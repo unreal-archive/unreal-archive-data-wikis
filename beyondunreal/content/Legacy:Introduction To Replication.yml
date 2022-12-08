@@ -1,0 +1,919 @@
+---
+parse:
+  title: "Legacy:Introduction To Replication"
+  text:
+    text: "<p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n\
+      </div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#What_is_replication.3F\"\
+      ><span class=\"tocnumber\">1</span> <span class=\"toctext\">What is replication?</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-2\"><a href=\"#The_Myths_of_replication\"\
+      ><span class=\"tocnumber\">2</span> <span class=\"toctext\">The Myths of replication</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-3\"><a href=\"#Why_you_need_it\"><span class=\"\
+      tocnumber\">3</span> <span class=\"toctext\">Why you need it</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-4\"><a href=\"#Multiple_copies\"><span class=\"\
+      tocnumber\">4</span> <span class=\"toctext\">Multiple copies</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-5\"><a href=\"#The_methods_of_replication\"\
+      ><span class=\"tocnumber\">5</span> <span class=\"toctext\">The methods of replication</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-6\"><a href=\"#Next_Step\"><span class=\"\
+      tocnumber\">6</span> <span class=\"toctext\">Next Step</span></a></li>\n<li\
+      \ class=\"toclevel-1 tocsection-7\"><a href=\"#Related_Topics\"><span class=\"\
+      tocnumber\">7</span> <span class=\"toctext\">Related Topics</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-8\"><a href=\"#Planning\"><span class=\"tocnumber\"\
+      >8</span> <span class=\"toctext\">Planning</span></a></li>\n<li class=\"toclevel-1\
+      \ tocsection-9\"><a href=\"#Discussion\"><span class=\"tocnumber\">9</span>\
+      \ <span class=\"toctext\">Discussion</span></a></li>\n</ul>\n</div>\n<p></p>\n\
+      <h2><span class=\"mw-headline\" id=\"What_is_replication.3F\">What is replication?</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Introduction_To_Replication?section=1\" title=\"Edit section:\
+      \ What is replication?\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>Put simply, replication is a way of making best use of limited bandwidth\
+      \ in a network game. The <a href=\"/Legacy:Replication\" title=\"Legacy:Replication\"\
+      >replication</a> page has a more in-depth exposition of the concept – but if\
+      \ you're completely new to it, it's likely you'll make a few false assumptions...</p>\n\
+      <h2><span class=\"mw-headline\" id=\"The_Myths_of_replication\">The Myths of\
+      \ replication</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Introduction_To_Replication?section=2\" title=\"\
+      Edit section: The Myths of replication\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>If you've read a few documents on replication and\
+      \ looked at the nuts and bolts of it – the <a href=\"/Legacy:UnrealScript\"\
+      \ title=\"Legacy:UnrealScript\">UnrealScript</a> keywords and variables that\
+      \ are involved – then there is a very good chance you've fallen into some commmon\
+      \ traps.</p>\n<ol>\n<li>Having read basic replication docs, you might have imagined\
+      \ that clients did their own thing, more or less running a duplicate of the\
+      \ game and occasionally exchanging data to keep things tied together. <b>The\
+      \ truth is: Clients do mostly nothing.</b></li>\n<li>You might think that a\
+      \ function marked as \"simulated\" is made to run on clients when it runs on\
+      \ the server. Not so – the \"simulated\" keyword doesn't mean that when something\
+      \ happens on the server, it also makes it happen on the client. <b>The truth\
+      \ is: The server doesn't cause clients to simulate simulated functions.</b></li>\n\
+      <li>The \"reliable if\" statement doesn't state \"this variable is reliable\"\
+      , it's an <i>instruction</i> to try to replicate the variable... reliably.</li>\n\
+      </ol>\n<p>We'll be looking into these in more detail throughout the tutorials.</p>\n\
+      <h2><span class=\"mw-headline\" id=\"Why_you_need_it\">Why you need it</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Introduction_To_Replication?section=3\" title=\"Edit section:\
+      \ Why you need it\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>Why would you need replication anyway? The dedicated server has all information\
+      \ of all the clients (that's why the server is so called \"authority\") regarding\
+      \ gameflow and making decisions (eg does the player has the correct key to open\
+      \ a door, if yes, issue the open-door-command on the door object) the server\
+      \ can decide everything by itself only.</p>\n<p>So when is replication (or simulation)\
+      \ really needed and is something you should take care of?</p>\n<dl>\n<dt>When\
+      \ it's not already taken care of by the Epic code.&#160;</dt>\n<dd><b>Example:</b>\
+      \ I change the actor location by a server running code only, and the new actor\
+      \ position is automatically replicated by the Epic code (so this is more a negative\
+      \ example – you dont need to handle replication in this case since Epic does\
+      \ it already for you).</dd>\n</dl>\n<dl>\n<dt>When it's something <i><b>visible</b></i>\
+      \ the client has to display/render. Imagine the player's computer just as a\
+      \ visual frontend, not more!&#160;</dt>\n<dd><b>Example:</b> I want to have\
+      \ some \"Weapon overheat function\", so the temperature is somehow calulated\
+      \ and the rounds shot are taking into account. This is purely server side –\
+      \ no calculation needed on the client. When overheated, I want the weapon to\
+      \ glow red. \"Red glow info\" is visible to the player and has to be replicated\
+      \ to the client (since Epic is not already doing it for me).</dd>\n</dl>\n<dl>\n\
+      <dt>When you want to minimize communication between the server and the client.&#160;</dt>\n\
+      <dd><b>Example:</b> A simple projectile moves in a straight line with a fixed\
+      \ velocity until it hits level geometry. That's predictable movement, and there's\
+      \ no point in having the server send constant location updates to the clients;\
+      \ so I just set the starting location, direction and velocity of the projectile\
+      \ and let the client simulate the movement by itself from there on. (Actually,\
+      \ virtually all of the game's projectiles are done that way, even those with\
+      \ more complicated movement trajectories such as the Flak secondary fire.)</dd>\n\
+      </dl>\n<p>So you have only to consider replication in the second and third case\
+      \ – the second in order to display something on the clientside which is not\
+      \ already covered by the epic code (something new!), and the third to cleverly\
+      \ reduce network load. Generally – if five percent of you code will handle with\
+      \ replication I would consider it much.</p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Multiple_copies\">Multiple copies</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Introduction_To_Replication?section=4\"\
+      \ title=\"Edit section: Multiple copies\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>In a network game of UT, there are several machines\
+      \ involved. Simplifying a little, these are servers and clients. Each machine\
+      \ has it's own actors, and each actor exists on a particular machine.</p>\n\
+      <p>This means that an actor such as a player is actually multiple actors, one\
+      \ on each machine. These multiple copies know that they correspond to one another.\
+      \ How they exchange information to make sure they keep in sync is the basic\
+      \ idea of replication.</p>\n<p>However, client versions generally don't do much\
+      \ (First Myth). Furthermore, you the programmer don't really have access to\
+      \ the heart of replication. You can't say in UnrealScript: \"send this piece\
+      \ of information across the network now\".</p>\n<p>Replication is rather like\
+      \ having a number of islands and some bottles to send messages between them.\
+      \ You tell the engine it should try to keep certain things in sync, and it will\
+      \ work the bottles and do its best – but there are no guarantees. You don't\
+      \ know how many bottles there are or when they are sent out, or when they are\
+      \ received.</p>\n<h2><span class=\"mw-headline\" id=\"The_methods_of_replication\"\
+      >The methods of replication</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Introduction_To_Replication?section=5\"\
+      \ title=\"Edit section: The methods of replication\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<p>So now you know that clients\
+      \ do nothing (First Myth), the question is: how do you actually make them do\
+      \ <i>something</i>?</p>\n<dl>\n<dt>Replicate variable values.</dt>\n<dd></dd>\n\
+      </dl>\n<p><br />\nWhen a variable value changes and has a replication statement\
+      \ such as <code>reliable if (Role == ROLE_Authority)</code>, the engine checks\
+      \ – at its own discretion, and subject to certain networking-related <a href=\"\
+      /Legacy:Actor\" title=\"Legacy:Actor\">Actor</a> variables – its replication\
+      \ condition (here: <code>Role == ROLE_Authority</code>). If a variable changes\
+      \ often, those checks happen frequently.</p>\n<p>If the replication condition\
+      \ is fulfilled, the engine sends an update of that variable's value over the\
+      \ network to the other side (in our case: from the server to the client). If\
+      \ the variable has a special meaning such as <code>Location</code> or <code>Rotation</code>,\
+      \ the client copy will change its appearance as soon as it receives the update.</p>\n\
+      <p><br /></p>\n<dl>\n<dt>Mark event functions as \"simulated.\"&#160;</dt>\n\
+      <dd></dd>\n</dl>\n<p><br />\nAs mentioned above, the client copy normally won't\
+      \ execute any of its code on clients.</p>\n<p>If you mark an event function\
+      \ as \"simulated,\" however, that tells the engine to call that event function\
+      \ client-side too (whenever the event happens, client-side). Then the UnrealScript\
+      \ code which is executed client-side can affect the client copy of the actor\
+      \ directly (or call other non-event functions client-side if they have been\
+      \ marked as \"simulated\" too).</p>\n<p><br /></p>\n<dl>\n<dt>Replicate function\
+      \ calls.&#160;</dt>\n<dd></dd>\n</dl>\n<p><br />\nIt's also possible to call\
+      \ a function on the server and have it execute on the one client who \"owns\"\
+      \ that actor (i.e. the client whose player is – directly or indirectly – the\
+      \ <code>Owner</code> of that actor).</p>\n<p>That happens asynchronously, meaning\
+      \ that \"calling the function on the server\" just makes the engine send a notification\
+      \ over the network to the affected client and return immediately without any\
+      \ feedback of whether and when the function was actually executed client-side;\
+      \ because of that, it's not possible to get return values from replicated functions.</p>\n\
+      <p><br /></p>\n<h2><span class=\"mw-headline\" id=\"Next_Step\">Next Step</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Introduction_To_Replication?section=6\" title=\"Edit section:\
+      \ Next Step\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>The next tutorial is the <a href=\"/Legacy:ProjectileDestroyerVolume\" title=\"\
+      Legacy:ProjectileDestroyerVolume\">ProjectileDestroyerVolume</a> actor.</p>\n\
+      <h2><span class=\"mw-headline\" id=\"Related_Topics\">Related Topics</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Introduction_To_Replication?section=7\" title=\"Edit section:\
+      \ Related Topics\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <ul>\n<li><a href=\"/Legacy:Replication\" title=\"Legacy:Replication\">Replication</a></li>\n\
+      <li><a href=\"/Legacy:Replication_Block\" title=\"Legacy:Replication Block\"\
+      >Replication Block</a></li>\n<li><a href=\"/Legacy:Role\" title=\"Legacy:Role\"\
+      >Role</a> and RemoteRole, and <a href=\"/Legacy:NetMode\" title=\"Legacy:NetMode\"\
+      >NetMode</a>.</li>\n<li><a href=\"/Legacy:Netcode_Idioms\" title=\"Legacy:Netcode\
+      \ Idioms\">Netcode Idioms</a></li>\n<li><a href=\"/Legacy:Replication_Examples\"\
+      \ title=\"Legacy:Replication Examples\">Replication Examples</a></li>\n</ul>\n\
+      <h2><span class=\"mw-headline\" id=\"Planning\">Planning</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Introduction_To_Replication?section=8\"\
+      \ title=\"Edit section: Planning\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<ul>\n<li>We should have examples of the following:\n\
+      <ul>\n<li>actors that exist on the server only</li>\n<li>actors that exist on\
+      \ the server and clients</li>\n<li>actors that are spawned clientside only</li>\n\
+      <li>actors that are spawned on owning clients only</li>\n</ul>\n</li>\n</ul>\n\
+      <ul>\n<li>We should also give examples of how to:\n<ul>\n<li>call a function\
+      \ on the server from a client via function replication</li>\n<li>call a function\
+      \ on an owning client via function replication</li>\n<li>trigger function calls\
+      \ on clients with PostNetReceive()</li>\n</ul>\n</li>\n</ul>\n<h2><span class=\"\
+      mw-headline\" id=\"Discussion\">Discussion</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Introduction_To_Replication?section=9\"\
+      \ title=\"Edit section: Discussion\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p><b>Tarquin:</b> I would really like a basic tutorial\
+      \ on replication: maybe something like a Trigger actor that does something to\
+      \ all players when touched.</p>\n<p><b>NickR:</b> I wouldn't mind some small\
+      \ replication examples just showing one type replication related code. Like\
+      \ when the simulated key word should be used or if static functions can be called\
+      \ from either the client or server and run on either.</p>\n<p><b>VitalOverdose</b>\
+      \ I think the ONSMineProjectile is a very good example for replication.</p>\n\
+      <p><b>Foxpaw:</b> I'm not sure about tutorials, but those are (fairly) easily\
+      \ explained. Simulated functions run on actors with ROLE_SimulatedProxy or better.\
+      \ However, only if they are called from another simulated function. Entry points\
+      \ like Tick can be declared as simulated when you override them to facilitate\
+      \ this. A short example:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">simulated</span> <span class=\"kw1\">function</span> <span class=\"kw4\"\
+      >Tick</span><span class=\"br0\">(</span> <span class=\"kw5\">float</span> Delta\
+      \ <span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"\
+      kw6\">Super</span>.<span class=\"kw4\">Tick</span><span class=\"br0\">(</span>\
+      \ Delta <span class=\"br0\">)</span>;\n \n  DoStuffOnServerOnly<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n  DoStuffOnBoth<span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n \n<span\
+      \ class=\"co1\">// Called from a simulated function, but not simulated itself,</span>\n\
+      <span class=\"co1\">// the engine skips over this function on clients. (or rather,</span>\n\
+      <span class=\"co1\">// the non-authority version, which is usually the client)</span>\n\
+      <span class=\"kw1\">function</span> DoStuffOnServerOnly<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n  DoStuffOnClient<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"co1\">// A simulated function getting called from another\
+      \ simulated</span>\n<span class=\"co1\">// function. This gets called on both\
+      \ machines.</span>\n<span class=\"kw1\">simulated</span> <span class=\"kw1\"\
+      >function</span> DoStuffOnBoth<span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n<span class=\"br0\">}</span>\n \n<span\
+      \ class=\"co1\">// Oops! This is a simulated function, but gets called from\
+      \ a</span>\n<span class=\"co1\">// non-simulated function, so although it COULD\
+      \ run on a client</span>\n<span class=\"co1\">// (because it's simulated) the\
+      \ code that calls it doesn't run</span>\n<span class=\"co1\">// on the client\
+      \ and so this won't ever get called.</span>\n<span class=\"kw1\">simulated</span>\
+      \ <span class=\"kw1\">function</span> DoStuffOnClient<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n<span class=\"br0\"\
+      >}</span></pre></div>\n</div>\n<p>Static functions on the other hand, have no\
+      \ relation to replication and are functions that exist outside the context of\
+      \ an object. Static functions can't get replicated, obviously, because they\
+      \ aren't associated with any particular instance of an object. They can access\
+      \ only default variables and stuff. See <a href=\"/Legacy:Static_Function\"\
+      \ title=\"Legacy:Static Function\">Static Function</a> and <a href=\"/Legacy:Simulated_Function\"\
+      \ title=\"Legacy:Simulated Function\">Simulated Function</a>.</p>\n<p>Also,\
+      \ feel free to refactor this somewhere or expand it into a full tutorial.. it's\
+      \ more a demonstration at the moment.</p>\n<p><b>Tarquin:</b> Thanks... but\
+      \ see, you've alreayd lost RepliN00bs with this: <i>run on actors with ROLE_SimulatedProxy\
+      \ or better</i>.... how does Replication actually WORK? Should we imagine multiple\
+      \ facets of the same actor on different machines, or many actors on different\
+      \ machines that somehow correspond to each other?</p>\n<p><b>Foxpaw:</b> Well,\
+      \ they're different actors, but they have a unique identifier so they \"correspond\"\
+      \ to each other. An actors Role variable determines it's replication behaviour.\
+      \ ROLE_Authority is usually the one on the server, and it runs all functions,\
+      \ simulated or not. ROLE_SimulatedProxy is usually on the client, and runs only\
+      \ simulated functions. ROLE_DumbProxy runs no functions, but still replicates\
+      \ variables. ROLE_None replicates nothing.</p>\n<p><b>Tarquin:</b> I simply\
+      \ don't understand how to visualize what is going on with replication. I'm used\
+      \ to thinking of an actor as a script that is running. How do I think of a replicated\
+      \ actor? Two scripts in tandem? How? Take something like this:</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">replication</span>\n<span class=\"\
+      br0\">{</span>\n  <span class=\"kw1\">reliable</span> <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span><span class=\"kw7\">Role</span> <span class=\"\
+      sy0\">==</span> <span class=\"kw7\">ROLE_Authority</span><span class=\"br0\"\
+      >)</span>\n    Foo, Bar;\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <p>What is this an instruction to? When is this parsed? What does it cause to\
+      \ happen?</p>\n<p><b>Mychaeel:</b> The engine executes the condition in this\
+      \ statement at its own discretion. It's not clearly specified <i>when</i> that\
+      \ happens; the documentation only says <i>that</i> it happens, and that it happens\
+      \ frequently.</p>\n<p>Each machine in a network game for which an actor is \"\
+      relevant\" has a copy of that actor. For simplicity, let's assume a single client\
+      \ here – the server spawns the actor, and the server engine tells the client\
+      \ that there's a new actor around. So we have two copies of the same actor:\
+      \ One on the server, and one on the client. The engines of both machines know\
+      \ that those two copies correspond to each other, but by itself that doesn't\
+      \ mean a lot – specifically, it doesn't mean that the client copy is automatically\
+      \ kept in sync with the server copy.</p>\n<p>Apart from that, nothing special\
+      \ happens. The server copy runs its events and other code, and the client copy\
+      \ just sits there, doing nothing. There are, however, several ways to <i>make</i>\
+      \ the client copy do something:</p>\n<dl>\n<dt>Replicate variable values.</dt>\n\
+      <dd></dd>\n</dl>\n<p><br />\nWhen a variable value changes and has a replication\
+      \ statement such as <code>Foo</code> and <code>Bar</code> above, the engine\
+      \ checks – at its own discretion, and subject to certain networking-related\
+      \ <a href=\"/Legacy:Actor\" title=\"Legacy:Actor\">Actor</a> variables – its\
+      \ replication condition (here: <code>Role == ROLE_Authority</code>). If a variable\
+      \ changes often, those checks happen frequently.</p>\n<p>If the replication\
+      \ condition is fulfilled, the engine sends an update of that variable's value\
+      \ over the network to the other side (in our case: from the server to the client).\
+      \ If the variable has a special meaning such as <code>Location</code> or <code>Rotation</code>,\
+      \ the client copy will change its appearance as soon as it receives the update.</p>\n\
+      <p><br /></p>\n<dl>\n<dt>Mark event functions as \"simulated.\"&#160;</dt>\n\
+      <dd></dd>\n</dl>\n<p><br />\nAs mentioned above, the client copy normally won't\
+      \ execute any of its code on clients.</p>\n<p>If you mark an event function\
+      \ as \"simulated,\" however, that tells the engine to call that event function\
+      \ client-side too (whenever the event happens, client-side). Then the UnrealScript\
+      \ code which is executed client-side can affect the client copy of the actor\
+      \ directly (or call other non-event functions client-side if they have been\
+      \ marked as \"simulated\" too).</p>\n<p><br /></p>\n<dl>\n<dt>Replicate function\
+      \ calls.&#160;</dt>\n<dd></dd>\n</dl>\n<p><br />\nIt's also possible to call\
+      \ a function on the server and have it execute on the one client who \"owns\"\
+      \ that actor (i.e. the client whose player is – directly or indirectly – the\
+      \ <code>Owner</code> of that actor).</p>\n<p>That happens asynchronously, meaning\
+      \ that \"calling the function on the server\" just makes the engine send a notification\
+      \ over the network to the affected client and return immediately without any\
+      \ feedback of whether and when the function was actually executed client-side;\
+      \ because of that, it's not possible to get return values from replicated functions.</p>\n\
+      <p><br /></p>\n<p>So, the server and client copies of the same actor are basically\
+      \ independent entities – but you can use the techniques explained above to keep\
+      \ them in sync on both machines.</p>\n<p><b>Tarquin:</b> This is starting to\
+      \ make sense! When you say \"does nothing\" – even if affected by other actors?\
+      \ If I have a player and a trigger, when the player touches the trigger, nothing\
+      \ happens on the client actors, only on the server?</p>\n<p>2nd question: is\
+      \ there a way for the server actor to make something happen on the client actor?</p>\n\
+      <p><b>Mychaeel:</b> \"Nothing\" means \"nothing.\" A server-side trigger will\
+      \ only trigger server-side; plus, only code within a simulated function or simulated\
+      \ state <i>can</i> (or from the engine's point of view: <i>may</i>) be executed\
+      \ client-side at all (but it's a common misconception that making a function\
+      \ \"simulated\" will magically execute it client-side – there's no such magic,\
+      \ unless that function happens to be an engine event <i>and</i> that event is\
+      \ caused client-side).</p>\n<p>Virtually all interaction between actors happens\
+      \ purely server-side, with the client copy being hardly ever any more than just\
+      \ a visual representation of the server copy.</p>\n<p>And actually most of what\
+      \ I wrote above is about how the server actor can make something happen on the\
+      \ client actor – starting from \"There are, however\"...</p>\n<p><b>Tarquin:</b>\
+      \ Based on what I now know, I can identify two major newbie mistakes in understanding\
+      \ replication:</p>\n<ol>\n<li>the \"reliable if\" statement doesn't state \"\
+      this variable is reliable\", it's an <i>instruction</i> to try to replicate\
+      \ the variable... reliably. Not sure if that makes sense, but I found out I've\
+      \ been completely misreading the meaning of that.</li>\n<li>clients do mostly\
+      \ nothing. Having read basic replication docs, I imagined that clients did their\
+      \ own thing, more or less running a duplicate of the game and occasionally echanging\
+      \ data to keep things tied together.</li>\n</ol>\n<p>I made a simple map with\
+      \ a <a href=\"/Legacy:Trigger\" title=\"Legacy:Trigger\">Trigger</a> to test\
+      \ something for Jailbreak, and I ran it as a netgame. The Trigger actor, that's\
+      \ I'd set bHidden=False on, wasn't visible when I played. Am I right in thinking\
+      \ that the Trigger <i>wasn't even there</i> on the client?</p>\n<p>Given this,\
+      \ could someone with knowlegde of replication conceive of a simple situation\
+      \ where an actor such as a Trigger or Keypoint class might require some replication,\
+      \ and I'll see if I can write a tutorial on it?</p>\n<p><b>Mychaeel:</b> Yes,\
+      \ you're right – the Trigger wasn't even there on the clients. (You have to\
+      \ set bNoDelete=True to prevent the engine from discarding it on clients after\
+      \ it was loaded with the map file; or bAlwaysRelevant=True to have the server\
+      \ replicate it to all clients again after the map was loaded. But since a Trigger\
+      \ is only acting server-side anyway, neither of those options makes sense in\
+      \ this context.)</p>\n<p><b>Tarquin:</b> Do we have a reference page of events\
+      \ that can be used as simulated? Are they the ones markes as [event] on <a href=\"\
+      /Legacy:Actor/Methods\" title=\"Legacy:Actor/Methods\">Actor/Methods</a>?</p>\n\
+      <p><b>Mychaeel:</b> The important difference between \"event function\" and\
+      \ \"normal function\" here is only that an event is automatically called by\
+      \ the engine. Just think about it – any function that's called directly by engine\
+      \ code qualifies, starting from PreBeginPlay over Tick and Timer to Destroyed...\
+      \ and any other, self-defined function doesn't (like MyOwnFunction or CanBeJailed).</p>\n\
+      <p><b>Tarquin:</b> How do you spawn an actor only on a client, or only on a\
+      \ particular client? Is this possible? I think the 3rd newbie mistake is supposing\
+      \ that the ways in which you can pass information from server to client are\
+      \ not as restricted as they are.</p>\n<p><b>Mychaeel:</b> To spawn an actor\
+      \ only on a (particular) client... just do so. &#160;:-) You can't directly\
+      \ initiate that from a server (as in \"server, tell client XY to spawn this\
+      \ actor\"); but you can spawn it directly from client-side code on that particular\
+      \ client.</p>\n<p><b>Tarquin:</b> For the first tutorial, I think I'll do a\
+      \ Volume that destroys incoming projectiles. It's fairly simple, but exposes\
+      \ some important concepts (I think... if I've got it right...). Work in progress:\
+      \ <a href=\"/Legacy:ProjectileDestroyerVolume\" title=\"Legacy:ProjectileDestroyerVolume\"\
+      >ProjectileDestroyerVolume</a>. And I'll be cleaning up this page too ....</p>\n\
+      <p><b>Lilguy:</b> Hey, I just added a bit, hope it's alright. since the \"myths\"\
+      \ section listed a bunch of facts, not myths, I changed it to \"some facts of\
+      \ replication.\" I also made a little list of examples we should make that would\
+      \ be helpful. Most of them could probably be copied and pasted from Epic's code,\
+      \ but we could make some simple examples of each one too.</p>\n<p><b>Tarquin:</b>\
+      \ Hmm... well, I like the title so I've put it back, but you are quite right,\
+      \ I wrote them as facts, which could be very confusing. I have rephrased the\
+      \ first two – is that better? I'm working on the first tutorial in the series.\
+      \ I think the 2nd one should involve the replication block with a replicated\
+      \ variable, somehow – but I don't know what sort of example would be good. After\
+      \ that, I have no idea...&#160;:)</p>\n<p><b>Lilguy:</b>Heh, sorry 'bout that,\
+      \ I had actually kinda liked the title too. That'll do fine...<br />\nPerhaps\
+      \ for the second example, there could be some sort of street light or something,\
+      \ with 2 alternate textures that randomly switch back and forth at random intervals.\
+      \ They would only do this if the light was in \"damaged mode\" which would be\
+      \ signaled by bDamaged, a reliably replicated variable. I guess maybe I should\
+      \ stop talking and start coding, lol.</p>\n<p><b>Foxpaw:</b> I have to disagree\
+      \ with the assertion that clients do mostly nothing. Clients handle physics\
+      \ just like the server. In UT2003, some actors are handled almost entirely client-side.\
+      \ (general projectiles, for instance, are handled almost entirely client side,\
+      \ with the exception being the actual application of damage.) An efficient replication\
+      \ system should have nearly everything handled client side, with only critical\
+      \ values replicated.</p>\n<p><b>Lilguy:</b> Yeah, I kind of agree there. SimulatedProxy\
+      \ actors are given an initial physical state, then they're only updated periodically\
+      \ to make sure everything matches up. And there are a lot of clientside only\
+      \ actors, such as almost all emitter effects, the hud, interactions, etc. Perhaps\
+      \ it could be ammended to say that clients are in charge of almost nothing,\
+      \ since the server is usually the ultimate authority on the state of actors\
+      \ that exist on the client and actors. It's really best to always think about\
+      \ this when you're coding, and keep in mind what code should be running on the\
+      \ server, and what should be running on the client, and to program it likewise.</p>\n\
+      <p><b>Tarquin:</b> I think the point is that clients will do nothing unless\
+      \ told to. Using \"SimulatedProxy\" is telling it. A \"client-side effect\"\
+      \ has to be MADE to be client-side.</p>\n<p><b>Andreas:</b> Catching up with\
+      \ replication - I would like to add some more basic ideas to replication?</p>\n\
+      <p><b>Tarquin:</b> inserted at the top&#160;:) BTW, please review <a href=\"\
+      /Legacy:Wiki_Markup\" title=\"Legacy:Wiki Markup\">Wiki markup</a>&#160;:)</p>\n\
+      <p><b>Andreas:</b> thanks for layouting - reading it the example 1 was not that\
+      \ clear - tried to clarify it a bit. Maybe the link</p>\n<p><a rel=\"nofollow\"\
+      \ class=\"external free\" href=\"http://unreal.epicgames.com/Network.htm\">http://unreal.epicgames.com/Network.htm</a>\
+      \ could be included - it helped me quite a bit.</p>\n<p><b>Legal:</b> Threadmode\
+      \ anyone? This page needs some cleaning up, perhaps a Refractor Me tag would\
+      \ be in order? Also, to add to the discussion, coders need to make sure as much\
+      \ as possible is done client side and with as little code as possible. Some\
+      \ mods which could have impressed requires so much bandwidth that few people\
+      \ get ping over 200.</p>\n<p><b>Andreas:</b> Im not a wikiexpert (due to limited\
+      \ sparetime I have) - but if it improves - sure - I agree. I disagree on doing\
+      \ everything clientside - the goal of writing a program using replication is\
+      \ to minimise networktraffic. So the server would be my first place (assuming\
+      \ it has enough cpu power) since 1. it has a complete view of the game-status\
+      \ and 2. epic did already implement \"clever\" methods to reduce the network\
+      \ load (by not updating clients with data they dont need anyways, since they\
+      \ cannot see the actor and so on) I would not want to reinvent. As a coder I\
+      \ would ask me what tasks have to be done (see weapon overheat example), and\
+      \ where I can split server/client in order to minimize communciation. There\
+      \ is no way around updating the client as far it considers visual informations\
+      \ - the client <b>is</b> the visual frontend - but upon everything else the\
+      \ coder is free to decide where to perform the tasks.</p>\n<p><b>Andreas:</b>\
+      \ To add, replication (especially simulated functions running on the client)\
+      \ might be usefull when someone wants to give clients different views or play\
+      \ different sounds locally.</p>\n<p><b>FatalOverdose:</b> In the first few paragraphs\
+      \ you say 'The truth is: Clients do mostly nothing.' and then a little further\
+      \ down you have 'However, client versions generally don't do much (First Myth).'</p>\n\
+      <p>. its a bit confusing</p>\n<p><b>Solid Snake:</b> This was asked by Mychaeel\
+      \ a long time ago, so I've converted my post into a wiki page, found here <a\
+      \ href=\"/edit/Legacy:Solid_Snake/A_Study_Of_Replication?redlink=1\" class=\"\
+      new\" title=\"Legacy:Solid Snake/A Study Of Replication (page does not exist)\"\
+      >A Study Of Replication</a></p>\n<p><b>Tarquin:</b> I think a simple tutorial\
+      \ would be fixing the example on <a href=\"/Legacy:Using_LocalMessages\" title=\"\
+      Legacy:Using LocalMessages\">Using LocalMessages</a> to broadcast the message\
+      \ so clients can see it. Can anyone help me by suggesting how it might be done?</p>\n\
+      <p><b>Ransico:</b> Something that has bothered me for a long time, is there\
+      \ is no info on how to get something to run properly on -only- the client...\
+      \ for example, I was stuck on how to get a custom LOD actor working. The issue\
+      \ I had, was that the tick and timer events would never get called on the client.</p>\n\
+      <p>The fix turned out to be that the client was deleting the object soon after\
+      \ its creation on the client, no matter what combo of defaultproperty switches\
+      \ I used.</p>\n<p>There may be a better way to do it, but I set bNoDelete=true\
+      \ and it solved my problem. The entire source can be found here - someone else\
+      \ may find it useful, it also tells you how to make something run on the client:\
+      \ <a href=\"/Legacy:Ransico/LODMesh\" title=\"Legacy:Ransico/LODMesh\">Ransico/LODMesh</a></p>\n\
+      <p><b>Vitaloverdose:</b> The page is called 'introduction to replication' so\
+      \ it was the first document i read on the subject but it begins with \"If you've\
+      \ read a few documents on replication\". Maybe the 'myths of replication' bit\
+      \ might be better off further into the page or as part of a summery as its not\
+      \ introducing the subject so much as reviewing it.Im sure the page is very helpfull\
+      \ for the reader with prior knowledge of the subject but could be very confusing/unhelpful\
+      \ to anyone looking into the issue for the first time as it is referrencing\
+      \ aspects of replication that havent been explained at this point.</p>\n<p><b>Kiff:</b>\
+      \ I attempted making a tutorial for function calls using PostNetReceive. It\
+      \ might be a little cluttered, so feel free to make suggestions and/or corrections.\
+      \ <a href=\"/Legacy:Kiff\" title=\"Legacy:Kiff\">Kiff</a></p>\n<hr />\n<p><a\
+      \ href=\"/Category:Legacy_Tutorial\" title=\"Category:Legacy Tutorial\">Category:Legacy\
+      \ Tutorial</a></p>\n<p><a href=\"/Category:Legacy_To_Do\" title=\"Category:Legacy\
+      \ To Do\">Category:Legacy To Do</a> – Work to organize according to <a href=\"\
+      /Legacy:Replication/Discussing\" title=\"Legacy:Replication/Discussing\">Replication/Discussing</a>.</p>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.119 seconds\nReal time usage:\
+      \ 0.122 seconds\nPreprocessor visited node count: 43/1000000\nPreprocessor generated\
+      \ node count: 98/1000000\nPost‐expand include size: 54/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:1509-0!*!0!!en!*!* and timestamp 20221118014919 and revision\
+      \ id 46288\n -->\n"
+  categories:
+  - sortkey: "Introduction To Replication"
+    name: "Legacy_To_Do"
+  - sortkey: "Introduction To Replication"
+    name: "Legacy_Tutorial"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Actor"
+  - ns: 100
+    exists: true
+    name: "Legacy:Wiki Markup"
+  - ns: 100
+    exists: true
+    name: "Legacy:Kiff"
+  - ns: 100
+    exists: true
+    name: "Legacy:Ransico/LODMesh"
+  - ns: 100
+    exists: true
+    name: "Legacy:Replication/Discussing"
+  - ns: 100
+    exists: true
+    name: "Legacy:Static Function"
+  - ns: 100
+    exists: true
+    name: "Legacy:NetMode"
+  - ns: 14
+    exists: true
+    name: "Category:Legacy To Do"
+  - ns: 100
+    exists: true
+    name: "Legacy:Simulated Function"
+  - ns: 100
+    exists: true
+    name: "Legacy:Replication Block"
+  - ns: 100
+    exists: true
+    name: "Legacy:Netcode Idioms"
+  - ns: 100
+    exists: true
+    name: "Legacy:Replication"
+  - ns: 100
+    exists: true
+    name: "Legacy:Using LocalMessages"
+  - ns: 100
+    exists: true
+    name: "Legacy:ProjectileDestroyerVolume"
+  - ns: 100
+    exists: false
+    name: "Legacy:Solid Snake/A Study Of Replication"
+  - ns: 100
+    exists: true
+    name: "Legacy:UnrealScript"
+  - ns: 14
+    exists: true
+    name: "Category:Legacy Tutorial"
+  - ns: 100
+    exists: true
+    name: "Legacy:Actor/Methods"
+  - ns: 100
+    exists: true
+    name: "Legacy:Role"
+  - ns: 100
+    exists: true
+    name: "Legacy:Trigger"
+  - ns: 100
+    exists: true
+    name: "Legacy:Replication Examples"
+  templates: []
+  images: []
+  externallinks:
+  - "http://unreal.epicgames.com/Network.htm"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "What is replication?"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Introduction_To_Replication"
+    byteoffset: 0
+    anchor: "What_is_replication.3F"
+  - toclevel: 1
+    level: "2"
+    line: "The Myths of replication"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Introduction_To_Replication"
+    byteoffset: 304
+    anchor: "The_Myths_of_replication"
+  - toclevel: 1
+    level: "2"
+    line: "Why you need it"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:Introduction_To_Replication"
+    byteoffset: 1388
+    anchor: "Why_you_need_it"
+  - toclevel: 1
+    level: "2"
+    line: "Multiple copies"
+    number: "4"
+    index: "4"
+    fromtitle: "Legacy:Introduction_To_Replication"
+    byteoffset: 3694
+    anchor: "Multiple_copies"
+  - toclevel: 1
+    level: "2"
+    line: "The methods of replication"
+    number: "5"
+    index: "5"
+    fromtitle: "Legacy:Introduction_To_Replication"
+    byteoffset: 4750
+    anchor: "The_methods_of_replication"
+  - toclevel: 1
+    level: "2"
+    line: "Next Step"
+    number: "6"
+    index: "6"
+    fromtitle: "Legacy:Introduction_To_Replication"
+    byteoffset: 6789
+    anchor: "Next_Step"
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "7"
+    index: "7"
+    fromtitle: "Legacy:Introduction_To_Replication"
+    byteoffset: 6900
+    anchor: "Related_Topics"
+  - toclevel: 1
+    level: "2"
+    line: "Planning"
+    number: "8"
+    index: "8"
+    fromtitle: "Legacy:Introduction_To_Replication"
+    byteoffset: 7175
+    anchor: "Planning"
+  - toclevel: 1
+    level: "2"
+    line: "Discussion"
+    number: "9"
+    index: "9"
+    fromtitle: "Legacy:Introduction_To_Replication"
+    byteoffset: 7649
+    anchor: "Discussion"
+  displaytitle: "Legacy:Introduction To Replication"
+  iwlinks: []
+  wikitext:
+    text: "==What is replication?==\n\nPut simply, replication is a way of making\
+      \ best use of limited bandwidth in a network game. The [[Legacy:Replication|replication]]\
+      \ page has a more in-depth exposition of the concept &ndash; but if you're completely\
+      \ new to it, it's likely you'll make a few false assumptions...\n\n==The Myths\
+      \ of replication==\n\nIf you've read a few documents on replication and looked\
+      \ at the nuts and bolts of it &ndash; the [[Legacy:UnrealScript|UnrealScript]]\
+      \ keywords and variables that are involved &ndash; then there is a very good\
+      \ chance you've fallen into some commmon traps. \n\n# Having read basic replication\
+      \ docs, you might have imagined that clients did their own thing, more or less\
+      \ running a duplicate of the game and occasionally exchanging data to keep things\
+      \ tied together.  '''The truth is: Clients do mostly nothing.'''\n# You might\
+      \ think that a function marked as \"simulated\" is made to run on clients when\
+      \ it runs on the server. Not so &ndash; the \"simulated\" keyword doesn't mean\
+      \ that when something happens on the server, it also makes it happen on the\
+      \ client. '''The truth is: The server doesn't cause clients to simulate simulated\
+      \ functions.'''\n# The \"reliable if\" statement doesn't state \"this variable\
+      \ is reliable\", it's an ''instruction'' to try to replicate the variable...\
+      \ reliably. \n\nWe'll be looking into these in more detail throughout the tutorials.\n\
+      \n==Why you need it==\n\nWhy would you need replication anyway? The dedicated\
+      \ server has all information of all the clients (that's why the server is so\
+      \ called \"authority\") regarding gameflow and making decisions (eg does the\
+      \ player has the correct key to open a door, if yes, issue the open-door-command\
+      \ on the door object) the server can decide everything by itself only. \n\n\
+      So when is replication (or simulation) really needed and is something you should\
+      \ take care of?\n\n; When it's not already taken care of by the Epic code. :\
+      \ '''Example:''' I change the actor location by a server running code only,\
+      \ and the new actor position is automatically replicated by the Epic code (so\
+      \ this is more a negative example &ndash; you dont need to handle replication\
+      \ in this case since Epic does it already for you).\n\n; When it's something\
+      \ '''''visible''''' the client has to display/render. Imagine the player's computer\
+      \ just as a visual frontend, not more! : '''Example:''' I want to have some\
+      \ \"Weapon overheat function\", so the temperature is somehow calulated and\
+      \ the rounds shot are taking into account. This is purely server side &ndash;\
+      \ no calculation needed on the client. When overheated, I want the weapon to\
+      \ glow red. \"Red glow info\" is visible to the player and has to be replicated\
+      \ to the client (since Epic is not already doing it for me).\n\n; When you want\
+      \ to minimize communication between the server and the client. : '''Example:'''\
+      \ A simple projectile moves in a straight line with a fixed velocity until it\
+      \ hits level geometry.  That's predictable movement, and there's no point in\
+      \ having the server send constant location updates to the clients; so I just\
+      \ set the starting location, direction and velocity of the projectile and let\
+      \ the client simulate the movement by itself from there on.  (Actually, virtually\
+      \ all of the game's projectiles are done that way, even those with more complicated\
+      \ movement trajectories such as the Flak secondary fire.)\n\nSo you have only\
+      \ to consider replication in the second and third case &ndash; the second in\
+      \ order to display something on the clientside which is not already covered\
+      \ by the epic code (something new!), and the third to cleverly reduce network\
+      \ load. Generally &ndash; if five percent of you code will handle with replication\
+      \ I would consider it much. \n\n==Multiple copies==\n\nIn a network game of\
+      \ UT, there are several machines involved. Simplifying a little, these are servers\
+      \ and clients. Each machine has it's own actors, and each actor exists on a\
+      \ particular machine.\n\nThis means that an actor such as a player is actually\
+      \ multiple actors, one on each machine. These multiple copies know that they\
+      \ correspond to one another. How they exchange information to make sure they\
+      \ keep in sync is the basic idea of replication.\n\nHowever, client versions\
+      \ generally don't do much (First Myth). Furthermore, you the programmer don't\
+      \ really have access to the heart of replication. You can't say in UnrealScript:\
+      \ \"send this piece of information across the network now\". \n\nReplication\
+      \ is rather like having a number of islands and some bottles to send messages\
+      \ between them. You tell the engine it should try to keep certain things in\
+      \ sync, and it will work the bottles and do its best &ndash; but there are no\
+      \ guarantees. You don't know how many bottles there are or when they are sent\
+      \ out, or when they are received.\n\n==The methods of replication==\n\nSo now\
+      \ you know that clients do nothing (First Myth), the question is: how do you\
+      \ actually make them do ''something''?\n\n; Replicate variable values.: \n\n\
+      \nWhen a variable value changes and has a replication statement such as <code>reliable\
+      \ if (Role == ROLE_Authority)</code>, the engine checks &ndash; at its own discretion,\
+      \ and subject to certain networking-related [[Legacy:Actor|Actor]] variables\
+      \ &ndash; its replication condition (here: <code>Role == ROLE_Authority</code>).\
+      \  If a variable changes often, those checks happen frequently.\n\nIf the replication\
+      \ condition is fulfilled, the engine sends an update of that variable's value\
+      \ over the network to the other side (in our case: from the server to the client).\
+      \  If the variable has a special meaning such as <code>Location</code> or <code>Rotation</code>,\
+      \ the client copy will change its appearance as soon as it receives the update.\n\
+      \n\n\n; Mark event functions as \"simulated.\" : \n\n\nAs mentioned above, the\
+      \ client copy normally won't execute any of its code on clients.\n\nIf you mark\
+      \ an event function as \"simulated,\" however, that tells the engine to call\
+      \ that event function client-side too (whenever the event happens, client-side).\
+      \  Then the UnrealScript code which is executed client-side can affect the client\
+      \ copy of the actor directly (or call other non-event functions client-side\
+      \ if they have been marked as \"simulated\" too).\n\n\n\n; Replicate function\
+      \ calls. : \n\n\nIt's also possible to call a function on the server and have\
+      \ it execute on the one client who \"owns\" that actor (i.e. the client whose\
+      \ player is &ndash; directly or indirectly &ndash; the <code>Owner</code> of\
+      \ that actor).\n\nThat happens asynchronously, meaning that \"calling the function\
+      \ on the server\" just makes the engine send a notification over the network\
+      \ to the affected client and return immediately without any feedback of whether\
+      \ and when the function was actually executed client-side; because of that,\
+      \ it's not possible to get return values from replicated functions.\n\n\n\n\
+      ==Next Step==\n\nThe next tutorial is the [[Legacy:ProjectileDestroyerVolume|ProjectileDestroyerVolume]]\
+      \ actor.\n\n==Related Topics==\n* [[Legacy:Replication|Replication]]\n* [[Legacy:Replication\
+      \ Block|Replication Block]]\n* [[Legacy:Role|Role]] and RemoteRole, and [[Legacy:NetMode|NetMode]].\n\
+      * [[Legacy:Netcode Idioms|Netcode Idioms]]\n* [[Legacy:Replication Examples|Replication\
+      \ Examples]]\n\n==Planning==\n*We should have examples of the following:\n**\
+      \ actors that exist on the server only\n** actors that exist on the server and\
+      \ clients\n** actors that are spawned clientside only\n** actors that are spawned\
+      \ on owning clients only\n\n*We should also give examples of how to:\n** call\
+      \ a function on the server from a client via function replication\n** call a\
+      \ function on an owning client via function replication\n** trigger function\
+      \ calls on clients with PostNetReceive()\n\n==Discussion==\n\n'''Tarquin:'''\
+      \ I would really like a basic tutorial on replication: maybe something like\
+      \ a Trigger actor that does something to all players when touched.\n\n'''NickR:'''\
+      \ I wouldn't mind some small replication examples just showing one type replication\
+      \ related code. Like when the simulated key word should be used or if static\
+      \ functions can be called from either the client or server and run on either.\n\
+      \n'''VitalOverdose''' I think the ONSMineProjectile is a very good example for\
+      \ replication.\n\n'''Foxpaw:''' I'm not sure about tutorials, but those are\
+      \ (fairly) easily explained. Simulated functions run on actors with ROLE_SimulatedProxy\
+      \ or better. However, only if they are called from another simulated function.\
+      \ Entry points like Tick can be declared as simulated when you override them\
+      \ to facilitate this. A short example:\n\n<uscript>\nsimulated function Tick(\
+      \ float Delta )\n{\n  Super.Tick( Delta );\n\n  DoStuffOnServerOnly();\n  DoStuffOnBoth();\n\
+      }\n\n// Called from a simulated function, but not simulated itself,\n// the\
+      \ engine skips over this function on clients. (or rather,\n// the non-authority\
+      \ version, which is usually the client)\nfunction DoStuffOnServerOnly()\n{\n\
+      \  DoStuffOnClient();\n}\n\n// A simulated function getting called from another\
+      \ simulated\n// function. This gets called on both machines.\nsimulated function\
+      \ DoStuffOnBoth()\n{\n}\n\n// Oops! This is a simulated function, but gets called\
+      \ from a\n// non-simulated function, so although it COULD run on a client\n\
+      // (because it's simulated) the code that calls it doesn't run\n// on the client\
+      \ and so this won't ever get called.\nsimulated function DoStuffOnClient()\n\
+      {\n}\n</uscript>\n\nStatic functions on the other hand, have no relation to\
+      \ replication and are functions that exist outside the context of an object.\
+      \ Static functions can't get replicated, obviously, because they aren't associated\
+      \ with any particular instance of an object. They can access only default variables\
+      \ and stuff. See [[Legacy:Static Function|Static Function]] and [[Legacy:Simulated\
+      \ Function|Simulated Function]].\n\nAlso, feel free to refactor this somewhere\
+      \ or expand it into a full tutorial.. it's more a demonstration at the moment.\n\
+      \n'''Tarquin:''' Thanks... but see, you've alreayd lost RepliN00bs with this:\
+      \ '' run on actors with ROLE_SimulatedProxy or better''.... how does Replication\
+      \ actually WORK? Should we imagine multiple facets of the same actor on different\
+      \ machines, or many actors on different machines that somehow correspond to\
+      \ each other?\n\n'''Foxpaw:''' Well, they're different actors, but they have\
+      \ a unique identifier so they \"correspond\" to each other. An actors Role variable\
+      \ determines it's replication behaviour. ROLE_Authority is usually the one on\
+      \ the server, and it runs all functions, simulated or not. ROLE_SimulatedProxy\
+      \ is usually on the client, and runs only simulated functions. ROLE_DumbProxy\
+      \ runs no functions, but still replicates variables. ROLE_None replicates nothing.\n\
+      \n'''Tarquin:''' I simply don't understand how to visualize what is going on\
+      \ with replication. I'm used to thinking of an actor as a script that is running.\
+      \ How do I think of a replicated actor? Two scripts in tandem? How? Take something\
+      \ like this:\n\n<uscript>\nreplication\n{\n  reliable if (Role == ROLE_Authority)\n\
+      \    Foo, Bar;\n}\n</uscript>\n\nWhat is this an instruction to? When is this\
+      \ parsed? What does it cause to happen?\n\n'''Mychaeel:''' The engine executes\
+      \ the condition in this statement at its own discretion.  It's not clearly specified\
+      \ ''when'' that happens; the documentation only says ''that'' it happens, and\
+      \ that it happens frequently.\n\nEach machine in a network game for which an\
+      \ actor is \"relevant\" has a copy of that actor.  For simplicity, let's assume\
+      \ a single client here &ndash; the server spawns the actor, and the server engine\
+      \ tells the client that there's a new actor around.  So we have two copies of\
+      \ the same actor:  One on the server, and one on the client.  The engines of\
+      \ both machines know that those two copies correspond to each other, but by\
+      \ itself that doesn't mean a lot &ndash; specifically, it doesn't mean that\
+      \ the client copy is automatically kept in sync with the server copy.\n\nApart\
+      \ from that, nothing special happens.  The server copy runs its events and other\
+      \ code, and the client copy just sits there, doing nothing.  There are, however,\
+      \ several ways to ''make'' the client copy do something:\n\n; Replicate variable\
+      \ values.: \n\n\nWhen a variable value changes and has a replication statement\
+      \ such as <code>Foo</code> and <code>Bar</code> above, the engine checks &ndash;\
+      \ at its own discretion, and subject to certain networking-related [[Legacy:Actor|Actor]]\
+      \ variables &ndash; its replication condition (here: <code>Role == ROLE_Authority</code>).\
+      \  If a variable changes often, those checks happen frequently.\n\nIf the replication\
+      \ condition is fulfilled, the engine sends an update of that variable's value\
+      \ over the network to the other side (in our case: from the server to the client).\
+      \  If the variable has a special meaning such as <code>Location</code> or <code>Rotation</code>,\
+      \ the client copy will change its appearance as soon as it receives the update.\n\
+      \n\n\n; Mark event functions as \"simulated.\" : \n\n\nAs mentioned above, the\
+      \ client copy normally won't execute any of its code on clients.\n\nIf you mark\
+      \ an event function as \"simulated,\" however, that tells the engine to call\
+      \ that event function client-side too (whenever the event happens, client-side).\
+      \  Then the UnrealScript code which is executed client-side can affect the client\
+      \ copy of the actor directly (or call other non-event functions client-side\
+      \ if they have been marked as \"simulated\" too).\n\n\n\n; Replicate function\
+      \ calls. : \n\n\nIt's also possible to call a function on the server and have\
+      \ it execute on the one client who \"owns\" that actor (i.e. the client whose\
+      \ player is &ndash; directly or indirectly &ndash; the <code>Owner</code> of\
+      \ that actor).\n\nThat happens asynchronously, meaning that \"calling the function\
+      \ on the server\" just makes the engine send a notification over the network\
+      \ to the affected client and return immediately without any feedback of whether\
+      \ and when the function was actually executed client-side; because of that,\
+      \ it's not possible to get return values from replicated functions.\n\n\n\n\
+      So, the server and client copies of the same actor are basically independent\
+      \ entities &ndash; but you can use the techniques explained above to keep them\
+      \ in sync on both machines.\n\n'''Tarquin:''' This is starting to make sense!\
+      \ When you say \"does nothing\" &ndash; even if affected by other actors? If\
+      \ I have a player and a trigger, when the player touches the trigger, nothing\
+      \ happens on the client actors, only on the server?\n\n2nd question: is there\
+      \ a way for the server actor to make something happen on the client actor?\n\
+      \n'''Mychaeel:''' \"Nothing\" means \"nothing.\"  A server-side trigger will\
+      \ only trigger server-side; plus, only code within a simulated function or simulated\
+      \ state ''can'' (or from the engine's point of view: ''may'') be executed client-side\
+      \ at all (but it's a common misconception that making a function \"simulated\"\
+      \ will magically execute it client-side &ndash; there's no such magic, unless\
+      \ that function happens to be an engine event ''and'' that event is caused client-side).\n\
+      \nVirtually all interaction between actors happens purely server-side, with\
+      \ the client copy being hardly ever any more than just a visual representation\
+      \ of the server copy.\n\nAnd actually most of what I wrote above is about how\
+      \ the server actor can make something happen on the client actor &ndash; starting\
+      \ from \"There are, however\"...\n\n'''Tarquin:''' Based on what I now know,\
+      \ I can identify two major newbie mistakes in understanding replication:\n#\
+      \ the \"reliable if\" statement doesn't state \"this variable is reliable\"\
+      , it's an ''instruction'' to try to replicate the variable... reliably. Not\
+      \ sure if that makes sense, but I found out I've been completely misreading\
+      \ the meaning of that.\n# clients do mostly nothing. Having read basic replication\
+      \ docs, I imagined that clients did their own thing, more or less running a\
+      \ duplicate of the game and occasionally echanging data to keep things tied\
+      \ together.\n\nI made a simple map with a [[Legacy:Trigger|Trigger]] to test\
+      \ something for Jailbreak, and I ran it as a netgame. The Trigger actor, that's\
+      \ I'd set bHidden=False on, wasn't visible when I played. Am I right in thinking\
+      \ that the Trigger ''wasn't even there'' on the client?\n\nGiven this, could\
+      \ someone with knowlegde of replication conceive of a simple situation where\
+      \ an actor such as a Trigger or Keypoint class might require some replication,\
+      \ and I'll see if I can write a tutorial on it?\n\n'''Mychaeel:''' Yes, you're\
+      \ right &ndash; the Trigger wasn't even there on the clients.  (You have to\
+      \ set bNoDelete=True to prevent the engine from discarding it on clients after\
+      \ it was loaded with the map file; or bAlwaysRelevant=True to have the server\
+      \ replicate it to all clients again after the map was loaded.  But since a Trigger\
+      \ is only acting server-side anyway, neither of those options makes sense in\
+      \ this context.)\n\n'''Tarquin:''' Do we have a reference page of events that\
+      \ can be used as simulated? Are they the ones markes as [event] on [[Legacy:Actor/Methods|Actor/Methods]]?\n\
+      \n'''Mychaeel:''' The important difference between \"event function\" and \"\
+      normal function\" here is only that an event is automatically called by the\
+      \ engine.  Just think about it &ndash; any function that's called directly by\
+      \ engine code qualifies, starting from PreBeginPlay over Tick and Timer to Destroyed...\
+      \ and any other, self-defined function doesn't (like MyOwnFunction or CanBeJailed).\n\
+      \n'''Tarquin:''' How do you spawn an actor only on a client, or only on a particular\
+      \ client? Is this possible? I think the 3rd newbie mistake is supposing that\
+      \ the ways in which you can pass information from server to client are not as\
+      \ restricted as they are.\n\n'''Mychaeel:''' To spawn an actor only on a (particular)\
+      \ client... just do so.  :-)  You can't directly initiate that from a server\
+      \ (as in \"server, tell client XY to spawn this actor\"); but you can spawn\
+      \ it directly from client-side code on that particular client.\n\n'''Tarquin:'''\
+      \ For the first tutorial, I think I'll do a Volume that destroys incoming projectiles.\
+      \ It's fairly simple, but exposes some important concepts (I think... if I've\
+      \ got it right...). Work in progress: [[Legacy:ProjectileDestroyerVolume|ProjectileDestroyerVolume]].\
+      \ And I'll be cleaning up this page too ....\n\n'''Lilguy:''' Hey, I just added\
+      \ a bit, hope it's alright. since the \"myths\" section listed a bunch of facts,\
+      \ not myths, I changed it to \"some facts of replication.\" I also made a little\
+      \ list of examples we should make that would be helpful. Most of them could\
+      \ probably be copied and pasted from Epic's code, but we could make some simple\
+      \ examples of each one too.\n\n'''Tarquin:''' Hmm... well, I like the title\
+      \ so I've put it back, but you are quite right, I wrote them as facts, which\
+      \ could be very confusing. I have rephrased the first two &ndash; is that better?\
+      \  I'm working on the first tutorial in the series. I think the 2nd one should\
+      \ involve the replication block with a replicated variable, somehow &ndash;\
+      \ but I don't know what sort of example would be good. After that, I have no\
+      \ idea... :)\n\n'''Lilguy:'''Heh, sorry 'bout that, I had actually kinda liked\
+      \ the title too. That'll do fine...<br />Perhaps for the second example, there\
+      \ could be some sort of street light or something, with 2 alternate textures\
+      \ that randomly switch back and forth at random intervals. They would only do\
+      \ this if the light was in \"damaged mode\" which would be signaled by bDamaged,\
+      \ a reliably replicated variable. I guess maybe I should stop talking and start\
+      \ coding, lol.\n\n'''Foxpaw:''' I have to disagree with the assertion that clients\
+      \ do mostly nothing. Clients handle physics just like the server. In UT2003,\
+      \ some actors are handled almost entirely client-side. (general projectiles,\
+      \ for instance, are handled almost entirely client side, with the exception\
+      \ being the actual application of damage.) An efficient replication system should\
+      \ have nearly everything handled client side, with only critical values replicated.\n\
+      \n'''Lilguy:''' Yeah, I kind of agree there. SimulatedProxy actors are given\
+      \ an initial physical state, then they're only updated periodically to make\
+      \ sure everything matches up. And there are a lot of clientside only actors,\
+      \ such as almost all emitter effects, the hud, interactions, etc. Perhaps it\
+      \ could be ammended to say that clients are in charge of almost nothing, since\
+      \ the server is usually the ultimate authority on the state of actors that exist\
+      \ on the client and actors. It's really best to always think about this when\
+      \ you're coding, and keep in mind what code should be running on the server,\
+      \ and what should be running on the client, and to program it likewise.\n\n\
+      '''Tarquin:''' I think the point is that clients will do nothing unless told\
+      \ to. Using \"SimulatedProxy\" is telling it. A \"client-side effect\" has to\
+      \ be MADE to be client-side.\n\n'''Andreas:''' Catching up with replication\
+      \ - I would like to add some more basic ideas to replication? \n\n'''Tarquin:'''\
+      \ inserted at the top :) BTW, please review [[Legacy:Wiki Markup|Wiki markup]]\
+      \ :) \n\n'''Andreas:''' thanks for layouting - reading it the example 1 was\
+      \ not that clear - tried to clarify it a bit. Maybe the link\n\nhttp://unreal.epicgames.com/Network.htm\
+      \ could be included - it helped me quite a bit.\n\n'''Legal:''' Threadmode anyone?\
+      \ This page needs some cleaning up, perhaps a Refractor Me tag would be in order?\
+      \ Also, to add to the discussion, coders need to make sure as much as possible\
+      \ is done client side and with as little code as possible. Some mods which could\
+      \ have impressed requires so much bandwidth that few people get ping over 200.\n\
+      \n'''Andreas:''' Im not a wikiexpert (due to limited sparetime I have) - but\
+      \ if it improves - sure - I agree. I disagree on doing everything clientside\
+      \ - the goal of writing a program using replication is to minimise networktraffic.\
+      \ So the server would be my first place (assuming it has enough cpu power) since\
+      \ 1. it has a complete view of the game-status and 2. epic did already implement\
+      \ \"clever\" methods to reduce the network load (by not updating clients with\
+      \ data they dont need anyways, since they cannot see the actor and so on) I\
+      \ would not want to reinvent. As a coder I would ask me what tasks have to be\
+      \ done (see weapon overheat example), and where I can split server/client in\
+      \ order to minimize communciation. There is no way around updating the client\
+      \ as far it considers visual informations - the client '''is''' the visual frontend\
+      \ - but upon everything else the coder is free to decide where to perform the\
+      \ tasks. \n\n'''Andreas:''' To add, replication (especially simulated functions\
+      \ running on the client) might be usefull when someone wants to give clients\
+      \ different views or play different sounds locally.\n\n'''FatalOverdose:'''\
+      \ In the first few paragraphs you say 'The truth is: Clients do mostly nothing.'\
+      \ and then a little further down you have 'However, client versions generally\
+      \ don't do much (First Myth).'\n\n. its a bit confusing \n\n'''Solid Snake:'''\
+      \ This was asked by Mychaeel a long time ago, so I've converted my post into\
+      \ a wiki page, found here [[Legacy:Solid_Snake/A_Study_Of_Replication|A Study\
+      \ Of Replication]]\n\n'''Tarquin:''' I think a simple tutorial would be fixing\
+      \ the example on [[Legacy:Using LocalMessages|Using LocalMessages]] to broadcast\
+      \ the message so clients can see it. Can anyone help me by suggesting how it\
+      \ might be done?\n\n'''Ransico:''' Something that has bothered me for a long\
+      \ time, is there is no info on how to get something to run properly on -only-\
+      \ the client... for example, I was stuck on how to get a custom LOD actor working.\
+      \ The issue I had, was that the tick and timer events would never get called\
+      \ on the client.\n\nThe fix turned out to be that the client was deleting the\
+      \ object soon after its creation on the client, no matter what combo of defaultproperty\
+      \ switches I used.\n\nThere may be a better way to do it, but I set bNoDelete=true\
+      \ and it solved my problem. The entire source can be found here - someone else\
+      \ may find it useful, it also tells you how to make something run on the client:\
+      \ [[Legacy:Ransico/LODMesh|Ransico/LODMesh]]\n\n'''Vitaloverdose:''' The page\
+      \ is called 'introduction to replication' so it was the first document i read\
+      \ on the subject but it begins with \"If you've read a few documents on replication\"\
+      . Maybe the 'myths of replication' bit might be better off further into the\
+      \ page or as part of a summery as its not introducing the subject so much as\
+      \ reviewing it.Im sure the page is very helpfull for the reader with prior knowledge\
+      \ of the subject but could be very confusing/unhelpful to anyone looking into\
+      \ the issue for the first time as it is referrencing aspects of replication\
+      \ that havent been explained at this point. \n\n'''Kiff:''' I attempted making\
+      \ a tutorial for function calls using PostNetReceive. It might be a little cluttered,\
+      \ so feel free to make suggestions and/or corrections. [[Legacy:Kiff|Kiff]]\n\
+      \n----\n\n[[:Category:Legacy Tutorial]]\n\n[[:Category:Legacy To Do]] &ndash;\
+      \ Work to organize according to [[Legacy:Replication/Discussing|Replication/Discussing]].\n\
+      [[Category:Legacy Tutorial|{{PAGENAME}}]]\n[[Category:Legacy To Do|{{PAGENAME}}]]"
+  properties: []
+  revId: 46288
+name: "Legacy:Introduction To Replication"
+revision:
+  revid: 46288
+  parentid: 35376
+  user: "SeriousBarbie"
+  timestamp: 1454292154.000000000
+  comment: "+Wiki syntax"
+timestamp: 1668764195.866310000

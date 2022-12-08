@@ -1,0 +1,319 @@
+---
+parse:
+  title: "Legacy:Replicated Function"
+  text:
+    text: "<p>A <b>replicated function</b> is one that is called on one machine, but\
+      \ executed on a different one. It's a function call sent over network (from\
+      \ server to a client, for example, or from a client back to the server; it is\
+      \ not possible however to replicate a function from one client to another client).</p>\n\
+      <p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n\
+      </div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#Executing_Replicated_Functions\"\
+      ><span class=\"tocnumber\">1</span> <span class=\"toctext\">Executing Replicated\
+      \ Functions</span></a></li>\n<li class=\"toclevel-1 tocsection-2\"><a href=\"\
+      #Replicating_Function_Calls\"><span class=\"tocnumber\">2</span> <span class=\"\
+      toctext\">Replicating Function Calls</span></a></li>\n<li class=\"toclevel-1\
+      \ tocsection-3\"><a href=\"#Reliable_vs._Unreliable_Replication\"><span class=\"\
+      tocnumber\">3</span> <span class=\"toctext\">Reliable vs. Unreliable Replication</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-4\"><a href=\"#What_Gets_Replicated.3F\"><span\
+      \ class=\"tocnumber\">4</span> <span class=\"toctext\">What Gets Replicated?</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-5\"><a href=\"#Replication_Trapdoors\"><span\
+      \ class=\"tocnumber\">5</span> <span class=\"toctext\">Replication Trapdoors</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-6\"><a href=\"#Related_Topics\"><span class=\"\
+      tocnumber\">6</span> <span class=\"toctext\">Related Topics</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-7\"><a href=\"#Discussion\"><span class=\"\
+      tocnumber\">7</span> <span class=\"toctext\">Discussion</span></a></li>\n</ul>\n\
+      </div>\n<p></p>\n<h2><span class=\"mw-headline\" id=\"Executing_Replicated_Functions\"\
+      >Executing Replicated Functions</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Replicated_Function?section=1\"\
+      \ title=\"Edit section: Executing Replicated Functions\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<p>There's no difference between\
+      \ calling replicated and other functions. This usually means if you want to\
+      \ run (not: call) a replicated function on a client it has to be simulated and\
+      \ the actor's <a href=\"/Legacy:RemoteRole\" title=\"Legacy:RemoteRole\" class=\"\
+      mw-redirect\">RemoteRole</a> must be at least ROLE_SimulatedProxy. See <a href=\"\
+      /Legacy:Simulated_Function\" title=\"Legacy:Simulated Function\">simulated function</a>\
+      \ for more details on this.</p>\n<p>If you replicate a non-simulated function\
+      \ to a client it won't be executed at all. Functions replicated to the server\
+      \ don't need to be simulated since the <i>simulated</i> keyword only affects\
+      \ where a function may be <i>executed</i>, not where it can be called.</p>\n\
+      <h2><span class=\"mw-headline\" id=\"Replicating_Function_Calls\">Replicating\
+      \ Function Calls</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Replicated_Function?section=2\" title=\"Edit\
+      \ section: Replicating Function Calls\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<dl>\n<dt>Function calls can only be replicated to or\
+      \ from the client owning the actor&#160;</dt>\n<dd>If the client doesn't own\
+      \ the actor your log will output <b>Received Unwanted Function</b></dd>\n</dl>\n\
+      <p>This means the <i>Owner</i> of the actor containing the replicated function\
+      \ must be a <a href=\"/Legacy:PlayerPawn\" title=\"Legacy:PlayerPawn\">PlayerPawn</a>\
+      \ in UT or a <a href=\"/Legacy:PlayerController\" title=\"Legacy:PlayerController\"\
+      >PlayerController</a> or <a href=\"/Legacy:Pawn\" title=\"Legacy:Pawn\">Pawn</a>\
+      \ owned by a PlayerController in UT2003.</p>\n<p>To actually replicate a function\
+      \ call from the server to a client you have to use a replication statement like\
+      \ the following:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">replication</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw1\"\
+      >reliable</span> <span class=\"kw2\">if</span> <span class=\"br0\">(</span>\
+      \ <span class=\"kw7\">Role</span> <span class=\"sy0\">==</span> <span class=\"\
+      kw7\">ROLE_Authority</span> <span class=\"br0\">)</span>\n    FunctionName;\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>This will replicate function\
+      \ calls for <i>FunctionName</i> to the client this actor belongs to. If the\
+      \ actor is either owned by the server's player or <i>Owner</i> is <i>None</i>\
+      \ the function will be executed on the server like a regular function.</p>\n\
+      <p>To replicate a function call from a client to the server you have to use\
+      \ a replication statement like the following:</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw1\">replication</span>\n<span class=\"br0\"\
+      >{</span>\n  <span class=\"kw1\">reliable</span> <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span> <span class=\"kw7\">Role</span> <span class=\"\
+      sy0\">&lt;</span> <span class=\"kw7\">ROLE_Authority</span> <span class=\"br0\"\
+      >)</span>\n    FunctionName;\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <p>This replicated function calls for <i>FunctionName</i> to the server if the\
+      \ actor is owned by this client's player.</p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Reliable_vs._Unreliable_Replication\">Reliable vs. Unreliable Replication</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Replicated_Function?section=3\" title=\"Edit section:\
+      \ Reliable vs. Unreliable Replication\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>Function calls will always reach the other side if\
+      \ the connection is free of errors. Unreliably replicated function calls can\
+      \ be lost due to packetloss, though.</p>\n<h2><span class=\"mw-headline\" id=\"\
+      What_Gets_Replicated.3F\">What Gets Replicated?</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Replicated_Function?section=4\"\
+      \ title=\"Edit section: What Gets Replicated?\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>When a function call is replicated all the parameters\
+      \ are replicated as well. The usual pitfalls apply, i.e. replicated actor references\
+      \ are only valid if the actor actually exists on the client, basic <a href=\"\
+      /Legacy:Variable_Type\" title=\"Legacy:Variable Type\">variable types</a>, enums\
+      \ and structs will be replicated, while dynamic arrays won't. Of course you\
+      \ can only access other actors if they actually exist, i.e. if you are on the\
+      \ server or the actor is relevant to the client. If you pass a client-side actor\
+      \ as the parameter of a function replicated to the server, this parameter will\
+      \ be <i>None</i> on the server for obvious reasons.</p>\n<p>If a replicated\
+      \ function has a return value it will return a null value (False, 0, \"\", None,\
+      \ etc.) whenever the function is really replicated to a different computer.</p>\n\
+      <h2><span class=\"mw-headline\" id=\"Replication_Trapdoors\">Replication Trapdoors</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Replicated_Function?section=5\" title=\"Edit section:\
+      \ Replication Trapdoors\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>Things that may go wrong when replication functions:</p>\n<ul>\n<li>Client\
+      \ -&gt; Server replication will not work if the actor is owned by the server\
+      \ player (on a listen server) or by a client other than the one trying to replicate\
+      \ something or when the actor has no owner.</li>\n<li>Server -&gt; Client replication\
+      \ will be useless if the replicated function isn't a <a href=\"/Legacy:Simulated_Function\"\
+      \ title=\"Legacy:Simulated Function\">simulated function</a> (unless the actor's\
+      \ <a href=\"/Legacy:Role\" title=\"Legacy:Role\">Role</a> on that client is\
+      \ ROLE_AutonomousProxy, which it usually isn't).</li>\n<li>Replication doesn't\
+      \ seem to work for functions overridden in <a href=\"/Legacy:State\" title=\"\
+      Legacy:State\">states</a>.</li>\n</ul>\n<h2><span class=\"mw-headline\" id=\"\
+      Related_Topics\">Related Topics</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Replicated_Function?section=6\"\
+      \ title=\"Edit section: Related Topics\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<ul>\n<li><a href=\"/Legacy:Replication\" title=\"Legacy:Replication\"\
+      >Replication</a></li>\n<li><a href=\"/Legacy:Introduction_To_Replication\" title=\"\
+      Legacy:Introduction To Replication\">Introduction To Replication</a></li>\n\
+      <li><a href=\"/Legacy:Role\" title=\"Legacy:Role\">Role</a></li>\n<li><a href=\"\
+      /Legacy:Simulated_Function\" title=\"Legacy:Simulated Function\">Simulated Function</a></li>\n\
+      <li><a href=\"/Legacy:Another_Look_At_Replication\" title=\"Legacy:Another Look\
+      \ At Replication\">Another Look At Replication</a></li>\n</ul>\n<h2><span class=\"\
+      mw-headline\" id=\"Discussion\">Discussion</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Replicated_Function?section=7\"\
+      \ title=\"Edit section: Discussion\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p><b>Optimus P-Fat:</b> It is worth noting that replicated\
+      \ functions will never be executed on the client for a <a href=\"/Legacy:Mutator\"\
+      \ title=\"Legacy:Mutator\">Mutator</a> unless the mutator is added to the ServerPackages\
+      \ for the server!</p>\n<p><b>SuperApe:</b> Except in UT200x, there is a function\
+      \ for Mutators called AddPackageToMap() that will force mutator/mod packages\
+      \ to travel with the map file automatically, negating the need to modify the\
+      \ UT2004 config file's ServerPackages block. True, one of these must be done.</p>\n\
+      <hr />\n<p><a href=\"/Category:Legacy_To_Do\" title=\"Category:Legacy To Do\"\
+      >Category:Legacy To Do</a> – This needs merged into the grand topic of <a href=\"\
+      /Legacy:Replication\" title=\"Legacy:Replication\">Replication</a>. See <a href=\"\
+      /Legacy:Replication/Discussing\" title=\"Legacy:Replication/Discussing\">Replication/Discussing</a></p>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.064 seconds\nReal time usage:\
+      \ 0.066 seconds\nPreprocessor visited node count: 46/1000000\nPreprocessor generated\
+      \ node count: 80/1000000\nPost‐expand include size: 19/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:2623-0!*!0!!en!*!* and timestamp 20221118043144 and revision\
+      \ id 6256\n -->\n"
+  categories:
+  - sortkey: "Replicated Function"
+    name: "Legacy_To_Do"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:State"
+  - ns: 100
+    exists: true
+    name: "Legacy:Introduction To Replication"
+  - ns: 100
+    exists: true
+    name: "Legacy:Replication"
+  - ns: 100
+    exists: true
+    name: "Legacy:Replication/Discussing"
+  - ns: 100
+    exists: true
+    name: "Legacy:PlayerPawn"
+  - ns: 100
+    exists: true
+    name: "Legacy:Role"
+  - ns: 100
+    exists: true
+    name: "Legacy:RemoteRole"
+  - ns: 100
+    exists: true
+    name: "Legacy:Simulated Function"
+  - ns: 100
+    exists: true
+    name: "Legacy:Pawn"
+  - ns: 100
+    exists: true
+    name: "Legacy:Variable Type"
+  - ns: 100
+    exists: true
+    name: "Legacy:Another Look At Replication"
+  - ns: 100
+    exists: true
+    name: "Legacy:PlayerController"
+  - ns: 14
+    exists: true
+    name: "Category:Legacy To Do"
+  - ns: 100
+    exists: true
+    name: "Legacy:Mutator"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Executing Replicated Functions"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Replicated_Function"
+    byteoffset: 303
+    anchor: "Executing_Replicated_Functions"
+  - toclevel: 1
+    level: "2"
+    line: "Replicating Function Calls"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Replicated_Function"
+    byteoffset: 940
+    anchor: "Replicating_Function_Calls"
+  - toclevel: 1
+    level: "2"
+    line: "Reliable vs. Unreliable Replication"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:Replicated_Function"
+    byteoffset: 2171
+    anchor: "Reliable_vs._Unreliable_Replication"
+  - toclevel: 1
+    level: "2"
+    line: "What Gets Replicated?"
+    number: "4"
+    index: "4"
+    fromtitle: "Legacy:Replicated_Function"
+    byteoffset: 2374
+    anchor: "What_Gets_Replicated.3F"
+  - toclevel: 1
+    level: "2"
+    line: "Replication Trapdoors"
+    number: "5"
+    index: "5"
+    fromtitle: "Legacy:Replicated_Function"
+    byteoffset: 3172
+    anchor: "Replication_Trapdoors"
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "6"
+    index: "6"
+    fromtitle: "Legacy:Replicated_Function"
+    byteoffset: 3783
+    anchor: "Related_Topics"
+  - toclevel: 1
+    level: "2"
+    line: "Discussion"
+    number: "7"
+    index: "7"
+    fromtitle: "Legacy:Replicated_Function"
+    byteoffset: 4052
+    anchor: "Discussion"
+  displaytitle: "Legacy:Replicated Function"
+  iwlinks: []
+  wikitext:
+    text: "A '''replicated function''' is one that is called on one machine, but executed\
+      \ on a different one.  It's a function call sent over network (from server to\
+      \ a client, for example, or from a client back to the server; it is not possible\
+      \ however to replicate a function from one client to another client).\n\n==Executing\
+      \ Replicated Functions==\n\nThere's no difference between calling replicated\
+      \ and other functions. This usually means if you want to run (not: call) a replicated\
+      \ function on a client it has to be simulated and the actor's [[Legacy:RemoteRole|RemoteRole]]\
+      \ must be at least ROLE_SimulatedProxy. See [[Legacy:Simulated Function|simulated\
+      \ function]] for more details on this.\n\nIf you replicate a non-simulated function\
+      \ to a client it won't be executed at all. Functions replicated to the server\
+      \ don't need to be simulated since the ''simulated'' keyword only affects where\
+      \ a function may be ''executed'', not where it can be called.\n\n==Replicating\
+      \ Function Calls==\n;Function calls can only be replicated to or from the client\
+      \ owning the actor : If the client doesn't own the actor your log will output\
+      \ '''Received Unwanted Function'''\n\nThis means the ''Owner'' of the actor\
+      \ containing the replicated function must be a [[Legacy:PlayerPawn|PlayerPawn]]\
+      \ in UT or a [[Legacy:PlayerController|PlayerController]] or [[Legacy:Pawn|Pawn]]\
+      \ owned by a PlayerController in UT2003.\n\nTo actually replicate a function\
+      \ call from the server to a client you have to use a replication statement like\
+      \ the following:\n\n<uscript>\nreplication\n{\n  reliable if ( Role == ROLE_Authority\
+      \ )\n    FunctionName;\n}\n</uscript>\n\nThis will replicate function calls\
+      \ for ''FunctionName'' to the client this actor belongs to. If the actor is\
+      \ either owned by the server's player or ''Owner'' is ''None'' the function\
+      \ will be executed on the server like a regular function.\n\nTo replicate a\
+      \ function call from a client to the server you have to use a replication statement\
+      \ like the following:\n\n<uscript>\nreplication\n{\n  reliable if ( Role < ROLE_Authority\
+      \ )\n    FunctionName;\n}\n\n</uscript>\n\nThis replicated function calls for\
+      \ ''FunctionName'' to the server if the actor is owned by this client's player.\n\
+      \n==Reliable vs. Unreliable Replication==\n\nFunction calls will always reach\
+      \ the other side if the connection is free of errors. Unreliably replicated\
+      \ function calls can be lost due to packetloss, though.\n\n==What Gets Replicated?==\n\
+      \nWhen a function call is replicated all the parameters are replicated as well.\
+      \ The usual pitfalls apply, i.e. replicated actor references are only valid\
+      \ if the actor actually exists on the client, basic [[Legacy:Variable Type|variable\
+      \ type]]s, enums and structs will be replicated, while dynamic arrays won't.\
+      \ Of course you can only access other actors if they actually exist, i.e. if\
+      \ you are on the server or the actor is relevant to the client. If you pass\
+      \ a client-side actor as the parameter of a function replicated to the server,\
+      \ this parameter will be ''None'' on the server for obvious reasons.\n\nIf a\
+      \ replicated function has a return value it will return a null value (False,\
+      \ 0, \"\", None, etc.) whenever the function is really replicated to a different\
+      \ computer.\n\n==Replication Trapdoors==\n\nThings that may go wrong when replication\
+      \ functions:\n* Client -> Server replication will not work if the actor is owned\
+      \ by the server player (on a listen server) or by a client other than the one\
+      \ trying to replicate something or when the actor has no owner.\n* Server ->\
+      \ Client replication will be useless if the replicated function isn't a [[Legacy:Simulated\
+      \ Function|simulated function]] (unless the actor's [[Legacy:Role|Role]] on\
+      \ that client is ROLE_AutonomousProxy, which it usually isn't).\n* Replication\
+      \ doesn't seem to work for functions overridden in [[Legacy:State|state]]s.\n\
+      \n==Related Topics==\n* [[Legacy:Replication|Replication]]\n* [[Legacy:Introduction\
+      \ To Replication|Introduction To Replication]]\n* [[Legacy:Role|Role]]\n* [[Legacy:Simulated\
+      \ Function|Simulated Function]]\n* [[Legacy:Another Look At Replication|Another\
+      \ Look At Replication]]\n\n==Discussion==\n\n'''Optimus P-Fat:''' It is worth\
+      \ noting that replicated functions will never be executed on the client for\
+      \ a [[Legacy:Mutator|Mutator]] unless the mutator is added to the ServerPackages\
+      \ for the server!\n\n'''SuperApe:''' Except in UT200x, there is a function for\
+      \ Mutators called AddPackageToMap() that will force mutator/mod packages to\
+      \ travel with the map file automatically, negating the need to modify the UT2004\
+      \ config file's ServerPackages block.  True, one of these must be done.\n\n\
+      ----\n\n[[:Category:Legacy To Do]] &ndash; This needs merged into the grand\
+      \ topic of [[Legacy:Replication|Replication]]. See [[Legacy:Replication/Discussing|Replication/Discussing]]\n\
+      [[Category:Legacy To Do|{{PAGENAME}}]]"
+  properties: []
+  revId: 6256
+name: "Legacy:Replicated Function"
+revision:
+  revid: 6256
+  parentid: 6257
+  user: "Fyfe"
+  timestamp: 1164563893.000000000
+  comment: "To Do -- This needs merged into the grand topic of Replication."
+timestamp: 1668759832.534292000

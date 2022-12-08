@@ -1,0 +1,282 @@
+---
+parse:
+  title: "Legacy:CRC32"
+  text:
+    text: "<p><b>CRC32</b> (<a href=\"http://en.wikipedia.org/wiki/Cyclic_Redundancy_Check\"\
+      \ class=\"extiw\" title=\"wikipedia:Cyclic Redundancy Check\">Wikipedia:Cyclic\
+      \ Redundancy Check</a>) is an algorithm that digests data into a 32-bit checksum.\
+      \ Small changes of the digested data yield large changes of the produced checksum.\
+      \ It is (fundamentally) impossible to retrieve the original data from the calculated\
+      \ checksum.</p>\n<p>Checksums have a lot of uses. The implementation below is\
+      \ used in a <a href=\"/Legacy:Jailbreak\" title=\"Legacy:Jailbreak\">Jailbreak</a>\
+      \ class that transmits statistics data to a central stats server. The client\
+      \ knows the secret password necessary to authenticate itself with the server;\
+      \ but to keep that password from being sent over the Internet in clear text,\
+      \ the client calculates a checksum over the transmitted stats data <i>and</i>\
+      \ the password. The server, knowing the password as well, can then validate\
+      \ the data and the client's authenticity by calculating the same checksum itself\
+      \ and comparing it to the given one.</p>\n<p>(A more sophisticated algorithm\
+      \ would have the server send the client a challenge first that's also digested\
+      \ by the checksum algorithm. That way the server could be sure that the client\
+      \ really is aware of the password and not just copying a prior overheard request.)</p>\n\
+      <h2><span class=\"mw-headline\" id=\"Implementation\">Implementation</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:CRC32?section=1\" title=\"Edit section: Implementation\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>The\
+      \ following implementation in UnrealScript has been created by <a href=\"/Legacy:Mychaeel\"\
+      \ title=\"Legacy:Mychaeel\">Mychaeel</a> for the <a href=\"/Legacy:Jailbreak\"\
+      \ title=\"Legacy:Jailbreak\">Jailbreak</a> mod. Feel free to use and modify.</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">var</span> <span\
+      \ class=\"kw1\">private</span> <span class=\"kw5\">int</span> CrcTable<span\
+      \ class=\"br0\">[</span><span class=\"nu0\">256</span><span class=\"br0\">]</span>;\n\
+      \ \n \n<span class=\"co1\">// ============================================================================</span>\n\
+      <span class=\"co1\">// CrcInit</span>\n<span class=\"co1\">//</span>\n<span\
+      \ class=\"co1\">// Initializes CrcTable and prepares it for use with Crc.</span>\n\
+      <span class=\"co1\">// ============================================================================</span>\n\
+      \ \n<span class=\"kw1\">final</span> <span class=\"kw1\">function</span> CrcInit<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"br0\">{</span>\n\
+      \ \n  <span class=\"kw1\">const</span> CrcPolynomial <span class=\"sy0\">=</span>\
+      \ 0xedb88320;\n \n  <span class=\"kw1\">local</span> <span class=\"kw5\">int</span>\
+      \ CrcValue;\n  <span class=\"kw1\">local</span> <span class=\"kw5\">int</span>\
+      \ IndexBit;\n  <span class=\"kw1\">local</span> <span class=\"kw5\">int</span>\
+      \ IndexEntry;\n \n  <span class=\"kw2\">for</span> <span class=\"br0\">(</span>IndexEntry\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>; IndexEntry <span\
+      \ class=\"sy0\">&lt;</span> <span class=\"nu0\">256</span>; IndexEntry<span\
+      \ class=\"sy0\">++</span><span class=\"br0\">)</span> <span class=\"br0\">{</span>\n\
+      \    CrcValue <span class=\"sy0\">=</span> IndexEntry;\n \n    <span class=\"\
+      kw2\">for</span> <span class=\"br0\">(</span>IndexBit <span class=\"sy0\">=</span>\
+      \ <span class=\"nu0\">8</span>; IndexBit <span class=\"sy0\">&gt;</span> <span\
+      \ class=\"nu0\">0</span>; IndexBit<span class=\"sy0\">--</span><span class=\"\
+      br0\">)</span>\n      <span class=\"kw2\">if</span> <span class=\"br0\">(</span><span\
+      \ class=\"br0\">(</span>CrcValue <span class=\"sy0\">&amp;</span> <span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span> <span class=\"sy0\">!=</span> <span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span>\n        CrcValue <span\
+      \ class=\"sy0\">=</span> <span class=\"br0\">(</span>CrcValue <span class=\"\
+      sy0\">&gt;&gt;&gt;</span> <span class=\"nu0\">1</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">^</span> CrcPolynomial;\n      <span class=\"kw2\">else</span>\n\
+      \        CrcValue <span class=\"sy0\">=</span> CrcValue <span class=\"sy0\"\
+      >&gt;&gt;&gt;</span> <span class=\"nu0\">1</span>;\n \n    CrcTable<span class=\"\
+      br0\">[</span>IndexEntry<span class=\"br0\">]</span> <span class=\"sy0\">=</span>\
+      \ CrcValue;\n    <span class=\"br0\">}</span>\n  <span class=\"br0\">}</span>\n\
+      \ \n \n<span class=\"co1\">// ============================================================================</span>\n\
+      <span class=\"co1\">// Crc</span>\n<span class=\"co1\">//</span>\n<span class=\"\
+      co1\">// Calculates and returns a checksum of the given string. Call CrcInit\
+      \ before.</span>\n<span class=\"co1\">// ============================================================================</span>\n\
+      \ \n<span class=\"kw1\">final</span> <span class=\"kw1\">function</span> <span\
+      \ class=\"kw5\">int</span> Crc<span class=\"br0\">(</span><span class=\"kw1\"\
+      >coerce</span> <span class=\"kw5\">string</span> Text<span class=\"br0\">)</span>\
+      \ <span class=\"br0\">{</span>\n \n  <span class=\"kw1\">local</span> <span\
+      \ class=\"kw5\">int</span> CrcValue;\n  <span class=\"kw1\">local</span> <span\
+      \ class=\"kw5\">int</span> IndexChar;\n \n  CrcValue <span class=\"sy0\">=</span>\
+      \ 0xffffffff;\n \n  <span class=\"kw2\">for</span> <span class=\"br0\">(</span>IndexChar\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>; IndexChar <span\
+      \ class=\"sy0\">&lt;</span> <span class=\"kw3\">Len</span><span class=\"br0\"\
+      >(</span>Text<span class=\"br0\">)</span>; IndexChar<span class=\"sy0\">++</span><span\
+      \ class=\"br0\">)</span>\n    CrcValue <span class=\"sy0\">=</span> <span class=\"\
+      br0\">(</span>CrcValue <span class=\"sy0\">&gt;&gt;&gt;</span> <span class=\"\
+      nu0\">8</span><span class=\"br0\">)</span> <span class=\"sy0\">^</span> CrcTable<span\
+      \ class=\"br0\">[</span><span class=\"kw3\">Asc</span><span class=\"br0\">(</span><span\
+      \ class=\"kw3\">Mid</span><span class=\"br0\">(</span>Text, IndexChar, <span\
+      \ class=\"nu0\">1</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">^</span> <span class=\"br0\">(</span>CrcValue <span class=\"\
+      sy0\">&amp;</span> 0xff<span class=\"br0\">)</span><span class=\"br0\">]</span>;\n\
+      \ \n  <span class=\"kw2\">return</span> CrcValue;\n  <span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<h2><span class=\"mw-headline\" id=\"Discussion\">Discussion</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:CRC32?section=2\" title=\"Edit section: Discussion\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h2>\n<p><b>Wormbo:</b> Looks\
+      \ like Asc()'s unicode-support breaks the Crc() function when passing in strings\
+      \ that contain certain characters in UT2004: E.g. when passing in an \"ä\" as\
+      \ the parameter of a commandlet from a DOS prompt Asc() returns 65508 and 65508\
+      \ ^ (something &amp; 0xff) will always be greater than 255, which is the CrcTable's\
+      \ maximum possible index.</p>\n<p>A potential fix could be:</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">final</span> <span class=\"kw1\">function</span>\
+      \ <span class=\"kw5\">int</span> Crc<span class=\"br0\">(</span><span class=\"\
+      kw1\">coerce</span> <span class=\"kw5\">string</span> Text<span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">int</span> CrcValue;\n  <span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">int</span> IndexChar;\n  <span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">int</span> StrLen;\n \n  CrcValue <span class=\"sy0\"\
+      >=</span> 0xffffffff;\n  StrLen <span class=\"sy0\">=</span> <span class=\"\
+      kw3\">Len</span><span class=\"br0\">(</span>Text<span class=\"br0\">)</span>;\n\
+      \  <span class=\"kw2\">for</span> <span class=\"br0\">(</span>IndexChar <span\
+      \ class=\"sy0\">=</span> <span class=\"nu0\">0</span>; IndexChar <span class=\"\
+      sy0\">&lt;</span> StrLen; IndexChar<span class=\"sy0\">++</span><span class=\"\
+      br0\">)</span>\n    CrcValue <span class=\"sy0\">=</span> <span class=\"br0\"\
+      >(</span>CrcValue <span class=\"sy0\">&gt;&gt;&gt;</span> <span class=\"nu0\"\
+      >8</span><span class=\"br0\">)</span> <span class=\"sy0\">^</span> CrcTable<span\
+      \ class=\"br0\">[</span><span class=\"br0\">(</span><span class=\"kw3\">Asc</span><span\
+      \ class=\"br0\">(</span><span class=\"kw3\">Mid</span><span class=\"br0\">(</span>Text,\
+      \ IndexChar, <span class=\"nu0\">1</span><span class=\"br0\">)</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">^</span> CrcValue<span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">&amp;</span> 0xff<span class=\"br0\">]</span>;\n \n  <span\
+      \ class=\"kw2\">return</span> CrcValue;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>This also improves performance for large strings by by calling Len()\
+      \ only once.</p>\n<p><b>Jimboh:</b> Hmm, what if I want to find the crc of a\
+      \ stream of data?</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">final</span> <span class=\"kw1\">function</span> <span class=\"kw5\">int</span>\
+      \ Crc<span class=\"br0\">(</span><span class=\"kw1\">coerce</span> <span class=\"\
+      kw5\">string</span> Text, <span class=\"kw5\">int</span> oldCrc, <span class=\"\
+      kw5\">bool</span> useOldCrc<span class=\"br0\">)</span>\n<span class=\"br0\"\
+      >{</span>\n    <span class=\"kw1\">local</span> <span class=\"kw5\">int</span>\
+      \ CrcValue;\n    <span class=\"kw1\">local</span> <span class=\"kw5\">int</span>\
+      \ IndexChar;\n    <span class=\"kw1\">local</span> <span class=\"kw5\">int</span>\
+      \ StrLen;\n \n    CrcValue <span class=\"sy0\">=</span> 0xffffffff;\n    <span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span>useOldCrc<span class=\"\
+      br0\">)</span>\n        CrcValue <span class=\"sy0\">=</span> oldCrc;\n \n \
+      \   StrLen <span class=\"sy0\">=</span> <span class=\"kw3\">Len</span><span\
+      \ class=\"br0\">(</span>Text<span class=\"br0\">)</span>;\n    <span class=\"\
+      kw2\">for</span> <span class=\"br0\">(</span>IndexChar <span class=\"sy0\">=</span>\
+      \ <span class=\"nu0\">0</span>; IndexChar <span class=\"sy0\">&lt;</span> StrLen;\
+      \ IndexChar<span class=\"sy0\">++</span><span class=\"br0\">)</span>\n     \
+      \   CrcValue <span class=\"sy0\">=</span> <span class=\"br0\">(</span>CrcValue\
+      \ <span class=\"sy0\">&gt;&gt;&gt;</span> <span class=\"nu0\">8</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">^</span> CrcTable<span class=\"\
+      br0\">[</span><span class=\"br0\">(</span><span class=\"kw3\">Asc</span><span\
+      \ class=\"br0\">(</span><span class=\"kw3\">Mid</span><span class=\"br0\">(</span>Text,\
+      \ IndexChar, <span class=\"nu0\">1</span><span class=\"br0\">)</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">^</span> CrcValue<span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">&amp;</span> 0xff<span class=\"br0\">]</span>;\n \n  \
+      \  <span class=\"kw2\">return</span> CrcValue;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>Also, is there a reason why this implementation uses a string instead\
+      \ of a byte array? Are byte arrays slower to read or something?</p>\n<p><b>Wormbo:</b>\
+      \ For small amounts of data it's not a problem. For larger data, however, strings\
+      \ are much slower than byte arrays. If you already have your data in byte array\
+      \ form, by all means calculate the CRC directly from it. Whether you convert\
+      \ a string to byte array first or use the string version of the CRC function\
+      \ directly doesn't make a difference, though.</p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Related_Links\">Related Links</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:CRC32?section=3\"\
+      \ title=\"Edit section: Related Links\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<ul>\n<li><a rel=\"nofollow\" class=\"external text\"\
+      \ href=\"http://www.geocities.com/SiliconValley/Pines/8659/crc.htm\">A Painless\
+      \ Guide to CRC Error Detection Algorithms</a></li>\n<li><a rel=\"nofollow\"\
+      \ class=\"external text\" href=\"http://www.rad.com/networks/1994/err_con/crc.htm\"\
+      >Cyclic Redundancy Check (CRC)</a></li>\n</ul>\n\n<!-- \nNewPP limit report\n\
+      CPU time usage: 0.091 seconds\nReal time usage: 0.114 seconds\nPreprocessor\
+      \ visited node count: 39/1000000\nPreprocessor generated node count: 84/1000000\n\
+      Post‐expand include size: 5/2097152 bytes\nTemplate argument size: 0/2097152\
+      \ bytes\nHighest expansion depth: 2/40\nExpensive parser function count: 0/100\n\
+      -->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n100.00%\
+      \    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:716-0!*!0!!*!*!*\
+      \ and timestamp 20221117133130 and revision id 2072\n -->\n"
+  categories:
+  - sortkey: "CRC32"
+    name: "Legacy_Algorithm"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Mychaeel"
+  - ns: 100
+    exists: true
+    name: "Legacy:Jailbreak"
+  templates: []
+  images: []
+  externallinks:
+  - "http://www.geocities.com/SiliconValley/Pines/8659/crc.htm"
+  - "http://www.rad.com/networks/1994/err_con/crc.htm"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Implementation"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:CRC32"
+    byteoffset: 1146
+    anchor: "Implementation"
+  - toclevel: 1
+    level: "2"
+    line: "Discussion"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:CRC32"
+    byteoffset: 2626
+    anchor: "Discussion"
+  - toclevel: 1
+    level: "2"
+    line: "Related Links"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:CRC32"
+    byteoffset: 4473
+    anchor: "Related_Links"
+  displaytitle: "Legacy:CRC32"
+  iwlinks:
+  - prefix: "wikipedia"
+    url: "http://en.wikipedia.org/wiki/Cyclic_Redundancy_Check"
+    name: "wikipedia:Cyclic Redundancy Check"
+  wikitext:
+    text: "'''CRC32''' ([[Wikipedia:Cyclic Redundancy Check]]) is an algorithm that\
+      \ digests data into a 32-bit checksum.  Small changes of the digested data yield\
+      \ large changes of the produced checksum.  It is (fundamentally) impossible\
+      \ to retrieve the original data from the calculated checksum.\n\nChecksums have\
+      \ a lot of uses.  The implementation below is used in a [[Legacy:Jailbreak|Jailbreak]]\
+      \ class that transmits statistics data to a central stats server.  The client\
+      \ knows the secret password necessary to authenticate itself with the server;\
+      \ but to keep that password from being sent over the Internet in clear text,\
+      \ the client calculates a checksum over the transmitted stats data ''and'' the\
+      \ password.  The server, knowing the password as well, can then validate the\
+      \ data and the client's authenticity by calculating the same checksum itself\
+      \ and comparing it to the given one.\n\n(A more sophisticated algorithm would\
+      \ have the server send the client a challenge first that's also digested by\
+      \ the checksum algorithm.  That way the server could be sure that the client\
+      \ really is aware of the password and not just copying a prior overheard request.)\n\
+      \n==Implementation ==\n\nThe following implementation in UnrealScript has been\
+      \ created by [[Legacy:Mychaeel|Mychaeel]] for the [[Legacy:Jailbreak|Jailbreak]]\
+      \ mod.  Feel free to use and modify.\n\n<uscript>\nvar private int CrcTable[256];\n\
+      \n\n// ============================================================================\n\
+      // CrcInit\n//\n// Initializes CrcTable and prepares it for use with Crc.\n\
+      // ============================================================================\n\
+      \nfinal function CrcInit() {\n\n  const CrcPolynomial = 0xedb88320;\n\n  local\
+      \ int CrcValue;\n  local int IndexBit;\n  local int IndexEntry;\n  \n  for (IndexEntry\
+      \ = 0; IndexEntry < 256; IndexEntry++) {\n    CrcValue = IndexEntry;\n\n   \
+      \ for (IndexBit = 8; IndexBit > 0; IndexBit--)\n      if ((CrcValue & 1) !=\
+      \ 0)\n        CrcValue = (CrcValue >>> 1) ^ CrcPolynomial;\n      else\n   \
+      \     CrcValue = CrcValue >>> 1;\n    \n    CrcTable[IndexEntry] = CrcValue;\n\
+      \    }\n  }\n\n\n// ============================================================================\n\
+      // Crc\n//\n// Calculates and returns a checksum of the given string. Call CrcInit\
+      \ before.\n// ============================================================================\n\
+      \nfinal function int Crc(coerce string Text) {\n\n  local int CrcValue;\n  local\
+      \ int IndexChar;\n  \n  CrcValue = 0xffffffff;\n  \n  for (IndexChar = 0; IndexChar\
+      \ < Len(Text); IndexChar++)\n    CrcValue = (CrcValue >>> 8) ^ CrcTable[Asc(Mid(Text,\
+      \ IndexChar, 1)) ^ (CrcValue & 0xff)];\n\n  return CrcValue;\n  }\n</uscript>\n\
+      \n==Discussion==\n\n'''Wormbo:''' Looks like Asc()'s unicode-support breaks\
+      \ the Crc() function when passing in strings that contain certain characters\
+      \ in UT2004: E.g. when passing in an \"ä\" as the parameter of a commandlet\
+      \ from a DOS prompt Asc() returns 65508 and 65508 ^ (something & 0xff) will\
+      \ always be greater than 255, which is the CrcTable's maximum possible index.\n\
+      \nA potential fix could be:\n\n<uscript>\nfinal function int Crc(coerce string\
+      \ Text)\n{\n  local int CrcValue;\n  local int IndexChar;\n  local int StrLen;\n\
+      \  \n  CrcValue = 0xffffffff;\n  StrLen = Len(Text);\n  for (IndexChar = 0;\
+      \ IndexChar < StrLen; IndexChar++)\n    CrcValue = (CrcValue >>> 8) ^ CrcTable[(Asc(Mid(Text,\
+      \ IndexChar, 1)) ^ CrcValue) & 0xff];\n\n  return CrcValue;\n}\n</uscript>\n\
+      \nThis also improves performance for large strings by by calling Len() only\
+      \ once.\n\n'''Jimboh:''' Hmm, what if I want to find the crc of a stream of\
+      \ data?\n\n<uscript>\nfinal function int Crc(coerce string Text, int oldCrc,\
+      \ bool useOldCrc)\n{\n    local int CrcValue;\n    local int IndexChar;\n  \
+      \  local int StrLen;\n\n    CrcValue = 0xffffffff;\n    if (useOldCrc)\n   \
+      \     CrcValue = oldCrc;\n\n    StrLen = Len(Text);\n    for (IndexChar = 0;\
+      \ IndexChar < StrLen; IndexChar++)\n        CrcValue = (CrcValue >>> 8) ^ CrcTable[(Asc(Mid(Text,\
+      \ IndexChar, 1)) ^ CrcValue) & 0xff];\n\n    return CrcValue;\n}\n</uscript>\n\
+      \nAlso, is there a reason why this implementation uses a string instead of a\
+      \ byte array? Are byte arrays slower to read or something?\n\n'''Wormbo:'''\
+      \ For small amounts of data it's not a problem. For larger data, however, strings\
+      \ are much slower than byte arrays. If you already have your data in byte array\
+      \ form, by all means calculate the CRC directly from it. Whether you convert\
+      \ a string to byte array first or use the string version of the CRC function\
+      \ directly doesn't make a difference, though.\n\n==Related Links==\n\n* [http://www.geocities.com/SiliconValley/Pines/8659/crc.htm\
+      \ A Painless Guide to CRC Error Detection Algorithms]\n* [http://www.rad.com/networks/1994/err_con/crc.htm\
+      \ Cyclic Redundancy Check (CRC)]\n\n[[Category:Legacy Algorithm|{{PAGENAME}}]]"
+  properties: []
+  revId: 2072
+name: "Legacy:CRC32"
+revision:
+  revid: 2072
+  parentid: 2073
+  user: "Wormbo"
+  timestamp: 1139127182.000000000
+  comment: "*"
+timestamp: 1668764806.209507000

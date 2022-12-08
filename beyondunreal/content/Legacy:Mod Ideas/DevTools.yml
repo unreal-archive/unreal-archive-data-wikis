@@ -1,0 +1,207 @@
+---
+parse:
+  title: "Legacy:Mod Ideas/DevTools"
+  text:
+    text: "<p>This is a growing collection of my own tools used to aid development\
+      \ of mods.</p>\n<p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\"\
+      >\n<h2>Contents</h2>\n</div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a\
+      \ href=\"#Current_Features\"><span class=\"tocnumber\">1</span> <span class=\"\
+      toctext\">Current Features</span></a></li>\n<li class=\"toclevel-1 tocsection-2\"\
+      ><a href=\"#Pieces_Of_Code\"><span class=\"tocnumber\">2</span> <span class=\"\
+      toctext\">Pieces Of Code</span></a>\n<ul>\n<li class=\"toclevel-2 tocsection-3\"\
+      ><a href=\"#Display_Debug_fix.21\"><span class=\"tocnumber\">2.1</span> <span\
+      \ class=\"toctext\">Display Debug fix!</span></a></li>\n</ul>\n</li>\n<li class=\"\
+      toclevel-1 tocsection-4\"><a href=\"#Suggestions\"><span class=\"tocnumber\"\
+      >3</span> <span class=\"toctext\">Suggestions</span></a></li>\n<li class=\"\
+      toclevel-1 tocsection-5\"><a href=\"#Discussion\"><span class=\"tocnumber\"\
+      >4</span> <span class=\"toctext\">Discussion</span></a></li>\n</ul>\n</div>\n\
+      <p></p>\n<h2><span class=\"mw-headline\" id=\"Current_Features\">Current Features</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Mod_Ideas/DevTools?section=1\" title=\"Edit section: Current\
+      \ Features\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <ul>\n<li>Shows the display debug for any pawn if the crosshair is on top of\
+      \ it</li>\n</ul>\n<h2><span class=\"mw-headline\" id=\"Pieces_Of_Code\">Pieces\
+      \ Of Code</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Mod_Ideas/DevTools?section=2\" title=\"Edit\
+      \ section: Pieces Of Code\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <h3><span class=\"mw-headline\" id=\"Display_Debug_fix.21\">Display Debug fix!</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Mod_Ideas/DevTools?section=3\" title=\"Edit section: Display\
+      \ Debug fix!\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>In my Interaction class:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">function</span> PostRender<span class=\"br0\">(</span> <span class=\"\
+      kw8\">canvas</span> <span class=\"kw8\">Canvas</span> <span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n\t<span class=\"kw1\">local</span> <span class=\"\
+      kw9\">Actor</span> p;\n\t<span class=\"kw1\">local</span> <span class=\"kw5\"\
+      >float</span> a, b;\n\t<span class=\"kw1\">local</span> <span class=\"kw5\"\
+      >vector</span> HitLocation, HitNormal;\n \n\ta <span class=\"sy0\">=</span>\
+      \ <span class=\"kw8\">Canvas</span>.<span class=\"me0\">CurYL</span>;\n\tb <span\
+      \ class=\"sy0\">=</span> <span class=\"nu0\">0</span>;\n \n\tmainTrace<span\
+      \ class=\"br0\">(</span>HitLocation, HitNormal, p, <span class=\"nu0\">2048</span><span\
+      \ class=\"br0\">)</span>;\n \n\t<span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span><span class=\"kw9\">Pawn</span><span class=\"br0\">(</span>p<span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">!=</span> <span class=\"kw5\">none</span><span\
+      \ class=\"br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t    p.<span class=\"\
+      me0\">DisplayDebug</span><span class=\"br0\">(</span><span class=\"kw8\">Canvas</span>,\
+      \ a, b<span class=\"br0\">)</span>;\n\t<span class=\"br0\">}</span>\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p>MainTrace():</p>\n<p>(obviously it is\
+      \ declared inside the Interaction class)</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"co1\">// ===========================================================================</span>\n\
+      <span class=\"co1\">// mainTrace</span>\n<span class=\"co1\">//</span>\n<span\
+      \ class=\"co1\">// This function traces for known actors that are RIGHT in front\
+      \ of the camera (under the crosshair)</span>\n<span class=\"co1\">// ===========================================================================</span>\n\
+      <span class=\"kw1\">function</span> mainTrace<span class=\"br0\">(</span><span\
+      \ class=\"kw1\">out</span> <span class=\"kw5\">vector</span> HitLocation, <span\
+      \ class=\"kw1\">out</span> <span class=\"kw5\">vector</span> HitNormal, <span\
+      \ class=\"kw1\">out</span> <span class=\"kw9\">Actor</span> aThing, <span class=\"\
+      kw5\">float</span> fDistance<span class=\"br0\">)</span>\n<span class=\"br0\"\
+      >{</span>\n\t<span class=\"kw1\">local</span> <span class=\"kw5\">vector</span>\
+      \ StartTrace, EndTrace;\n\t<span class=\"kw1\">local</span> <span class=\"kw9\"\
+      >PlayerController</span> PlayerOwner;\n \n\t<span class=\"co1\">// Log(self$\"\
+      : before assigning the playerOwner\"); //DEBUG</span>\n\tPlayerOwner <span class=\"\
+      sy0\">=</span> ViewportOwner.<span class=\"kw9\">Actor</span>;\n\t<span class=\"\
+      co1\">// Log(self$\": after assigning the playerOwner\"); //DEBUG</span>\n \n\
+      \t<span class=\"co1\">// important: find the REAL rotation of the camera - X\
+      \ and Y</span>\n \n\t<span class=\"co1\">// Log(self$\": before trace\"); //\
+      \ DEBUG</span>\n\t<span class=\"co1\">// Perform a trace to find any colliding\
+      \ actors</span>\n\tStartTrace <span class=\"sy0\">=</span> PlayerOwner.<span\
+      \ class=\"kw9\">Pawn</span>.<span class=\"kw7\">Location</span>;\t\t\t<span\
+      \ class=\"co1\">// the beginning of the trace</span>\n\tStartTrace.<span class=\"\
+      me0\">Z</span> <span class=\"sy0\">+=</span> PlayerOwner.<span class=\"kw9\"\
+      >Pawn</span>.<span class=\"me0\">BaseEyeHeight</span>;\t<span class=\"co1\"\
+      >// account for player's eye height</span>\n\t<span class=\"co1\">// I call\
+      \ this the oblivion vector</span>\n\tEndTrace <span class=\"sy0\">=</span> StartTrace\
+      \ <span class=\"sy0\">+</span> <span class=\"kw5\">vector</span><span class=\"\
+      br0\">(</span>PlayerOwner.<span class=\"kw9\">Pawn</span>.<span class=\"me0\"\
+      >GetViewRotation</span><span class=\"br0\">(</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">*</span> fDistance;\n\t<span class=\"\
+      co1\">// TODO: try fasttrace</span>\n\taThing <span class=\"sy0\">=</span> PlayerOwner.<span\
+      \ class=\"kw9\">Pawn</span>.<span class=\"kw4\">Trace</span><span class=\"br0\"\
+      >(</span>HitLocation, HitNormal, EndTrace, StartTrace, <span class=\"kw6\">true</span><span\
+      \ class=\"br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <h2><span class=\"mw-headline\" id=\"Suggestions\">Suggestions</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Mod_Ideas/DevTools?section=4\"\
+      \ title=\"Edit section: Suggestions\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>Please feel free to suggest any other features that\
+      \ could be included in this mod. Just try to stick to mutator functionality,\
+      \ so that it can be tested with other game types!</p>\n<hr />\n<p><a rel=\"\
+      nofollow\" class=\"external text\" href=\"http://www.yucc.yorku.ca/~plouj/DevTools.zip\"\
+      >DevTools</a></p>\n<p>by <a href=\"/Legacy:AlphaOne\" title=\"Legacy:AlphaOne\"\
+      >AlphaOne</a></p>\n<hr />\n<h2><span class=\"mw-headline\" id=\"Discussion\"\
+      >Discussion</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Mod_Ideas/DevTools?section=5\" title=\"Edit\
+      \ section: Discussion\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p><b>Foxpaw:</b> Is the mainTrace function a function you wrote yourself or\
+      \ is it included in the base UT2003 packages. I've never seen it called elsewhere.</p>\n\
+      <p><b>AlphaOne:</b> Oops! Forgot to mention that Yes it is one of my own.</p>\n\
+      <p><b>Daemonica:</b> I noticed the Todo line, I wouldn't try as FastTrace will\
+      \ only return a True/False if the trace hits World Geometry. On a side note\
+      \ I'm trying to implement a similar function within a PlayerController class\
+      \ and having little to no success, even though the code is the same&#160;;)</p>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.050 seconds\nReal time usage:\
+      \ 0.073 seconds\nPreprocessor visited node count: 37/1000000\nPreprocessor generated\
+      \ node count: 64/1000000\nPost‐expand include size: 0/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:1973-0!*!0!!en!*!* and timestamp 20221118031305 and revision\
+      \ id 4826\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:AlphaOne"
+  templates: []
+  images: []
+  externallinks:
+  - "http://www.yucc.yorku.ca/~plouj/DevTools.zip"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Current Features"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Mod_Ideas/DevTools"
+    byteoffset: 79
+    anchor: "Current_Features"
+  - toclevel: 1
+    level: "2"
+    line: "Pieces Of Code"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Mod_Ideas/DevTools"
+    byteoffset: 173
+    anchor: "Pieces_Of_Code"
+  - toclevel: 2
+    level: "3"
+    line: "Display Debug fix!"
+    number: "2.1"
+    index: "3"
+    fromtitle: "Legacy:Mod_Ideas/DevTools"
+    byteoffset: 193
+    anchor: "Display_Debug_fix.21"
+  - toclevel: 1
+    level: "2"
+    line: "Suggestions"
+    number: "3"
+    index: "4"
+    fromtitle: "Legacy:Mod_Ideas/DevTools"
+    byteoffset: 1759
+    anchor: "Suggestions"
+  - toclevel: 1
+    level: "2"
+    line: "Discussion"
+    number: "4"
+    index: "5"
+    fromtitle: "Legacy:Mod_Ideas/DevTools"
+    byteoffset: 2054
+    anchor: "Discussion"
+  displaytitle: "Legacy:Mod Ideas/DevTools"
+  iwlinks: []
+  wikitext:
+    text: "This is a growing collection of my own tools used to aid development of\
+      \ mods.\n\n==Current Features==\n* Shows the display debug for any pawn if the\
+      \ crosshair is on top of it\n\n==Pieces Of Code==\n\n===Display Debug fix!===\n\
+      \nIn my Interaction class:\n\n<uscript>\nfunction PostRender( canvas Canvas\
+      \ )\n{\n\tlocal Actor p;\n\tlocal float a, b;\n\tlocal vector HitLocation, HitNormal;\n\
+      \t\n\ta = Canvas.CurYL;\n\tb = 0;\n\n\tmainTrace(HitLocation, HitNormal, p,\
+      \ 2048);\n\t\n\tif(Pawn(p) != none)\n\t{\n\t    p.DisplayDebug(Canvas, a, b);\n\
+      \t}\n}\n</uscript>\n\nMainTrace():\n\n(obviously it is declared inside the Interaction\
+      \ class)\n\n<uscript>\n// ===========================================================================\n\
+      // mainTrace\n//\n// This function traces for known actors that are RIGHT in\
+      \ front of the camera (under the crosshair)\n// ===========================================================================\n\
+      function mainTrace(out vector HitLocation, out vector HitNormal, out Actor aThing,\
+      \ float fDistance)\n{\n\tlocal vector StartTrace, EndTrace;\n\tlocal PlayerController\
+      \ PlayerOwner;\n\n\t// Log(self$\": before assigning the playerOwner\"); //DEBUG\n\
+      \tPlayerOwner = ViewportOwner.Actor;\n\t// Log(self$\": after assigning the\
+      \ playerOwner\"); //DEBUG\n\n\t// important: find the REAL rotation of the camera\
+      \ - X and Y\n\n\t// Log(self$\": before trace\"); // DEBUG\n\t// Perform a trace\
+      \ to find any colliding actors\n\tStartTrace = PlayerOwner.Pawn.Location;\t\t\
+      \t// the beginning of the trace\n\tStartTrace.Z += PlayerOwner.Pawn.BaseEyeHeight;\t\
+      // account for player's eye height\n\t// I call this the oblivion vector\n\t\
+      EndTrace = StartTrace + vector(PlayerOwner.Pawn.GetViewRotation()) * fDistance;\n\
+      \t// TODO: try fasttrace\n\taThing = PlayerOwner.Pawn.Trace(HitLocation, HitNormal,\
+      \ EndTrace, StartTrace, true);\n}\n</uscript>\n\n==Suggestions==\n\nPlease feel\
+      \ free to suggest any other features that could be included in this mod. Just\
+      \ try to stick to mutator functionality, so that it can be tested with other\
+      \ game types!\n\n----\n\n[http://www.yucc.yorku.ca/~plouj/DevTools.zip DevTools]\n\
+      \nby [[Legacy:AlphaOne|AlphaOne]]\n\n----\n\n==Discussion==\n\n'''Foxpaw:'''\
+      \ Is the mainTrace function a function you wrote yourself or is it included\
+      \ in the base UT2003 packages. I've never seen it called elsewhere.\n\n'''AlphaOne:'''\
+      \ Oops! Forgot to mention that Yes it is one of my own.\n\n'''Daemonica:'''\
+      \ I noticed the Todo line, I wouldn't try as FastTrace will only return a True/False\
+      \ if the trace hits World Geometry. On a side note I'm trying to implement a\
+      \ similar function within a PlayerController class and having little to no success,\
+      \ even though the code is the same ;)"
+  properties: []
+  revId: 4826
+name: "Legacy:Mod Ideas/DevTools"
+revision:
+  revid: 4826
+  parentid: 4828
+  user: "Pat611.ccs.yorku.ca"
+  timestamp: 1069692432.000000000
+  comment: "*"
+timestamp: 1668765629.198473000

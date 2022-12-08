@@ -1,0 +1,1940 @@
+---
+parse:
+  title: "Legacy:DoubleMetaPhone"
+  text:
+    text: "<p>This document implements a \"sounds like\" algorithm developed by Lawrence\
+      \ Philips which he published in the June, 2000 issue of <a rel=\"nofollow\"\
+      \ class=\"external text\" href=\"http://www.cuj.com/documents/s=8038/cuj0006philips/\"\
+      >C/C++ Users Journal.</a></p>\n<p>Double Metaphone is an improved version of\
+      \ Philips' original Metaphone algorithm.</p>\n<p>The UnrealScript implementation\
+      \ has been adapted from Stephen Woodbridge's <a rel=\"nofollow\" class=\"external\
+      \ text\" href=\"http://swoodbridge.com/DoubleMetaPhone/\">PHP implementation</a>\
+      \ by <a href=\"/Legacy:El_Muerte\" title=\"Legacy:El Muerte\" class=\"mw-redirect\"\
+      >El Muerte</a>.</p>\n<p><i>Note:</i> Because of the size of the algorithm there\
+      \ might be errors in it.</p>\n<p></p>\n<div id=\"toc\" class=\"toc\">\n<div\
+      \ id=\"toctitle\">\n<h2>Contents</h2>\n</div>\n<ul>\n<li class=\"toclevel-1\
+      \ tocsection-1\"><a href=\"#The_algorithm\"><span class=\"tocnumber\">1</span>\
+      \ <span class=\"toctext\">The algorithm</span></a></li>\n<li class=\"toclevel-1\
+      \ tocsection-2\"><a href=\"#Helper_functions\"><span class=\"tocnumber\">2</span>\
+      \ <span class=\"toctext\">Helper functions</span></a></li>\n<li class=\"toclevel-1\
+      \ tocsection-3\"><a href=\"#Copyright\"><span class=\"tocnumber\">3</span> <span\
+      \ class=\"toctext\">Copyright</span></a></li>\n<li class=\"toclevel-1 tocsection-4\"\
+      ><a href=\"#Related_Topics\"><span class=\"tocnumber\">4</span> <span class=\"\
+      toctext\">Related Topics</span></a></li>\n</ul>\n</div>\n<p></p>\n<h2><span\
+      \ class=\"mw-headline\" id=\"The_algorithm\">The algorithm</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:DoubleMetaPhone?section=1\"\
+      \ title=\"Edit section: The algorithm\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      coMULTI\">/**\n\tReturns the double metaphone value of in.\n\tThe array always\
+      \ contains two values.\n*/</span>\n<span class=\"kw1\">static</span> <span class=\"\
+      kw1\">final</span> <span class=\"kw1\">function</span> array<span class=\"sy0\"\
+      >&lt;</span>string<span class=\"sy0\">&gt;</span> DoubleMetaPhone<span class=\"\
+      br0\">(</span><span class=\"kw1\">coerce</span> <span class=\"kw5\">string</span>\
+      \ in, <span class=\"kw1\">optional</span> <span class=\"kw5\">int</span> mlen<span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw1\"\
+      >local</span> array<span class=\"sy0\">&lt;</span>string<span class=\"sy0\"\
+      >&gt;</span> res;\n\t<span class=\"kw1\">local</span> <span class=\"kw5\">string</span>\
+      \ prim, sec, tmp;\n\t<span class=\"kw1\">local</span> <span class=\"kw5\">int</span>\
+      \ cur, last, slen;\n \n\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>mlen\
+      \ <span class=\"sy0\">==</span> <span class=\"nu0\">0</span><span class=\"br0\"\
+      >)</span> mlen <span class=\"sy0\">=</span> <span class=\"nu0\">4</span>;\n\
+      \ \tslen <span class=\"sy0\">=</span> <span class=\"kw3\">Len</span><span class=\"\
+      br0\">(</span>in<span class=\"br0\">)</span>;\n \tlast <span class=\"sy0\">=</span>\
+      \ slen<span class=\"sy0\">-</span><span class=\"nu0\">1</span>;\n \tin <span\
+      \ class=\"sy0\">=</span> <span class=\"kw3\">caps</span><span class=\"br0\"\
+      >(</span>in<span class=\"sy0\">$</span><span class=\"st0\">\"     \"</span><span\
+      \ class=\"br0\">)</span>;\n\t<span class=\"co1\">// skip this at beginning of\
+      \ word</span>\n\t<span class=\"kw2\">switch</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw3\">Left</span><span class=\"br0\">(</span>in, <span class=\"nu0\"\
+      >2</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\n\t<span class=\"\
+      br0\">{</span>\n\t\t<span class=\"kw2\">case</span> <span class=\"st0\">\"GN\"\
+      </span>:\n\t\t<span class=\"kw2\">case</span> <span class=\"st0\">\"KN\"</span>:\n\
+      \t\t<span class=\"kw2\">case</span> <span class=\"st0\">\"PN\"</span>:\n\t\t\
+      <span class=\"kw2\">case</span> <span class=\"st0\">\"WR\"</span>:\n\t\t<span\
+      \ class=\"kw2\">case</span> <span class=\"st0\">\"PS\"</span>:\n\t\t\tcur<span\
+      \ class=\"sy0\">++</span>;\n\t<span class=\"br0\">}</span>\n \t<span class=\"\
+      co1\">// Initial 'X' is pronounced 'Z' e.g. 'Xavier'</span>\n \t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span><span class=\"kw3\">Left</span><span\
+      \ class=\"br0\">(</span>in, <span class=\"nu0\">1</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"X\"</span><span\
+      \ class=\"br0\">)</span>\n \t<span class=\"br0\">{</span>\n \t\tprim <span class=\"\
+      sy0\">$=</span> <span class=\"st0\">\"S\"</span>; <span class=\"co1\">// 'Z'\
+      \ maps to 'S'</span>\n \t\tsec  <span class=\"sy0\">$=</span> <span class=\"\
+      st0\">\"S\"</span>;\n \t\tcur<span class=\"sy0\">++</span>;\n \t<span class=\"\
+      br0\">}</span>\n \t<span class=\"co1\">// main loop</span>\n \t<span class=\"\
+      kw2\">while</span> <span class=\"br0\">(</span><span class=\"kw3\">len</span><span\
+      \ class=\"br0\">(</span>prim<span class=\"br0\">)</span> <span class=\"sy0\"\
+      >&lt;</span> mlen <span class=\"sy0\">||</span> <span class=\"kw3\">len</span><span\
+      \ class=\"br0\">(</span>sec<span class=\"br0\">)</span> <span class=\"sy0\"\
+      >&lt;</span> mlen<span class=\"br0\">)</span>\n\t<span class=\"br0\">{</span>\n\
+      \t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>cur <span class=\"\
+      sy0\">&gt;=</span> slen<span class=\"br0\">)</span> <span class=\"kw2\">break</span>;\n\
+      \t\t<span class=\"kw2\">switch</span> <span class=\"br0\">(</span><span class=\"\
+      kw3\">mid</span><span class=\"br0\">(</span>in, cur, <span class=\"nu0\">1</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\t<span class=\"br0\"\
+      >{</span>\n\t\t\t<span class=\"kw2\">case</span> <span class=\"st0\">\"A\"</span>:\n\
+      \t\t\t<span class=\"kw2\">case</span> <span class=\"st0\">\"E\"</span>:\n\t\t\
+      \t<span class=\"kw2\">case</span> <span class=\"st0\">\"I\"</span>:\n\t\t\t\
+      <span class=\"kw2\">case</span> <span class=\"st0\">\"O\"</span>:\n\t\t\t<span\
+      \ class=\"kw2\">case</span> <span class=\"st0\">\"U\"</span>:\n\t\t\t<span class=\"\
+      kw2\">case</span> <span class=\"st0\">\"Y\"</span>:\n\t\t\t\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>cur <span class=\"sy0\">==</span>\
+      \ <span class=\"nu0\">0</span><span class=\"br0\">)</span> <span class=\"co1\"\
+      >// all init vowels now map to 'A'</span>\n\t\t\t\t<span class=\"br0\">{</span>\n\
+      \t\t\t\t\tprim <span class=\"sy0\">$=</span> <span class=\"st0\">\"A\"</span>;\n\
+      \t\t\t\t\tsec\t <span class=\"sy0\">$=</span> <span class=\"st0\">\"A\"</span>;\n\
+      \t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\tcur<span class=\"sy0\">++</span>;\n\
+      \t\t\t\t<span class=\"kw2\">break</span>;\n \n\t\t\t<span class=\"kw2\">case</span>\
+      \ <span class=\"st0\">\"B\"</span>: <span class=\"co1\">// '-mb', e.g. \"dumb\"\
+      , already skipped over ...</span>\n\t\t\t\tprim <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"P\"</span>;\n\t\t\t\tsec  <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"P\"</span>;\n\t\t\t\t<span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span><span class=\"kw3\">mid</span><span class=\"br0\">(</span>in,\
+      \ cur<span class=\"sy0\">+</span><span class=\"nu0\">1</span>, <span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span> <span class=\"sy0\">==</span> <span\
+      \ class=\"st0\">\"B\"</span><span class=\"br0\">)</span> cur <span class=\"\
+      sy0\">+=</span> <span class=\"nu0\">2</span>;\n\t\t\t\t<span class=\"kw2\">else</span>\
+      \ cur<span class=\"sy0\">++</span>;\n\t\t\t\t<span class=\"kw2\">break</span>;\n\
+      \ \n\t\t\t<span class=\"kw2\">case</span> <span class=\"st0\">\"Ç\"</span>:\n\
+      \t\t\t\tprim <span class=\"sy0\">$=</span> <span class=\"st0\">\"S\"</span>;\n\
+      \t\t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"st0\">\"S\"</span>;\n\
+      \t\t\t\tcur<span class=\"sy0\">++</span>;\n\t\t\t\t<span class=\"kw2\">break</span>;\n\
+      \ \n\t\t\t<span class=\"kw2\">case</span> <span class=\"st0\">\"C\"</span>:\
+      \ <span class=\"co1\">// various gremanic</span>\n\t\t\t\t<span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span><span class=\"br0\">(</span>cur <span\
+      \ class=\"sy0\">&gt;</span> <span class=\"nu0\">1</span><span class=\"br0\"\
+      >)</span>\n\t\t\t\t\t<span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\"\
+      >(</span><span class=\"sy0\">!</span>is_vowel<span class=\"br0\">(</span>in,\
+      \ cur<span class=\"sy0\">-</span><span class=\"nu0\">2</span><span class=\"\
+      br0\">)</span><span class=\"br0\">)</span>\n\t\t\t\t\t<span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"br0\">(</span><span class=\"kw3\">mid</span><span class=\"br0\"\
+      >(</span>in, cur <span class=\"sy0\">-</span> <span class=\"nu0\">1</span>,\
+      \ <span class=\"nu0\">3</span><span class=\"br0\">)</span> <span class=\"sy0\"\
+      >==</span> <span class=\"st0\">\"ACH\"</span><span class=\"br0\">)</span>\n\t\
+      \t\t\t\t<span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span><span\
+      \ class=\"br0\">(</span><span class=\"kw3\">mid</span><span class=\"br0\">(</span>in,\
+      \ cur <span class=\"sy0\">+</span> <span class=\"nu0\">2</span>, <span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span> <span class=\"sy0\">!=</span> <span\
+      \ class=\"st0\">\"I\"</span><span class=\"br0\">)</span>\n\t\t\t\t\t\t<span\
+      \ class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span><span class=\"\
+      br0\">(</span><span class=\"kw3\">mid</span><span class=\"br0\">(</span>in,\
+      \ cur <span class=\"sy0\">+</span> <span class=\"nu0\">2</span>, <span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span> <span class=\"sy0\">!=</span> <span\
+      \ class=\"st0\">\"E\"</span><span class=\"br0\">)</span>\n\t\t\t\t\t\t\t<span\
+      \ class=\"sy0\">||</span> smid<span class=\"br0\">(</span>in, cur <span class=\"\
+      sy0\">-</span> <span class=\"nu0\">2</span>, <span class=\"nu0\">6</span>, tmp<span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"\
+      BACHER\"</span><span class=\"br0\">)</span>\n\t\t\t\t\t\t\t<span class=\"sy0\"\
+      >||</span> tmp <span class=\"sy0\">==</span> <span class=\"st0\">\"MACHER\"\
+      </span><span class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\t\t\t<span\
+      \ class=\"br0\">{</span>\n\t\t\t\t\tprim <span class=\"sy0\">$=</span> <span\
+      \ class=\"st0\">\"K\"</span>;\n\t\t\t\t\tsec  <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"K\"</span>;\n\t\t\t\t\tcur <span class=\"sy0\">+=</span>\
+      \ <span class=\"nu0\">2</span>;\n\t\t\t\t\t<span class=\"kw2\">break</span>;\n\
+      \t\t\t\t<span class=\"br0\">}</span>\n \n\t\t\t\t<span class=\"co1\">// special\
+      \ case 'caesar'</span>\n\t\t\t\t<span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span><span class=\"br0\">(</span>cur <span class=\"sy0\">==</span>\
+      \ <span class=\"nu0\">0</span><span class=\"br0\">)</span> <span class=\"sy0\"\
+      >&amp;&amp;</span> <span class=\"br0\">(</span><span class=\"kw3\">mid</span><span\
+      \ class=\"br0\">(</span>in, cur, <span class=\"nu0\">6</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"CAESAR\"\
+      </span><span class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\t\t\t<span\
+      \ class=\"br0\">{</span>\n\t\t\t\t\tprim <span class=\"sy0\">$=</span> <span\
+      \ class=\"st0\">\"S\"</span>;\n\t\t\t\t\tsec  <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"S\"</span>;\n\t\t\t\t\tcur <span class=\"sy0\">+=</span>\
+      \ <span class=\"nu0\">2</span>;\n\t\t\t\t\t<span class=\"kw2\">break</span>;\n\
+      \t\t\t\t<span class=\"br0\">}</span>\n \n\t\t\t\t<span class=\"co1\">// italian\
+      \ 'chianti'</span>\n\t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span><span class=\"kw3\">mid</span><span class=\"br0\">(</span>in, cur,\
+      \ <span class=\"nu0\">4</span><span class=\"br0\">)</span> <span class=\"sy0\"\
+      >==</span> <span class=\"st0\">\"CHIA\"</span><span class=\"br0\">)</span>\n\
+      \t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\tprim <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"K\"</span>;\n\t\t\t\t\tsec  <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"K\"</span>;\n\t\t\t\t\tcur <span class=\"sy0\">+=</span>\
+      \ <span class=\"nu0\">2</span>;\n\t\t\t\t\t<span class=\"kw2\">break</span>;\n\
+      \t\t\t\t<span class=\"br0\">}</span>\n \n\t\t  \t\t<span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span><span class=\"kw3\">mid</span><span class=\"br0\"\
+      >(</span>in, cur, <span class=\"nu0\">2</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">==</span> <span class=\"st0\">\"CH\"</span><span class=\"br0\"\
+      >)</span>\n\t\t  \t\t<span class=\"br0\">{</span>\n\t\t\t\t\t<span class=\"\
+      co1\">// find 'michael'</span>\n\t\t\t\t\t<span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span><span class=\"br0\">(</span>cur <span class=\"sy0\"\
+      >&gt;</span> <span class=\"nu0\">0</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span><span class=\"\
+      kw3\">mid</span><span class=\"br0\">(</span>in, cur, <span class=\"nu0\">4</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"\
+      CHAE\"</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\t\t\
+      \t\t<span class=\"br0\">{</span>\n\t\t\t\t\t\tprim <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"K\"</span>;\n\t\t\t\t\t\tsec  <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"X\"</span>;\n\t\t\t\t\t\tcur <span class=\"sy0\">+=</span>\
+      \ <span class=\"nu0\">2</span>;\n\t\t\t\t\t\t<span class=\"kw2\">break</span>;\n\
+      \t\t\t\t\t<span class=\"br0\">}</span>\n \n\t\t\t\t\t<span class=\"co1\">//\
+      \ greek roots e.g. 'chemistry', 'chorus'</span>\n\t\t\t\t\t<span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span><span class=\"br0\">(</span>cur <span\
+      \ class=\"sy0\">==</span> <span class=\"nu0\">0</span><span class=\"br0\">)</span>\n\
+      \ \t\t\t\t\t\t<span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span>smid<span\
+      \ class=\"br0\">(</span>in, cur<span class=\"sy0\">+</span><span class=\"nu0\"\
+      >1</span>, <span class=\"nu0\">5</span>, tmp<span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">==</span> <span class=\"st0\">\"HARAC\"</span>\n \t\t\t\t\t\t\
+      \t<span class=\"sy0\">||</span> tmp <span class=\"sy0\">==</span> <span class=\"\
+      st0\">\"HARIS\"</span><span class=\"br0\">)</span>\n\t\t\t\t\t\t<span class=\"\
+      sy0\">||</span> <span class=\"br0\">(</span>smid<span class=\"br0\">(</span>in,\
+      \ cur<span class=\"sy0\">+</span><span class=\"nu0\">1</span>, <span class=\"\
+      nu0\">3</span>, tmp<span class=\"br0\">)</span> <span class=\"sy0\">==</span>\
+      \ <span class=\"st0\">\"HOR\"</span>\n\t\t\t\t\t\t\t<span class=\"sy0\">||</span>\
+      \ tmp <span class=\"sy0\">==</span> <span class=\"st0\">\"HYM\"</span>\n\t\t\
+      \t\t\t\t\t<span class=\"sy0\">||</span> tmp <span class=\"sy0\">==</span> <span\
+      \ class=\"st0\">\"HIA\"</span>\n\t\t\t\t\t\t\t<span class=\"sy0\">||</span>\
+      \ tmp <span class=\"sy0\">==</span> <span class=\"st0\">\"HEM\"</span><span\
+      \ class=\"br0\">)</span>\n\t\t\t\t\t\t<span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"br0\">(</span><span class=\"kw3\">mid</span><span class=\"br0\"\
+      >(</span>in, <span class=\"nu0\">0</span>, <span class=\"nu0\">5</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">!=</span> <span class=\"st0\">\"\
+      CHORE\"</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\t\
+      \t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\t\tprim <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"K\"</span>;\n\t\t\t\t\t\tsec  <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"K\"</span>;\n\t\t\t\t\t\tcur <span class=\"sy0\">+=</span>\
+      \ <span class=\"nu0\">2</span>;\n\t\t\t\t\t\t<span class=\"kw2\">break</span>;\n\
+      \t\t\t\t\t<span class=\"br0\">}</span>\n \n\t\t\t\t\t<span class=\"co1\">//\
+      \ germanic, greek, or otherwise 'ch' for 'kh' sound</span>\n\t\t\t\t\t<span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"br0\">(</span>\t\
+      <span class=\"br0\">(</span>smid<span class=\"br0\">(</span>in, <span class=\"\
+      nu0\">0</span>, <span class=\"nu0\">4</span>, tmp<span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">==</span> <span class=\"st0\">\"VAN \"</span><span class=\"\
+      br0\">)</span>\n\t\t\t\t\t\t\t<span class=\"sy0\">||</span> <span class=\"br0\"\
+      >(</span>tmp <span class=\"sy0\">==</span> <span class=\"st0\">\"VON \"</span><span\
+      \ class=\"br0\">)</span>\n\t\t\t\t\t\t\t<span class=\"sy0\">||</span> <span\
+      \ class=\"br0\">(</span>tmp <span class=\"sy0\">==</span> <span class=\"st0\"\
+      >\"SCH\"</span><span class=\"br0\">)</span>\n\t\t\t\t\t\t<span class=\"br0\"\
+      >)</span>\n\t\t\t\t\t\t<span class=\"co1\">// 'architect' but not 'arch', orchestra',\
+      \ 'orchid'</span>\n\t\t\t\t\t\t<span class=\"sy0\">||</span> <span class=\"\
+      br0\">(</span>\t<span class=\"br0\">(</span>smid<span class=\"br0\">(</span>in,\
+      \ cur<span class=\"sy0\">-</span><span class=\"nu0\">2</span>, <span class=\"\
+      nu0\">6</span>, tmp<span class=\"br0\">)</span> <span class=\"sy0\">==</span>\
+      \ <span class=\"st0\">\"ORCHES\"</span><span class=\"br0\">)</span>\n\t\t\t\t\
+      \t\t\t\t<span class=\"sy0\">||</span> <span class=\"br0\">(</span>tmp <span\
+      \ class=\"sy0\">==</span> <span class=\"st0\">\"ARCHIT\"</span><span class=\"\
+      br0\">)</span>\n\t\t\t\t\t\t\t\t<span class=\"sy0\">||</span> <span class=\"\
+      br0\">(</span>tmp <span class=\"sy0\">==</span> <span class=\"st0\">\"ORCHID\"\
+      </span><span class=\"br0\">)</span>\n\t\t\t\t\t\t\t<span class=\"br0\">)</span>\n\
+      \t\t\t\t\t\t<span class=\"sy0\">||</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw3\">InStr</span><span class=\"br0\">(</span><span class=\"st0\"\
+      >\"TS\"</span>, <span class=\"kw3\">Mid</span><span class=\"br0\">(</span>in,\
+      \ cur<span class=\"sy0\">+</span><span class=\"nu0\">2</span>, <span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">&gt;</span> <span class=\"sy0\">-</span><span class=\"nu0\"\
+      >1</span><span class=\"br0\">)</span>\n\t\t\t\t\t\t<span class=\"sy0\">||</span>\
+      \ <span class=\"br0\">(</span>\n\t\t\t\t\t\t\t<span class=\"br0\">(</span><span\
+      \ class=\"br0\">(</span><span class=\"kw3\">InStr</span><span class=\"br0\"\
+      >(</span><span class=\"st0\">\"AOUE\"</span>, <span class=\"kw3\">Mid</span><span\
+      \ class=\"br0\">(</span>in, cur<span class=\"sy0\">-</span><span class=\"nu0\"\
+      >1</span>, <span class=\"nu0\">1</span><span class=\"br0\">)</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">&gt;</span> <span class=\"sy0\">-</span><span\
+      \ class=\"nu0\">1</span><span class=\"br0\">)</span>\n\t\t\t\t\t \t\t\t<span\
+      \ class=\"sy0\">||</span> <span class=\"br0\">(</span>cur <span class=\"sy0\"\
+      >==</span> <span class=\"nu0\">0</span><span class=\"br0\">)</span>\n\t\t\t\t\
+      \t\t\t<span class=\"br0\">)</span>\n\t\t\t\t\t\t\t<span class=\"co1\">// e.g.\
+      \ 'wachtler', 'weschsler', but not 'tichner'</span>\n\t\t\t\t\t\t\t<span class=\"\
+      sy0\">&amp;&amp;</span> <span class=\"br0\">(</span><span class=\"kw3\">InStr</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">\"LRNMBHFVW\"</span>, <span class=\"\
+      kw3\">Mid</span><span class=\"br0\">(</span>in, cur<span class=\"sy0\">+</span><span\
+      \ class=\"nu0\">2</span>, <span class=\"nu0\">1</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">&gt;</span> <span class=\"sy0\"\
+      >-</span><span class=\"nu0\">1</span><span class=\"br0\">)</span><span class=\"\
+      br0\">)</span>\n\t\t\t\t\t\t<span class=\"br0\">)</span>\n\t\t\t\t\t<span class=\"\
+      br0\">{</span>\n\t\t\t\t\t\tprim <span class=\"sy0\">$=</span> <span class=\"\
+      st0\">\"K\"</span>;\n\t\t\t\t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"\
+      st0\">\"K\"</span>;\n\t\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t\t<span\
+      \ class=\"kw2\">else</span> <span class=\"br0\">{</span>\n\t\t\t\t\t\t<span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span>cur <span class=\"sy0\"\
+      >&gt;</span> <span class=\"nu0\">0</span><span class=\"br0\">)</span>\n\t\t\t\
+      \t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\t\t\t<span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span><span class=\"kw3\">mid</span><span class=\"br0\"\
+      >(</span>in, <span class=\"nu0\">0</span>, <span class=\"nu0\">2</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"\
+      MC\"</span><span class=\"br0\">)</span>\n\t\t\t\t\t\t\t<span class=\"br0\">{</span>\n\
+      \t\t\t\t\t\t\t\t<span class=\"co1\">// e.g. 'McHugh'</span>\n\t\t\t\t\t\t\t\t\
+      prim <span class=\"sy0\">$=</span> <span class=\"st0\">\"K\"</span>;\n\t\t\t\
+      \t\t\t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"st0\">\"K\"</span>;\n\
+      \t\t\t\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t\t\t\t<span class=\"kw2\"\
+      >else</span> <span class=\"br0\">{</span>\n\t\t\t\t\t\t\t\tprim <span class=\"\
+      sy0\">$=</span> <span class=\"st0\">\"X\"</span>;\n\t\t\t\t\t\t\t\tsec  <span\
+      \ class=\"sy0\">$=</span> <span class=\"st0\">\"K\"</span>;\n\t\t\t\t\t\t\t\
+      <span class=\"br0\">}</span>\n\t\t\t\t\t\t<span class=\"br0\">}</span>\n\t\t\
+      \t\t\t\t<span class=\"kw2\">else</span> <span class=\"br0\">{</span>\n\t\t\t\
+      \t\t\t\tprim <span class=\"sy0\">$=</span> <span class=\"st0\">\"X\"</span>;\n\
+      \t\t\t\t\t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"st0\">\"X\"</span>;\n\
+      \t\t\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t\t<span class=\"br0\">}</span>\n\
+      \t\t\t\t\tcur <span class=\"sy0\">+=</span> <span class=\"nu0\">2</span>;\n\t\
+      \t\t\t\t<span class=\"kw2\">break</span>;\n\t\t\t\t<span class=\"br0\">}</span>\n\
+      \ \n\t\t\t\t<span class=\"co1\">// e.g. 'czerny'</span>\n\t\t\t\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span><span class=\"kw3\">mid</span><span\
+      \ class=\"br0\">(</span>in, cur, <span class=\"nu0\">2</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"CZ\"</span>\n\
+      \t\t\t\t\t<span class=\"sy0\">&amp;&amp;</span> <span class=\"kw3\">mid</span><span\
+      \ class=\"br0\">(</span>in, cur<span class=\"sy0\">-</span><span class=\"nu0\"\
+      >2</span>, <span class=\"nu0\">4</span><span class=\"br0\">)</span> <span class=\"\
+      sy0\">!=</span> <span class=\"st0\">\"WICZ\"</span><span class=\"br0\">)</span>\n\
+      \t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\tprim <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"S\"</span>;\n\t\t\t\t\tsec  <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"X\"</span>;\n\t\t\t\t\tcur <span class=\"sy0\">+=</span>\
+      \ <span class=\"nu0\">2</span>;\n\t\t\t\t\t<span class=\"kw2\">break</span>;\n\
+      \t\t\t\t<span class=\"br0\">}</span>\n \n\t\t\t\t<span class=\"co1\">// e.g.\
+      \ 'focaccia'</span>\n\t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span><span class=\"kw3\">mid</span><span class=\"br0\">(</span>in, cur <span\
+      \ class=\"sy0\">+</span> <span class=\"nu0\">1</span>, <span class=\"nu0\">3</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"\
+      CIA\"</span><span class=\"br0\">)</span>\n\t\t\t\t<span class=\"br0\">{</span>\n\
+      \t\t\t\t\tprim <span class=\"sy0\">$=</span> <span class=\"st0\">\"X\"</span>;\n\
+      \t\t\t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"st0\">\"X\"</span>;\n\
+      \t\t\t\t\tcur <span class=\"sy0\">+=</span> <span class=\"nu0\">3</span>;\n\t\
+      \t\t\t\t<span class=\"kw2\">break</span>;\n\t\t\t\t<span class=\"br0\">}</span>\n\
+      \ \n\t\t\t\t<span class=\"co1\">// double 'C', but not McClellan'</span>\n\t\
+      \t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      kw3\">mid</span><span class=\"br0\">(</span>in, cur, <span class=\"nu0\">2</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"\
+      CC\"</span>\n\t\t\t\t\t\t<span class=\"sy0\">&amp;&amp;</span> <span class=\"\
+      sy0\">!</span><span class=\"br0\">(</span><span class=\"br0\">(</span>cur <span\
+      \ class=\"sy0\">==</span> <span class=\"nu0\">1</span><span class=\"br0\">)</span>\n\
+      \t\t\t\t\t\t\t<span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw3\">mid</span><span class=\"br0\">(</span>in, <span class=\"nu0\"\
+      >0</span>, <span class=\"nu0\">1</span><span class=\"br0\">)</span> <span class=\"\
+      sy0\">==</span> <span class=\"st0\">\"M\"</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\t\t\t<span class=\"\
+      br0\">{</span>\n\t\t\t\t\t<span class=\"co1\">// 'bellocchio' but not 'bacchus'</span>\n\
+      \t\t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      br0\">(</span><span class=\"kw3\">InStr</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">\"IEH\"</span>, <span class=\"kw3\">mid</span><span class=\"\
+      br0\">(</span>in, cur <span class=\"sy0\">+</span> <span class=\"nu0\">2</span>,\
+      \ <span class=\"nu0\">1</span><span class=\"br0\">)</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">&gt;</span> <span class=\"sy0\">-</span><span\
+      \ class=\"nu0\">1</span><span class=\"br0\">)</span>\n\t\t\t\t\t\t<span class=\"\
+      sy0\">&amp;&amp;</span> <span class=\"br0\">(</span><span class=\"kw3\">mid</span><span\
+      \ class=\"br0\">(</span>in, cur <span class=\"sy0\">+</span> <span class=\"\
+      nu0\">2</span>, <span class=\"nu0\">2</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">!=</span> <span class=\"st0\">\"HU\"</span><span class=\"br0\"\
+      >)</span><span class=\"br0\">)</span>\n\t\t\t\t\t<span class=\"br0\">{</span>\n\
+      \t\t\t  \t\t\t<span class=\"co1\">// 'accident', 'accede', 'succeed'</span>\n\
+      \t\t\t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">(</span>cur <span class=\"sy0\"\
+      >==</span> <span class=\"nu0\">1</span><span class=\"br0\">)</span>\n\t\t\t\t\
+      \t\t\t<span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw3\">mid</span><span class=\"br0\">(</span>in, cur <span class=\"\
+      sy0\">-</span> <span class=\"nu0\">1</span>, <span class=\"nu0\">1</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"\
+      A\"</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\t\t\t\
+      \t\t\t<span class=\"sy0\">||</span> <span class=\"br0\">(</span>smid<span class=\"\
+      br0\">(</span>in, cur<span class=\"sy0\">-</span><span class=\"nu0\">1</span>,\
+      \ <span class=\"nu0\">5</span>, tmp<span class=\"br0\">)</span> <span class=\"\
+      sy0\">==</span> <span class=\"st0\">\"UCCEE\"</span><span class=\"br0\">)</span>\n\
+      \t\t\t\t\t\t\t<span class=\"sy0\">||</span> <span class=\"br0\">(</span>tmp\
+      \ <span class=\"sy0\">==</span> <span class=\"st0\">\"UCCES\"</span><span class=\"\
+      br0\">)</span><span class=\"br0\">)</span>\n\t\t\t\t\t\t<span class=\"br0\"\
+      >{</span>\n\t\t\t\t\t\t\tprim <span class=\"sy0\">$=</span> <span class=\"st0\"\
+      >\"KS\"</span>;\n\t\t\t\t\t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"\
+      st0\">\"KS\"</span>;\n\t\t\t\t\t\t\t<span class=\"co1\">// 'bacci', 'bertucci',\
+      \ other italian</span>\n\t\t\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t\t\
+      \t<span class=\"kw2\">else</span> <span class=\"br0\">{</span>\n\t\t\t\t\t\t\
+      \tprim <span class=\"sy0\">$=</span> <span class=\"st0\">\"X\"</span>;\n\t\t\
+      \t\t\t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"st0\">\"X\"</span>;\n\
+      \t\t\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t\t\tcur <span class=\"sy0\"\
+      >+=</span> <span class=\"nu0\">3</span>;\n\t\t\t\t\t\t<span class=\"kw2\">break</span>;\n\
+      \t\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t\t<span class=\"kw2\">else</span>\
+      \ <span class=\"br0\">{</span>\n\t\t\t\t\t\t<span class=\"co1\">// Pierce's\
+      \ rule</span>\n\t\t\t\t\t\tprim <span class=\"sy0\">$=</span> <span class=\"\
+      st0\">\"K\"</span>;\n\t\t\t\t\t\tsec <span class=\"sy0\">$=</span> <span class=\"\
+      st0\">\"K\"</span>;\n\t\t\t\t\t\tcur <span class=\"sy0\">+=</span> <span class=\"\
+      nu0\">2</span>;\n\t\t\t\t\t\t<span class=\"kw2\">break</span>;\n\t\t\t\t\t<span\
+      \ class=\"br0\">}</span>\n\t\t\t\t<span class=\"br0\">}</span>\n \n\t\t\t\t\
+      <span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"br0\"\
+      >(</span>smid<span class=\"br0\">(</span>in, cur, <span class=\"nu0\">2</span>,\
+      \ tmp<span class=\"br0\">)</span> <span class=\"sy0\">==</span> <span class=\"\
+      st0\">\"CK\"</span><span class=\"br0\">)</span>\n\t\t\t\t\t<span class=\"sy0\"\
+      >||</span> <span class=\"br0\">(</span>tmp <span class=\"sy0\">==</span> <span\
+      \ class=\"st0\">\"CG\"</span><span class=\"br0\">)</span>\n\t\t\t\t\t<span class=\"\
+      sy0\">||</span> <span class=\"br0\">(</span>tmp <span class=\"sy0\">==</span>\
+      \ <span class=\"st0\">\"CQ\"</span><span class=\"br0\">)</span><span class=\"\
+      br0\">)</span>\n\t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\tprim <span class=\"\
+      sy0\">$=</span> <span class=\"st0\">\"K\"</span>;\n\t\t\t\t\tsec  <span class=\"\
+      sy0\">$=</span> <span class=\"st0\">\"K\"</span>;\n\t\t\t\t\tcur <span class=\"\
+      sy0\">+=</span> <span class=\"nu0\">2</span>;\n\t\t\t\t\t<span class=\"kw2\"\
+      >break</span>;\n\t\t\t\t<span class=\"br0\">}</span>\n \n\t\t\t\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span><span class=\"br0\">(</span>smid<span\
+      \ class=\"br0\">(</span>in, cur, <span class=\"nu0\">2</span>, tmp<span class=\"\
+      br0\">)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"CI\"</span><span\
+      \ class=\"br0\">)</span>\n\t\t\t\t\t<span class=\"sy0\">||</span> <span class=\"\
+      br0\">(</span>tmp <span class=\"sy0\">==</span> <span class=\"st0\">\"CE\"</span><span\
+      \ class=\"br0\">)</span>\n\t\t\t\t\t<span class=\"sy0\">||</span> <span class=\"\
+      br0\">(</span>tmp <span class=\"sy0\">==</span> <span class=\"st0\">\"CY\"</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\t\t\t<span class=\"\
+      br0\">{</span>\n\t\t\t\t\t<span class=\"co1\">// italian vs. english</span>\n\
+      \t\t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      br0\">(</span>smid<span class=\"br0\">(</span>in, cur, <span class=\"nu0\">3</span>,\
+      \ tmp<span class=\"br0\">)</span> <span class=\"sy0\">==</span> <span class=\"\
+      st0\">\"CIO\"</span><span class=\"br0\">)</span>\n\t\t\t\t\t\t<span class=\"\
+      sy0\">||</span> <span class=\"br0\">(</span>tmp <span class=\"sy0\">==</span>\
+      \ <span class=\"st0\">\"CIE\"</span><span class=\"br0\">)</span>\n\t\t\t\t\t\
+      \t<span class=\"sy0\">||</span> <span class=\"br0\">(</span>tmp <span class=\"\
+      sy0\">==</span> <span class=\"st0\">\"CIA\"</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span>\n\t\t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\t\
+      \tprim <span class=\"sy0\">$=</span> <span class=\"st0\">\"S\"</span>;\n\t\t\
+      \t\t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"st0\">\"X\"</span>;\n\
+      \t\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t\t<span class=\"kw2\">else</span>\
+      \ <span class=\"br0\">{</span>\n\t\t\t\t\t\tprim <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"S\"</span>;\n\t\t\t\t\t\tsec  <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"S\"</span>;\n\t\t\t\t\t<span class=\"br0\">}</span>\n\
+      \t\t\t\t\tcur <span class=\"sy0\">+=</span> <span class=\"nu0\">2</span>;\n\t\
+      \t\t\t\t<span class=\"kw2\">break</span>;\n\t\t\t\t<span class=\"br0\">}</span>\n\
+      \ \n\t\t\t\t<span class=\"co1\">// else</span>\n\t\t\t\tprim <span class=\"\
+      sy0\">$=</span> <span class=\"st0\">\"K\"</span>;\n\t\t\t\tsec  <span class=\"\
+      sy0\">$=</span> <span class=\"st0\">\"K\"</span>;\n \n\t\t\t\t<span class=\"\
+      co1\">// name sent in 'mac caffrey', 'mac gregor'</span>\n\t\t\t\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span><span class=\"br0\">(</span>smid<span\
+      \ class=\"br0\">(</span>in, cur<span class=\"sy0\">+</span><span class=\"nu0\"\
+      >1</span>, <span class=\"nu0\">2</span>, tmp<span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">==</span> <span class=\"st0\">\" C\"</span><span class=\"br0\"\
+      >)</span>\n\t\t\t\t\t<span class=\"sy0\">||</span> <span class=\"br0\">(</span>tmp\
+      \ <span class=\"sy0\">==</span> <span class=\"st0\">\" Q\"</span><span class=\"\
+      br0\">)</span>\n\t\t\t\t\t<span class=\"sy0\">||</span> <span class=\"br0\"\
+      >(</span>tmp <span class=\"sy0\">==</span> <span class=\"st0\">\" G\"</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\t\t\t<span class=\"\
+      br0\">{</span>\n\t\t\t\t\tcur <span class=\"sy0\">+=</span> <span class=\"nu0\"\
+      >3</span>;\n\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t<span class=\"kw2\"\
+      >else</span> <span class=\"br0\">{</span>\n\t\t\t\t\t<span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span><span class=\"br0\">(</span><span class=\"kw3\"\
+      >InStr</span><span class=\"br0\">(</span><span class=\"st0\">\"CKQ\"</span>,\
+      \ <span class=\"kw3\">mid</span><span class=\"br0\">(</span>in, cur <span class=\"\
+      sy0\">+</span> <span class=\"nu0\">1</span>, <span class=\"nu0\">1</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span> <span class=\"sy0\">&gt;</span>\
+      \ <span class=\"sy0\">-</span><span class=\"nu0\">1</span><span class=\"br0\"\
+      >)</span>\n\t\t\t\t\t\t<span class=\"sy0\">&amp;&amp;</span> <span class=\"\
+      sy0\">!</span><span class=\"br0\">(</span><span class=\"br0\">(</span>smid<span\
+      \ class=\"br0\">(</span>in, cur<span class=\"sy0\">+</span><span class=\"nu0\"\
+      >1</span>, <span class=\"nu0\">2</span>, tmp<span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">==</span> <span class=\"st0\">\"CE\"</span><span class=\"br0\"\
+      >)</span>\n\t\t\t\t\t\t\t<span class=\"sy0\">||</span> <span class=\"br0\">(</span>tmp\
+      \ <span class=\"sy0\">==</span> <span class=\"st0\">\"CI\"</span><span class=\"\
+      br0\">)</span><span class=\"br0\">)</span>\n\t\t\t\t\t\t<span class=\"br0\"\
+      >)</span>\n\t\t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\t\tcur <span class=\"\
+      sy0\">+=</span> <span class=\"nu0\">2</span>;\n\t\t\t\t\t<span class=\"br0\"\
+      >}</span>\n\t\t\t\t\t<span class=\"kw2\">else</span> <span class=\"br0\">{</span>\n\
+      \t\t\t\t\t\tcur<span class=\"sy0\">++</span>;\n\t\t\t\t\t<span class=\"br0\"\
+      >}</span>\n\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t<span class=\"kw2\"\
+      >break</span>;\n \n\t\t\t<span class=\"kw2\">case</span> <span class=\"st0\"\
+      >\"D\"</span>:\n\t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw3\">mid</span><span class=\"br0\">(</span>in, cur, <span class=\"\
+      nu0\">2</span><span class=\"br0\">)</span> <span class=\"sy0\">==</span> <span\
+      \ class=\"st0\">\"DG\"</span><span class=\"br0\">)</span>\n\t\t\t\t<span class=\"\
+      br0\">{</span>\n\t\t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span><span class=\"kw3\">InStr</span><span class=\"br0\">(</span><span class=\"\
+      st0\">\"IEY\"</span>, <span class=\"kw3\">mid</span><span class=\"br0\">(</span>in,\
+      \ cur <span class=\"sy0\">+</span> <span class=\"nu0\">2</span>, <span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">&gt;</span> <span class=\"sy0\">-</span><span class=\"nu0\"\
+      >1</span><span class=\"br0\">)</span>\n\t\t\t\t\t<span class=\"br0\">{</span>\n\
+      \t\t\t\t\t\t<span class=\"co1\">// e.g. 'edge'</span>\n\t\t\t\t\t\tprim <span\
+      \ class=\"sy0\">$=</span> <span class=\"st0\">\"J\"</span>;\n\t\t\t\t\t\tsec\
+      \  <span class=\"sy0\">$=</span> <span class=\"st0\">\"J\"</span>;\n\t\t\t\t\
+      \t\tcur <span class=\"sy0\">+=</span> <span class=\"nu0\">3</span>;\n\t\t\t\t\
+      \t\t<span class=\"kw2\">break</span>;\n\t\t\t\t\t<span class=\"br0\">}</span>\n\
+      \t\t\t\t\t<span class=\"kw2\">else</span> <span class=\"br0\">{</span>\n\t\t\
+      \t\t\t\t<span class=\"co1\">// e.g. 'edgar'</span>\n\t\t\t\t\t\tprim <span class=\"\
+      sy0\">$=</span> <span class=\"st0\">\"TK\"</span>;\n\t\t\t\t\t\tsec  <span class=\"\
+      sy0\">$=</span> <span class=\"st0\">\"TK\"</span>;\n\t\t\t\t\t\tcur <span class=\"\
+      sy0\">+=</span> <span class=\"nu0\">2</span>;\n\t\t\t\t\t\t<span class=\"kw2\"\
+      >break</span>;\n\t\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t<span class=\"\
+      br0\">}</span>\n \n\t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span><span class=\"br0\">(</span>smid<span class=\"br0\">(</span>in, cur,\
+      \ <span class=\"nu0\">2</span>, tmp<span class=\"br0\">)</span> <span class=\"\
+      sy0\">==</span> <span class=\"st0\">\"DT\"</span><span class=\"br0\">)</span>\n\
+      \t\t\t\t\t<span class=\"sy0\">||</span> <span class=\"br0\">(</span>tmp <span\
+      \ class=\"sy0\">==</span> <span class=\"st0\">\"DD\"</span><span class=\"br0\"\
+      >)</span><span class=\"br0\">)</span>\n\t\t\t\t<span class=\"br0\">{</span>\n\
+      \t\t\t\t\tprim <span class=\"sy0\">$=</span> <span class=\"st0\">\"T\"</span>;\n\
+      \t\t\t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"st0\">\"T\"</span>;\n\
+      \t\t\t\t\tcur <span class=\"sy0\">+=</span> <span class=\"nu0\">2</span>;\n\t\
+      \t\t\t\t<span class=\"kw2\">break</span>;\n\t\t\t\t<span class=\"br0\">}</span>\n\
+      \ \n\t\t\t\t<span class=\"co1\">// else</span>\n\t\t\t\tprim <span class=\"\
+      sy0\">$=</span> <span class=\"st0\">\"T\"</span>;\n\t\t\t\tsec  <span class=\"\
+      sy0\">$=</span> <span class=\"st0\">\"T\"</span>;\n\t\t\t\tcur<span class=\"\
+      sy0\">++</span>;\n\t\t\t\t<span class=\"kw2\">break</span>;\n \n\t\t\t<span\
+      \ class=\"kw2\">case</span> <span class=\"st0\">\"F\"</span>:\n\t\t\t\t<span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"kw3\">mid</span><span\
+      \ class=\"br0\">(</span>in, cur <span class=\"sy0\">+</span> <span class=\"\
+      nu0\">1</span>, <span class=\"nu0\">1</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">==</span> <span class=\"st0\">\"F\"</span><span class=\"br0\"\
+      >)</span> cur <span class=\"sy0\">+=</span> <span class=\"nu0\">2</span>;\n\t\
+      \t\t\t<span class=\"kw2\">else</span> cur<span class=\"sy0\">++</span>;\n\t\t\
+      \t\tprim <span class=\"sy0\">$=</span> <span class=\"st0\">\"F\"</span>;\n\t\
+      \t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"st0\">\"F\"</span>;\n\
+      \t\t\t\t<span class=\"kw2\">break</span>;\n \n\t\t\t<span class=\"co1\">// TODO:\
+      \ optimize</span>\n\t\t\t<span class=\"kw2\">case</span> <span class=\"st0\"\
+      >\"G\"</span>:\n\t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw3\">mid</span><span class=\"br0\">(</span>in, cur <span class=\"\
+      sy0\">+</span> <span class=\"nu0\">1</span>, <span class=\"nu0\">1</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"\
+      H\"</span><span class=\"br0\">)</span>\n\t\t\t\t<span class=\"br0\">{</span>\n\
+      \t\t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      br0\">(</span>cur <span class=\"sy0\">&gt;</span> <span class=\"nu0\">0</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"\
+      sy0\">!</span>is_vowel<span class=\"br0\">(</span>in, cur<span class=\"sy0\"\
+      >-</span><span class=\"nu0\">1</span><span class=\"br0\">)</span><span class=\"\
+      br0\">)</span>\n\t\t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\t\tprim <span\
+      \ class=\"sy0\">$=</span> <span class=\"st0\">\"K\"</span>;\n\t\t\t\t\t\tsec\
+      \  <span class=\"sy0\">$=</span> <span class=\"st0\">\"K\"</span>;\n\t\t\t\t\
+      \t\tcur <span class=\"sy0\">+=</span> <span class=\"nu0\">2</span>;\n\t\t\t\t\
+      \t\t<span class=\"kw2\">break</span>;\n\t\t\t\t\t<span class=\"br0\">}</span>\n\
+      \ \n\t\t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>cur\
+      \ <span class=\"sy0\">&lt;</span> <span class=\"nu0\">3</span><span class=\"\
+      br0\">)</span>\n\t\t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\t\t<span class=\"\
+      co1\">// 'ghislane', 'ghiradelli'</span>\n\t\t\t\t\t\t<span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span>cur <span class=\"sy0\">==</span> <span class=\"\
+      nu0\">0</span><span class=\"br0\">)</span>\n\t\t\t\t\t\t<span class=\"br0\"\
+      >{</span>\n\t\t\t\t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw3\">mid</span><span class=\"br0\">(</span>in, cur <span class=\"\
+      sy0\">+</span> <span class=\"nu0\">2</span>, <span class=\"nu0\">1</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"\
+      I\"</span><span class=\"br0\">)</span>\n\t\t\t\t\t\t\t<span class=\"br0\">{</span>\n\
+      \t\t\t\t\t\t\t\tprim <span class=\"sy0\">$=</span> <span class=\"st0\">\"J\"\
+      </span>;\n\t\t\t\t\t\t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"\
+      st0\">\"J\"</span>;\n\t\t\t\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t\t\t\
+      \t<span class=\"kw2\">else</span> <span class=\"br0\">{</span>\n\t\t\t\t\t\t\
+      \t\tprim <span class=\"sy0\">$=</span> <span class=\"st0\">\"K\"</span>;\n\t\
+      \t\t\t\t\t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"st0\">\"K\"</span>;\n\
+      \t\t\t\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t\t\t\tcur <span class=\"\
+      sy0\">+=</span> <span class=\"nu0\">2</span>;\n\t\t\t\t\t\t\t<span class=\"\
+      kw2\">break</span>;\n\t\t\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t\t<span\
+      \ class=\"br0\">}</span>\n \n\t\t\t\t\t<span class=\"co1\">// Parker's rule\
+      \ (with some further refinements) - e.g. 'hugh'</span>\n\t\t\t\t\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">(</span>cur <span class=\"sy0\">&gt;</span> <span class=\"nu0\"\
+      >1</span><span class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"br0\">(</span><span class=\"kw3\">InStr</span><span class=\"\
+      br0\">(</span><span class=\"st0\">\"BHD\"</span>, <span class=\"kw3\">mid</span><span\
+      \ class=\"br0\">(</span>in, cur <span class=\"sy0\">-</span> <span class=\"\
+      nu0\">2</span>, <span class=\"nu0\">1</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">&gt;</span> <span class=\"sy0\"\
+      >-</span><span class=\"nu0\">1</span><span class=\"br0\">)</span><span class=\"\
+      br0\">)</span>\n\t\t\t\t\t\t<span class=\"co1\">// e.g. 'bough'</span>\n\t\t\
+      \t\t\t\t<span class=\"sy0\">||</span> <span class=\"br0\">(</span><span class=\"\
+      br0\">(</span>cur <span class=\"sy0\">&gt;</span> <span class=\"nu0\">2</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"\
+      br0\">(</span><span class=\"kw3\">InStr</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">\"BHD\"</span>, <span class=\"kw3\">mid</span><span class=\"\
+      br0\">(</span>in, cur <span class=\"sy0\">-</span> <span class=\"nu0\">3</span>,\
+      \ <span class=\"nu0\">1</span><span class=\"br0\">)</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">&gt;</span> <span class=\"sy0\">-</span><span\
+      \ class=\"nu0\">1</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\n\
+      \t\t\t\t\t\t<span class=\"co1\">// e.g. 'broughton'</span>\n\t\t\t\t\t\t<span\
+      \ class=\"sy0\">||</span> <span class=\"br0\">(</span><span class=\"br0\">(</span>cur\
+      \ <span class=\"sy0\">&gt;</span> <span class=\"nu0\">3</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw3\">InStr</span><span class=\"br0\">(</span><span class=\"st0\"\
+      >\"BH\"</span>, <span class=\"kw3\">mid</span><span class=\"br0\">(</span>in,\
+      \ cur <span class=\"sy0\">-</span> <span class=\"nu0\">4</span>, <span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">&gt;</span> <span class=\"sy0\">-</span><span class=\"nu0\"\
+      >1</span><span class=\"br0\">)</span><span class=\"br0\">)</span><span class=\"\
+      br0\">)</span>\n\t\t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\t\tcur <span\
+      \ class=\"sy0\">+=</span> <span class=\"nu0\">2</span>;\n\t\t\t\t\t\t<span class=\"\
+      kw2\">break</span>;\n\t\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t\t<span\
+      \ class=\"kw2\">else</span> <span class=\"br0\">{</span>\n\t\t\t\t\t\t<span\
+      \ class=\"co1\">// e.g. 'laugh', 'McLaughlin', 'cough', 'gough', 'rough', 'tough'</span>\n\
+      \t\t\t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span\
+      \ class=\"br0\">(</span>cur <span class=\"sy0\">&gt;</span> <span class=\"nu0\"\
+      >2</span><span class=\"br0\">)</span>\n\t\t\t\t\t\t\t<span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"br0\">(</span><span class=\"kw3\">Mid</span><span class=\"br0\"\
+      >(</span>in, cur <span class=\"sy0\">-</span> <span class=\"nu0\">1</span>,\
+      \ <span class=\"nu0\">1</span><span class=\"br0\">)</span> <span class=\"sy0\"\
+      >==</span> <span class=\"st0\">\"U\"</span><span class=\"br0\">)</span>\n\t\t\
+      \t\t\t\t\t<span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw3\">InStr</span><span class=\"br0\">(</span><span class=\"st0\"\
+      >\"CGLRT\"</span>, <span class=\"kw3\">mid</span><span class=\"br0\">(</span>in,\
+      \ cur <span class=\"sy0\">-</span> <span class=\"nu0\">3</span>, <span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">&gt;</span> <span class=\"sy0\">-</span><span class=\"nu0\"\
+      >1</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\t\t\t\t\
+      \t<span class=\"br0\">{</span>\n\t\t\t\t\t\t\tprim <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"F\"</span>;\n\t\t\t\t\t\t\tsec  <span class=\"sy0\"\
+      >$=</span> <span class=\"st0\">\"F\"</span>;\n\t\t\t\t\t\t<span class=\"br0\"\
+      >}</span>\n\t\t\t\t\t\t<span class=\"kw2\">else</span> <span class=\"br0\">{</span>\n\
+      \t\t\t\t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span\
+      \ class=\"br0\">(</span>cur <span class=\"sy0\">&gt;</span> <span class=\"nu0\"\
+      >0</span><span class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"kw3\">mid</span><span class=\"br0\">(</span>in, cur <span class=\"\
+      sy0\">-</span> <span class=\"nu0\">1</span>, <span class=\"nu0\">1</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">!=</span> <span class=\"st0\">\"\
+      I\"</span><span class=\"br0\">)</span>\n\t\t\t\t\t\t\t<span class=\"br0\">{</span>\n\
+      \t\t\t\t\t\t\t\tprim <span class=\"sy0\">$=</span> <span class=\"st0\">\"K\"\
+      </span>;\n\t\t\t\t\t\t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"\
+      st0\">\"K\"</span>;\n\t\t\t\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t\t\t\
+      \tcur <span class=\"sy0\">+=</span> <span class=\"nu0\">2</span>;\n\t\t\t\t\t\
+      \t\t<span class=\"kw2\">break</span>;\n\t\t\t\t\t\t<span class=\"br0\">}</span>\n\
+      \t\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t<span class=\"br0\">}</span>\n\
+      \ \n\t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw3\">mid</span><span class=\"br0\">(</span>in, cur <span class=\"\
+      sy0\">+</span> <span class=\"nu0\">1</span>, <span class=\"nu0\">1</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"\
+      N\"</span><span class=\"br0\">)</span>\n\t\t\t\t<span class=\"br0\">{</span>\n\
+      \t\t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      br0\">(</span>cur <span class=\"sy0\">==</span> <span class=\"nu0\">1</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span> is_vowel<span\
+      \ class=\"br0\">(</span>in, <span class=\"nu0\">0</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"sy0\">!</span>Slavo_Germanic<span\
+      \ class=\"br0\">(</span>in<span class=\"br0\">)</span><span class=\"br0\">)</span>\n\
+      \t\t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\t\tprim <span class=\"sy0\"\
+      >$=</span> <span class=\"st0\">\"KN\"</span>;\n\t\t\t\t\t\tsec  <span class=\"\
+      sy0\">$=</span> <span class=\"st0\">\"N\"</span>;\n\t\t\t\t\t<span class=\"\
+      br0\">}</span>\n\t\t\t\t\t<span class=\"kw2\">else</span> <span class=\"br0\"\
+      >{</span>\n\t\t\t\t\t\t<span class=\"co1\">// not e.g. 'cagney'</span>\n\t\t\
+      \t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      br0\">(</span><span class=\"kw3\">mid</span><span class=\"br0\">(</span>in,\
+      \ cur <span class=\"sy0\">+</span> <span class=\"nu0\">2</span>, <span class=\"\
+      nu0\">2</span><span class=\"br0\">)</span> <span class=\"sy0\">!=</span> <span\
+      \ class=\"st0\">\"EY\"</span><span class=\"br0\">)</span>\n\t\t\t\t\t\t\t<span\
+      \ class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span><span class=\"\
+      kw3\">mid</span><span class=\"br0\">(</span>in, cur <span class=\"sy0\">+</span>\
+      \ <span class=\"nu0\">1</span><span class=\"br0\">)</span> <span class=\"sy0\"\
+      >!=</span> <span class=\"st0\">\"Y\"</span><span class=\"br0\">)</span>\n\t\t\
+      \t\t\t\t\t<span class=\"sy0\">&amp;&amp;</span> <span class=\"sy0\">!</span>Slavo_Germanic<span\
+      \ class=\"br0\">(</span>in<span class=\"br0\">)</span><span class=\"br0\">)</span>\n\
+      \t\t\t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\t\t\tprim <span class=\"\
+      sy0\">$=</span> <span class=\"st0\">\"N\"</span>;\n\t\t\t\t\t\t\tsec  <span\
+      \ class=\"sy0\">$=</span> <span class=\"st0\">\"KN\"</span>;\n\t\t\t\t\t\t<span\
+      \ class=\"br0\">}</span>\n\t\t\t\t\t\t<span class=\"kw2\">else</span> <span\
+      \ class=\"br0\">{</span>\n\t\t\t\t\t\t\tprim <span class=\"sy0\">$=</span> <span\
+      \ class=\"st0\">\"KN\"</span>;\n\t\t\t\t\t\t\tsec  <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"KN\"</span>;\n\t\t\t\t\t\t<span class=\"br0\">}</span>\n\
+      \t\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t\tcur <span class=\"sy0\">+=</span>\
+      \ <span class=\"nu0\">2</span>;\n\t\t\t\t\t<span class=\"kw2\">break</span>;\n\
+      \t\t\t\t<span class=\"br0\">}</span>\n \n\t\t\t\t<span class=\"co1\">// 'tagliaro'</span>\n\
+      \t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      br0\">(</span><span class=\"kw3\">mid</span><span class=\"br0\">(</span>in,\
+      \ cur <span class=\"sy0\">+</span> <span class=\"nu0\">1</span>, <span class=\"\
+      nu0\">2</span><span class=\"br0\">)</span> <span class=\"sy0\">==</span> <span\
+      \ class=\"st0\">\"LI\"</span><span class=\"br0\">)</span> <span class=\"sy0\"\
+      >&amp;&amp;</span> <span class=\"sy0\">!</span>Slavo_Germanic<span class=\"\
+      br0\">(</span>in<span class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\
+      \t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\tprim <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"KL\"</span>;\n\t\t\t\t\tsec  <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"L\"</span>;\n\t\t\t\t\tcur <span class=\"sy0\">+=</span>\
+      \ <span class=\"nu0\">2</span>;\n\t\t\t\t\t<span class=\"kw2\">break</span>;\n\
+      \t\t\t\t<span class=\"br0\">}</span>\n \n\t\t\t\t<span class=\"co1\">// -ges-,\
+      \ -gep-, -gel- at beginning</span>\n\t\t\t\t<span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span><span class=\"br0\">(</span>cur <span class=\"sy0\"\
+      >==</span> <span class=\"nu0\">0</span><span class=\"br0\">)</span>\n\t\t\t\t\
+      \t<span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span><span class=\"\
+      br0\">(</span><span class=\"kw3\">mid</span><span class=\"br0\">(</span>in,\
+      \ cur <span class=\"sy0\">+</span> <span class=\"nu0\">1</span>, <span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span> <span class=\"sy0\">==</span> <span\
+      \ class=\"st0\">\"Y\"</span><span class=\"br0\">)</span>\n\t\t\t\t\t\t<span\
+      \ class=\"sy0\">||</span> <span class=\"br0\">(</span><span class=\"br0\">(</span>smid<span\
+      \ class=\"br0\">(</span>in, cur <span class=\"sy0\">+</span> <span class=\"\
+      nu0\">1</span>, <span class=\"nu0\">2</span>, tmp<span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">==</span> <span class=\"st0\">\"ES\"</span><span class=\"\
+      br0\">)</span>\n\t\t\t\t\t\t\t<span class=\"sy0\">||</span> <span class=\"br0\"\
+      >(</span>tmp <span class=\"sy0\">==</span> <span class=\"st0\">\"EP\"</span><span\
+      \ class=\"br0\">)</span>\n\t\t\t\t\t\t\t<span class=\"sy0\">||</span> <span\
+      \ class=\"br0\">(</span>tmp <span class=\"sy0\">==</span> <span class=\"st0\"\
+      >\"EB\"</span><span class=\"br0\">)</span>\n\t\t\t\t\t\t\t<span class=\"sy0\"\
+      >||</span> <span class=\"br0\">(</span>tmp <span class=\"sy0\">==</span> <span\
+      \ class=\"st0\">\"EL\"</span><span class=\"br0\">)</span>\n\t\t\t\t\t\t\t<span\
+      \ class=\"sy0\">||</span> <span class=\"br0\">(</span>tmp <span class=\"sy0\"\
+      >==</span> <span class=\"st0\">\"EY\"</span><span class=\"br0\">)</span>\n\t\
+      \t\t\t\t\t\t<span class=\"sy0\">||</span> <span class=\"br0\">(</span>tmp <span\
+      \ class=\"sy0\">==</span> <span class=\"st0\">\"IB\"</span><span class=\"br0\"\
+      >)</span>\n\t\t\t\t\t\t\t<span class=\"sy0\">||</span> <span class=\"br0\">(</span>tmp\
+      \ <span class=\"sy0\">==</span> <span class=\"st0\">\"IL\"</span><span class=\"\
+      br0\">)</span>\n\t\t\t\t\t\t\t<span class=\"sy0\">||</span> <span class=\"br0\"\
+      >(</span>tmp <span class=\"sy0\">==</span> <span class=\"st0\">\"IN\"</span><span\
+      \ class=\"br0\">)</span>\n\t\t\t\t\t\t\t<span class=\"sy0\">||</span> <span\
+      \ class=\"br0\">(</span>tmp <span class=\"sy0\">==</span> <span class=\"st0\"\
+      >\"IE\"</span><span class=\"br0\">)</span>\n\t\t\t\t\t\t\t<span class=\"sy0\"\
+      >||</span> <span class=\"br0\">(</span>tmp <span class=\"sy0\">==</span> <span\
+      \ class=\"st0\">\"EI\"</span><span class=\"br0\">)</span>\n\t\t\t\t\t\t\t<span\
+      \ class=\"sy0\">||</span> <span class=\"br0\">(</span>tmp <span class=\"sy0\"\
+      >==</span> <span class=\"st0\">\"ER\"</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span>\n\t\t\t\t\t\t<span class=\"br0\">)</span>\n\t\t\t\t\
+      \t<span class=\"br0\">)</span>\n\t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\
+      \t\tprim <span class=\"sy0\">$=</span> <span class=\"st0\">\"K\"</span>;\n\t\
+      \t\t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"st0\">\"J\"</span>;\n\
+      \t\t\t\t\tcur <span class=\"sy0\">+=</span> <span class=\"nu0\">2</span>;\n\t\
+      \t\t\t\t<span class=\"kw2\">break</span>;\n\t\t\t\t<span class=\"br0\">}</span>\n\
+      \ \n\t\t\t\t<span class=\"co1\">// -ger-, -gy-</span>\n\t\t\t\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">(</span><span class=\"kw3\">mid</span><span class=\"br0\">(</span>in,\
+      \ cur <span class=\"sy0\">+</span> <span class=\"nu0\">1</span>, <span class=\"\
+      nu0\">2</span><span class=\"br0\">)</span> <span class=\"sy0\">==</span> <span\
+      \ class=\"st0\">\"ER\"</span><span class=\"br0\">)</span>\n\t\t\t\t\t<span class=\"\
+      sy0\">||</span> <span class=\"br0\">(</span><span class=\"kw3\">mid</span><span\
+      \ class=\"br0\">(</span>in, cur <span class=\"sy0\">+</span> <span class=\"\
+      nu0\">1</span>, <span class=\"nu0\">1</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">==</span> <span class=\"st0\">\"Y\"</span><span class=\"br0\"\
+      >)</span><span class=\"br0\">)</span>\n\t\t\t\t\t<span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"sy0\">!</span><span class=\"br0\">(</span>smid<span class=\"\
+      br0\">(</span>in, <span class=\"nu0\">0</span>, <span class=\"nu0\">6</span>,\
+      \ tmp<span class=\"br0\">)</span> <span class=\"sy0\">==</span> <span class=\"\
+      st0\">\"DANGER\"</span>\n\t\t\t\t\t\t<span class=\"sy0\">||</span> tmp <span\
+      \ class=\"sy0\">==</span> <span class=\"st0\">\"RANGER\"</span>\n\t\t\t\t\t\t\
+      <span class=\"sy0\">||</span> tmp <span class=\"sy0\">==</span> <span class=\"\
+      st0\">\"MANGER\"</span>\n\t\t\t\t\t<span class=\"br0\">)</span>\n\t\t\t\t\t\
+      <span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span><span class=\"\
+      kw3\">InStr</span><span class=\"br0\">(</span><span class=\"st0\">\"EI\"</span>,\
+      \ <span class=\"kw3\">mid</span><span class=\"br0\">(</span>in, cur<span class=\"\
+      sy0\">-</span><span class=\"nu0\">1</span>, <span class=\"nu0\">1</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span> <span class=\"sy0\">==</span>\
+      \ <span class=\"sy0\">-</span><span class=\"nu0\">1</span><span class=\"br0\"\
+      >)</span>\n\t\t\t\t\t<span class=\"sy0\">&amp;&amp;</span> <span class=\"sy0\"\
+      >!</span><span class=\"br0\">(</span>smid<span class=\"br0\">(</span>in, cur<span\
+      \ class=\"sy0\">-</span><span class=\"nu0\">1</span>, <span class=\"nu0\">3</span>,\
+      \ tmp<span class=\"br0\">)</span> <span class=\"sy0\">==</span> <span class=\"\
+      st0\">\"RGY\"</span>\n\t\t\t\t\t\t<span class=\"sy0\">||</span> tmp <span class=\"\
+      sy0\">==</span> <span class=\"st0\">\"OGY\"</span>\n\t\t\t\t\t<span class=\"\
+      br0\">)</span><span class=\"br0\">)</span>\n\t\t\t\t<span class=\"br0\">{</span>\n\
+      \t\t\t\t\tprim <span class=\"sy0\">$=</span> <span class=\"st0\">\"K\"</span>;\n\
+      \t\t\t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"st0\">\"J\"</span>;\n\
+      \t\t\t\t\tcur <span class=\"sy0\">+=</span> <span class=\"nu0\">2</span>;\n\t\
+      \t\t\t\t<span class=\"kw2\">break</span>;\n\t\t\t\t<span class=\"br0\">}</span>\n\
+      \ \n\t\t\t\t<span class=\"co1\">// italian e.g. 'biaggi'</span>\n\t\t\t\t<span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"br0\">(</span><span\
+      \ class=\"kw3\">InStr</span><span class=\"br0\">(</span><span class=\"st0\"\
+      >\"EIY\"</span>, <span class=\"kw3\">mid</span><span class=\"br0\">(</span>in,\
+      \ cur <span class=\"sy0\">+</span> <span class=\"nu0\">1</span>, <span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">&gt;</span> <span class=\"sy0\">-</span><span class=\"nu0\"\
+      >1</span><span class=\"br0\">)</span>\n\t\t\t\t\t<span class=\"sy0\">||</span>\
+      \ smid<span class=\"br0\">(</span>in, cur<span class=\"sy0\">-</span><span class=\"\
+      nu0\">1</span>, <span class=\"nu0\">4</span>, tmp<span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">==</span> <span class=\"st0\">\"AGGI\"</span>\n\t\t\t\t\
+      \t<span class=\"sy0\">||</span> tmp <span class=\"sy0\">==</span> <span class=\"\
+      st0\">\"OGGI\"</span><span class=\"br0\">)</span>\n\t\t\t\t<span class=\"br0\"\
+      >{</span>\n\t\t\t\t\t<span class=\"co1\">// obvious germanic</span>\n\t\t\t\t\
+      \t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">(</span>smid<span class=\"br0\">(</span>in, <span\
+      \ class=\"nu0\">0</span>, <span class=\"nu0\">4</span>, tmp<span class=\"br0\"\
+      >)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"VAN \"</span>\n\
+      \t\t\t\t\t\t\t<span class=\"sy0\">||</span> tmp <span class=\"sy0\">==</span>\
+      \ <span class=\"st0\">\"VON \"</span><span class=\"br0\">)</span>\n\t\t\t\t\t\
+      \t<span class=\"sy0\">||</span> <span class=\"br0\">(</span><span class=\"kw3\"\
+      >mid</span><span class=\"br0\">(</span>in, <span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">3</span><span class=\"br0\">)</span> <span class=\"sy0\">==</span>\
+      \ <span class=\"st0\">\"SCH\"</span><span class=\"br0\">)</span><span class=\"\
+      br0\">)</span>\n\t\t\t\t\t\t<span class=\"sy0\">||</span> <span class=\"br0\"\
+      >(</span><span class=\"kw3\">mid</span><span class=\"br0\">(</span>in, cur <span\
+      \ class=\"sy0\">+</span> <span class=\"nu0\">1</span>, <span class=\"nu0\">2</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"\
+      ET\"</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\t\t\t\
+      \t<span class=\"br0\">{</span>\n\t\t\t\t\t\tprim <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"K\"</span>;\n\t\t\t\t\t\tsec  <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"K\"</span>;\n\t\t\t\t\t<span class=\"br0\">}</span>\n\
+      \t\t\t\t\t<span class=\"kw2\">else</span> <span class=\"br0\">{</span>\n\t\t\
+      \t\t\t\t<span class=\"co1\">// always soft if french ending</span>\n\t\t\t\t\
+      \t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      kw3\">mid</span><span class=\"br0\">(</span>in, cur <span class=\"sy0\">+</span>\
+      \ <span class=\"nu0\">1</span>, <span class=\"nu0\">4</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"IER \"</span><span\
+      \ class=\"br0\">)</span>\n\t\t\t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\
+      \t\t\tprim <span class=\"sy0\">$=</span> <span class=\"st0\">\"J\"</span>;\n\
+      \t\t\t\t\t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"st0\">\"J\"</span>;\n\
+      \t\t\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t\t\t<span class=\"kw2\">else</span>\
+      \ <span class=\"br0\">{</span>\n\t\t\t\t\t\t\tprim <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"J\"</span>;\n\t\t\t\t\t\t\tsec  <span class=\"sy0\"\
+      >$=</span> <span class=\"st0\">\"K\"</span>;\n\t\t\t\t\t\t<span class=\"br0\"\
+      >}</span>\n\t\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t\tcur <span class=\"\
+      sy0\">+=</span> <span class=\"nu0\">2</span>;\n\t\t\t\t\t<span class=\"kw2\"\
+      >break</span>;\n\t\t\t\t<span class=\"br0\">}</span>\n \n\t\t\t\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span><span class=\"kw3\">mid</span><span\
+      \ class=\"br0\">(</span>in, cur <span class=\"sy0\">+</span><span class=\"nu0\"\
+      >1</span>, <span class=\"nu0\">1</span><span class=\"br0\">)</span> <span class=\"\
+      sy0\">==</span> <span class=\"st0\">\"G\"</span><span class=\"br0\">)</span>\
+      \ cur <span class=\"sy0\">+=</span> <span class=\"nu0\">2</span>;\n\t\t\t\t\
+      <span class=\"kw2\">else</span> cur<span class=\"sy0\">++</span>;\n \n\t\t\t\
+      \tprim <span class=\"sy0\">$=</span> <span class=\"st0\">\"K\"</span>;\n\t\t\
+      \t\tsec  <span class=\"sy0\">$=</span> <span class=\"st0\">\"K\"</span>;\n\t\
+      \t\t\t<span class=\"kw2\">break</span>;\n \n\t\t\t<span class=\"kw2\">case</span>\
+      \ <span class=\"st0\">\"H\"</span>:\n\t\t\t\t<span class=\"co1\">// only keep\
+      \ if first &amp; before vowel or btw. 2 vowels</span>\n\t\t\t\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">(</span>cur <span class=\"sy0\">==</span> <span class=\"nu0\"\
+      >0</span><span class=\"br0\">)</span> <span class=\"sy0\">||</span> is_vowel<span\
+      \ class=\"br0\">(</span>in, cur <span class=\"sy0\">-</span> <span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">&amp;&amp;</span> is_vowel<span class=\"br0\">(</span>in, cur\
+      \ <span class=\"sy0\">+</span> <span class=\"nu0\">1</span><span class=\"br0\"\
+      >)</span><span class=\"br0\">)</span>\n\t\t\t\t<span class=\"br0\">{</span>\n\
+      \t\t\t\t\tprim <span class=\"sy0\">$=</span> <span class=\"st0\">\"H\"</span>;\n\
+      \t\t\t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"st0\">\"H\"</span>;\n\
+      \t\t\t\t\tcur <span class=\"sy0\">+=</span> <span class=\"nu0\">2</span>;\n\t\
+      \t\t\t<span class=\"br0\">}</span>\n\t\t\t\t<span class=\"kw2\">else</span>\
+      \ cur<span class=\"sy0\">++</span>;\n\t\t\t\t<span class=\"kw2\">break</span>;\n\
+      \ \n   \t\t\t<span class=\"kw2\">case</span> <span class=\"st0\">\"J\"</span>:\n\
+      \t\t\t\t<span class=\"co1\">// obvious spanish, 'jose', 'san jacinto'</span>\n\
+      \t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      br0\">(</span><span class=\"kw3\">mid</span><span class=\"br0\">(</span>in,\
+      \ cur, <span class=\"nu0\">4</span><span class=\"br0\">)</span> <span class=\"\
+      sy0\">==</span> <span class=\"st0\">\"JOSE\"</span><span class=\"br0\">)</span>\n\
+      \t\t\t\t\t<span class=\"sy0\">||</span> <span class=\"br0\">(</span><span class=\"\
+      kw3\">mid</span><span class=\"br0\">(</span>in, <span class=\"nu0\">0</span>,\
+      \ <span class=\"nu0\">4</span><span class=\"br0\">)</span> <span class=\"sy0\"\
+      >==</span> <span class=\"st0\">\"SAN \"</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span>\n\t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\t<span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">(</span>cur <span class=\"sy0\">==</span> <span class=\"nu0\"\
+      >0</span><span class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"br0\">(</span><span class=\"kw3\">mid</span><span class=\"br0\"\
+      >(</span>in, cur <span class=\"sy0\">+</span> <span class=\"nu0\">4</span>,\
+      \ <span class=\"nu0\">1</span><span class=\"br0\">)</span> <span class=\"sy0\"\
+      >==</span> <span class=\"st0\">\" \"</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span>\n\t\t\t\t\t\t<span class=\"sy0\">||</span> <span class=\"\
+      br0\">(</span><span class=\"kw3\">mid</span><span class=\"br0\">(</span>in,\
+      \ <span class=\"nu0\">0</span>, <span class=\"nu0\">4</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"SAN \"</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\t\t\t\t<span class=\"\
+      br0\">{</span>\n\t\t\t\t\t\tprim <span class=\"sy0\">$=</span> <span class=\"\
+      st0\">\"H\"</span>;\n\t\t\t\t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"\
+      st0\">\"H\"</span>;\n\t\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t\t<span\
+      \ class=\"kw2\">else</span> <span class=\"br0\">{</span>\n\t\t\t\t\t\tprim <span\
+      \ class=\"sy0\">$=</span> <span class=\"st0\">\"J\"</span>;\n\t\t\t\t\t\tsec\
+      \  <span class=\"sy0\">$=</span> <span class=\"st0\">\"H\"</span>;\n\t\t\t\t\
+      \t<span class=\"br0\">}</span>\n\t\t\t\t\tcur<span class=\"sy0\">++</span>;\n\
+      \t\t\t\t\t<span class=\"kw2\">break</span>;\n\t\t\t\t<span class=\"br0\">}</span>\n\
+      \ \n\t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span\
+      \ class=\"br0\">(</span>cur <span class=\"sy0\">==</span> <span class=\"nu0\"\
+      >0</span><span class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"br0\">(</span><span class=\"kw3\">mid</span><span class=\"br0\"\
+      >(</span>in, cur, <span class=\"nu0\">4</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">!=</span> <span class=\"st0\">\"JOSE\"</span><span class=\"\
+      br0\">)</span><span class=\"br0\">)</span>\n\t\t\t\t<span class=\"br0\">{</span>\n\
+      \t\t\t\t\tprim <span class=\"sy0\">$=</span> <span class=\"st0\">\"J\"</span>;\
+      \  <span class=\"co1\">// Yankelovich/Jankelowicz</span>\n\t\t\t\t\tsec  <span\
+      \ class=\"sy0\">$=</span> <span class=\"st0\">\"A\"</span>;\n\t\t\t\t<span class=\"\
+      br0\">}</span>\n\t\t\t\t<span class=\"kw2\">else</span> <span class=\"br0\"\
+      >{</span>\n\t\t\t\t\t<span class=\"co1\">// spanish pron. of .e.g. 'bajador'</span>\n\
+      \t\t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>is_vowel<span\
+      \ class=\"br0\">(</span>in, cur <span class=\"sy0\">-</span> <span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span>\n\t\t\t\t\t\t<span class=\"sy0\"\
+      >&amp;&amp;</span> <span class=\"sy0\">!</span>Slavo_Germanic<span class=\"\
+      br0\">(</span>in<span class=\"br0\">)</span>\n\t\t\t\t\t\t<span class=\"sy0\"\
+      >&amp;&amp;</span> <span class=\"br0\">(</span><span class=\"br0\">(</span><span\
+      \ class=\"kw3\">mid</span><span class=\"br0\">(</span>in, cur <span class=\"\
+      sy0\">+</span> <span class=\"nu0\">1</span>, <span class=\"nu0\">1</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"\
+      A\"</span><span class=\"br0\">)</span>\n\t\t\t\t\t\t<span class=\"sy0\">||</span>\
+      \ <span class=\"br0\">(</span><span class=\"kw3\">mid</span><span class=\"br0\"\
+      >(</span>in, cur <span class=\"sy0\">+</span> <span class=\"nu0\">1</span>,\
+      \ <span class=\"nu0\">1</span><span class=\"br0\">)</span> <span class=\"sy0\"\
+      >==</span> <span class=\"st0\">\"O\"</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\t\t\t\t<span class=\"\
+      br0\">{</span>\n\t\t\t\t\t\tprim <span class=\"sy0\">$=</span> <span class=\"\
+      st0\">\"J\"</span>;\n\t\t\t\t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"\
+      st0\">\"H\"</span>;\n\t\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t\t<span\
+      \ class=\"kw2\">else</span> <span class=\"br0\">{</span>\n\t\t\t\t\t\t<span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span>cur <span class=\"sy0\"\
+      >==</span> last<span class=\"br0\">)</span>\n\t\t\t\t\t\t<span class=\"br0\"\
+      >{</span>\n\t\t\t\t\t\t\tprim <span class=\"sy0\">$=</span> <span class=\"st0\"\
+      >\"J\"</span>;\n\t\t\t\t\t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"\
+      st0\">\"\"</span>;\n\t\t\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t\t\t<span\
+      \ class=\"kw2\">else</span> <span class=\"br0\">{</span>\n\t\t\t\t\t\t\t<span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"br0\">(</span><span\
+      \ class=\"kw3\">InStr</span><span class=\"br0\">(</span><span class=\"st0\"\
+      >\"LTKSNMBZ\"</span>, <span class=\"kw3\">mid</span><span class=\"br0\">(</span>in,\
+      \ cur <span class=\"sy0\">+</span> <span class=\"nu0\">1</span>, <span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">==</span> <span class=\"sy0\">-</span><span class=\"nu0\">1</span><span\
+      \ class=\"br0\">)</span>\n\t\t\t\t\t\t\t\t<span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"br0\">(</span><span class=\"kw3\">InStr</span><span class=\"\
+      br0\">(</span><span class=\"st0\">\"SKL\"</span>, <span class=\"kw3\">mid</span><span\
+      \ class=\"br0\">(</span>in, cur <span class=\"sy0\">-</span> <span class=\"\
+      nu0\">1</span>, <span class=\"nu0\">1</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">==</span> <span class=\"sy0\">-</span><span\
+      \ class=\"nu0\">1</span><span class=\"br0\">)</span> <span class=\"br0\">)</span>\n\
+      \t\t\t\t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\t\t\t\tprim <span class=\"\
+      sy0\">$=</span> <span class=\"st0\">\"J\"</span>;\n\t\t\t\t\t\t\t\tsec  <span\
+      \ class=\"sy0\">$=</span> <span class=\"st0\">\"J\"</span>;\n\t\t\t\t\t\t\t\
+      <span class=\"br0\">}</span>\n\t\t\t\t\t\t<span class=\"br0\">}</span>\n\t\t\
+      \t\t\t<span class=\"br0\">}</span>\n\t\t\t\t<span class=\"br0\">}</span>\n \n\
+      \t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      kw3\">mid</span><span class=\"br0\">(</span>in, cur <span class=\"sy0\">+</span>\
+      \ <span class=\"nu0\">1</span>, <span class=\"nu0\">1</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"J\"</span><span\
+      \ class=\"br0\">)</span> <span class=\"co1\">// it could happen</span>\n\t\t\
+      \t\t\tcur <span class=\"sy0\">+=</span> <span class=\"nu0\">2</span>;\n\t\t\t\
+      \t<span class=\"kw2\">else</span>\n\t\t\t\t\tcur<span class=\"sy0\">++</span>;\n\
+      \t\t\t\t<span class=\"kw2\">break</span>;\n \n\t\t\t<span class=\"kw2\">case</span>\
+      \ <span class=\"st0\">\"K\"</span>:\n\t\t\t\t<span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span><span class=\"kw3\">mid</span><span class=\"br0\">(</span>in,\
+      \ cur <span class=\"sy0\">+</span> <span class=\"nu0\">1</span>, <span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span> <span class=\"sy0\">==</span> <span\
+      \ class=\"st0\">\"K\"</span><span class=\"br0\">)</span> cur <span class=\"\
+      sy0\">+=</span> <span class=\"nu0\">2</span>;\n\t\t\t\t<span class=\"kw2\">else</span>\
+      \ cur<span class=\"sy0\">++</span>;\n\t\t\t\tprim <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"K\"</span>;\n\t\t\t\tsec  <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"K\"</span>;\n\t\t\t\t<span class=\"kw2\">break</span>;\n\
+      \ \n\t\t\t<span class=\"kw2\">case</span> <span class=\"st0\">\"L\"</span>:\n\
+      \t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      kw3\">mid</span><span class=\"br0\">(</span>in, cur <span class=\"sy0\">+</span>\
+      \ <span class=\"nu0\">1</span>, <span class=\"nu0\">1</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"L\"</span><span\
+      \ class=\"br0\">)</span>\n\t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\t<span\
+      \ class=\"co1\">// spanish e.g. 'cabrillo', 'gallegos'</span>\n\t\t\t\t\t<span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">(</span>cur <span class=\"sy0\">==</span> <span class=\"br0\"\
+      >(</span>slen <span class=\"sy0\">-</span> <span class=\"nu0\">3</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\t\t\t\t\t<span class=\"\
+      sy0\">&amp;&amp;</span> <span class=\"br0\">(</span>smid<span class=\"br0\"\
+      >(</span>in, cur<span class=\"sy0\">-</span><span class=\"nu0\">1</span>, <span\
+      \ class=\"nu0\">4</span>, tmp<span class=\"br0\">)</span> <span class=\"sy0\"\
+      >==</span> <span class=\"st0\">\"ILLO\"</span>\n\t\t\t\t\t\t\t<span class=\"\
+      sy0\">||</span> tmp <span class=\"sy0\">==</span> <span class=\"st0\">\"ILLA\"\
+      </span>\n\t\t\t\t\t\t\t<span class=\"sy0\">||</span> tmp <span class=\"sy0\"\
+      >==</span> <span class=\"st0\">\"ALLE\"</span>\n\t\t\t\t\t\t<span class=\"br0\"\
+      >)</span>\n\t\t\t\t\t\t<span class=\"sy0\">||</span> <span class=\"br0\">(</span>\n\
+      \t\t\t\t\t\t\t<span class=\"br0\">(</span><span class=\"br0\">(</span>smid<span\
+      \ class=\"br0\">(</span>in, last<span class=\"sy0\">-</span><span class=\"nu0\"\
+      >1</span>, <span class=\"nu0\">2</span>, tmp<span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">==</span> <span class=\"st0\">\"AS\"</span>\n\t\t\t\t\t\t\t\t\
+      <span class=\"sy0\">||</span> tmp <span class=\"sy0\">==</span> <span class=\"\
+      st0\">\"OS\"</span><span class=\"br0\">)</span>\n\t\t\t\t\t\t\t\t<span class=\"\
+      sy0\">||</span> <span class=\"br0\">(</span><span class=\"kw3\">InStr</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">\"AO\"</span>, <span class=\"kw3\"\
+      >mid</span><span class=\"br0\">(</span>in, last, <span class=\"nu0\">1</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span> <span class=\"sy0\">&gt;</span>\
+      \ <span class=\"sy0\">-</span><span class=\"nu0\">1</span><span class=\"br0\"\
+      >)</span>\n\t\t\t\t\t\t\t<span class=\"br0\">)</span>\n\t\t\t\t\t\t\t<span class=\"\
+      sy0\">&amp;&amp;</span> <span class=\"br0\">(</span><span class=\"kw3\">mid</span><span\
+      \ class=\"br0\">(</span>in, cur <span class=\"sy0\">-</span> <span class=\"\
+      nu0\">1</span>, <span class=\"nu0\">4</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">==</span> <span class=\"st0\">\"ALLE\"</span><span class=\"\
+      br0\">)</span>\n\t\t\t\t\t\t\t<span class=\"br0\">)</span>\n\t\t\t\t\t\t<span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\t\t\t\t<span class=\"\
+      br0\">{</span>\n\t\t\t\t\t\tprim <span class=\"sy0\">$=</span> <span class=\"\
+      st0\">\"L\"</span>;\n\t\t\t\t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"\
+      st0\">\"\"</span>;\n\t\t\t\t\t\tcur <span class=\"sy0\">+=</span> <span class=\"\
+      nu0\">2</span>;\n\t\t\t\t\t\t<span class=\"kw2\">break</span>;\n\t\t\t\t\t<span\
+      \ class=\"br0\">}</span>\n\t\t\t\t\tcur <span class=\"sy0\">+=</span> <span\
+      \ class=\"nu0\">2</span>;\n\t\t\t\t<span class=\"br0\">}</span> <span class=\"\
+      kw2\">else</span> cur<span class=\"sy0\">++</span>;\n\t\t\t\tprim <span class=\"\
+      sy0\">$=</span> <span class=\"st0\">\"L\"</span>;\n\t\t\t\tsec  <span class=\"\
+      sy0\">$=</span> <span class=\"st0\">\"L\"</span>;\n\t\t\t\t<span class=\"kw2\"\
+      >break</span>;\n \n\t\t\t<span class=\"kw2\">case</span> <span class=\"st0\"\
+      >\"M\"</span>:\n\t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">(</span><span class=\"kw3\">mid</span><span\
+      \ class=\"br0\">(</span>in, cur<span class=\"sy0\">-</span><span class=\"nu0\"\
+      >1</span>, <span class=\"nu0\">3</span><span class=\"br0\">)</span> <span class=\"\
+      sy0\">==</span> <span class=\"st0\">\"UMB\"</span><span class=\"br0\">)</span>\n\
+      \t\t\t\t\t<span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">(</span>cur <span class=\"sy0\"\
+      >+</span> <span class=\"nu0\">1</span><span class=\"br0\">)</span> <span class=\"\
+      sy0\">==</span> last<span class=\"br0\">)</span>\n\t\t\t\t\t<span class=\"sy0\"\
+      >||</span> <span class=\"br0\">(</span><span class=\"kw3\">mid</span><span class=\"\
+      br0\">(</span>in, cur<span class=\"sy0\">+</span><span class=\"nu0\">2</span>,\
+      \ <span class=\"nu0\">2</span><span class=\"br0\">)</span> <span class=\"sy0\"\
+      >==</span> <span class=\"st0\">\"ER\"</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\t\t\t\t<span class=\"\
+      co1\">// 'dumb', 'thumb'</span>\n\t\t\t\t\t<span class=\"sy0\">||</span> <span\
+      \ class=\"br0\">(</span><span class=\"kw3\">mid</span><span class=\"br0\">(</span>in,\
+      \ cur <span class=\"sy0\">+</span> <span class=\"nu0\">1</span>, <span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span> <span class=\"sy0\">==</span> <span\
+      \ class=\"st0\">\"M\"</span><span class=\"br0\">)</span><span class=\"br0\"\
+      >)</span>\n\t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\tcur <span class=\"\
+      sy0\">+=</span> <span class=\"nu0\">2</span>;\n\t\t\t\t<span class=\"br0\">}</span>\n\
+      \t\t\t\t<span class=\"kw2\">else</span> <span class=\"br0\">{</span>\n\t\t\t\
+      \t\tcur<span class=\"sy0\">++</span>;\n\t\t\t\t<span class=\"br0\">}</span>\n\
+      \t\t\t\tprim <span class=\"sy0\">$=</span> <span class=\"st0\">\"M\"</span>;\n\
+      \t\t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"st0\">\"M\"</span>;\n\
+      \t\t\t\t<span class=\"kw2\">break</span>;\n \n\t\t\t<span class=\"kw2\">case</span>\
+      \ <span class=\"st0\">\"N\"</span>:\n\t\t\t\t<span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span><span class=\"kw3\">mid</span><span class=\"br0\">(</span>in,\
+      \ cur <span class=\"sy0\">+</span> <span class=\"nu0\">1</span>, <span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span> <span class=\"sy0\">==</span> <span\
+      \ class=\"st0\">\"N\"</span><span class=\"br0\">)</span> cur <span class=\"\
+      sy0\">+=</span> <span class=\"nu0\">2</span>;\n\t\t\t\t<span class=\"kw2\">else</span>\
+      \ cur<span class=\"sy0\">++</span>;\n\t\t\t\tprim <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"N\"</span>;\n\t\t\t\tsec  <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"N\"</span>;\n\t\t\t\t<span class=\"kw2\">break</span>;\n\
+      \ \n\t\t\t<span class=\"kw2\">case</span> <span class=\"st0\">\"Ñ\"</span>:\n\
+      \t\t\t\tcur<span class=\"sy0\">++</span>;\n\t\t\t\tprim <span class=\"sy0\"\
+      >$=</span> <span class=\"st0\">\"N\"</span>;\n\t\t\t\tsec  <span class=\"sy0\"\
+      >$=</span> <span class=\"st0\">\"N\"</span>;\n\t\t\t\t<span class=\"kw2\">break</span>;\n\
+      \ \n\t\t\t<span class=\"kw2\">case</span> <span class=\"st0\">\"P\"</span>:\n\
+      \t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      kw3\">mid</span><span class=\"br0\">(</span>in, cur <span class=\"sy0\">+</span>\
+      \ <span class=\"nu0\">1</span>, <span class=\"nu0\">1</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"H\"</span><span\
+      \ class=\"br0\">)</span>\n\t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\tcur\
+      \ <span class=\"sy0\">+=</span> <span class=\"nu0\">2</span>;\n\t\t\t\t\tprim\
+      \ <span class=\"sy0\">$=</span> <span class=\"st0\">\"F\"</span>;\n\t\t\t\t\t\
+      sec  <span class=\"sy0\">$=</span> <span class=\"st0\">\"F\"</span>;\n\t\t\t\
+      \t\t<span class=\"kw2\">break</span>;\n\t\t\t\t<span class=\"br0\">}</span>\n\
+      \ \n\t\t\t\t<span class=\"co1\">// also account for \"campbell\" and \"raspberry\"\
+      </span>\n\t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw3\">InStr</span><span class=\"br0\">(</span><span class=\"st0\"\
+      >\"PB\"</span>, <span class=\"kw3\">Mid</span><span class=\"br0\">(</span>in,\
+      \ cur <span class=\"sy0\">+</span> <span class=\"nu0\">1</span>, <span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">&gt;</span> <span class=\"sy0\">-</span><span class=\"nu0\"\
+      >1</span><span class=\"br0\">)</span>\n\t\t\t\t\tcur <span class=\"sy0\">+=</span>\
+      \ <span class=\"nu0\">2</span>;\n\t\t\t\t<span class=\"kw2\">else</span>\n\t\
+      \t\t\t\tcur<span class=\"sy0\">++</span>;\n\t\t\t\tprim <span class=\"sy0\"\
+      >$=</span> <span class=\"st0\">\"P\"</span>;\n\t\t\t\tsec  <span class=\"sy0\"\
+      >$=</span> <span class=\"st0\">\"P\"</span>;\n\t\t\t\t<span class=\"kw2\">break</span>;\n\
+      \ \n   \t\t\t<span class=\"kw2\">case</span> <span class=\"st0\">\"Q\"</span>:\n\
+      \t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      kw3\">mid</span><span class=\"br0\">(</span>in, cur <span class=\"sy0\">+</span>\
+      \ <span class=\"nu0\">1</span>, <span class=\"nu0\">1</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"Q\"</span><span\
+      \ class=\"br0\">)</span> cur <span class=\"sy0\">+=</span> <span class=\"nu0\"\
+      >2</span>;\n\t\t\t\t<span class=\"kw2\">else</span> cur<span class=\"sy0\">++</span>;\n\
+      \t\t\t\tprim <span class=\"sy0\">$=</span> <span class=\"st0\">\"K\"</span>;\n\
+      \t\t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"st0\">\"K\"</span>;\n\
+      \t\t\t\t<span class=\"kw2\">break</span>;\n \n\t\t\t<span class=\"kw2\">case</span>\
+      \ <span class=\"st0\">\"R\"</span>:\n\t\t\t\t<span class=\"co1\">// french e.g.\
+      \ 'rogier', but exclude 'hochmeier'</span>\n\t\t\t\t<span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span><span class=\"br0\">(</span>cur <span class=\"\
+      sy0\">==</span> last<span class=\"br0\">)</span>\n\t\t\t\t\t<span class=\"sy0\"\
+      >&amp;&amp;</span> <span class=\"sy0\">!</span>Slavo_Germanic<span class=\"\
+      br0\">(</span>in<span class=\"br0\">)</span>\n\t\t\t\t\t<span class=\"sy0\"\
+      >&amp;&amp;</span> <span class=\"br0\">(</span><span class=\"kw3\">mid</span><span\
+      \ class=\"br0\">(</span>in, cur <span class=\"sy0\">-</span> <span class=\"\
+      nu0\">2</span>, <span class=\"nu0\">2</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">==</span> <span class=\"st0\">\"IE\"</span><span class=\"br0\"\
+      >)</span>\n\t\t\t\t\t<span class=\"sy0\">&amp;&amp;</span> <span class=\"sy0\"\
+      >!</span><span class=\"br0\">(</span>smid<span class=\"br0\">(</span>in, cur<span\
+      \ class=\"sy0\">-</span><span class=\"nu0\">4</span>, <span class=\"nu0\">2</span>,\
+      \ tmp<span class=\"br0\">)</span> <span class=\"sy0\">==</span> <span class=\"\
+      st0\">\"ME\"</span>\n\t\t\t\t\t\t<span class=\"sy0\">||</span> tmp <span class=\"\
+      sy0\">==</span> <span class=\"st0\">\"MA\"</span>\n\t\t\t\t\t<span class=\"\
+      br0\">)</span><span class=\"br0\">)</span>\n\t\t\t\t<span class=\"br0\">{</span>\n\
+      \t\t\t\t\tprim <span class=\"sy0\">$=</span> <span class=\"st0\">\"\"</span>;\n\
+      \t\t\t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"st0\">\"R\"</span>;\n\
+      \t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t<span class=\"kw2\">else</span>\
+      \ <span class=\"br0\">{</span>\n\t\t\t\t\tprim <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"R\"</span>;\n\t\t\t\t\tsec  <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"R\"</span>;\n\t\t\t\t<span class=\"br0\">}</span>\n\t\
+      \t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      kw3\">mid</span><span class=\"br0\">(</span>in, cur <span class=\"sy0\">+</span>\
+      \ <span class=\"nu0\">1</span>, <span class=\"nu0\">1</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"R\"</span><span\
+      \ class=\"br0\">)</span> cur <span class=\"sy0\">+=</span> <span class=\"nu0\"\
+      >2</span>;\n\t\t\t\t<span class=\"kw2\">else</span> cur<span class=\"sy0\">++</span>;\n\
+      \t\t\t\t<span class=\"kw2\">break</span>;\n \n\t\t\t<span class=\"kw2\">case</span>\
+      \ <span class=\"st0\">\"S\"</span>:\n\t\t\t\t<span class=\"co1\">// special\
+      \ cases 'island', 'isle', 'carlisle', 'carlysle'</span>\n\t\t\t\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span><span class=\"br0\">(</span>smid<span\
+      \ class=\"br0\">(</span>in, cur <span class=\"sy0\">-</span> <span class=\"\
+      nu0\">1</span>, <span class=\"nu0\">3</span>, tmp<span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">==</span> <span class=\"st0\">\"ISL\"</span><span class=\"\
+      br0\">)</span>\n\t\t\t\t\t<span class=\"sy0\">||</span> <span class=\"br0\"\
+      >(</span>tmp <span class=\"sy0\">==</span> <span class=\"st0\">\"YSL\"</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\t\t\t<span class=\"\
+      br0\">{</span>\n\t\t\t\t\tcur<span class=\"sy0\">++</span>;\n\t\t\t\t\t<span\
+      \ class=\"kw2\">break</span>;\n\t\t\t\t<span class=\"br0\">}</span>\n \n\t\t\
+      \t\t<span class=\"co1\">// special case 'sugar-'</span>\n\t\t\t\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span><span class=\"br0\">(</span>cur\
+      \ <span class=\"sy0\">==</span> <span class=\"nu0\">0</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw3\">mid</span><span class=\"br0\">(</span>in, cur, <span class=\"\
+      nu0\">5</span><span class=\"br0\">)</span> <span class=\"sy0\">==</span> <span\
+      \ class=\"st0\">\"SUGAR\"</span><span class=\"br0\">)</span><span class=\"br0\"\
+      >)</span>\n\t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\tprim <span class=\"\
+      sy0\">$=</span> <span class=\"st0\">\"X\"</span>;\n\t\t\t\t\tsec  <span class=\"\
+      sy0\">$=</span> <span class=\"st0\">\"S\"</span>;\n\t\t\t\t\tcur<span class=\"\
+      sy0\">++</span>;\n\t\t\t\t\t<span class=\"kw2\">break</span>;\n\t\t\t\t<span\
+      \ class=\"br0\">}</span>\n \n\t\t\t\t<span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span><span class=\"kw3\">mid</span><span class=\"br0\">(</span>in,\
+      \ cur, <span class=\"nu0\">2</span><span class=\"br0\">)</span> <span class=\"\
+      sy0\">==</span> <span class=\"st0\">\"SH\"</span><span class=\"br0\">)</span>\n\
+      \t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\t<span class=\"co1\">// germanic</span>\n\
+      \t\t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>smid<span\
+      \ class=\"br0\">(</span>in, cur <span class=\"sy0\">+</span> <span class=\"\
+      nu0\">1</span>, <span class=\"nu0\">4</span>, tmp<span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">==</span> <span class=\"st0\">\"HEIM\"</span>\n\t\t\t\t\
+      \t\t<span class=\"sy0\">||</span> tmp <span class=\"sy0\">==</span> <span class=\"\
+      st0\">\"HOEK\"</span>\n\t\t\t\t\t\t<span class=\"sy0\">||</span> tmp <span class=\"\
+      sy0\">==</span> <span class=\"st0\">\"HOLM\"</span>\n\t\t\t\t\t\t<span class=\"\
+      sy0\">||</span> tmp <span class=\"sy0\">==</span> <span class=\"st0\">\"HOLZ\"\
+      </span><span class=\"br0\">)</span>\n\t\t\t\t\t<span class=\"br0\">{</span>\n\
+      \t\t\t\t\t\tprim <span class=\"sy0\">$=</span> <span class=\"st0\">\"S\"</span>;\n\
+      \t\t\t\t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"st0\">\"S\"</span>;\n\
+      \t\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t\t<span class=\"kw2\">else</span>\
+      \ <span class=\"br0\">{</span>\n\t\t\t\t\t\tprim <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"X\"</span>;\n\t\t\t\t\t\tsec  <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"X\"</span>;\n\t\t\t\t\t<span class=\"br0\">}</span>\n\
+      \t\t\t\t\tcur <span class=\"sy0\">+=</span> <span class=\"nu0\">2</span>;\n\t\
+      \t\t\t\t<span class=\"kw2\">break</span>;\n\t\t\t\t<span class=\"br0\">}</span>\n\
+      \ \n\t\t\t\t<span class=\"co1\">// italian &amp; armenian</span>\n\t\t\t\t<span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span>smid<span class=\"br0\"\
+      >(</span>in, cur, <span class=\"nu0\">3</span>, tmp<span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">==</span> <span class=\"st0\">\"SIO\"</span>\n\t\t\t\t\
+      \t<span class=\"sy0\">||</span> tmp <span class=\"sy0\">==</span> <span class=\"\
+      st0\">\"SIA\"</span>\n\t\t\t\t\t<span class=\"sy0\">||</span> <span class=\"\
+      kw3\">mid</span><span class=\"br0\">(</span>in, cur, <span class=\"nu0\">4</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"\
+      SIAN\"</span><span class=\"br0\">)</span>\n\t\t\t\t<span class=\"br0\">{</span>\n\
+      \t\t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      sy0\">!</span>Slavo_Germanic<span class=\"br0\">(</span>in<span class=\"br0\"\
+      >)</span><span class=\"br0\">)</span>\n\t\t\t\t\t<span class=\"br0\">{</span>\n\
+      \t\t\t\t\t\tprim <span class=\"sy0\">$=</span> <span class=\"st0\">\"S\"</span>;\n\
+      \t\t\t\t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"st0\">\"X\"</span>;\n\
+      \t\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t\t<span class=\"kw2\">else</span>\
+      \ <span class=\"br0\">{</span>\n\t\t\t\t\t\tprim <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"S\"</span>;\n\t\t\t\t\t\tsec  <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"S\"</span>;\n\t\t\t\t\t<span class=\"br0\">}</span>\n\
+      \t\t\t\t\tcur <span class=\"sy0\">+=</span> <span class=\"nu0\">3</span>;\n\t\
+      \t\t\t\t<span class=\"kw2\">break</span>;\n\t\t\t\t<span class=\"br0\">}</span>\n\
+      \ \n\t\t\t\t<span class=\"co1\">// german &amp; anglicisations, e.g. 'smith'\
+      \ match 'schmidt', 'snider' match 'schneider'</span>\n\t\t\t\t<span class=\"\
+      co1\">// also, -sz- in slavic language altho in hungarian it is pronounced 's'</span>\n\
+      \t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      br0\">(</span>\n\t\t\t\t\t\t<span class=\"br0\">(</span>cur <span class=\"sy0\"\
+      >==</span> <span class=\"nu0\">0</span><span class=\"br0\">)</span>\n\t\t\t\t\
+      \t\t<span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw3\">InStr</span><span class=\"br0\">(</span><span class=\"st0\"\
+      >\"MNLW\"</span>, <span class=\"kw3\">mid</span><span class=\"br0\">(</span>in,\
+      \ cur <span class=\"sy0\">+</span> <span class=\"nu0\">1</span>, <span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">&gt;</span> <span class=\"sy0\">-</span><span class=\"nu0\"\
+      >1</span><span class=\"br0\">)</span>\n\t\t\t\t\t<span class=\"br0\">)</span>\n\
+      \t\t\t\t\t<span class=\"sy0\">||</span> <span class=\"kw3\">mid</span><span\
+      \ class=\"br0\">(</span>in, cur <span class=\"sy0\">+</span> <span class=\"\
+      nu0\">1</span>, <span class=\"nu0\">1</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">==</span> <span class=\"st0\">\"Z\"</span><span class=\"br0\"\
+      >)</span>\n\t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\tprim <span class=\"\
+      sy0\">$=</span> <span class=\"st0\">\"S\"</span>;\n\t\t\t\t\tsec  <span class=\"\
+      sy0\">$=</span> <span class=\"st0\">\"X\"</span>;\n\t\t\t\t\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span><span class=\"kw3\">mid</span><span\
+      \ class=\"br0\">(</span>in, cur <span class=\"sy0\">+</span> <span class=\"\
+      nu0\">1</span>, <span class=\"nu0\">1</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">==</span> <span class=\"st0\">\"Z\"</span><span class=\"br0\"\
+      >)</span>\tcur <span class=\"sy0\">+=</span> <span class=\"nu0\">2</span>;\n\
+      \t\t\t\t\t<span class=\"kw2\">else</span> cur<span class=\"sy0\">++</span>;\n\
+      \t\t\t\t\t<span class=\"kw2\">break</span>;\n\t\t\t\t<span class=\"br0\">}</span>\n\
+      \ \n\t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw3\">mid</span><span class=\"br0\">(</span>in, cur, <span class=\"\
+      nu0\">2</span><span class=\"br0\">)</span> <span class=\"sy0\">==</span> <span\
+      \ class=\"st0\">\"SC\"</span><span class=\"br0\">)</span>\n\t\t\t\t<span class=\"\
+      br0\">{</span>\n\t\t\t\t\t<span class=\"co1\">// Schlesinger's rule</span>\n\
+      \t\t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      kw3\">mid</span><span class=\"br0\">(</span>in, cur <span class=\"sy0\">+</span>\
+      \ <span class=\"nu0\">2</span>, <span class=\"nu0\">1</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"H\"</span><span\
+      \ class=\"br0\">)</span>\n\t\t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\t\
+      \t<span class=\"co1\">// dutch origin, e.g. 'school', 'schooner'</span>\n\t\t\
+      \t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>smid<span\
+      \ class=\"br0\">(</span>in, cur <span class=\"sy0\">+</span> <span class=\"\
+      nu0\">3</span>, <span class=\"nu0\">2</span>, tmp<span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">==</span> <span class=\"st0\">\"OO\"</span>\n\t\t\t\t\t\
+      \t\t<span class=\"sy0\">||</span> tmp <span class=\"sy0\">==</span> <span class=\"\
+      st0\">\"ER\"</span>\n\t\t\t\t\t\t\t<span class=\"sy0\">||</span> tmp <span class=\"\
+      sy0\">==</span> <span class=\"st0\">\"EN\"</span>\n\t\t\t\t\t\t\t<span class=\"\
+      sy0\">||</span> tmp <span class=\"sy0\">==</span> <span class=\"st0\">\"UY\"\
+      </span>\n\t\t\t\t\t\t\t<span class=\"sy0\">||</span> tmp <span class=\"sy0\"\
+      >==</span> <span class=\"st0\">\"ED\"</span>\n\t\t\t\t\t\t\t<span class=\"sy0\"\
+      >||</span> tmp <span class=\"sy0\">==</span> <span class=\"st0\">\"EM\"</span><span\
+      \ class=\"br0\">)</span>\n\t\t\t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\
+      \t\t\t<span class=\"co1\">// 'schermerhorn', 'schenker'</span>\n\t\t\t\t\t\t\
+      \t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>smid<span class=\"\
+      br0\">(</span>in, cur <span class=\"sy0\">+</span> <span class=\"nu0\">3</span>,\
+      \ <span class=\"nu0\">2</span>, tmp<span class=\"br0\">)</span> <span class=\"\
+      sy0\">==</span> <span class=\"st0\">\"ER\"</span>\n\t\t\t\t\t\t\t\t<span class=\"\
+      sy0\">||</span> tmp <span class=\"sy0\">==</span> <span class=\"st0\">\"EN\"\
+      </span><span class=\"br0\">)</span>\n\t\t\t\t\t\t\t<span class=\"br0\">{</span>\n\
+      \t\t\t\t\t\t\t\tprim <span class=\"sy0\">$=</span> <span class=\"st0\">\"X\"\
+      </span>;\n\t\t\t\t\t\t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"\
+      st0\">\"SK\"</span>;\n\t\t\t\t\t\t\t<span class=\"br0\">}</span> <span class=\"\
+      kw2\">else</span> <span class=\"br0\">{</span>\n\t\t\t\t\t\t\t\tprim <span class=\"\
+      sy0\">$=</span> <span class=\"st0\">\"SK\"</span>;\n\t\t\t\t\t\t\t\tsec  <span\
+      \ class=\"sy0\">$=</span> <span class=\"st0\">\"SK\"</span>;\n\t\t\t\t\t\t\t\
+      <span class=\"br0\">}</span>\n\t\t\t\t\t\t\tcur <span class=\"sy0\">+=</span>\
+      \ <span class=\"nu0\">3</span>;\n\t\t\t\t\t\t\t<span class=\"kw2\">break</span>;\n\
+      \t\t\t\t\t\t<span class=\"br0\">}</span> <span class=\"kw2\">else</span> <span\
+      \ class=\"br0\">{</span>\n\t\t\t\t\t\t\t<span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span><span class=\"br0\">(</span>cur <span class=\"sy0\"\
+      >==</span> <span class=\"nu0\">0</span><span class=\"br0\">)</span>\n\t\t\t\t\
+      \t\t\t\t<span class=\"sy0\">&amp;&amp;</span> <span class=\"sy0\">!</span>is_vowel<span\
+      \ class=\"br0\">(</span>in, <span class=\"nu0\">3</span><span class=\"br0\"\
+      >)</span>\n\t\t\t\t\t\t\t\t<span class=\"sy0\">&amp;&amp;</span> <span class=\"\
+      br0\">(</span><span class=\"kw3\">mid</span><span class=\"br0\">(</span>in,\
+      \ cur <span class=\"sy0\">+</span> <span class=\"nu0\">3</span>, <span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span> <span class=\"sy0\">!=</span> <span\
+      \ class=\"st0\">\"W\"</span><span class=\"br0\">)</span><span class=\"br0\"\
+      >)</span>\n\t\t\t\t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\t\t\t\tprim\
+      \ <span class=\"sy0\">$=</span> <span class=\"st0\">\"X\"</span>;\n\t\t\t\t\t\
+      \t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"st0\">\"S\"</span>;\n\
+      \t\t\t\t\t\t\t<span class=\"br0\">}</span> <span class=\"kw2\">else</span> <span\
+      \ class=\"br0\">{</span>\n\t\t\t\t\t\t\t\tprim <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"X\"</span>;\n\t\t\t\t\t\t\t\tsec  <span class=\"sy0\"\
+      >$=</span> <span class=\"st0\">\"X\"</span>;\n\t\t\t\t\t\t\t<span class=\"br0\"\
+      >}</span>\n\t\t\t\t\t\t\tcur <span class=\"sy0\">+=</span> <span class=\"nu0\"\
+      >3</span>;\n\t\t\t\t\t\t\t<span class=\"kw2\">break</span>;\n\t\t\t\t\t\t<span\
+      \ class=\"br0\">}</span>\n \n\t\t\t\t\t\t<span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span><span class=\"kw3\">InStr</span><span class=\"br0\"\
+      >(</span><span class=\"st0\">\"IEY\"</span>, <span class=\"kw3\">mid</span><span\
+      \ class=\"br0\">(</span>in, cur <span class=\"sy0\">+</span> <span class=\"\
+      nu0\">2</span>, <span class=\"nu0\">1</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">&gt;</span> <span class=\"sy0\"\
+      >-</span><span class=\"nu0\">1</span><span class=\"br0\">)</span>\n\t\t\t\t\t\
+      \t<span class=\"br0\">{</span>\n\t\t\t\t\t\t\tprim <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"S\"</span>;\n\t\t\t\t\t\t\tsec  <span class=\"sy0\"\
+      >$=</span> <span class=\"st0\">\"S\"</span>;\n\t\t\t\t\t\t\tcur <span class=\"\
+      sy0\">+=</span> <span class=\"nu0\">3</span>;\n\t\t\t\t\t\t\t<span class=\"\
+      kw2\">break</span>;\n\t\t\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t\t<span\
+      \ class=\"br0\">}</span>\n \n\t\t\t\t\t<span class=\"co1\">// else</span>\n\t\
+      \t\t\t\tprim <span class=\"sy0\">$=</span> <span class=\"st0\">\"SK\"</span>;\n\
+      \t\t\t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"st0\">\"SK\"</span>;\n\
+      \t\t\t\t\tcur <span class=\"sy0\">+=</span> <span class=\"nu0\">3</span>;\n\t\
+      \t\t\t\t<span class=\"kw2\">break</span>;\n\t\t\t\t<span class=\"br0\">}</span>\n\
+      \ \n\t\t\t\t<span class=\"co1\">// french e.g. 'resnais', 'artois'</span>\n\t\
+      \t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      br0\">(</span>cur <span class=\"sy0\">==</span> last<span class=\"br0\">)</span>\n\
+      \t\t\t\t\t<span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span>\n\
+      \t\t\t\t\t\tsmid<span class=\"br0\">(</span>in, cur<span class=\"sy0\">-</span><span\
+      \ class=\"nu0\">2</span>, <span class=\"nu0\">2</span>, tmp<span class=\"br0\"\
+      >)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"AI\"</span>\n\t\
+      \t\t\t\t\t<span class=\"sy0\">||</span> tmp <span class=\"sy0\">==</span> <span\
+      \ class=\"st0\">\"OI\"</span>\n\t\t\t\t\t<span class=\"br0\">)</span><span class=\"\
+      br0\">)</span>\n\t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\tprim <span class=\"\
+      sy0\">$=</span> <span class=\"st0\">\"\"</span>;\n\t\t\t\t\tsec  <span class=\"\
+      sy0\">$=</span> <span class=\"st0\">\"S\"</span>;\n\t\t\t\t<span class=\"br0\"\
+      >}</span> <span class=\"kw2\">else</span> <span class=\"br0\">{</span>\n\t\t\
+      \t\t\tprim <span class=\"sy0\">$=</span> <span class=\"st0\">\"S\"</span>;\n\
+      \t\t\t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"st0\">\"S\"</span>;\n\
+      \t\t\t\t<span class=\"br0\">}</span>\n \n\t\t\t\t<span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span><span class=\"kw3\">InStr</span><span class=\"\
+      br0\">(</span><span class=\"st0\">\"SZ\"</span>, <span class=\"kw3\">mid</span><span\
+      \ class=\"br0\">(</span>in, cur <span class=\"sy0\">+</span> <span class=\"\
+      nu0\">1</span>, <span class=\"nu0\">1</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">&gt;</span> <span class=\"sy0\"\
+      >-</span><span class=\"nu0\">1</span><span class=\"br0\">)</span>\n\t\t\t\t\t\
+      cur <span class=\"sy0\">+=</span> <span class=\"nu0\">2</span>;\n\t\t\t\t<span\
+      \ class=\"kw2\">else</span>\n\t\t\t\t\tcur<span class=\"sy0\">++</span>;\n\t\
+      \t\t\t<span class=\"kw2\">break</span>;\n \n\t\t\t<span class=\"kw2\">case</span>\
+      \ <span class=\"st0\">\"T\"</span>:\n\t\t\t\t<span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span><span class=\"kw3\">mid</span><span class=\"br0\">(</span>in,\
+      \ cur, <span class=\"nu0\">4</span><span class=\"br0\">)</span> <span class=\"\
+      sy0\">==</span> <span class=\"st0\">\"TION\"</span><span class=\"br0\">)</span>\n\
+      \t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\tprim <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"X\"</span>;\n\t\t\t\t\tsec  <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"X\"</span>;\n\t\t\t\t\tcur <span class=\"sy0\">+=</span>\
+      \ <span class=\"nu0\">3</span>;\n\t\t\t\t\t<span class=\"kw2\">break</span>;\n\
+      \t\t\t\t<span class=\"br0\">}</span>\n \n\t\t\t\t<span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span>smid<span class=\"br0\">(</span>in, cur, <span\
+      \ class=\"nu0\">3</span>, tmp<span class=\"br0\">)</span> <span class=\"sy0\"\
+      >==</span> <span class=\"st0\">\"TIA\"</span>\n\t\t\t\t\t<span class=\"sy0\"\
+      >||</span> tmp <span class=\"sy0\">==</span> <span class=\"st0\">\"TCH\"</span><span\
+      \ class=\"br0\">)</span>\n\t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\tprim\
+      \ <span class=\"sy0\">$=</span> <span class=\"st0\">\"X\"</span>;\n\t\t\t\t\t\
+      sec  <span class=\"sy0\">$=</span> <span class=\"st0\">\"X\"</span>;\n\t\t\t\
+      \t\tcur <span class=\"sy0\">+=</span> <span class=\"nu0\">3</span>;\n\t\t\t\t\
+      \t<span class=\"kw2\">break</span>;\n\t\t\t\t<span class=\"br0\">}</span>\n\
+      \ \n\t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span\
+      \ class=\"br0\">(</span><span class=\"kw3\">mid</span><span class=\"br0\">(</span>in,\
+      \ cur, <span class=\"nu0\">2</span><span class=\"br0\">)</span> <span class=\"\
+      sy0\">==</span> <span class=\"st0\">\"TH\"</span><span class=\"br0\">)</span>\n\
+      \t\t\t\t\t<span class=\"sy0\">||</span> <span class=\"br0\">(</span><span class=\"\
+      kw3\">mid</span><span class=\"br0\">(</span>in, cur, <span class=\"nu0\">3</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"\
+      TTH\"</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\t\t\
+      \t<span class=\"br0\">{</span>\n\t\t\t\t\t<span class=\"co1\">// special case\
+      \ 'thomas', 'thames' or germanic</span>\n\t\t\t\t\t<span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span>smid<span class=\"br0\">(</span>in, cur <span\
+      \ class=\"sy0\">+</span> <span class=\"nu0\">2</span>, <span class=\"nu0\">2</span>,\
+      \ tmp<span class=\"br0\">)</span> <span class=\"sy0\">==</span> <span class=\"\
+      st0\">\"OM\"</span>\n\t\t\t\t\t\t<span class=\"sy0\">||</span> tmp <span class=\"\
+      sy0\">==</span> <span class=\"st0\">\"AM\"</span>\n\t\t\t\t\t\t<span class=\"\
+      sy0\">||</span> smid<span class=\"br0\">(</span>in, <span class=\"nu0\">0</span>,\
+      \ <span class=\"nu0\">4</span>, tmp<span class=\"br0\">)</span> <span class=\"\
+      sy0\">==</span> <span class=\"st0\">\"VAN\"</span>\n\t\t\t\t\t\t<span class=\"\
+      sy0\">||</span> tmp <span class=\"sy0\">==</span> <span class=\"st0\">\"VON\"\
+      </span>\n\t\t\t\t\t\t<span class=\"sy0\">||</span> <span class=\"kw3\">mid</span><span\
+      \ class=\"br0\">(</span>in, <span class=\"nu0\">0</span>, <span class=\"nu0\"\
+      >3</span><span class=\"br0\">)</span> <span class=\"sy0\">==</span> <span class=\"\
+      st0\">\"SCH\"</span><span class=\"br0\">)</span>\n\t\t\t\t\t<span class=\"br0\"\
+      >{</span>\n\t\t\t\t\t\tprim <span class=\"sy0\">$=</span> <span class=\"st0\"\
+      >\"T\"</span>;\n\t\t\t\t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"\
+      st0\">\"T\"</span>;\n\t\t\t\t\t<span class=\"br0\">}</span> <span class=\"kw2\"\
+      >else</span> <span class=\"br0\">{</span>\n\t\t\t\t\t\tprim <span class=\"sy0\"\
+      >$=</span> <span class=\"st0\">\"O\"</span>;\n\t\t\t\t\t\tsec  <span class=\"\
+      sy0\">$=</span> <span class=\"st0\">\"T\"</span>;\n\t\t\t\t\t<span class=\"\
+      br0\">}</span>\n\t\t\t\t\tcur <span class=\"sy0\">+=</span> <span class=\"nu0\"\
+      >2</span>;\n\t\t\t\t\t<span class=\"kw2\">break</span>;\n\t\t\t\t<span class=\"\
+      br0\">}</span>\n \n\t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span><span class=\"kw3\">InStr</span><span class=\"br0\">(</span><span class=\"\
+      st0\">\"TD\"</span>, <span class=\"kw3\">mid</span><span class=\"br0\">(</span>in,\
+      \ cur <span class=\"sy0\">+</span> <span class=\"nu0\">1</span>, <span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">&gt;</span> <span class=\"sy0\">-</span><span class=\"nu0\"\
+      >1</span><span class=\"br0\">)</span>\n\t\t\t\t\tcur <span class=\"sy0\">+=</span>\
+      \ <span class=\"nu0\">2</span>;\n\t\t\t\t<span class=\"kw2\">else</span>\n\t\
+      \t\t\t\tcur<span class=\"sy0\">++</span>;\n\t\t\t\tprim <span class=\"sy0\"\
+      >$=</span> <span class=\"st0\">\"T\"</span>;\n\t\t\t\tsec  <span class=\"sy0\"\
+      >$=</span> <span class=\"st0\">\"T\"</span>;\n\t\t\t\t<span class=\"kw2\">break</span>;\n\
+      \ \n\t\t\t<span class=\"kw2\">case</span> <span class=\"st0\">\"V\"</span>:\n\
+      \t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      kw3\">mid</span><span class=\"br0\">(</span>in, cur <span class=\"sy0\">+</span>\
+      \ <span class=\"nu0\">1</span>, <span class=\"nu0\">1</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"V\"</span><span\
+      \ class=\"br0\">)</span>\n\t\t\t\t\tcur <span class=\"sy0\">+=</span> <span\
+      \ class=\"nu0\">2</span>;\n\t\t\t\t<span class=\"kw2\">else</span>\n\t\t\t\t\
+      \tcur<span class=\"sy0\">++</span>;\n\t\t\t\tprim <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"F\"</span>;\n\t\t\t\tsec  <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"F\"</span>;\n\t\t\t\t<span class=\"kw2\">break</span>;\n\
+      \ \n\t\t\t<span class=\"kw2\">case</span> <span class=\"st0\">\"W\"</span>:\n\
+      \t\t\t\t<span class=\"co1\">// can also be in middle of word</span>\n\t\t\t\t\
+      <span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"kw3\"\
+      >mid</span><span class=\"br0\">(</span>in, cur, <span class=\"nu0\">2</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"\
+      WR\"</span><span class=\"br0\">)</span> <span class=\"br0\">{</span>\n\t\t\t\
+      \t\tprim <span class=\"sy0\">$=</span> <span class=\"st0\">\"R\"</span>;\n\t\
+      \t\t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"st0\">\"R\"</span>;\n\
+      \t\t\t\t\tcur <span class=\"sy0\">+=</span> <span class=\"nu0\">2</span>;\n\t\
+      \t\t\t\t<span class=\"kw2\">break</span>;\n\t\t\t\t<span class=\"br0\">}</span>\n\
+      \ \n\t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span\
+      \ class=\"br0\">(</span>cur <span class=\"sy0\">==</span> <span class=\"nu0\"\
+      >0</span><span class=\"br0\">)</span>\n\t\t\t\t\t<span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"br0\">(</span>is_vowel<span class=\"br0\">(</span>in, cur <span\
+      \ class=\"sy0\">+</span> <span class=\"nu0\">1</span><span class=\"br0\">)</span>\n\
+      \t\t\t\t\t\t<span class=\"sy0\">||</span> <span class=\"kw3\">mid</span><span\
+      \ class=\"br0\">(</span>in, cur, <span class=\"nu0\">2</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"WH\"</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\t\t\t<span class=\"\
+      br0\">{</span>\n\t\t\t\t\t<span class=\"co1\">// Wasserman should match Vasserman</span>\n\
+      \t\t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>is_vowel<span\
+      \ class=\"br0\">(</span>in, cur <span class=\"sy0\">+</span> <span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\t\
+      \t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\t\tprim <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"A\"</span>;\n\t\t\t\t\t\tsec  <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"F\"</span>;\n\t\t\t\t\t<span class=\"br0\">}</span>\n\
+      \t\t\t\t\t<span class=\"kw2\">else</span> <span class=\"br0\">{</span>\n\t\t\
+      \t\t\t\t<span class=\"co1\">// need Uomo to match Womo</span>\n\t\t\t\t\t\t\
+      prim <span class=\"sy0\">$=</span> <span class=\"st0\">\"A\"</span>;\n\t\t\t\
+      \t\t\tsec  <span class=\"sy0\">$=</span> <span class=\"st0\">\"A\"</span>;\n\
+      \t\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t<span class=\"br0\">}</span>\n\
+      \ \n\t\t\t\t<span class=\"co1\">// Arnow should match Arnoff</span>\n\t\t\t\t\
+      <span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">(</span>cur <span class=\"sy0\">==</span> last<span\
+      \ class=\"br0\">)</span>\n\t\t\t\t\t\t<span class=\"sy0\">&amp;&amp;</span>\
+      \ is_vowel<span class=\"br0\">(</span>in, cur <span class=\"sy0\">-</span> <span\
+      \ class=\"nu0\">1</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\n\
+      \t\t\t\t\t<span class=\"sy0\">||</span> smid<span class=\"br0\">(</span>in,\
+      \ cur <span class=\"sy0\">-</span> <span class=\"nu0\">1</span>, <span class=\"\
+      nu0\">5</span>, tmp<span class=\"br0\">)</span> <span class=\"sy0\">==</span><span\
+      \ class=\"st0\">\"EWSKI\"</span>\n\t\t\t\t\t<span class=\"sy0\">||</span> tmp\
+      \ <span class=\"sy0\">==</span> <span class=\"st0\">\"EWSKY\"</span>\n\t\t\t\
+      \t\t<span class=\"sy0\">||</span> tmp <span class=\"sy0\">==</span> <span class=\"\
+      st0\">\"OWSKI\"</span>\n\t\t\t\t\t<span class=\"sy0\">||</span> tmp <span class=\"\
+      sy0\">==</span> <span class=\"st0\">\"OWSKY\"</span>\n\t\t\t\t\t<span class=\"\
+      sy0\">||</span> <span class=\"kw3\">mid</span><span class=\"br0\">(</span>in,\
+      \ <span class=\"nu0\">0</span>, <span class=\"nu0\">3</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"SCH\"</span><span\
+      \ class=\"br0\">)</span>\n\t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\tprim\
+      \ <span class=\"sy0\">$=</span> <span class=\"st0\">\"\"</span>;\n\t\t\t\t\t\
+      sec  <span class=\"sy0\">$=</span> <span class=\"st0\">\"F\"</span>;\n\t\t\t\
+      \t\tcur<span class=\"sy0\">++</span>;\n\t\t\t\t\t<span class=\"kw2\">break</span>;\n\
+      \t\t\t\t<span class=\"br0\">}</span>\n \n\t\t\t\t<span class=\"co1\">// polish\
+      \ e.g. 'filipowicz'</span>\n\t\t\t\t<span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span>smid<span class=\"br0\">(</span>in, cur, <span class=\"nu0\">4</span>,\
+      \ tmp<span class=\"br0\">)</span> <span class=\"sy0\">==</span> <span class=\"\
+      st0\">\"WICZ\"</span>\n\t\t\t\t\t<span class=\"sy0\">||</span> tmp <span class=\"\
+      sy0\">==</span> <span class=\"st0\">\"WITZ\"</span><span class=\"br0\">)</span>\n\
+      \t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\tprim <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"TS\"</span>;\n\t\t\t\t\tsec  <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"FX\"</span>;\n\t\t\t\t\tcur <span class=\"sy0\">+=</span>\
+      \ <span class=\"nu0\">4</span>;\n\t\t\t\t\t<span class=\"kw2\">break</span>;\n\
+      \t\t\t\t<span class=\"br0\">}</span>\n \n\t\t\t\t<span class=\"co1\">// else\
+      \ skip it</span>\n\t\t\t\tcur<span class=\"sy0\">++</span>;\n\t\t\t\t<span class=\"\
+      kw2\">break</span>;\n \n\t\t\t<span class=\"kw2\">case</span> <span class=\"\
+      st0\">\"X\"</span>:\n\t\t\t\t<span class=\"co1\">// french e.g. breaux</span>\n\
+      \t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      sy0\">!</span><span class=\"br0\">(</span><span class=\"br0\">(</span>cur <span\
+      \ class=\"sy0\">==</span> last<span class=\"br0\">)</span>\n\t\t\t\t\t<span\
+      \ class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span>smid<span class=\"\
+      br0\">(</span>in, cur <span class=\"sy0\">-</span> <span class=\"nu0\">3</span>,\
+      \ <span class=\"nu0\">3</span>, tmp<span class=\"br0\">)</span> <span class=\"\
+      sy0\">==</span> <span class=\"st0\">\"IAU\"</span>\n\t\t\t\t\t\t<span class=\"\
+      sy0\">||</span> tmp <span class=\"sy0\">==</span> <span class=\"st0\">\"EAU\"\
+      </span>\n\t\t\t\t\t\t<span class=\"sy0\">||</span> smid<span class=\"br0\">(</span>in,\
+      \ cur <span class=\"sy0\">-</span> <span class=\"nu0\">2</span>, <span class=\"\
+      nu0\">2</span>, tmp<span class=\"br0\">)</span> <span class=\"sy0\">==</span>\
+      \ <span class=\"st0\">\"AU\"</span>\n\t\t\t\t\t\t<span class=\"sy0\">||</span>\
+      \ tmp <span class=\"sy0\">==</span> <span class=\"st0\">\"OU\"</span><span class=\"\
+      br0\">)</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\t\
+      \t\t<span class=\"br0\">{</span>\n\t\t\t\t\tprim <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"KS\"</span>;\n\t\t\t\t\tsec  <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"KS\"</span>;\n\t\t\t\t<span class=\"br0\">}</span>\n\
+      \ \n\t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw3\">InStr</span><span class=\"br0\">(</span><span class=\"st0\"\
+      >\"CX\"</span>, <span class=\"kw3\">mid</span><span class=\"br0\">(</span>in,\
+      \ cur <span class=\"sy0\">+</span> <span class=\"nu0\">1</span>, <span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">&gt;</span> <span class=\"sy0\">-</span><span class=\"nu0\"\
+      >1</span><span class=\"br0\">)</span>\n\t\t\t\t\tcur <span class=\"sy0\">+=</span>\
+      \ <span class=\"nu0\">2</span>;\n\t\t\t\t<span class=\"kw2\">else</span>\n\t\
+      \t\t\t\tcur<span class=\"sy0\">++</span>;\n\t\t\t\t<span class=\"kw2\">break</span>;\n\
+      \ \n \n\t\t\t<span class=\"kw2\">case</span> <span class=\"st0\">\"Z\"</span>:\n\
+      \t\t\t\t<span class=\"co1\">// chinese pinyin e.g. 'zhao'</span>\n\t\t\t\t<span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"kw3\">mid</span><span\
+      \ class=\"br0\">(</span>in, cur <span class=\"sy0\">+</span> <span class=\"\
+      nu0\">1</span>, <span class=\"nu0\">1</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">==</span> <span class=\"st0\">\"H\"</span><span class=\"br0\"\
+      >)</span>\n\t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\tprim <span class=\"\
+      sy0\">$=</span> <span class=\"st0\">\"J\"</span>;\n\t\t\t\t\tsec  <span class=\"\
+      sy0\">$=</span> <span class=\"st0\">\"J\"</span>;\n\t\t\t\t\tcur <span class=\"\
+      sy0\">+=</span> <span class=\"nu0\">2</span>;\n\t\t\t\t\t<span class=\"kw2\"\
+      >break</span>;\n\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t<span class=\"\
+      kw2\">else</span>\n\t\t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span>smid<span class=\"br0\">(</span>in, cur <span class=\"sy0\">+</span>\
+      \ <span class=\"nu0\">1</span>, <span class=\"nu0\">2</span>, tmp<span class=\"\
+      br0\">)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"ZO\"</span>\n\
+      \t\t\t\t\t\t<span class=\"sy0\">||</span> tmp <span class=\"sy0\">==</span>\
+      \ <span class=\"st0\">\"ZI\"</span>\n\t\t\t\t\t\t<span class=\"sy0\">||</span>\
+      \ tmp <span class=\"sy0\">==</span> <span class=\"st0\">\"ZA\"</span>\n\t\t\t\
+      \t\t\t<span class=\"sy0\">||</span> <span class=\"br0\">(</span>Slavo_Germanic<span\
+      \ class=\"br0\">(</span>in<span class=\"br0\">)</span>\n\t\t\t\t\t\t<span class=\"\
+      sy0\">&amp;&amp;</span> <span class=\"br0\">(</span><span class=\"br0\">(</span>cur\
+      \ <span class=\"sy0\">&gt;</span> <span class=\"nu0\">0</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"kw3\">mid</span><span\
+      \ class=\"br0\">(</span>in, cur <span class=\"sy0\">-</span> <span class=\"\
+      nu0\">1</span>, <span class=\"nu0\">1</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">!=</span> <span class=\"st0\">\"T\"</span><span class=\"br0\"\
+      >)</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\t\t\t\t\
+      <span class=\"br0\">{</span>\n\t\t\t\t\tprim <span class=\"sy0\">$=</span> <span\
+      \ class=\"st0\">\"S\"</span>;\n\t\t\t\t\tsec  <span class=\"sy0\">$=</span>\
+      \ <span class=\"st0\">\"TS\"</span>;\n\t\t\t\t<span class=\"br0\">}</span> <span\
+      \ class=\"kw2\">else</span> <span class=\"br0\">{</span>\n\t\t\t\t\tprim <span\
+      \ class=\"sy0\">$=</span> <span class=\"st0\">\"S\"</span>;\n\t\t\t\t\tsec \
+      \ <span class=\"sy0\">$=</span> <span class=\"st0\">\"S\"</span>;\n\t\t\t\t\
+      <span class=\"br0\">}</span>\n \n\t\t\t\t<span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span><span class=\"kw3\">mid</span><span class=\"br0\">(</span>in,\
+      \ cur <span class=\"sy0\">+</span> <span class=\"nu0\">1</span>, <span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span> <span class=\"sy0\">==</span> <span\
+      \ class=\"st0\">\"Z\"</span><span class=\"br0\">)</span>\n\t\t\t\t\tcur <span\
+      \ class=\"sy0\">+=</span> <span class=\"nu0\">2</span>;\n\t\t\t\t<span class=\"\
+      kw2\">else</span>\n\t\t\t\t\tcur<span class=\"sy0\">++</span>;\n\t\t\t\t<span\
+      \ class=\"kw2\">break</span>;\n \n\t\t\t<span class=\"kw1\">default</span>:\n\
+      \t\t\t\tcur<span class=\"sy0\">++</span>;\n\t\t<span class=\"br0\">}</span>\n\
+      \ \t<span class=\"br0\">}</span>\n \n \tres<span class=\"br0\">[</span><span\
+      \ class=\"nu0\">0</span><span class=\"br0\">]</span> <span class=\"sy0\">=</span>\
+      \ <span class=\"kw3\">Left</span><span class=\"br0\">(</span>prim, mlen<span\
+      \ class=\"br0\">)</span>;\n \tres<span class=\"br0\">[</span><span class=\"\
+      nu0\">1</span><span class=\"br0\">]</span> <span class=\"sy0\">=</span> <span\
+      \ class=\"kw3\">Left</span><span class=\"br0\">(</span>sec, mlen<span class=\"\
+      br0\">)</span>;\n \t<span class=\"kw2\">return</span> res;\n<span class=\"br0\"\
+      >}</span></pre></div>\n</div>\n<h2><span class=\"mw-headline\" id=\"Helper_functions\"\
+      >Helper functions</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:DoubleMetaPhone?section=2\" title=\"Edit section:\
+      \ Helper functions\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"coMULTI\">/**\n\tSame\
+      \ as mid, except that is has a 4th param that will also get the result. &lt;br\
+      \ /&gt;\n\tUse this for caching the result.\n*/</span>\n<span class=\"kw1\"\
+      >static</span> <span class=\"kw1\">final</span> <span class=\"kw1\">function</span>\
+      \ <span class=\"kw5\">string</span> smid<span class=\"br0\">(</span><span class=\"\
+      kw1\">coerce</span> <span class=\"kw5\">string</span> in, <span class=\"kw5\"\
+      >int</span> off, <span class=\"kw5\">int</span> <span class=\"kw3\">len</span>,\
+      \ <span class=\"kw1\">out</span> <span class=\"kw5\">string</span> s<span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n\ts <span class=\"sy0\">=</span>\
+      \ <span class=\"kw3\">mid</span><span class=\"br0\">(</span>in, off, <span class=\"\
+      kw3\">len</span><span class=\"br0\">)</span>;\n\t<span class=\"kw2\">return</span>\
+      \ s;\n<span class=\"br0\">}</span>\n \n<span class=\"coMULTI\">/**\n\treturns\
+      \ true if the character at pos is a vowel.\n*/</span>\n<span class=\"kw1\">static</span>\
+      \ <span class=\"kw1\">final</span> <span class=\"kw1\">function</span> <span\
+      \ class=\"kw5\">bool</span> is_vowel<span class=\"br0\">(</span><span class=\"\
+      kw1\">coerce</span> <span class=\"kw5\">string</span> in, <span class=\"kw5\"\
+      >int</span> pos<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t\
+      <span class=\"kw2\">return</span> <span class=\"br0\">(</span><span class=\"\
+      kw3\">InStr</span><span class=\"br0\">(</span><span class=\"st0\">\"AEIOUY\"\
+      </span>, <span class=\"kw3\">mid</span><span class=\"br0\">(</span>in, pos,\
+      \ <span class=\"nu0\">1</span><span class=\"br0\">)</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">&gt;</span> <span class=\"sy0\">-</span><span\
+      \ class=\"nu0\">1</span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"coMULTI\">/**\n\thelper function for the metaphone algorithm\
+      \ to determain if this word is\n\t\"slave germanic\"\n*/</span>\n<span class=\"\
+      kw1\">static</span> <span class=\"kw1\">final</span> <span class=\"kw1\">function</span>\
+      \ <span class=\"kw5\">bool</span> Slavo_Germanic<span class=\"br0\">(</span><span\
+      \ class=\"kw1\">coerce</span> <span class=\"kw5\">string</span> in<span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw2\">return</span>\
+      \ <span class=\"br0\">(</span><span class=\"kw3\">InStr</span><span class=\"\
+      br0\">(</span>in, <span class=\"st0\">\"W\"</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">&gt;</span> <span class=\"sy0\">-</span><span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span>\n\t\t<span class=\"sy0\">||</span>\
+      \ <span class=\"br0\">(</span><span class=\"kw3\">InStr</span><span class=\"\
+      br0\">(</span>in, <span class=\"st0\">\"K\"</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">&gt;</span> <span class=\"sy0\">-</span><span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span>\n\t\t<span class=\"sy0\">||</span>\
+      \ <span class=\"br0\">(</span><span class=\"kw3\">InStr</span><span class=\"\
+      br0\">(</span>in, <span class=\"st0\">\"CZ\"</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">&gt;</span> <span class=\"sy0\">-</span><span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span>\n\t\t<span class=\"sy0\">||</span>\
+      \ <span class=\"br0\">(</span><span class=\"kw3\">InStr</span><span class=\"\
+      br0\">(</span>in, <span class=\"st0\">\"WITZ\"</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">&gt;</span> <span class=\"sy0\">-</span><span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<h2><span class=\"mw-headline\" id=\"Copyright\">Copyright</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:DoubleMetaPhone?section=3\" title=\"Edit section: Copyright\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n<pre>\
+      \   Copyright 2004, Michiel Hendriks &lt;elmuerte@drunksnipers.com&gt;\n   All\
+      \ rights reserved.\n\n   This UnrealScript translation is based heavily on the\
+      \ PHP \n   implementation by Stephen Woodbridge &lt;woodbri@swoodbridge.com&gt;,\
+      \ \n   which in turn is based on the C implementation\n   by Maurice Aubrey\
+      \ &lt;maurice@hevanet.com&gt;, which in turn\n   is based heavily on the C++\
+      \ implementation by\n   Lawrence Philips and incorporates several bug fixes\
+      \ courtesy\n   of Kevin Atkinson &lt;kevina@users.sourceforge.net&gt;.\n\n \
+      \  This module is free software; you may redistribute it and/or\n   modify it\
+      \ under the same terms as Perl itself.\n</pre>\n<p>The <a rel=\"nofollow\" class=\"\
+      external text\" href=\"http://www.perl.com/pub/a/language/misc/Artistic.html\"\
+      >Perl Artistic License</a>.</p>\n<p>Note that that page currently appears to\
+      \ be blank, the Perl Artistic License is almost similar to the <a rel=\"nofollow\"\
+      \ class=\"external text\" href=\"http://www.opensource.org/licenses/artistic-license.php\"\
+      >Artistic License</a></p>\n<p><b>Wormbo:</b> Erm... Perl?</p>\n<p><b>El Muerte:</b>\
+      \ Yeah go figure, just pasting a long the license notice. The implementation\
+      \ of Maurice Aubrey has been released under that license, and so is the PHP\
+      \ implementation, thus this implementation should also be released under the\
+      \ same license. The license isn't very restrictive, it allows you to do even\
+      \ more than the <a href=\"/Legacy:LesserOpenUnrealModLicense\" title=\"Legacy:LesserOpenUnrealModLicense\"\
+      >LesserOpenUnrealModLicense</a> would do.</p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Related_Topics\">Related Topics</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:DoubleMetaPhone?section=4\"\
+      \ title=\"Edit section: Related Topics\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<ul>\n<li><a href=\"/Legacy:SoundEx\" title=\"Legacy:SoundEx\"\
+      >SoundEx</a></li>\n<li><a rel=\"nofollow\" class=\"external text\" href=\"http://aspell.sourceforge.net/metaphone/\"\
+      >More about metaphone</a> – and implementations in other languages</li>\n</ul>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.465 seconds\nReal time usage:\
+      \ 0.866 seconds\nPreprocessor visited node count: 34/1000000\nPreprocessor generated\
+      \ node count: 68/1000000\nPost‐expand include size: 15/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:1065-0!*!0!!en!*!* and timestamp 20221120203138 and revision\
+      \ id 2833\n -->\n"
+  categories:
+  - sortkey: "DoubleMetaPhone"
+    name: "Legacy_Algorithm"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:SoundEx"
+  - ns: 100
+    exists: true
+    name: "Legacy:LesserOpenUnrealModLicense"
+  - ns: 100
+    exists: true
+    name: "Legacy:El Muerte"
+  templates: []
+  images: []
+  externallinks:
+  - "http://www.opensource.org/licenses/artistic-license.php"
+  - "http://www.cuj.com/documents/s=8038/cuj0006philips/"
+  - "http://www.perl.com/pub/a/language/misc/Artistic.html"
+  - "http://swoodbridge.com/DoubleMetaPhone/"
+  - "http://aspell.sourceforge.net/metaphone/"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "The algorithm"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:DoubleMetaPhone"
+    byteoffset: 536
+    anchor: "The_algorithm"
+  - toclevel: 1
+    level: "2"
+    line: "Helper functions"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:DoubleMetaPhone"
+    byteoffset: 19161
+    anchor: "Helper_functions"
+  - toclevel: 1
+    level: "2"
+    line: "Copyright"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:DoubleMetaPhone"
+    byteoffset: 19906
+    anchor: "Copyright"
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "4"
+    index: "4"
+    fromtitle: "Legacy:DoubleMetaPhone"
+    byteoffset: 21239
+    anchor: "Related_Topics"
+  displaytitle: "Legacy:DoubleMetaPhone"
+  iwlinks: []
+  wikitext:
+    text: "This document implements a \"sounds like\" algorithm developed by Lawrence\
+      \ Philips which he published in the June, 2000 issue of [http://www.cuj.com/documents/s=8038/cuj0006philips/\
+      \ C/C++ Users Journal.]\n\nDouble Metaphone is an improved version of Philips'\
+      \ original Metaphone algorithm.\n\nThe UnrealScript implementation has been\
+      \ adapted from Stephen Woodbridge's [http://swoodbridge.com/DoubleMetaPhone/\
+      \ PHP implementation] by [[Legacy:El Muerte|El Muerte]]. \n\n''Note:'' Because\
+      \ of the size of the algorithm there might be errors in it.\n\n==The algorithm==\n\
+      \n<uscript>\n/**\n\tReturns the double metaphone value of in.\n\tThe array always\
+      \ contains two values.\n*/\nstatic final function array<string> DoubleMetaPhone(coerce\
+      \ string in, optional int mlen)\n{\n\tlocal array<string> res;\n\tlocal string\
+      \ prim, sec, tmp;\n\tlocal int cur, last, slen;\n\n\tif (mlen == 0) mlen = 4;\n\
+      \ \tslen = Len(in);\n \tlast = slen-1;\n \tin = caps(in$\"     \");\n\t// skip\
+      \ this at beginning of word\n\tswitch (Left(in, 2))\n\t{\n\t\tcase \"GN\":\n\
+      \t\tcase \"KN\":\n\t\tcase \"PN\":\n\t\tcase \"WR\":\n\t\tcase \"PS\":\n\t\t\
+      \tcur++;\n\t}\n \t// Initial 'X' is pronounced 'Z' e.g. 'Xavier'\n \tif (Left(in,\
+      \ 1) == \"X\")\n \t{\n \t\tprim $= \"S\"; // 'Z' maps to 'S'\n \t\tsec  $= \"\
+      S\";\n \t\tcur++;\n \t}\n \t// main loop\n \twhile (len(prim) < mlen || len(sec)\
+      \ < mlen)\n\t{\n\t\tif (cur >= slen) break;\n\t\tswitch (mid(in, cur, 1))\n\t\
+      \t{\n\t\t\tcase \"A\":\n\t\t\tcase \"E\":\n\t\t\tcase \"I\":\n\t\t\tcase \"\
+      O\":\n\t\t\tcase \"U\":\n\t\t\tcase \"Y\":\n\t\t\t\tif (cur == 0) // all init\
+      \ vowels now map to 'A'\n\t\t\t\t{\n\t\t\t\t\tprim $= \"A\";\n\t\t\t\t\tsec\t\
+      \ $= \"A\";\n\t\t\t\t}\n\t\t\t\tcur++;\n\t\t\t\tbreak;\n\n\t\t\tcase \"B\":\
+      \ // '-mb', e.g. \"dumb\", already skipped over ...\n\t\t\t\tprim $= \"P\";\n\
+      \t\t\t\tsec  $= \"P\";\n\t\t\t\tif (mid(in, cur+1, 1) == \"B\") cur += 2;\n\t\
+      \t\t\telse cur++;\n\t\t\t\tbreak;\n\n\t\t\tcase \"Ç\":\n\t\t\t\tprim $= \"S\"\
+      ;\n\t\t\t\tsec  $= \"S\";\n\t\t\t\tcur++;\n\t\t\t\tbreak;\n\n\t\t\tcase \"C\"\
+      : // various gremanic\n\t\t\t\tif ((cur > 1)\n\t\t\t\t\t&& (!is_vowel(in, cur-2))\n\
+      \t\t\t\t\t&& (mid(in, cur - 1, 3) == \"ACH\")\n\t\t\t\t\t&& ((mid(in, cur +\
+      \ 2, 1) != \"I\")\n\t\t\t\t\t\t&& ((mid(in, cur + 2, 1) != \"E\")\n\t\t\t\t\t\
+      \t\t|| smid(in, cur - 2, 6, tmp) == \"BACHER\")\n\t\t\t\t\t\t\t|| tmp == \"\
+      MACHER\"))\n\t\t\t\t{\n\t\t\t\t\tprim $= \"K\";\n\t\t\t\t\tsec  $= \"K\";\n\t\
+      \t\t\t\tcur += 2;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\n\t\t\t\t// special case 'caesar'\n\
+      \t\t\t\tif ((cur == 0) && (mid(in, cur, 6) == \"CAESAR\"))\n\t\t\t\t{\n\t\t\t\
+      \t\tprim $= \"S\";\n\t\t\t\t\tsec  $= \"S\";\n\t\t\t\t\tcur += 2;\n\t\t\t\t\t\
+      break;\n\t\t\t\t}\n\n\t\t\t\t// italian 'chianti'\n\t\t\t\tif (mid(in, cur,\
+      \ 4) == \"CHIA\")\n\t\t\t\t{\n\t\t\t\t\tprim $= \"K\";\n\t\t\t\t\tsec  $= \"\
+      K\";\n\t\t\t\t\tcur += 2;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\n\t\t  \t\tif (mid(in,\
+      \ cur, 2) == \"CH\")\n\t\t  \t\t{\n\t\t\t\t\t// find 'michael'\n\t\t\t\t\tif\
+      \ ((cur > 0) && (mid(in, cur, 4) == \"CHAE\"))\n\t\t\t\t\t{\n\t\t\t\t\t\tprim\
+      \ $= \"K\";\n\t\t\t\t\t\tsec  $= \"X\";\n\t\t\t\t\t\tcur += 2;\n\t\t\t\t\t\t\
+      break;\n\t\t\t\t\t}\n\n\t\t\t\t\t// greek roots e.g. 'chemistry', 'chorus'\n\
+      \t\t\t\t\tif ((cur == 0)\n \t\t\t\t\t\t&& (smid(in, cur+1, 5, tmp) == \"HARAC\"\
+      \n \t\t\t\t\t\t\t|| tmp == \"HARIS\")\n\t\t\t\t\t\t|| (smid(in, cur+1, 3, tmp)\
+      \ == \"HOR\"\n\t\t\t\t\t\t\t|| tmp == \"HYM\"\n\t\t\t\t\t\t\t|| tmp == \"HIA\"\
+      \n\t\t\t\t\t\t\t|| tmp == \"HEM\")\n\t\t\t\t\t\t&& (mid(in, 0, 5) != \"CHORE\"\
+      ))\n\t\t\t\t\t{\n\t\t\t\t\t\tprim $= \"K\";\n\t\t\t\t\t\tsec  $= \"K\";\n\t\t\
+      \t\t\t\tcur += 2;\n\t\t\t\t\t\tbreak;\n\t\t\t\t\t}\n\n\t\t\t\t\t// germanic,\
+      \ greek, or otherwise 'ch' for 'kh' sound\n\t\t\t\t\tif ((\t(smid(in, 0, 4,\
+      \ tmp) == \"VAN \")\n\t\t\t\t\t\t\t|| (tmp == \"VON \")\n\t\t\t\t\t\t\t|| (tmp\
+      \ == \"SCH\")\n\t\t\t\t\t\t)\n\t\t\t\t\t\t// 'architect' but not 'arch', orchestra',\
+      \ 'orchid'\n\t\t\t\t\t\t|| (\t(smid(in, cur-2, 6, tmp) == \"ORCHES\")\n\t\t\t\
+      \t\t\t\t\t|| (tmp == \"ARCHIT\")\n\t\t\t\t\t\t\t\t|| (tmp == \"ORCHID\")\n\t\
+      \t\t\t\t\t\t)\n\t\t\t\t\t\t|| (InStr(\"TS\", Mid(in, cur+2, 1)) > -1)\n\t\t\t\
+      \t\t\t|| (\n\t\t\t\t\t\t\t((InStr(\"AOUE\", Mid(in, cur-1, 1)) > -1)\n\t\t\t\
+      \t\t \t\t\t|| (cur == 0)\n\t\t\t\t\t\t\t)\n\t\t\t\t\t\t\t// e.g. 'wachtler',\
+      \ 'weschsler', but not 'tichner'\n\t\t\t\t\t\t\t&& (InStr(\"LRNMBHFVW\", Mid(in,\
+      \ cur+2, 1)) > -1))\n\t\t\t\t\t\t)\n\t\t\t\t\t{\n\t\t\t\t\t\tprim $= \"K\";\n\
+      \t\t\t\t\t\tsec  $= \"K\";\n\t\t\t\t\t}\n\t\t\t\t\telse {\n\t\t\t\t\t\tif (cur\
+      \ > 0)\n\t\t\t\t\t\t{\n\t\t\t\t\t\t\tif (mid(in, 0, 2) == \"MC\")\n\t\t\t\t\t\
+      \t\t{\n\t\t\t\t\t\t\t\t// e.g. 'McHugh'\n\t\t\t\t\t\t\t\tprim $= \"K\";\n\t\t\
+      \t\t\t\t\t\tsec  $= \"K\";\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\telse {\n\t\t\t\t\t\
+      \t\t\tprim $= \"X\";\n\t\t\t\t\t\t\t\tsec  $= \"K\";\n\t\t\t\t\t\t\t}\n\t\t\t\
+      \t\t\t}\n\t\t\t\t\t\telse {\n\t\t\t\t\t\t\tprim $= \"X\";\n\t\t\t\t\t\t\tsec\
+      \  $= \"X\";\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t\tcur += 2;\n\t\t\t\t\tbreak;\n\
+      \t\t\t\t}\n\n\t\t\t\t// e.g. 'czerny'\n\t\t\t\tif (mid(in, cur, 2) == \"CZ\"\
+      \n\t\t\t\t\t&& mid(in, cur-2, 4) != \"WICZ\")\n\t\t\t\t{\n\t\t\t\t\tprim $=\
+      \ \"S\";\n\t\t\t\t\tsec  $= \"X\";\n\t\t\t\t\tcur += 2;\n\t\t\t\t\tbreak;\n\t\
+      \t\t\t}\n\n\t\t\t\t// e.g. 'focaccia'\n\t\t\t\tif (mid(in, cur + 1, 3) == \"\
+      CIA\")\n\t\t\t\t{\n\t\t\t\t\tprim $= \"X\";\n\t\t\t\t\tsec  $= \"X\";\n\t\t\t\
+      \t\tcur += 3;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\n\t\t\t\t// double 'C', but not\
+      \ McClellan'\n\t\t\t\tif (mid(in, cur, 2) == \"CC\"\n\t\t\t\t\t\t&& !((cur ==\
+      \ 1)\n\t\t\t\t\t\t\t&& (mid(in, 0, 1) == \"M\")))\n\t\t\t\t{\n\t\t\t\t\t// 'bellocchio'\
+      \ but not 'bacchus'\n\t\t\t\t\tif ((InStr(\"IEH\", mid(in, cur + 2, 1)) > -1)\n\
+      \t\t\t\t\t\t&& (mid(in, cur + 2, 2) != \"HU\"))\n\t\t\t\t\t{\n\t\t\t  \t\t\t\
+      // 'accident', 'accede', 'succeed'\n\t\t\t\t\t\tif (((cur == 1)\n\t\t\t\t\t\t\
+      \t&& (mid(in, cur - 1, 1) == \"A\"))\n\t\t\t\t\t\t\t|| (smid(in, cur-1, 5, tmp)\
+      \ == \"UCCEE\")\n\t\t\t\t\t\t\t|| (tmp == \"UCCES\"))\n\t\t\t\t\t\t{\n\t\t\t\
+      \t\t\t\tprim $= \"KS\";\n\t\t\t\t\t\t\tsec  $= \"KS\";\n\t\t\t\t\t\t\t// 'bacci',\
+      \ 'bertucci', other italian\n\t\t\t\t\t\t}\n\t\t\t\t\t\telse {\n\t\t\t\t\t\t\
+      \tprim $= \"X\";\n\t\t\t\t\t\t\tsec  $= \"X\";\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\
+      cur += 3;\n\t\t\t\t\t\tbreak;\n\t\t\t\t\t}\n\t\t\t\t\telse {\n\t\t\t\t\t\t//\
+      \ Pierce's rule\n\t\t\t\t\t\tprim $= \"K\";\n\t\t\t\t\t\tsec $= \"K\";\n\t\t\
+      \t\t\t\tcur += 2;\n\t\t\t\t\t\tbreak;\n\t\t\t\t\t}\n\t\t\t\t}\n\n\t\t\t\tif\
+      \ ((smid(in, cur, 2, tmp) == \"CK\")\n\t\t\t\t\t|| (tmp == \"CG\")\n\t\t\t\t\
+      \t|| (tmp == \"CQ\"))\n\t\t\t\t{\n\t\t\t\t\tprim $= \"K\";\n\t\t\t\t\tsec  $=\
+      \ \"K\";\n\t\t\t\t\tcur += 2;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\n\t\t\t\tif ((smid(in,\
+      \ cur, 2, tmp) == \"CI\")\n\t\t\t\t\t|| (tmp == \"CE\")\n\t\t\t\t\t|| (tmp ==\
+      \ \"CY\"))\n\t\t\t\t{\n\t\t\t\t\t// italian vs. english\n\t\t\t\t\tif ((smid(in,\
+      \ cur, 3, tmp) == \"CIO\")\n\t\t\t\t\t\t|| (tmp == \"CIE\")\n\t\t\t\t\t\t||\
+      \ (tmp == \"CIA\"))\n\t\t\t\t\t{\n\t\t\t\t\t\tprim $= \"S\";\n\t\t\t\t\t\tsec\
+      \  $= \"X\";\n\t\t\t\t\t}\n\t\t\t\t\telse {\n\t\t\t\t\t\tprim $= \"S\";\n\t\t\
+      \t\t\t\tsec  $= \"S\";\n\t\t\t\t\t}\n\t\t\t\t\tcur += 2;\n\t\t\t\t\tbreak;\n\
+      \t\t\t\t}\n\n\t\t\t\t// else\n\t\t\t\tprim $= \"K\";\n\t\t\t\tsec  $= \"K\"\
+      ;\n\n\t\t\t\t// name sent in 'mac caffrey', 'mac gregor'\n\t\t\t\tif ((smid(in,\
+      \ cur+1, 2, tmp) == \" C\")\n\t\t\t\t\t|| (tmp == \" Q\")\n\t\t\t\t\t|| (tmp\
+      \ == \" G\"))\n\t\t\t\t{\n\t\t\t\t\tcur += 3;\n\t\t\t\t}\n\t\t\t\telse {\n\t\
+      \t\t\t\tif ((InStr(\"CKQ\", mid(in, cur + 1, 1)) > -1)\n\t\t\t\t\t\t&& !((smid(in,\
+      \ cur+1, 2, tmp) == \"CE\")\n\t\t\t\t\t\t\t|| (tmp == \"CI\"))\n\t\t\t\t\t\t\
+      )\n\t\t\t\t\t{\n\t\t\t\t\t\tcur += 2;\n\t\t\t\t\t}\n\t\t\t\t\telse {\n\t\t\t\
+      \t\t\tcur++;\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t\tbreak;\n\n\t\t\tcase \"D\":\n\t\
+      \t\t\tif (mid(in, cur, 2) == \"DG\")\n\t\t\t\t{\n\t\t\t\t\tif (InStr(\"IEY\"\
+      , mid(in, cur + 2, 1)) > -1)\n\t\t\t\t\t{\n\t\t\t\t\t\t// e.g. 'edge'\n\t\t\t\
+      \t\t\tprim $= \"J\";\n\t\t\t\t\t\tsec  $= \"J\";\n\t\t\t\t\t\tcur += 3;\n\t\t\
+      \t\t\t\tbreak;\n\t\t\t\t\t}\n\t\t\t\t\telse {\n\t\t\t\t\t\t// e.g. 'edgar'\n\
+      \t\t\t\t\t\tprim $= \"TK\";\n\t\t\t\t\t\tsec  $= \"TK\";\n\t\t\t\t\t\tcur +=\
+      \ 2;\n\t\t\t\t\t\tbreak;\n\t\t\t\t\t}\n\t\t\t\t}\n\n\t\t\t\tif ((smid(in, cur,\
+      \ 2, tmp) == \"DT\")\n\t\t\t\t\t|| (tmp == \"DD\"))\n\t\t\t\t{\n\t\t\t\t\tprim\
+      \ $= \"T\";\n\t\t\t\t\tsec  $= \"T\";\n\t\t\t\t\tcur += 2;\n\t\t\t\t\tbreak;\n\
+      \t\t\t\t}\n\n\t\t\t\t// else\n\t\t\t\tprim $= \"T\";\n\t\t\t\tsec  $= \"T\"\
+      ;\n\t\t\t\tcur++;\n\t\t\t\tbreak;\n\n\t\t\tcase \"F\":\n\t\t\t\tif (mid(in,\
+      \ cur + 1, 1) == \"F\") cur += 2;\n\t\t\t\telse cur++;\n\t\t\t\tprim $= \"F\"\
+      ;\n\t\t\t\tsec  $= \"F\";\n\t\t\t\tbreak;\n\n\t\t\t// TODO: optimize\n\t\t\t\
+      case \"G\":\n\t\t\t\tif (mid(in, cur + 1, 1) == \"H\")\n\t\t\t\t{\n\t\t\t\t\t\
+      if ((cur > 0) && !is_vowel(in, cur-1))\n\t\t\t\t\t{\n\t\t\t\t\t\tprim $= \"\
+      K\";\n\t\t\t\t\t\tsec  $= \"K\";\n\t\t\t\t\t\tcur += 2;\n\t\t\t\t\t\tbreak;\n\
+      \t\t\t\t\t}\n\n\t\t\t\t\tif (cur < 3)\n\t\t\t\t\t{\n\t\t\t\t\t\t// 'ghislane',\
+      \ 'ghiradelli'\n\t\t\t\t\t\tif (cur == 0)\n\t\t\t\t\t\t{\n\t\t\t\t\t\t\tif (mid(in,\
+      \ cur + 2, 1) == \"I\")\n\t\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\tprim $= \"J\";\n\t\
+      \t\t\t\t\t\t\tsec  $= \"J\";\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\telse {\n\t\t\t\t\
+      \t\t\t\tprim $= \"K\";\n\t\t\t\t\t\t\t\tsec  $= \"K\";\n\t\t\t\t\t\t\t}\n\t\t\
+      \t\t\t\t\tcur += 2;\n\t\t\t\t\t\t\tbreak;\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\n\t\t\
+      \t\t\t// Parker's rule (with some further refinements) - e.g. 'hugh'\n\t\t\t\
+      \t\tif (((cur > 1) && (InStr(\"BHD\", mid(in, cur - 2, 1)) > -1))\n\t\t\t\t\t\
+      \t// e.g. 'bough'\n\t\t\t\t\t\t|| ((cur > 2) && (InStr(\"BHD\", mid(in, cur\
+      \ - 3, 1)) > -1))\n\t\t\t\t\t\t// e.g. 'broughton'\n\t\t\t\t\t\t|| ((cur > 3)\
+      \ && (InStr(\"BH\", mid(in, cur - 4, 1)) > -1)))\n\t\t\t\t\t{\n\t\t\t\t\t\t\
+      cur += 2;\n\t\t\t\t\t\tbreak;\n\t\t\t\t\t}\n\t\t\t\t\telse {\n\t\t\t\t\t\t//\
+      \ e.g. 'laugh', 'McLaughlin', 'cough', 'gough', 'rough', 'tough'\n\t\t\t\t\t\
+      \tif ((cur > 2)\n\t\t\t\t\t\t\t&& (Mid(in, cur - 1, 1) == \"U\")\n\t\t\t\t\t\
+      \t\t&& (InStr(\"CGLRT\", mid(in, cur - 3, 1)) > -1))\n\t\t\t\t\t\t{\n\t\t\t\t\
+      \t\t\tprim $= \"F\";\n\t\t\t\t\t\t\tsec  $= \"F\";\n\t\t\t\t\t\t}\n\t\t\t\t\t\
+      \telse {\n\t\t\t\t\t\t\tif ((cur > 0) && mid(in, cur - 1, 1) != \"I\")\n\t\t\
+      \t\t\t\t\t{\n\t\t\t\t\t\t\t\tprim $= \"K\";\n\t\t\t\t\t\t\t\tsec  $= \"K\";\n\
+      \t\t\t\t\t\t\t}\n\t\t\t\t\t\t\tcur += 2;\n\t\t\t\t\t\t\tbreak;\n\t\t\t\t\t\t\
+      }\n\t\t\t\t\t}\n\t\t\t\t}\n\n\t\t\t\tif (mid(in, cur + 1, 1) == \"N\")\n\t\t\
+      \t\t{\n\t\t\t\t\tif ((cur == 1) && is_vowel(in, 0) && !Slavo_Germanic(in))\n\
+      \t\t\t\t\t{\n\t\t\t\t\t\tprim $= \"KN\";\n\t\t\t\t\t\tsec  $= \"N\";\n\t\t\t\
+      \t\t}\n\t\t\t\t\telse {\n\t\t\t\t\t\t// not e.g. 'cagney'\n\t\t\t\t\t\tif ((mid(in,\
+      \ cur + 2, 2) != \"EY\")\n\t\t\t\t\t\t\t&& (mid(in, cur + 1) != \"Y\")\n\t\t\
+      \t\t\t\t\t&& !Slavo_Germanic(in))\n\t\t\t\t\t\t{\n\t\t\t\t\t\t\tprim $= \"N\"\
+      ;\n\t\t\t\t\t\t\tsec  $= \"KN\";\n\t\t\t\t\t\t}\n\t\t\t\t\t\telse {\n\t\t\t\t\
+      \t\t\tprim $= \"KN\";\n\t\t\t\t\t\t\tsec  $= \"KN\";\n\t\t\t\t\t\t}\n\t\t\t\t\
+      \t}\n\t\t\t\t\tcur += 2;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\n\t\t\t\t// 'tagliaro'\n\
+      \t\t\t\tif ((mid(in, cur + 1, 2) == \"LI\") && !Slavo_Germanic(in))\n\t\t\t\t\
+      {\n\t\t\t\t\tprim $= \"KL\";\n\t\t\t\t\tsec  $= \"L\";\n\t\t\t\t\tcur += 2;\n\
+      \t\t\t\t\tbreak;\n\t\t\t\t}\n\n\t\t\t\t// -ges-, -gep-, -gel- at beginning\n\
+      \t\t\t\tif ((cur == 0)\n\t\t\t\t\t&& ((mid(in, cur + 1, 1) == \"Y\")\n\t\t\t\
+      \t\t\t|| ((smid(in, cur + 1, 2, tmp) == \"ES\")\n\t\t\t\t\t\t\t|| (tmp == \"\
+      EP\")\n\t\t\t\t\t\t\t|| (tmp == \"EB\")\n\t\t\t\t\t\t\t|| (tmp == \"EL\")\n\t\
+      \t\t\t\t\t\t|| (tmp == \"EY\")\n\t\t\t\t\t\t\t|| (tmp == \"IB\")\n\t\t\t\t\t\
+      \t\t|| (tmp == \"IL\")\n\t\t\t\t\t\t\t|| (tmp == \"IN\")\n\t\t\t\t\t\t\t|| (tmp\
+      \ == \"IE\")\n\t\t\t\t\t\t\t|| (tmp == \"EI\")\n\t\t\t\t\t\t\t|| (tmp == \"\
+      ER\"))\n\t\t\t\t\t\t)\n\t\t\t\t\t)\n\t\t\t\t{\n\t\t\t\t\tprim $= \"K\";\n\t\t\
+      \t\t\tsec  $= \"J\";\n\t\t\t\t\tcur += 2;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\n\t\
+      \t\t\t// -ger-, -gy-\n\t\t\t\tif (((mid(in, cur + 1, 2) == \"ER\")\n\t\t\t\t\
+      \t|| (mid(in, cur + 1, 1) == \"Y\"))\n\t\t\t\t\t&& !(smid(in, 0, 6, tmp) ==\
+      \ \"DANGER\"\n\t\t\t\t\t\t|| tmp == \"RANGER\"\n\t\t\t\t\t\t|| tmp == \"MANGER\"\
+      \n\t\t\t\t\t)\n\t\t\t\t\t&& (InStr(\"EI\", mid(in, cur-1, 1)) == -1)\n\t\t\t\
+      \t\t&& !(smid(in, cur-1, 3, tmp) == \"RGY\"\n\t\t\t\t\t\t|| tmp == \"OGY\"\n\
+      \t\t\t\t\t))\n\t\t\t\t{\n\t\t\t\t\tprim $= \"K\";\n\t\t\t\t\tsec  $= \"J\";\n\
+      \t\t\t\t\tcur += 2;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\n\t\t\t\t// italian e.g.\
+      \ 'biaggi'\n\t\t\t\tif ((InStr(\"EIY\", mid(in, cur + 1, 1)) > -1)\n\t\t\t\t\
+      \t|| smid(in, cur-1, 4, tmp) == \"AGGI\"\n\t\t\t\t\t|| tmp == \"OGGI\")\n\t\t\
+      \t\t{\n\t\t\t\t\t// obvious germanic\n\t\t\t\t\tif (((smid(in, 0, 4, tmp) ==\
+      \ \"VAN \"\n\t\t\t\t\t\t\t|| tmp == \"VON \")\n\t\t\t\t\t\t|| (mid(in, 0, 3)\
+      \ == \"SCH\"))\n\t\t\t\t\t\t|| (mid(in, cur + 1, 2) == \"ET\"))\n\t\t\t\t\t\
+      {\n\t\t\t\t\t\tprim $= \"K\";\n\t\t\t\t\t\tsec  $= \"K\";\n\t\t\t\t\t}\n\t\t\
+      \t\t\telse {\n\t\t\t\t\t\t// always soft if french ending\n\t\t\t\t\t\tif (mid(in,\
+      \ cur + 1, 4) == \"IER \")\n\t\t\t\t\t\t{\n\t\t\t\t\t\t\tprim $= \"J\";\n\t\t\
+      \t\t\t\t\tsec  $= \"J\";\n\t\t\t\t\t\t}\n\t\t\t\t\t\telse {\n\t\t\t\t\t\t\t\
+      prim $= \"J\";\n\t\t\t\t\t\t\tsec  $= \"K\";\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\
+      \t\t\t\tcur += 2;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\n\t\t\t\tif (mid(in, cur +1,\
+      \ 1) == \"G\") cur += 2;\n\t\t\t\telse cur++;\n\n\t\t\t\tprim $= \"K\";\n\t\t\
+      \t\tsec  $= \"K\";\n\t\t\t\tbreak;\n\n\t\t\tcase \"H\":\n\t\t\t\t// only keep\
+      \ if first & before vowel or btw. 2 vowels\n\t\t\t\tif (((cur == 0) || is_vowel(in,\
+      \ cur - 1)) && is_vowel(in, cur + 1))\n\t\t\t\t{\n\t\t\t\t\tprim $= \"H\";\n\
+      \t\t\t\t\tsec  $= \"H\";\n\t\t\t\t\tcur += 2;\n\t\t\t\t}\n\t\t\t\telse cur++;\n\
+      \t\t\t\tbreak;\n\n   \t\t\tcase \"J\":\n\t\t\t\t// obvious spanish, 'jose',\
+      \ 'san jacinto'\n\t\t\t\tif ((mid(in, cur, 4) == \"JOSE\")\n\t\t\t\t\t|| (mid(in,\
+      \ 0, 4) == \"SAN \"))\n\t\t\t\t{\n\t\t\t\t\tif (((cur == 0) && (mid(in, cur\
+      \ + 4, 1) == \" \"))\n\t\t\t\t\t\t|| (mid(in, 0, 4) == \"SAN \"))\n\t\t\t\t\t\
+      {\n\t\t\t\t\t\tprim $= \"H\";\n\t\t\t\t\t\tsec  $= \"H\";\n\t\t\t\t\t}\n\t\t\
+      \t\t\telse {\n\t\t\t\t\t\tprim $= \"J\";\n\t\t\t\t\t\tsec  $= \"H\";\n\t\t\t\
+      \t\t}\n\t\t\t\t\tcur++;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\n\t\t\t\tif ((cur ==\
+      \ 0) && (mid(in, cur, 4) != \"JOSE\"))\n\t\t\t\t{\n\t\t\t\t\tprim $= \"J\";\
+      \  // Yankelovich/Jankelowicz\n\t\t\t\t\tsec  $= \"A\";\n\t\t\t\t}\n\t\t\t\t\
+      else {\n\t\t\t\t\t// spanish pron. of .e.g. 'bajador'\n\t\t\t\t\tif (is_vowel(in,\
+      \ cur - 1)\n\t\t\t\t\t\t&& !Slavo_Germanic(in)\n\t\t\t\t\t\t&& ((mid(in, cur\
+      \ + 1, 1) == \"A\")\n\t\t\t\t\t\t|| (mid(in, cur + 1, 1) == \"O\")))\n\t\t\t\
+      \t\t{\n\t\t\t\t\t\tprim $= \"J\";\n\t\t\t\t\t\tsec  $= \"H\";\n\t\t\t\t\t}\n\
+      \t\t\t\t\telse {\n\t\t\t\t\t\tif (cur == last)\n\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\
+      prim $= \"J\";\n\t\t\t\t\t\t\tsec  $= \"\";\n\t\t\t\t\t\t}\n\t\t\t\t\t\telse\
+      \ {\n\t\t\t\t\t\t\tif ((InStr(\"LTKSNMBZ\", mid(in, cur + 1, 1)) == -1)\n\t\t\
+      \t\t\t\t\t\t&& (InStr(\"SKL\", mid(in, cur - 1, 1)) == -1) )\n\t\t\t\t\t\t\t\
+      {\n\t\t\t\t\t\t\t\tprim $= \"J\";\n\t\t\t\t\t\t\t\tsec  $= \"J\";\n\t\t\t\t\t\
+      \t\t}\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t}\n\n\t\t\t\tif (mid(in, cur + 1,\
+      \ 1) == \"J\") // it could happen\n\t\t\t\t\tcur += 2;\n\t\t\t\telse\n\t\t\t\
+      \t\tcur++;\n\t\t\t\tbreak;\n\n\t\t\tcase \"K\":\n\t\t\t\tif (mid(in, cur + 1,\
+      \ 1) == \"K\") cur += 2;\n\t\t\t\telse cur++;\n\t\t\t\tprim $= \"K\";\n\t\t\t\
+      \tsec  $= \"K\";\n\t\t\t\tbreak;\n\n\t\t\tcase \"L\":\n\t\t\t\tif (mid(in, cur\
+      \ + 1, 1) == \"L\")\n\t\t\t\t{\n\t\t\t\t\t// spanish e.g. 'cabrillo', 'gallegos'\n\
+      \t\t\t\t\tif (((cur == (slen - 3))\n\t\t\t\t\t\t&& (smid(in, cur-1, 4, tmp)\
+      \ == \"ILLO\"\n\t\t\t\t\t\t\t|| tmp == \"ILLA\"\n\t\t\t\t\t\t\t|| tmp == \"\
+      ALLE\"\n\t\t\t\t\t\t)\n\t\t\t\t\t\t|| (\n\t\t\t\t\t\t\t((smid(in, last-1, 2,\
+      \ tmp) == \"AS\"\n\t\t\t\t\t\t\t\t|| tmp == \"OS\")\n\t\t\t\t\t\t\t\t|| (InStr(\"\
+      AO\", mid(in, last, 1)) > -1)\n\t\t\t\t\t\t\t)\n\t\t\t\t\t\t\t&& (mid(in, cur\
+      \ - 1, 4) == \"ALLE\")\n\t\t\t\t\t\t\t)\n\t\t\t\t\t\t))\n\t\t\t\t\t{\n\t\t\t\
+      \t\t\tprim $= \"L\";\n\t\t\t\t\t\tsec  $= \"\";\n\t\t\t\t\t\tcur += 2;\n\t\t\
+      \t\t\t\tbreak;\n\t\t\t\t\t}\n\t\t\t\t\tcur += 2;\n\t\t\t\t} else cur++;\n\t\t\
+      \t\tprim $= \"L\";\n\t\t\t\tsec  $= \"L\";\n\t\t\t\tbreak;\n\n\t\t\tcase \"\
+      M\":\n\t\t\t\tif (((mid(in, cur-1, 3) == \"UMB\")\n\t\t\t\t\t&& (((cur + 1)\
+      \ == last)\n\t\t\t\t\t|| (mid(in, cur+2, 2) == \"ER\")))\n\t\t\t\t\t// 'dumb',\
+      \ 'thumb'\n\t\t\t\t\t|| (mid(in, cur + 1, 1) == \"M\"))\n\t\t\t\t{\n\t\t\t\t\
+      \tcur += 2;\n\t\t\t\t}\n\t\t\t\telse {\n\t\t\t\t\tcur++;\n\t\t\t\t}\n\t\t\t\t\
+      prim $= \"M\";\n\t\t\t\tsec  $= \"M\";\n\t\t\t\tbreak;\n\n\t\t\tcase \"N\":\n\
+      \t\t\t\tif (mid(in, cur + 1, 1) == \"N\") cur += 2;\n\t\t\t\telse cur++;\n\t\
+      \t\t\tprim $= \"N\";\n\t\t\t\tsec  $= \"N\";\n\t\t\t\tbreak;\n\n\t\t\tcase \"\
+      Ñ\":\n\t\t\t\tcur++;\n\t\t\t\tprim $= \"N\";\n\t\t\t\tsec  $= \"N\";\n\t\t\t\
+      \tbreak;\n\n\t\t\tcase \"P\":\n\t\t\t\tif (mid(in, cur + 1, 1) == \"H\")\n\t\
+      \t\t\t{\n\t\t\t\t\tcur += 2;\n\t\t\t\t\tprim $= \"F\";\n\t\t\t\t\tsec  $= \"\
+      F\";\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\n\t\t\t\t// also account for \"campbell\"\
+      \ and \"raspberry\"\n\t\t\t\tif (InStr(\"PB\", Mid(in, cur + 1, 1)) > -1)\n\t\
+      \t\t\t\tcur += 2;\n\t\t\t\telse\n\t\t\t\t\tcur++;\n\t\t\t\tprim $= \"P\";\n\t\
+      \t\t\tsec  $= \"P\";\n\t\t\t\tbreak;\n\n   \t\t\tcase \"Q\":\n\t\t\t\tif (mid(in,\
+      \ cur + 1, 1) == \"Q\") cur += 2;\n\t\t\t\telse cur++;\n\t\t\t\tprim $= \"K\"\
+      ;\n\t\t\t\tsec  $= \"K\";\n\t\t\t\tbreak;\n\n\t\t\tcase \"R\":\n\t\t\t\t// french\
+      \ e.g. 'rogier', but exclude 'hochmeier'\n\t\t\t\tif ((cur == last)\n\t\t\t\t\
+      \t&& !Slavo_Germanic(in)\n\t\t\t\t\t&& (mid(in, cur - 2, 2) == \"IE\")\n\t\t\
+      \t\t\t&& !(smid(in, cur-4, 2, tmp) == \"ME\"\n\t\t\t\t\t\t|| tmp == \"MA\"\n\
+      \t\t\t\t\t))\n\t\t\t\t{\n\t\t\t\t\tprim $= \"\";\n\t\t\t\t\tsec  $= \"R\";\n\
+      \t\t\t\t}\n\t\t\t\telse {\n\t\t\t\t\tprim $= \"R\";\n\t\t\t\t\tsec  $= \"R\"\
+      ;\n\t\t\t\t}\n\t\t\t\tif (mid(in, cur + 1, 1) == \"R\") cur += 2;\n\t\t\t\t\
+      else cur++;\n\t\t\t\tbreak;\n\n\t\t\tcase \"S\":\n\t\t\t\t// special cases 'island',\
+      \ 'isle', 'carlisle', 'carlysle'\n\t\t\t\tif ((smid(in, cur - 1, 3, tmp) ==\
+      \ \"ISL\")\n\t\t\t\t\t|| (tmp == \"YSL\"))\n\t\t\t\t{\n\t\t\t\t\tcur++;\n\t\t\
+      \t\t\tbreak;\n\t\t\t\t}\n\n\t\t\t\t// special case 'sugar-'\n\t\t\t\tif ((cur\
+      \ == 0) && (mid(in, cur, 5) == \"SUGAR\"))\n\t\t\t\t{\n\t\t\t\t\tprim $= \"\
+      X\";\n\t\t\t\t\tsec  $= \"S\";\n\t\t\t\t\tcur++;\n\t\t\t\t\tbreak;\n\t\t\t\t\
+      }\n\n\t\t\t\tif (mid(in, cur, 2) == \"SH\")\n\t\t\t\t{\n\t\t\t\t\t// germanic\n\
+      \t\t\t\t\tif (smid(in, cur + 1, 4, tmp) == \"HEIM\"\n\t\t\t\t\t\t|| tmp == \"\
+      HOEK\"\n\t\t\t\t\t\t|| tmp == \"HOLM\"\n\t\t\t\t\t\t|| tmp == \"HOLZ\")\n\t\t\
+      \t\t\t{\n\t\t\t\t\t\tprim $= \"S\";\n\t\t\t\t\t\tsec  $= \"S\";\n\t\t\t\t\t\
+      }\n\t\t\t\t\telse {\n\t\t\t\t\t\tprim $= \"X\";\n\t\t\t\t\t\tsec  $= \"X\";\n\
+      \t\t\t\t\t}\n\t\t\t\t\tcur += 2;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\n\t\t\t\t//\
+      \ italian & armenian\n\t\t\t\tif (smid(in, cur, 3, tmp) == \"SIO\"\n\t\t\t\t\
+      \t|| tmp == \"SIA\"\n\t\t\t\t\t|| mid(in, cur, 4) == \"SIAN\")\n\t\t\t\t{\n\t\
+      \t\t\t\tif (!Slavo_Germanic(in))\n\t\t\t\t\t{\n\t\t\t\t\t\tprim $= \"S\";\n\t\
+      \t\t\t\t\tsec  $= \"X\";\n\t\t\t\t\t}\n\t\t\t\t\telse {\n\t\t\t\t\t\tprim $=\
+      \ \"S\";\n\t\t\t\t\t\tsec  $= \"S\";\n\t\t\t\t\t}\n\t\t\t\t\tcur += 3;\n\t\t\
+      \t\t\tbreak;\n\t\t\t\t}\n\n\t\t\t\t// german & anglicisations, e.g. 'smith'\
+      \ match 'schmidt', 'snider' match 'schneider'\n\t\t\t\t// also, -sz- in slavic\
+      \ language altho in hungarian it is pronounced 's'\n\t\t\t\tif ((\n\t\t\t\t\t\
+      \t(cur == 0)\n\t\t\t\t\t\t&& (InStr(\"MNLW\", mid(in, cur + 1, 1)) > -1)\n\t\
+      \t\t\t\t)\n\t\t\t\t\t|| mid(in, cur + 1, 1) == \"Z\")\n\t\t\t\t{\n\t\t\t\t\t\
+      prim $= \"S\";\n\t\t\t\t\tsec  $= \"X\";\n\t\t\t\t\tif (mid(in, cur + 1, 1)\
+      \ == \"Z\")\tcur += 2;\n\t\t\t\t\telse cur++;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\
+      \n\t\t\t\tif (mid(in, cur, 2) == \"SC\")\n\t\t\t\t{\n\t\t\t\t\t// Schlesinger's\
+      \ rule\n\t\t\t\t\tif (mid(in, cur + 2, 1) == \"H\")\n\t\t\t\t\t{\n\t\t\t\t\t\
+      \t// dutch origin, e.g. 'school', 'schooner'\n\t\t\t\t\t\tif (smid(in, cur +\
+      \ 3, 2, tmp) == \"OO\"\n\t\t\t\t\t\t\t|| tmp == \"ER\"\n\t\t\t\t\t\t\t|| tmp\
+      \ == \"EN\"\n\t\t\t\t\t\t\t|| tmp == \"UY\"\n\t\t\t\t\t\t\t|| tmp == \"ED\"\n\
+      \t\t\t\t\t\t\t|| tmp == \"EM\")\n\t\t\t\t\t\t{\n\t\t\t\t\t\t\t// 'schermerhorn',\
+      \ 'schenker'\n\t\t\t\t\t\t\tif (smid(in, cur + 3, 2, tmp) == \"ER\"\n\t\t\t\t\
+      \t\t\t\t|| tmp == \"EN\")\n\t\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\tprim $= \"X\";\n\
+      \t\t\t\t\t\t\t\tsec  $= \"SK\";\n\t\t\t\t\t\t\t} else {\n\t\t\t\t\t\t\t\tprim\
+      \ $= \"SK\";\n\t\t\t\t\t\t\t\tsec  $= \"SK\";\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\
+      \tcur += 3;\n\t\t\t\t\t\t\tbreak;\n\t\t\t\t\t\t} else {\n\t\t\t\t\t\t\tif ((cur\
+      \ == 0)\n\t\t\t\t\t\t\t\t&& !is_vowel(in, 3)\n\t\t\t\t\t\t\t\t&& (mid(in, cur\
+      \ + 3, 1) != \"W\"))\n\t\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\tprim $= \"X\";\n\t\t\t\
+      \t\t\t\t\tsec  $= \"S\";\n\t\t\t\t\t\t\t} else {\n\t\t\t\t\t\t\t\tprim $= \"\
+      X\";\n\t\t\t\t\t\t\t\tsec  $= \"X\";\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\tcur +=\
+      \ 3;\n\t\t\t\t\t\t\tbreak;\n\t\t\t\t\t\t}\n\n\t\t\t\t\t\tif (InStr(\"IEY\",\
+      \ mid(in, cur + 2, 1)) > -1)\n\t\t\t\t\t\t{\n\t\t\t\t\t\t\tprim $= \"S\";\n\t\
+      \t\t\t\t\t\tsec  $= \"S\";\n\t\t\t\t\t\t\tcur += 3;\n\t\t\t\t\t\t\tbreak;\n\t\
+      \t\t\t\t\t}\n\t\t\t\t\t}\n\n\t\t\t\t\t// else\n\t\t\t\t\tprim $= \"SK\";\n\t\
+      \t\t\t\tsec  $= \"SK\";\n\t\t\t\t\tcur += 3;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\n\
+      \t\t\t\t// french e.g. 'resnais', 'artois'\n\t\t\t\tif ((cur == last)\n\t\t\t\
+      \t\t&& (\n\t\t\t\t\t\tsmid(in, cur-2, 2, tmp) == \"AI\"\n\t\t\t\t\t\t|| tmp\
+      \ == \"OI\"\n\t\t\t\t\t))\n\t\t\t\t{\n\t\t\t\t\tprim $= \"\";\n\t\t\t\t\tsec\
+      \  $= \"S\";\n\t\t\t\t} else {\n\t\t\t\t\tprim $= \"S\";\n\t\t\t\t\tsec  $=\
+      \ \"S\";\n\t\t\t\t}\n\n\t\t\t\tif (InStr(\"SZ\", mid(in, cur + 1, 1)) > -1)\n\
+      \t\t\t\t\tcur += 2;\n\t\t\t\telse\n\t\t\t\t\tcur++;\n\t\t\t\tbreak;\n\n\t\t\t\
+      case \"T\":\n\t\t\t\tif (mid(in, cur, 4) == \"TION\")\n\t\t\t\t{\n\t\t\t\t\t\
+      prim $= \"X\";\n\t\t\t\t\tsec  $= \"X\";\n\t\t\t\t\tcur += 3;\n\t\t\t\t\tbreak;\n\
+      \t\t\t\t}\n\n\t\t\t\tif (smid(in, cur, 3, tmp) == \"TIA\"\n\t\t\t\t\t|| tmp\
+      \ == \"TCH\")\n\t\t\t\t{\n\t\t\t\t\tprim $= \"X\";\n\t\t\t\t\tsec  $= \"X\"\
+      ;\n\t\t\t\t\tcur += 3;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\n\t\t\t\tif ((mid(in,\
+      \ cur, 2) == \"TH\")\n\t\t\t\t\t|| (mid(in, cur, 3) == \"TTH\"))\n\t\t\t\t{\n\
+      \t\t\t\t\t// special case 'thomas', 'thames' or germanic\n\t\t\t\t\tif (smid(in,\
+      \ cur + 2, 2, tmp) == \"OM\"\n\t\t\t\t\t\t|| tmp == \"AM\"\n\t\t\t\t\t\t|| smid(in,\
+      \ 0, 4, tmp) == \"VAN\"\n\t\t\t\t\t\t|| tmp == \"VON\"\n\t\t\t\t\t\t|| mid(in,\
+      \ 0, 3) == \"SCH\")\n\t\t\t\t\t{\n\t\t\t\t\t\tprim $= \"T\";\n\t\t\t\t\t\tsec\
+      \  $= \"T\";\n\t\t\t\t\t} else {\n\t\t\t\t\t\tprim $= \"O\";\n\t\t\t\t\t\tsec\
+      \  $= \"T\";\n\t\t\t\t\t}\n\t\t\t\t\tcur += 2;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\
+      \n\t\t\t\tif (InStr(\"TD\", mid(in, cur + 1, 1)) > -1)\n\t\t\t\t\tcur += 2;\n\
+      \t\t\t\telse\n\t\t\t\t\tcur++;\n\t\t\t\tprim $= \"T\";\n\t\t\t\tsec  $= \"T\"\
+      ;\n\t\t\t\tbreak;\n\n\t\t\tcase \"V\":\n\t\t\t\tif (mid(in, cur + 1, 1) == \"\
+      V\")\n\t\t\t\t\tcur += 2;\n\t\t\t\telse\n\t\t\t\t\tcur++;\n\t\t\t\tprim $= \"\
+      F\";\n\t\t\t\tsec  $= \"F\";\n\t\t\t\tbreak;\n\n\t\t\tcase \"W\":\n\t\t\t\t\
+      // can also be in middle of word\n\t\t\t\tif (mid(in, cur, 2) == \"WR\") {\n\
+      \t\t\t\t\tprim $= \"R\";\n\t\t\t\t\tsec  $= \"R\";\n\t\t\t\t\tcur += 2;\n\t\t\
+      \t\t\tbreak;\n\t\t\t\t}\n\n\t\t\t\tif ((cur == 0)\n\t\t\t\t\t&& (is_vowel(in,\
+      \ cur + 1)\n\t\t\t\t\t\t|| mid(in, cur, 2) == \"WH\"))\n\t\t\t\t{\n\t\t\t\t\t\
+      // Wasserman should match Vasserman\n\t\t\t\t\tif (is_vowel(in, cur + 1))\n\t\
+      \t\t\t\t{\n\t\t\t\t\t\tprim $= \"A\";\n\t\t\t\t\t\tsec  $= \"F\";\n\t\t\t\t\t\
+      }\n\t\t\t\t\telse {\n\t\t\t\t\t\t// need Uomo to match Womo\n\t\t\t\t\t\tprim\
+      \ $= \"A\";\n\t\t\t\t\t\tsec  $= \"A\";\n\t\t\t\t\t}\n\t\t\t\t}\n\n\t\t\t\t\
+      // Arnow should match Arnoff\n\t\t\t\tif (((cur == last)\n\t\t\t\t\t\t&& is_vowel(in,\
+      \ cur - 1))\n\t\t\t\t\t|| smid(in, cur - 1, 5, tmp) ==\"EWSKI\"\n\t\t\t\t\t\
+      || tmp == \"EWSKY\"\n\t\t\t\t\t|| tmp == \"OWSKI\"\n\t\t\t\t\t|| tmp == \"OWSKY\"\
+      \n\t\t\t\t\t|| mid(in, 0, 3) == \"SCH\")\n\t\t\t\t{\n\t\t\t\t\tprim $= \"\"\
+      ;\n\t\t\t\t\tsec  $= \"F\";\n\t\t\t\t\tcur++;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\
+      \n\t\t\t\t// polish e.g. 'filipowicz'\n\t\t\t\tif (smid(in, cur, 4, tmp) ==\
+      \ \"WICZ\"\n\t\t\t\t\t|| tmp == \"WITZ\")\n\t\t\t\t{\n\t\t\t\t\tprim $= \"TS\"\
+      ;\n\t\t\t\t\tsec  $= \"FX\";\n\t\t\t\t\tcur += 4;\n\t\t\t\t\tbreak;\n\t\t\t\t\
+      }\n\n\t\t\t\t// else skip it\n\t\t\t\tcur++;\n\t\t\t\tbreak;\n\n\t\t\tcase \"\
+      X\":\n\t\t\t\t// french e.g. breaux\n\t\t\t\tif (!((cur == last)\n\t\t\t\t\t\
+      && (smid(in, cur - 3, 3, tmp) == \"IAU\"\n\t\t\t\t\t\t|| tmp == \"EAU\"\n\t\t\
+      \t\t\t\t|| smid(in, cur - 2, 2, tmp) == \"AU\"\n\t\t\t\t\t\t|| tmp == \"OU\"\
+      )))\n\t\t\t\t{\n\t\t\t\t\tprim $= \"KS\";\n\t\t\t\t\tsec  $= \"KS\";\n\t\t\t\
+      \t}\n\n\t\t\t\tif (InStr(\"CX\", mid(in, cur + 1, 1)) > -1)\n\t\t\t\t\tcur +=\
+      \ 2;\n\t\t\t\telse\n\t\t\t\t\tcur++;\n\t\t\t\tbreak;\n\n\n\t\t\tcase \"Z\":\n\
+      \t\t\t\t// chinese pinyin e.g. 'zhao'\n\t\t\t\tif (mid(in, cur + 1, 1) == \"\
+      H\")\n\t\t\t\t{\n\t\t\t\t\tprim $= \"J\";\n\t\t\t\t\tsec  $= \"J\";\n\t\t\t\t\
+      \tcur += 2;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\t\t\t\telse\n\t\t\t\t\tif (smid(in,\
+      \ cur + 1, 2, tmp) == \"ZO\"\n\t\t\t\t\t\t|| tmp == \"ZI\"\n\t\t\t\t\t\t|| tmp\
+      \ == \"ZA\"\n\t\t\t\t\t\t|| (Slavo_Germanic(in)\n\t\t\t\t\t\t&& ((cur > 0) &&\
+      \ mid(in, cur - 1, 1) != \"T\")))\n\t\t\t\t\t{\n\t\t\t\t\tprim $= \"S\";\n\t\
+      \t\t\t\tsec  $= \"TS\";\n\t\t\t\t} else {\n\t\t\t\t\tprim $= \"S\";\n\t\t\t\t\
+      \tsec  $= \"S\";\n\t\t\t\t}\n\n\t\t\t\tif (mid(in, cur + 1, 1) == \"Z\")\n\t\
+      \t\t\t\tcur += 2;\n\t\t\t\telse\n\t\t\t\t\tcur++;\n\t\t\t\tbreak;\n\n\t\t\t\
+      default:\n\t\t\t\tcur++;\n\t\t}\n \t}\n\n \tres[0] = Left(prim, mlen);\n \t\
+      res[1] = Left(sec, mlen);\n \treturn res;\n}\n</uscript>\n\n==Helper functions==\n\
+      \n<uscript>\n/**\n\tSame as mid, except that is has a 4th param that will also\
+      \ get the result. <br />\n\tUse this for caching the result.\n*/\nstatic final\
+      \ function string smid(coerce string in, int off, int len, out string s)\n{\n\
+      \ts = mid(in, off, len);\n\treturn s;\n}\n\n/**\n\treturns true if the character\
+      \ at pos is a vowel.\n*/\nstatic final function bool is_vowel(coerce string\
+      \ in, int pos)\n{\n\treturn (InStr(\"AEIOUY\", mid(in, pos, 1)) > -1);\n}\n\n\
+      /**\n\thelper function for the metaphone algorithm to determain if this word\
+      \ is\n\t\"slave germanic\"\n*/\nstatic final function bool Slavo_Germanic(coerce\
+      \ string in)\n{\n\treturn (InStr(in, \"W\") > -1)\n\t\t|| (InStr(in, \"K\")\
+      \ > -1)\n\t\t|| (InStr(in, \"CZ\") > -1)\n\t\t|| (InStr(in, \"WITZ\") > -1);\n\
+      }\n</uscript>\n\n==Copyright==\n\n    Copyright 2004, Michiel Hendriks <elmuerte@drunksnipers.com>\n\
+      \    All rights reserved.\n \n    This UnrealScript translation is based heavily\
+      \ on the PHP \n    implementation by Stephen Woodbridge <woodbri@swoodbridge.com>,\
+      \ \n    which in turn is based on the C implementation\n    by Maurice Aubrey\
+      \ <maurice@hevanet.com>, which in turn\n    is based heavily on the C++ implementation\
+      \ by\n    Lawrence Philips and incorporates several bug fixes courtesy\n   \
+      \ of Kevin Atkinson <kevina@users.sourceforge.net>.\n \n    This module is free\
+      \ software; you may redistribute it and/or\n    modify it under the same terms\
+      \ as Perl itself.\n\nThe [http://www.perl.com/pub/a/language/misc/Artistic.html\
+      \ Perl Artistic License].\n\nNote that that page currently appears to be blank,\
+      \ the Perl Artistic License is almost similar to the [http://www.opensource.org/licenses/artistic-license.php\
+      \ Artistic License]\n\n'''Wormbo:''' Erm... Perl?\n\n'''El Muerte:''' Yeah go\
+      \ figure, just pasting a long the license notice. The implementation of Maurice\
+      \ Aubrey has been released under that license, and so is the PHP implementation,\
+      \ thus this implementation should also be released under the same license. The\
+      \ license isn't very restrictive, it allows you to do even more than the [[Legacy:LesserOpenUnrealModLicense|LesserOpenUnrealModLicense]]\
+      \ would do.\n\n==Related Topics==\n* [[Legacy:SoundEx|SoundEx]]\n* [http://aspell.sourceforge.net/metaphone/\
+      \ More about metaphone] &ndash; and implementations in other languages\n\n[[Category:Legacy\
+      \ Algorithm|{{PAGENAME}}]]"
+  properties: []
+  revId: 2833
+name: "Legacy:DoubleMetaPhone"
+revision:
+  revid: 2833
+  parentid: 2835
+  user: "El Muerte"
+  timestamp: 1092921328.000000000
+  comment: "*"
+timestamp: 1668976040.221801000

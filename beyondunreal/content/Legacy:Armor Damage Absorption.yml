@@ -1,0 +1,223 @@
+---
+parse:
+  title: "Legacy:Armor Damage Absorption"
+  text:
+    text: "<p>When a <a href=\"/Legacy:Pawn_(UT)\" title=\"Legacy:Pawn (UT)\">Pawn\
+      \ (UT)</a> takes damage it allows its <a href=\"/Legacy:Inventory_(UT)\" title=\"\
+      Legacy:Inventory (UT)\">Inventory (UT)</a> items to reduce the damage by calling\
+      \ the <tt>ReduceDamage</tt> function of the first item in the inventory chain,\
+      \ but only if the Pawn's <tt>bIsPlayer</tt> property is <tt>True</tt> and the\
+      \ Pawn's <tt>ReducedDamageType</tt> property is not 'All'.<br /></p>\n<p>The\
+      \ damage reduction process is divided into two steps:</p>\n<ol>\n<li>Create\
+      \ a list of armor items and sort it by priority.</li>\n<li>Let the single items\
+      \ in that list reduce the damage until either the damage is 0 or the end of\
+      \ the list is reached.</li>\n</ol>\n<h2><span class=\"mw-headline\" id=\"Creating_the_List\"\
+      >Creating the List</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Armor_Damage_Absorption?section=1\" title=\"\
+      Edit section: Creating the List\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>When building the list of armor items <i>every</i>\
+      \ item in the Pawn's inventory list is checked even if its <tt>bIsAnArmor</tt>\
+      \ is <tt>False</tt>. (e.g. the Relic of Redemption is not an armor item, but\
+      \ still uses armor functions to check for probably deadly hits.)<br /></p>\n\
+      <p>The list is built by the recursively called <tt>PrioritizeArmor</tt> function:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">function</span>\
+      \ <span class=\"kw9\">inventory</span> PrioritizeArmor<span class=\"br0\">(</span>\
+      \ <span class=\"kw5\">int</span> Damage, <span class=\"kw5\">name</span> <span\
+      \ class=\"kw9\">DamageType</span>, <span class=\"kw5\">vector</span> HitLocation\
+      \ <span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n    <span class=\"\
+      kw1\">local</span> <span class=\"kw9\">Inventory</span> FirstArmor, InsertAfter;\n\
+      \ \n    <span class=\"kw2\">if</span> <span class=\"br0\">(</span> <span class=\"\
+      kw9\">Inventory</span> <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span>\
+      \ <span class=\"br0\">)</span>\n        FirstArmor <span class=\"sy0\">=</span>\
+      \ <span class=\"kw9\">Inventory</span>.<span class=\"me0\">PrioritizeArmor</span><span\
+      \ class=\"br0\">(</span>Damage, <span class=\"kw9\">DamageType</span>, HitLocation<span\
+      \ class=\"br0\">)</span>;\n    <span class=\"kw2\">else</span>\n        FirstArmor\
+      \ <span class=\"sy0\">=</span> <span class=\"kw5\">None</span>;\n \n    <span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span> bIsAnArmor<span class=\"\
+      br0\">)</span>\n    <span class=\"br0\">{</span>\n        <span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span> FirstArmor <span class=\"sy0\">==</span>\
+      \ <span class=\"kw5\">None</span> <span class=\"br0\">)</span>\n        <span\
+      \ class=\"br0\">{</span>\n            nextArmor <span class=\"sy0\">=</span>\
+      \ <span class=\"kw5\">None</span>;\n            <span class=\"kw2\">return</span>\
+      \ <span class=\"kw6\">self</span>;\n        <span class=\"br0\">}</span>\n \n\
+      \        <span class=\"co1\">// insert this armor into the prioritized armor\
+      \ list</span>\n        <span class=\"kw2\">if</span> <span class=\"br0\">(</span>\
+      \ FirstArmor.<span class=\"me0\">ArmorPriority</span><span class=\"br0\">(</span><span\
+      \ class=\"kw9\">DamageType</span><span class=\"br0\">)</span> <span class=\"\
+      sy0\">&lt;</span> ArmorPriority<span class=\"br0\">(</span><span class=\"kw9\"\
+      >DamageType</span><span class=\"br0\">)</span> <span class=\"br0\">)</span>\n\
+      \        <span class=\"br0\">{</span>\n            nextArmor <span class=\"\
+      sy0\">=</span> FirstArmor;\n            <span class=\"kw2\">return</span> <span\
+      \ class=\"kw6\">self</span>;\n        <span class=\"br0\">}</span>\n       \
+      \ InsertAfter <span class=\"sy0\">=</span> FirstArmor;\n        <span class=\"\
+      kw2\">while</span> <span class=\"br0\">(</span> <span class=\"br0\">(</span>InsertAfter.<span\
+      \ class=\"me0\">nextArmor</span> <span class=\"sy0\">!=</span> <span class=\"\
+      kw5\">None</span><span class=\"br0\">)</span> \n                <span class=\"\
+      sy0\">&amp;&amp;</span> <span class=\"br0\">(</span>InsertAfter.<span class=\"\
+      me0\">nextArmor</span>.<span class=\"me0\">ArmorPriority</span><span class=\"\
+      br0\">(</span><span class=\"kw9\">DamageType</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">&gt;</span> ArmorPriority<span class=\"br0\">(</span><span\
+      \ class=\"kw9\">DamageType</span><span class=\"br0\">)</span><span class=\"\
+      br0\">)</span> <span class=\"br0\">)</span>\n            InsertAfter <span class=\"\
+      sy0\">=</span> InsertAfter.<span class=\"me0\">nextArmor</span>;\n \n      \
+      \  nextArmor <span class=\"sy0\">=</span> InsertAfter.<span class=\"me0\">nextArmor</span>;\n\
+      \        InsertAfter.<span class=\"me0\">nextArmor</span> <span class=\"sy0\"\
+      >=</span> <span class=\"kw6\">self</span>;\n    <span class=\"br0\">}</span>\n\
+      \    <span class=\"kw2\">return</span> FirstArmor;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>If there is at least one more item in the inventory chain that item's\
+      \ <tt>PrioritizeArmor</tt> function is called and returns the first item of\
+      \ a sorted list of all armors behind this item in the inventory chain. That\
+      \ item is stored in the <tt>FirstArmor</tt> variable. When \"<tt>if (bIsAnArmor)</tt>\"\
+      \ is reached and the <tt>FirstArmor</tt> variable still contains <tt>None</tt>\
+      \ there are no armor items in the inventory chain behind this item, so if this\
+      \ item <i>is</i> an armor it will be returned as the first (and only) item of\
+      \ the armor list to either the previous <tt>PrioitizeArmor</tt> function or\
+      \ to the <tt>ReduceDamage</tt> function.</p>\n<p>If the armor list is not empty\
+      \ the return values of the <tt>ArmorPriority</tt> functions of this item and\
+      \ of the items in the armor list are compared until the correct position for\
+      \ this item is found. The item is inserted into the list then and the first\
+      \ item of the list (which could also be this item) is returned to either the\
+      \ previous <tt>PrioitizeArmor</tt> function or to the <tt>ReduceDamage</tt>\
+      \ function.</p>\n<p>When code execution is returned to the <tt>ReduceDamage</tt>\
+      \ function it has a reference to the complete and sorted list of armor items.</p>\n\
+      <h2><span class=\"mw-headline\" id=\"Reducing_Damage\">Reducing Damage</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Armor_Damage_Absorption?section=2\" title=\"Edit section:\
+      \ Reducing Damage\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>Now the items can start reducing the damage. The items in the armor list\
+      \ now receive <tt>ArmorAbsorbDamage</tt> calls untill the damage is 0 or the\
+      \ end of the list is reached.</p>\n<p>By default the <tt>ArmorAbsorbDamage</tt>\
+      \ function works like this:</p>\n<ol>\n<li>If the damage type is not 'Drowned'\
+      \ the item's <tt>ArmorImpactEffect</tt> function is called.</li>\n<li>If the\
+      \ damage type is not 'None' and matches either <tt>ProtectionType1</tt> or <tt>ProtectionType2</tt>\
+      \ a damage of 0 si returned meaning all damage has been absorbed without using\
+      \ the armor's charge.</li>\n<li>If the damage type is 'Drowned' the full damage\
+      \ is returned meaning no damage has been absorbed at all.</li>\n<li>An \"armor\
+      \ damage\" value is calculated: <tt>ArmorDamage = (Damage * ArmorAbsorption)\
+      \ / 100</tt><br />\nIf the armor damage is greater than or equal to the armor's\
+      \ <tt>Charge</tt> the armor damage is reduced to <tt>Charge</tt> and the item\
+      \ is destroyed. If there's more charge than armor damage <tt>Charge</tt> is\
+      \ reduced by <tt>ArmorDamage</tt>.<br />\nIn both cases <tt>Damage - ArmorDamage</tt>\
+      \ is returned as the new damage value to be processed by the next armor item.</li>\n\
+      </ol>\n<h2><span class=\"mw-headline\" id=\"Related_Topics\">Related Topics</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Armor_Damage_Absorption?section=3\" title=\"Edit section:\
+      \ Related Topics\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <ul>\n<li><a href=\"/Legacy:Taking_Damage\" title=\"Legacy:Taking Damage\">Taking\
+      \ Damage</a></li>\n</ul>\n\n<!-- \nNewPP limit report\nCPU time usage: 0.048\
+      \ seconds\nReal time usage: 0.050 seconds\nPreprocessor visited node count:\
+      \ 23/1000000\nPreprocessor generated node count: 42/1000000\nPost‐expand include\
+      \ size: 0/2097152 bytes\nTemplate argument size: 0/2097152 bytes\nHighest expansion\
+      \ depth: 2/40\nExpensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion\
+      \ expansion time report (%,ms,calls,template)\n100.00%    0.000      1 - -total\n\
+      -->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:364-0!*!0!!*!*!*\
+      \ and timestamp 20221118021948 and revision id 1246\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Taking Damage"
+  - ns: 100
+    exists: true
+    name: "Legacy:Pawn (UT)"
+  - ns: 100
+    exists: true
+    name: "Legacy:Inventory (UT)"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Creating the List"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Armor_Damage_Absorption"
+    byteoffset: 592
+    anchor: "Creating_the_List"
+  - toclevel: 1
+    level: "2"
+    line: "Reducing Damage"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Armor_Damage_Absorption"
+    byteoffset: 3186
+    anchor: "Reducing_Damage"
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:Armor_Damage_Absorption"
+    byteoffset: 4331
+    anchor: "Related_Topics"
+  displaytitle: "Legacy:Armor Damage Absorption"
+  iwlinks: []
+  wikitext:
+    text: "When a [[Legacy:Pawn (UT)|Pawn (UT)]] takes damage it allows its [[Legacy:Inventory\
+      \ (UT)|Inventory (UT)]] items to reduce the damage by calling the <tt>ReduceDamage</tt>\
+      \ function of the first item in the inventory chain, but only if the Pawn's\
+      \ <tt>bIsPlayer</tt> property is <tt>True</tt> and the Pawn's <tt>ReducedDamageType</tt>\
+      \ property is not 'All'.<br />\n\nThe damage reduction process is divided into\
+      \ two steps:\n# Create a list of armor items and sort it by priority.\n# Let\
+      \ the single items in that list reduce the damage until either the damage is\
+      \ 0 or the end of the list is reached.\n\n==Creating the List ==\n\nWhen building\
+      \ the list of armor items ''every'' item in the Pawn's inventory list is checked\
+      \ even if its <tt>bIsAnArmor</tt> is <tt>False</tt>. (e.g. the Relic of Redemption\
+      \ is not an armor item, but still uses armor functions to check for probably\
+      \ deadly hits.)<br>\n\nThe list is built by the recursively called <tt>PrioritizeArmor</tt>\
+      \ function:\n\n<uscript>\nfunction inventory PrioritizeArmor( int Damage, name\
+      \ DamageType, vector HitLocation )\n{\n    local Inventory FirstArmor, InsertAfter;\n\
+      \    \n    if ( Inventory != None )\n        FirstArmor = Inventory.PrioritizeArmor(Damage,\
+      \ DamageType, HitLocation);\n    else\n        FirstArmor = None;\n    \n  \
+      \  if ( bIsAnArmor)\n    {\n        if ( FirstArmor == None )\n        {\n \
+      \           nextArmor = None;\n            return self;\n        }\n    \n \
+      \       // insert this armor into the prioritized armor list\n        if ( FirstArmor.ArmorPriority(DamageType)\
+      \ < ArmorPriority(DamageType) )\n        {\n            nextArmor = FirstArmor;\n\
+      \            return self;\n        }\n        InsertAfter = FirstArmor;\n  \
+      \      while ( (InsertAfter.nextArmor != None) \n                && (InsertAfter.nextArmor.ArmorPriority(DamageType)\
+      \ > ArmorPriority(DamageType)) )\n            InsertAfter = InsertAfter.nextArmor;\n\
+      \        \n        nextArmor = InsertAfter.nextArmor;\n        InsertAfter.nextArmor\
+      \ = self;\n    }\n    return FirstArmor;\n}\n</uscript>\n\nIf there is at least\
+      \ one more item in the inventory chain that item's <tt>PrioritizeArmor</tt>\
+      \ function is called and returns the first item of a sorted list of all armors\
+      \ behind this item in the inventory chain. That item is stored in the <tt>FirstArmor</tt>\
+      \ variable. When \"<tt>if (bIsAnArmor)</tt>\" is reached and the <tt>FirstArmor</tt>\
+      \ variable still contains <tt>None</tt> there are no armor items in the inventory\
+      \ chain behind this item, so if this item ''is'' an armor it will be returned\
+      \ as the first (and only) item of the armor list to either the previous <tt>PrioitizeArmor</tt>\
+      \ function or to the <tt>ReduceDamage</tt> function.\n\nIf the armor list is\
+      \ not empty the return values of the <tt>ArmorPriority</tt> functions of this\
+      \ item and of the items in the armor list are compared until the correct position\
+      \ for this item is found. The item is inserted into the list then and the first\
+      \ item of the list (which could also be this item) is returned to either the\
+      \ previous <tt>PrioitizeArmor</tt> function or to the <tt>ReduceDamage</tt>\
+      \ function.\n\nWhen code execution is returned to the <tt>ReduceDamage</tt>\
+      \ function it has a reference to the complete and sorted list of armor items.\n\
+      \n==Reducing Damage ==\n\nNow the items can start reducing the damage. The items\
+      \ in the armor list now receive <tt>ArmorAbsorbDamage</tt> calls untill the\
+      \ damage is 0 or the end of the list is reached.\n\nBy default the <tt>ArmorAbsorbDamage</tt>\
+      \ function works like this:\n\n# If the damage type is not 'Drowned' the item's\
+      \ <tt>ArmorImpactEffect</tt> function is called.\n# If the damage type is not\
+      \ 'None' and matches either <tt>ProtectionType1</tt> or <tt>ProtectionType2</tt>\
+      \ a damage of 0 si returned meaning all damage has been absorbed without using\
+      \ the armor's charge.\n# If the damage type is 'Drowned' the full damage is\
+      \ returned meaning no damage has been absorbed at all.\n# An \"armor damage\"\
+      \ value is calculated: <tt>ArmorDamage = (Damage * ArmorAbsorption) / 100</tt><br\
+      \ />If the armor damage is greater than or equal to the armor's <tt>Charge</tt>\
+      \ the armor damage is reduced to <tt>Charge</tt> and the item is destroyed.\
+      \ If there's more charge than armor damage <tt>Charge</tt> is reduced by <tt>ArmorDamage</tt>.<br\
+      \ />In both cases <tt>Damage - ArmorDamage</tt> is returned as the new damage\
+      \ value to be processed by the next armor item.\n\n==Related Topics ==\n* [[Legacy:Taking\
+      \ Damage|Taking Damage]]"
+  properties: []
+  revId: 1246
+name: "Legacy:Armor Damage Absorption"
+revision:
+  revid: 1246
+  parentid: 1248
+  user: "Mychaeel"
+  timestamp: 1022627414.000000000
+  comment: "*"
+timestamp: 1668763579.087200000

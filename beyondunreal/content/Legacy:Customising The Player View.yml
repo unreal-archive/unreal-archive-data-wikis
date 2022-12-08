@@ -1,0 +1,386 @@
+---
+parse:
+  title: "Legacy:Customising The Player View"
+  text:
+    text: "<p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n\
+      </div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#Customising_the_Player_View\"\
+      ><span class=\"tocnumber\">1</span> <span class=\"toctext\">Customising the\
+      \ Player View</span></a>\n<ul>\n<li class=\"toclevel-2 tocsection-2\"><a href=\"\
+      #Create_a_Game_Type_Class\"><span class=\"tocnumber\">1.1</span> <span class=\"\
+      toctext\">Create a Game Type Class</span></a></li>\n<li class=\"toclevel-2 tocsection-3\"\
+      ><a href=\"#Creating_the_Player_Controller_Class\"><span class=\"tocnumber\"\
+      >1.2</span> <span class=\"toctext\">Creating the Player Controller Class</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-4\"><a href=\"#Overriding_the_PlayerCalcView.28.29_Function\"\
+      ><span class=\"tocnumber\">1.3</span> <span class=\"toctext\">Overriding the\
+      \ PlayerCalcView() Function</span></a></li>\n</ul>\n</li>\n<li class=\"toclevel-1\
+      \ tocsection-5\"><a href=\"#Related_Pages\"><span class=\"tocnumber\">2</span>\
+      \ <span class=\"toctext\">Related Pages</span></a></li>\n<li class=\"toclevel-1\
+      \ tocsection-6\"><a href=\"#Questions_and_Discussion\"><span class=\"tocnumber\"\
+      >3</span> <span class=\"toctext\">Questions and Discussion</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-7\"><a href=\"#Information_Overload_Section\"\
+      ><span class=\"tocnumber\">4</span> <span class=\"toctext\">Information Overload\
+      \ Section</span></a>\n<ul>\n<li class=\"toclevel-2 tocsection-8\"><a href=\"\
+      #A_Quick_Experiment\"><span class=\"tocnumber\">4.1</span> <span class=\"toctext\"\
+      >A Quick Experiment</span></a></li>\n</ul>\n</li>\n</ul>\n</div>\n<p></p>\n\
+      <h2><span class=\"mw-headline\" id=\"Customising_the_Player_View\">Customising\
+      \ the Player View</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Customising_The_Player_View?section=1\" title=\"\
+      Edit section: Customising the Player View\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>Before we get into the real meat of how to fix the\
+      \ player views we need to understand the code that is already there. Grasping\
+      \ the link between the posessed pawn (stored in the Pawn attribute) and the\
+      \ current view target (held in the ViewTarget attribute) is essential to obtaining\
+      \ the desired effects. Before we go any further lets recap on a few of the attributes\
+      \ of the PlayerController.</p>\n<dl>\n<dt>Pawn&#160;</dt>\n<dd>This is the Pawn\
+      \ that the player has <i>possessed</i>. A possessed pawn is controlled by the\
+      \ player. The pawn class occupied by the player makes callbacks to the PlayerController\
+      \ in use to determine what should happen when the player attempts to make the\
+      \ pawn perform an action (run forwards, change weapon etc).</dd>\n<dt>ViewTarget&#160;</dt>\n\
+      <dd>The view target is used to determine what the player sees. Nominally the\
+      \ view target is the actor displayed at the center of the current view. The\
+      \ most important thing to remember about the view target is that it does not\
+      \ have to be the same object at the possessed pawn.</dd>\n<dt>Rotation&#160;</dt>\n\
+      <dd>This is the rotation of the PlayerController class itself, as set by the\
+      \ SetRotation() function. This is invariably set by the PlayerMove() functions\
+      \ of the PlayerController class. This is used by the CalcBehindView() and CalcFirstPersonView()\
+      \ functions in the determination of the view rotation.</dd>\n</dl>\n<p>In order\
+      \ to set the player view to that of your chosing you will need to perform the\
+      \ following steps.</p>\n<ol>\n<li>Create a new game type class and reference\
+      \ your player controller within the <i>PlayerControllerClassName</i> property.</li>\n\
+      <li>Create a player controller class that will implement your shiny view.</li>\n\
+      <li>Override the <i>PlayerCalcView()</i> function in the player controller class\
+      \ to set the view you want.</li>\n</ol>\n<h3><span class=\"mw-headline\" id=\"\
+      Create_a_Game_Type_Class\">Create a Game Type Class</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Customising_The_Player_View?section=2\"\
+      \ title=\"Edit section: Create a Game Type Class\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Assuming that your new game type is going to be based\
+      \ on a deathmatch game, you could use the following code. The important thing\
+      \ to note is the mechanism by which the custom PlayerController class is referenced.</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">class</span> ViewTestGame\
+      \ <span class=\"kw1\">extends</span> <span class=\"kw9\">xDeathMatch</span>;\n\
+      \ \n<span class=\"kw1\">DefaultProperties</span> \n<span class=\"br0\">{</span>\n\
+      \     PlayerControllerClassName<span class=\"sy0\">=</span><span class=\"st0\"\
+      >\"ViewTest.ViewTestPlayerController\"</span> <span class=\"co1\">// This is\
+      \ the important line</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <p>Simply save the code as /UT2003/ViewTest/Classes/ViewTestGame.uc and you\
+      \ should be well away. You will also need to create a ViewTest.int file.</p>\n\
+      <h3><span class=\"mw-headline\" id=\"Creating_the_Player_Controller_Class\"\
+      >Creating the Player Controller Class</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Customising_The_Player_View?section=3\"\
+      \ title=\"Edit section: Creating the Player Controller Class\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h3>\n<p>This is where the\
+      \ real work is done. Since we have already created our game class and named\
+      \ the player controller class we are going to create we had better keep the\
+      \ same name. The following code will allow us to play around.</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">class</span> ViewTestPlayerController\
+      \ <span class=\"kw1\">extends</span> xGame.<span class=\"kw9\">xPlayer</span>;\n\
+      <span class=\"kw1\">var</span> <span class=\"kw9\">Actor</span> myTarget;\n\
+      <span class=\"kw1\">var</span> <span class=\"kw5\">bool</span>  targetIsMyTarget;\n\
+      \ \n<span class=\"co1\">// The player view is determined by this function.</span>\n\
+      <span class=\"kw1\">function</span> <span class=\"kw1\">event</span> PlayerCalcView<span\
+      \ class=\"br0\">(</span><span class=\"kw1\">out</span> <span class=\"kw9\">actor</span>\
+      \ ViewActor, <span class=\"kw1\">out</span> <span class=\"kw5\">vector</span>\
+      \ CameraLocation, <span class=\"kw1\">out</span> <span class=\"kw5\">rotator</span>\
+      \ CameraRotation <span class=\"br0\">)</span> <span class=\"br0\">{</span>\n\
+      \  <span class=\"kw6\">Super</span>.<span class=\"me0\">PlayerCalcView</span><span\
+      \ class=\"br0\">(</span> ViewActor, CameraLocation, CameraRotation <span class=\"\
+      br0\">)</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"co1\">// Locates\
+      \ the dummy view target object set up on the map - in my case I used a blue\
+      \ flag decoration.</span>\n<span class=\"kw1\">function</span> <span class=\"\
+      kw4\">PostBeginPlay</span><span class=\"br0\">(</span><span class=\"br0\">)</span>\
+      \ <span class=\"br0\">{</span>\n\t<span class=\"kw1\">local</span> <span class=\"\
+      kw9\">actor</span> newTarget;\n\t<span class=\"kw6\">Super</span>.<span class=\"\
+      kw4\">PostBeginPlay</span><span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \t<span class=\"kw2\">foreach</span> <span class=\"kw2\">AllActors</span><span\
+      \ class=\"br0\">(</span><span class=\"kw1\">class</span><span class=\"st0\"\
+      >'Actor'</span>, newTarget, <span class=\"st0\">'newView'</span><span class=\"\
+      br0\">)</span> <span class=\"br0\">{</span>\n\t\tmyTarget <span class=\"sy0\"\
+      >=</span> newTarget;\n\t\tSetViewTarget<span class=\"br0\">(</span> newTarget\
+      \ <span class=\"br0\">)</span>;\n\t\t<span class=\"kw2\">break</span>;\n\t<span\
+      \ class=\"br0\">}</span>\n<span class=\"br0\">}</span>\n \n<span class=\"co1\"\
+      >// The following function allows us to switch between a view target of the\
+      \ player pawn and the dummy view target.</span>\n<span class=\"kw1\">exec</span>\
+      \ <span class=\"kw1\">function</span> ViewTest<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span> <span class=\"br0\">{</span>\n\t<span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span> targetIsMyTarget <span class=\"br0\"\
+      >)</span> <span class=\"br0\">{</span>\n\t\tSetViewTarget<span class=\"br0\"\
+      >(</span> myTarget <span class=\"br0\">)</span>;\n\t<span class=\"br0\">}</span>\
+      \ <span class=\"kw2\">else</span> <span class=\"br0\">{</span>\n\t\tSetViewTarget<span\
+      \ class=\"br0\">(</span> <span class=\"kw9\">Pawn</span> <span class=\"br0\"\
+      >)</span>;\n\t<span class=\"br0\">}</span>\n\ttargetIsMyTarget <span class=\"\
+      sy0\">=</span> <span class=\"sy0\">!</span>targetIsMyTarget;\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<h3><span class=\"mw-headline\" id=\"Overriding_the_PlayerCalcView.28.29_Function\"\
+      >Overriding the PlayerCalcView() Function</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Customising_The_Player_View?section=4\"\
+      \ title=\"Edit section: Overriding the PlayerCalcView() Function\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h3>\n<p>I'm not going to\
+      \ provide any code in here (well, maybe a bit) as setting the rotation and location\
+      \ of the view is as easy as setting the output variables CameraRotation and\
+      \ CameraLocation. I will say that the purpose of the ViewActor output variable\
+      \ is still a bit of a mystery - but it might be there to support setting the\
+      \ view the player sees when the player has died or other similar function. The\
+      \ following guidelines seem to hold true.</p>\n<ul>\n<li>In order to fix the\
+      \ view rotation and still allow the possessed pawn to be controlled you can\
+      \ set the CameraRotation to a fixed value and set the ViewTarget to the possessed\
+      \ pawn.</li>\n<li>It's generally better to use the Rotation property of the\
+      \ controller than either the Pawn.Rotation or ViewTarget.Rotation properties\
+      \ as this takes network issues into account.</li>\n<li>The ViewTarget can be\
+      \ any object of type Actor.</li>\n<li>The player can only possess Pawns</li>\n\
+      <li>Explicitly set bBehindView to true to remove the floating player weapon\
+      \ (if it appears in thrid person view).</li>\n</ul>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Related_Pages\">Related Pages</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Customising_The_Player_View?section=5\"\
+      \ title=\"Edit section: Related Pages\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<ul>\n<li><a href=\"/Legacy:PlayerController\" title=\"\
+      Legacy:PlayerController\">PlayerController</a> – A discussion on Player Controllers\
+      \ and how to make them do what you want.</li>\n</ul>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Questions_and_Discussion\">Questions and Discussion</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Customising_The_Player_View?section=6\"\
+      \ title=\"Edit section: Questions and Discussion\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p><b>EntropicLqd:</b> I realise that there is some duplication\
+      \ between this page and the <a href=\"/Legacy:PlayerController\" title=\"Legacy:PlayerController\"\
+      >PlayerController</a> page but I'll worry about that when I'm happy with the\
+      \ entire piece. The information overload section isn't quite complete as I've\
+      \ not finished commenting the code.</p>\n<h2><span class=\"mw-headline\" id=\"\
+      Information_Overload_Section\">Information Overload Section</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Customising_The_Player_View?section=7\"\
+      \ title=\"Edit section: Information Overload Section\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<p>Here's a quick run down of\
+      \ some of the things I did while working out how it all worked. A lot of it\
+      \ is fairly redundant, but nonetheless was somewhat amusing.</p>\n<h3><span\
+      \ class=\"mw-headline\" id=\"A_Quick_Experiment\">A Quick Experiment</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Customising_The_Player_View?section=8\" title=\"Edit section:\
+      \ A Quick Experiment\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>In order to explore the default behaviour of the ViewTarget and Pawn we shall\
+      \ created a small map with a single player start and a static decoration. I\
+      \ gave the static decoration a tag of <i>newView</i> and placed it near the\
+      \ player start, facing it. I then went on to create my own game type (called\
+      \ ViewTestGame), and my own player controller class. The code is fairly self\
+      \ explanatory and shown above.</p>\n<p>OK, if you can be bothered to repeat\
+      \ the experiment (or even if you can) here's what you'll find.</p>\n<p>Prior\
+      \ to the game starting you'll see that the view is centered on the decoration.\
+      \ This is because the PostBeingPlay() function sets the view target of the controller\
+      \ to be that of the decoration. However, once in the game you'll be playing\
+      \ as normal and you'll be able to run around the map in both first person and\
+      \ third person (using the <i>behindview</i> console command) views.</p>\n<p>When\
+      \ viewing the player from the first person, position your player such that the\
+      \ decoration is \"looking\" at you. Then enter the command <i>ViewTest</i> at\
+      \ the console. You should see the view change and with luck you'll be able to\
+      \ see your player. If you can't see your player use the view test to toggle\
+      \ the view back to the first person perspectivew of your player and reposition\
+      \ yourself so you can be seen. You should notice three things.</p>\n<ul>\n<li>You\
+      \ still have complete control over your player pawn, you can make him look up\
+      \ and down, run, jump, fire weapons, everything that you would normally be able\
+      \ to do.</li>\n<li>Your view into the world is completely fixed in the direction\
+      \ the decoration happens to be facing. You cannot change the view at all (although\
+      \ altering the FOV will work).</li>\n<li>Not only can you see your player pawn,\
+      \ but you can also see the weapon your player currently has selected floating\
+      \ next to the player. As the pawn moves around the weapon also moves around\
+      \ with it – sort of.</li>\n</ul>\n<p>Now switch to the third person perspective\
+      \ by entering <i>behindview 1</i> at the console. You should notice the following\
+      \ things.</p>\n<ul>\n<li>Your view has pulled back slightly.</li>\n<li>The floating\
+      \ weapon has vanished into thin air.</li>\n<li>Your view now rotates as you\
+      \ look around with the mouse.</li>\n<li>You still have full normal control over\
+      \ the player pawn.</li>\n</ul>\n<p>It's all interesting stuff as it gives us\
+      \ a basis for working through the code and figuring out what's going on. The\
+      \ view the player sees is ultimately controlled by the <i>PlayerCalcView()</i>\
+      \ function. Control this and you can make them look anywhere you want to.</p>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.075 seconds\nReal time usage:\
+      \ 0.077 seconds\nPreprocessor visited node count: 48/1000000\nPreprocessor generated\
+      \ node count: 76/1000000\nPost‐expand include size: 0/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:745-0!*!0!!en!*!* and timestamp 20221118161425 and revision\
+      \ id 2135\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:PlayerController"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Customising the Player View"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Customising_The_Player_View"
+    byteoffset: 0
+    anchor: "Customising_the_Player_View"
+  - toclevel: 2
+    level: "3"
+    line: "Create a Game Type Class"
+    number: "1.1"
+    index: "2"
+    fromtitle: "Legacy:Customising_The_Player_View"
+    byteoffset: 1747
+    anchor: "Create_a_Game_Type_Class"
+  - toclevel: 2
+    level: "3"
+    line: "Creating the Player Controller Class"
+    number: "1.2"
+    index: "3"
+    fromtitle: "Legacy:Customising_The_Player_View"
+    byteoffset: 2324
+    anchor: "Creating_the_Player_Controller_Class"
+  - toclevel: 2
+    level: "3"
+    line: "Overriding the PlayerCalcView() Function"
+    number: "1.3"
+    index: "4"
+    fromtitle: "Legacy:Customising_The_Player_View"
+    byteoffset: 3534
+    anchor: "Overriding_the_PlayerCalcView.28.29_Function"
+  - toclevel: 1
+    level: "2"
+    line: "Related Pages"
+    number: "2"
+    index: "5"
+    fromtitle: "Legacy:Customising_The_Player_View"
+    byteoffset: 4587
+    anchor: "Related_Pages"
+  - toclevel: 1
+    level: "2"
+    line: "Questions and Discussion"
+    number: "3"
+    index: "6"
+    fromtitle: "Legacy:Customising_The_Player_View"
+    byteoffset: 4736
+    anchor: "Questions_and_Discussion"
+  - toclevel: 1
+    level: "2"
+    line: "Information Overload Section"
+    number: "4"
+    index: "7"
+    fromtitle: "Legacy:Customising_The_Player_View"
+    byteoffset: 5065
+    anchor: "Information_Overload_Section"
+  - toclevel: 2
+    level: "3"
+    line: "A Quick Experiment"
+    number: "4.1"
+    index: "8"
+    fromtitle: "Legacy:Customising_The_Player_View"
+    byteoffset: 5262
+    anchor: "A_Quick_Experiment"
+  displaytitle: "Legacy:Customising The Player View"
+  iwlinks: []
+  wikitext:
+    text: "==Customising the Player View ==\n\nBefore we get into the real meat of\
+      \ how to fix the player views we need to understand the code that is already\
+      \ there.  Grasping the link between the posessed pawn (stored in the Pawn attribute)\
+      \ and the current view target (held in the ViewTarget attribute) is essential\
+      \ to obtaining the desired effects.  Before we go any further lets recap on\
+      \ a few of the attributes of the PlayerController.\n\n; Pawn : This is the Pawn\
+      \ that the player has ''possessed''.  A possessed pawn is controlled by the\
+      \ player.  The pawn class occupied by the player makes callbacks to the PlayerController\
+      \ in use to determine what should happen when the player attempts to make the\
+      \ pawn perform an action (run forwards, change weapon etc).\n; ViewTarget :\
+      \ The view target is used to determine what the player sees.  Nominally the\
+      \ view target is the actor displayed at the center of the current view.  The\
+      \ most important thing to remember about the view target is that it does not\
+      \ have to be the same object at the possessed pawn.\n; Rotation : This is the\
+      \ rotation of the PlayerController class itself, as set by the SetRotation()\
+      \ function.  This is invariably set by the PlayerMove() functions of the PlayerController\
+      \ class.  This is used by the CalcBehindView() and CalcFirstPersonView() functions\
+      \ in the determination of the view rotation.\n\nIn order to set the player view\
+      \ to that of your chosing you will need to perform the following steps.\n# Create\
+      \ a new game type class and reference your player controller within the ''PlayerControllerClassName''\
+      \ property.\n# Create a player controller class that will implement your shiny\
+      \ view.\n# Override the ''PlayerCalcView()'' function in the player controller\
+      \ class to set the view you want.\n\n===Create a Game Type Class ===\n\nAssuming\
+      \ that your new game type is going to be based on a deathmatch game, you could\
+      \ use the following code.  The important thing to note is the mechanism by which\
+      \ the custom PlayerController class is referenced.\n\n<uscript>\nclass ViewTestGame\
+      \ extends xDeathMatch;\n\nDefaultProperties \n{\n     PlayerControllerClassName=\"\
+      ViewTest.ViewTestPlayerController\" // This is the important line\n}\n</uscript>\n\
+      \nSimply save the code as /UT2003/ViewTest/Classes/ViewTestGame.uc and you should\
+      \ be well away.  You will also need to create a ViewTest.int file.\n\n===Creating\
+      \ the Player Controller Class ===\n\nThis is where the real work is done.  Since\
+      \ we have already created our game class and named the player controller class\
+      \ we are going to create we had better keep the same name.  The following code\
+      \ will allow us to play around.\n\n<uscript>\nclass ViewTestPlayerController\
+      \ extends xGame.xPlayer;\nvar Actor myTarget;\nvar bool  targetIsMyTarget;\n\
+      \n// The player view is determined by this function.\nfunction event PlayerCalcView(out\
+      \ actor ViewActor, out vector CameraLocation, out rotator CameraRotation ) {\n\
+      \  Super.PlayerCalcView( ViewActor, CameraLocation, CameraRotation );\n}\n\n\
+      // Locates the dummy view target object set up on the map - in my case I used\
+      \ a blue flag decoration.\nfunction PostBeginPlay() {\n\tlocal actor newTarget;\n\
+      \tSuper.PostBeginPlay();\n\tforeach AllActors(class'Actor', newTarget, 'newView')\
+      \ {\n\t\tmyTarget = newTarget;\n\t\tSetViewTarget( newTarget );\n\t\tbreak;\n\
+      \t}\n}\n\n// The following function allows us to switch between a view target\
+      \ of the player pawn and the dummy view target.\nexec function ViewTest() {\n\
+      \tif ( targetIsMyTarget ) {\n\t\tSetViewTarget( myTarget );\n\t} else {\n\t\t\
+      SetViewTarget( Pawn );\n\t}\n\ttargetIsMyTarget = !targetIsMyTarget;\n}\n</uscript>\n\
+      \n===Overriding the PlayerCalcView() Function ===\n\nI'm not going to provide\
+      \ any code in here (well, maybe a bit) as setting the rotation and location\
+      \ of the view is as easy as setting the output variables CameraRotation and\
+      \ CameraLocation.  I will say that the purpose of the ViewActor output variable\
+      \ is still a bit of a mystery - but it might be there to support setting the\
+      \ view the player sees when the player has died or other similar function. \
+      \ The following guidelines seem to hold true.\n* In order to fix the view rotation\
+      \ and still allow the possessed pawn to be controlled you can set the CameraRotation\
+      \ to a fixed value and set the ViewTarget to the possessed pawn.\n* It's generally\
+      \ better to use the Rotation property of the controller than either the Pawn.Rotation\
+      \ or ViewTarget.Rotation properties as this takes network issues into account.\n\
+      * The ViewTarget can be any object of type Actor.\n* The player can only possess\
+      \ Pawns \n* Explicitly set bBehindView to true to remove the floating player\
+      \ weapon (if it appears in thrid person view).\n\n==Related Pages ==\n* [[Legacy:PlayerController|PlayerController]]\
+      \ &ndash; A discussion on Player Controllers and how to make them do what you\
+      \ want.\n\n==Questions and Discussion ==\n\n'''EntropicLqd:''' I realise that\
+      \ there is some duplication between this page and the [[Legacy:PlayerController|PlayerController]]\
+      \ page but I'll worry about that when I'm happy with the entire piece.  The\
+      \ information overload section isn't quite complete as I've not finished commenting\
+      \ the code.\n\n==Information Overload Section ==\n\nHere's a quick run down\
+      \ of some of the things I did while working out how it all worked.  A lot of\
+      \ it is fairly redundant, but nonetheless was somewhat amusing.\n\n===A Quick\
+      \ Experiment ===\n\nIn order to explore the default behaviour of the ViewTarget\
+      \ and Pawn we shall created a small map with a single player start and a static\
+      \ decoration.  I gave the static decoration a tag of ''newView'' and placed\
+      \ it near the player start, facing it.  I then went on to create my own game\
+      \ type (called ViewTestGame), and my own player controller class.  The code\
+      \ is fairly self explanatory and shown above.\n\nOK, if you can be bothered\
+      \ to repeat the experiment (or even if you can) here's what you'll find.\n\n\
+      Prior to the game starting you'll see that the view is centered on the decoration.\
+      \  This is because the PostBeingPlay() function sets the view target of the\
+      \ controller to be that of the decoration.  However, once in the game you'll\
+      \ be playing as normal and you'll be able to run around the map in both first\
+      \ person and third person (using the ''behindview'' console command) views.\n\
+      \nWhen viewing the player from the first person, position your player such that\
+      \ the decoration is \"looking\" at you.  Then enter the command ''ViewTest''\
+      \ at the console.  You should see the view change and with luck you'll be able\
+      \ to see your player.  If you can't see your player use the view test to toggle\
+      \ the view back to the first person perspectivew of your player and reposition\
+      \ yourself so you can be seen.  You should notice three things.\n* You still\
+      \ have complete control over your player pawn, you can make him look up and\
+      \ down, run, jump, fire weapons, everything that you would normally be able\
+      \ to do.\n* Your view into the world is completely fixed in the direction the\
+      \ decoration happens to be facing.  You cannot change the view at all (although\
+      \ altering the FOV will work).\n* Not only can you see your player pawn, but\
+      \ you can also see the weapon your player currently has selected floating next\
+      \ to the player.  As the pawn moves around the weapon also moves around with\
+      \ it &ndash; sort of.\n\nNow switch to the third person perspective by entering\
+      \ ''behindview 1'' at the console.  You should notice the following things.\n\
+      * Your view has pulled back slightly.\n* The floating weapon has vanished into\
+      \ thin air.\n* Your view now rotates as you look around with the mouse.\n* You\
+      \ still have full normal control over the player pawn.\n\nIt's all interesting\
+      \ stuff as it gives us a basis for working through the code and figuring out\
+      \ what's going on.  The view the player sees is ultimately controlled by the\
+      \ ''PlayerCalcView()'' function.  Control this and you can make them look anywhere\
+      \ you want to."
+  properties: []
+  revId: 2135
+name: "Legacy:Customising The Player View"
+revision:
+  revid: 2135
+  parentid: 2136
+  user: "Ppp22-161.lns2.syd7.internode.on.net"
+  timestamp: 1158559361.000000000
+  comment: "*fixed typo - 'section'"
+timestamp: 1668787914.070128000

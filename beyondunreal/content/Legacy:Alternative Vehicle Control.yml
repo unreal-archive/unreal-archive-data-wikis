@@ -1,0 +1,510 @@
+---
+parse:
+  title: "Legacy:Alternative Vehicle Control"
+  text:
+    text: "<p>This code has arisen from the need to have a vehicle where the player\
+      \ can still be seen and shot whilst in control of a vehicle (for the artillery\
+      \ and horses in the LawDogs mod). Instead of the player's original <a href=\"\
+      /Legacy:Pawn\" title=\"Legacy:Pawn\">Pawn</a> being hidden and the vehicle possessed,\
+      \ the original pawn is attached to the vehicle and the vehicle controlled indirectly.</p>\n\
+      <p>This has the advantage not only of being able to kill the player without\
+      \ damaging the vehicle and vice versa, but also it allows the player to potentially\
+      \ fire their normal weapons whilst on the vehicle.</p>\n<p>The code shown here\
+      \ has only the code relevant to this control method present; It is a long way\
+      \ from a complete vehicle. There is no bot support.</p>\n<p>First the vehicle\
+      \ class:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n\
+      <div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\"\
+      >class</span> LawDogsVehicle <span class=\"kw1\">extends</span> <span class=\"\
+      kw9\">KVehicle</span>\n\t<span class=\"kw1\">abstract</span>;\n \n<span class=\"\
+      kw1\">var</span> <span class=\"kw9\">Pawn</span> RepDriver; <span class=\"co1\"\
+      >//Replicated 'Driver'.</span>\n \n<span class=\"kw1\">replication</span>\n\
+      <span class=\"br0\">{</span>\n\t<span class=\"kw1\">reliable</span> <span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span><span class=\"kw7\">Role</span> <span\
+      \ class=\"sy0\">==</span> <span class=\"kw7\">ROLE_Authority</span><span class=\"\
+      br0\">)</span>\n\t\tRepDriver;\n<span class=\"br0\">}</span>\n \n<span class=\"\
+      kw1\">simulated</span> <span class=\"kw1\">function</span> ClientKDriverEnter<span\
+      \ class=\"br0\">(</span><span class=\"kw9\">PlayerController</span> pc<span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw9\"\
+      >PlayerController</span><span class=\"br0\">(</span>RepDriver.<span class=\"\
+      kw9\">Controller</span><span class=\"br0\">)</span>.<span class=\"me0\">bBehindView</span>\
+      \ <span class=\"sy0\">=</span> bUseBehindView;\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"kw1\">function</span> KDriverEnter<span class=\"br0\">(</span><span\
+      \ class=\"kw9\">Pawn</span> p<span class=\"br0\">)</span>\n<span class=\"br0\"\
+      >{</span>\n\tDriver <span class=\"sy0\">=</span> p;\n\tRepDriver <span class=\"\
+      sy0\">=</span> Driver;\n \n\tDriver.<span class=\"me0\">bCollideWorld</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"kw6\">false</span>;\n\tDriver.<span\
+      \ class=\"me0\">bPhysicsAnimUpdate</span> <span class=\"sy0\">=</span> <span\
+      \ class=\"kw6\">false</span>;\n\tDriver.<span class=\"kw7\">Velocity</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"kw3\">vect</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">0</span>,<span class=\"nu0\">0</span>,<span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span>;\n\tDriver.<span class=\"\
+      kw4\">SetPhysics</span><span class=\"br0\">(</span><span class=\"kw7\">PHYS_None</span><span\
+      \ class=\"br0\">)</span>;\n \n\tDriver.<span class=\"kw4\">SetBase</span><span\
+      \ class=\"br0\">(</span><span class=\"kw6\">self</span><span class=\"br0\">)</span>;\n\
+      \tDriver.<span class=\"kw4\">SetRelativeLocation</span><span class=\"br0\">(</span>DrivePos<span\
+      \ class=\"br0\">)</span>;\n\tDriver.<span class=\"kw4\">SetRelativeRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"kw3\">rot</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">0</span>, <span class=\"nu0\">0</span>, <span class=\"nu0\"\
+      >0</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n \n\tLawDogsPlayer<span\
+      \ class=\"br0\">(</span>Driver.<span class=\"kw9\">Controller</span><span class=\"\
+      br0\">)</span>.<span class=\"kw9\">Vehicle</span> <span class=\"sy0\">=</span>\
+      \ <span class=\"kw6\">self</span>;\n\tLawDogsPlayer<span class=\"br0\">(</span>Driver.<span\
+      \ class=\"kw9\">Controller</span><span class=\"br0\">)</span>.<span class=\"\
+      kw3\">GotoState</span><span class=\"br0\">(</span><span class=\"st0\">'PlayerRiding'</span><span\
+      \ class=\"br0\">)</span>;\n\t<span class=\"kw4\">SetOwner</span><span class=\"\
+      br0\">(</span>Driver.<span class=\"kw9\">Controller</span><span class=\"br0\"\
+      >)</span>;\n \n\tClientKDriverEnter<span class=\"br0\">(</span><span class=\"\
+      kw9\">PlayerController</span><span class=\"br0\">(</span>Driver.<span class=\"\
+      kw9\">Controller</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">simulated</span> <span\
+      \ class=\"kw1\">function</span> ClientKDriverLeave<span class=\"br0\">(</span><span\
+      \ class=\"kw9\">PlayerController</span> pc<span class=\"br0\">)</span>\n<span\
+      \ class=\"br0\">{</span>\n\tpc.<span class=\"me0\">bBehindView</span> <span\
+      \ class=\"sy0\">=</span> pc.<span class=\"kw1\">Default</span>.<span class=\"\
+      me0\">bBehindView</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\"\
+      >function</span> <span class=\"kw5\">bool</span> KDriverLeave<span class=\"\
+      br0\">(</span><span class=\"kw5\">bool</span> bForceLeave<span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">int</span> i;\n\t<span class=\"kw1\">local</span> <span\
+      \ class=\"kw5\">bool</span> havePlaced;\n\t<span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">vector</span> HitLocation, HitNormal, tryPlace;\n \n\t\
+      <span class=\"kw2\">if</span><span class=\"br0\">(</span>Driver <span class=\"\
+      sy0\">==</span> <span class=\"kw5\">None</span><span class=\"br0\">)</span>\n\
+      \t\t<span class=\"kw2\">return</span> <span class=\"kw6\">false</span>;\n \n\
+      \tDriver.<span class=\"me0\">bCollideWorld</span> <span class=\"sy0\">=</span>\
+      \ <span class=\"kw6\">true</span>;\n \n\t<span class=\"kw2\">for</span><span\
+      \ class=\"br0\">(</span>i <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>;\
+      \ i <span class=\"sy0\">&lt;</span> ExitPositions.<span class=\"me0\">Length</span>\
+      \ <span class=\"sy0\">&amp;&amp;</span> havePlaced <span class=\"sy0\">==</span>\
+      \ <span class=\"kw6\">false</span>; i<span class=\"sy0\">++</span><span class=\"\
+      br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t\ttryPlace <span class=\"\
+      sy0\">=</span> <span class=\"kw7\">Location</span> <span class=\"sy0\">+</span>\
+      \ <span class=\"br0\">(</span>ExitPositions<span class=\"br0\">[</span>i<span\
+      \ class=\"br0\">]</span> <span class=\"sy0\">&gt;&gt;</span> <span class=\"\
+      kw7\">Rotation</span><span class=\"br0\">)</span>;\n \n\t\t<span class=\"kw2\"\
+      >if</span><span class=\"br0\">(</span><span class=\"kw4\">Trace</span><span\
+      \ class=\"br0\">(</span>HitLocation, HitNormal, tryPlace, <span class=\"kw7\"\
+      >Location</span>, <span class=\"kw6\">false</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span><span class=\"\
+      br0\">)</span>\n\t\t\t<span class=\"kw2\">continue</span>;\n \n\t\t<span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span><span class=\"sy0\">!</span>Driver.<span\
+      \ class=\"kw4\">SetLocation</span><span class=\"br0\">(</span>tryPlace<span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\t\t<span class=\"kw2\"\
+      >continue</span>;\n \n\t\thavePlaced <span class=\"sy0\">=</span> <span class=\"\
+      kw6\">true</span>;\n\t<span class=\"br0\">}</span>\n \n\t<span class=\"kw2\"\
+      >if</span><span class=\"br0\">(</span><span class=\"sy0\">!</span>havePlaced\
+      \ <span class=\"sy0\">&amp;&amp;</span> <span class=\"sy0\">!</span>bForceLeave<span\
+      \ class=\"br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t\tDriver.<span class=\"\
+      me0\">bCollideWorld</span> <span class=\"sy0\">=</span> <span class=\"kw6\"\
+      >false</span>;\n\t\t<span class=\"kw2\">return</span> <span class=\"kw6\">false</span>;\n\
+      \t<span class=\"br0\">}</span>\n \n\tDriver.<span class=\"me0\">PlayWaiting</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n\tDriver.<span class=\"\
+      me0\">bPhysicsAnimUpdate</span> <span class=\"sy0\">=</span> Driver.<span class=\"\
+      kw1\">Default</span>.<span class=\"me0\">bPhysicsAnimUpdate</span>;\n\tDriver.<span\
+      \ class=\"kw4\">SetBase</span><span class=\"br0\">(</span><span class=\"kw5\"\
+      >None</span><span class=\"br0\">)</span>;\n\tDriver.<span class=\"kw7\">Acceleration</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"kw3\">vect</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">24000</span><span class=\"br0\">)</span>;\n \n\t<span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span>Driver.<span class=\"me0\">TouchingWaterVolume</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\n\
+      \t\tDriver.<span class=\"kw4\">SetPhysics</span><span class=\"br0\">(</span><span\
+      \ class=\"kw7\">PHYS_Swimming</span><span class=\"br0\">)</span>;\n\t<span class=\"\
+      kw2\">else</span>\n\t\tDriver.<span class=\"kw4\">SetPhysics</span><span class=\"\
+      br0\">(</span><span class=\"kw7\">PHYS_Falling</span><span class=\"br0\">)</span>;\n\
+      \ \n\tDriver.<span class=\"kw9\">Controller</span>.<span class=\"me0\">Restart</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n\tLawDogsPlayer<span\
+      \ class=\"br0\">(</span>Driver.<span class=\"kw9\">Controller</span><span class=\"\
+      br0\">)</span>.<span class=\"kw9\">Vehicle</span> <span class=\"sy0\">=</span>\
+      \ <span class=\"kw5\">None</span>;\n\tClientKDriverLeave<span class=\"br0\"\
+      >(</span><span class=\"kw9\">PlayerController</span><span class=\"br0\">(</span>Driver.<span\
+      \ class=\"kw9\">Controller</span><span class=\"br0\">)</span><span class=\"\
+      br0\">)</span>;\n \n\tDriver <span class=\"sy0\">=</span> <span class=\"kw5\"\
+      >None</span>;\n\tRepDriver <span class=\"sy0\">=</span> <span class=\"kw5\"\
+      >None</span>;\n\t<span class=\"kw4\">SetOwner</span><span class=\"br0\">(</span><span\
+      \ class=\"kw5\">None</span><span class=\"br0\">)</span>;\n \n\tThrottle<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0</span>;\n\tSteering<span class=\"\
+      sy0\">=</span><span class=\"nu0\">0</span>;\n \n\t<span class=\"kw2\">return</span>\
+      \ <span class=\"kw6\">true</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"\
+      kw1\">function</span> <span class=\"kw4\">TakeDamage</span><span class=\"br0\"\
+      >(</span><span class=\"kw5\">int</span> Damage, <span class=\"kw9\">Pawn</span>\
+      \ instigatedBy, <span class=\"kw5\">Vector</span> hitlocation, <span class=\"\
+      kw5\">Vector</span> momentum, class<span class=\"sy0\">&lt;</span>DamageType<span\
+      \ class=\"sy0\">&gt;</span> <span class=\"kw9\">damageType</span><span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n\tHealth <span class=\"sy0\">-=</span>\
+      \ Damage;\n \n\t<span class=\"kw2\">if</span><span class=\"br0\">(</span>Health\
+      \ <span class=\"sy0\">&lt;=</span> <span class=\"nu0\">0</span><span class=\"\
+      br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t\t<span class=\"co1\">//Make\
+      \ sure driver leaves when vehicle is destroyed.</span>\n\t\t<span class=\"kw2\"\
+      >if</span><span class=\"br0\">(</span>Driver <span class=\"sy0\">!=</span> <span\
+      \ class=\"kw5\">None</span><span class=\"br0\">)</span>\n\t\t\tKDriverLeave<span\
+      \ class=\"br0\">(</span><span class=\"kw6\">true</span><span class=\"br0\">)</span>;\n\
+      \ \n\t\t<span class=\"kw4\">Destroy</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n\t<span class=\"br0\">}</span>\n<span class=\"br0\"\
+      >}</span>\n \n<span class=\"kw1\">simulated</span> <span class=\"kw1\">function</span>\
+      \ <span class=\"kw4\">Tick</span><span class=\"br0\">(</span><span class=\"\
+      kw5\">float</span> DeltaTime<span class=\"br0\">)</span>\n<span class=\"br0\"\
+      >{</span>\n\t<span class=\"kw1\">local</span> <span class=\"kw5\">rotator</span>\
+      \ DriverRot;\n \n\t<span class=\"kw2\">if</span><span class=\"br0\">(</span>RepDriver\
+      \ <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span><span class=\"\
+      br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t\t<span class=\"co1\">//So\
+      \ taking damage doesn't make the driver start falling.</span>\n\t\t<span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span>RepDriver.<span class=\"kw7\">Physics</span>\
+      \ <span class=\"sy0\">!=</span> <span class=\"kw7\">PHYS_None</span><span class=\"\
+      br0\">)</span>\n\t\t\tRepDriver.<span class=\"kw4\">SetPhysics</span><span class=\"\
+      br0\">(</span><span class=\"kw7\">PHYS_None</span><span class=\"br0\">)</span>;\n\
+      \ \n\t\t<span class=\"co1\">//Make very sure the driver stays still.</span>\n\
+      \t\tRepDriver.<span class=\"kw4\">SetRelativeLocation</span><span class=\"br0\"\
+      >(</span>DrivePos<span class=\"br0\">)</span>;\n\t\tDriverRot.<span class=\"\
+      me0\">Yaw</span> <span class=\"sy0\">=</span> RepDriver.<span class=\"kw7\"\
+      >RelativeRotation</span>.<span class=\"me0\">Yaw</span>;\n\t\tRepDriver.<span\
+      \ class=\"kw4\">SetRelativeRotation</span><span class=\"br0\">(</span>DriverRot<span\
+      \ class=\"br0\">)</span>;\n\t<span class=\"br0\">}</span>\n<span class=\"br0\"\
+      >}</span>\n \n<span class=\"co1\">//Allow camera to rotate relative to the vehicle,\
+      \ within limits.</span>\n<span class=\"kw1\">simulated</span> <span class=\"\
+      kw1\">function</span> <span class=\"kw5\">bool</span> SpecialCalcView<span class=\"\
+      br0\">(</span><span class=\"kw1\">out</span> <span class=\"kw9\">actor</span>\
+      \ ViewActor, <span class=\"kw1\">out</span> <span class=\"kw5\">vector</span>\
+      \ CameraLocation, <span class=\"kw1\">out</span> <span class=\"kw5\">rotator</span>\
+      \ CameraRotation<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \t<span class=\"kw2\">if</span><span class=\"br0\">(</span>RepDriver <span class=\"\
+      sy0\">==</span> <span class=\"kw5\">None</span> <span class=\"sy0\">||</span>\
+      \ RepDriver.<span class=\"kw9\">Controller</span> <span class=\"sy0\">==</span>\
+      \ <span class=\"kw5\">None</span><span class=\"br0\">)</span>\n\t\t<span class=\"\
+      kw2\">return</span> <span class=\"kw6\">false</span>;\n \n\tViewActor <span\
+      \ class=\"sy0\">=</span> RepDriver;\n \n\t<span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span>CameraRotation.<span class=\"me0\">Yaw</span> <span\
+      \ class=\"kw3\">ClockwiseFrom</span> <span class=\"br0\">(</span><span class=\"\
+      kw7\">Rotation</span>.<span class=\"me0\">Yaw</span> <span class=\"sy0\">+</span>\
+      \ MaxYaw<span class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\tCameraRotation.<span\
+      \ class=\"me0\">Yaw</span> <span class=\"sy0\">=</span> <span class=\"kw7\"\
+      >Rotation</span>.<span class=\"me0\">Yaw</span> <span class=\"sy0\">+</span>\
+      \ MaxYaw;\n\t<span class=\"kw2\">else</span> <span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span><span class=\"sy0\">!</span><span class=\"br0\">(</span>CameraRotation.<span\
+      \ class=\"me0\">Yaw</span> <span class=\"kw3\">ClockwiseFrom</span> <span class=\"\
+      br0\">(</span><span class=\"kw7\">Rotation</span>.<span class=\"me0\">Yaw</span>\
+      \ <span class=\"sy0\">+</span> MinYaw<span class=\"br0\">)</span><span class=\"\
+      br0\">)</span><span class=\"br0\">)</span>\n\t\tCameraRotation.<span class=\"\
+      me0\">Yaw</span> <span class=\"sy0\">=</span> <span class=\"kw7\">Rotation</span>.<span\
+      \ class=\"me0\">Yaw</span> <span class=\"sy0\">+</span> MinYaw;\n \n\tCameraRotation\
+      \ <span class=\"sy0\">=</span> <span class=\"kw3\">normalize</span><span class=\"\
+      br0\">(</span>CameraRotation<span class=\"br0\">)</span>;\n\tRepDriver.<span\
+      \ class=\"me0\">SetTwistLook</span><span class=\"br0\">(</span><span class=\"\
+      kw3\">normalize</span><span class=\"br0\">(</span>CameraRotation <span class=\"\
+      sy0\">-</span> <span class=\"kw7\">Rotation</span><span class=\"br0\">)</span>.<span\
+      \ class=\"me0\">Yaw</span>, CameraRotation.<span class=\"me0\">Pitch</span><span\
+      \ class=\"br0\">)</span>;\n \n\tRepDriver.<span class=\"kw9\">Controller</span>.<span\
+      \ class=\"kw4\">SetRotation</span><span class=\"br0\">(</span>CameraRotation<span\
+      \ class=\"br0\">)</span>;\n\tCameraLocation <span class=\"sy0\">=</span> RepDriver.<span\
+      \ class=\"kw7\">Location</span> <span class=\"sy0\">+</span> RepDriver.<span\
+      \ class=\"me0\">EyePosition</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n \n\t<span class=\"kw2\">if</span><span class=\"br0\">(</span><span\
+      \ class=\"kw9\">PlayerController</span><span class=\"br0\">(</span>RepDriver.<span\
+      \ class=\"kw9\">Controller</span><span class=\"br0\">)</span>.<span class=\"\
+      me0\">bBehindView</span><span class=\"br0\">)</span>\n\t\tCameraLocation <span\
+      \ class=\"sy0\">+=</span> BehindViewOffset <span class=\"sy0\">&gt;&gt;</span>\
+      \ <span class=\"kw7\">Rotation</span>;\n \n\t<span class=\"kw2\">return</span>\
+      \ <span class=\"kw6\">true</span>;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>And the new stuff for the PlayerController class:</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">class</span> LawDogsPlayer <span class=\"\
+      kw1\">extends</span> <span class=\"kw9\">xPlayer</span>\n\t<span class=\"kw1\"\
+      >config</span><span class=\"br0\">(</span>user<span class=\"br0\">)</span>;\n\
+      \ \n<span class=\"kw1\">var</span> <span class=\"kw9\">KVehicle</span> <span\
+      \ class=\"kw9\">Vehicle</span>;\n \n<span class=\"kw1\">replication</span>\n\
+      <span class=\"br0\">{</span>\n\t<span class=\"kw1\">reliable</span> <span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span><span class=\"kw7\">Role</span> <span\
+      \ class=\"sy0\">==</span> <span class=\"kw7\">ROLE_Authority</span><span class=\"\
+      br0\">)</span>\n\t\t<span class=\"kw9\">Vehicle</span>;\n<span class=\"br0\"\
+      >}</span>\n \n<span class=\"co1\">//Fix dying whilst controling a vehicle.</span>\n\
+      <span class=\"kw1\">function</span> WasKilledBy<span class=\"br0\">(</span><span\
+      \ class=\"kw9\">Controller</span> Other<span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n\t<span class=\"kw2\">if</span><span class=\"br0\">(</span><span\
+      \ class=\"kw9\">Vehicle</span> <span class=\"sy0\">!=</span> <span class=\"\
+      kw5\">None</span><span class=\"br0\">)</span>\n\t\t<span class=\"kw9\">Vehicle</span>.<span\
+      \ class=\"me0\">KDriverLeave</span><span class=\"br0\">(</span><span class=\"\
+      kw6\">true</span><span class=\"br0\">)</span>;\n \n\t<span class=\"kw6\">Super</span>.<span\
+      \ class=\"me0\">WasKilledBy</span><span class=\"br0\">(</span>Other<span class=\"\
+      br0\">)</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"co1\">//Allow\
+      \ vehicle to handle camera.</span>\n<span class=\"kw1\">event</span> PlayerCalcView<span\
+      \ class=\"br0\">(</span><span class=\"kw1\">out</span> <span class=\"kw9\">actor</span>\
+      \ ViewActor, <span class=\"kw1\">out</span> <span class=\"kw5\">vector</span>\
+      \ CameraLocation, <span class=\"kw1\">out</span> <span class=\"kw5\">rotator</span>\
+      \ CameraRotation<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \t<span class=\"kw2\">if</span><span class=\"br0\">(</span><span class=\"kw9\"\
+      >Vehicle</span> <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span>\
+      \ <span class=\"sy0\">&amp;&amp;</span> <span class=\"kw9\">Vehicle</span>.<span\
+      \ class=\"me0\">bSpecialCalcView</span> <span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"kw9\">Vehicle</span>.<span class=\"me0\">SpecialCalcView</span><span\
+      \ class=\"br0\">(</span>ViewActor, CameraLocation, CameraRotation<span class=\"\
+      br0\">)</span><span class=\"br0\">)</span>\n\t\t<span class=\"kw2\">return</span>;\n\
+      \ \n\t<span class=\"kw6\">Super</span>.<span class=\"me0\">PlayerCalcView</span><span\
+      \ class=\"br0\">(</span>ViewActor, CameraLocation, CameraRotation<span class=\"\
+      br0\">)</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"co1\">//Using\
+      \ a LawDogsVehicle.</span>\n<span class=\"kw1\">state</span> PlayerRiding\n\
+      <span class=\"br0\">{</span>\n<span class=\"kw1\">ignores</span> SeePlayer,\
+      \ HearNoise, <span class=\"kw4\">Bump</span>;\n \n\t<span class=\"kw1\">function</span>\
+      \ ProcessMove<span class=\"br0\">(</span><span class=\"kw5\">float</span> DeltaTime,\
+      \ <span class=\"kw5\">vector</span> NewAccel, eDoubleClickDir DoubleClickMove,\
+      \ <span class=\"kw5\">rotator</span> DeltaRot<span class=\"br0\">)</span><span\
+      \ class=\"br0\">{</span><span class=\"br0\">}</span>\n \n\t<span class=\"co1\"\
+      >//Pressing 'use' will exit vehicle (to free up the jump key for other purposes).</span>\n\
+      \t<span class=\"kw1\">function</span> ServerUse<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t\t<span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span><span class=\"kw7\">Level</span>.<span\
+      \ class=\"me0\">Pauser</span> <span class=\"sy0\">==</span> PlayerReplicationInfo<span\
+      \ class=\"br0\">)</span>\n\t\t<span class=\"br0\">{</span>\n\t\t\tSetPause<span\
+      \ class=\"br0\">(</span><span class=\"kw6\">false</span><span class=\"br0\"\
+      >)</span>;\n\t\t\t<span class=\"kw2\">return</span>;\n\t\t<span class=\"br0\"\
+      >}</span>\n \n\t\t<span class=\"kw2\">if</span><span class=\"br0\">(</span><span\
+      \ class=\"kw9\">Pawn</span> <span class=\"sy0\">==</span> <span class=\"kw5\"\
+      >None</span><span class=\"br0\">)</span>\n\t\t\t<span class=\"kw2\">return</span>;\n\
+      \ \n\t\t<span class=\"kw2\">if</span><span class=\"br0\">(</span><span class=\"\
+      kw9\">Vehicle</span> <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span><span\
+      \ class=\"br0\">)</span>\n\t\t\t<span class=\"kw9\">Vehicle</span>.<span class=\"\
+      me0\">bGetOut</span> <span class=\"sy0\">=</span> <span class=\"kw6\">true</span>;\n\
+      \t<span class=\"br0\">}</span>\n \n\t<span class=\"kw1\">exec</span> <span class=\"\
+      kw1\">function</span> Fire<span class=\"br0\">(</span><span class=\"kw1\">optional</span>\
+      \ <span class=\"kw5\">float</span> F<span class=\"br0\">)</span>\n\t<span class=\"\
+      br0\">{</span>\n\t\t<span class=\"kw2\">if</span><span class=\"br0\">(</span><span\
+      \ class=\"kw9\">Vehicle</span> <span class=\"sy0\">!=</span> <span class=\"\
+      kw5\">None</span><span class=\"br0\">)</span>\n\t\t<span class=\"br0\">{</span>\n\
+      \t\t\t<span class=\"kw9\">Vehicle</span>.<span class=\"me0\">VehicleFire</span><span\
+      \ class=\"br0\">(</span><span class=\"kw6\">false</span><span class=\"br0\"\
+      >)</span>;\n\t\t\t<span class=\"kw9\">Vehicle</span>.<span class=\"me0\">bVehicleIsFiring</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"kw6\">true</span>;\n\t\t<span class=\"\
+      br0\">}</span>\n\t<span class=\"br0\">}</span>\n \n\t<span class=\"kw1\">exec</span>\
+      \ <span class=\"kw1\">function</span> AltFire<span class=\"br0\">(</span><span\
+      \ class=\"kw1\">optional</span> <span class=\"kw5\">float</span> F<span class=\"\
+      br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t\t<span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span><span class=\"kw9\">Vehicle</span> <span class=\"sy0\"\
+      >!=</span> <span class=\"kw5\">None</span><span class=\"br0\">)</span>\n\t\t\
+      <span class=\"br0\">{</span>\n\t\t\t<span class=\"kw9\">Vehicle</span>.<span\
+      \ class=\"me0\">VehicleFire</span><span class=\"br0\">(</span><span class=\"\
+      kw6\">true</span><span class=\"br0\">)</span>;\n\t\t\t<span class=\"kw9\">Vehicle</span>.<span\
+      \ class=\"me0\">bVehicleIsAltFiring</span> <span class=\"sy0\">=</span> <span\
+      \ class=\"kw6\">true</span>;\n\t\t<span class=\"br0\">}</span>\n\t<span class=\"\
+      br0\">}</span>\n \n\t<span class=\"co1\">// Set the throttle, steering etc.\
+      \ for the vehicle based on the input provided</span>\n\t<span class=\"kw1\"\
+      >function</span> ProcessDrive<span class=\"br0\">(</span><span class=\"kw5\"\
+      >float</span> InForward, <span class=\"kw5\">float</span> InStrafe, <span class=\"\
+      kw5\">bool</span> InJump<span class=\"br0\">)</span>\n\t<span class=\"br0\"\
+      >{</span>\n\t\t<span class=\"kw2\">if</span><span class=\"br0\">(</span><span\
+      \ class=\"kw9\">Vehicle</span> <span class=\"sy0\">==</span> <span class=\"\
+      kw5\">None</span><span class=\"br0\">)</span>\n\t\t<span class=\"br0\">{</span>\n\
+      \t\t\t<span class=\"kw3\">log</span><span class=\"br0\">(</span><span class=\"\
+      st0\">\"PlayerRiding.PlayerMove: No Vehicle\"</span><span class=\"br0\">)</span>;\n\
+      \t\t\t<span class=\"kw2\">return</span>;\n\t\t<span class=\"br0\">}</span>\n\
+      \ \n\t\t<span class=\"co1\">//Horses can jump.</span>\n\t\t<span class=\"kw2\"\
+      >if</span><span class=\"br0\">(</span>bPressedJump<span class=\"br0\">)</span>\n\
+      \t\t<span class=\"br0\">{</span>\n\t\t\t<span class=\"kw9\">Vehicle</span>.<span\
+      \ class=\"me0\">DoJump</span><span class=\"br0\">(</span>bUpdating<span class=\"\
+      br0\">)</span>;\n\t\t\tbPressedJump <span class=\"sy0\">=</span> <span class=\"\
+      kw6\">false</span>;\n\t\t<span class=\"br0\">}</span>\n \n\t\t<span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span>InForward <span class=\"sy0\">&gt;</span>\
+      \ <span class=\"nu0\">1</span><span class=\"br0\">)</span>\n\t\t\t<span class=\"\
+      kw9\">Vehicle</span>.<span class=\"me0\">Throttle</span> <span class=\"sy0\"\
+      >=</span> <span class=\"nu0\">1</span>;\n\t\t<span class=\"kw2\">else</span>\
+      \ <span class=\"kw2\">if</span><span class=\"br0\">(</span>InForward <span class=\"\
+      sy0\">&lt;</span> <span class=\"sy0\">-</span><span class=\"nu0\">1</span><span\
+      \ class=\"br0\">)</span>\n\t\t\t<span class=\"kw9\">Vehicle</span>.<span class=\"\
+      me0\">Throttle</span> <span class=\"sy0\">=</span> <span class=\"sy0\">-</span><span\
+      \ class=\"nu0\">1</span>;\n\t\t<span class=\"kw2\">else</span>\n\t\t\t<span\
+      \ class=\"kw9\">Vehicle</span>.<span class=\"me0\">Throttle</span> <span class=\"\
+      sy0\">=</span> <span class=\"nu0\">0</span>;\n \n\t\t<span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span>InStrafe <span class=\"sy0\">&lt;</span> <span class=\"\
+      sy0\">-</span><span class=\"nu0\">1</span><span class=\"br0\">)</span>\n\t\t\
+      \t<span class=\"kw9\">Vehicle</span>.<span class=\"me0\">Steering</span> <span\
+      \ class=\"sy0\">=</span> <span class=\"sy0\">-</span><span class=\"nu0\">1</span>;\n\
+      \t\t<span class=\"kw2\">else</span> <span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span>InStrafe <span class=\"sy0\">&gt;</span> <span class=\"nu0\">1</span><span\
+      \ class=\"br0\">)</span>\n\t\t\t<span class=\"kw9\">Vehicle</span>.<span class=\"\
+      me0\">Steering</span> <span class=\"sy0\">=</span> <span class=\"nu0\">1</span>;\n\
+      \t\t<span class=\"kw2\">else</span>\n\t\t\t<span class=\"kw9\">Vehicle</span>.<span\
+      \ class=\"me0\">Steering</span> <span class=\"sy0\">=</span> <span class=\"\
+      nu0\">0</span>;\n\t<span class=\"br0\">}</span>\n \n\t<span class=\"kw1\">function</span>\
+      \ PlayerMove<span class=\"br0\">(</span><span class=\"kw5\">float</span> DeltaTime<span\
+      \ class=\"br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t\t<span class=\"\
+      co1\">//Only servers can actually do the driving logic.</span>\n\t\t<span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span><span class=\"kw7\">Role</span> <span\
+      \ class=\"sy0\">&lt;</span> <span class=\"kw7\">ROLE_Authority</span><span class=\"\
+      br0\">)</span>\n\t\t\tServerDrive<span class=\"br0\">(</span>aForward, aStrafe,\
+      \ bPressedJump<span class=\"br0\">)</span>;\n\t\t<span class=\"kw2\">else</span>\n\
+      \t\t\tProcessDrive<span class=\"br0\">(</span>aForward, aStrafe, bPressedJump<span\
+      \ class=\"br0\">)</span>;\n \n\t\t<span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span><span class=\"kw9\">Vehicle</span> <span class=\"sy0\">!=</span>\
+      \ <span class=\"kw5\">None</span><span class=\"br0\">)</span>\n\t\t<span class=\"\
+      br0\">{</span>\n\t\t\t<span class=\"kw2\">if</span><span class=\"br0\">(</span>bFire\
+      \ <span class=\"sy0\">==</span> <span class=\"nu0\">0</span> <span class=\"\
+      sy0\">&amp;&amp;</span> <span class=\"kw9\">Vehicle</span>.<span class=\"me0\"\
+      >bVehicleIsFiring</span><span class=\"br0\">)</span>\n\t\t\t<span class=\"br0\"\
+      >{</span>\n\t\t\t\t<span class=\"kw9\">Vehicle</span>.<span class=\"me0\">VehicleCeaseFire</span><span\
+      \ class=\"br0\">(</span><span class=\"kw6\">false</span><span class=\"br0\"\
+      >)</span>;\n\t\t\t\t<span class=\"kw9\">Vehicle</span>.<span class=\"me0\">bVehicleIsFiring</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"kw6\">false</span>;\n\t\t\t<span\
+      \ class=\"br0\">}</span>\n \n\t\t\t<span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span>bAltFire <span class=\"sy0\">==</span> <span class=\"nu0\">0</span>\
+      \ <span class=\"sy0\">&amp;&amp;</span> <span class=\"kw9\">Vehicle</span>.<span\
+      \ class=\"me0\">bVehicleIsAltFiring</span><span class=\"br0\">)</span>\n\t\t\
+      \t<span class=\"br0\">{</span>\n\t\t\t\t<span class=\"kw9\">Vehicle</span>.<span\
+      \ class=\"me0\">VehicleCeaseFire</span><span class=\"br0\">(</span><span class=\"\
+      kw6\">true</span><span class=\"br0\">)</span>;\n\t\t\t\t<span class=\"kw9\"\
+      >Vehicle</span>.<span class=\"me0\">bVehicleIsAltFiring</span> <span class=\"\
+      sy0\">=</span> <span class=\"kw6\">false</span>;\n\t\t\t<span class=\"br0\"\
+      >}</span>\n\t\t<span class=\"br0\">}</span>\n \n\t\t<span class=\"co1\">//update\
+      \ 'looking' rotation - no affect on driving</span>\n\t\tUpdateRotation<span\
+      \ class=\"br0\">(</span>DeltaTime, <span class=\"nu0\">2</span><span class=\"\
+      br0\">)</span>;\n\t<span class=\"br0\">}</span>\n \n\t<span class=\"kw1\">function</span>\
+      \ <span class=\"kw3\">BeginState</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t\tCleanOutSavedMoves<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n\t<span class=\"br0\"\
+      >}</span>\n \n\t<span class=\"kw1\">function</span> <span class=\"kw3\">EndState</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n\t<span class=\"br0\"\
+      >{</span>\n\t\tCleanOutSavedMoves<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n\t<span class=\"br0\">}</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>One thing that you may find necessary but which is not shown here\
+      \ is that to stop a player from firing their own weapons, you need to give them\
+      \ a non-functional dummy weapon whilst they are in control of the vehicle.</p>\n\
+      <p>Another potential problem is that the player's pawn can encroach on other\
+      \ pawns whilst it is attached to the vehicle, telefragging them instantly. This\
+      \ needs to be fixed in the EncroachedBy function in the pawn.</p>\n<p><b>Foxpaw:</b>\
+      \ From what I've heard, this is already part of the vehicle code for UT2004.\
+      \ But I haven't played UT2004 so I can't say that with certainty.</p>\n<p><b>Mr\
+      \ Evil:</b> That's what I've heard too, but I wanted it now, so I did it.</p>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.136 seconds\nReal time usage:\
+      \ 0.159 seconds\nPreprocessor visited node count: 8/1000000\nPreprocessor generated\
+      \ node count: 52/1000000\nPost‐expand include size: 27/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:452-0!*!0!*!*!*!* and timestamp 20221118154335 and revision\
+      \ id 1494\n -->\n"
+  categories:
+  - sortkey: "Alternative Vehicle Control"
+    name: "Legacy_Custom_Class_(UT)"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Pawn"
+  templates: []
+  images: []
+  externallinks: []
+  sections: []
+  displaytitle: "Legacy:Alternative Vehicle Control"
+  iwlinks: []
+  wikitext:
+    text: "This code has arisen from the need to have a vehicle where the player can\
+      \ still be seen and shot whilst in control of a vehicle (for the artillery and\
+      \ horses in the LawDogs mod). Instead of the player's original [[Legacy:Pawn|Pawn]]\
+      \ being hidden and the vehicle possessed, the original pawn is attached to the\
+      \ vehicle and the vehicle controlled indirectly.\n\nThis has the advantage not\
+      \ only of being able to kill the player without damaging the vehicle and vice\
+      \ versa, but also it allows the player to potentially fire their normal weapons\
+      \ whilst on the vehicle.\n\nThe code shown here has only the code relevant to\
+      \ this control method present; It is a long way from a complete vehicle. There\
+      \ is no bot support.\n\nFirst the vehicle class:\n\n<uscript>\nclass LawDogsVehicle\
+      \ extends KVehicle\n\tabstract;\n\nvar Pawn RepDriver; //Replicated 'Driver'.\n\
+      \nreplication\n{\n\treliable if(Role == ROLE_Authority)\n\t\tRepDriver;\n}\n\
+      \nsimulated function ClientKDriverEnter(PlayerController pc)\n{\n\tPlayerController(RepDriver.Controller).bBehindView\
+      \ = bUseBehindView;\n}\n\nfunction KDriverEnter(Pawn p)\n{\n\tDriver = p;\n\t\
+      RepDriver = Driver;\n\n\tDriver.bCollideWorld = false;\n\tDriver.bPhysicsAnimUpdate\
+      \ = false;\n\tDriver.Velocity = vect(0,0,0);\n\tDriver.SetPhysics(PHYS_None);\n\
+      \n\tDriver.SetBase(self);\n\tDriver.SetRelativeLocation(DrivePos);\n\tDriver.SetRelativeRotation(rot(0,\
+      \ 0, 0));\n\n\tLawDogsPlayer(Driver.Controller).Vehicle = self;\n\tLawDogsPlayer(Driver.Controller).GotoState('PlayerRiding');\n\
+      \tSetOwner(Driver.Controller);\n\n\tClientKDriverEnter(PlayerController(Driver.Controller));\n\
+      }\n\nsimulated function ClientKDriverLeave(PlayerController pc)\n{\n\tpc.bBehindView\
+      \ = pc.Default.bBehindView;\n}\n\nfunction bool KDriverLeave(bool bForceLeave)\n\
+      {\n\tlocal int i;\n\tlocal bool havePlaced;\n\tlocal vector HitLocation, HitNormal,\
+      \ tryPlace;\n\n\tif(Driver == None)\n\t\treturn false;\n\n\tDriver.bCollideWorld\
+      \ = true;\n\n\tfor(i = 0; i < ExitPositions.Length && havePlaced == false; i++)\n\
+      \t{\n\t\ttryPlace = Location + (ExitPositions[i] >> Rotation);\n\t\n\t\tif(Trace(HitLocation,\
+      \ HitNormal, tryPlace, Location, false) != None)\n\t\t\tcontinue;\n\t\t\t\n\t\
+      \tif(!Driver.SetLocation(tryPlace))\n\t\t\tcontinue;\n\t\n\t\thavePlaced = true;\n\
+      \t}\n\n\tif(!havePlaced && !bForceLeave)\n\t{\n\t\tDriver.bCollideWorld = false;\n\
+      \t\treturn false;\n\t}\n\n\tDriver.PlayWaiting();\n\tDriver.bPhysicsAnimUpdate\
+      \ = Driver.Default.bPhysicsAnimUpdate;\n\tDriver.SetBase(None);\n\tDriver.Acceleration\
+      \ = vect(0, 0, 24000);\n\n\tif(Driver.TouchingWaterVolume())\n\t\tDriver.SetPhysics(PHYS_Swimming);\n\
+      \telse\n\t\tDriver.SetPhysics(PHYS_Falling);\n\n\tDriver.Controller.Restart();\n\
+      \tLawDogsPlayer(Driver.Controller).Vehicle = None;\n\tClientKDriverLeave(PlayerController(Driver.Controller));\n\
+      \n\tDriver = None;\n\tRepDriver = None;\n\tSetOwner(None);\n\n\tThrottle=0;\n\
+      \tSteering=0;\n\n\treturn true;\n}\n\nfunction TakeDamage(int Damage, Pawn instigatedBy,\
+      \ Vector hitlocation, Vector momentum, class<DamageType> damageType)\n{\n\t\
+      Health -= Damage;\n\n\tif(Health <= 0)\n\t{\n\t\t//Make sure driver leaves when\
+      \ vehicle is destroyed.\n\t\tif(Driver != None)\n\t\t\tKDriverLeave(true);\n\
+      \n\t\tDestroy();\n\t}\n}\n\nsimulated function Tick(float DeltaTime)\n{\n\t\
+      local rotator DriverRot;\n\n\tif(RepDriver != None)\n\t{\n\t\t//So taking damage\
+      \ doesn't make the driver start falling.\n\t\tif(RepDriver.Physics != PHYS_None)\n\
+      \t\t\tRepDriver.SetPhysics(PHYS_None);\n\n\t\t//Make very sure the driver stays\
+      \ still.\n\t\tRepDriver.SetRelativeLocation(DrivePos);\n\t\tDriverRot.Yaw =\
+      \ RepDriver.RelativeRotation.Yaw;\n\t\tRepDriver.SetRelativeRotation(DriverRot);\n\
+      \t}\n}\n\n//Allow camera to rotate relative to the vehicle, within limits.\n\
+      simulated function bool SpecialCalcView(out actor ViewActor, out vector CameraLocation,\
+      \ out rotator CameraRotation)\n{\n\tif(RepDriver == None || RepDriver.Controller\
+      \ == None)\n\t\treturn false;\n\n\tViewActor = RepDriver;\n\n\tif(CameraRotation.Yaw\
+      \ ClockwiseFrom (Rotation.Yaw + MaxYaw))\n\t\tCameraRotation.Yaw = Rotation.Yaw\
+      \ + MaxYaw;\n\telse if(!(CameraRotation.Yaw ClockwiseFrom (Rotation.Yaw + MinYaw)))\n\
+      \t\tCameraRotation.Yaw = Rotation.Yaw + MinYaw;\n\n\tCameraRotation = normalize(CameraRotation);\n\
+      \tRepDriver.SetTwistLook(normalize(CameraRotation - Rotation).Yaw, CameraRotation.Pitch);\n\
+      \n\tRepDriver.Controller.SetRotation(CameraRotation);\n\tCameraLocation = RepDriver.Location\
+      \ + RepDriver.EyePosition();\n\n\tif(PlayerController(RepDriver.Controller).bBehindView)\n\
+      \t\tCameraLocation += BehindViewOffset >> Rotation;\n\n\treturn true;\n}\n</uscript>\n\
+      \nAnd the new stuff for the PlayerController class:\n\n<uscript>\nclass LawDogsPlayer\
+      \ extends xPlayer\n\tconfig(user);\n\nvar KVehicle Vehicle;\n\nreplication\n\
+      {\n\treliable if(Role == ROLE_Authority)\n\t\tVehicle;\n}\n\n//Fix dying whilst\
+      \ controling a vehicle.\nfunction WasKilledBy(Controller Other)\n{\n\tif(Vehicle\
+      \ != None)\n\t\tVehicle.KDriverLeave(true);\n\n\tSuper.WasKilledBy(Other);\n\
+      }\n\n//Allow vehicle to handle camera.\nevent PlayerCalcView(out actor ViewActor,\
+      \ out vector CameraLocation, out rotator CameraRotation)\n{\n\tif(Vehicle !=\
+      \ None && Vehicle.bSpecialCalcView && Vehicle.SpecialCalcView(ViewActor, CameraLocation,\
+      \ CameraRotation))\n\t\treturn;\n\n\tSuper.PlayerCalcView(ViewActor, CameraLocation,\
+      \ CameraRotation);\n}\n\n//Using a LawDogsVehicle.\nstate PlayerRiding\n{\n\
+      ignores SeePlayer, HearNoise, Bump;\n\n\tfunction ProcessMove(float DeltaTime,\
+      \ vector NewAccel, eDoubleClickDir DoubleClickMove, rotator DeltaRot){}\n\n\t\
+      //Pressing 'use' will exit vehicle (to free up the jump key for other purposes).\n\
+      \tfunction ServerUse()\n\t{\n\t\tif(Level.Pauser == PlayerReplicationInfo)\n\
+      \t\t{\n\t\t\tSetPause(false);\n\t\t\treturn;\n\t\t}\n\n\t\tif(Pawn == None)\n\
+      \t\t\treturn;\n\n\t\tif(Vehicle != None)\n\t\t\tVehicle.bGetOut = true;\n\t\
+      }\n\n\texec function Fire(optional float F)\n\t{\n\t\tif(Vehicle != None)\n\t\
+      \t{\n\t\t\tVehicle.VehicleFire(false);\n\t\t\tVehicle.bVehicleIsFiring = true;\n\
+      \t\t}\n\t}\n\n\texec function AltFire(optional float F)\n\t{\n\t\tif(Vehicle\
+      \ != None)\n\t\t{\n\t\t\tVehicle.VehicleFire(true);\n\t\t\tVehicle.bVehicleIsAltFiring\
+      \ = true;\n\t\t}\n\t}\n\n\t// Set the throttle, steering etc. for the vehicle\
+      \ based on the input provided\n\tfunction ProcessDrive(float InForward, float\
+      \ InStrafe, bool InJump)\n\t{\n\t\tif(Vehicle == None)\n\t\t{\n\t\t\tlog(\"\
+      PlayerRiding.PlayerMove: No Vehicle\");\n\t\t\treturn;\n\t\t}\n\n\t\t//Horses\
+      \ can jump.\n\t\tif(bPressedJump)\n\t\t{\n\t\t\tVehicle.DoJump(bUpdating);\n\
+      \t\t\tbPressedJump = false;\n\t\t}\n\n\t\tif(InForward > 1)\n\t\t\tVehicle.Throttle\
+      \ = 1;\n\t\telse if(InForward < -1)\n\t\t\tVehicle.Throttle = -1;\n\t\telse\n\
+      \t\t\tVehicle.Throttle = 0;\n\n\t\tif(InStrafe < -1)\n\t\t\tVehicle.Steering\
+      \ = -1;\n\t\telse if(InStrafe > 1)\n\t\t\tVehicle.Steering = 1;\n\t\telse\n\t\
+      \t\tVehicle.Steering = 0;\n\t}\n\n\tfunction PlayerMove(float DeltaTime)\n\t\
+      {\n\t\t//Only servers can actually do the driving logic.\n\t\tif(Role < ROLE_Authority)\n\
+      \t\t\tServerDrive(aForward, aStrafe, bPressedJump);\n\t\telse\n\t\t\tProcessDrive(aForward,\
+      \ aStrafe, bPressedJump);\n\n\t\tif(Vehicle != None)\n\t\t{\n\t\t\tif(bFire\
+      \ == 0 && Vehicle.bVehicleIsFiring)\n\t\t\t{\n\t\t\t\tVehicle.VehicleCeaseFire(false);\n\
+      \t\t\t\tVehicle.bVehicleIsFiring = false;\n\t\t\t}\n\n\t\t\tif(bAltFire == 0\
+      \ && Vehicle.bVehicleIsAltFiring)\n\t\t\t{\n\t\t\t\tVehicle.VehicleCeaseFire(true);\n\
+      \t\t\t\tVehicle.bVehicleIsAltFiring = false;\n\t\t\t}\n\t\t}\n\n\t\t//update\
+      \ 'looking' rotation - no affect on driving\n\t\tUpdateRotation(DeltaTime, 2);\n\
+      \t}\n\n\tfunction BeginState()\n\t{\n\t\tCleanOutSavedMoves();\n\t}\n\n\tfunction\
+      \ EndState()\n\t{\n\t\tCleanOutSavedMoves();\n\t}\n}\n</uscript>\n\nOne thing\
+      \ that you may find necessary but which is not shown here is that to stop a\
+      \ player from firing their own weapons, you need to give them a non-functional\
+      \ dummy weapon whilst they are in control of the vehicle.\n\nAnother potential\
+      \ problem is that the player's pawn can encroach on other pawns whilst it is\
+      \ attached to the vehicle, telefragging them instantly. This needs to be fixed\
+      \ in the EncroachedBy function in the pawn.\n\n'''Foxpaw:''' From what I've\
+      \ heard, this is already part of the vehicle code for UT2004. But I haven't\
+      \ played UT2004 so I can't say that with certainty.\n\n'''Mr Evil:''' That's\
+      \ what I've heard too, but I wanted it now, so I did it.\n[[Category:Legacy\
+      \ Custom Class (UT)|{{PAGENAME}}]]"
+  properties: []
+  revId: 1494
+name: "Legacy:Alternative Vehicle Control"
+revision:
+  revid: 1494
+  parentid: 1495
+  user: "Dyn-62-56-58-176.dslaccess.co.uk"
+  timestamp: 1195341927.000000000
+  comment: "*"
+timestamp: 1668786138.587682000

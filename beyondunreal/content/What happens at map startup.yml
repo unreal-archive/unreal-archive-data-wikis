@@ -1,0 +1,1168 @@
+---
+parse:
+  title: "What happens at map startup"
+  text:
+    text: "<p>The information in this article are based on a snippet of native <a\
+      \ href=\"/UT2004\" title=\"UT2004\" class=\"mw-redirect\">UT2004</a> code posted\
+      \ by Steve Polge on Epic Game's ut2003mods mailing list. The code can be found\
+      \ as UnGame.cpp in the Engine\\Src directory of the UT2004 <a href=\"/UnrealScript_source_code\"\
+      \ title=\"UnrealScript source code\">UnrealScript source code</a> download.</p>\n\
+      <p>This article only describes the map startup process. It applies to offline\
+      \ games, network servers and clients, including <a href=\"/edit/UTV?redlink=1\"\
+      \ class=\"new\" title=\"UTV (page does not exist)\">UTV</a> clients (but not\
+      \ the UTV proxy server) and demo playback. Note that this article does not apply\
+      \ to loading saved game states in engine builds that support this. Those \"\
+      simply continue\" from where the game was saved. In UT2004 the <a href=\"/UE2:Actor_events_(UT2004)#PostLoadSavedGame\"\
+      \ title=\"UE2:Actor events (UT2004)\">PostLoadSavedGame() event</a> is called\
+      \ for all existing actors and all ragdolls are destroyed because their state\
+      \ cannot be stored in save game files.</p>\n<p>The seamless travel feature of\
+      \ <a href=\"/Unreal_Engine_3\" title=\"Unreal Engine 3\">Unreal Engine 3</a>\
+      \ seems to behave similarly to a regular map startup, except that the new map\
+      \ is loaded in the background. However, additional GameInfo events, such as\
+      \ GetSeamlessTravelActorList(), PostSeamlessTravel() and HandleSeamlessTravelPlayer()\
+      \ are called at some point during the map change process. <i>(This needs further\
+      \ research.)</i></p>\n<p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\"\
+      >\n<h2>Contents</h2>\n</div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a\
+      \ href=\"#Summary_of_events\"><span class=\"tocnumber\">1</span> <span class=\"\
+      toctext\">Summary of events</span></a>\n<ul>\n<li class=\"toclevel-2 tocsection-2\"\
+      ><a href=\"#Client_preparations\"><span class=\"tocnumber\">1.1</span> <span\
+      \ class=\"toctext\">Client preparations</span></a></li>\n<li class=\"toclevel-2\
+      \ tocsection-3\"><a href=\"#General_preparations\"><span class=\"tocnumber\"\
+      >1.2</span> <span class=\"toctext\">General preparations</span></a></li>\n<li\
+      \ class=\"toclevel-2 tocsection-4\"><a href=\"#GameInfo.InitGame.28.29\"><span\
+      \ class=\"tocnumber\">1.3</span> <span class=\"toctext\">GameInfo.InitGame()</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-5\"><a href=\"#PreBeginPlay.28.29\"><span\
+      \ class=\"tocnumber\">1.4</span> <span class=\"toctext\">PreBeginPlay()</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-6\"><a href=\"#BeginPlay.28.29\"><span class=\"\
+      tocnumber\">1.5</span> <span class=\"toctext\">BeginPlay()</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-7\"><a href=\"#Zones.2FVolumes\"><span class=\"\
+      tocnumber\">1.6</span> <span class=\"toctext\">Zones/Volumes</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-8\"><a href=\"#PostBeginPlay.28.29\"><span\
+      \ class=\"tocnumber\">1.7</span> <span class=\"toctext\">PostBeginPlay()</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-9\"><a href=\"#PostNetBeginPlay.28.29\"><span\
+      \ class=\"tocnumber\">1.8</span> <span class=\"toctext\">PostNetBeginPlay()</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-10\"><a href=\"#SetInitialState.28.29\"><span\
+      \ class=\"tocnumber\">1.9</span> <span class=\"toctext\">SetInitialState()</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-11\"><a href=\"#Finding_bases\"><span class=\"\
+      tocnumber\">1.10</span> <span class=\"toctext\">Finding bases</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-12\"><a href=\"#Final_initialization_step\"\
+      ><span class=\"tocnumber\">1.11</span> <span class=\"toctext\">Final initialization\
+      \ step</span></a></li>\n</ul>\n</li>\n<li class=\"toclevel-1 tocsection-13\"\
+      ><a href=\"#The_actual_UnGame.cpp_snippet\"><span class=\"tocnumber\">2</span>\
+      \ <span class=\"toctext\">The actual UnGame.cpp snippet</span></a>\n<ul>\n<li\
+      \ class=\"toclevel-2 tocsection-14\"><a href=\"#Hints_for_reading_the_code\"\
+      ><span class=\"tocnumber\">2.1</span> <span class=\"toctext\">Hints for reading\
+      \ the code</span></a></li>\n<li class=\"toclevel-2 tocsection-15\"><a href=\"\
+      #General_notes_about_this_code_snippet\"><span class=\"tocnumber\">2.2</span>\
+      \ <span class=\"toctext\">General notes about this code snippet</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-16\"><a href=\"#Notes_for_Unreal_Engine_1\"\
+      ><span class=\"tocnumber\">2.3</span> <span class=\"toctext\">Notes for Unreal\
+      \ Engine 1</span></a></li>\n<li class=\"toclevel-2 tocsection-17\"><a href=\"\
+      #Notes_for_Unreal_Engine_3\"><span class=\"tocnumber\">2.4</span> <span class=\"\
+      toctext\">Notes for Unreal Engine 3</span></a></li>\n<li class=\"toclevel-2\
+      \ tocsection-18\"><a href=\"#The_code\"><span class=\"tocnumber\">2.5</span>\
+      \ <span class=\"toctext\">The code</span></a></li>\n</ul>\n</li>\n</ul>\n</div>\n\
+      <p></p>\n<h2><span class=\"mw-headline\" id=\"Summary_of_events\">Summary of\
+      \ events</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/What_happens_at_map_startup?section=1\" title=\"Edit\
+      \ section: Summary of events\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>Before any of the following events happen, the engine\
+      \ loads the map and any packages it depends on.</p>\n<p>Next it spawns the <a\
+      \ href=\"/GameInfo\" title=\"GameInfo\">GameInfo</a>, unless loading the map\
+      \ for a saved game or in a client environment. The engine always tries to load\
+      \ the GameInfo class from the <code>?game=</code> URL option. If that fails,\
+      \ a default game type for the map is determined, either using the <a href=\"\
+      /edit/LevelInfo?redlink=1\" class=\"new\" title=\"LevelInfo (page does not exist)\"\
+      >LevelInfo</a>'s <i>DefaultGameType</i> property (<a href=\"/edit/UE1?redlink=1\"\
+      \ class=\"new\" title=\"UE1 (page does not exist)\">UE1</a> and <a href=\"/edit/UE2?redlink=1\"\
+      \ class=\"new\" title=\"UE2 (page does not exist)\">UE2</a>) or the map prefix\
+      \ (<a href=\"/UE3\" title=\"UE3\" class=\"mw-redirect\">UE3</a>). If that fails\
+      \ as well, a default game type as specified in the main <a href=\"/edit/INI_file?redlink=1\"\
+      \ class=\"new\" title=\"INI file (page does not exist)\">INI file</a> is used.\
+      \ The final fallback option is the GameInfo class itself.</p>\n<p>Additionally,\
+      \ if running a listen or dedicated server, any actors mentioned in the <i>ServerActors</i>\
+      \ list of INI section [Engine.GameEngine] are created. Non-standard property\
+      \ values for these actors may be specified in the form <code><i>propertyname</i>=<i>value</i></code>\
+      \ on the ServerActors line, separated form the actor class and from each other\
+      \ by spaces.</p>\n<p>Note that at this point there are no player actors in the\
+      \ level yet. Offline and on a listen server, the local player joins right after\
+      \ map startup completed. In network client environments (including UTV and demo\
+      \ playback), the local player actor is received through <a href=\"/Replication\"\
+      \ title=\"Replication\" class=\"mw-redirect\">replication</a> soon after map\
+      \ startup has completed.</p>\n<p>During the events described here, the LevelInfo\
+      \ or WorldInfo's <i>bStartup</i> property is set to <code>True</code>.</p>\n\
+      <h3><span class=\"mw-headline\" id=\"Client_preparations\">Client preparations</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/What_happens_at_map_startup?section=2\" title=\"Edit section:\
+      \ Client preparations\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>One of the first things the engine does in client environments is deleting\
+      \ all actors that have neither <i>bStatic</i> nor <i>bNoDelete</i> set to <code>True</code>.\
+      \ (UT2004 also treats xEmitters as undeletable in this context.)</p>\n<p>Any\
+      \ remaining actors have their <i>Role</i> and <i>RemoteRole</i> swapped as if\
+      \ they were received through <a href=\"/Replication\" title=\"Replication\"\
+      \ class=\"mw-redirect\">replication</a>. The only exception are actors with\
+      \ <i>bClientAuthoritative</i> set to <code>True</code>, which only really applies\
+      \ to ClientMovers.</p>\n<h3><span class=\"mw-headline\" id=\"General_preparations\"\
+      >General preparations</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/What_happens_at_map_startup?section=3\" title=\"Edit\
+      \ section: General preparations\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>All actors start out touching nothing and using the\
+      \ level's DefaultPhysicsVolume as their current <i>PhysicsVolume</i>. Native\
+      \ code also initializes state support and Karma physics here.</p>\n<p>Only at\
+      \ this point UnrealScript support is enabled for the actors in this level by\
+      \ setting the LevelInfo's <i>bBegunPlay</i> to <code>True</code>. Any actors\
+      \ spawned before this point did not get the UnrealScript events during <a href=\"\
+      /What_happens_when_an_Actor_is_spawned\" title=\"What happens when an Actor\
+      \ is spawned\">what happens when an Actor is spawned</a> and any actors destroyed\
+      \ did not receive the events during <a href=\"/What_happens_when_an_Actor_is_destroyed\"\
+      \ title=\"What happens when an Actor is destroyed\">what happens when an Actor\
+      \ is destroyed</a>.</p>\n<h3><span class=\"mw-headline\" id=\"GameInfo.InitGame.28.29\"\
+      >GameInfo.InitGame()</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/What_happens_at_map_startup?section=4\" title=\"Edit\
+      \ section: GameInfo.InitGame()\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Offline and on network servers the GameInfo's InitGame()\
+      \ event is called now. UT2004 also calls SetGrammar() afterwards, which initializes\
+      \ speech recognition grammars.</p>\n<p>InitGame() performs general and gametype-specific\
+      \ initialization. It parses the URL options and among other things also spawns\
+      \ the AccessControl, Mutators and similar actors. Those actors are initialized\
+      \ according to <a href=\"/What_happens_when_an_Actor_is_spawned\" title=\"What\
+      \ happens when an Actor is spawned\">what happens when an Actor is spawned</a>.\
+      \ Starting with <a href=\"/edit/UE2?redlink=1\" class=\"new\" title=\"UE2 (page\
+      \ does not exist)\">UE2</a> these actors exclude themselves from receiving the\
+      \ UnrealScript events mentioned below by setting their <i>bScriptInitialized</i>\
+      \ property to <code>True</code>, usually in their SetInitialState() event.</p>\n\
+      <h3><span class=\"mw-headline\" id=\"PreBeginPlay.28.29\">PreBeginPlay()</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/What_happens_at_map_startup?section=5\" title=\"Edit section:\
+      \ PreBeginPlay()\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>Next the PreBeginPlay() function is called for all actors with <i>bScriptInitialized</i>=<code>False</code>.</p>\n\
+      <p>The default implementation of PreBeginPlay() allows mutators to modify the\
+      \ actor while it is being initialized by calling the GameInfo's IsRelevant()\
+      \ in <a href=\"/edit/UE1?redlink=1\" class=\"new\" title=\"UE1 (page does not\
+      \ exist)\">UE1</a>, the base mutator's CheckRelevance() in <a href=\"/edit/UE2?redlink=1\"\
+      \ class=\"new\" title=\"UE2 (page does not exist)\">UE2</a> or the GameInfo's\
+      \ CheckRelevance() in <a href=\"/UE3\" title=\"UE3\" class=\"mw-redirect\">UE3</a>.\
+      \ These call <a href=\"/edit/Mutator?redlink=1\" class=\"new\" title=\"Mutator\
+      \ (page does not exist)\">Mutator</a>.AlwaysKeep() and Mutator.IsRelevant(),\
+      \ which in turn calls Mutator.CheckReplacement().</p>\n<p>The above logic doesn't\
+      \ apply if PreBeginPlay() is overridden without calling <a href=\"/Super\" title=\"\
+      Super\" class=\"mw-redirect\">Super</a>, the actor is flagged as <i>bGameRelevant</i>,\
+      \ the actor is <i>bStatic</i> (only UE3) or spawning happens on a network client.</p>\n\
+      <h3><span class=\"mw-headline\" id=\"BeginPlay.28.29\">BeginPlay()</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/What_happens_at_map_startup?section=6\" title=\"Edit section:\
+      \ BeginPlay()\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>Then the BeginPlay() function is called for all actors with <i>bScriptInitialized</i>=<code>False</code>.</p>\n\
+      <p>This event does nothing by default and no longer exists in Unreal Engine\
+      \ 3 as the same effect could be achieved by overriding PreBeginPlay() and calling\
+      \ Super.PreBeginPlay() first. It can be used to implement logic that should\
+      \ happen after mutators had a chance to modify the actor.</p>\n<h3><span class=\"\
+      mw-headline\" id=\"Zones.2FVolumes\">Zones/Volumes</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/What_happens_at_map_startup?section=7\"\
+      \ title=\"Edit section: Zones/Volumes\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>At this point all actors' containing <a href=\"/edit/Zone?redlink=1\"\
+      \ class=\"new\" title=\"Zone (page does not exist)\">zones</a> and <a href=\"\
+      /edit/PhysicsVolume?redlink=1\" class=\"new\" title=\"PhysicsVolume (page does\
+      \ not exist)\">PhysicsVolumes</a> are initialized. Also, if the actor touches\
+      \ any <a href=\"/edit/Volume?redlink=1\" class=\"new\" title=\"Volume (page\
+      \ does not exist)\">Volumes</a>, the actor and the Volume add each other to\
+      \ their list of touching actors.</p>\n<p>Unlike for spawning actors, none of\
+      \ the actions in this startup stage cause UnrealScript events to be called.</p>\n\
+      <h3><span class=\"mw-headline\" id=\"PostBeginPlay.28.29\">PostBeginPlay()</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/What_happens_at_map_startup?section=8\" title=\"Edit section:\
+      \ PostBeginPlay()\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>Now all actors with <i>bScriptInitialized</i>=<code>False</code> have their\
+      \ UnrealScript and C++ PostBeginPlay() functions called. These do nothing by\
+      \ default.</p>\n<h3><span class=\"mw-headline\" id=\"PostNetBeginPlay.28.29\"\
+      >PostNetBeginPlay()</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/What_happens_at_map_startup?section=9\" title=\"Edit\
+      \ section: PostNetBeginPlay()\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Right after PostBeginPlay(), PostNetBeginPlay() is\
+      \ called on all actors with <i>bScriptInitialized</i>=<code>False</code>. This\
+      \ event does no longer exist in <a href=\"/Unreal_Engine_3\" title=\"Unreal\
+      \ Engine 3\">Unreal Engine 3</a>.</p>\n<p>Note that unlike for spawning actors,\
+      \ PostNetBeginPlay() is called <i>before</i> SetInitialSate().</p>\n<h3><span\
+      \ class=\"mw-headline\" id=\"SetInitialState.28.29\">SetInitialState()</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/What_happens_at_map_startup?section=10\" title=\"Edit section:\
+      \ SetInitialState()\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>The SetInitialState() function is the last to be called on all actors (with\
+      \ <i>bScriptInitialized</i>=<code>False</code>) during initialization. As the\
+      \ name suggests, this function sets the actor's initial state. Using GotoState()\
+      \ it either switches to the state specified in the <a href=\"/edit/InitialState?redlink=1\"\
+      \ class=\"new\" title=\"InitialState (page does not exist)\">InitialState</a>\
+      \ property or to the state marked with the <a href=\"/Auto\" title=\"Auto\"\
+      \ class=\"mw-redirect\">auto</a> modifier. As a result, the corresponding state's\
+      \ BeginState() event will be called.</p>\n<p>Note that the <a href=\"/UE2:Actor_native_functions_(UT2004)#AddToPackageMap\"\
+      \ title=\"UE2:Actor native functions (UT2004)\">AddToPackageMap() function</a>\
+      \ in UT2004, which can dynamically add server packages at runtime, only works\
+      \ before this stage of map startup.</p>\n<h3><span class=\"mw-headline\" id=\"\
+      Finding_bases\">Finding bases</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/What_happens_at_map_startup?section=11\"\
+      \ title=\"Edit section: Finding bases\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>In this step, any actors with an <i>AttachTag</i>\
+      \ are attached to the first actor with a matching <i>Tag</i> or <i>Name</i>.\
+      \ If a matching actor is found, it receives the Attach() event.</p>\n<p>For\
+      \ actors without an <i>AttachTag</i>, that <i>bShouldBaseOnStartup</i>, have\
+      \ world collision enabled and have their <i>Physics</i> set to None or Rotating,\
+      \ a good base actor is determined. If a base is found, its Attach() event and\
+      \ this actor's BaseChange() event are called.</p>\n<h3><span class=\"mw-headline\"\
+      \ id=\"Final_initialization_step\">Final initialization step</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/What_happens_at_map_startup?section=12\"\
+      \ title=\"Edit section: Final initialization step\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>The last iteration over all actors updates any <a\
+      \ href=\"/edit/Projector?redlink=1\" class=\"new\" title=\"Projector (page does\
+      \ not exist)\">Projectors</a> and disables Karma simulation for high-detail\
+      \ actors in low-detail mode and for high-detail and client-only actors in dedicated\
+      \ server mode.</p>\n<h2><span class=\"mw-headline\" id=\"The_actual_UnGame.cpp_snippet\"\
+      >The actual UnGame.cpp snippet</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/What_happens_at_map_startup?section=13\"\
+      \ title=\"Edit section: The actual UnGame.cpp snippet\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<p>The following is a copy of\
+      \ the code snippet this article is based on. This particular piece of code is\
+      \ executed after a new map has been loaded and before the local player enters\
+      \ the game or any replication kicks in. Keep in mind that much of the initialization\
+      \ also happens at the UnrealScript level, so for a complete picture you should\
+      \ have the UT2004 sources ready and browse to the relevant UnrealScript functions.</p>\n\
+      <h3><span class=\"mw-headline\" id=\"Hints_for_reading_the_code\">Hints for\
+      \ reading the code</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/What_happens_at_map_startup?section=14\" title=\"Edit\
+      \ section: Hints for reading the code\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>A few things that will help understanding the code\
+      \ even if you're not into C++:</p>\n<ul>\n<li>The <code>-&gt;</code> operator\
+      \ does the same as the dot does in UnrealScript - it accessed variables or functions\
+      \ of an object.</li>\n<li><code>GLevel</code> is a Level object. In UnrealScript\
+      \ this object is referenced by the XLevel property of any Actor.</li>\n<li><code>GLevel-&gt;GetLevelInfo()</code>\
+      \ returns the actual LevelInfo object. The <code>Info</code> property also points\
+      \ to the LevelInfo.</li>\n<li>Variables in UnrealScript objects have the same\
+      \ name in C++. For example <code>Info-&gt;bBegunPlay</code> refers to a variable\
+      \ you'd access as <code>Level.bBegunPlay</code> in UnrealScript code.</li>\n\
+      <li>The LevelInfo's <code>bBegunPlay</code> acts as general gate to UnrealScript\
+      \ execution. During map load it is 0 (False), so no UnrealScript code will be\
+      \ executed until it is set to 1 (True) in this code snippet.</li>\n<li>UnrealScript\
+      \ functions declared with the <i>event</i> keyword are called from C++ via <code>event<i>NameOfUScriptFunction</i>(<i>parameters</i>)</code>,\
+      \ for example <code>eventPreBeginPlay</code> calls the PreBeginPlay() function.</li>\n\
+      <li><a href=\"/Dynamic_arrays\" title=\"Dynamic arrays\">Dynamic arrays</a>\
+      \ have a slightly different syntax in native code. They are declared as <code>TArray&lt;<i>type</i>&gt;</code>,\
+      \ their length is returned via <code><i>array</i>.Num()</code> and individual\
+      \ elements are accessed via round parentheses instead of square brackets. <code><i>array</i>.Empty()</code>\
+      \ does what <code><i>aray</i>.Length = 0;</code> would do in UnrealScript.</li>\n\
+      <li><code>GLevel-&gt;IsServer()</code> basically returns the same as <code>(Level.NetMode&#160;!=\
+      \ NM_Client)</code> in UnrealScript. Similarly <code>GIsClient</code> basically\
+      \ returns the same as <code>Level.NetMode&#160;!= NM_DedicatedServer</code>\
+      \ in UnrealScript.</li>\n<li>The <code>GLevel-&gt;Actors</code> array is the\
+      \ same list that the AllActors iterator traverses in UnrealScript.</li>\n<li>The\
+      \ native class name of Actor subclasses is prefixed with an A, the native name\
+      \ of non-Actor classes with a U and the native name of structs with an F, for\
+      \ example APhysicsVolume, UKarmaParams or FVector.</li>\n<li><a href=\"/Name\"\
+      \ title=\"Name\" class=\"mw-redirect\">Name</a> literals do not exist. Instead,\
+      \ the values of all natively-used names are hard-coded as <code>NAME_<i>name</i></code>,\
+      \ for example NAME_None for 'None'.</li>\n<li>Class <a href=\"/Literals\" title=\"\
+      Literals\">literals</a> do exist, but look very different from UnrealScript.\
+      \ They are expressed as <code><i>nativeClassName</i>::StaticClass()</code>.</li>\n\
+      <li><code>bScriptInitialized</code> is an Actor property that is set to True\
+      \ in the SetinitialState() event.</li>\n<li><code>if (!<i>someObjectReference</i>)</code>\
+      \ checks if a variable actually points to an object, similar to the UnrealScript\
+      \ code <code>if (<i>someObjectReference</i>&#160;!= None)</code>.</li>\n<li>Values\
+      \ for <a href=\"/Bool\" title=\"Bool\" class=\"mw-redirect\">bool</a> variables\
+      \ are 0 and 1, not False and True.</li>\n<li><code>GetClass()-&gt;GetDefaultActor()</code>\
+      \ corresponds to UnrealScript's <code>.default.</code> syntax for <a href=\"\
+      /Variables#Accessing_variables\" title=\"Variables\">accessing the default variable\
+      \ values</a> of a class.</li>\n</ul>\n<h3><span class=\"mw-headline\" id=\"\
+      General_notes_about_this_code_snippet\">General notes about this code snippet</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/What_happens_at_map_startup?section=15\" title=\"Edit section:\
+      \ General notes about this code snippet\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<ul>\n<li>When running as a (listen and dedicated) server,\
+      \ actors mentioned in the [Engine.GameEngine] ServerActors list in the main\
+      \ INI file (e.g. UnrealTournament.ini, UT2004.ini or UTEngine.ini) are created\
+      \ before this code is executed. UnrealScript execution is not yet enabled at\
+      \ that point, so these actors are initialized like any other actor already in\
+      \ the map.</li>\n<li>Players do not exist while this code is executed. Any (local\
+      \ or remote) players join \"much\" later.</li>\n</ul>\n<h3><span class=\"mw-headline\"\
+      \ id=\"Notes_for_Unreal_Engine_1\">Notes for Unreal Engine 1</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/What_happens_at_map_startup?section=16\"\
+      \ title=\"Edit section: Notes for Unreal Engine 1\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<ul>\n<li>The <code>bScriptInitialized</code> variable\
+      \ does not exist in <a href=\"/edit/Unreal_Engine_1?redlink=1\" class=\"new\"\
+      \ title=\"Unreal Engine 1 (page does not exist)\">Unreal Engine 1</a>, so unlike\
+      \ in later engine generations actors spawned during initialization may receive\
+      \ *BeginPlay() calls twice.</li>\n<li>Unreal Engine 1 does not have volumes\
+      \ or Karma physics, so these parts of the code here do not apply.</li>\n</ul>\n\
+      <h3><span class=\"mw-headline\" id=\"Notes_for_Unreal_Engine_3\">Notes for Unreal\
+      \ Engine 3</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/What_happens_at_map_startup?section=17\" title=\"Edit\
+      \ section: Notes for Unreal Engine 3\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<ul>\n<li>The Actor's Level variable and the LevelInfo\
+      \ class are both called <i>WorldInfo</i> in <a href=\"/Unreal_Engine_3\" title=\"\
+      Unreal Engine 3\">Unreal Engine 3</a>.</li>\n<li>The BeginPlay() and PostNetBeginPlay()\
+      \ functions have been removed, with PostBeginPlay() now taking PostNetBeginPlay()'s\
+      \ role.</li>\n<li>Unreal Engine 3 does not use zones, so the related parts of\
+      \ the code here do not apply.</li>\n<li>Initialization of levels streamed in\
+      \ at runtime is not covered by this article.</li>\n<li><a href=\"/edit/Kismet?redlink=1\"\
+      \ class=\"new\" title=\"Kismet (page does not exist)\">Kismet</a> initialization\
+      \ is not covered in this article. <i>(More research is required on this.)</i></li>\n\
+      </ul>\n<h3><span class=\"mw-headline\" id=\"The_code\">The code</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/What_happens_at_map_startup?section=18\" title=\"Edit section:\
+      \ The code\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"coMULTI\">/*=============================================================================\n\
+      \tUnGame.cpp: Unreal game engine.\n\tCopyright 1997-2003 Epic Games, Inc. All\
+      \ Rights Reserved.\n \n=============================================================================*/</span>\n\
+      \ \n\tGLevel<span class=\"sy0\">-&gt;</span>iFirstDynamicActor <span class=\"\
+      sy0\">=</span> <span class=\"nu0\">0</span>;\n\t<span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span> <span class=\"sy0\">!</span>Info<span class=\"sy0\"\
+      >-&gt;</span>bBegunPlay <span class=\"br0\">)</span>\n\t<span class=\"br0\"\
+      >{</span>\n        appResetTimer<span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>; <span class=\"co1\">// sjs</span>\n \n\t\t<span class=\"co1\">//\
+      \ fix up level problems</span>\n\t\tFixUpLevel<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n \n\t\t<span class=\"co1\">// Update draw distance.</span>\n\
+      \t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>GIsClient<span\
+      \ class=\"br0\">)</span>\n\t\t<span class=\"br0\">{</span>\n\t\t\tGLevel<span\
+      \ class=\"sy0\">-&gt;</span>GetLevelInfo<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span><span class=\"sy0\">-&gt;</span>InitDistanceFogLOD<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n\t\t\tGLevel<span class=\"sy0\"\
+      >-&gt;</span>GetLevelInfo<span class=\"br0\">(</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">-&gt;</span>UpdateDistanceFogLOD<span class=\"br0\">(</span>\
+      \ Client<span class=\"sy0\">-&gt;</span>DrawDistanceLOD <span class=\"br0\"\
+      >)</span>;\n\t\t<span class=\"br0\">}</span>\n \n\t\t<span class=\"co1\">//\
+      \ Lock the level.</span>\n\t\tdebugf<span class=\"br0\">(</span> NAME_Log, TEXT<span\
+      \ class=\"br0\">(</span><span class=\"st0\">\"Bringing %s up for play (%i) appSeconds:\
+      \ %f...\"</span><span class=\"br0\">)</span>, GLevel<span class=\"sy0\">-&gt;</span>GetFullName<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>, appRound<span class=\"\
+      br0\">(</span>GetMaxTickRate<span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span><span class=\"br0\">)</span>, appSeconds<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span> <span class=\"br0\">)</span>; <span class=\"co1\">//\
+      \ sjs</span>\n\t\tGLevel<span class=\"sy0\">-&gt;</span>FinishedPrecaching <span\
+      \ class=\"sy0\">=</span> <span class=\"nu0\">0</span>;\n\t\tGLevel<span class=\"\
+      sy0\">-&gt;</span>TimeSeconds <span class=\"sy0\">=</span> <span class=\"nu0\"\
+      >0</span>;\n\t\tGLevel<span class=\"sy0\">-&gt;</span>GetLevelInfo<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span><span class=\"sy0\">-&gt;</span>TimeSeconds\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>;\n\t\tGLevel<span\
+      \ class=\"sy0\">-&gt;</span>GetLevelInfo<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span><span class=\"sy0\">-&gt;</span>GetDefaultPhysicsVolume<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span><span class=\"sy0\">-&gt;</span>bNoDelete\
+      \ <span class=\"sy0\">=</span> <span class=\"kw6\">true</span>;\n \n\t\t<span\
+      \ class=\"co1\">// Kill off actors that aren't interesting to the client.</span>\n\
+      \t\t<span class=\"kw2\">if</span><span class=\"br0\">(</span> <span class=\"\
+      sy0\">!</span>GLevel<span class=\"sy0\">-&gt;</span>IsServer<span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span> <span class=\"br0\">)</span>\n\t\t<span\
+      \ class=\"br0\">{</span>\n\t\t\t<span class=\"kw2\">for</span><span class=\"\
+      br0\">(</span> <span class=\"kw5\">INT</span> i<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0</span>; i<span class=\"sy0\">&lt;</span>GLevel<span class=\"\
+      sy0\">-&gt;</span>Actors.<span class=\"me0\">Num</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>; i<span class=\"sy0\">++</span> <span class=\"br0\"\
+      >)</span>\n\t\t\t<span class=\"br0\">{</span>\n\t\t\t\tAActor<span class=\"\
+      sy0\">*</span> <span class=\"kw9\">Actor</span> <span class=\"sy0\">=</span>\
+      \ GLevel<span class=\"sy0\">-&gt;</span>Actors<span class=\"br0\">(</span>i<span\
+      \ class=\"br0\">)</span>;\n\t\t\t\t<span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span> <span class=\"kw9\">Actor</span> <span class=\"br0\">)</span>\n\
+      \t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\t<span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span> Actor<span class=\"sy0\">-&gt;</span>bStatic <span\
+      \ class=\"sy0\">||</span> Actor<span class=\"sy0\">-&gt;</span>bNoDelete <span\
+      \ class=\"sy0\">||</span> Actor<span class=\"sy0\">-&gt;</span><span class=\"\
+      kw3\">IsA</span><span class=\"br0\">(</span>AxEmitter::StaticClass<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">)</span> <span\
+      \ class=\"br0\">)</span> \n\t\t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\t\
+      \t<span class=\"kw2\">if</span> <span class=\"br0\">(</span> <span class=\"\
+      sy0\">!</span>Actor<span class=\"sy0\">-&gt;</span>bClientAuthoritative <span\
+      \ class=\"br0\">)</span>\n\t\t\t\t\t\t\tExchange<span class=\"br0\">(</span>\
+      \ Actor<span class=\"sy0\">-&gt;</span><span class=\"kw7\">Role</span>, Actor<span\
+      \ class=\"sy0\">-&gt;</span><span class=\"kw7\">RemoteRole</span> <span class=\"\
+      br0\">)</span>;\n\t\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t\t<span class=\"\
+      kw2\">else</span>\n\t\t\t\t\t\tGLevel<span class=\"sy0\">-&gt;</span>DestroyActor<span\
+      \ class=\"br0\">(</span> <span class=\"kw9\">Actor</span> <span class=\"br0\"\
+      >)</span>;\n\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t<span class=\"br0\"\
+      >}</span>\n\t\t<span class=\"br0\">}</span>\n \n\t\t<span class=\"co1\">// Init\
+      \ touching actors &amp; clear LastRenderTime</span>\n\t\t<span class=\"kw2\"\
+      >for</span><span class=\"br0\">(</span> <span class=\"kw5\">INT</span> i<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0</span>; i<span class=\"sy0\">&lt;</span>GLevel<span\
+      \ class=\"sy0\">-&gt;</span>Actors.<span class=\"me0\">Num</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>; i<span class=\"sy0\">++</span> <span\
+      \ class=\"br0\">)</span>\n\t\t\t<span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span> GLevel<span class=\"sy0\">-&gt;</span>Actors<span class=\"br0\"\
+      >(</span>i<span class=\"br0\">)</span> <span class=\"br0\">)</span>\n\t\t\t\
+      <span class=\"br0\">{</span>\n\t\t\t\tGLevel<span class=\"sy0\">-&gt;</span>Actors<span\
+      \ class=\"br0\">(</span>i<span class=\"br0\">)</span><span class=\"sy0\">-&gt;</span>LastRenderTime\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>.<span class=\"me0\"\
+      >f</span>;\n\t\t\t\tGLevel<span class=\"sy0\">-&gt;</span>Actors<span class=\"\
+      br0\">(</span>i<span class=\"br0\">)</span><span class=\"sy0\">-&gt;</span>Touching.<span\
+      \ class=\"me0\">Empty</span><span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>;\n\t\t\t\tGLevel<span class=\"sy0\">-&gt;</span>Actors<span class=\"\
+      br0\">(</span>i<span class=\"br0\">)</span><span class=\"sy0\">-&gt;</span><span\
+      \ class=\"kw9\">PhysicsVolume</span> <span class=\"sy0\">=</span> GLevel<span\
+      \ class=\"sy0\">-&gt;</span>GetLevelInfo<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span><span class=\"sy0\">-&gt;</span>GetDefaultPhysicsVolume<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n\t\t\t<span class=\"br0\">}</span>\n\
+      \ \n \n\t\t<span class=\"co1\">// Init scripting.</span>\n\t\t<span class=\"\
+      kw2\">for</span><span class=\"br0\">(</span> <span class=\"kw5\">INT</span>\
+      \ i<span class=\"sy0\">=</span><span class=\"nu0\">0</span>; i<span class=\"\
+      sy0\">&lt;</span>GLevel<span class=\"sy0\">-&gt;</span>Actors.<span class=\"\
+      me0\">Num</span><span class=\"br0\">(</span><span class=\"br0\">)</span>; i<span\
+      \ class=\"sy0\">++</span> <span class=\"br0\">)</span>\n\t\t\t<span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span> GLevel<span class=\"sy0\">-&gt;</span>Actors<span\
+      \ class=\"br0\">(</span>i<span class=\"br0\">)</span> <span class=\"br0\">)</span>\n\
+      \t\t\t\tGLevel<span class=\"sy0\">-&gt;</span>Actors<span class=\"br0\">(</span>i<span\
+      \ class=\"br0\">)</span><span class=\"sy0\">-&gt;</span>InitExecution<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n \n\t\t<span class=\"co1\">// Enable\
+      \ actor script calls.</span>\n\t\tInfo<span class=\"sy0\">-&gt;</span>bBegunPlay\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">1</span>;\n\t\tInfo<span\
+      \ class=\"sy0\">-&gt;</span>bStartup <span class=\"sy0\">=</span> <span class=\"\
+      nu0\">1</span>;\n\t\tInfo<span class=\"sy0\">-&gt;</span>TimeDilation <span\
+      \ class=\"sy0\">=</span> <span class=\"br0\">(</span><span class=\"br0\">(</span>ALevelInfo\
+      \ <span class=\"sy0\">*</span><span class=\"br0\">)</span><span class=\"br0\"\
+      >(</span>Info<span class=\"sy0\">-&gt;</span>GetClass<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">-&gt;</span>GetDefaultActor<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">-&gt;</span>TimeDilation;\n \n<span\
+      \ class=\"co2\">#ifdef WITH_KARMA</span>\n\t\t<span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span><span class=\"sy0\">!</span>GIsEditor <span class=\"\
+      sy0\">&amp;&amp;</span> <span class=\"sy0\">!</span>GLevel<span class=\"sy0\"\
+      >-&gt;</span>GetLevelInfo<span class=\"br0\">(</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">-&gt;</span>bKNoInit<span class=\"br0\">)</span>\n\t\t<span\
+      \ class=\"br0\">{</span>\n\t\t\tKInitLevelKarma<span class=\"br0\">(</span>GLevel<span\
+      \ class=\"br0\">)</span>;\n \n\t\t\t<span class=\"kw2\">for</span><span class=\"\
+      br0\">(</span> <span class=\"kw5\">INT</span> i<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0</span>; i<span class=\"sy0\">&lt;</span>GLevel<span class=\"\
+      sy0\">-&gt;</span>Actors.<span class=\"me0\">Num</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>; i<span class=\"sy0\">++</span> <span class=\"br0\"\
+      >)</span>\n\t\t\t\t<span class=\"kw2\">if</span><span class=\"br0\">(</span>\
+      \ GLevel<span class=\"sy0\">-&gt;</span>Actors<span class=\"br0\">(</span>i<span\
+      \ class=\"br0\">)</span> <span class=\"br0\">)</span>\n\t\t\t\t\tKInitActorKarma<span\
+      \ class=\"br0\">(</span> GLevel<span class=\"sy0\">-&gt;</span>Actors<span class=\"\
+      br0\">(</span>i<span class=\"br0\">)</span> <span class=\"br0\">)</span>;\n\t\
+      \t<span class=\"br0\">}</span>\n<span class=\"co2\">#endif</span>\n \n\t\t<span\
+      \ class=\"co1\">// Init the game.</span>\n\t\t<span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span> Info<span class=\"sy0\">-&gt;</span><span class=\"\
+      kw7\">Game</span> <span class=\"br0\">)</span>\n\t\t<span class=\"br0\">{</span>\t\
+      \t\n\t\t\tInfo<span class=\"sy0\">-&gt;</span>Game<span class=\"sy0\">-&gt;</span>eventInitGame<span\
+      \ class=\"br0\">(</span> Options, <span class=\"kw4\">Error</span> <span class=\"\
+      br0\">)</span>;\n\t\t\tInfo<span class=\"sy0\">-&gt;</span>Game<span class=\"\
+      sy0\">-&gt;</span>eventSetGrammar<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n\t\t<span class=\"br0\">}</span>\n \n\t\t<span class=\"co1\"\
+      >// Send PreBeginPlay.</span>\n\t\t<span class=\"kw2\">for</span><span class=\"\
+      br0\">(</span> <span class=\"kw5\">INT</span> i<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0</span>; i<span class=\"sy0\">&lt;</span>GLevel<span class=\"\
+      sy0\">-&gt;</span>Actors.<span class=\"me0\">Num</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>; i<span class=\"sy0\">++</span> <span class=\"br0\"\
+      >)</span>\n\t\t\t<span class=\"kw2\">if</span><span class=\"br0\">(</span> GLevel<span\
+      \ class=\"sy0\">-&gt;</span>Actors<span class=\"br0\">(</span>i<span class=\"\
+      br0\">)</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"sy0\">!</span>GLevel<span\
+      \ class=\"sy0\">-&gt;</span>Actors<span class=\"br0\">(</span>i<span class=\"\
+      br0\">)</span><span class=\"sy0\">-&gt;</span>bScriptInitialized <span class=\"\
+      br0\">)</span>\n\t\t\t\tGLevel<span class=\"sy0\">-&gt;</span>Actors<span class=\"\
+      br0\">(</span>i<span class=\"br0\">)</span><span class=\"sy0\">-&gt;</span>eventPreBeginPlay<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n \n\t\t<span class=\"\
+      co1\">// Set BeginPlay.</span>\n\t\t<span class=\"kw2\">for</span><span class=\"\
+      br0\">(</span> <span class=\"kw5\">INT</span> i<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0</span>; i<span class=\"sy0\">&lt;</span>GLevel<span class=\"\
+      sy0\">-&gt;</span>Actors.<span class=\"me0\">Num</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>; i<span class=\"sy0\">++</span> <span class=\"br0\"\
+      >)</span>\n\t\t\t<span class=\"kw2\">if</span><span class=\"br0\">(</span> GLevel<span\
+      \ class=\"sy0\">-&gt;</span>Actors<span class=\"br0\">(</span>i<span class=\"\
+      br0\">)</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"sy0\">!</span>GLevel<span\
+      \ class=\"sy0\">-&gt;</span>Actors<span class=\"br0\">(</span>i<span class=\"\
+      br0\">)</span><span class=\"sy0\">-&gt;</span>bScriptInitialized <span class=\"\
+      br0\">)</span>\n\t\t\t\tGLevel<span class=\"sy0\">-&gt;</span>Actors<span class=\"\
+      br0\">(</span>i<span class=\"br0\">)</span><span class=\"sy0\">-&gt;</span>eventBeginPlay<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n \n\t\t<span class=\"\
+      co1\">// Set zones &amp;&amp; gather volumes.</span>\n\t\tTArray<span class=\"\
+      sy0\">&lt;</span>AVolume<span class=\"sy0\">*&gt;</span> LevelVolumes;\n\t\t\
+      <span class=\"kw2\">for</span><span class=\"br0\">(</span> <span class=\"kw5\"\
+      >INT</span> i<span class=\"sy0\">=</span><span class=\"nu0\">0</span>; i<span\
+      \ class=\"sy0\">&lt;</span>GLevel<span class=\"sy0\">-&gt;</span>Actors.<span\
+      \ class=\"me0\">Num</span><span class=\"br0\">(</span><span class=\"br0\">)</span>;\
+      \ i<span class=\"sy0\">++</span> <span class=\"br0\">)</span>\n\t\t<span class=\"\
+      br0\">{</span>\n\t\t\t<span class=\"kw2\">if</span><span class=\"br0\">(</span>\
+      \ GLevel<span class=\"sy0\">-&gt;</span>Actors<span class=\"br0\">(</span>i<span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"\
+      sy0\">!</span>GLevel<span class=\"sy0\">-&gt;</span>Actors<span class=\"br0\"\
+      >(</span>i<span class=\"br0\">)</span><span class=\"sy0\">-&gt;</span>bScriptInitialized\
+      \ <span class=\"br0\">)</span>\n\t\t\t\tGLevel<span class=\"sy0\">-&gt;</span>Actors<span\
+      \ class=\"br0\">(</span>i<span class=\"br0\">)</span><span class=\"sy0\">-&gt;</span>SetZone<span\
+      \ class=\"br0\">(</span> <span class=\"nu0\">1</span>, <span class=\"nu0\">1</span>\
+      \ <span class=\"br0\">)</span>;\n \n\t\t\tAVolume<span class=\"sy0\">*</span>\
+      \ <span class=\"kw9\">Volume</span> <span class=\"sy0\">=</span> Cast<span class=\"\
+      sy0\">&lt;</span>AVolume<span class=\"sy0\">&gt;</span><span class=\"br0\">(</span>GLevel<span\
+      \ class=\"sy0\">-&gt;</span>Actors<span class=\"br0\">(</span>i<span class=\"\
+      br0\">)</span><span class=\"br0\">)</span>;\n\t\t\t<span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span> <span class=\"kw9\">Volume</span> <span class=\"br0\"\
+      >)</span>\n\t\t\t\tLevelVolumes.<span class=\"me0\">AddItem</span><span class=\"\
+      br0\">(</span><span class=\"kw9\">Volume</span><span class=\"br0\">)</span>;\n\
+      \t\t<span class=\"br0\">}</span>\n \n\t\t<span class=\"co1\">// Set appropriate\
+      \ volumes for each actor.</span>\n\t\t<span class=\"kw2\">for</span><span class=\"\
+      br0\">(</span> <span class=\"kw5\">INT</span> i<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0</span>; i<span class=\"sy0\">&lt;</span>GLevel<span class=\"\
+      sy0\">-&gt;</span>Actors.<span class=\"me0\">Num</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>; i<span class=\"sy0\">++</span> <span class=\"br0\"\
+      >)</span>\n\t\t\t<span class=\"kw2\">if</span><span class=\"br0\">(</span> GLevel<span\
+      \ class=\"sy0\">-&gt;</span>Actors<span class=\"br0\">(</span>i<span class=\"\
+      br0\">)</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"sy0\">!</span>GLevel<span\
+      \ class=\"sy0\">-&gt;</span>Actors<span class=\"br0\">(</span>i<span class=\"\
+      br0\">)</span><span class=\"sy0\">-&gt;</span>bScriptInitialized <span class=\"\
+      br0\">)</span>\n\t\t\t\tGLevel<span class=\"sy0\">-&gt;</span>Actors<span class=\"\
+      br0\">(</span>i<span class=\"br0\">)</span><span class=\"sy0\">-&gt;</span>SetVolumes<span\
+      \ class=\"br0\">(</span> LevelVolumes <span class=\"br0\">)</span>;\n \n\t\t\
+      <span class=\"co1\">// Post begin play.</span>\n\t\t<span class=\"kw2\">for</span><span\
+      \ class=\"br0\">(</span> <span class=\"kw5\">INT</span> i<span class=\"sy0\"\
+      >=</span><span class=\"nu0\">0</span>; i<span class=\"sy0\">&lt;</span>GLevel<span\
+      \ class=\"sy0\">-&gt;</span>Actors.<span class=\"me0\">Num</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>; i<span class=\"sy0\">++</span> <span\
+      \ class=\"br0\">)</span>\n\t\t\t<span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span> GLevel<span class=\"sy0\">-&gt;</span>Actors<span class=\"br0\"\
+      >(</span>i<span class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"sy0\">!</span>GLevel<span class=\"sy0\">-&gt;</span>Actors<span\
+      \ class=\"br0\">(</span>i<span class=\"br0\">)</span><span class=\"sy0\">-&gt;</span>bScriptInitialized\
+      \ <span class=\"br0\">)</span>\n\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\
+      GLevel<span class=\"sy0\">-&gt;</span>Actors<span class=\"br0\">(</span>i<span\
+      \ class=\"br0\">)</span><span class=\"sy0\">-&gt;</span>eventPostBeginPlay<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n \n\t\t\t\t<span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span>GLevel<span class=\"sy0\">-&gt;</span>Actors<span\
+      \ class=\"br0\">(</span>i<span class=\"br0\">)</span><span class=\"br0\">)</span>\n\
+      \t\t\t\t\tGLevel<span class=\"sy0\">-&gt;</span>Actors<span class=\"br0\">(</span>i<span\
+      \ class=\"br0\">)</span><span class=\"sy0\">-&gt;</span><span class=\"kw4\"\
+      >PostBeginPlay</span><span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \t\t\t<span class=\"br0\">}</span>\n \n\t\t<span class=\"co1\">// Post net begin\
+      \ play.</span>\n\t\t<span class=\"kw2\">for</span><span class=\"br0\">(</span>\
+      \ <span class=\"kw5\">INT</span> i<span class=\"sy0\">=</span><span class=\"\
+      nu0\">0</span>; i<span class=\"sy0\">&lt;</span>GLevel<span class=\"sy0\">-&gt;</span>Actors.<span\
+      \ class=\"me0\">Num</span><span class=\"br0\">(</span><span class=\"br0\">)</span>;\
+      \ i<span class=\"sy0\">++</span> <span class=\"br0\">)</span>\n\t\t\t<span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span> GLevel<span class=\"sy0\">-&gt;</span>Actors<span\
+      \ class=\"br0\">(</span>i<span class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"sy0\">!</span>GLevel<span class=\"sy0\">-&gt;</span>Actors<span\
+      \ class=\"br0\">(</span>i<span class=\"br0\">)</span><span class=\"sy0\">-&gt;</span>bScriptInitialized\
+      \ <span class=\"br0\">)</span>\n\t\t\t\tGLevel<span class=\"sy0\">-&gt;</span>Actors<span\
+      \ class=\"br0\">(</span>i<span class=\"br0\">)</span><span class=\"sy0\">-&gt;</span>eventPostNetBeginPlay<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n \n\t\t<span class=\"\
+      co1\">// Begin scripting.</span>\n\t\t<span class=\"kw2\">for</span><span class=\"\
+      br0\">(</span> <span class=\"kw5\">INT</span> i<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0</span>; i<span class=\"sy0\">&lt;</span>GLevel<span class=\"\
+      sy0\">-&gt;</span>Actors.<span class=\"me0\">Num</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>; i<span class=\"sy0\">++</span> <span class=\"br0\"\
+      >)</span>\n\t\t\t<span class=\"kw2\">if</span><span class=\"br0\">(</span> GLevel<span\
+      \ class=\"sy0\">-&gt;</span>Actors<span class=\"br0\">(</span>i<span class=\"\
+      br0\">)</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"sy0\">!</span>GLevel<span\
+      \ class=\"sy0\">-&gt;</span>Actors<span class=\"br0\">(</span>i<span class=\"\
+      br0\">)</span><span class=\"sy0\">-&gt;</span>bScriptInitialized <span class=\"\
+      br0\">)</span>\n\t\t\t\tGLevel<span class=\"sy0\">-&gt;</span>Actors<span class=\"\
+      br0\">(</span>i<span class=\"br0\">)</span><span class=\"sy0\">-&gt;</span>eventSetInitialState<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n \n\t\t<span class=\"\
+      co1\">// Find bases</span>\n\t\t<span class=\"kw2\">for</span><span class=\"\
+      br0\">(</span> <span class=\"kw5\">INT</span> i<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0</span>; i<span class=\"sy0\">&lt;</span>GLevel<span class=\"\
+      sy0\">-&gt;</span>Actors.<span class=\"me0\">Num</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>; i<span class=\"sy0\">++</span> <span class=\"br0\"\
+      >)</span>\n\t\t<span class=\"br0\">{</span>\n\t\t\t<span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span> GLevel<span class=\"sy0\">-&gt;</span>Actors<span class=\"\
+      br0\">(</span>i<span class=\"br0\">)</span> <span class=\"br0\">)</span> \n\t\
+      \t\t<span class=\"br0\">{</span>\n\t\t\t\t<span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span> GLevel<span class=\"sy0\">-&gt;</span>Actors<span class=\"\
+      br0\">(</span>i<span class=\"br0\">)</span><span class=\"sy0\">-&gt;</span>AttachTag\
+      \ <span class=\"sy0\">!=</span> NAME_None <span class=\"br0\">)</span>\n\t\t\
+      \t\t<span class=\"br0\">{</span>\n\t\t\t\t\t<span class=\"co1\">//find actor\
+      \ to attach self onto</span>\n\t\t\t\t\t<span class=\"kw2\">for</span><span\
+      \ class=\"br0\">(</span> <span class=\"kw5\">INT</span> j<span class=\"sy0\"\
+      >=</span><span class=\"nu0\">0</span>; j<span class=\"sy0\">&lt;</span>GLevel<span\
+      \ class=\"sy0\">-&gt;</span>Actors.<span class=\"me0\">Num</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>; j<span class=\"sy0\">++</span> <span\
+      \ class=\"br0\">)</span>\n\t\t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\t\
+      \t<span class=\"kw2\">if</span><span class=\"br0\">(</span> GLevel<span class=\"\
+      sy0\">-&gt;</span>Actors<span class=\"br0\">(</span>j<span class=\"br0\">)</span>\
+      \ \n\t\t\t\t\t\t\t<span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\"\
+      >(</span><span class=\"br0\">(</span>GLevel<span class=\"sy0\">-&gt;</span>Actors<span\
+      \ class=\"br0\">(</span>j<span class=\"br0\">)</span><span class=\"sy0\">-&gt;</span><span\
+      \ class=\"kw7\">Tag</span> <span class=\"sy0\">==</span> GLevel<span class=\"\
+      sy0\">-&gt;</span>Actors<span class=\"br0\">(</span>i<span class=\"br0\">)</span><span\
+      \ class=\"sy0\">-&gt;</span>AttachTag<span class=\"br0\">)</span> <span class=\"\
+      sy0\">||</span> <span class=\"br0\">(</span>GLevel<span class=\"sy0\">-&gt;</span>Actors<span\
+      \ class=\"br0\">(</span>j<span class=\"br0\">)</span><span class=\"sy0\">-&gt;</span>GetFName<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"sy0\">==</span>\
+      \ GLevel<span class=\"sy0\">-&gt;</span>Actors<span class=\"br0\">(</span>i<span\
+      \ class=\"br0\">)</span><span class=\"sy0\">-&gt;</span>AttachTag<span class=\"\
+      br0\">)</span><span class=\"br0\">)</span>  <span class=\"br0\">)</span>\n\t\
+      \t\t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\t\t\tGLevel<span class=\"sy0\"\
+      >-&gt;</span>Actors<span class=\"br0\">(</span>i<span class=\"br0\">)</span><span\
+      \ class=\"sy0\">-&gt;</span><span class=\"kw4\">SetBase</span><span class=\"\
+      br0\">(</span>GLevel<span class=\"sy0\">-&gt;</span>Actors<span class=\"br0\"\
+      >(</span>j<span class=\"br0\">)</span>, FVector<span class=\"br0\">(</span><span\
+      \ class=\"nu0\">0</span>,<span class=\"nu0\">0</span>,<span class=\"nu0\">1</span><span\
+      \ class=\"br0\">)</span>, <span class=\"nu0\">0</span><span class=\"br0\">)</span>;\n\
+      \t\t\t\t\t\t\t<span class=\"kw2\">break</span>;\n\t\t\t\t\t\t<span class=\"\
+      br0\">}</span>\n\t\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t<span class=\"\
+      br0\">}</span>\n\t\t\t\t<span class=\"kw2\">else</span> <span class=\"kw2\"\
+      >if</span><span class=\"br0\">(</span> GLevel<span class=\"sy0\">-&gt;</span>Actors<span\
+      \ class=\"br0\">(</span>i<span class=\"br0\">)</span><span class=\"sy0\">-&gt;</span>bCollideWorld\
+      \ <span class=\"sy0\">&amp;&amp;</span> GLevel<span class=\"sy0\">-&gt;</span>Actors<span\
+      \ class=\"br0\">(</span>i<span class=\"br0\">)</span><span class=\"sy0\">-&gt;</span>bShouldBaseAtStartup\n\
+      \t\t\t\t <span class=\"sy0\">&amp;&amp;</span>\t<span class=\"br0\">(</span><span\
+      \ class=\"br0\">(</span>GLevel<span class=\"sy0\">-&gt;</span>Actors<span class=\"\
+      br0\">(</span>i<span class=\"br0\">)</span><span class=\"sy0\">-&gt;</span><span\
+      \ class=\"kw7\">Physics</span> <span class=\"sy0\">==</span> <span class=\"\
+      kw7\">PHYS_None</span><span class=\"br0\">)</span> <span class=\"sy0\">||</span>\
+      \ <span class=\"br0\">(</span>GLevel<span class=\"sy0\">-&gt;</span>Actors<span\
+      \ class=\"br0\">(</span>i<span class=\"br0\">)</span><span class=\"sy0\">-&gt;</span><span\
+      \ class=\"kw7\">Physics</span> <span class=\"sy0\">==</span> <span class=\"\
+      kw7\">PHYS_Rotating</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\
+      \ <span class=\"br0\">)</span>\n\t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\
+      \t\t GLevel<span class=\"sy0\">-&gt;</span>Actors<span class=\"br0\">(</span>i<span\
+      \ class=\"br0\">)</span><span class=\"sy0\">-&gt;</span>FindBase<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n\t\t\t\t<span class=\"br0\">}</span>\n\
+      \t\t\t<span class=\"br0\">}</span>\n\t\t<span class=\"br0\">}</span>\n \n\t\t\
+      <span class=\"kw2\">for</span><span class=\"br0\">(</span> <span class=\"kw5\"\
+      >INT</span> i<span class=\"sy0\">=</span><span class=\"nu0\">0</span>; i<span\
+      \ class=\"sy0\">&lt;</span>GLevel<span class=\"sy0\">-&gt;</span>Actors.<span\
+      \ class=\"me0\">Num</span><span class=\"br0\">(</span><span class=\"br0\">)</span>;\
+      \ i<span class=\"sy0\">++</span> <span class=\"br0\">)</span> \n\t\t<span class=\"\
+      br0\">{</span>\n\t\t\t<span class=\"kw2\">if</span><span class=\"br0\">(</span>GLevel<span\
+      \ class=\"sy0\">-&gt;</span>Actors<span class=\"br0\">(</span>i<span class=\"\
+      br0\">)</span><span class=\"br0\">)</span>\n\t\t\t<span class=\"br0\">{</span>\n\
+      \t\t\t\t<span class=\"kw2\">if</span><span class=\"br0\">(</span> GLevel<span\
+      \ class=\"sy0\">-&gt;</span>Actors<span class=\"br0\">(</span>i<span class=\"\
+      br0\">)</span><span class=\"sy0\">-&gt;</span><span class=\"kw3\">IsA</span><span\
+      \ class=\"br0\">(</span>AProjector::StaticClass<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\
+      \ <span class=\"co1\">// sjs - why is this needed?!!</span>\n\t\t\t\t<span class=\"\
+      br0\">{</span>\n\t\t\t\t\tGLevel<span class=\"sy0\">-&gt;</span>Actors<span\
+      \ class=\"br0\">(</span>i<span class=\"br0\">)</span><span class=\"sy0\">-&gt;</span>PostEditChange<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n\t\t\t\t<span class=\"\
+      br0\">}</span>\n \n<span class=\"co2\">#ifdef WITH_KARMA</span>\n\t\t\t\tAActor<span\
+      \ class=\"sy0\">*</span> <span class=\"kw9\">actor</span> <span class=\"sy0\"\
+      >=</span> GLevel<span class=\"sy0\">-&gt;</span>Actors<span class=\"br0\">(</span>i<span\
+      \ class=\"br0\">)</span>;\n \n\t\t\t\t<span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span>actor<span class=\"sy0\">-&gt;</span><span class=\"kw7\">Physics</span>\
+      \ <span class=\"sy0\">!=</span> <span class=\"kw7\">PHYS_Karma</span> <span\
+      \ class=\"sy0\">||</span> <span class=\"sy0\">!</span>actor<span class=\"sy0\"\
+      >-&gt;</span>KParams <span class=\"sy0\">||</span> <span class=\"sy0\">!</span>actor<span\
+      \ class=\"sy0\">-&gt;</span>KParams<span class=\"sy0\">-&gt;</span><span class=\"\
+      kw3\">IsA</span><span class=\"br0\">(</span>UKarmaParams::StaticClass<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span>\n\t\t\t\t\t<span class=\"kw2\">continue</span>;\n \n\
+      \t\t\t\tUKarmaParams<span class=\"sy0\">*</span> kparams <span class=\"sy0\"\
+      >=</span> Cast<span class=\"sy0\">&lt;</span>UKarmaParams<span class=\"sy0\"\
+      >&gt;</span><span class=\"br0\">(</span>actor<span class=\"sy0\">-&gt;</span>KParams<span\
+      \ class=\"br0\">)</span>;\n \n\t\t\t\t<span class=\"co1\">// If running below\
+      \ HighDetailPhysics, turn off karma dynamics for actors with bHighDetailOnly\
+      \ set true.</span>\n\t\t\t\t<span class=\"kw2\">if</span><span class=\"br0\"\
+      >(</span>\tGLevel<span class=\"sy0\">-&gt;</span>GetLevelInfo<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span><span class=\"sy0\">-&gt;</span>PhysicsDetailLevel\
+      \ <span class=\"sy0\">&lt;</span> PDL_High <span class=\"sy0\">&amp;&amp;</span>\
+      \ kparams<span class=\"sy0\">-&gt;</span>bHighDetailOnly <span class=\"br0\"\
+      >)</span>\n\t\t\t\t\tKTermActorDynamics<span class=\"br0\">(</span><span class=\"\
+      kw9\">actor</span><span class=\"br0\">)</span>;\n \n\t\t\t\t<span class=\"co1\"\
+      >// If dedicated server, turn off karma for actors with bHighDetailOnly or bClientsOnly</span>\n\
+      \t\t\t\t<span class=\"kw2\">if</span><span class=\"br0\">(</span>\tGLevel<span\
+      \ class=\"sy0\">-&gt;</span>GetLevelInfo<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span><span class=\"sy0\">-&gt;</span>NetMode <span class=\"sy0\">==</span>\
+      \ NM_DedicatedServer <span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\"\
+      >(</span>kparams<span class=\"sy0\">-&gt;</span>bHighDetailOnly <span class=\"\
+      sy0\">||</span> kparams<span class=\"sy0\">-&gt;</span>bClientOnly<span class=\"\
+      br0\">)</span> <span class=\"br0\">)</span>\t\t\t\t\t\n\t\t\t\t\tKTermActorDynamics<span\
+      \ class=\"br0\">(</span><span class=\"kw9\">actor</span><span class=\"br0\"\
+      >)</span>;\n<span class=\"co2\">#endif</span>\n\t\t\t<span class=\"br0\">}</span>\n\
+      \t\t<span class=\"br0\">}</span>\n \n\t\tInfo<span class=\"sy0\">-&gt;</span>bStartup\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>;\n\t<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n\n<!-- \nNewPP limit report\nCPU time usage:\
+      \ 0.161 seconds\nReal time usage: 0.393 seconds\nPreprocessor visited node count:\
+      \ 74/1000000\nPreprocessor generated node count: 96/1000000\nPost‐expand include\
+      \ size: 0/2097152 bytes\nTemplate argument size: 0/2097152 bytes\nHighest expansion\
+      \ depth: 2/40\nExpensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion\
+      \ expansion time report (%,ms,calls,template)\n100.00%    0.000      1 - -total\n\
+      -->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:28783-0!*!0!!en!*!*\
+      \ and timestamp 20221117234452 and revision id 45927\n -->\n"
+  categories:
+  - sortkey: ""
+    name: "Programming_articles"
+  - sortkey: ""
+    name: "Native_code_snippet"
+  links:
+  - ns: 0
+    exists: true
+    name: "Dynamic arrays"
+  - ns: 0
+    exists: true
+    name: "Super"
+  - ns: 0
+    exists: false
+    name: "Volume"
+  - ns: 104
+    exists: true
+    name: "UE2:Actor native functions (UT2004)"
+  - ns: 0
+    exists: true
+    name: "UnrealScript source code"
+  - ns: 0
+    exists: false
+    name: "UTV"
+  - ns: 0
+    exists: true
+    name: "Auto"
+  - ns: 0
+    exists: true
+    name: "Bool"
+  - ns: 0
+    exists: true
+    name: "Literals"
+  - ns: 0
+    exists: false
+    name: "Unreal Engine 1"
+  - ns: 0
+    exists: true
+    name: "Variables"
+  - ns: 0
+    exists: false
+    name: "INI file"
+  - ns: 104
+    exists: true
+    name: "UE2:Actor events (UT2004)"
+  - ns: 0
+    exists: true
+    name: "Replication"
+  - ns: 0
+    exists: false
+    name: "Mutator"
+  - ns: 0
+    exists: false
+    name: "UE2"
+  - ns: 0
+    exists: false
+    name: "Kismet"
+  - ns: 0
+    exists: false
+    name: "Projector"
+  - ns: 0
+    exists: false
+    name: "Zone"
+  - ns: 0
+    exists: true
+    name: "What happens when an Actor is destroyed"
+  - ns: 0
+    exists: false
+    name: "LevelInfo"
+  - ns: 0
+    exists: true
+    name: "GameInfo"
+  - ns: 0
+    exists: true
+    name: "UE3"
+  - ns: 0
+    exists: false
+    name: "PhysicsVolume"
+  - ns: 0
+    exists: true
+    name: "UT2004"
+  - ns: 0
+    exists: true
+    name: "What happens when an Actor is spawned"
+  - ns: 0
+    exists: true
+    name: "Name"
+  - ns: 0
+    exists: true
+    name: "Unreal Engine 3"
+  - ns: 0
+    exists: false
+    name: "InitialState"
+  - ns: 0
+    exists: false
+    name: "UE1"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Summary of events"
+    number: "1"
+    index: "1"
+    fromtitle: "What_happens_at_map_startup"
+    byteoffset: 1194
+    anchor: "Summary_of_events"
+  - toclevel: 2
+    level: "3"
+    line: "Client preparations"
+    number: "1.1"
+    index: "2"
+    fromtitle: "What_happens_at_map_startup"
+    byteoffset: 2627
+    anchor: "Client_preparations"
+  - toclevel: 2
+    level: "3"
+    line: "General preparations"
+    number: "1.2"
+    index: "3"
+    fromtitle: "What_happens_at_map_startup"
+    byteoffset: 3125
+    anchor: "General_preparations"
+  - toclevel: 2
+    level: "3"
+    line: "GameInfo.InitGame()"
+    number: "1.3"
+    index: "4"
+    fromtitle: "What_happens_at_map_startup"
+    byteoffset: 3708
+    anchor: "GameInfo.InitGame.28.29"
+  - toclevel: 2
+    level: "3"
+    line: "PreBeginPlay()"
+    number: "1.4"
+    index: "5"
+    fromtitle: "What_happens_at_map_startup"
+    byteoffset: 4386
+    anchor: "PreBeginPlay.28.29"
+  - toclevel: 2
+    level: "3"
+    line: "BeginPlay()"
+    number: "1.5"
+    index: "6"
+    fromtitle: "What_happens_at_map_startup"
+    byteoffset: 5091
+    anchor: "BeginPlay.28.29"
+  - toclevel: 2
+    level: "3"
+    line: "Zones/Volumes"
+    number: "1.6"
+    index: "7"
+    fromtitle: "What_happens_at_map_startup"
+    byteoffset: 5497
+    anchor: "Zones.2FVolumes"
+  - toclevel: 2
+    level: "3"
+    line: "PostBeginPlay()"
+    number: "1.7"
+    index: "8"
+    fromtitle: "What_happens_at_map_startup"
+    byteoffset: 5834
+    anchor: "PostBeginPlay.28.29"
+  - toclevel: 2
+    level: "3"
+    line: "PostNetBeginPlay()"
+    number: "1.8"
+    index: "9"
+    fromtitle: "What_happens_at_map_startup"
+    byteoffset: 6014
+    anchor: "PostNetBeginPlay.28.29"
+  - toclevel: 2
+    level: "3"
+    line: "SetInitialState()"
+    number: "1.9"
+    index: "10"
+    fromtitle: "What_happens_at_map_startup"
+    byteoffset: 6313
+    anchor: "SetInitialState.28.29"
+  - toclevel: 2
+    level: "3"
+    line: "Finding bases"
+    number: "1.10"
+    index: "11"
+    fromtitle: "What_happens_at_map_startup"
+    byteoffset: 6974
+    anchor: "Finding_bases"
+  - toclevel: 2
+    level: "3"
+    line: "Final initialization step"
+    number: "1.11"
+    index: "12"
+    fromtitle: "What_happens_at_map_startup"
+    byteoffset: 7443
+    anchor: "Final_initialization_step"
+  - toclevel: 1
+    level: "2"
+    line: "The actual UnGame.cpp snippet"
+    number: "2"
+    index: "13"
+    fromtitle: "What_happens_at_map_startup"
+    byteoffset: 7679
+    anchor: "The_actual_UnGame.cpp_snippet"
+  - toclevel: 2
+    level: "3"
+    line: "Hints for reading the code"
+    number: "2.1"
+    index: "14"
+    fromtitle: "What_happens_at_map_startup"
+    byteoffset: 8134
+    anchor: "Hints_for_reading_the_code"
+  - toclevel: 2
+    level: "3"
+    line: "General notes about this code snippet"
+    number: "2.2"
+    index: "15"
+    fromtitle: "What_happens_at_map_startup"
+    byteoffset: 11055
+    anchor: "General_notes_about_this_code_snippet"
+  - toclevel: 2
+    level: "3"
+    line: "Notes for Unreal Engine 1"
+    number: "2.3"
+    index: "16"
+    fromtitle: "What_happens_at_map_startup"
+    byteoffset: 11563
+    anchor: "Notes_for_Unreal_Engine_1"
+  - toclevel: 2
+    level: "3"
+    line: "Notes for Unreal Engine 3"
+    number: "2.4"
+    index: "17"
+    fromtitle: "What_happens_at_map_startup"
+    byteoffset: 11899
+    anchor: "Notes_for_Unreal_Engine_3"
+  - toclevel: 2
+    level: "3"
+    line: "The code"
+    number: "2.5"
+    index: "18"
+    fromtitle: "What_happens_at_map_startup"
+    byteoffset: 12441
+    anchor: "The_code"
+  displaytitle: "What happens at map startup"
+  iwlinks: []
+  wikitext:
+    text: "The information in this article are based on a snippet of native [[UT2004]]\
+      \ code posted by Steve Polge on Epic Game's ut2003mods mailing list. The code\
+      \ can be found as UnGame.cpp in the Engine\\Src directory of the UT2004 [[UnrealScript\
+      \ source code]] download.\n\nThis article only describes the map startup process.\
+      \ It applies to offline games, network servers and clients, including [[UTV]]\
+      \ clients (but not the UTV proxy server) and demo playback.\nNote that this\
+      \ article does not apply to loading saved game states in engine builds that\
+      \ support this. Those \"simply continue\" from where the game was saved. In\
+      \ UT2004 the [[UE2:Actor events (UT2004)#PostLoadSavedGame|PostLoadSavedGame()\
+      \ event]] is called for all existing actors and all ragdolls are destroyed because\
+      \ their state cannot be stored in save game files.\n\nThe seamless travel feature\
+      \ of [[Unreal Engine 3]] seems to behave similarly to a regular map startup,\
+      \ except that the new map is loaded in the background. However, additional GameInfo\
+      \ events, such as GetSeamlessTravelActorList(), PostSeamlessTravel() and HandleSeamlessTravelPlayer()\
+      \ are called at some point during the map change process. ''(This needs further\
+      \ research.)''\n\n==Summary of events==\nBefore any of the following events\
+      \ happen, the engine loads the map and any packages it depends on.\n\nNext it\
+      \ spawns the [[GameInfo]], unless loading the map for a saved game or in a client\
+      \ environment. The engine always tries to load the GameInfo class from the <code>?game=</code>\
+      \ URL option. If that fails, a default game type for the map is determined,\
+      \ either using the [[LevelInfo]]'s ''DefaultGameType'' property ([[UE1]] and\
+      \ [[UE2]]) or the map prefix ([[UE3]]). If that fails as well, a default game\
+      \ type as specified in the main [[INI file]] is used. The final fallback option\
+      \ is the GameInfo class itself.\n\nAdditionally, if running a listen or dedicated\
+      \ server, any actors mentioned in the ''ServerActors'' list of INI section [Engine.GameEngine]\
+      \ are created. Non-standard property values for these actors may be specified\
+      \ in the form <code>''propertyname''=''value''</code> on the ServerActors line,\
+      \ separated form the actor class and from each other by spaces.\n\nNote that\
+      \ at this point there are no player actors in the level yet. Offline and on\
+      \ a listen server, the local player joins right after map startup completed.\
+      \ In network client environments (including UTV and demo playback), the local\
+      \ player actor is received through [[replication]] soon after map startup has\
+      \ completed.\n\nDuring the events described here, the LevelInfo or WorldInfo's\
+      \ ''bStartup'' property is set to <code>True</code>.\n\n===Client preparations===\n\
+      One of the first things the engine does in client environments is deleting all\
+      \ actors that have neither ''bStatic'' nor ''bNoDelete'' set to <code>True</code>.\
+      \ (UT2004 also treats xEmitters as undeletable in this context.)\n\nAny remaining\
+      \ actors have their ''Role'' and ''RemoteRole'' swapped as if they were received\
+      \ through [[replication]]. The only exception are actors with ''bClientAuthoritative''\
+      \ set to <code>True</code>, which only really applies to ClientMovers.\n\n===General\
+      \ preparations===\nAll actors start out touching nothing and using the level's\
+      \ DefaultPhysicsVolume as their current ''PhysicsVolume''. Native code also\
+      \ initializes state support and Karma physics here.\n\nOnly at this point UnrealScript\
+      \ support is enabled for the actors in this level by setting the LevelInfo's\
+      \ ''bBegunPlay'' to <code>True</code>. Any actors spawned before this point\
+      \ did not get the UnrealScript events during [[what happens when an Actor is\
+      \ spawned]] and any actors destroyed did not receive the events during [[what\
+      \ happens when an Actor is destroyed]].\n\n===GameInfo.InitGame()===\nOffline\
+      \ and on network servers the GameInfo's InitGame() event is called now. UT2004\
+      \ also calls SetGrammar() afterwards, which initializes speech recognition grammars.\n\
+      \nInitGame() performs general and gametype-specific initialization. It parses\
+      \ the URL options and among other things also spawns the AccessControl, Mutators\
+      \ and similar actors. Those actors are initialized according to [[what happens\
+      \ when an Actor is spawned]]. Starting with [[UE2]] these actors exclude themselves\
+      \ from receiving the UnrealScript events mentioned below by setting their ''bScriptInitialized''\
+      \ property to <code>True</code>, usually in their SetInitialState() event.\n\
+      \n===PreBeginPlay()===\nNext the PreBeginPlay() function is called for all actors\
+      \ with ''bScriptInitialized''=<code>False</code>.\n\nThe default implementation\
+      \ of PreBeginPlay() allows mutators to modify the actor while it is being initialized\
+      \ by calling the GameInfo's IsRelevant() in [[UE1]], the base mutator's CheckRelevance()\
+      \ in [[UE2]] or the GameInfo's CheckRelevance() in [[UE3]]. These call [[Mutator]].AlwaysKeep()\
+      \ and Mutator.IsRelevant(), which in turn calls Mutator.CheckReplacement().\n\
+      \nThe above logic doesn't apply if PreBeginPlay() is overridden without calling\
+      \ [[Super]], the actor is flagged as ''bGameRelevant'', the actor is ''bStatic''\
+      \ (only UE3) or spawning happens on a network client.\n\n===BeginPlay()===\n\
+      Then the BeginPlay() function is called for all actors with ''bScriptInitialized''=<code>False</code>.\n\
+      \nThis event does nothing by default and no longer exists in Unreal Engine 3\
+      \ as the same effect could be achieved by overriding PreBeginPlay() and calling\
+      \ Super.PreBeginPlay() first. It can be used to implement logic that should\
+      \ happen after mutators had a chance to modify the actor.\n\n===Zones/Volumes===\n\
+      At this point all actors' containing [[zone]]s and [[PhysicsVolume]]s are initialized.\
+      \ Also, if the actor touches any [[Volume]]s, the actor and the Volume add each\
+      \ other to their list of touching actors.\n\nUnlike for spawning actors, none\
+      \ of the actions in this startup stage cause UnrealScript events to be called.\n\
+      \n===PostBeginPlay()===\nNow all actors with ''bScriptInitialized''=<code>False</code>\
+      \ have their UnrealScript and C++ PostBeginPlay() functions called. These do\
+      \ nothing by default.\n\n===PostNetBeginPlay()===\nRight after PostBeginPlay(),\
+      \ PostNetBeginPlay() is called on all actors with ''bScriptInitialized''=<code>False</code>.\
+      \ This event does no longer exist in [[Unreal Engine 3]].\n\nNote that unlike\
+      \ for spawning actors, PostNetBeginPlay() is called ''before'' SetInitialSate().\n\
+      \n===SetInitialState()===\nThe SetInitialState() function is the last to be\
+      \ called on all actors (with ''bScriptInitialized''=<code>False</code>) during\
+      \ initialization. As the name suggests, this function sets the actor's initial\
+      \ state. Using GotoState() it either switches to the state specified in the\
+      \ [[InitialState]] property or to the state marked with the [[auto]] modifier.\
+      \ As a result, the corresponding state's BeginState() event will be called.\n\
+      \nNote that the [[UE2:Actor native functions (UT2004)#AddToPackageMap|AddToPackageMap()\
+      \ function]] in UT2004, which can dynamically add server packages at runtime,\
+      \ only works before this stage of map startup.\n\n===Finding bases===\nIn this\
+      \ step, any actors with an ''AttachTag'' are attached to the first actor with\
+      \ a matching ''Tag'' or ''Name''. If a matching actor is found, it receives\
+      \ the Attach() event.\n\nFor actors without an ''AttachTag'', that ''bShouldBaseOnStartup'',\
+      \ have world collision enabled and have their ''Physics'' set to None or Rotating,\
+      \ a good base actor is determined. If a base is found, its Attach() event and\
+      \ this actor's BaseChange() event are called.\n\n===Final initialization step===\n\
+      The last iteration over all actors updates any [[Projector]]s and disables Karma\
+      \ simulation for high-detail actors in low-detail mode and for high-detail and\
+      \ client-only actors in dedicated server mode.\n\n==The actual UnGame.cpp snippet==\n\
+      The following is a copy of the code snippet this article is based on. This particular\
+      \ piece of code is executed after a new map has been loaded and before the local\
+      \ player enters the game or any replication kicks in. Keep in mind that much\
+      \ of the initialization also happens at the UnrealScript level, so for a complete\
+      \ picture you should have the UT2004 sources ready and browse to the relevant\
+      \ UnrealScript functions.\n\n===Hints for reading the code===\nA few things\
+      \ that will help understanding the code even if you're not into C++:\n* The\
+      \ <code>-></code> operator does the same as the dot does in UnrealScript - it\
+      \ accessed variables or functions of an object.\n* <code>GLevel</code> is a\
+      \ Level object. In UnrealScript this object is referenced by the XLevel property\
+      \ of any Actor.\n* <code>GLevel->GetLevelInfo()</code> returns the actual LevelInfo\
+      \ object. The <code>Info</code> property also points to the LevelInfo.\n* Variables\
+      \ in UnrealScript objects have the same name in C++. For example <code>Info->bBegunPlay</code>\
+      \ refers to a variable you'd access as <code>Level.bBegunPlay</code> in UnrealScript\
+      \ code.\n* The LevelInfo's <code>bBegunPlay</code> acts as general gate to UnrealScript\
+      \ execution. During map load it is 0 (False), so no UnrealScript code will be\
+      \ executed until it is set to 1 (True) in this code snippet.\n* UnrealScript\
+      \ functions declared with the ''event'' keyword are called from C++ via <code>event''NameOfUScriptFunction''(''parameters'')</code>,\
+      \ for example <code>eventPreBeginPlay</code> calls the PreBeginPlay() function.\n\
+      * [[Dynamic arrays]] have a slightly different syntax in native code. They are\
+      \ declared as <code>TArray<''type''></code>, their length is returned via <code>''array''.Num()</code>\
+      \ and individual elements are accessed via round parentheses instead of square\
+      \ brackets. <code>''array''.Empty()</code> does what <code>''aray''.Length =\
+      \ 0;</code> would do in UnrealScript.\n* <code>GLevel->IsServer()</code> basically\
+      \ returns the same as <code>(Level.NetMode != NM_Client)</code> in UnrealScript.\
+      \ Similarly <code>GIsClient</code> basically returns the same as <code>Level.NetMode\
+      \ != NM_DedicatedServer</code> in UnrealScript.\n* The <code>GLevel->Actors</code>\
+      \ array is the same list that the AllActors iterator traverses in UnrealScript.\n\
+      * The native class name of Actor subclasses is prefixed with an A, the native\
+      \ name of non-Actor classes with a U and the native name of structs with an\
+      \ F, for example APhysicsVolume, UKarmaParams or FVector.\n* [[Name]] literals\
+      \ do not exist. Instead, the values of all natively-used names are hard-coded\
+      \ as <code>NAME_''name''</code>, for example NAME_None for 'None'.\n* Class\
+      \ [[literals]] do exist, but look very different from UnrealScript. They are\
+      \ expressed as <code>''nativeClassName''::StaticClass()</code>.\n* <code>bScriptInitialized</code>\
+      \ is an Actor property that is set to True in the SetinitialState() event.\n\
+      * <code>if (!''someObjectReference'')</code> checks if a variable actually points\
+      \ to an object, similar to the UnrealScript code <code>if (''someObjectReference''\
+      \ != None)</code>.\n* Values for [[bool]] variables are 0 and 1, not False and\
+      \ True.\n* <code>GetClass()->GetDefaultActor()</code> corresponds to UnrealScript's\
+      \ <code>.default.</code> syntax for [[Variables#Accessing variables|accessing\
+      \ the default variable values]] of a class.\n\n===General notes about this code\
+      \ snippet===\n* When running as a (listen and dedicated) server, actors mentioned\
+      \ in the [Engine.GameEngine] ServerActors list in the main INI file (e.g. UnrealTournament.ini,\
+      \ UT2004.ini or UTEngine.ini) are created before this code is executed. UnrealScript\
+      \ execution is not yet enabled at that point, so these actors are initialized\
+      \ like any other actor already in the map.\n* Players do not exist while this\
+      \ code is executed. Any (local or remote) players join \"much\" later.\n\n===Notes\
+      \ for Unreal Engine 1===\n* The <code>bScriptInitialized</code> variable does\
+      \ not exist in [[Unreal Engine 1]], so unlike in later engine generations actors\
+      \ spawned during initialization may receive *BeginPlay() calls twice.\n* Unreal\
+      \ Engine 1 does not have volumes or Karma physics, so these parts of the code\
+      \ here do not apply.\n\n===Notes for Unreal Engine 3===\n* The Actor's Level\
+      \ variable and the LevelInfo class are both called ''WorldInfo'' in [[Unreal\
+      \ Engine 3]].\n* The BeginPlay() and PostNetBeginPlay() functions have been\
+      \ removed, with PostBeginPlay() now taking PostNetBeginPlay()'s role.\n* Unreal\
+      \ Engine 3 does not use zones, so the related parts of the code here do not\
+      \ apply.\n* Initialization of levels streamed in at runtime is not covered by\
+      \ this article.\n* [[Kismet]] initialization is not covered in this article.\
+      \ ''(More research is required on this.)''\n\n===The code===\n<source language=\"\
+      C++\">\n/*=============================================================================\n\
+      \tUnGame.cpp: Unreal game engine.\n\tCopyright 1997-2003 Epic Games, Inc. All\
+      \ Rights Reserved.\n\n=============================================================================*/\n\
+      \n\tGLevel->iFirstDynamicActor = 0;\n\tif( !Info->bBegunPlay )\n\t{\n      \
+      \  appResetTimer(); // sjs\n\n\t\t// fix up level problems\n\t\tFixUpLevel();\n\
+      \n\t\t// Update draw distance.\n\t\tif (GIsClient)\n\t\t{\n\t\t\tGLevel->GetLevelInfo()->InitDistanceFogLOD();\n\
+      \t\t\tGLevel->GetLevelInfo()->UpdateDistanceFogLOD( Client->DrawDistanceLOD\
+      \ );\n\t\t}\n\n\t\t// Lock the level.\n\t\tdebugf( NAME_Log, TEXT(\"Bringing\
+      \ %s up for play (%i) appSeconds: %f...\"), GLevel->GetFullName(), appRound(GetMaxTickRate()),\
+      \ appSeconds() ); // sjs\n\t\tGLevel->FinishedPrecaching = 0;\n\t\tGLevel->TimeSeconds\
+      \ = 0;\n\t\tGLevel->GetLevelInfo()->TimeSeconds = 0;\n\t\tGLevel->GetLevelInfo()->GetDefaultPhysicsVolume()->bNoDelete\
+      \ = true;\n\n\t\t// Kill off actors that aren't interesting to the client.\n\
+      \t\tif( !GLevel->IsServer() )\n\t\t{\n\t\t\tfor( INT i=0; i<GLevel->Actors.Num();\
+      \ i++ )\n\t\t\t{\n\t\t\t\tAActor* Actor = GLevel->Actors(i);\n\t\t\t\tif( Actor\
+      \ )\n\t\t\t\t{\n\t\t\t\t\tif( Actor->bStatic || Actor->bNoDelete || Actor->IsA(AxEmitter::StaticClass())\
+      \ ) \n\t\t\t\t\t{\n\t\t\t\t\t\tif ( !Actor->bClientAuthoritative )\n\t\t\t\t\
+      \t\t\tExchange( Actor->Role, Actor->RemoteRole );\n\t\t\t\t\t}\n\t\t\t\t\telse\n\
+      \t\t\t\t\t\tGLevel->DestroyActor( Actor );\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\n\t\t\
+      // Init touching actors & clear LastRenderTime\n\t\tfor( INT i=0; i<GLevel->Actors.Num();\
+      \ i++ )\n\t\t\tif( GLevel->Actors(i) )\n\t\t\t{\n\t\t\t\tGLevel->Actors(i)->LastRenderTime\
+      \ = 0.f;\n\t\t\t\tGLevel->Actors(i)->Touching.Empty();\n\t\t\t\tGLevel->Actors(i)->PhysicsVolume\
+      \ = GLevel->GetLevelInfo()->GetDefaultPhysicsVolume();\n\t\t\t}\n\n\n\t\t//\
+      \ Init scripting.\n\t\tfor( INT i=0; i<GLevel->Actors.Num(); i++ )\n\t\t\tif(\
+      \ GLevel->Actors(i) )\n\t\t\t\tGLevel->Actors(i)->InitExecution();\n\n\t\t//\
+      \ Enable actor script calls.\n\t\tInfo->bBegunPlay = 1;\n\t\tInfo->bStartup\
+      \ = 1;\n\t\tInfo->TimeDilation = ((ALevelInfo *)(Info->GetClass()->GetDefaultActor()))->TimeDilation;\n\
+      \n#ifdef WITH_KARMA\n\t\tif(!GIsEditor && !GLevel->GetLevelInfo()->bKNoInit)\n\
+      \t\t{\n\t\t\tKInitLevelKarma(GLevel);\n\n\t\t\tfor( INT i=0; i<GLevel->Actors.Num();\
+      \ i++ )\n\t\t\t\tif( GLevel->Actors(i) )\n\t\t\t\t\tKInitActorKarma( GLevel->Actors(i)\
+      \ );\n\t\t}\n#endif\n\n\t\t// Init the game.\n\t\tif( Info->Game )\n\t\t{\t\t\
+      \n\t\t\tInfo->Game->eventInitGame( Options, Error );\n\t\t\tInfo->Game->eventSetGrammar();\n\
+      \t\t}\n\n\t\t// Send PreBeginPlay.\n\t\tfor( INT i=0; i<GLevel->Actors.Num();\
+      \ i++ )\n\t\t\tif( GLevel->Actors(i) && !GLevel->Actors(i)->bScriptInitialized\
+      \ )\n\t\t\t\tGLevel->Actors(i)->eventPreBeginPlay();\n\n\t\t// Set BeginPlay.\n\
+      \t\tfor( INT i=0; i<GLevel->Actors.Num(); i++ )\n\t\t\tif( GLevel->Actors(i)\
+      \ && !GLevel->Actors(i)->bScriptInitialized )\n\t\t\t\tGLevel->Actors(i)->eventBeginPlay();\n\
+      \n\t\t// Set zones && gather volumes.\n\t\tTArray<AVolume*> LevelVolumes;\n\t\
+      \tfor( INT i=0; i<GLevel->Actors.Num(); i++ )\n\t\t{\n\t\t\tif( GLevel->Actors(i)\
+      \ && !GLevel->Actors(i)->bScriptInitialized )\n\t\t\t\tGLevel->Actors(i)->SetZone(\
+      \ 1, 1 );\n\n\t\t\tAVolume* Volume = Cast<AVolume>(GLevel->Actors(i));\n\t\t\
+      \tif( Volume )\n\t\t\t\tLevelVolumes.AddItem(Volume);\n\t\t}\n\t\t\n\t\t// Set\
+      \ appropriate volumes for each actor.\n\t\tfor( INT i=0; i<GLevel->Actors.Num();\
+      \ i++ )\n\t\t\tif( GLevel->Actors(i) && !GLevel->Actors(i)->bScriptInitialized\
+      \ )\n\t\t\t\tGLevel->Actors(i)->SetVolumes( LevelVolumes );\n\n\t\t// Post begin\
+      \ play.\n\t\tfor( INT i=0; i<GLevel->Actors.Num(); i++ )\n\t\t\tif( GLevel->Actors(i)\
+      \ && !GLevel->Actors(i)->bScriptInitialized )\n\t\t\t{\n\t\t\t\tGLevel->Actors(i)->eventPostBeginPlay();\n\
+      \n\t\t\t\tif(GLevel->Actors(i))\n\t\t\t\t\tGLevel->Actors(i)->PostBeginPlay();\n\
+      \t\t\t}\n\n\t\t// Post net begin play.\n\t\tfor( INT i=0; i<GLevel->Actors.Num();\
+      \ i++ )\n\t\t\tif( GLevel->Actors(i) && !GLevel->Actors(i)->bScriptInitialized\
+      \ )\n\t\t\t\tGLevel->Actors(i)->eventPostNetBeginPlay();\n\n\t\t// Begin scripting.\n\
+      \t\tfor( INT i=0; i<GLevel->Actors.Num(); i++ )\n\t\t\tif( GLevel->Actors(i)\
+      \ && !GLevel->Actors(i)->bScriptInitialized )\n\t\t\t\tGLevel->Actors(i)->eventSetInitialState();\n\
+      \n\t\t// Find bases\n\t\tfor( INT i=0; i<GLevel->Actors.Num(); i++ )\n\t\t{\n\
+      \t\t\tif( GLevel->Actors(i) ) \n\t\t\t{\n\t\t\t\tif ( GLevel->Actors(i)->AttachTag\
+      \ != NAME_None )\n\t\t\t\t{\n\t\t\t\t\t//find actor to attach self onto\n\t\t\
+      \t\t\tfor( INT j=0; j<GLevel->Actors.Num(); j++ )\n\t\t\t\t\t{\n\t\t\t\t\t\t\
+      if( GLevel->Actors(j) \n\t\t\t\t\t\t\t&& ((GLevel->Actors(j)->Tag == GLevel->Actors(i)->AttachTag)\
+      \ || (GLevel->Actors(j)->GetFName() == GLevel->Actors(i)->AttachTag))  )\n\t\
+      \t\t\t\t\t{\n\t\t\t\t\t\t\tGLevel->Actors(i)->SetBase(GLevel->Actors(j), FVector(0,0,1),\
+      \ 0);\n\t\t\t\t\t\t\tbreak;\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t\t\
+      else if( GLevel->Actors(i)->bCollideWorld && GLevel->Actors(i)->bShouldBaseAtStartup\n\
+      \t\t\t\t &&\t((GLevel->Actors(i)->Physics == PHYS_None) || (GLevel->Actors(i)->Physics\
+      \ == PHYS_Rotating)) )\n\t\t\t\t{\n\t\t\t\t\t GLevel->Actors(i)->FindBase();\n\
+      \t\t\t\t}\n\t\t\t}\n\t\t}\n\n\t\tfor( INT i=0; i<GLevel->Actors.Num(); i++ )\
+      \ \n\t\t{\n\t\t\tif(GLevel->Actors(i))\n\t\t\t{\n\t\t\t\tif( GLevel->Actors(i)->IsA(AProjector::StaticClass()))\
+      \ // sjs - why is this needed?!!\n\t\t\t\t{\n\t\t\t\t\tGLevel->Actors(i)->PostEditChange();\n\
+      \t\t\t\t}\n\n#ifdef WITH_KARMA\n\t\t\t\tAActor* actor = GLevel->Actors(i);\n\
+      \n\t\t\t\tif(actor->Physics != PHYS_Karma || !actor->KParams || !actor->KParams->IsA(UKarmaParams::StaticClass()))\n\
+      \t\t\t\t\tcontinue;\n\n\t\t\t\tUKarmaParams* kparams = Cast<UKarmaParams>(actor->KParams);\n\
+      \n\t\t\t\t// If running below HighDetailPhysics, turn off karma dynamics for\
+      \ actors with bHighDetailOnly set true.\n\t\t\t\tif(\tGLevel->GetLevelInfo()->PhysicsDetailLevel\
+      \ < PDL_High && kparams->bHighDetailOnly )\n\t\t\t\t\tKTermActorDynamics(actor);\n\
+      \n\t\t\t\t// If dedicated server, turn off karma for actors with bHighDetailOnly\
+      \ or bClientsOnly\n\t\t\t\tif(\tGLevel->GetLevelInfo()->NetMode == NM_DedicatedServer\
+      \ && (kparams->bHighDetailOnly || kparams->bClientOnly) )\t\t\t\t\t\n\t\t\t\t\
+      \tKTermActorDynamics(actor);\n#endif\n\t\t\t}\n\t\t}\n\n\t\tInfo->bStartup =\
+      \ 0;\n\t}\n</source>\n\n[[Category:Programming articles]]\n[[Category:Native\
+      \ code snippet]]"
+  properties: []
+  revId: 45927
+name: "What happens at map startup"
+revision:
+  revid: 45927
+  parentid: 43563
+  user: "Wormbo"
+  timestamp: 1389298703.000000000
+  comment: "/* Hints for reading the code */ added text that seems to have gotten\
+    \ lost"
+timestamp: 1668772519.057132000

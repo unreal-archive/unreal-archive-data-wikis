@@ -1,0 +1,848 @@
+---
+parse:
+  title: "Legacy:Mutator Config GUI (UT2003)"
+  text:
+    text: "<p>Making a configuration window for your <a href=\"/Legacy:Mutator_Topics\"\
+      \ title=\"Legacy:Mutator Topics\">mutator</a> in <a href=\"/Legacy:UT2003\"\
+      \ title=\"Legacy:UT2003\" class=\"mw-redirect\">UT2003</a>. Written By LedZep</p>\n\
+      <p><b>NOTE:</b> If you want the <a href=\"/Legacy:UT2004\" title=\"Legacy:UT2004\"\
+      \ class=\"mw-redirect\">UT2004</a> version then please see <a href=\"/Legacy:Mutator_Config_GUI_(UT2004)\"\
+      \ title=\"Legacy:Mutator Config GUI (UT2004)\">Mutator Config GUI (UT2004)</a>.</p>\n\
+      <p>This tutorial will guide you through creating a simple mutator and a configuration\
+      \ window for it. This tutorial assumes that you have basic knowledge in <a href=\"\
+      /Legacy:UnrealScript\" title=\"Legacy:UnrealScript\">UnrealScript</a> and that\
+      \ you know how to create <a href=\"/Legacy:UC_File\" title=\"Legacy:UC File\"\
+      \ class=\"mw-redirect\">UC files</a> and how to setup and compile them: see\
+      \ <a href=\"/Legacy:Setting_Up_UnrealScript\" title=\"Legacy:Setting Up UnrealScript\"\
+      >Setting Up UnrealScript</a>.</p>\n<p>As an example, this tutorial will show\
+      \ you how to create a MultiJumping mutator and how to create a configuration\
+      \ window to setup it. You are not going to need any external files other than\
+      \ the ones you will create yourself.</p>\n<p>For a class tree of the GUI components\
+      \ see <a href=\"/Legacy:GUI_Class_Hierarchy\" title=\"Legacy:GUI Class Hierarchy\"\
+      >GUI Class Hierarchy</a>.</p>\n<p></p>\n<div id=\"toc\" class=\"toc\">\n<div\
+      \ id=\"toctitle\">\n<h2>Contents</h2>\n</div>\n<ul>\n<li class=\"toclevel-1\
+      \ tocsection-1\"><a href=\"#Creating_the_Mutator_Class\"><span class=\"tocnumber\"\
+      >1</span> <span class=\"toctext\">Creating the Mutator Class</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-2\"><a href=\"#Creating_the_Configuration_Window_for_the_Mutator\"\
+      ><span class=\"tocnumber\">2</span> <span class=\"toctext\">Creating the Configuration\
+      \ Window for the Mutator</span></a></li>\n<li class=\"toclevel-1 tocsection-3\"\
+      ><a href=\"#Creating_the_INT_file\"><span class=\"tocnumber\">3</span> <span\
+      \ class=\"toctext\">Creating the INT file</span></a></li>\n<li class=\"toclevel-1\
+      \ tocsection-4\"><a href=\"#The_Grand_Finale\"><span class=\"tocnumber\">4</span>\
+      \ <span class=\"toctext\">The Grand Finale</span></a></li>\n<li class=\"toclevel-1\
+      \ tocsection-5\"><a href=\"#Comments\"><span class=\"tocnumber\">5</span> <span\
+      \ class=\"toctext\">Comments</span></a></li>\n</ul>\n</div>\n<p></p>\n<h2><span\
+      \ class=\"mw-headline\" id=\"Creating_the_Mutator_Class\">Creating the Mutator\
+      \ Class</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Mutator_Config_GUI_(UT2003)?section=1\" title=\"\
+      Edit section: Creating the Mutator Class\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>First we will create the mutator, basically it is\
+      \ going to have three components: the configurable variables, the ModifyPlayer\
+      \ function and the <a href=\"/Legacy:Default_Properties\" title=\"Legacy:Default\
+      \ Properties\">Default Properties</a>. Here is how it is going to look like:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">Class</span> MultiJumpMut\
+      \ <span class=\"kw1\">extends</span> <span class=\"kw9\">Mutator</span> <span\
+      \ class=\"kw1\">Config</span><span class=\"br0\">(</span>User<span class=\"\
+      br0\">)</span>;\n \n<span class=\"kw1\">var</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span> <span class=\"kw1\">config</span> <span class=\"kw5\"\
+      >int</span> MJMax, MJBoost;\n \n<span class=\"kw1\">function</span> ModifyPlayer<span\
+      \ class=\"br0\">(</span><span class=\"kw9\">Pawn</span> Other<span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw1\">local</span>\
+      \ <span class=\"kw9\">xPawn</span> x;\n\tx <span class=\"sy0\">=</span> <span\
+      \ class=\"kw9\">xPawn</span><span class=\"br0\">(</span>Other<span class=\"\
+      br0\">)</span>;\t<span class=\"co1\">// Check if pawn is xPawn</span>\n \n\t\
+      <span class=\"kw2\">if</span><span class=\"br0\">(</span>x <span class=\"sy0\"\
+      >!=</span> <span class=\"kw5\">None</span><span class=\"br0\">)</span>\t\t<span\
+      \ class=\"co1\">// If it is, assign the new variables to it</span>\n\t<span\
+      \ class=\"br0\">{</span>\n\t\tx.<span class=\"me0\">MaxMultiJump</span> <span\
+      \ class=\"sy0\">=</span> MJMax;\n\t\tx.<span class=\"me0\">MultiJumpBoost</span>\
+      \ <span class=\"sy0\">=</span> MJBoost;\n\t<span class=\"br0\">}</span>\n<span\
+      \ class=\"br0\">}</span>\n \n<span class=\"kw1\">defaultproperties</span>\n\
+      <span class=\"br0\">{</span>\n    IconMaterialName<span class=\"sy0\">=</span><span\
+      \ class=\"st0\">\"MutatorArt.nosym\"</span>\n    ConfigMenuClassName<span class=\"\
+      sy0\">=</span><span class=\"st0\">\"MultiJumpMutator.MJMutConfig\"</span>  \
+      \      <span class=\"co1\">// Note that this assumes that your package's name\
+      \ is MultiJumpMutator</span>\n    GroupName<span class=\"sy0\">=</span><span\
+      \ class=\"st0\">\"Jumping\"</span>\n    FriendlyName<span class=\"sy0\">=</span><span\
+      \ class=\"st0\">\"MultiJumpMutator\"</span>\n    Description<span class=\"sy0\"\
+      >=</span><span class=\"st0\">\"Configure Your Multi Jumping Ability.\"</span>\n\
+      \    MJMax<span class=\"sy0\">=</span><span class=\"nu0\">1</span>\n    MJBoost<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">25</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>Note that I added \"Config(User)\" to the class declaration so it\
+      \ will know where to store its variables. When declaring Configurable variables,\
+      \ always put the word \"config\" after the \"var\" to let the compiler know\
+      \ that they are configurable. If you want those varibles to have default properties\
+      \ incase the user wont specify any, make your \"var\" look like this: \"var()\"\
+      , and in the default properties section give those variable a value (dont forget\
+      \ that you dont use semi colons in the default properties section). See also\
+      \ <a href=\"/Legacy:Variable_Syntax\" title=\"Legacy:Variable Syntax\">Variable\
+      \ Syntax</a>.</p>\n<p>In this mutator's case, MJMax is the maximum number of\
+      \ extra jumps the player can make, and MJBoost is the boost each extra jump\
+      \ gives him. The ModifyPlayer function is really simple, it recieves a Pawn\
+      \ in its parameters, checks if it is an xPawn and then assigns our mutator's\
+      \ variables to the xPawn's variables. Now default props, basically what they\
+      \ do is give the mutator its name and its description, assign values to our\
+      \ configurable variable and specify our mutator's config class (which we will\
+      \ make in a second)</p>\n<h2><span class=\"mw-headline\" id=\"Creating_the_Configuration_Window_for_the_Mutator\"\
+      >Creating the Configuration Window for the Mutator</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Mutator_Config_GUI_(UT2003)?section=2\"\
+      \ title=\"Edit section: Creating the Configuration Window for the Mutator\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>The\
+      \ ConfigWindow is a little more tricky, it has four parts to it; declaring the\
+      \ two edit boxes we are going to be using, the InitComponent and InternalOnClick\
+      \ functions and the DefaultProperties. First I'll give you the code, then I'll\
+      \ explain. Dont freak out when you see the Default Properties, it will all become\
+      \ clear to you very soon.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">class</span> MJMutConfig <span class=\"kw1\">extends</span> GUIPage;\n\
+      \ \n<span class=\"kw1\">var</span> moEditBox MJCountBox, MJBoostBox;\t\t<span\
+      \ class=\"co1\">// Declare two EditBox type Variables</span>\n \n<span class=\"\
+      co1\">// Called when our GUI component is initiated (in this case our config\
+      \ window)</span>\n<span class=\"kw1\">function</span> InitComponent<span class=\"\
+      br0\">(</span>GUIController MyController, GUIComponent MyOwner<span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw6\">Super</span>.<span\
+      \ class=\"me0\">InitComponent</span><span class=\"br0\">(</span>MyController,\
+      \ MyOwner<span class=\"br0\">)</span>;\t<span class=\"co1\">// Call Parent's\
+      \ InitComponent</span>\n \n\t<span class=\"co1\">// Assign variables to EditBoxes\
+      \ that were created in the default properties</span>\n\tMJCountBox <span class=\"\
+      sy0\">=</span> moEditBox<span class=\"br0\">(</span>Controls<span class=\"br0\"\
+      >[</span><span class=\"nu0\">4</span><span class=\"br0\">]</span><span class=\"\
+      br0\">)</span>;\n\tMJBoostBox <span class=\"sy0\">=</span> moEditBox<span class=\"\
+      br0\">(</span>Controls<span class=\"br0\">[</span><span class=\"nu0\">5</span><span\
+      \ class=\"br0\">]</span><span class=\"br0\">)</span>;\n \n\t<span class=\"co1\"\
+      >// Set the EditBoxes to be integer only because we are only dealing with numbers</span>\n\
+      \tMJCountBox.<span class=\"me0\">IntOnly</span><span class=\"br0\">(</span><span\
+      \ class=\"kw6\">true</span><span class=\"br0\">)</span>;\n\tMJBoostBox.<span\
+      \ class=\"me0\">IntOnly</span><span class=\"br0\">(</span><span class=\"kw6\"\
+      >true</span><span class=\"br0\">)</span>;\n \n\t<span class=\"co1\">// Set the\
+      \ EditBoxes' text to our mutator's config variables' values</span>\n\tMJCountBox.<span\
+      \ class=\"me0\">SetText</span><span class=\"br0\">(</span><span class=\"kw5\"\
+      >string</span><span class=\"br0\">(</span><span class=\"kw1\">class</span><span\
+      \ class=\"st0\">'MultiJumpMut'</span>.<span class=\"kw1\">default</span>.<span\
+      \ class=\"me0\">MJMax</span><span class=\"br0\">)</span><span class=\"br0\"\
+      >)</span>;\n\tMJBoostBox.<span class=\"me0\">SetText</span><span class=\"br0\"\
+      >(</span><span class=\"kw5\">string</span><span class=\"br0\">(</span><span\
+      \ class=\"kw1\">class</span><span class=\"st0\">'MultiJumpMut'</span>.<span\
+      \ class=\"kw1\">default</span>.<span class=\"me0\">MJBoost</span><span class=\"\
+      br0\">)</span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"co1\">// Called when the OK button is clicked</span>\n<span\
+      \ class=\"kw1\">function</span> <span class=\"kw5\">bool</span> InternalOnClick<span\
+      \ class=\"br0\">(</span>GUIComponent Sender<span class=\"br0\">)</span>\n<span\
+      \ class=\"br0\">{</span>\n\t<span class=\"co1\">// Set our Mutator's variables\
+      \ to the new variables that were set by the user</span>\n\t<span class=\"kw1\"\
+      >class</span><span class=\"st0\">'MultiJumpMut'</span>.<span class=\"kw1\">default</span>.<span\
+      \ class=\"me0\">MJMax</span> <span class=\"sy0\">=</span> <span class=\"kw5\"\
+      >int</span><span class=\"br0\">(</span>MJCountBox.<span class=\"me0\">GetText</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n\
+      \t<span class=\"kw1\">class</span><span class=\"st0\">'MultiJumpMut'</span>.<span\
+      \ class=\"kw1\">default</span>.<span class=\"me0\">MJBoost</span> <span class=\"\
+      sy0\">=</span> <span class=\"kw5\">int</span><span class=\"br0\">(</span>MJBoostBox.<span\
+      \ class=\"me0\">GetText</span><span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span><span class=\"br0\">)</span>;\n \n\t<span class=\"kw1\">class</span><span\
+      \ class=\"st0\">'MultiJumpMut'</span>.<span class=\"kw1\">static</span>.<span\
+      \ class=\"kw3\">StaticSaveConfig</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\t<span class=\"co1\">// Save all the Mutator's config variables</span>\n\
+      \ \n\t<span class=\"kw9\">Controller</span>.<span class=\"me0\">CloseMenu</span><span\
+      \ class=\"br0\">(</span><span class=\"kw6\">false</span><span class=\"br0\"\
+      >)</span>;\t<span class=\"co1\">// Close the window</span>\n \n\t<span class=\"\
+      kw2\">return</span> <span class=\"kw6\">true</span>;\t<span class=\"co1\">//\
+      \ Return True (hard to figure out eh?) ;)</span>\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"kw1\">defaultproperties</span>\n<span class=\"br0\">{</span>\n\
+      \t<span class=\"kw2\">Begin</span> <span class=\"kw8\">Object</span> <span class=\"\
+      kw1\">Class</span><span class=\"sy0\">=</span>GUIButton <span class=\"kw5\"\
+      >name</span><span class=\"sy0\">=</span>DialogBackground\t<span class=\"co1\"\
+      >// The window's background</span>\n\t\tWinWidth<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">1.0</span>\t\t\t<span class=\"co1\">// Set Window's width</span>\n\
+      \t\tWinHeight<span class=\"sy0\">=</span><span class=\"nu0\">1.0</span>\t\t\t\
+      <span class=\"co1\">// Set Window's height</span>\n\t\tWinTop<span class=\"\
+      sy0\">=</span><span class=\"nu0\">0</span>\t\t\t<span class=\"co1\">// Set the\
+      \ windows location on the Y axis</span>\n\t\tWinLeft<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0</span>\t\t\t<span class=\"co1\">// Set the windows location\
+      \ on the X axis</span>\n\t\tbAcceptsInput<span class=\"sy0\">=</span><span class=\"\
+      kw6\">false</span>\t\t<span class=\"co1\">// Since its just a background it\
+      \ wont accept input</span>\n\t\tbNeverFocus<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">true</span>\t\t<span class=\"co1\">// Just a background, no\
+      \ need for focus</span>\n\t\tStyleName<span class=\"sy0\">=</span><span class=\"\
+      st0\">\"ComboListBox\"</span>\t<span class=\"co1\">// The style of the background</span>\n\
+      \t\tbBoundToParent<span class=\"sy0\">=</span><span class=\"kw6\">true</span>\t\
+      \t<span class=\"co1\">// is it bound to its parent window?</span>\n\t\tbScaleToParent<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">true</span>\t\t<span class=\"co1\"\
+      >// is it in scale to its parent window?</span>\n\tEnd <span class=\"kw8\">Object</span>\n\
+      \tControls<span class=\"br0\">(</span><span class=\"nu0\">0</span><span class=\"\
+      br0\">)</span><span class=\"sy0\">=</span>GUIButton<span class=\"st0\">'DialogBackground'</span>\t\
+      <span class=\"co1\">// Sets Controls[0] to the DialogBackround</span>\n \n\t\
+      <span class=\"kw2\">Begin</span> <span class=\"kw8\">Object</span> <span class=\"\
+      kw1\">Class</span><span class=\"sy0\">=</span>GUIButton <span class=\"kw5\"\
+      >Name</span><span class=\"sy0\">=</span>OkButton\t<span class=\"co1\">// An\
+      \ \"OK\" Button</span>\n\t\tCaption<span class=\"sy0\">=</span><span class=\"\
+      st0\">\"OK\"</span>\t\t\t\t<span class=\"co1\">// The button's caption</span>\n\
+      \t\tWinWidth<span class=\"sy0\">=</span><span class=\"nu0\">0.2</span>\n\t\t\
+      WinHeight<span class=\"sy0\">=</span><span class=\"nu0\">0.04</span>\n\t\tWinLeft<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0.4</span>\n\t\tWinTop<span class=\"\
+      sy0\">=</span><span class=\"nu0\">0.63</span>\n\t\tOnClick<span class=\"sy0\"\
+      >=</span>InternalOnClick\t\t\t<span class=\"co1\">// Assigns the button's OnClick\
+      \ to our InternalOnClick function</span>\n\tEnd <span class=\"kw8\">Object</span>\n\
+      \tControls<span class=\"br0\">(</span><span class=\"nu0\">1</span><span class=\"\
+      br0\">)</span><span class=\"sy0\">=</span>GUIButton<span class=\"st0\">'OkButton'</span>\t\
+      \t\t<span class=\"co1\">// Sets Controls[1] to the OkButton</span>\n \n\t<span\
+      \ class=\"kw2\">Begin</span> <span class=\"kw8\">Object</span> <span class=\"\
+      kw1\">class</span><span class=\"sy0\">=</span>GUILabel <span class=\"kw5\">Name</span><span\
+      \ class=\"sy0\">=</span>DialogText\t<span class=\"co1\">// A text label</span>\n\
+      \t\tCaption<span class=\"sy0\">=</span><span class=\"st0\">\"MultiJump Configuration\"\
+      </span>\n\t\tTextALign<span class=\"sy0\">=</span>TXTA_Center\t\t\t<span class=\"\
+      co1\">// Text allignment</span>\n\t\tTextColor<span class=\"sy0\">=</span><span\
+      \ class=\"br0\">(</span>R<span class=\"sy0\">=</span><span class=\"nu0\">220</span>,G<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">180</span>,B<span class=\"sy0\"\
+      >=</span><span class=\"nu0\">0</span>,A<span class=\"sy0\">=</span><span class=\"\
+      nu0\">255</span><span class=\"br0\">)</span>\t<span class=\"co1\">// Text color</span>\n\
+      \t\tTextFont<span class=\"sy0\">=</span><span class=\"st0\">\"UT2HeaderFont\"\
+      </span>\t\t<span class=\"co1\">// Text font</span>\n\t\tWinWidth<span class=\"\
+      sy0\">=</span><span class=\"nu0\">1.000000</span>\n\t\tWinHeight<span class=\"\
+      sy0\">=</span><span class=\"nu0\">32.000000</span>\n\t\tWinLeft<span class=\"\
+      sy0\">=</span><span class=\"nu0\">0.000000</span>\n\t\tWinTop<span class=\"\
+      sy0\">=</span><span class=\"nu0\">0.325000</span>\n\tEnd <span class=\"kw8\"\
+      >Object</span>\n\tControls<span class=\"br0\">(</span><span class=\"nu0\">2</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">=</span>GUILabel<span class=\"st0\"\
+      >'DialogText'</span>\n \n\t<span class=\"kw2\">Begin</span> <span class=\"kw8\"\
+      >Object</span> <span class=\"kw1\">class</span><span class=\"sy0\">=</span>GUILabel\
+      \ <span class=\"kw5\">Name</span><span class=\"sy0\">=</span>DialogText2\t<span\
+      \ class=\"co1\">// Another text label</span>\n\t\tCaption<span class=\"sy0\"\
+      >=</span><span class=\"st0\">\"Configure your MultiJump Options (default JumpBoost\
+      \ is 25)\"</span>\n\t\tTextALign<span class=\"sy0\">=</span>TXTA_Center\n\t\t\
+      TextColor<span class=\"sy0\">=</span><span class=\"br0\">(</span>R<span class=\"\
+      sy0\">=</span><span class=\"nu0\">220</span>,G<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">180</span>,B<span class=\"sy0\">=</span><span class=\"nu0\"\
+      >0</span>,A<span class=\"sy0\">=</span><span class=\"nu0\">255</span><span class=\"\
+      br0\">)</span>\n\t\tTextFont<span class=\"sy0\">=</span><span class=\"st0\"\
+      >\"UT2MenuFont\"</span>\n\t\tWinWidth<span class=\"sy0\">=</span><span class=\"\
+      nu0\">1.000000</span>\n\t\tWinHeight<span class=\"sy0\">=</span><span class=\"\
+      nu0\">32.000000</span>\n\t\tWinLeft<span class=\"sy0\">=</span><span class=\"\
+      nu0\">0.000000</span>\n\t\tWinTop<span class=\"sy0\">=</span><span class=\"\
+      nu0\">0.390626</span>\n\tEnd <span class=\"kw8\">Object</span>\n\tControls<span\
+      \ class=\"br0\">(</span><span class=\"nu0\">3</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">=</span>GUILabel<span class=\"st0\">'DialogText2'</span>\n \n\
+      \t<span class=\"kw2\">Begin</span> <span class=\"kw8\">Object</span> <span class=\"\
+      kw1\">class</span><span class=\"sy0\">=</span>moEditBox <span class=\"kw5\"\
+      >Name</span><span class=\"sy0\">=</span>MJCounter\t<span class=\"co1\">// An\
+      \ edit box (for our MJMax)</span>\n\t\tWinWidth<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0.431641</span>\n\t\tWinHeight<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0.04</span>\n\t\tWinLeft<span class=\"sy0\">=</span><span class=\"\
+      nu0\">0.293750</span>\n\t\tWinTop<span class=\"sy0\">=</span><span class=\"\
+      nu0\">0.467448</span>\n\t\tCaption<span class=\"sy0\">=</span><span class=\"\
+      st0\">\"Number of MultiJumps\"</span>\n\t\tbReadOnly<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">false</span>\t\t\t\t<span class=\"co1\">// Will take Input,\
+      \ therefor isn't readonly</span>\n\tEnd <span class=\"kw8\">Object</span>\n\t\
+      Controls<span class=\"br0\">(</span><span class=\"nu0\">4</span><span class=\"\
+      br0\">)</span><span class=\"sy0\">=</span>moEditBox<span class=\"st0\">'MJCounter'</span>\t\
+      \t<span class=\"co1\">// Set Controls[4] to the MJCounter</span>\n \n\t<span\
+      \ class=\"kw2\">Begin</span> <span class=\"kw8\">Object</span> <span class=\"\
+      kw1\">class</span><span class=\"sy0\">=</span>moEditBox <span class=\"kw5\"\
+      >Name</span><span class=\"sy0\">=</span>MJBooster\t<span class=\"co1\">// Another\
+      \ edit box (for our MJBoost)</span>\n\t\tWinWidth<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0.431641</span>\n\t\tWinHeight<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0.04</span>\n\t\tWinLeft<span class=\"sy0\">=</span><span class=\"\
+      nu0\">0.293750</span>\n\t\tWinTop<span class=\"sy0\">=</span><span class=\"\
+      nu0\">0.517448</span>\n\t\tCaption<span class=\"sy0\">=</span><span class=\"\
+      st0\">\"MultiJump Boost\"</span>\n\t\tbReadOnly<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">false</span>\n\tEnd <span class=\"kw8\">Object</span>\n\tControls<span\
+      \ class=\"br0\">(</span><span class=\"nu0\">5</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">=</span>moEditBox<span class=\"st0\">'MJBooster'</span>\t\t\
+      <span class=\"co1\">// Set Controls[5] to the MJBooster</span>\n \n\t<span class=\"\
+      co1\">// The Window's own properties (MJMutConfig)</span>\n\tWinLeft<span class=\"\
+      sy0\">=</span><span class=\"nu0\">0</span>\n\tWinTop<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0.3</span>\n\tWinWidth<span class=\"sy0\">=</span><span class=\"\
+      nu0\">1</span>\n\tWinHeight<span class=\"sy0\">=</span><span class=\"nu0\">0.4</span>\n\
+      \tbRequire640x480<span class=\"sy0\">=</span><span class=\"kw6\">True</span>\t\
+      \t<span class=\"co1\">// Required Minimum resolution</span>\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p>First we have the Class Declaration,\
+      \ only one line, easy wasnt it? (note that you should subclass GUIPage) Then\
+      \ we have the variable declaration, also one line! you see how easy coding is?\
+      \ Well, only this time, since we are making editboxes, the variables are of\
+      \ the moEditBox type. Ok, now we will skip the two function (we will come back\
+      \ to them later) and go straight to the defaultprops. If you are new to UnrealScript,\
+      \ this might seem a little weird to you (it sure did to me), but dont worry,\
+      \ it is really simple! in the classic UT, we had to create around 3 or 4 classes\
+      \ just to make one window, basically what all this code does is create this\
+      \ window for you using only one class, how cool is that? To make it easy to\
+      \ understand for you I put a whole bunch of comments into it so just read through\
+      \ it and read the comments and it will give you the general idea. Basically,\
+      \ Begin Object creates an object, names it, manipulates its variables and then\
+      \ assigns it to something. It is commonly used in the UT2003 window system as\
+      \ followes:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\">\t<span class=\"\
+      kw2\">Begin</span> <span class=\"kw8\">Object</span> <span class=\"kw1\">class</span><span\
+      \ class=\"sy0\">=&lt;</span>ClassName<span class=\"sy0\">&gt;</span> <span class=\"\
+      kw5\">Name</span><span class=\"sy0\">=&lt;</span>ObjectName<span class=\"sy0\"\
+      >&gt;</span>\n\t\tWinWidth<span class=\"sy0\">=&lt;</span>Width<span class=\"\
+      sy0\">&gt;</span>\n\t\tWinHeight<span class=\"sy0\">=&lt;</span>Height<span\
+      \ class=\"sy0\">&gt;</span>\n\t\tWinLeft<span class=\"sy0\">=&lt;</span>LocationOnXAxis<span\
+      \ class=\"sy0\">&gt;</span>\n\t\tWinTop<span class=\"sy0\">=&lt;</span>LocationOnYAxis<span\
+      \ class=\"sy0\">&gt;</span>\n\t\t<span class=\"sy0\">&lt;</span>OtherVars<span\
+      \ class=\"sy0\">&gt;=&lt;</span>OtherValues<span class=\"sy0\">&gt;</span>\n\
+      \tEnd <span class=\"kw8\">Object</span>\n\tControls<span class=\"br0\">(</span>n<span\
+      \ class=\"br0\">)</span><span class=\"sy0\">=&lt;</span>ClassName<span class=\"\
+      sy0\">&gt;</span><span class=\"st0\">'&lt;ObjectName&gt;'</span>\t<span class=\"\
+      co1\">// n is the object's number - 1 (so the first object is 0)</span></pre></div>\n\
+      </div>\n<p>all what our DefaultProperties do is create a background, an \"OK\"\
+      \ Button, two text labels, two edit boxes and then set the variables for its\
+      \ own class (MJMutConfig). There are two important things you should note, one\
+      \ is \"OnClick=InternalOnClick\" which is found in the \"OK\" button's creation\
+      \ code. Basically what it does is call our InternalOnClick function whenever\
+      \ the \"OK\" button is clicked. The second important thing is that after the\
+      \ creation of each window, it is assigned to a Controls(n) (n being a number),\
+      \ this is important to us because we will soon use this.</p>\n<p>Ok, we are\
+      \ done with the hard part, all what is left to do is the last two functions.\
+      \ the function InitComponent is pretty much like UT's Created, it is called\
+      \ when our GUI component is initiated. First it calls its parent's InitComponent\
+      \ to do all the important stuff of initiating the window. Then we assign the\
+      \ two moEditBoxes (that were created in the default properties) to our own EditBoxes.</p>\n\
+      <p>Then we set them as IntOnly because we are only dealing with numbers, and\
+      \ finally we set their text to our mutator's configurable variables' values.\
+      \ Basically all what our InitComponent function does is getting our EditBoxes\
+      \ setup and ready to use. And our last function for this tutorial, InternalOnClick,\
+      \ which is called when the \"OK\" button is clicked. All this function does\
+      \ is set our mutator's variables to the new variables that were typed into the\
+      \ editboxes, then is saves all of our mutator's config variables (which is only\
+      \ two) and finally it closes the window.</p>\n<p>And thats it!</p>\n<p>By the\
+      \ way, you can also add checkboxes and combolists and all sorts of GUI components,\
+      \ look around the GUI components, or more specifically, look at moEditBox and\
+      \ moCheckBox and basically do the same thing with them as I did with moEditBox\
+      \ in this tutorial. (also look at their classes to see what kind of variables\
+      \ and functions they have)</p>\n<h2><span class=\"mw-headline\" id=\"Creating_the_INT_file\"\
+      >Creating the INT file</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Mutator_Config_GUI_(UT2003)?section=3\" title=\"\
+      Edit section: Creating the INT file\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>it is very simple, just follow this syntax:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"br0\">[</span><span class=\"\
+      kw1\">Public</span><span class=\"br0\">]</span>\n<span class=\"kw8\">Object</span><span\
+      \ class=\"sy0\">=</span><span class=\"br0\">(</span><span class=\"kw1\">Class</span><span\
+      \ class=\"sy0\">=</span><span class=\"kw1\">Class</span>,MetaClass<span class=\"\
+      sy0\">=</span><span class=\"kw8\">Engine</span>.<span class=\"kw9\">Mutator</span>,<span\
+      \ class=\"kw5\">Name</span><span class=\"sy0\">=&lt;</span>PackageName<span\
+      \ class=\"sy0\">&gt;</span>.<span class=\"sy0\">&lt;</span>MutatorClass<span\
+      \ class=\"sy0\">&gt;</span>,Description<span class=\"sy0\">=</span><span class=\"\
+      st0\">\"&lt;MutatorName&gt;,&lt;Description&gt;\"</span><span class=\"br0\"\
+      >)</span></pre></div>\n</div>\n<p>so in our case, if lets say the mutator's\
+      \ package will be named MultiJumpMutator, our <a href=\"/Legacy:INT_File\" title=\"\
+      Legacy:INT File\">INT File</a> will look like this:</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"br0\">[</span><span class=\"kw1\">Public</span><span\
+      \ class=\"br0\">]</span>\n<span class=\"kw8\">Object</span><span class=\"sy0\"\
+      >=</span><span class=\"br0\">(</span><span class=\"kw1\">Class</span><span class=\"\
+      sy0\">=</span><span class=\"kw1\">Class</span>,MetaClass<span class=\"sy0\"\
+      >=</span><span class=\"kw8\">Engine</span>.<span class=\"kw9\">Mutator</span>,<span\
+      \ class=\"kw5\">Name</span><span class=\"sy0\">=</span>MultiJumpMutator.<span\
+      \ class=\"me0\">MultiJumpMut</span>,Description<span class=\"sy0\">=</span><span\
+      \ class=\"st0\">\"MultiJump,Configure your multi jumping ability.\"</span><span\
+      \ class=\"br0\">)</span></pre></div>\n</div>\n<p>and it will be named MultiJumpMutator.int</p>\n\
+      <h2><span class=\"mw-headline\" id=\"The_Grand_Finale\">The Grand Finale</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Mutator_Config_GUI_(UT2003)?section=4\" title=\"Edit section:\
+      \ The Grand Finale\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p><a href=\"/Legacy:Compiling_With_UCC\" title=\"Legacy:Compiling With UCC\"\
+      >Compile</a> the whole enchilada, then start UT2003. Go to instant action and\
+      \ click on Mutators, in there find MultiJumpMutator, add it to the mutator list\
+      \ and click on Configure Mutator, the window we created will pop up and you\
+      \ will be able to change the values to whatever you want, then start a game\
+      \ session and see the mutator in action.</p>\n<p>I hope you enjoyed this tutorial.</p>\n\
+      <p>LedZep (for comments EMail me at LedZepperus@Yahoo.com)</p>\n<h2><span class=\"\
+      mw-headline\" id=\"Comments\">Comments</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Mutator_Config_GUI_(UT2003)?section=5\"\
+      \ title=\"Edit section: Comments\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p><b>Dma:</b> Dude, you took my idea! <a href=\"/Legacy:Dma/MutMultiJump\"\
+      \ title=\"Legacy:Dma/MutMultiJump\">dma/MutMultiJump</a>&#160;:-)</p>\n<p><b>RoninLord:</b>\
+      \ Using the property <b>bBoundToParent=true</b> in a widget, including GUIButtons\
+      \ etc., makes the <b>WinLeft</b> and <b>WinTop</b> properties relative to the\
+      \ parent widget. So <b>WinTop=0.9</b> is 90% of the parent widget, rather than\
+      \ 90% of the whole window.</p>\n<p>This makes it easier to lay out widgets,\
+      \ especially if you later move the parent widget, you then don't have to adjust\
+      \ the properties of the child widgets.</p>\n<p><b>LedZep:</b> Wow thanks for\
+      \ the info RoninLord. Dma, sorry if you also used this idea (although i came\
+      \ up with it by myself, i didnt steal anything&#160;:-D) but the real point\
+      \ of this tutorial is to teach you how to make a GUI Config window, not a multi\
+      \ jump mutator&#160;;-)</p>\n<p><b>JoeDark:</b> Does this tut apply to UT or\
+      \ UT2003 so it can be filed correctly (if it already isn't). Please label it\
+      \ on here somewhere.</p>\n<p><b>Wormbo:</b> Uhm, I found this at the top of\
+      \ the page:</p>\n<blockquote class=\"legacyquote\">\n<p>Tutorial #1: Making\
+      \ a configuration window for your <a href=\"/Legacy:Mutator\" title=\"Legacy:Mutator\"\
+      >mutator</a> in <a href=\"/Legacy:UT2003\" title=\"Legacy:UT2003\" class=\"\
+      mw-redirect\">UT2003</a></p>\n</blockquote>\n<p><b>JoeDark:</b> LOL! It's late..\
+      \ need sleep.</p>\n<p><b>Tarquin:</b> This page isn't linked form anywhere useful.\
+      \ Could someone find it a home, eg <a href=\"/Legacy:UnrealScript\" title=\"\
+      Legacy:UnrealScript\">UnrealScript</a>&#160;?</p>\n<p><b>JoeDark:</b> Done.</p>\n\
+      <p><b>LedZep:</b> Hehe JoeDark, it happens to everyone... Ill just make the\
+      \ title a bit bigger so it'll be easier to see&#160;;)</p>\n<p><b>EntropicLqd:</b>\
+      \ If you follow the example above all positioning and scaling is relative to\
+      \ the window as a whole. This is fine if your dialog window (<i>with the dirty\
+      \ hack of using a button as the window background - ugh</i>) takes up the whole\
+      \ screen. If it doesn't then setting the <b>MenuOwner</b> proeprty to the background\
+      \ button will make all scalings relative to the actual button (the \"real\"\
+      \ window) - rather than the entire window itself. I found it made laying out\
+      \ the widgets a little easier.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">defaultproperties</span> <span class=\"br0\">{</span>\n\
+      \  <span class=\"kw2\">Begin</span> <span class=\"kw8\">Object</span> <span\
+      \ class=\"kw1\">Class</span><span class=\"sy0\">=</span>GUIButton <span class=\"\
+      kw5\">name</span><span class=\"sy0\">=</span>FMConfigBackground\n    <span class=\"\
+      co1\">// Blah blah blah</span>\n  End <span class=\"kw8\">Object</span>\n  <span\
+      \ class=\"kw2\">Begin</span> <span class=\"kw8\">Object</span> <span class=\"\
+      kw1\">Class</span><span class=\"sy0\">=</span>GUIButton <span class=\"kw5\"\
+      >Name</span><span class=\"sy0\">=</span>FMOkButton\n    <span class=\"co1\"\
+      >// Object properties go here and add the following to make everything relative\
+      \ to your config background:</span>\n    bBoundToParent<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">true</span>\n    bScaleToParent<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">true</span>\n    MenuOwner<span class=\"sy0\">=</span>FMConfigBackground\n\
+      \  End <span class=\"kw8\">Object</span></pre></div>\n</div>\n<p><b>EntropicLqd:</b>\
+      \ One other thing that is worth noting is that you can specify your own functions\
+      \ as callbacks from the OnChange events and such like. As long as the interface\
+      \ matches it works fine. For example I have three colour bar sliders that need\
+      \ to change the colour of a widget. Rather than use the \"InternalOnChange\"\
+      \ function I simply created my own and set the OnChange property appropriately.\
+      \ Example below:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      co1\">// I define the callback function I want to use to handle my three colour\
+      \ bar sliders</span>\n<span class=\"kw1\">function</span> ColourSliderChanged<span\
+      \ class=\"br0\">(</span>GUIComponent Sender<span class=\"br0\">)</span> <span\
+      \ class=\"br0\">{</span>\n  <span class=\"co1\">// Code goes in here</span>\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"co1\">// And then in the default\
+      \ property section of my slider I set the following property:</span>\n<span\
+      \ class=\"kw2\">Begin</span> <span class=\"kw8\">Object</span> <span class=\"\
+      kw1\">class</span><span class=\"sy0\">=</span>GUISlider <span class=\"kw5\"\
+      >Name</span><span class=\"sy0\">=</span>FMRedSlider\n  OnChange<span class=\"\
+      sy0\">=</span>ColourSliderChanged\n  <span class=\"co1\">// Rest of details</span>\n\
+      End <span class=\"kw8\">Object</span></pre></div>\n</div>\n<p><b>Brox:</b> How\
+      \ would you create a new class (also extended from GUIPage) in the onClick function\
+      \ of a button?</p>\n<p><b>EntropicLqd:</b> Like this: Code is taken from XInterface.Tab_InstantActionMutators.uc</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">function</span>\
+      \ <span class=\"kw5\">bool</span> MutConfigClick<span class=\"br0\">(</span>\
+      \ GUIComponent Sender <span class=\"br0\">)</span> <span class=\"br0\">{</span>\n\
+      \  <span class=\"kw2\">if</span><span class=\"br0\">(</span>MutConfigMenu <span\
+      \ class=\"sy0\">==</span> <span class=\"st0\">\"\"</span><span class=\"br0\"\
+      >)</span>\n    <span class=\"kw2\">return</span> <span class=\"kw6\">true</span>;\n\
+      \  <span class=\"co1\">// In this case MutConfigMenu is set to the value of\
+      \ the Mutator.ConfigMenuClassName property</span>\n  <span class=\"kw9\">Controller</span>.<span\
+      \ class=\"me0\">OpenMenu</span><span class=\"br0\">(</span> MutConfigMenu <span\
+      \ class=\"br0\">)</span>;\n  <span class=\"kw2\">return</span> <span class=\"\
+      kw6\">true</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"co1\">//\
+      \ And as for the actual button definition - I've cut out all bar the relevant\
+      \ properties</span>\n<span class=\"kw2\">Begin</span> <span class=\"kw8\">Object</span>\
+      \ <span class=\"kw1\">Class</span><span class=\"sy0\">=</span>GUIButton <span\
+      \ class=\"kw5\">Name</span><span class=\"sy0\">=</span>IAMutatorConfig\n  OnClick<span\
+      \ class=\"sy0\">=</span>MutConfigClick\nEnd <span class=\"kw8\">Object</span></pre></div>\n\
+      </div>\n<p><b>the_viking:</b> But how can I create a GUIPage where i might display\
+      \ the contents of my inventory?</p>\n<p>Where do I have to put my code into?</p>\n\
+      <p><b>spoon:</b> You can have an in-game GUIPage by using <b>ClientOpenMenu</b>.\
+      \ Just create a GUIPage, then call ClientOpenMenu from a mutate command or an\
+      \ exec function. The above GUIPage information still applies.</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">function</span> Mutate<span class=\"\
+      br0\">(</span> <span class=\"kw5\">string</span> MutateString, <span class=\"\
+      kw9\">PlayerController</span> Sender <span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n    <span class=\"kw2\">if</span><span class=\"br0\">(</span>\
+      \ <span class=\"kw3\">Caps</span><span class=\"br0\">(</span> <span class=\"\
+      kw3\">Left</span><span class=\"br0\">(</span> MutateString, <span class=\"nu0\"\
+      >3</span> <span class=\"br0\">)</span> <span class=\"br0\">)</span> <span class=\"\
+      sy0\">==</span> <span class=\"st0\">\"INV\"</span> <span class=\"br0\">)</span>\n\
+      \    <span class=\"br0\">{</span>\n      Sender.<span class=\"me0\">ClientOpenMenu</span><span\
+      \ class=\"br0\">(</span> <span class=\"st0\">\"GUIInvPage\"</span> <span class=\"\
+      br0\">)</span>;\n    <span class=\"br0\">}</span>\n    <span class=\"kw6\">Super</span>.<span\
+      \ class=\"me0\">Mutate</span><span class=\"br0\">(</span> MutateString, Sender\
+      \ <span class=\"br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>Your GUIPage class will have to play a nice game of find-the-actor\
+      \ since you can't pass anything.</p>\n<p><b>VonStrohmen:</b> In what instances\
+      \ do WinHeight/Width and WinTop/Left correspond to actual pixel coordinates\
+      \ versus fractions of the parent window? It seems to me that if I set any of\
+      \ those variables to be a decimal value less than 1 (e.g. 0.5) it translates\
+      \ that to percent, whereas greater than one is interpreted as a pixel coordinate.\
+      \ However, it doesn't always seem to work that way. Any advice?</p>\n<p>Also,\
+      \ why does Controls(n) work? I thought dynamic arrays use [] instead of ().</p>\n\
+      <p><b>Wormbo:</b> <a href=\"/Legacy:Default_Properties\" title=\"Legacy:Default\
+      \ Properties\">Default Properties</a> are always different.&#160;;) The size/position\
+      \ properties really work the way you described, but the position of a <a href=\"\
+      /Legacy:GUIComponent\" title=\"Legacy:GUIComponent\">GUIComponent</a> depends\
+      \ on more than just WinTop/Left and its size depends on more than just WinHeight/Width.\
+      \ There are also the bBoundToParent and bScaleWithParent properties which affect\
+      \ the position and size of a control.</p>\n<p><b>VonStrohmen:</b> I experimented\
+      \ with those as well, with mixed results. Then I realized that I never set the\
+      \ properties of the GUIPage itself. That seemed to help.</p>\n<hr />\n<p><b>EntropicLqd:</b>\
+      \ Any chance someone could rename this page to <strong class=\"selflink\">Mutator\
+      \ Config GUI (UT2003)</strong>?</p>\n<p><b>Mr.bob:</b> Help out a poor newb\
+      \ here, You said \"The second important thing is that after the creation of\
+      \ each window, it is assigned to a Controls(n) (n being a number), this is important\
+      \ to us because we will soon use this.\"</p>\n<p>And then you never used it?\
+      \ What does control(n) do anyway?</p>\n<p>I have another problem. I took the\
+      \ text that was shown, copied an pasted it into a .uc file. Then it tired to\
+      \ compile it, everything went fine until it said:</p>\n<p>Parsing MultiJumpMut</p>\n\
+      <p>C;\\UT2004\\MultijumpMut\\ClassesMultiJumpMut.uc&lt;20&gt;&#160;: Error Unexpected\
+      \ 'class'</p>\n<p>Complie aborted due to errors.</p>\n<p>Failure - 1 error,\
+      \ 0 warnings</p>\n<p>Yes I did change the code so it knew that it was MultiJumpMut\
+      \ instead of MultiJumpMutator, also you may have noticed that I have Unreal\
+      \ Tourny 2004. I have never had 2003</p>\n<p><b>Tarquin:</b> I am not sure it\
+      \ is useful for this tutorial page to include an actual mutator – it rather\
+      \ detracts from the point, doesn't it?</p>\n<p><b>M.r.bob:</b> I see what you\
+      \ mean, but I exspected to see what this code did, and then change it so it\
+      \ did something else, and that way figure out how code like this worked. Anyway\
+      \ I found out my problem, GUI's work very different in 2004 then in 2003.</p>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.248 seconds\nReal time usage:\
+      \ 0.747 seconds\nPreprocessor visited node count: 87/1000000\nPreprocessor generated\
+      \ node count: 273/1000000\nPost‐expand include size: 366/2097152 bytes\nTemplate\
+      \ argument size: 108/2097152 bytes\nHighest expansion depth: 3/40\nExpensive\
+      \ parser function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report\
+      \ (%,ms,calls,template)\n100.00%   20.657      1 - -total\n100.00%   20.657\
+      \      1 - Template:Innerbox\n-->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:2174-0!*!0!!en!*!*\
+      \ and timestamp 20221118020325 and revision id 5282\n -->\n"
+  categories:
+  - sortkey: "Mutator Config GUI (UT2003)"
+    name: "Legacy_Tutorial"
+  - sortkey: "Mutator Config GUI (UT2003)"
+    name: "Legacy_Refactor_Me"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Compiling With UCC"
+  - ns: 100
+    exists: true
+    name: "Legacy:UnrealScript"
+  - ns: 100
+    exists: true
+    name: "Legacy:INT File"
+  - ns: 100
+    exists: true
+    name: "Legacy:Mutator"
+  - ns: 100
+    exists: true
+    name: "Legacy:UT2004"
+  - ns: 100
+    exists: true
+    name: "Legacy:GUIComponent"
+  - ns: 100
+    exists: true
+    name: "Legacy:Mutator Topics"
+  - ns: 100
+    exists: true
+    name: "Legacy:UT2003"
+  - ns: 100
+    exists: true
+    name: "Legacy:Mutator Config GUI (UT2004)"
+  - ns: 100
+    exists: true
+    name: "Legacy:GUI Class Hierarchy"
+  - ns: 100
+    exists: true
+    name: "Legacy:Dma/MutMultiJump"
+  - ns: 100
+    exists: true
+    name: "Legacy:Default Properties"
+  - ns: 100
+    exists: true
+    name: "Legacy:Setting Up UnrealScript"
+  - ns: 100
+    exists: true
+    name: "Legacy:Variable Syntax"
+  - ns: 100
+    exists: true
+    name: "Legacy:UC File"
+  templates:
+  - ns: 10
+    exists: true
+    name: "Template:Innerbox"
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Creating the Mutator Class"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Mutator_Config_GUI_(UT2003)"
+    byteoffset: 939
+    anchor: "Creating_the_Mutator_Class"
+  - toclevel: 1
+    level: "2"
+    line: "Creating the Configuration Window for the Mutator"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Mutator_Config_GUI_(UT2003)"
+    byteoffset: 2966
+    anchor: "Creating_the_Configuration_Window_for_the_Mutator"
+  - toclevel: 1
+    level: "2"
+    line: "Creating the INT file"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:Mutator_Config_GUI_(UT2003)"
+    byteoffset: 10525
+    anchor: "Creating_the_INT_file"
+  - toclevel: 1
+    level: "2"
+    line: "The Grand Finale"
+    number: "4"
+    index: "4"
+    fromtitle: "Legacy:Mutator_Config_GUI_(UT2003)"
+    byteoffset: 11104
+    anchor: "The_Grand_Finale"
+  - toclevel: 1
+    level: "2"
+    line: "Comments"
+    number: "5"
+    index: "5"
+    fromtitle: "Legacy:Mutator_Config_GUI_(UT2003)"
+    byteoffset: 11587
+    anchor: "Comments"
+  displaytitle: "Legacy:Mutator Config GUI (UT2003)"
+  iwlinks: []
+  wikitext:
+    text: "Making a configuration window for your [[Legacy:Mutator Topics|mutator]]\
+      \ in [[Legacy:UT2003|UT2003]]. Written By LedZep\n\n'''NOTE:''' If you want\
+      \ the [[Legacy:UT2004|UT2004]] version then please see [[Legacy:Mutator Config\
+      \ GUI (UT2004)|Mutator Config GUI (UT2004)]].\n\nThis tutorial will guide you\
+      \ through creating a simple mutator and a configuration window for it. This\
+      \ tutorial assumes that you have basic knowledge in [[Legacy:UnrealScript|UnrealScript]]\
+      \ and that you know how to create [[Legacy:UC File|UC file]]s and how to setup\
+      \ and compile them: see [[Legacy:Setting Up UnrealScript|Setting Up UnrealScript]].\n\
+      \nAs an example, this tutorial will show you how to create a MultiJumping mutator\
+      \ and how to create a configuration window to setup it. You are not going to\
+      \ need any external files other than the ones you will create yourself.\n\n\
+      For a class tree of the GUI components see [[Legacy:GUI Class Hierarchy|GUI\
+      \ Class Hierarchy]].\n\n==Creating the Mutator Class==\n\nFirst we will create\
+      \ the mutator, basically it is going to have three components: the configurable\
+      \ variables, the ModifyPlayer function and the [[Legacy:Default Properties|Default\
+      \ Properties]]. Here is how it is going to look like:\n\n<uscript>\nClass MultiJumpMut\
+      \ extends Mutator Config(User);\n\nvar() config int MJMax, MJBoost;\n\nfunction\
+      \ ModifyPlayer(Pawn Other)\n{\n\tlocal xPawn x;\n\tx = xPawn(Other);\t// Check\
+      \ if pawn is xPawn\n\n\tif(x != None)\t\t// If it is, assign the new variables\
+      \ to it\n\t{\n\t\tx.MaxMultiJump = MJMax;\n\t\tx.MultiJumpBoost = MJBoost;\n\
+      \t}\n}\n\ndefaultproperties\n{\n    IconMaterialName=\"MutatorArt.nosym\"\n\
+      \    ConfigMenuClassName=\"MultiJumpMutator.MJMutConfig\"        // Note that\
+      \ this assumes that your package's name is MultiJumpMutator\n    GroupName=\"\
+      Jumping\"\n    FriendlyName=\"MultiJumpMutator\"\n    Description=\"Configure\
+      \ Your Multi Jumping Ability.\"\n    MJMax=1\n    MJBoost=25\n}\n</uscript>\n\
+      \nNote that I added \"Config(User)\" to the class declaration so it will know\
+      \ where to store its variables.  When declaring Configurable variables, always\
+      \ put the word \"config\" after the \"var\" to let the compiler know that they\
+      \ are configurable. If you want those varibles to have default properties incase\
+      \ the user wont specify any, make your \"var\" look like this: \"var()\", and\
+      \ in the default properties section give those variable a value (dont forget\
+      \ that you dont use semi colons in the default properties section).  See also\
+      \ [[Legacy:Variable Syntax|Variable Syntax]].\n\nIn this mutator's case, MJMax\
+      \ is the maximum number of extra jumps the player can make, and MJBoost is the\
+      \ boost each extra jump gives him.  The ModifyPlayer function is really simple,\
+      \ it recieves a Pawn in its parameters, checks if it is an xPawn and then assigns\
+      \ our mutator's variables to the xPawn's variables.  Now default props, basically\
+      \ what they do is give the mutator its name and its description, assign values\
+      \ to our configurable variable and specify our mutator's config class (which\
+      \ we will make in a second)\n\n==Creating the Configuration Window for the Mutator==\n\
+      \nThe ConfigWindow is a little more tricky, it has four parts to it; declaring\
+      \ the two edit boxes we are going to be using, the InitComponent and InternalOnClick\
+      \ functions and the DefaultProperties.  First I'll give you the code, then I'll\
+      \ explain. Dont freak out when you see the Default Properties, it will all become\
+      \ clear to you very soon.\n\n<uscript>\nclass MJMutConfig extends GUIPage;\n\
+      \nvar moEditBox MJCountBox, MJBoostBox;\t\t// Declare two EditBox type Variables\n\
+      \n// Called when our GUI component is initiated (in this case our config window)\n\
+      function InitComponent(GUIController MyController, GUIComponent MyOwner)\n{\n\
+      \tSuper.InitComponent(MyController, MyOwner);\t// Call Parent's InitComponent\n\
+      \n\t// Assign variables to EditBoxes that were created in the default properties\n\
+      \tMJCountBox = moEditBox(Controls[4]);\n\tMJBoostBox = moEditBox(Controls[5]);\n\
+      \n\t// Set the EditBoxes to be integer only because we are only dealing with\
+      \ numbers\n\tMJCountBox.IntOnly(true);\n\tMJBoostBox.IntOnly(true);\n\t\n\t\
+      // Set the EditBoxes' text to our mutator's config variables' values\n\tMJCountBox.SetText(string(class'MultiJumpMut'.default.MJMax));\n\
+      \tMJBoostBox.SetText(string(class'MultiJumpMut'.default.MJBoost));\n}\n\n//\
+      \ Called when the OK button is clicked\nfunction bool InternalOnClick(GUIComponent\
+      \ Sender)\n{\n\t// Set our Mutator's variables to the new variables that were\
+      \ set by the user\n\tclass'MultiJumpMut'.default.MJMax = int(MJCountBox.GetText());\n\
+      \tclass'MultiJumpMut'.default.MJBoost = int(MJBoostBox.GetText());\n\t\n\tclass'MultiJumpMut'.static.StaticSaveConfig();\t\
+      // Save all the Mutator's config variables\n\n\tController.CloseMenu(false);\t\
+      // Close the window\n\n\treturn true;\t// Return True (hard to figure out eh?)\
+      \ ;)\n}\n\ndefaultproperties\n{\n\tBegin Object Class=GUIButton name=DialogBackground\t\
+      // The window's background\n\t\tWinWidth=1.0\t\t\t// Set Window's width\n\t\t\
+      WinHeight=1.0\t\t\t// Set Window's height\n\t\tWinTop=0\t\t\t// Set the windows\
+      \ location on the Y axis\n\t\tWinLeft=0\t\t\t// Set the windows location on\
+      \ the X axis\n\t\tbAcceptsInput=false\t\t// Since its just a background it wont\
+      \ accept input\n\t\tbNeverFocus=true\t\t// Just a background, no need for focus\n\
+      \t\tStyleName=\"ComboListBox\"\t// The style of the background\n\t\tbBoundToParent=true\t\
+      \t// is it bound to its parent window?\n\t\tbScaleToParent=true\t\t// is it\
+      \ in scale to its parent window?\n\tEnd Object\n\tControls(0)=GUIButton'DialogBackground'\t\
+      // Sets Controls[0] to the DialogBackround\n\n\tBegin Object Class=GUIButton\
+      \ Name=OkButton\t// An \"OK\" Button\n\t\tCaption=\"OK\"\t\t\t\t// The button's\
+      \ caption\n\t\tWinWidth=0.2\n\t\tWinHeight=0.04\n\t\tWinLeft=0.4\n\t\tWinTop=0.63\n\
+      \t\tOnClick=InternalOnClick\t\t\t// Assigns the button's OnClick to our InternalOnClick\
+      \ function\n\tEnd Object\n\tControls(1)=GUIButton'OkButton'\t\t\t// Sets Controls[1]\
+      \ to the OkButton\n\n\tBegin Object class=GUILabel Name=DialogText\t// A text\
+      \ label\n\t\tCaption=\"MultiJump Configuration\"\n\t\tTextALign=TXTA_Center\t\
+      \t\t// Text allignment\n\t\tTextColor=(R=220,G=180,B=0,A=255)\t// Text color\n\
+      \t\tTextFont=\"UT2HeaderFont\"\t\t// Text font\n\t\tWinWidth=1.000000\n\t\t\
+      WinHeight=32.000000\n\t\tWinLeft=0.000000\n\t\tWinTop=0.325000\n\tEnd Object\n\
+      \tControls(2)=GUILabel'DialogText'\n\n\tBegin Object class=GUILabel Name=DialogText2\t\
+      // Another text label\n\t\tCaption=\"Configure your MultiJump Options (default\
+      \ JumpBoost is 25)\"\n\t\tTextALign=TXTA_Center\n\t\tTextColor=(R=220,G=180,B=0,A=255)\n\
+      \t\tTextFont=\"UT2MenuFont\"\n\t\tWinWidth=1.000000\n\t\tWinHeight=32.000000\n\
+      \t\tWinLeft=0.000000\n\t\tWinTop=0.390626\n\tEnd Object\n\tControls(3)=GUILabel'DialogText2'\n\
+      \n\tBegin Object class=moEditBox Name=MJCounter\t// An edit box (for our MJMax)\n\
+      \t\tWinWidth=0.431641\n\t\tWinHeight=0.04\n\t\tWinLeft=0.293750\n\t\tWinTop=0.467448\n\
+      \t\tCaption=\"Number of MultiJumps\"\n\t\tbReadOnly=false\t\t\t\t// Will take\
+      \ Input, therefor isn't readonly\n\tEnd Object\n\tControls(4)=moEditBox'MJCounter'\t\
+      \t// Set Controls[4] to the MJCounter\n\t\n\tBegin Object class=moEditBox Name=MJBooster\t\
+      // Another edit box (for our MJBoost)\n\t\tWinWidth=0.431641\n\t\tWinHeight=0.04\n\
+      \t\tWinLeft=0.293750\n\t\tWinTop=0.517448\n\t\tCaption=\"MultiJump Boost\"\n\
+      \t\tbReadOnly=false\n\tEnd Object\n\tControls(5)=moEditBox'MJBooster'\t\t//\
+      \ Set Controls[5] to the MJBooster\n\t\n\t// The Window's own properties (MJMutConfig)\n\
+      \tWinLeft=0\n\tWinTop=0.3\n\tWinWidth=1\n\tWinHeight=0.4\n\tbRequire640x480=True\t\
+      \t// Required Minimum resolution\n}\n</uscript>\n\nFirst we have the Class Declaration,\
+      \ only one line, easy wasnt it? (note that you should subclass GUIPage) Then\
+      \ we have the variable declaration, also one line! you see how easy coding is?\
+      \ Well, only this time, since we are making editboxes, the variables are of\
+      \ the moEditBox type.  Ok, now we will skip the two function (we will come back\
+      \ to them later) and go straight to the defaultprops.  If you are new to UnrealScript,\
+      \ this might seem a little weird to you (it sure did to me), but dont worry,\
+      \ it is really simple! in the classic UT, we had to create around 3 or 4 classes\
+      \ just to make one window, basically what all this code does is create this\
+      \ window for you using only one class, how cool is that?  To make it easy to\
+      \ understand for you I put a whole bunch of comments into it so just read through\
+      \ it and read the comments and it will give you the general idea.  Basically,\
+      \ Begin Object creates an object, names it, manipulates its variables and then\
+      \ assigns it to something.  It is commonly used in the UT2003 window system\
+      \ as followes:\n\n<uscript>\n\tBegin Object class=<ClassName> Name=<ObjectName>\n\
+      \t\tWinWidth=<Width>\n\t\tWinHeight=<Height>\n\t\tWinLeft=<LocationOnXAxis>\n\
+      \t\tWinTop=<LocationOnYAxis>\n\t\t<OtherVars>=<OtherValues>\n\tEnd Object\n\t\
+      Controls(n)=<ClassName>'<ObjectName>'\t// n is the object's number - 1 (so the\
+      \ first object is 0)\n</uscript>\n\nall what our DefaultProperties do is create\
+      \ a background, an \"OK\" Button, two text labels, two edit boxes and then set\
+      \ the variables for its own class (MJMutConfig).  There are two important things\
+      \ you should note, one is \"OnClick=InternalOnClick\" which is found in the\
+      \ \"OK\" button's creation code. Basically what it does is call our InternalOnClick\
+      \ function whenever the \"OK\" button is clicked. The second important thing\
+      \ is that after the creation of each window, it is assigned to a Controls(n)\
+      \ (n being a number), this is important to us because we will soon use this.\n\
+      \nOk, we are done with the hard part, all what is left to do is the last two\
+      \ functions.  the function InitComponent is pretty much like UT's Created, it\
+      \ is called when our GUI component is initiated.  First it calls its parent's\
+      \ InitComponent to do all the important stuff of initiating the window.  Then\
+      \ we assign the two moEditBoxes (that were created in the default properties)\
+      \ to our own EditBoxes.\n\nThen we set them as IntOnly because we are only dealing\
+      \ with numbers, and finally we set their text to our mutator's configurable\
+      \ variables' values. Basically all what our InitComponent function does is getting\
+      \ our EditBoxes setup and ready to use.  And our last function for this tutorial,\
+      \ InternalOnClick, which is called when the \"OK\" button is clicked.  All this\
+      \ function does is set our mutator's variables to the new variables that were\
+      \ typed into the editboxes, then is saves all of our mutator's config variables\
+      \ (which is only two) and finally it closes the window.\n\nAnd thats it!\n\n\
+      By the way, you can also add checkboxes and combolists and all sorts of GUI\
+      \ components, look around the GUI components, or more specifically, look at\
+      \ moEditBox and moCheckBox and basically do the same thing with them as I did\
+      \ with moEditBox in this tutorial. (also look at their classes to see what kind\
+      \ of variables and functions they have)\n\n==Creating the INT file==\n\nit is\
+      \ very simple, just follow this syntax:\n\n<uscript>\n[Public]\nObject=(Class=Class,MetaClass=Engine.Mutator,Name=<PackageName>.<MutatorClass>,Description=\"\
+      <MutatorName>,<Description>\")\n</uscript>\n\nso in our case, if lets say the\
+      \ mutator's package will be named MultiJumpMutator, our [[Legacy:INT File|INT\
+      \ File]] will look like this:\n\n<uscript>\n[Public]\nObject=(Class=Class,MetaClass=Engine.Mutator,Name=MultiJumpMutator.MultiJumpMut,Description=\"\
+      MultiJump,Configure your multi jumping ability.\")\n</uscript>\n\nand it will\
+      \ be named MultiJumpMutator.int\n\n==The Grand Finale==\n\n[[Legacy:Compiling\
+      \ With UCC|Compile]] the whole enchilada, then start UT2003. Go to instant action\
+      \ and click on Mutators, in there find MultiJumpMutator, add it to the mutator\
+      \ list and click on Configure Mutator, the window we created will pop up and\
+      \ you will be able to change the values to whatever you want, then start a game\
+      \ session and see the mutator in action.\n\nI hope you enjoyed this tutorial.\n\
+      \nLedZep (for comments EMail me at LedZepperus@Yahoo.com)\n\n==Comments ==\n\
+      \n'''Dma:''' Dude, you took my idea! [[Legacy:Dma/MutMultiJump|dma/MutMultiJump]]\
+      \ :-)\n\n'''RoninLord:''' Using the property '''bBoundToParent=true''' in a\
+      \ widget, including GUIButtons etc., makes the '''WinLeft''' and '''WinTop'''\
+      \ properties relative to the parent widget. So '''WinTop=0.9''' is 90% of the\
+      \ parent widget, rather than 90% of the whole window.\n\nThis makes it easier\
+      \ to lay out widgets, especially if you later move the parent widget, you then\
+      \ don't have to adjust the properties of the child widgets.\n\n'''LedZep:'''\
+      \ Wow thanks for the info RoninLord. Dma, sorry if you also used this idea (although\
+      \ i came up with it by myself, i didnt steal anything :-D) but the real point\
+      \ of this tutorial is to teach you how to make a GUI Config window, not a multi\
+      \ jump mutator ;-)\n\n'''JoeDark:''' Does this tut apply to UT or UT2003 so\
+      \ it can be filed correctly (if it already isn't). Please label it on here somewhere.\n\
+      \n'''Wormbo:''' Uhm, I found this at the top of the page:\n\n{{innerbox|Tutorial\
+      \ #1: Making a configuration window for your [[Legacy:Mutator|mutator]] in [[Legacy:UT2003|UT2003]]\n\
+      \n}}\n\n'''JoeDark:''' LOL! It's late.. need sleep.\n\n'''Tarquin:''' This page\
+      \ isn't linked form anywhere useful. Could someone find it a home, eg [[Legacy:UnrealScript|UnrealScript]]\
+      \ ?\n\n'''JoeDark:''' Done.\n\n'''LedZep:''' Hehe JoeDark, it happens to everyone...\
+      \ Ill just make the title a bit bigger so it'll be easier to see ;)\n\n'''EntropicLqd:'''\
+      \  If you follow the example above all positioning and scaling is relative to\
+      \ the window as a whole.  This is fine if your dialog window (''with the dirty\
+      \ hack of using a button as the window background - ugh'') takes up the whole\
+      \ screen.  If it doesn't then setting the '''MenuOwner''' proeprty to the background\
+      \ button will make all scalings relative to the actual button (the \"real\"\
+      \ window) - rather than the entire window itself.  I found it made laying out\
+      \ the widgets a little easier.\n\n<uscript>\ndefaultproperties {\n  Begin Object\
+      \ Class=GUIButton name=FMConfigBackground\n    // Blah blah blah\n  End Object\n\
+      \  Begin Object Class=GUIButton Name=FMOkButton\n    // Object properties go\
+      \ here and add the following to make everything relative to your config background:\n\
+      \    bBoundToParent=true\n    bScaleToParent=true\n    MenuOwner=FMConfigBackground\n\
+      \  End Object\n</uscript>\n\n'''EntropicLqd:''' One other thing that is worth\
+      \ noting is that you can specify your own functions as callbacks from the OnChange\
+      \ events and such like.  As long as the interface matches it works fine.  For\
+      \ example I have three colour bar sliders that need to change the colour of\
+      \ a widget.  Rather than use the \"InternalOnChange\" function I simply created\
+      \ my own and set the OnChange property appropriately.  Example below:\n\n<uscript>\n\
+      // I define the callback function I want to use to handle my three colour bar\
+      \ sliders\nfunction ColourSliderChanged(GUIComponent Sender) {\n  // Code goes\
+      \ in here\n}\n\n// And then in the default property section of my slider I set\
+      \ the following property:\nBegin Object class=GUISlider Name=FMRedSlider\n \
+      \ OnChange=ColourSliderChanged\n  // Rest of details\nEnd Object\n</uscript>\n\
+      \n'''Brox:''' How would you create a new class (also extended from GUIPage)\
+      \ in the onClick function of a button?\n\n'''EntropicLqd:''' Like this:  Code\
+      \ is taken from XInterface.Tab_InstantActionMutators.uc\n\n<uscript>\nfunction\
+      \ bool MutConfigClick( GUIComponent Sender ) {\n  if(MutConfigMenu == \"\")\n\
+      \    return true;\n  // In this case MutConfigMenu is set to the value of the\
+      \ Mutator.ConfigMenuClassName property\n  Controller.OpenMenu( MutConfigMenu\
+      \ );\n  return true;\n}\n\n// And as for the actual button definition - I've\
+      \ cut out all bar the relevant properties\nBegin Object Class=GUIButton Name=IAMutatorConfig\n\
+      \  OnClick=MutConfigClick\nEnd Object\n</uscript>\n\n'''the_viking:''' But how\
+      \ can I create a GUIPage where i might display the contents of my inventory?\
+      \ \n\nWhere do I have to put my code into?\n\n'''spoon:''' You can have an in-game\
+      \ GUIPage by using '''ClientOpenMenu'''. Just create a GUIPage, then call ClientOpenMenu\
+      \ from a mutate command or an exec function. The above GUIPage information still\
+      \ applies.\n\n<uscript>\nfunction Mutate( string MutateString, PlayerController\
+      \ Sender )\n{\n    if( Caps( Left( MutateString, 3 ) ) == \"INV\" )\n    {\n\
+      \      Sender.ClientOpenMenu( \"GUIInvPage\" );\n    }\n    Super.Mutate( MutateString,\
+      \ Sender );\n}\n</uscript>\n\nYour GUIPage class will have to play a nice game\
+      \ of find-the-actor since you can't pass anything.\n\n'''VonStrohmen:''' In\
+      \ what instances do WinHeight/Width and WinTop/Left correspond to actual pixel\
+      \ coordinates versus fractions of the parent window? It seems to me that if\
+      \ I set any of those variables to be a decimal value less than 1 (e.g. 0.5)\
+      \ it translates that to percent, whereas greater than one is interpreted as\
+      \ a pixel coordinate. However, it doesn't always seem to work that way. Any\
+      \ advice?\n\nAlso, why does Controls(n) work? I thought dynamic arrays use []\
+      \ instead of ().\n\n'''Wormbo:''' [[Legacy:Default Properties|Default Properties]]\
+      \ are always different. ;) The size/position properties really work the way\
+      \ you described, but the position of a [[Legacy:GUIComponent|GUIComponent]]\
+      \ depends on more than just WinTop/Left and its size depends on more than just\
+      \ WinHeight/Width. There are also the bBoundToParent and bScaleWithParent properties\
+      \ which affect the position and size of a control.\n\n'''VonStrohmen:''' I experimented\
+      \ with those as well, with mixed results. Then I realized that I never set the\
+      \ properties of the GUIPage itself. That seemed to help. \n\n----\n\n'''EntropicLqd:'''\
+      \ Any chance someone could rename this page to [[Legacy:Mutator Config GUI (UT2003)|Mutator\
+      \ Config GUI (UT2003)]]?\n\n'''Mr.bob:''' Help out a poor newb here, You said\
+      \ \"The second important thing is that after the creation of each window, it\
+      \ is assigned to a Controls(n) (n being a number), this is important to us because\
+      \ we will soon use this.\"\n\nAnd then you never used it? What does control(n)\
+      \ do anyway?\n\nI have another problem. I took the text that was shown, copied\
+      \ an pasted it into a .uc file. Then it tired to compile it, everything went\
+      \ fine until it said:\n\nParsing MultiJumpMut\n\nC;\\UT2004\\MultijumpMut\\\
+      ClassesMultiJumpMut.uc<20> : Error Unexpected 'class'\n\nComplie aborted due\
+      \ to errors.\n\nFailure - 1 error, 0 warnings\n\nYes I did change the code so\
+      \ it knew that it was MultiJumpMut instead of MultiJumpMutator, also you may\
+      \ have noticed that I have Unreal Tourny 2004. I have never had 2003\n\n'''Tarquin:'''\
+      \ I am not sure it is useful for this tutorial page to include an actual mutator\
+      \ &ndash; it rather detracts from the point, doesn't it?\n\n'''M.r.bob:''' I\
+      \ see what you mean, but I exspected to see what this code did, and then change\
+      \ it so it did something else, and that way figure out how code like this worked.\
+      \ Anyway I found out my problem, GUI's work very different in 2004 then in 2003.\n\
+      \n[[Category:Legacy Tutorial|{{PAGENAME}}]]\n[[Category:Legacy Refactor Me|{{PAGENAME}}]]"
+  properties: []
+  revId: 5282
+name: "Legacy:Mutator Config GUI (UT2003)"
+revision:
+  revid: 5282
+  parentid: 5283
+  user: "EntropicLqd"
+  timestamp: 1087749639.000000000
+  comment: "Added note pointing at the UT2004 equivalent page."
+timestamp: 1668763627.508966000

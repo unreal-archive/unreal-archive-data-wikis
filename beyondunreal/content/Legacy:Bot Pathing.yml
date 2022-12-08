@@ -1,0 +1,833 @@
+---
+parse:
+  title: "Legacy:Bot Pathing"
+  text:
+    text: "<p>This is the <a href=\"/Legacy:Bot_Support\" title=\"Legacy:Bot Support\"\
+      >Bot Support</a> system that allows bots to run around a map via a network of\
+      \ waypoints, or <b>bot paths</b>. This page describes the concepts and elements\
+      \ of bot path networks. For a simple tutorial, see <a href=\"/Legacy:Basic_Bot_Pathing\"\
+      \ title=\"Legacy:Basic Bot Pathing\">Basic Bot Pathing</a>.</p>\n<p><b>If you\
+      \ are new to bot pathing</b>, see the <a href=\"/Legacy:Basic_Bot_Pathing\"\
+      \ title=\"Legacy:Basic Bot Pathing\">Basic Bot Pathing</a> tutorial. After that,\
+      \ <a href=\"/Legacy:Testing_Botplay\" title=\"Legacy:Testing Botplay\">Testing\
+      \ Botplay</a> will help clean up any problem areas in the bot path. When problems\
+      \ arise, see <a href=\"/Legacy:Bot_Mind\" title=\"Legacy:Bot Mind\">Bot Mind</a>\
+      \ because understanding the bot's behavior can help. For special tasks you'd\
+      \ like bots to do, try <a href=\"/Legacy:Strategic_Bots\" title=\"Legacy:Strategic\
+      \ Bots\">Strategic Bots</a> or reviewing the list of available <a href=\"/Legacy:NavigationPoint\"\
+      \ title=\"Legacy:NavigationPoint\">NavigationPoints</a> for options that handle\
+      \ bot support.</p>\n<p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\"\
+      >\n<h2>Contents</h2>\n</div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a\
+      \ href=\"#Overview\"><span class=\"tocnumber\">1</span> <span class=\"toctext\"\
+      >Overview</span></a>\n<ul>\n<li class=\"toclevel-2 tocsection-2\"><a href=\"\
+      #A_Quick_Note_About_Automatically_Building_The_Path_Network\"><span class=\"\
+      tocnumber\">1.1</span> <span class=\"toctext\">A Quick Note About Automatically\
+      \ Building The Path Network</span></a></li>\n</ul>\n</li>\n<li class=\"toclevel-1\
+      \ tocsection-3\"><a href=\"#Seeing_The_Network\"><span class=\"tocnumber\">2</span>\
+      \ <span class=\"toctext\">Seeing The Network</span></a>\n<ul>\n<li class=\"\
+      toclevel-2 tocsection-4\"><a href=\"#UT200x_Color_Codes\"><span class=\"tocnumber\"\
+      >2.1</span> <span class=\"toctext\">UT200x Color Codes</span></a></li>\n<li\
+      \ class=\"toclevel-2 tocsection-5\"><a href=\"#UT_Color_Codes\"><span class=\"\
+      tocnumber\">2.2</span> <span class=\"toctext\">UT Color Codes</span></a></li>\n\
+      </ul>\n</li>\n<li class=\"toclevel-1 tocsection-6\"><a href=\"#Special_Navigation_Points\"\
+      ><span class=\"tocnumber\">3</span> <span class=\"toctext\">Special Navigation\
+      \ Points</span></a>\n<ul>\n<li class=\"toclevel-2 tocsection-7\"><a href=\"\
+      #JumpSpots\"><span class=\"tocnumber\">3.1</span> <span class=\"toctext\">JumpSpots</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-8\"><a href=\"#AssaultPaths\"><span class=\"\
+      tocnumber\">3.2</span> <span class=\"toctext\">AssaultPaths</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-9\"><a href=\"#GameObjectives\"><span class=\"\
+      tocnumber\">3.3</span> <span class=\"toctext\">GameObjectives</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-10\"><a href=\"#RoadPathNodes_.26_FlyingPathNodes_.28UT2004.29\"\
+      ><span class=\"tocnumber\">3.4</span> <span class=\"toctext\">RoadPathNodes\
+      \ &amp; FlyingPathNodes (UT2004)</span></a></li>\n</ul>\n</li>\n<li class=\"\
+      toclevel-1 tocsection-11\"><a href=\"#Special_Handling\"><span class=\"tocnumber\"\
+      >4</span> <span class=\"toctext\">Special Handling</span></a>\n<ul>\n<li class=\"\
+      toclevel-2 tocsection-12\"><a href=\"#Forced_Paths\"><span class=\"tocnumber\"\
+      >4.1</span> <span class=\"toctext\">Forced Paths</span></a></li>\n<li class=\"\
+      toclevel-2 tocsection-13\"><a href=\"#Proscribed_Paths\"><span class=\"tocnumber\"\
+      >4.2</span> <span class=\"toctext\">Proscribed Paths</span></a></li>\n<li class=\"\
+      toclevel-2 tocsection-14\"><a href=\"#AIScripts_.26_ScriptedSequences\"><span\
+      \ class=\"tocnumber\">4.3</span> <span class=\"toctext\">AIScripts &amp; ScriptedSequences</span></a></li>\n\
+      </ul>\n</li>\n<li class=\"toclevel-1 tocsection-15\"><a href=\"#Pathing_Special_Areas\"\
+      ><span class=\"tocnumber\">5</span> <span class=\"toctext\">Pathing Special\
+      \ Areas</span></a>\n<ul>\n<li class=\"toclevel-2 tocsection-16\"><a href=\"\
+      #Water\"><span class=\"tocnumber\">5.1</span> <span class=\"toctext\">Water</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-17\"><a href=\"#Lifts\"><span class=\"tocnumber\"\
+      >5.2</span> <span class=\"toctext\">Lifts</span></a></li>\n<li class=\"toclevel-2\
+      \ tocsection-18\"><a href=\"#Ladders\"><span class=\"tocnumber\">5.3</span>\
+      \ <span class=\"toctext\">Ladders</span></a></li>\n<li class=\"toclevel-2 tocsection-19\"\
+      ><a href=\"#JumpPads\"><span class=\"tocnumber\">5.4</span> <span class=\"toctext\"\
+      >JumpPads</span></a></li>\n<li class=\"toclevel-2 tocsection-20\"><a href=\"\
+      #Doors\"><span class=\"tocnumber\">5.5</span> <span class=\"toctext\">Doors</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-21\"><a href=\"#Teleporters\"><span class=\"\
+      tocnumber\">5.6</span> <span class=\"toctext\">Teleporters</span></a></li>\n\
+      </ul>\n</li>\n<li class=\"toclevel-1 tocsection-22\"><a href=\"#Pathing_Topics\"\
+      ><span class=\"tocnumber\">6</span> <span class=\"toctext\">Pathing Topics</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-23\"><a href=\"#Basic_Bot_Pathing_Tutorial\"\
+      ><span class=\"tocnumber\">7</span> <span class=\"toctext\">Basic Bot Pathing\
+      \ Tutorial</span></a></li>\n<li class=\"toclevel-1 tocsection-24\"><a href=\"\
+      #Related_Topics\"><span class=\"tocnumber\">8</span> <span class=\"toctext\"\
+      >Related Topics</span></a></li>\n<li class=\"toclevel-1 tocsection-25\"><a href=\"\
+      #External_Links\"><span class=\"tocnumber\">9</span> <span class=\"toctext\"\
+      >External Links</span></a></li>\n<li class=\"toclevel-1 tocsection-26\"><a href=\"\
+      #Discussion\"><span class=\"tocnumber\">10</span> <span class=\"toctext\">Discussion</span></a></li>\n\
+      </ul>\n</div>\n<p></p>\n<h2><span class=\"mw-headline\" id=\"Overview\">Overview</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Bot_Pathing?section=1\" title=\"Edit section: Overview\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>The\
+      \ AI code that drives bots doesn't have the power to interpret the 3D maps we\
+      \ see them in. Instead, a map has to have a set of waypoints, joined together\
+      \ to make a network which the bots follow.</p>\n<p>These waypoints are mostly\
+      \ actors of the class <a href=\"/Legacy:Actor\" title=\"Legacy:Actor\">Actor</a>\
+      \ &gt;&gt; <a href=\"/Legacy:NavigationPoint\" title=\"Legacy:NavigationPoint\"\
+      >NavigationPoint</a> &gt;&gt; <a href=\"/Legacy:PathNode\" title=\"Legacy:PathNode\"\
+      >PathNode</a>. PathNodes are special actors specifically designed to tell bots\
+      \ of places that are safe and easy to travel. These nodes make up the bulk of\
+      \ most bot path networks. Other types allow bots to tackle more complex things,\
+      \ such as lifts, jumping, translocating and camping.</p>\n<p>Unless specifically\
+      \ told so, bots assume they can simply walk, run or jump through the entire\
+      \ bot path network. Simple obstacles like doors, lifts and ladders pose problems\
+      \ for bots and require special nodes to help them navigate as players do.</p>\n\
+      <h3><span class=\"mw-headline\" id=\"A_Quick_Note_About_Automatically_Building_The_Path_Network\"\
+      >A Quick Note About Automatically Building The Path Network</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Bot_Pathing?section=2\"\
+      \ title=\"Edit section: A Quick Note About Automatically Building The Path Network\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n<p><i><b>NOTE:</b></i>\
+      \ It is the UnrealEd community consensus that use of <b>any</b> of these automatic\
+      \ pathnode network generators creates an inferior Bot Navigation system for\
+      \ your map. It is <b>highly</b> recommended that you do the pathing manually.</p>\n\
+      <p>There are actually three <a href=\"/Legacy:UnrealEd_Console\" title=\"Legacy:UnrealEd\
+      \ Console\">UnrealEd Console</a> commands that will automatically build a botpath\
+      \ network for your map:</p>\n<pre><i>PATHS BUILD</i>  auto create pathnode network\
+      \ - opt=1\n<i>PATHS BUILD HIGHOPT</i> auto create pathnode network - opt=2 \
+      \           \n<i>PATHS BUILD LOWOPT</i> auto create pathnode network - opt=0\n\
+      </pre>\n<p>Also, <a href=\"/Legacy:PathLogic\" title=\"Legacy:PathLogic\">PathLogic</a>\
+      \ is a third-party application that lets you build the path network from within\
+      \ the game: you walk around your map, dropping path nodes as you go.</p>\n<h2><span\
+      \ class=\"mw-headline\" id=\"Seeing_The_Network\">Seeing The Network</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Bot_Pathing?section=3\" title=\"Edit section: Seeing The\
+      \ Network\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>In UnrealEd 3, use Show Paths to troubleshoot the network after re-building\
+      \ paths. Do <a href=\"/Legacy:Viewport_Caption_Context_Menu\" title=\"Legacy:Viewport\
+      \ Caption Context Menu\">Viewport Caption Context Menu</a> -&gt; View -&gt;\
+      \ Show Paths. It's possible to hide everything except the paths, which can be\
+      \ quite handy. Once the paths are visible, hit <b>Q</b> to hide the <a href=\"\
+      /Legacy:BSP\" title=\"Legacy:BSP\">BSP</a>, and the 3D viewport shows just the\
+      \ network (see <a href=\"/Legacy:Hiding_Actors\" title=\"Legacy:Hiding Actors\"\
+      >Hiding Actors</a> for more on this). This is basically your map as a bot sees\
+      \ it: just a network.</p>\n<p>While running a game, you can see the paths a\
+      \ bot is considering (the route it is attempting) when you use <tt>showdebug</tt>,\
+      \ one of the <a href=\"/Legacy:Console_Commands\" title=\"Legacy:Console Commands\"\
+      >Console Commands</a> for UT200x. This will also show a lot of other information\
+      \ pertaining to the bot's weapon, pawn, controller status, etc.</p>\n<p>You\
+      \ should see a bunch of lines connecting the pathnodes. They are color coded\
+      \ depending on their nature:</p>\n<h3><span class=\"mw-headline\" id=\"UT200x_Color_Codes\"\
+      >UT200x Color Codes</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Bot_Pathing?section=4\" title=\"Edit section:\
+      \ UT200x Color Codes\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>The color of the line between path nodes indicates to bots the general width\
+      \ of the path and therefore the ease with which to use it.</p>\n<dl>\n<dt>White</dt>\n\
+      <dd>A nice, wide path for the bots to follow. The bots will have no trouble\
+      \ following this path, seeing this as the most availble route to take. Bots\
+      \ will also see these paths as traversable by vehicles. See <a href=\"/Legacy:Pathing_For_Vehicles\"\
+      \ title=\"Legacy:Pathing For Vehicles\">Pathing for Vehicles</a>.</dd>\n<dt>Green</dt>\n\
+      <dd>Not as good as a white path, but still a perfectly good path. Bots prefer\
+      \ white paths but generally there are other factors that influence their decision\
+      \ so this is not as big of an issue.</dd>\n<dt>Blue</dt>\n<dd>This path is technically\
+      \ a good path, but is quite narrow. Bots will prefer a green or white path but\
+      \ will attempt to take this one if it is the only path available.</dd>\n<dt>Purple</dt>\n\
+      <dd>Purple paths designate jumpspots, lifts, teleporters, etc. They have their\
+      \ own UnrealScript to define how bots feel about this type of path. If paths\
+      \ are not shown, a pink arc will show the expected path that a pawn will take\
+      \ when launched from the jumppad. When paths are shown this pink line will disappear.</dd>\n\
+      <dt>Light Purple</dt>\n<dd>A path that takes the bot up or down a ladder.</dd>\n\
+      <dt>Yellow</dt>\n<dd>A forced path. Used to tell bots that this path is available\
+      \ when the editor doesn't automatically connect two nodes. A path must be specifically\
+      \ set as forced in the pathnode properties.</dd>\n<dt>Red</dt>\n<dd>A proscribed\
+      \ path. The pathnodes joined by this line, while technically connected, should\
+      \ never be used by bots. However, that is not to say that a bot will not end\
+      \ up at the other pathnode as a result of being hit, etc. and may continue along\
+      \ the path by \"skipping\" over the proscribed path. A path must be specifically\
+      \ set as proscibed in the pathnode properties.</dd>\n</dl>\n<h3><span class=\"\
+      mw-headline\" id=\"UT_Color_Codes\">UT Color Codes</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Bot_Pathing?section=5\"\
+      \ title=\"Edit section: UT Color Codes\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>In UT, there is only two colors of path - good ones\
+      \ and bad ones. Blue paths are good paths that the bots should have no trouble\
+      \ with. Red paths are not very good paths but the bot will attempt them anyway\
+      \ if it has no blue paths to take.</p>\n<h2><span class=\"mw-headline\" id=\"\
+      Special_Navigation_Points\">Special Navigation Points</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Bot_Pathing?section=6\"\
+      \ title=\"Edit section: Special Navigation Points\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<h3><span class=\"mw-headline\" id=\"JumpSpots\">JumpSpots</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Bot_Pathing?section=7\" title=\"Edit section: JumpSpots\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n<p>JumpSpots\
+      \ are nodes that tell bots of good landing spots, good jumping <b>destinations</b>.\
+      \ They include information telling the bots whether the destination requires\
+      \ DoubleJumping, ImpactJumping or LiftJumping to reach it. They are also used\
+      \ to indicate good spots to translocate to. See also <a href=\"/Legacy:JumpSpot\"\
+      \ title=\"Legacy:JumpSpot\">JumpSpot</a>.</p>\n<h3><span class=\"mw-headline\"\
+      \ id=\"AssaultPaths\">AssaultPaths</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Bot_Pathing?section=8\"\
+      \ title=\"Edit section: AssaultPaths\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>These nodes are used to indicate a good route to attack\
+      \ the enemy. They not only add nodes to the bot path network, they label particular\
+      \ routes and are used give them a path weight that indicates to a bot how \"\
+      good\" the route is. Assault paths can also be used in games that require back\
+      \ and forth movement from one base to the other, as in CTF, to tell bots of\
+      \ better return routes. See also <a href=\"/Legacy:AssaultPath\" title=\"Legacy:AssaultPath\"\
+      >AssaultPath</a>.</p>\n<h3><span class=\"mw-headline\" id=\"GameObjectives\"\
+      >GameObjectives</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Bot_Pathing?section=9\" title=\"Edit section:\
+      \ GameObjectives\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>These are game goals, objects that players must handle to play the game.\
+      \ CTF FlagBases, Double Domination DomPoints, Bombing Run BombSpawns or BombDeliveries,\
+      \ Onslaught Nodes and Cores are all GameObjectives. Some of these are configured\
+      \ to indicate to bots if they should be defended, if they are destroyable, what\
+      \ <a href=\"/Legacy:AIScript\" title=\"Legacy:AIScript\">AIScripts</a> should\
+      \ be used to defend it, etc. See also <a href=\"/Legacy:GameObjective\" title=\"\
+      Legacy:GameObjective\">GameObjective</a>.</p>\n<h3><span class=\"mw-headline\"\
+      \ id=\"RoadPathNodes_.26_FlyingPathNodes_.28UT2004.29\">RoadPathNodes &amp;\
+      \ FlyingPathNodes (UT2004)</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Bot_Pathing?section=10\"\
+      \ title=\"Edit section: RoadPathNodes &amp; FlyingPathNodes (UT2004)\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h3>\n<p>These nodes are\
+      \ used for vehicles. They require the widest, clearest path possible (white\
+      \ color coded). They can be spread much farther apart than normal PathNodes.\
+      \ It is critical to have a full route of clear (White) <a href=\"/Legacy:RoadPathNode\"\
+      \ title=\"Legacy:RoadPathNode\">RoadPathNodes</a> (or <a href=\"/Legacy:FlyingPathNode\"\
+      \ title=\"Legacy:FlyingPathNode\">FlyingPathNodes</a>) from one GameObjective\
+      \ to another and to the vehicle factories in order for bots to effectively use\
+      \ vehicles. See also <a href=\"/Legacy:Pathing_For_Vehicles\" title=\"Legacy:Pathing\
+      \ For Vehicles\">Pathing for Vehicles</a> and <a href=\"/Legacy:Pathing_2k4_Flying_Vehicles\"\
+      \ title=\"Legacy:Pathing 2k4 Flying Vehicles\">Pathing 2k4 Flying Vehicles</a>.</p>\n\
+      <h2><span class=\"mw-headline\" id=\"Special_Handling\">Special Handling</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Bot_Pathing?section=11\" title=\"Edit section: Special\
+      \ Handling\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>Inevitably, mappers will encounter situations that require tweaking of the\
+      \ bot's normal navigation system. Sometimes the default bot path network will\
+      \ include a path leading directly into an obvious hazard. Sometimes the bots\
+      \ will need to be told a specific path to take from a particular node. Sometimes,\
+      \ a system complex behaviors is needed for specific purposes in a map.</p>\n\
+      <h3><span class=\"mw-headline\" id=\"Forced_Paths\">Forced Paths</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Bot_Pathing?section=12\" title=\"Edit section: Forced\
+      \ Paths\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>All nodes that deal with navigation (from PlayerStarts to Vehicle Path nodes)\
+      \ have an array available to define Forced Paths. A forced path is a specific\
+      \ directive to bots traveling from a node, of which node to go to next.</p>\n\
+      <h3><span class=\"mw-headline\" id=\"Proscribed_Paths\">Proscribed Paths</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Bot_Pathing?section=13\" title=\"Edit section: Proscribed\
+      \ Paths\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>All node that deal with navigation also have Proscribed Paths. Proscribed\
+      \ Paths tell bots of forbidden nodes to travel to from the node they're on.\
+      \ It is the opposite of a Forced Path.</p>\n<h3><span class=\"mw-headline\"\
+      \ id=\"AIScripts_.26_ScriptedSequences\">AIScripts &amp; ScriptedSequences</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Bot_Pathing?section=14\" title=\"Edit section: AIScripts\
+      \ &amp; ScriptedSequences\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>Bots can be told very specific things to do with an AIscript. An AIscript\
+      \ is a series of commands designed to override the normal Bot, TeamAI and SquadAI\
+      \ code with custom behavior. Almost anything that a player can do, can be achieved\
+      \ using AIscipts. A ScriptedSequence is an actor with a customizable array of\
+      \ actions it will perform. Some of these actions can be used to control bots,\
+      \ much like a simplified version of an AIScript. Often they are used as Defensive\
+      \ Scripts or Sniper Scripts. However, a misguided Script can simply make the\
+      \ bot predictable and easy to defeat. See also <a href=\"/Legacy:Creating_And_Using_ScriptedActions\"\
+      \ title=\"Legacy:Creating And Using ScriptedActions\">Creating and Using ScriptedActions</a>,\
+      \ <a href=\"/Legacy:ScriptedAction\" title=\"Legacy:ScriptedAction\">ScriptedAction</a>,\
+      \ <a href=\"/Legacy:ScriptedSequence\" title=\"Legacy:ScriptedSequence\">ScriptedSequence</a>\
+      \ and <a href=\"/Legacy:Strategic_Bots\" title=\"Legacy:Strategic Bots\">Strategic\
+      \ Bots</a>.</p>\n<h2><span class=\"mw-headline\" id=\"Pathing_Special_Areas\"\
+      >Pathing Special Areas</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Bot_Pathing?section=15\" title=\"Edit section:\
+      \ Pathing Special Areas\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <h3><span class=\"mw-headline\" id=\"Water\">Water</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Bot_Pathing?section=16\"\
+      \ title=\"Edit section: Water\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Don't place pathnodes above water but in it or bots\
+      \ will bob up and down under the pathnode trying to reach it.</p>\n<h3><span\
+      \ class=\"mw-headline\" id=\"Lifts\">Lifts</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Bot_Pathing?section=17\"\
+      \ title=\"Edit section: Lifts\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>A lift system has an entry point and an exit point.\
+      \ Bots need to know where those points are and where the lift currently is.\
+      \ This is described with LiftCenter and LiftExit actors. See also <a href=\"\
+      /Legacy:Pathing_Lifts\" title=\"Legacy:Pathing Lifts\">Pathing Lifts</a>.</p>\n\
+      <h3><span class=\"mw-headline\" id=\"Ladders\">Ladders</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Bot_Pathing?section=18\"\
+      \ title=\"Edit section: Ladders\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>In UT2003/UT2004, a ladder is a special volume that\
+      \ allows a player inside to move up and down instead of forward and back. Bots\
+      \ need to be told where to enter and exit the ladder volume. This is done with\
+      \ Ladder actors. See also <a href=\"/Legacy:Add_A_Ladder\" title=\"Legacy:Add\
+      \ A Ladder\">Add A Ladder</a>.</p>\n<h3><span class=\"mw-headline\" id=\"JumpPads\"\
+      >JumpPads</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Bot_Pathing?section=19\" title=\"Edit section:\
+      \ JumpPads\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>JumpPads are nodes that throw players and bots through the air to a destination\
+      \ node, like an ordinary PathNode. Bots know what that destination node is by\
+      \ the ForcedPath described in the UTJumpPad actor. See also <a href=\"/Legacy:UTJumpPad\"\
+      \ title=\"Legacy:UTJumpPad\">UTJumpPad</a> and <a href=\"/Legacy:Pathing_Kickers\"\
+      \ title=\"Legacy:Pathing Kickers\">Pathing Kickers</a>.</p>\n<h3><span class=\"\
+      mw-headline\" id=\"Doors\">Doors</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Bot_Pathing?section=20\"\
+      \ title=\"Edit section: Doors\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Bots need to know if doors are closed they need to\
+      \ be opened to travel or shoot through. This is done with a Door actor. The\
+      \ Door actor tells the bots if there are any external triggers to open the door.\
+      \ The Door actor can also tell bots to ingore the path through the door if it\
+      \ is closed; used for locked or triggered doors that block the path. See also\
+      \ <a href=\"/Legacy:Door\" title=\"Legacy:Door\">Door</a>.</p>\n<h3><span class=\"\
+      mw-headline\" id=\"Teleporters\">Teleporters</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Bot_Pathing?section=21\"\
+      \ title=\"Edit section: Teleporters\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Teleporters simply hook up to the bot path network\
+      \ by the two end point nodes. Bots immediately know how to use them to navigate.\
+      \ See also <a href=\"/Legacy:Teleportation_Basics\" title=\"Legacy:Teleportation\
+      \ Basics\">Teleportation Basics</a>.</p>\n<h2><span class=\"mw-headline\" id=\"\
+      Pathing_Topics\">Pathing Topics</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Bot_Pathing?section=22\"\
+      \ title=\"Edit section: Pathing Topics\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>Other pages cover in detail how to make bots tackle\
+      \ more complex elements of their environment:</p>\n<ul>\n<li><a href=\"/Legacy:Pathing_Lifts\"\
+      \ title=\"Legacy:Pathing Lifts\">Pathing Lifts</a></li>\n<li><a href=\"/Legacy:Pathing_Kickers\"\
+      \ title=\"Legacy:Pathing Kickers\">Pathing Kickers</a></li>\n<li><a href=\"\
+      /Legacy:Pathing_Translocators\" title=\"Legacy:Pathing Translocators\">Pathing\
+      \ Translocators</a></li>\n<li><a href=\"/Legacy:Pathing_For_Vehicles\" title=\"\
+      Legacy:Pathing For Vehicles\">Pathing For Vehicles</a></li>\n<li><a href=\"\
+      /Legacy:Pathing_2k4_Flying_Vehicles\" title=\"Legacy:Pathing 2k4 Flying Vehicles\"\
+      >Pathing 2k4 Flying Vehicles</a></li>\n</ul>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Basic_Bot_Pathing_Tutorial\">Basic Bot Pathing Tutorial</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Bot_Pathing?section=23\"\
+      \ title=\"Edit section: Basic Bot Pathing Tutorial\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<ul>\n<li><a href=\"/Legacy:Basic_Bot_Pathing\"\
+      \ title=\"Legacy:Basic Bot Pathing\">Basic Bot Pathing</a> – A tutorial on basic\
+      \ bot pathing</li>\n</ul>\n<h2><span class=\"mw-headline\" id=\"Related_Topics\"\
+      >Related Topics</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Bot_Pathing?section=24\" title=\"Edit section:\
+      \ Related Topics\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <ul>\n<li><a href=\"/Legacy:Bot_Support\" title=\"Legacy:Bot Support\">Bot Support</a>\
+      \ – Main topic\n<ul>\n<li><a href=\"/Legacy:Strategic_Bots\" title=\"Legacy:Strategic\
+      \ Bots\">Strategic Bots</a> – Advanced bot support</li>\n<li><a href=\"/Legacy:Bot_Mind\"\
+      \ title=\"Legacy:Bot Mind\">Bot Mind</a> – Understanding the bots</li>\n<li><a\
+      \ href=\"/Legacy:Testing_Botplay\" title=\"Legacy:Testing Botplay\">Testing\
+      \ Botplay</a> – Ensures reliable bot support</li>\n</ul>\n</li>\n</ul>\n<h2><span\
+      \ class=\"mw-headline\" id=\"External_Links\">External Links</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Bot_Pathing?section=25\"\
+      \ title=\"Edit section: External Links\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<ul>\n<li><a rel=\"nofollow\" class=\"external text\"\
+      \ href=\"http://unreal.epicgames.com/ut2ai.htm\">UT200x Botpathing by Steven\
+      \ Polge</a></li>\n<li><a rel=\"nofollow\" class=\"external text\" href=\"http://www.leveldesigner.com/index.php?action=doc&amp;ID=172\"\
+      >UT200x Advanced Bot Pathing Tutorial by Blitz</a></li>\n<li><a rel=\"nofollow\"\
+      \ class=\"external text\" href=\"http://www.planetunreal.com/nucleus/UED2_pathing.html\"\
+      >The Nucleus - Basic Bot Pathing</a></li>\n</ul>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Discussion\">Discussion</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Bot_Pathing?section=26\"\
+      \ title=\"Edit section: Discussion\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p><b>SuperApe:</b> Revision done. What do you think?</p>\n\
+      <p><b>Evil-System:</b> I don't understand how to get a specific ScriptedCharacter\
+      \ to start patrolling at one point. I have 3 patrol points set up the way I\
+      \ want, and a ScriptedCharacter nearby, and I want him to move the first point,\
+      \ and go to the second one and just walk back and forth between the second and\
+      \ third point.</p>\n\n<!-- \nNewPP limit report\nCPU time usage: 0.070 seconds\n\
+      Real time usage: 0.072 seconds\nPreprocessor visited node count: 104/1000000\n\
+      Preprocessor generated node count: 116/1000000\nPost‐expand include size: 11/2097152\
+      \ bytes\nTemplate argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\n\
+      Expensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion expansion\
+      \ time report (%,ms,calls,template)\n100.00%    0.000      1 - -total\n-->\n\
+      \n<!-- Saved in parser cache with key wiki:pcache:idhash:646-0!*!0!!en!*!* and\
+      \ timestamp 20221118015242 and revision id 46148\n -->\n"
+  categories:
+  - sortkey: "Bot Pathing"
+    name: "Legacy_Mapping"
+  - sortkey: ""
+    name: "Bot_Support"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Pathing Lifts"
+  - ns: 100
+    exists: true
+    name: "Legacy:ScriptedAction"
+  - ns: 100
+    exists: true
+    name: "Legacy:Pathing For Vehicles"
+  - ns: 100
+    exists: true
+    name: "Legacy:FlyingPathNode"
+  - ns: 100
+    exists: true
+    name: "Legacy:Testing Botplay"
+  - ns: 100
+    exists: true
+    name: "Legacy:UTJumpPad"
+  - ns: 100
+    exists: true
+    name: "Legacy:Creating And Using ScriptedActions"
+  - ns: 100
+    exists: true
+    name: "Legacy:ScriptedSequence"
+  - ns: 100
+    exists: true
+    name: "Legacy:Strategic Bots"
+  - ns: 100
+    exists: true
+    name: "Legacy:Actor"
+  - ns: 100
+    exists: true
+    name: "Legacy:BSP"
+  - ns: 100
+    exists: true
+    name: "Legacy:Add A Ladder"
+  - ns: 100
+    exists: true
+    name: "Legacy:Basic Bot Pathing"
+  - ns: 100
+    exists: true
+    name: "Legacy:AIScript"
+  - ns: 100
+    exists: true
+    name: "Legacy:Door"
+  - ns: 100
+    exists: true
+    name: "Legacy:Teleportation Basics"
+  - ns: 100
+    exists: true
+    name: "Legacy:UnrealEd Console"
+  - ns: 100
+    exists: true
+    name: "Legacy:JumpSpot"
+  - ns: 100
+    exists: true
+    name: "Legacy:GameObjective"
+  - ns: 100
+    exists: true
+    name: "Legacy:Pathing 2k4 Flying Vehicles"
+  - ns: 100
+    exists: true
+    name: "Legacy:Viewport Caption Context Menu"
+  - ns: 100
+    exists: true
+    name: "Legacy:RoadPathNode"
+  - ns: 100
+    exists: true
+    name: "Legacy:AssaultPath"
+  - ns: 100
+    exists: true
+    name: "Legacy:PathNode"
+  - ns: 100
+    exists: true
+    name: "Legacy:Hiding Actors"
+  - ns: 100
+    exists: true
+    name: "Legacy:Bot Support"
+  - ns: 100
+    exists: true
+    name: "Legacy:NavigationPoint"
+  - ns: 100
+    exists: true
+    name: "Legacy:Bot Mind"
+  - ns: 100
+    exists: true
+    name: "Legacy:Pathing Translocators"
+  - ns: 100
+    exists: true
+    name: "Legacy:PathLogic"
+  - ns: 100
+    exists: true
+    name: "Legacy:Pathing Kickers"
+  - ns: 100
+    exists: true
+    name: "Legacy:Console Commands"
+  templates: []
+  images: []
+  externallinks:
+  - "http://www.planetunreal.com/nucleus/UED2_pathing.html"
+  - "http://www.leveldesigner.com/index.php?action=doc&ID=172"
+  - "http://unreal.epicgames.com/ut2ai.htm"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Overview"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Bot_Pathing"
+    byteoffset: 808
+    anchor: "Overview"
+  - toclevel: 2
+    level: "3"
+    line: "A Quick Note About Automatically Building The Path Network"
+    number: "1.1"
+    index: "2"
+    fromtitle: "Legacy:Bot_Pathing"
+    byteoffset: 1691
+    anchor: "A_Quick_Note_About_Automatically_Building_The_Path_Network"
+  - toclevel: 1
+    level: "2"
+    line: "Seeing The Network"
+    number: "2"
+    index: "3"
+    fromtitle: "Legacy:Bot_Pathing"
+    byteoffset: 2519
+    anchor: "Seeing_The_Network"
+  - toclevel: 2
+    level: "3"
+    line: "UT200x Color Codes"
+    number: "2.1"
+    index: "4"
+    fromtitle: "Legacy:Bot_Pathing"
+    byteoffset: 3458
+    anchor: "UT200x_Color_Codes"
+  - toclevel: 2
+    level: "3"
+    line: "UT Color Codes"
+    number: "2.2"
+    index: "5"
+    fromtitle: "Legacy:Bot_Pathing"
+    byteoffset: 5214
+    anchor: "UT_Color_Codes"
+  - toclevel: 1
+    level: "2"
+    line: "Special Navigation Points"
+    number: "3"
+    index: "6"
+    fromtitle: "Legacy:Bot_Pathing"
+    byteoffset: 5476
+    anchor: "Special_Navigation_Points"
+  - toclevel: 2
+    level: "3"
+    line: "JumpSpots"
+    number: "3.1"
+    index: "7"
+    fromtitle: "Legacy:Bot_Pathing"
+    byteoffset: 5507
+    anchor: "JumpSpots"
+  - toclevel: 2
+    level: "3"
+    line: "AssaultPaths"
+    number: "3.2"
+    index: "8"
+    fromtitle: "Legacy:Bot_Pathing"
+    byteoffset: 5851
+    anchor: "AssaultPaths"
+  - toclevel: 2
+    level: "3"
+    line: "GameObjectives"
+    number: "3.3"
+    index: "9"
+    fromtitle: "Legacy:Bot_Pathing"
+    byteoffset: 6305
+    anchor: "GameObjectives"
+  - toclevel: 2
+    level: "3"
+    line: "RoadPathNodes & FlyingPathNodes (UT2004)"
+    number: "3.4"
+    index: "10"
+    fromtitle: "Legacy:Bot_Pathing"
+    byteoffset: 6760
+    anchor: "RoadPathNodes_.26_FlyingPathNodes_.28UT2004.29"
+  - toclevel: 1
+    level: "2"
+    line: "Special Handling"
+    number: "4"
+    index: "11"
+    fromtitle: "Legacy:Bot_Pathing"
+    byteoffset: 7360
+    anchor: "Special_Handling"
+  - toclevel: 2
+    level: "3"
+    line: "Forced Paths"
+    number: "4.1"
+    index: "12"
+    fromtitle: "Legacy:Bot_Pathing"
+    byteoffset: 7762
+    anchor: "Forced_Paths"
+  - toclevel: 2
+    level: "3"
+    line: "Proscribed Paths"
+    number: "4.2"
+    index: "13"
+    fromtitle: "Legacy:Bot_Pathing"
+    byteoffset: 8008
+    anchor: "Proscribed_Paths"
+  - toclevel: 2
+    level: "3"
+    line: "AIScripts & ScriptedSequences"
+    number: "4.3"
+    index: "14"
+    fromtitle: "Legacy:Bot_Pathing"
+    byteoffset: 8220
+    anchor: "AIScripts_.26_ScriptedSequences"
+  - toclevel: 1
+    level: "2"
+    line: "Pathing Special Areas"
+    number: "5"
+    index: "15"
+    fromtitle: "Legacy:Bot_Pathing"
+    byteoffset: 9067
+    anchor: "Pathing_Special_Areas"
+  - toclevel: 2
+    level: "3"
+    line: "Water"
+    number: "5.1"
+    index: "16"
+    fromtitle: "Legacy:Bot_Pathing"
+    byteoffset: 9094
+    anchor: "Water"
+  - toclevel: 2
+    level: "3"
+    line: "Lifts"
+    number: "5.2"
+    index: "17"
+    fromtitle: "Legacy:Bot_Pathing"
+    byteoffset: 9221
+    anchor: "Lifts"
+  - toclevel: 2
+    level: "3"
+    line: "Ladders"
+    number: "5.3"
+    index: "18"
+    fromtitle: "Legacy:Bot_Pathing"
+    byteoffset: 9468
+    anchor: "Ladders"
+  - toclevel: 2
+    level: "3"
+    line: "JumpPads"
+    number: "5.4"
+    index: "19"
+    fromtitle: "Legacy:Bot_Pathing"
+    byteoffset: 9755
+    anchor: "JumpPads"
+  - toclevel: 2
+    level: "3"
+    line: "Doors"
+    number: "5.5"
+    index: "20"
+    fromtitle: "Legacy:Bot_Pathing"
+    byteoffset: 10067
+    anchor: "Doors"
+  - toclevel: 2
+    level: "3"
+    line: "Teleporters"
+    number: "5.6"
+    index: "21"
+    fromtitle: "Legacy:Bot_Pathing"
+    byteoffset: 10463
+    anchor: "Teleporters"
+  - toclevel: 1
+    level: "2"
+    line: "Pathing Topics"
+    number: "6"
+    index: "22"
+    fromtitle: "Legacy:Bot_Pathing"
+    byteoffset: 10678
+    anchor: "Pathing_Topics"
+  - toclevel: 1
+    level: "2"
+    line: "Basic Bot Pathing Tutorial"
+    number: "7"
+    index: "23"
+    fromtitle: "Legacy:Bot_Pathing"
+    byteoffset: 11062
+    anchor: "Basic_Bot_Pathing_Tutorial"
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "8"
+    index: "24"
+    fromtitle: "Legacy:Bot_Pathing"
+    byteoffset: 11183
+    anchor: "Related_Topics"
+  - toclevel: 1
+    level: "2"
+    line: "External Links"
+    number: "9"
+    index: "25"
+    fromtitle: "Legacy:Bot_Pathing"
+    byteoffset: 11478
+    anchor: "External_Links"
+  - toclevel: 1
+    level: "2"
+    line: "Discussion"
+    number: "10"
+    index: "26"
+    fromtitle: "Legacy:Bot_Pathing"
+    byteoffset: 11772
+    anchor: "Discussion"
+  displaytitle: "Legacy:Bot Pathing"
+  iwlinks: []
+  wikitext:
+    text: "This is the [[Legacy:Bot Support|Bot Support]] system that allows bots\
+      \ to run around a map via a network of waypoints, or '''bot paths'''.  This\
+      \ page describes the concepts and elements of bot path networks.  For a simple\
+      \ tutorial, see [[Legacy:Basic Bot Pathing|Basic Bot Pathing]].\n\n'''If you\
+      \ are new to bot pathing''', see the [[Legacy:Basic Bot Pathing|Basic Bot Pathing]]\
+      \ tutorial.   After that, [[Legacy:Testing Botplay|Testing Botplay]] will help\
+      \ clean up any problem areas in the bot path.  When problems arise, see [[Legacy:Bot\
+      \ Mind|Bot Mind]] because understanding the bot's behavior can help.  For special\
+      \ tasks you'd like bots to do, try [[Legacy:Strategic Bots|Strategic Bots]]\
+      \ or reviewing the list of available [[Legacy:NavigationPoint|NavigationPoint]]s\
+      \ for options that handle bot support.\n\n==Overview ==\n\nThe AI code that\
+      \ drives bots doesn't have the power to interpret the 3D maps we see them in.\
+      \  Instead, a map has to have a set of waypoints, joined together to make a\
+      \ network which the bots follow. \n\nThese waypoints are mostly actors of the\
+      \ class [[Legacy:Actor|Actor]] >> [[Legacy:NavigationPoint|NavigationPoint]]\
+      \ >> [[Legacy:PathNode|PathNode]]. PathNodes are special actors specifically\
+      \ designed to tell bots of places that are safe and easy to travel.  These nodes\
+      \ make up the bulk of most bot path networks. Other types allow bots to tackle\
+      \ more complex things, such as lifts, jumping, translocating and camping. \n\
+      \nUnless specifically told so, bots assume they can simply walk, run or jump\
+      \ through the entire bot path network.  Simple obstacles like doors, lifts and\
+      \ ladders pose problems for bots and require special nodes to help them navigate\
+      \ as players do.\n\n===A Quick Note About Automatically Building The Path Network===\n\
+      \n'''''NOTE:''''' It is the UnrealEd community consensus that use of '''any'''\
+      \ of these automatic pathnode network generators creates an inferior Bot Navigation\
+      \ system for your map. It is '''highly''' recommended that you do the pathing\
+      \ manually.\n\nThere are actually three [[Legacy:UnrealEd Console|UnrealEd Console]]\
+      \ commands that will automatically build a botpath network for your map:\n\n\
+      \ ''PATHS BUILD''  auto create pathnode network - opt=1\n ''PATHS BUILD HIGHOPT''\
+      \ auto create pathnode network - opt=2            \n ''PATHS BUILD LOWOPT''\
+      \ auto create pathnode network - opt=0\n\nAlso, [[Legacy:PathLogic|PathLogic]]\
+      \ is a third-party application that lets you build the path network from within\
+      \ the game: you walk around your map, dropping path nodes as you go.\n\n==Seeing\
+      \ The Network ==\n\nIn UnrealEd 3, use Show Paths to troubleshoot the network\
+      \ after re-building paths. Do [[Legacy:Viewport Caption Context Menu|Viewport\
+      \ Caption Context Menu]] ->  View -> Show Paths.  It's possible to hide everything\
+      \ except the paths, which can be quite handy. Once the paths are visible, hit\
+      \ '''Q''' to hide the [[Legacy:BSP|BSP]], and the 3D viewport shows just the\
+      \ network (see [[Legacy:Hiding Actors|Hiding Actors]] for more on this). This\
+      \ is basically your map as a bot sees it: just a network. \n\nWhile running\
+      \ a game, you can see the paths a bot is considering (the route it is attempting)\
+      \ when you use <tt>showdebug</tt>, one of the [[Legacy:Console Commands|Console\
+      \ Commands]] for UT200x.  This will also show a lot of other information pertaining\
+      \ to the bot's weapon, pawn, controller status, etc.\n\nYou should see a bunch\
+      \ of  lines connecting the pathnodes. They are color coded depending on their\
+      \ nature:\n\n===UT200x Color Codes===\n\nThe color of the line between path\
+      \ nodes indicates to bots the general width of the path and therefore the ease\
+      \ with which to use it.\n; White:  A nice, wide path for the bots to follow.\
+      \ The bots will have no trouble following this path, seeing this as the most\
+      \ availble route to take.  Bots will also see these paths as traversable by\
+      \ vehicles. See [[Legacy:Pathing For Vehicles|Pathing for Vehicles]].\n; Green:\
+      \ Not as good as a white path, but still a perfectly good path. Bots prefer\
+      \ white paths but generally there are other factors that influence their decision\
+      \ so this is not as big of an issue.\n; Blue: This path is technically a good\
+      \ path, but is quite narrow. Bots will prefer a green or white path but will\
+      \ attempt to take this one if it is the only path available.\n; Purple: Purple\
+      \ paths designate jumpspots, lifts, teleporters, etc. They have their own UnrealScript\
+      \ to define how bots feel about this type of path. If paths are not shown, a\
+      \ pink arc will show the expected path that a pawn will take when launched from\
+      \ the jumppad. When paths are shown this pink line will disappear.\n; Light\
+      \ Purple: A path that takes the bot up or down a ladder.\n; Yellow: A forced\
+      \ path. Used to tell bots that this path is available when the editor doesn't\
+      \ automatically connect two nodes. A path must be specifically set as forced\
+      \ in the pathnode properties.\n; Red: A proscribed path. The pathnodes joined\
+      \ by this line, while technically connected, should never be used by bots. However,\
+      \ that is not to say that a bot will not end up at the other pathnode as a result\
+      \ of being hit, etc. and may continue along the path by \"skipping\" over the\
+      \ proscribed path. A path must be specifically set as proscibed in the pathnode\
+      \ properties.\n\n===UT Color Codes===\n\nIn UT, there is only two colors of\
+      \ path - good ones and bad ones. Blue paths are good paths that the bots should\
+      \ have no trouble with. Red paths are not very good paths but the bot will attempt\
+      \ them anyway if it has no blue paths to take.\n\n==Special Navigation Points==\n\
+      \n===JumpSpots===\n\nJumpSpots are nodes that tell bots of good landing spots,\
+      \ good jumping '''destinations'''.  They include information telling the bots\
+      \ whether the destination requires DoubleJumping, ImpactJumping or LiftJumping\
+      \ to reach it.  They are also used to indicate good spots to translocate to.\
+      \  See also [[Legacy:JumpSpot|JumpSpot]].\n\n===AssaultPaths===\n\nThese nodes\
+      \ are used to indicate a good route to attack the enemy.  They not only add\
+      \ nodes to the bot path network, they label particular routes and are used give\
+      \ them a path weight that indicates to a bot how \"good\" the route is.  Assault\
+      \ paths can also be used in games that require back and forth movement from\
+      \ one base to the other, as in CTF, to tell bots of better return routes.  See\
+      \ also [[Legacy:AssaultPath|AssaultPath]].\n\n===GameObjectives===\n\nThese\
+      \ are game goals, objects that players must handle to play the game.  CTF FlagBases,\
+      \ Double Domination DomPoints, Bombing Run BombSpawns or BombDeliveries, Onslaught\
+      \ Nodes and Cores are all GameObjectives.  Some of these are configured to indicate\
+      \ to bots if they should be defended, if they are destroyable, what [[Legacy:AIScript|AIScript]]s\
+      \ should be used to defend it, etc.  See also [[Legacy:GameObjective|GameObjective]].\n\
+      \n===RoadPathNodes & FlyingPathNodes (UT2004)===\n\nThese nodes are used for\
+      \ vehicles.  They require the widest, clearest path possible (white color coded).\
+      \  They can be spread much farther apart than normal PathNodes.  It is critical\
+      \ to have a full route of clear (White) [[Legacy:RoadPathNode|RoadPathNode]]s\
+      \ (or [[Legacy:FlyingPathNode|FlyingPathNode]]s) from one GameObjective to another\
+      \ and to the vehicle factories in order for bots to effectively use vehicles.\
+      \  See also [[Legacy:Pathing For Vehicles|Pathing for Vehicles]] and [[Legacy:Pathing\
+      \ 2k4 Flying Vehicles|Pathing 2k4 Flying Vehicles]].\n\n==Special Handling==\n\
+      \nInevitably, mappers will encounter situations that require tweaking of the\
+      \ bot's normal  navigation system.  Sometimes the default bot path network will\
+      \ include a path leading directly into an obvious hazard.  Sometimes the bots\
+      \ will need to be told a specific path to take from a particular node.  Sometimes,\
+      \ a system complex behaviors is needed for specific purposes in a map.\n\n===Forced\
+      \ Paths===\n\nAll nodes that deal with navigation (from PlayerStarts to Vehicle\
+      \ Path nodes) have an array available to define Forced Paths.  A forced path\
+      \ is a specific directive to bots traveling from a node, of which node to go\
+      \ to next.\n\n===Proscribed Paths===\n\nAll node that deal with navigation also\
+      \ have Proscribed Paths.  Proscribed Paths tell bots of forbidden nodes to travel\
+      \ to from the node they're on.  It is the opposite of a Forced Path.\n\n===AIScripts\
+      \ & ScriptedSequences===\n\nBots can be told very specific things to do with\
+      \ an AIscript.  An AIscript is a series of commands designed to override the\
+      \ normal Bot, TeamAI and SquadAI code with custom behavior.  Almost anything\
+      \ that a player can do, can be achieved using AIscipts.  A ScriptedSequence\
+      \ is an actor with a customizable array of actions it will perform.  Some of\
+      \ these actions can be used to control bots, much like a simplified version\
+      \ of an AIScript.  Often they are used as Defensive Scripts or Sniper Scripts.\
+      \  However, a misguided Script can simply make the bot predictable and easy\
+      \ to defeat.  See also [[Legacy:Creating And Using ScriptedActions|Creating\
+      \ and Using ScriptedActions]], [[Legacy:ScriptedAction|ScriptedAction]], [[Legacy:ScriptedSequence|ScriptedSequence]]\
+      \ and [[Legacy:Strategic Bots|Strategic Bots]].\n\n==Pathing Special Areas==\n\
+      \n===Water ===\n\nDon't place pathnodes above water but in it or bots will bob\
+      \ up and down under the pathnode trying to reach it.\n\n===Lifts===\n\nA lift\
+      \ system has an entry point and an exit point.  Bots need to know where those\
+      \ points are and where the lift currently is.  This is described with LiftCenter\
+      \ and LiftExit actors.  See also [[Legacy:Pathing Lifts|Pathing Lifts]].\n\n\
+      ===Ladders===\n\nIn UT2003/UT2004, a ladder is a special volume that allows\
+      \ a player inside to move up and down instead of forward and back.  Bots need\
+      \ to be told where to enter and exit the ladder volume.  This is done with Ladder\
+      \ actors.  See also [[Legacy:Add A Ladder|Add A Ladder]].\n\n===JumpPads===\n\
+      \nJumpPads are nodes that throw players and bots through the air to a destination\
+      \ node, like an ordinary PathNode.  Bots know what that destination node is\
+      \ by the ForcedPath described in the UTJumpPad actor.  See also [[Legacy:UTJumpPad|UTJumpPad]]\
+      \ and [[Legacy:Pathing Kickers|Pathing Kickers]].\n\n===Doors===\n\nBots need\
+      \ to know if doors are closed they need to be opened to travel or shoot through.\
+      \  This is done with a Door actor.  The Door actor tells the bots if there are\
+      \ any external triggers to open the door.  The Door actor can also tell bots\
+      \ to ingore the path through the door if it is closed; used for locked or triggered\
+      \ doors that block the path.  See also [[Legacy:Door|Door]].\n\n===Teleporters===\n\
+      \nTeleporters simply hook up to the bot path network by the two end point nodes.\
+      \  Bots immediately know how to use them to navigate.  See also [[Legacy:Teleportation\
+      \ Basics|Teleportation Basics]].\n\n==Pathing Topics==\n\nOther pages cover\
+      \ in detail how to make bots tackle more complex elements of their environment:\n\
+      * [[Legacy:Pathing Lifts|Pathing Lifts]]\n* [[Legacy:Pathing Kickers|Pathing\
+      \ Kickers]]\n* [[Legacy:Pathing Translocators|Pathing Translocators]]\n* [[Legacy:Pathing\
+      \ For Vehicles|Pathing For Vehicles]]\n* [[Legacy:Pathing 2k4 Flying Vehicles|Pathing\
+      \ 2k4 Flying Vehicles]]\n\n==Basic Bot Pathing Tutorial==\n* [[Legacy:Basic\
+      \ Bot Pathing|Basic Bot Pathing]] &ndash; A tutorial on basic bot pathing\n\n\
+      ==Related Topics==\n* [[Legacy:Bot Support|Bot Support]] &ndash; Main topic\n\
+      ** [[Legacy:Strategic Bots|Strategic Bots]] &ndash; Advanced bot support\n**\
+      \ [[Legacy:Bot Mind|Bot Mind]] &ndash; Understanding the bots\n** [[Legacy:Testing\
+      \ Botplay|Testing Botplay]] &ndash; Ensures reliable bot support\n\n==External\
+      \ Links ==\n* [http://unreal.epicgames.com/ut2ai.htm UT200x Botpathing by Steven\
+      \ Polge]\n* [http://www.leveldesigner.com/index.php?action=doc&ID=172 UT200x\
+      \ Advanced Bot Pathing Tutorial by Blitz]\n* [http://www.planetunreal.com/nucleus/UED2_pathing.html\
+      \ The Nucleus - Basic Bot Pathing]\n\n==Discussion ==\n\n'''SuperApe:''' Revision\
+      \ done.  What do you think?\n\n'''Evil-System:''' I don't understand how to\
+      \ get a specific ScriptedCharacter to start patrolling at one point. I have\
+      \ 3 patrol points set up the way I want, and a ScriptedCharacter nearby, and\
+      \ I want him to move the first point, and go to the second one and just walk\
+      \ back and forth between the second and third point.\n\n[[Category:Legacy Mapping|{{PAGENAME}}]]\n\
+      [[Category:Bot Support]]"
+  properties: []
+  revId: 46148
+name: "Legacy:Bot Pathing"
+revision:
+  revid: 46148
+  parentid: 33223
+  user: "SeriousBarbie"
+  timestamp: 1428790382.000000000
+  comment: "+[[Category:Bot Support]]"
+timestamp: 1668762630.465755000

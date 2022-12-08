@@ -1,0 +1,223 @@
+---
+parse:
+  title: "Trace"
+  text:
+    text: "<p>A <b>trace</b> is a line check against relevant collision primitives\
+      \ of actors in the level.</p>\n<table style=\"\" class=\"metadata plainlinks\
+      \ ambox ambox-content\">\n<tr>\n<td class=\"ambox-image\"></td>\n<td class=\"\
+      ambox-text\">This article is a <a href=\"/Unreal_Wiki:Stub\" title=\"Unreal\
+      \ Wiki:Stub\">stub</a>. You can help Unreal Wiki by <a rel=\"nofollow\" class=\"\
+      external text\" href=\"https://wiki.beyondunreal.com/edit/Trace\">expanding\
+      \ it</a>.</td>\n</tr>\n</table>\n<p></p>\n<div id=\"toc\" class=\"toc\">\n<div\
+      \ id=\"toctitle\">\n<h2>Contents</h2>\n</div>\n<ul>\n<li class=\"toclevel-1\
+      \ tocsection-1\"><a href=\"#Tracing_functions\"><span class=\"tocnumber\">1</span>\
+      \ <span class=\"toctext\">Tracing functions</span></a>\n<ul>\n<li class=\"toclevel-2\
+      \ tocsection-2\"><a href=\"#Trace\"><span class=\"tocnumber\">1.1</span> <span\
+      \ class=\"toctext\">Trace</span></a></li>\n<li class=\"toclevel-2 tocsection-3\"\
+      ><a href=\"#FastTrace\"><span class=\"tocnumber\">1.2</span> <span class=\"\
+      toctext\">FastTrace</span></a></li>\n<li class=\"toclevel-2 tocsection-4\"><a\
+      \ href=\"#TraceActors\"><span class=\"tocnumber\">1.3</span> <span class=\"\
+      toctext\">TraceActors</span></a></li>\n<li class=\"toclevel-2 tocsection-5\"\
+      ><a href=\"#TraceThisActor.2FTraceThisComponent\"><span class=\"tocnumber\"\
+      >1.4</span> <span class=\"toctext\">TraceThisActor/TraceThisComponent</span></a></li>\n\
+      </ul>\n</li>\n<li class=\"toclevel-1 tocsection-6\"><a href=\"#Alternative_ways_of_tracing\"\
+      ><span class=\"tocnumber\">2</span> <span class=\"toctext\">Alternative ways\
+      \ of tracing</span></a></li>\n</ul>\n</div>\n<p></p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Tracing_functions\">Tracing functions</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Trace?section=1\"\
+      \ title=\"Edit section: Tracing functions\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>The engine provides multiple ways to perform line\
+      \ checks. Additionally it perfoms line checks internally when moving actors.</p>\n\
+      <h3><span class=\"mw-headline\" id=\"Trace\">Trace</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Trace?section=2\"\
+      \ title=\"Edit section: Trace\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>The most obvious choice. The <b>Trace</b> function\
+      \ performs a line check from a start location to an end location and returns\
+      \ the actor hit closest to the start location. Internally it still needs to\
+      \ find all hits and sort them by distance from the start to find the first hit.</p>\n\
+      <p>You can pick whether you want to trace for only world geometry (BSP, movers,\
+      \ anything marked as <tt>bWorldGeometry</tt>) or all actors a projectile could\
+      \ hit (world geometry and any colliding actors that have <tt>bProjTarget</tt>\
+      \ or <tt>bBlockActors</tt>). Certain special cases, like tracing WaterVolumes\
+      \ or limiting trace results to only Pawns, can be enabled via actor properties.\
+      \ You likely won't find regular pickups using the <b>Trace</b> function, because\
+      \ they are not projectile targets. (Unless, for example, you are playing with\
+      \ \"Volatile Ammo\".)</p>\n<h3><span class=\"mw-headline\" id=\"FastTrace\"\
+      >FastTrace</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Trace?section=3\" title=\"Edit section: FastTrace\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n<p>This\
+      \ function checks only against BSP, Movers and <tt>bWorldGeometry</tt> and returns\
+      \ <i>false</i> if a hit is detected, but does not provide any information about\
+      \ the hit whatsoever. As the name suggests, this is likely the fastest way to\
+      \ perform a trace, but you are limited in the tracing targets.</p>\n<h3><span\
+      \ class=\"mw-headline\" id=\"TraceActors\">TraceActors</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Trace?section=4\"\
+      \ title=\"Edit section: TraceActors\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Performs a trace and then lets you iterate over the\
+      \ hits. Like <b>Trace</b>, it will sort the hits by their distance from the\
+      \ start location.</p>\n<p><b>TraceActors</b> considers all colliding actors,\
+      \ even if they are not projectile targets, but of course it only returns hits\
+      \ that pass the class filter you specified. This is probably the most complete\
+      \ trace function you will find.</p>\n<p>It is defined in class'Actor' as follows:<br\
+      \ />\n<code>native(309) final iterator function TraceActors( class&lt;actor&gt;\
+      \ BaseClass, out actor Actor, out vector HitLoc, out vector HitNorm, vector\
+      \ End, optional vector Start, optional vector Extent );</code></p>\n<p>The second\
+      \ parameter <b>Actor</b> must be of the same class as the filter <b>BaseClass</b>.</p>\n\
+      <h3><span class=\"mw-headline\" id=\"TraceThisActor.2FTraceThisComponent\">TraceThisActor/TraceThisComponent</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Trace?section=5\" title=\"Edit section: TraceThisActor/TraceThisComponent\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n<p>Performs\
+      \ a trace only against the collision primitive of the actor or component it\
+      \ was called on, regardless of that actor's collision settings. You can use\
+      \ this function when you already know what you are likely going to hit, but\
+      \ want to figure out exactly how the hit will connect. This function is even\
+      \ faster than <b>FastTrace</b>, but obviously has different applications than\
+      \ that.</p>\n<h2><span class=\"mw-headline\" id=\"Alternative_ways_of_tracing\"\
+      >Alternative ways of tracing</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Trace?section=6\" title=\"\
+      Edit section: Alternative ways of tracing\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>If the above functions do not satisfy your needs,\
+      \ there are also other ways to probe for collisions along a certain path.</p>\n\
+      <p>If everything else fails, you can always spawn an actor with the collision\
+      \ settings you need and move it along the path you want to trace. You can use\
+      \ its Touch or HitWall events to collect any hits it encounters. To move it\
+      \ along a particular path, you can set up its Velocity and/or Acceleration and\
+      \ then call the <b>AutonomousPhysics</b> function to have the actor perform\
+      \ its configured physics as if the specified amount of game time passed. Alternatively\
+      \ you can use the <b>Move</b> function to specify a location offset to move\
+      \ the actor along, but Touch/Untouch notification may not be useful other than\
+      \ signaling that there was a collision.</p>\n\n<!-- \nNewPP limit report\nCPU\
+      \ time usage: 0.030 seconds\nReal time usage: 0.067 seconds\nPreprocessor visited\
+      \ node count: 52/1000000\nPreprocessor generated node count: 192/1000000\nPost‐\
+      expand include size: 637/2097152 bytes\nTemplate argument size: 136/2097152\
+      \ bytes\nHighest expansion depth: 5/40\nExpensive parser function count: 0/100\n\
+      -->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n100.00%\
+      \   14.344      1 - -total\n100.00%   14.344      1 - Template:Stub\n 36.31%\
+      \    5.209      1 - Template:Ambox\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:29723-0!*!0!!en!*!* and timestamp 20221117204928 and revision\
+      \ id 47264\n -->\n"
+  categories:
+  - sortkey: ""
+    name: "Programming_articles"
+  - sortkey: "Trace"
+    name: "Stubs"
+  links:
+  - ns: 4
+    exists: true
+    name: "Unreal Wiki:Stub"
+  templates:
+  - ns: 10
+    exists: true
+    name: "Template:Stub"
+  - ns: 10
+    exists: true
+    name: "Template:Ambox"
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Tracing functions"
+    number: "1"
+    index: "1"
+    fromtitle: "Trace"
+    byteoffset: 136
+    anchor: "Tracing_functions"
+  - toclevel: 2
+    level: "3"
+    line: "Trace"
+    number: "1.1"
+    index: "2"
+    fromtitle: "Trace"
+    byteoffset: 284
+    anchor: "Trace"
+  - toclevel: 2
+    level: "3"
+    line: "FastTrace"
+    number: "1.2"
+    index: "3"
+    fromtitle: "Trace"
+    byteoffset: 1131
+    anchor: "FastTrace"
+  - toclevel: 2
+    level: "3"
+    line: "TraceActors"
+    number: "1.3"
+    index: "4"
+    fromtitle: "Trace"
+    byteoffset: 1446
+    anchor: "TraceActors"
+  - toclevel: 2
+    level: "3"
+    line: "TraceThisActor/TraceThisComponent"
+    number: "1.4"
+    index: "5"
+    fromtitle: "Trace"
+    byteoffset: 2185
+    anchor: "TraceThisActor.2FTraceThisComponent"
+  - toclevel: 1
+    level: "2"
+    line: "Alternative ways of tracing"
+    number: "2"
+    index: "6"
+    fromtitle: "Trace"
+    byteoffset: 2613
+    anchor: "Alternative_ways_of_tracing"
+  displaytitle: "Trace"
+  iwlinks: []
+  wikitext:
+    text: "A '''trace''' is a line check against relevant collision primitives of\
+      \ actors in the level.\n{{stub}}\n[[Category:Programming articles]]\n\n==Tracing\
+      \ functions==\nThe engine provides multiple ways to perform line checks. Additionally\
+      \ it perfoms line checks internally when moving actors.\n\n===Trace===\nThe\
+      \ most obvious choice. The '''Trace''' function performs a line check from a\
+      \ start location to an end location and returns the actor hit closest to the\
+      \ start location. Internally it still needs to find all hits and sort them by\
+      \ distance from the start to find the first hit.\n\nYou can pick whether you\
+      \ want to trace for only world geometry (BSP, movers, anything marked as <tt>bWorldGeometry</tt>)\
+      \ or all actors a projectile could hit (world geometry and any colliding actors\
+      \ that have <tt>bProjTarget</tt> or <tt>bBlockActors</tt>). Certain special\
+      \ cases, like tracing WaterVolumes or limiting trace results to only Pawns,\
+      \ can be enabled via actor properties. You likely won't find regular pickups\
+      \ using the '''Trace''' function, because they are not projectile targets. (Unless,\
+      \ for example, you are playing with \"Volatile Ammo\".)\n\n===FastTrace===\n\
+      This function checks only against BSP, Movers and <tt>bWorldGeometry</tt> and\
+      \ returns ''false'' if a hit is detected, but does not provide any information\
+      \ about the hit whatsoever. As the name suggests, this is likely the fastest\
+      \ way to perform a trace, but you are limited in the tracing targets.\n\n===\
+      \ TraceActors ===\nPerforms a trace and then lets you iterate over the hits.\
+      \ Like '''Trace''', it will sort the hits by their distance from the start location.\n\
+      \n'''TraceActors''' considers all colliding actors, even if they are not projectile\
+      \ targets, but of course it only returns hits that pass the class filter you\
+      \ specified. This is probably the most complete trace function you will find.\n\
+      \nIt is defined in class'Actor' as follows:<BR />\n<code>native(309) final iterator\
+      \ function TraceActors( class<actor> BaseClass, out actor Actor, out vector\
+      \ HitLoc, out vector HitNorm, vector End, optional vector Start, optional vector\
+      \ Extent );</code>\n\nThe second parameter '''Actor''' must be of the same class\
+      \ as the filter '''BaseClass'''.\n\n===TraceThisActor/TraceThisComponent===\n\
+      Performs a trace only against the collision primitive of the actor or component\
+      \ it was called on, regardless of that actor's collision settings. You can use\
+      \ this function when you already know what you are likely going to hit, but\
+      \ want to figure out exactly how the hit will connect. This function is even\
+      \ faster than '''FastTrace''', but obviously has different applications than\
+      \ that.\n\n==Alternative ways of tracing==\nIf the above functions do not satisfy\
+      \ your needs, there are also other ways to probe for collisions along a certain\
+      \ path.\n\nIf everything else fails, you can always spawn an actor with the\
+      \ collision settings you need and move it along the path you want to trace.\
+      \ You can use its Touch or HitWall events to collect any hits it encounters.\
+      \ To move it along a particular path, you can set up its Velocity and/or Acceleration\
+      \ and then call the '''AutonomousPhysics''' function to have the actor perform\
+      \ its configured physics as if the specified amount of game time passed. Alternatively\
+      \ you can use the '''Move''' function to specify a location offset to move the\
+      \ actor along, but Touch/Untouch notification may not be useful other than signaling\
+      \ that there was a collision."
+  properties: []
+  revId: 47264
+name: "Trace"
+revision:
+  revid: 47264
+  parentid: 46319
+  user: "SeriousBarbie"
+  timestamp: 1650186566.000000000
+  comment: "Additions to TraceActors"
+timestamp: 1668752792.111926000

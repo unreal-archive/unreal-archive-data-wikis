@@ -1,0 +1,256 @@
+---
+parse:
+  title: "Legacy:Mod Authoring/Making A Mutator"
+  text:
+    text: "<p><a href=\"/Legacy:Mutator\" title=\"Legacy:Mutator\">Mutators</a> are\
+      \ a great place to cut your teeth on UnrealScript because you are exposed to\
+      \ a limited, but powerful subset of the engine. As I said above, Mutators should\
+      \ only modify the game code in a relatively slight way. This increases the chances\
+      \ your mutator will work well when mixed with other mutators. (For example,\
+      \ you can play <i>FatBoy</i>, <i>InstaGib</i>, <i>No Powerups</i> deathmatch.\
+      \ A mix of 3 mutators).</p>\n<p>All mutators descend from the Mutator base class\
+      \ either directly or indirectly. Let's make a Vampire mutator and see how it\
+      \ all works. Create a new file in your package classes directory called Vampire.uc.\
+      \ Drop the following code in there:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">class</span> Vampire <span class=\"kw1\">extends</span>\
+      \ <span class=\"kw9\">Mutator</span>;\n \n<span class=\"kw1\">var</span> <span\
+      \ class=\"kw5\">bool</span> Initialized;\n \n<span class=\"kw1\">function</span>\
+      \ <span class=\"kw4\">PostBeginPlay</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span>Initialized<span class=\"br0\">)</span>\n\
+      \t\t<span class=\"kw2\">return</span>;\n\tInitialized <span class=\"sy0\">=</span>\
+      \ <span class=\"kw6\">True</span>;\n \n\t<span class=\"kw7\">Level</span>.<span\
+      \ class=\"kw7\">Game</span>.<span class=\"me0\">RegisterDamageMutator</span><span\
+      \ class=\"br0\">(</span> <span class=\"kw6\">Self</span> <span class=\"br0\"\
+      >)</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">function</span>\
+      \ MutatorTakeDamage<span class=\"br0\">(</span> <span class=\"kw1\">out</span>\
+      \ <span class=\"kw5\">int</span> ActualDamage, <span class=\"kw9\">Pawn</span>\
+      \ Victim, <span class=\"kw9\">Pawn</span> InstigatedBy, <span class=\"kw1\"\
+      >out</span> <span class=\"kw5\">Vector</span> HitLocation,\n\t<span class=\"\
+      kw1\">out</span> <span class=\"kw5\">Vector</span> Momentum, <span class=\"\
+      kw5\">name</span> <span class=\"kw9\">DamageType</span><span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n\t<span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span>InstigatedBy.<span class=\"kw3\">IsA</span><span class=\"br0\"\
+      >(</span><span class=\"st0\">'Bot'</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">||</span> InstigatedBy.<span class=\"kw3\">IsA</span><span class=\"\
+      br0\">(</span><span class=\"st0\">'PlayerPawn'</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t\tInstigatedBy.<span\
+      \ class=\"me0\">Health</span> <span class=\"sy0\">+=</span> ActualDamage;\n\t\
+      \t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>InstigatedBy.<span\
+      \ class=\"me0\">Health</span> <span class=\"sy0\">&gt;</span> <span class=\"\
+      nu0\">199</span><span class=\"br0\">)</span>\n\t\t\tInstigatedBy.<span class=\"\
+      me0\">Health</span> <span class=\"sy0\">=</span> <span class=\"nu0\">199</span>;\n\
+      \t<span class=\"br0\">}</span>\n\t<span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span> NextDamageMutator <span class=\"sy0\">!=</span> <span class=\"\
+      kw5\">None</span> <span class=\"br0\">)</span>\n\t\tNextDamageMutator.<span\
+      \ class=\"me0\">MutatorTakeDamage</span><span class=\"br0\">(</span> ActualDamage,\
+      \ Victim, InstigatedBy, HitLocation, Momentum, <span class=\"kw9\">DamageType</span>\
+      \ <span class=\"br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>The first line declares the class contained in this file. UnrealScript\
+      \ is like Java in that each file contains a separate class definition. We are\
+      \ saying that our class, Vampire, is a Mutator. It \"inherits\" all the properties\
+      \ of Mutator.</p>\n<p>Next, we declare a class member. In UnrealScript, all\
+      \ class member variables must be declared before any functions (also called\
+      \ methods) are declared. The var keyword tells the compiler what we are doing.\
+      \ Here we have a boolean (true/false) value called Intialized.</p>\n<p>Next\
+      \ we have a function called <code>PostBeginPlay</code>. To someone who isn't\
+      \ experienced with object oriented programming, we have a bit of a puzzle. This\
+      \ object just declares functions, it doesn't seem to have any entry point! The\
+      \ \"entry point\" is inherited. Vampire is a Mutator, so it does everything\
+      \ Mutators can. Mutator is an Info, Info is an Actor, and an Actor is managed\
+      \ by the engine. In our case, we are overriding the function PostBeginPlay.\
+      \ PreBeginPlay, BeginPlay, and PostBeginPlay are called on every Actor in the\
+      \ level when the game starts. They are used to initialize the world.</p>\n<p>Our\
+      \ PostBeginPlay function starts by setting initialized to true. Notice it'll\
+      \ return if initialized is already true. What's the point of that? Well, the\
+      \ problem is that the BeginPlay suite of functions get called twice on Mutators.\
+      \ Unfortunately, this is somewhat unavoidable. BeginPlay and its friends are\
+      \ called on Actors when they are spawned and when the game starts. Mutators,\
+      \ unlike other actors, are spawned before the game starts... so you get two\
+      \ calls. The Initialized check is to prevent the rest of PostBeginPlay from\
+      \ being executed twice.</p>\n<p>The second part of PostBeginPlay is called RegisterDamageMutator,\
+      \ a method located in the <a href=\"/Legacy:GameInfo_(UT)\" title=\"Legacy:GameInfo\
+      \ (UT)\">GameInfo (UT)</a> class. Here we are accessing the <code>Level</code>\
+      \ property that all <a href=\"/Legacy:Actor\" title=\"Legacy:Actor\">Actors</a>\
+      \ inherit. Then we access the <code>Game</code> property of the <a href=\"/Legacy:LevelInfo\"\
+      \ title=\"Legacy:LevelInfo\">LevelInfo</a> class that <code>Level</code> points\
+      \ to. Finally, we call the function from that reference, passing our <code>Self</code>\
+      \ as the parameter.</p>\n<p><code>RegisterDamageMutator</code> is a special\
+      \ method that tells the GameInfo to call MutatorTakeDamage on this mutator whenever\
+      \ a pawn takes damage. Because pawns take a lot of damage during the course\
+      \ of a normal game, we don't want to call this function on every mutator, that\
+      \ would be slow. RegisterDamageMutator allows us to limit the calls to only\
+      \ a subset of mutators. (By the way, in UT <a href=\"/Legacy:Pawn_(UT)\" title=\"\
+      Legacy:Pawn (UT)\">Pawn (UT)s</a> consist primarily of <a href=\"/Legacy:Bot_(UT)\"\
+      \ title=\"Legacy:Bot (UT)\">Bot (UT)s</a> and <a href=\"/Legacy:PlayerPawn\"\
+      \ title=\"Legacy:PlayerPawn\">PlayerPawns</a>).</p>\n<p>Next we have our implementation\
+      \ of <code>MutatorTakeDamage</code>. This is the heart of our Mutator. We are\
+      \ making a Vampire mutator. The idea is simple: if a Pawn A does damage to another\
+      \ Pawn B, give the Pawn A health equal to the amount of damage. Players and\
+      \ bots will effectively suck life off of other players or bots.</p>\n<p>As I\
+      \ mentioned above, RegisterDamageMutator is called on our mutator whenever a\
+      \ player takes damage from another one. The pawns in question are passed to\
+      \ us in the variables.</p>\n<p>We start by making sure we are only dealing with\
+      \ bots and playerpawns. There are pawns that are neither bots nor players and\
+      \ we don't want to deal with them. InstigatedBy refers to the player who dealt\
+      \ the damage. We do our core logic by adding to that pawn's health life equal\
+      \ to the damage dealt. RegisterDamageMutator always passes in an amount of damage\
+      \ <i>after</i> armor, so this is raw final damage. Finally, we don't want a\
+      \ player gaining so much life he becomes unkillable, so we limit the total life\
+      \ gain to 199 points.</p>\n<p>To finish the function off, we call MutatorTakeDamage\
+      \ on the next damage mutator in the list. It is <b>critical</b> that you pass\
+      \ along method calls like this. If you fail to, damage mutators loaded after\
+      \ your own won't work right. There are other functions that need to be passed\
+      \ along, which we'll look at below.</p>\n<p>So now you can save this file and\
+      \ rebuild your package. We aren't done yet, though, because the mutator won't\
+      \ show up in the menus without some more work. Open your package's .int file\
+      \ and add the following line to the <code>[Public]</code> section (in a single\
+      \ line):</p>\n<pre> Object=(Name=SemperFi.Vampire,Class=Class,MetaClass=Engine.Mutator,\n\
+      \   Description=\"Vampire,You gain life equal to the amount of damage you do\
+      \ to an enemy.\")\n</pre>\n<p>When the game looks for mutators to list in the\
+      \ <i>Add Mutators</i> window, it searches all .int files for objects with a\
+      \ declared MetaClass of Engine.Mutator. We've also added a Description for the\
+      \ help bar. Now we are ready to run Unreal Tournament and load the mutator.\
+      \ Play around with it for a bit and you'll probably get ideas for your own mutators\
+      \ or ways of expanding Vampire.</p>\n<hr />\n<p>Prev Page: <a href=\"/Legacy:Mod_Authoring/How_To_Build_Your_Package\"\
+      \ title=\"Legacy:Mod Authoring/How To Build Your Package\">Legacy:Mod Authoring/How\
+      \ To Build Your Package</a> – <b>Section 7 of 12</b> – Next Page: <a href=\"\
+      /Legacy:Mod_Authoring/The_Anatomy_Of_Mutator\" title=\"Legacy:Mod Authoring/The\
+      \ Anatomy Of Mutator\">Legacy:Mod Authoring/The Anatomy Of Mutator</a></p>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.046 seconds\nReal time usage:\
+      \ 0.103 seconds\nPreprocessor visited node count: 8/1000000\nPreprocessor generated\
+      \ node count: 56/1000000\nPost‐expand include size: 38/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:1794-0!*!0!*!*!*!* and timestamp 20221118022754 and revision\
+      \ id 4403\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:PlayerPawn"
+  - ns: 100
+    exists: true
+    name: "Legacy:Mod Authoring/How To Build Your Package"
+  - ns: 100
+    exists: true
+    name: "Legacy:Mutator"
+  - ns: 100
+    exists: true
+    name: "Legacy:Actor"
+  - ns: 100
+    exists: true
+    name: "Legacy:GameInfo (UT)"
+  - ns: 100
+    exists: true
+    name: "Legacy:LevelInfo"
+  - ns: 100
+    exists: true
+    name: "Legacy:Mod Authoring/The Anatomy Of Mutator"
+  - ns: 100
+    exists: true
+    name: "Legacy:Pawn (UT)"
+  - ns: 100
+    exists: true
+    name: "Legacy:Bot (UT)"
+  templates: []
+  images: []
+  externallinks: []
+  sections: []
+  displaytitle: "Legacy:Mod Authoring/Making A Mutator"
+  iwlinks: []
+  wikitext:
+    text: "[[Legacy:Mutator|Mutator]]s are a great place to cut your teeth on UnrealScript\
+      \ because you are exposed to a limited, but powerful subset of the engine. As\
+      \ I said above, Mutators should only modify the game code in a relatively slight\
+      \ way. This increases the chances your mutator will work well when mixed with\
+      \ other mutators. (For example, you can play ''FatBoy'', ''InstaGib'', ''No\
+      \ Powerups'' deathmatch. A mix of 3 mutators).\n\nAll mutators descend from\
+      \ the Mutator base class either directly or indirectly. Let's make a Vampire\
+      \ mutator and see how it all works. Create a new file in your package classes\
+      \ directory called Vampire.uc. Drop the following code in there:\n\n<uscript>\n\
+      class Vampire extends Mutator;\n\nvar bool Initialized;\n\nfunction PostBeginPlay()\n\
+      {\n\tif (Initialized)\n\t\treturn;\n\tInitialized = True;\n\n\tLevel.Game.RegisterDamageMutator(\
+      \ Self );\n}\n\nfunction MutatorTakeDamage( out int ActualDamage, Pawn Victim,\
+      \ Pawn InstigatedBy, out Vector HitLocation,\n\tout Vector Momentum, name DamageType)\n\
+      {\n\tif (InstigatedBy.IsA('Bot') || InstigatedBy.IsA('PlayerPawn'))\n\t{\n\t\
+      \tInstigatedBy.Health += ActualDamage;\n\t\tif (InstigatedBy.Health > 199)\n\
+      \t\t\tInstigatedBy.Health = 199;\n\t}\n\tif ( NextDamageMutator != None )\n\t\
+      \tNextDamageMutator.MutatorTakeDamage( ActualDamage, Victim, InstigatedBy, HitLocation,\
+      \ Momentum, DamageType );\n}\n</uscript>\n\nThe first line declares the class\
+      \ contained in this file. UnrealScript is like Java in that each file contains\
+      \ a separate class definition. We are saying that our class, Vampire, is a Mutator.\
+      \ It \"inherits\" all the properties of Mutator.\n\nNext, we declare a class\
+      \ member. In UnrealScript, all class member variables must be declared before\
+      \ any functions (also called methods) are declared. The var keyword tells the\
+      \ compiler what we are doing. Here we have a boolean (true/false) value called\
+      \ Intialized.\n\nNext we have a function called <code>PostBeginPlay</code>.\
+      \ To someone who isn't experienced with object oriented programming, we have\
+      \ a bit of a puzzle. This object just declares functions, it doesn't seem to\
+      \ have any entry point! The \"entry point\" is inherited. Vampire is a Mutator,\
+      \ so it does everything Mutators can. Mutator is an Info, Info is an Actor,\
+      \ and an Actor is managed by the engine. In our case, we are overriding the\
+      \ function PostBeginPlay. PreBeginPlay, BeginPlay, and PostBeginPlay are called\
+      \ on every Actor in the level when the game starts. They are used to initialize\
+      \ the world.\n\nOur PostBeginPlay function starts by setting initialized to\
+      \ true. Notice it'll return if initialized is already true. What's the point\
+      \ of that? Well, the problem is that the BeginPlay suite of functions get called\
+      \ twice on Mutators. Unfortunately, this is somewhat unavoidable. BeginPlay\
+      \ and its friends are called on Actors when they are spawned and when the game\
+      \ starts. Mutators, unlike other actors, are spawned before the game starts...\
+      \ so you get two calls. The Initialized check is to prevent the rest of PostBeginPlay\
+      \ from being executed twice.\n\nThe second part of PostBeginPlay is called RegisterDamageMutator,\
+      \ a method located in the [[Legacy:GameInfo (UT)|GameInfo (UT)]] class. Here\
+      \ we are accessing the <code>Level</code> property that all [[Legacy:Actor|Actor]]s\
+      \ inherit. Then we access the <code>Game</code> property of the [[Legacy:LevelInfo|LevelInfo]]\
+      \ class that <code>Level</code> points to. Finally, we call the function from\
+      \ that reference, passing our <code>Self</code> as the parameter.\n\n<code>RegisterDamageMutator</code>\
+      \ is a special method that tells the GameInfo to call MutatorTakeDamage on this\
+      \ mutator whenever a pawn takes damage. Because pawns take a lot of damage during\
+      \ the course of a normal game, we don't want to call this function on every\
+      \ mutator, that would be slow. RegisterDamageMutator allows us to limit the\
+      \ calls to only a subset of mutators. (By the way, in UT [[Legacy:Pawn (UT)|Pawn\
+      \ (UT)]]s consist primarily of [[Legacy:Bot (UT)|Bot (UT)]]s and [[Legacy:PlayerPawn|PlayerPawn]]s).\n\
+      \nNext we have our implementation of <code>MutatorTakeDamage</code>. This is\
+      \ the heart of our Mutator. We are making a Vampire mutator. The idea is simple:\
+      \ if a Pawn A does damage to another Pawn B, give the Pawn A health equal to\
+      \ the amount of damage. Players and bots will effectively suck life off of other\
+      \ players or bots. \n\nAs I mentioned above, RegisterDamageMutator is called\
+      \ on our mutator whenever a player takes damage from another one. The pawns\
+      \ in question are passed to us in the variables.\n\nWe start by making sure\
+      \ we are only dealing with bots and playerpawns. There are pawns that are neither\
+      \ bots nor players and we don't want to deal with them. InstigatedBy refers\
+      \ to the player who dealt the damage. We do our core logic by adding to that\
+      \ pawn's health life equal to the damage dealt. RegisterDamageMutator always\
+      \ passes in an amount of damage ''after'' armor, so this is raw final damage.\
+      \ Finally, we don't want a player gaining so much life he becomes unkillable,\
+      \ so we limit the total life gain to 199 points.\n\nTo finish the function off,\
+      \ we call MutatorTakeDamage on the next damage mutator in the list. It is '''critical'''\
+      \ that you pass along method calls like this. If you fail to, damage mutators\
+      \ loaded after your own won't work right. There are other functions that need\
+      \ to be passed along, which we'll look at below.\n\nSo now you can save this\
+      \ file and rebuild your package. We aren't done yet, though, because the mutator\
+      \ won't show up in the menus without some more work. Open your package's .int\
+      \ file and add the following line to the <code>[Public]</code> section (in a\
+      \ single line):\n\n  Object=(Name=SemperFi.Vampire,Class=Class,MetaClass=Engine.Mutator,\n\
+      \    Description=\"Vampire,You gain life equal to the amount of damage you do\
+      \ to an enemy.\")\n\nWhen the game looks for mutators to list in the ''Add Mutators''\
+      \ window, it searches all .int files for objects with a declared MetaClass of\
+      \ Engine.Mutator. We've also added a Description for the help bar. Now we are\
+      \ ready to run Unreal Tournament and load the mutator. Play around with it for\
+      \ a bit and you'll probably get ideas for your own mutators or ways of expanding\
+      \ Vampire.\n\n----\n\nPrev Page: [[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/How To\
+      \ Build Your Package]] &ndash; '''Section 7 of 12''' &ndash; Next Page: [[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/The\
+      \ Anatomy Of Mutator]]"
+  properties: []
+  revId: 4403
+name: "Legacy:Mod Authoring/Making A Mutator"
+revision:
+  revid: 4403
+  parentid: 4405
+  user: "Alien8"
+  timestamp: 1053398762.000000000
+  comment: "*Oh, the extending!"
+timestamp: 1668763615.314196000

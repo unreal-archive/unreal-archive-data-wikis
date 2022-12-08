@@ -1,0 +1,209 @@
+---
+parse:
+  title: "Legacy:Mod Authoring/A First Look At GameInfo"
+  text:
+    text: "<p>Open the Engine package file <code>GameInfo.uc</code>. This is the definition\
+      \ of the basic game logic. At the top of the file you'll see a long list of\
+      \ variable declarations. Many of these variables have comments that describe\
+      \ their purpose. Below the variable declarations come the functions (or methods)\
+      \ that do the work.</p>\n<dl>\n<dt>Timer&#160;</dt>\n<dd>The first thing to\
+      \ look at is the Timer function. In <a href=\"/Legacy:GameInfo_(UT)\" title=\"\
+      Legacy:GameInfo (UT)\">GameInfo (UT)</a> its pretty short, but in <a href=\"\
+      /Legacy:DeathMatchPlus\" title=\"Legacy:DeathMatchPlus\">DeathMatchPlus</a>\
+      \ its very long. Timer is a special UnrealScript event. If you call the function\
+      \ <code>SetTimer(int Time, bool bLoop)</code> you can set up a repeating timer\
+      \ on your <a href=\"/Legacy:Actor\" title=\"Legacy:Actor\">actor</a>. The Time\
+      \ parameter describes when the Timer function should be called. The bLoop parameter\
+      \ describes whether or not Timer should be called in a loop after the first\
+      \ call. <b>All TournamentGameInfo classes use a Timer loop of one second.</b>\
+      \ This means that the Timer function is called every second. You can use Timer\
+      \ for events that have to happen at certain times. By declaring watch variables\
+      \ that count up seconds, you can perform events at any time up to a second's\
+      \ resolution. DeathMatchPlus uses this to check and see if the TimeLimit has\
+      \ been hit in a game.</dd>\n</dl>\n<dl>\n<dt>Tick&#160;</dt>\n<dd>Another important\
+      \ time function to get to know is Tick. Tick isn't used in GameInfo, but any\
+      \ Actor can use it. The declaration for Tick is: <code>Tick(float DeltaTime)</code>.\
+      \ Tick is called on <b>every</b> Actor in the game each frame. DeltaTime contains\
+      \ the amount of time that has passed since the last Tick. Using Tick, you can\
+      \ perform behavior that has to be done at less-than-a-second resolution. You\
+      \ must be careful not to perform CPU heavy behavior in Tick, because it is called\
+      \ so often.</dd>\n</dl>\n<dl>\n<dt>Login&#160;</dt>\n<dd>Scroll down in GameInfo\
+      \ until you find the Login function. This function is called by the engine whenever\
+      \ a player logs in to the game. GameInfo's version of login does important setup\
+      \ stuff like assigning the player a name, a skin, a mesh and so forth. It also\
+      \ spawns the intial teleport effect and finds a spawn point to stick the player\
+      \ at. A little ways below Login is Logout. It is called whenever a player leaves\
+      \ the game. You can use logout to clean up after a player exits.</dd>\n</dl>\n\
+      <dl>\n<dt>AddDefaultInventory&#160;</dt>\n<dd>Another interesting function in\
+      \ GameInfo is AddDefaultInventory. This function assigns a player his initial\
+      \ weapon and equipment. In UnrealTournment's DeathMatchPlus, the player is given\
+      \ an <a href=\"/Legacy:ImpactHammer\" title=\"Legacy:ImpactHammer\">ImpactHammer</a>\
+      \ and an <a href=\"/Legacy:Enforcer\" title=\"Legacy:Enforcer\">Enforcer</a>.\
+      \ <a href=\"/edit/Legacy:LMS?redlink=1\" class=\"new\" title=\"Legacy:LMS (page\
+      \ does not exist)\">LastManStanding</a> has a great example of doing cool things\
+      \ with AddDefaultInventory. It gives the player every weapon in the game (except\
+      \ for the Redeemer) as well as some armor and a lot of ammo. You can use AddDefaultInventory\
+      \ to add custom inventory to players that join your mod (for example, you might\
+      \ want to give them a grenade and some money).</dd>\n</dl>\n<dl>\n<dt>FindPlayerStart&#160;</dt>\n\
+      <dd>The FindPlayerStart method searches the actors in a level for <a href=\"\
+      /Legacy:NavigationPoint\" title=\"Legacy:NavigationPoint\">NavigationPoints</a>\
+      \ suitable for spawning. The <a href=\"/Legacy:PlayerStart\" title=\"Legacy:PlayerStart\"\
+      >PlayerStart</a> actor that a map designer adds to their map is one such location.\
+      \ In <a href=\"/Legacy:TeamGamePlus\" title=\"Legacy:TeamGamePlus\">TeamGamePlus</a>,\
+      \ FindPlayerStart spawns players and bots depending on their Team. It checks\
+      \ the Team of each playerstart and the Team of the pawn to be spawned. You can\
+      \ use FindPlayerStart to write custom spawn code (for example, you might want\
+      \ to spawn Terrorists in one location and Snipers in another).</dd>\n</dl>\n\
+      <dl>\n<dt>RestartPlayer&#160;</dt>\n<dd>The RestartPlayer method is called whenever\
+      \ a player respawns. The basic GameInfo version calls FindPlayerStart to find\
+      \ a starting spot, moves the player to that spot and spawns a teleport effect.\
+      \ It also restores the players health, sets the player's collision, and gives\
+      \ the player his default inventory.</dd>\n</dl>\n<dl>\n<dt>Killed&#160;</dt>\n\
+      <dd>The Killed method is very useful. It is called whenever a player kills another\
+      \ player. It looks at the cirumstances of the death (whether a player suicided\
+      \ or killed successfully) and the type of damage and prints a message. It also\
+      \ logs the event to the ngStats log. Finally, it calls ScoreKill.</dd>\n</dl>\n\
+      <dl>\n<dt>ScoreKill&#160;</dt>\n<dd>ScoreKill awards points for a kill. DeathMatchPlus\
+      \ assigns a frag for a successful kill and subtracts one for a suicide. TeamGamePlus\
+      \ also adds a point to the TeamInfo of the Killer's team, or subtracts one in\
+      \ the case of a suicide.</dd>\n</dl>\n<dl>\n<dt>DiscardInventory&#160;</dt>\n\
+      <dd>DiscardInventory is called whenever a player dies or is removed from the\
+      \ game. DiscardInventory goes through a pawn's inventory, tossing out weapons\
+      \ and destroying others as appropriate. You might override this function if\
+      \ you wanted to toss out a backpack or a trap.</dd>\n</dl>\n<dl>\n<dt>EndGame&#160;</dt>\n\
+      <dd>Finally, the EndGame function is called with a reason whenever the game\
+      \ ends. You might want to perform special logging or clean up here.</dd>\n</dl>\n\
+      <p>So thats a quick look at the more important GameInfo functions. The advanced\
+      \ GameInfo classes like DeathMatchPlus add important new behavior for controlling\
+      \ bots and single player games, as well as refining the GameInfo methods into\
+      \ specific rules.</p>\n<hr />\n<p>Prev Page: <a href=\"/Legacy:Mod_Authoring/Introduction_To_GameTypes\"\
+      \ title=\"Legacy:Mod Authoring/Introduction To GameTypes\">Legacy:Mod Authoring/Introduction\
+      \ To GameTypes</a> – <b>Section 10 of 12</b> – Next Page: <a href=\"/Legacy:Mod_Authoring/Adding_A_HUD\"\
+      \ title=\"Legacy:Mod Authoring/Adding A HUD\">Legacy:Mod Authoring/Adding A\
+      \ HUD</a></p>\n\n<!-- \nNewPP limit report\nCPU time usage: 0.026 seconds\n\
+      Real time usage: 0.028 seconds\nPreprocessor visited node count: 5/1000000\n\
+      Preprocessor generated node count: 36/1000000\nPost‐expand include size: 38/2097152\
+      \ bytes\nTemplate argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\n\
+      Expensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion expansion\
+      \ time report (%,ms,calls,template)\n100.00%    0.000      1 - -total\n-->\n\
+      \n<!-- Saved in parser cache with key wiki:pcache:idhash:1791-0!*!0!*!*!*!*\
+      \ and timestamp 20221118155533 and revision id 4394\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Enforcer"
+  - ns: 100
+    exists: true
+    name: "Legacy:DeathMatchPlus"
+  - ns: 100
+    exists: true
+    name: "Legacy:PlayerStart"
+  - ns: 100
+    exists: true
+    name: "Legacy:GameInfo (UT)"
+  - ns: 100
+    exists: true
+    name: "Legacy:NavigationPoint"
+  - ns: 100
+    exists: true
+    name: "Legacy:Mod Authoring/Introduction To GameTypes"
+  - ns: 100
+    exists: true
+    name: "Legacy:Actor"
+  - ns: 100
+    exists: false
+    name: "Legacy:LMS"
+  - ns: 100
+    exists: true
+    name: "Legacy:TeamGamePlus"
+  - ns: 100
+    exists: true
+    name: "Legacy:Mod Authoring/Adding A HUD"
+  - ns: 100
+    exists: true
+    name: "Legacy:ImpactHammer"
+  templates: []
+  images: []
+  externallinks: []
+  sections: []
+  displaytitle: "Legacy:Mod Authoring/A First Look At GameInfo"
+  iwlinks: []
+  wikitext:
+    text: "Open the Engine package file <code>GameInfo.uc</code>. This is the definition\
+      \ of the basic game logic. At the top of the file you'll see a long list of\
+      \ variable declarations. Many of these variables have comments that describe\
+      \ their purpose. Below the variable declarations come the functions (or methods)\
+      \ that do the work.\n\n; Timer : The first thing to look at is the Timer function.\
+      \ In [[Legacy:GameInfo (UT)|GameInfo (UT)]] its pretty short, but in [[Legacy:DeathMatchPlus|DeathMatchPlus]]\
+      \ its very long. Timer is a special UnrealScript event. If you call the function\
+      \ <code>SetTimer(int Time, bool bLoop)</code> you can set up a repeating timer\
+      \ on your [[Legacy:Actor|actor]]. The Time parameter describes when the Timer\
+      \ function should be called. The bLoop parameter describes whether or not Timer\
+      \ should be called in a loop after the first call. '''All TournamentGameInfo\
+      \ classes use a Timer loop of one second.''' This means that the Timer function\
+      \ is called every second. You can use Timer for events that have to happen at\
+      \ certain times. By declaring watch variables that count up seconds, you can\
+      \ perform events at any time up to a second's resolution. DeathMatchPlus uses\
+      \ this to check and see if the TimeLimit has been hit in a game.\n\n; Tick :\
+      \ Another important time function to get to know is Tick. Tick isn't used in\
+      \ GameInfo, but any Actor can use it. The declaration for Tick is: <code>Tick(float\
+      \ DeltaTime)</code>. Tick is called on '''every''' Actor in the game each frame.\
+      \ DeltaTime contains the amount of time that has passed since the last Tick.\
+      \ Using Tick, you can perform behavior that has to be done at less-than-a-second\
+      \ resolution. You must be careful not to perform CPU heavy behavior in Tick,\
+      \ because it is called so often.\n\n; Login : Scroll down in GameInfo until\
+      \ you find the Login function. This function is called by the engine whenever\
+      \ a player logs in to the game. GameInfo's version of login does important setup\
+      \ stuff like assigning the player a name, a skin, a mesh and so forth. It also\
+      \ spawns the intial teleport effect and finds a spawn point to stick the player\
+      \ at. A little ways below Login is Logout. It is called whenever a player leaves\
+      \ the game. You can use logout to clean up after a player exits.\n\n; AddDefaultInventory\
+      \ : Another interesting function in GameInfo is AddDefaultInventory. This function\
+      \ assigns a player his initial weapon and equipment. In UnrealTournment's DeathMatchPlus,\
+      \ the player is given an [[Legacy:ImpactHammer|ImpactHammer]] and an [[Legacy:Enforcer|Enforcer]].\
+      \ [[Legacy:LMS|LastManStanding]] has a great example of doing cool things with\
+      \ AddDefaultInventory. It gives the player every weapon in the game (except\
+      \ for the Redeemer) as well as some armor and a lot of ammo. You can use AddDefaultInventory\
+      \ to add custom inventory to players that join your mod (for example, you might\
+      \ want to give them a grenade and some money).\n\n; FindPlayerStart : The FindPlayerStart\
+      \ method searches the actors in a level for [[Legacy:NavigationPoint|NavigationPoint]]s\
+      \ suitable for spawning. The [[Legacy:PlayerStart|PlayerStart]] actor that a\
+      \ map designer adds to their map is one such location. In [[Legacy:TeamGamePlus|TeamGamePlus]],\
+      \ FindPlayerStart spawns players and bots depending on their Team. It checks\
+      \ the Team of each playerstart and the Team of the pawn to be spawned. You can\
+      \ use FindPlayerStart to write custom spawn code (for example, you might want\
+      \ to spawn Terrorists in one location and Snipers in another).\n\n; RestartPlayer\
+      \ : The RestartPlayer method is called whenever a player respawns. The basic\
+      \ GameInfo version calls FindPlayerStart to find a starting spot, moves the\
+      \ player to that spot and spawns a teleport effect. It also restores the players\
+      \ health, sets the player's collision, and gives the player his default inventory.\n\
+      \n; Killed : The Killed method is very useful. It is called whenever a player\
+      \ kills another player. It looks at the cirumstances of the death (whether a\
+      \ player suicided or killed successfully) and the type of damage and prints\
+      \ a message. It also logs the event to the ngStats log. Finally, it calls ScoreKill.\n\
+      \n; ScoreKill : ScoreKill awards points for a kill. DeathMatchPlus assigns a\
+      \ frag for a successful kill and subtracts one for a suicide. TeamGamePlus also\
+      \ adds a point to the TeamInfo of the Killer's team, or subtracts one in the\
+      \ case of a suicide.\n\n; DiscardInventory : DiscardInventory is called whenever\
+      \ a player dies or is removed from the game. DiscardInventory goes through a\
+      \ pawn's inventory, tossing out weapons and destroying others as appropriate.\
+      \ You might override this function if you wanted to toss out a backpack or a\
+      \ trap.\n\n; EndGame : Finally, the EndGame function is called with a reason\
+      \ whenever the game ends. You might want to perform special logging or clean\
+      \ up here.\n\nSo thats a quick look at the more important GameInfo functions.\
+      \ The advanced GameInfo classes like DeathMatchPlus add important new behavior\
+      \ for controlling bots and single player games, as well as refining the GameInfo\
+      \ methods into specific rules.\n\n----\n\nPrev Page: [[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/Introduction\
+      \ To GameTypes]] &ndash; '''Section 10 of 12''' &ndash; Next Page: [[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/Adding\
+      \ A HUD]]"
+  properties: []
+  revId: 4394
+name: "Legacy:Mod Authoring/A First Look At GameInfo"
+revision:
+  revid: 4394
+  parentid: 4396
+  user: "Ip68-110-10-195.tc.ph.cox.net"
+  timestamp: 1060302400.000000000
+  comment: "*"
+timestamp: 1668786856.604497000

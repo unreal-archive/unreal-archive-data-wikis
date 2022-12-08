@@ -1,0 +1,912 @@
+---
+parse:
+  title: "Legacy:Will/Creating A HTTP Server List Tab"
+  text:
+    text: "<p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n\
+      </div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#Creating_A_HTTP_Server_List_Tab\"\
+      ><span class=\"tocnumber\">1</span> <span class=\"toctext\">Creating A HTTP\
+      \ Server List Tab</span></a>\n<ul>\n<li class=\"toclevel-2 tocsection-2\"><a\
+      \ href=\"#Talking_to_the_webserver\"><span class=\"tocnumber\">1.1</span> <span\
+      \ class=\"toctext\">Talking to the webserver</span></a></li>\n<li class=\"toclevel-2\
+      \ tocsection-3\"><a href=\"#The_tab_itself\"><span class=\"tocnumber\">1.2</span>\
+      \ <span class=\"toctext\">The tab itself</span></a></li>\n<li class=\"toclevel-2\
+      \ tocsection-4\"><a href=\"#Loading_the_tab\"><span class=\"tocnumber\">1.3</span>\
+      \ <span class=\"toctext\">Loading the tab</span></a></li>\n<li class=\"toclevel-2\
+      \ tocsection-5\"><a href=\"#The_whole_lot\"><span class=\"tocnumber\">1.4</span>\
+      \ <span class=\"toctext\">The whole lot</span></a></li>\n<li class=\"toclevel-2\
+      \ tocsection-6\"><a href=\"#Why.3F.3F.21\"><span class=\"tocnumber\">1.5</span>\
+      \ <span class=\"toctext\">Why??!</span></a></li>\n</ul>\n</li>\n</ul>\n</div>\n\
+      <p></p>\n<h2><span class=\"mw-headline\" id=\"Creating_A_HTTP_Server_List_Tab\"\
+      >Creating A HTTP Server List Tab</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Will/Creating_A_HTTP_Server_List_Tab?section=1\"\
+      \ title=\"Edit section: Creating A HTTP Server List Tab\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<p>This page basically explains\
+      \ the steps I've taken over the last day or so to create a server tab that will\
+      \ pull it's list of servers from a file on a webserver somewhere. It took me\
+      \ a fair while because I'd not looked at server tabs or how they all go together\
+      \ before at all.</p>\n<h3><span class=\"mw-headline\" id=\"Talking_to_the_webserver\"\
+      >Talking to the webserver</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Will/Creating_A_HTTP_Server_List_Tab?section=2\"\
+      \ title=\"Edit section: Talking to the webserver\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>If you want to pull some data from a web server, you\
+      \ have to talk to this server. This is the part that gave me the most greif\
+      \ in figuring it out (mainly that my CR and LF and CRLF variables weren't set\
+      \ – it worked once I'd set them).</p>\n<p>This part is going to be a <a href=\"\
+      /edit/Legacy:BufferedTCPLink?redlink=1\" class=\"new\" title=\"Legacy:BufferedTCPLink\
+      \ (page does not exist)\">BufferedTCPLink</a> subclass.</p>\n<p>You need to\
+      \ declare a few variables first:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">Var</span> <span class=\"kw5\">String</span> ServerAddress;\
+      \ <span class=\"co1\">//the server address, ie: www.beyondunreal.com</span>\n\
+      <span class=\"kw1\">Var</span> <span class=\"kw5\">String</span> ServerPath;\
+      \ <span class=\"co1\">//The path to connect to, ie: /index.php</span>\n<span\
+      \ class=\"kw1\">Var</span> <span class=\"kw5\">Int</span> ServerPort; <span\
+      \ class=\"co1\">//The port on the server to connect to</span>\n<span class=\"\
+      kw1\">Var</span> BYBrowser_Page BYBP; <span class=\"co1\">//A link to the browser\
+      \ page itself. Used later, and set by the browser page. </span>\n<span class=\"\
+      kw1\">Var</span> Array<span class=\"sy0\">&lt;</span>String<span class=\"sy0\"\
+      >&gt;</span> LinesA; <span class=\"co1\">//This holds the results of your query</span></pre></div>\n\
+      </div>\n<p>Righto. That's sorted. Now onto the function and events.</p>\n<div\
+      \ dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">Function</span>\
+      \ RetrieveServers<span class=\"br0\">(</span><span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n\tLinesA.<span class=\"me0\">Length</span> <span\
+      \ class=\"sy0\">=</span> <span class=\"nu0\">0</span>;\n\tResetBuffer<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n\tResolve<span class=\"br0\">(</span>ServerAddress<span\
+      \ class=\"br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <p>This should be fairly self explanatory. It resets the string array, resets\
+      \ the buffer (which also sets the CR, LF, and CRLF variables), and tries to\
+      \ resolve the server address to an IP. If the resolve succeeds, event \"Resolved\"\
+      \ is fired off, which nicely brings me onto the next one...:</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">Function</span> Resolved<span class=\"\
+      br0\">(</span>IpAddr Addr<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \tAddr.<span class=\"me0\">Port</span> <span class=\"sy0\">=</span> ServerPort;\n\
+      \ \n\t<span class=\"kw2\">If</span> <span class=\"br0\">(</span>BindPort<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"sy0\">==</span>\
+      \ <span class=\"nu0\">0</span><span class=\"br0\">)</span>\n\t\t<span class=\"\
+      kw2\">Return</span>;\n \n\tOpen<span class=\"br0\">(</span>Addr<span class=\"\
+      br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>Basically,\
+      \ this sets the port to be used, attempts to bind a port, and opens a connection\
+      \ to the remote server. When the connection is opened, Event \"Opened\" is called.</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">Event</span> Opened<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \t<span class=\"kw1\">Local</span> <span class=\"kw5\">String</span> SendString;\n\
+      \ \n\tSendString <span class=\"sy0\">=</span> <span class=\"st0\">\"GET \"</span>\
+      \ <span class=\"sy0\">$</span> <span class=\"st0\">\"http://\"</span> <span\
+      \ class=\"sy0\">$</span> ServerAddress <span class=\"sy0\">$</span> ServerPath\
+      \ <span class=\"sy0\">$</span> <span class=\"st0\">\" HTTP/1.0\"</span> <span\
+      \ class=\"sy0\">$</span> CRLF <span class=\"sy0\">$</span> <span class=\"st0\"\
+      >\"Host: \"</span> <span class=\"sy0\">$</span> ServerAddress <span class=\"\
+      sy0\">$</span> CRLF <span class=\"sy0\">$</span> CRLF;\n \n\tSendBufferedData<span\
+      \ class=\"br0\">(</span>SendString<span class=\"br0\">)</span>;\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p>This function quite simply creates the\
+      \ string to be sent to the server (requesting the document), and then adds it\
+      \ to the send buffer.</p>\n<p>Now we're onto the processing of the data that\
+      \ is returned, all handled in these next two functions:</p>\n<div dir=\"ltr\"\
+      \ class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">event</span> ReceivedText<span class=\"\
+      br0\">(</span><span class=\"kw5\">string</span> Text<span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n\t<span class=\"kw1\">Local</span> <span class=\"\
+      kw5\">int</span> I;\n\tSplitIntoLines<span class=\"br0\">(</span>Text<span class=\"\
+      br0\">)</span>;\n\t<span class=\"kw2\">For</span> <span class=\"br0\">(</span>i<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0</span>;i<span class=\"sy0\">&lt;</span>linesa.<span\
+      \ class=\"me0\">length</span>;i<span class=\"sy0\">++</span><span class=\"br0\"\
+      >)</span>\n\t\t<span class=\"br0\">{</span>\n\t\tBYBP.<span class=\"me0\">AddToList</span><span\
+      \ class=\"br0\">(</span>BYBP.<span class=\"me0\">IPToServer</span><span class=\"\
+      br0\">(</span>linesa<span class=\"br0\">[</span>i<span class=\"br0\">]</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>;\n\t\t<span class=\"br0\"\
+      >}</span>\n\tBYBP.<span class=\"me0\">RefreshFinished</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>;\n\tLinesA.<span class=\"me0\">Length</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>;\n<span class=\"\
+      br0\">}</span>\n \n<span class=\"kw1\">Function</span> SplitIntoLines<span class=\"\
+      br0\">(</span><span class=\"kw5\">String</span> Text<span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n\t<span class=\"kw1\">Local</span> <span class=\"\
+      kw5\">int</span> i;\n\t<span class=\"kw1\">Local</span> <span class=\"kw5\"\
+      >String</span> Temp;\n \n\tText <span class=\"sy0\">=</span> <span class=\"\
+      kw3\">Mid</span><span class=\"br0\">(</span>Text, <span class=\"kw3\">InStr</span><span\
+      \ class=\"br0\">(</span>Text, CRLF<span class=\"br0\">)</span> <span class=\"\
+      sy0\">+</span> <span class=\"nu0\">1</span><span class=\"br0\">)</span>; <span\
+      \ class=\"co1\">//Split off the headers</span>\n \n\t<span class=\"kw2\">Do</span>\t\
+      <span class=\"br0\">{</span>\n\t\tTemp <span class=\"sy0\">=</span> <span class=\"\
+      st0\">\"\"</span>;\n\t\tTemp <span class=\"sy0\">=</span> <span class=\"kw3\"\
+      >Left</span><span class=\"br0\">(</span>Text, <span class=\"kw3\">InStr</span><span\
+      \ class=\"br0\">(</span>Text, <span class=\"kw3\">Chr</span><span class=\"br0\"\
+      >(</span><span class=\"nu0\">10</span><span class=\"br0\">)</span><span class=\"\
+      br0\">)</span><span class=\"br0\">)</span>;\n \n\t\t<span class=\"kw2\">If</span>\
+      \ <span class=\"br0\">(</span><span class=\"br0\">(</span>Temp <span class=\"\
+      sy0\">!=</span> <span class=\"st0\">\"\"</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span>Temp <span\
+      \ class=\"sy0\">!=</span> <span class=\"kw3\">Chr</span><span class=\"br0\"\
+      >(</span><span class=\"nu0\">10</span><span class=\"br0\">)</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span>Temp\
+      \ <span class=\"sy0\">!=</span> <span class=\"kw3\">Chr</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">13</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\t\t<span class=\"br0\"\
+      >{</span>\n\t\t\tLinesA.<span class=\"me0\">Length</span> <span class=\"sy0\"\
+      >=</span> LinesA.<span class=\"me0\">Length</span> <span class=\"sy0\">+</span>\
+      \ <span class=\"nu0\">1</span>;\n\t\t\tLinesA<span class=\"br0\">[</span>LinesA.<span\
+      \ class=\"me0\">Length</span> <span class=\"sy0\">-</span><span class=\"nu0\"\
+      >1</span><span class=\"br0\">]</span> <span class=\"sy0\">=</span> Temp;\n\t\
+      \t\t<span class=\"br0\">}</span>\n\t\tText <span class=\"sy0\">=</span> <span\
+      \ class=\"kw3\">Mid</span><span class=\"br0\">(</span>Text, <span class=\"kw3\"\
+      >InStr</span><span class=\"br0\">(</span>Text, <span class=\"kw3\">Chr</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">10</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">+</span> <span class=\"nu0\">1</span><span\
+      \ class=\"br0\">)</span>;\n\t\ti<span class=\"sy0\">++</span>;\n\t\t<span class=\"\
+      br0\">}</span> Until <span class=\"br0\">(</span><span class=\"br0\">(</span><span\
+      \ class=\"kw3\">InStr</span><span class=\"br0\">(</span>Text, <span class=\"\
+      kw3\">Chr</span><span class=\"br0\">(</span><span class=\"nu0\">10</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span> <span class=\"sy0\">==</span>\
+      \ <span class=\"sy0\">-</span><span class=\"nu0\">1</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">||</span> <span class=\"br0\">(</span>i <span\
+      \ class=\"sy0\">&gt;</span> <span class=\"nu0\">200</span><span class=\"br0\"\
+      >)</span><span class=\"br0\">)</span>; <span class=\"co1\">//put in to stop\
+      \ a massive loop which might happen</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>RecievedText is called when, you guessed it, some text is received.\
+      \ It then calls the SplitIntoLines function, who's job it is to remove the headers\
+      \ (all before one CRLF), and then split the remainder into IP's (Seperarated\
+      \ by LF's). The IP's are all added into the dynamic array, and this is used\
+      \ back in the RecievedText function to add the IP's into the server tab's list.\
+      \ The array is then reset.</p>\n<p>And of course, you need the defaultproperties:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">DefaultProperties</span>\n\
+      <span class=\"br0\">{</span>\n\tServerAddress<span class=\"sy0\">=</span><span\
+      \ class=\"st0\">\"byut.net\"</span>\n\tServerPath<span class=\"sy0\">=</span><span\
+      \ class=\"st0\">\"/serverlist2k3.php\"</span>\n\tServerPort<span class=\"sy0\"\
+      >=</span><span class=\"nu0\">80</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<h3><span class=\"mw-headline\" id=\"The_tab_itself\">The tab itself</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Will/Creating_A_HTTP_Server_List_Tab?section=3\" title=\"\
+      Edit section: The tab itself\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>This is probably one of the bits that caused me the\
+      \ LEAST greif. I decided to subclass it from the Favourites tab, because that\
+      \ is closest to what I want it to be.</p>\n<p>Only one variable here:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">Var</span> BYBrowser_HTTPLink\
+      \ BYB;</pre></div>\n</div>\n<p>That's just a reference to the HTTPLink, which\
+      \ is needed to actually query the HTTP server to get the server list.</p>\n\
+      <p>InitComponent, I think this is one of the places that gave me the least greif.\
+      \ It's all very simple and straightforward.</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">function</span> InitComponent<span class=\"br0\">(</span>GUIController\
+      \ MyController, GUIComponent MyOwner<span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n\t<span class=\"kw6\">Super</span><span class=\"br0\">(</span>Browser_ServerListPageBase<span\
+      \ class=\"br0\">)</span>.<span class=\"me0\">Initcomponent</span><span class=\"\
+      br0\">(</span>MyController, MyOwner<span class=\"br0\">)</span>;\n \n\t<span\
+      \ class=\"kw2\">if</span><span class=\"br0\">(</span>SQC <span class=\"sy0\"\
+      >==</span> <span class=\"kw5\">None</span> <span class=\"br0\">)</span> <span\
+      \ class=\"co1\">//needed for pingage, etc</span>\n\t\t<span class=\"br0\">{</span>\n\
+      \t\tSQC <span class=\"sy0\">=</span> PlayerOwner<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>.<span class=\"kw7\">Level</span>.<span class=\"kw4\"\
+      >Spawn</span><span class=\"br0\">(</span><span class=\"kw1\">class</span><span\
+      \ class=\"st0\">'ServerQueryClient'</span><span class=\"br0\">)</span>;\n\t\t\
+      SQC.<span class=\"me0\">OnReceivedPingInfo</span> <span class=\"sy0\">=</span>\
+      \ MyServersList.<span class=\"me0\">MyReceivedPingInfo</span>;\n\t\tSQC.<span\
+      \ class=\"me0\">OnPingTimeout</span> <span class=\"sy0\">=</span> MyServersList.<span\
+      \ class=\"me0\">MyPingTimeout</span>;\n\t\t<span class=\"br0\">}</span>\n \n\
+      \t<span class=\"co1\">//edit buttons</span>\n\tGUIButton<span class=\"br0\"\
+      >(</span>GUIPanel<span class=\"br0\">(</span>Controls<span class=\"br0\">[</span><span\
+      \ class=\"nu0\">1</span><span class=\"br0\">]</span><span class=\"br0\">)</span>.<span\
+      \ class=\"me0\">Controls</span><span class=\"br0\">[</span><span class=\"nu0\"\
+      >1</span><span class=\"br0\">]</span><span class=\"br0\">)</span>.<span class=\"\
+      me0\">Caption</span> <span class=\"sy0\">=</span> <span class=\"st0\">\"RE-PING\
+      \ LIST\"</span>;\n\tGUIButton<span class=\"br0\">(</span>GUIPanel<span class=\"\
+      br0\">(</span>Controls<span class=\"br0\">[</span><span class=\"nu0\">1</span><span\
+      \ class=\"br0\">]</span><span class=\"br0\">)</span>.<span class=\"me0\">Controls</span><span\
+      \ class=\"br0\">[</span><span class=\"nu0\">6</span><span class=\"br0\">]</span><span\
+      \ class=\"br0\">)</span>.<span class=\"me0\">bVisible</span><span class=\"sy0\"\
+      >=</span><span class=\"kw6\">False</span>;\n\tGUIButton<span class=\"br0\">(</span>GUIPanel<span\
+      \ class=\"br0\">(</span>Controls<span class=\"br0\">[</span><span class=\"nu0\"\
+      >1</span><span class=\"br0\">]</span><span class=\"br0\">)</span>.<span class=\"\
+      me0\">Controls</span><span class=\"br0\">[</span><span class=\"nu0\">7</span><span\
+      \ class=\"br0\">]</span><span class=\"br0\">)</span>.<span class=\"me0\">Caption</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"st0\">\"REFRESH LIST\"</span>;\n\
+      \tGUIButton<span class=\"br0\">(</span>GUIPanel<span class=\"br0\">(</span>Controls<span\
+      \ class=\"br0\">[</span><span class=\"nu0\">1</span><span class=\"br0\">]</span><span\
+      \ class=\"br0\">)</span>.<span class=\"me0\">Controls</span><span class=\"br0\"\
+      >[</span><span class=\"nu0\">7</span><span class=\"br0\">]</span><span class=\"\
+      br0\">)</span>.<span class=\"me0\">OnClick</span> <span class=\"sy0\">=</span>\
+      \ RefreshClick;\n\tStatusBar.<span class=\"me0\">WinWidth</span><span class=\"\
+      sy0\">=</span><span class=\"nu0\">0.8</span>;\n \n\tRefreshList<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>Skip out the favoutites class in the Super call, else you'll be just\
+      \ messing around, and server query client is something I left out at first,\
+      \ before I realised it was needed to actually talk to the servers themselves.\
+      \ The rest is just altering the buttons, as the Favourites tab leaves out one,\
+      \ and renames another. I changed them back to what they should be.</p>\n<p>Next\
+      \ bit is the RefreshList function, which handles loading and using the HTTP\
+      \ Link class.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">Function</span> RefreshList<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw2\">ForEach</span>\
+      \ PlayerOwner<span class=\"br0\">(</span><span class=\"br0\">)</span>.<span\
+      \ class=\"kw7\">Level</span>.<span class=\"kw2\">AllActors</span><span class=\"\
+      br0\">(</span><span class=\"kw1\">Class</span><span class=\"st0\">'BYBrowser_HTTPLink'</span>,\
+      \ BYB<span class=\"br0\">)</span>\n\t\t<span class=\"kw2\">Break</span>;\n\t\
+      <span class=\"kw2\">if</span><span class=\"br0\">(</span>BYB <span class=\"\
+      sy0\">==</span> <span class=\"kw5\">None</span><span class=\"br0\">)</span>\n\
+      \t\tBYB <span class=\"sy0\">=</span> PlayerOwner<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>.<span class=\"kw7\">Level</span>.<span class=\"kw4\"\
+      >Spawn</span><span class=\"br0\">(</span><span class=\"kw1\">class</span><span\
+      \ class=\"st0\">'BYBrowser_HTTPLink'</span><span class=\"br0\">)</span>;\n \n\
+      \tBYB.<span class=\"me0\">BYBP</span> <span class=\"sy0\">=</span> <span class=\"\
+      kw6\">Self</span>;\n \n\tMyServersList.<span class=\"me0\">Clear</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>; <span class=\"co1\">//Clear\
+      \ the current list</span>\n\tBYB.<span class=\"me0\">RetrieveServers</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>Basically, all that does is find (or create) the HTTP Link, set it's\
+      \ BYBP value (see the section above), clears the current server list, then calls\
+      \ RetrieveServers on the HTTP Link – which as you'll know initiates the connection,\
+      \ etc.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div\
+      \ class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\"\
+      >Function</span> RefreshFinished<span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n\tMyServersList.<span class=\"me0\"\
+      >AutoPingServers</span><span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>This diddy function is\
+      \ just called at the end of an update to force the servers to refresh, re-ping,\
+      \ etc.</p>\n<p>The following function was ripped right out of another class,\
+      \ and all it does is turn an IP into a ServerResponseLine which is needed to\
+      \ add it to the list.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">Function</span> <span class=\"kw9\">GameInfo</span>.<span class=\"me0\"\
+      >ServerResponseLine</span> IPToServer<span class=\"br0\">(</span><span class=\"\
+      kw5\">string</span> Address<span class=\"br0\">)</span>\n<span class=\"br0\"\
+      >{</span>\n\t<span class=\"kw1\">local</span> <span class=\"kw9\">GameInfo</span>.<span\
+      \ class=\"me0\">ServerResponseLine</span> S;\n\t<span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">string</span> ipString, portString;\n\t<span class=\"\
+      kw1\">local</span> <span class=\"kw5\">int</span> colonPos, portNum;\n \n\t\
+      <span class=\"co1\">// Parse text to find IP and possibly port number</span>\n\
+      \tcolonPos <span class=\"sy0\">=</span> <span class=\"kw3\">InStr</span><span\
+      \ class=\"br0\">(</span>address, <span class=\"st0\">\":\"</span><span class=\"\
+      br0\">)</span>;\n\t<span class=\"kw2\">if</span><span class=\"br0\">(</span>colonPos\
+      \ <span class=\"sy0\">&lt;</span> <span class=\"nu0\">0</span><span class=\"\
+      br0\">)</span>\n\t\t<span class=\"br0\">{</span>\n\t\tipString <span class=\"\
+      sy0\">=</span> address;\n\t\tportNum <span class=\"sy0\">=</span> <span class=\"\
+      nu0\">7777</span>;\n\t\t<span class=\"br0\">}</span>\n\t<span class=\"kw2\"\
+      >else</span>\n\t\t<span class=\"br0\">{</span>\n\t\tipString <span class=\"\
+      sy0\">=</span> <span class=\"kw3\">Left</span><span class=\"br0\">(</span>address,\
+      \ colonPos<span class=\"br0\">)</span>;\n\t\tportString <span class=\"sy0\"\
+      >=</span> <span class=\"kw3\">Mid</span><span class=\"br0\">(</span>address,\
+      \ colonPos<span class=\"sy0\">+</span><span class=\"nu0\">1</span><span class=\"\
+      br0\">)</span>;\n\t\tportNum <span class=\"sy0\">=</span> <span class=\"kw5\"\
+      >int</span><span class=\"br0\">(</span>portString<span class=\"br0\">)</span>;\n\
+      \t\t<span class=\"br0\">}</span>\n \n\tS.<span class=\"me0\">IP</span> <span\
+      \ class=\"sy0\">=</span> ipString;\n\tS.<span class=\"me0\">Port</span> <span\
+      \ class=\"sy0\">=</span> portNum;\n\tS.<span class=\"me0\">QueryPort</span>\
+      \ <span class=\"sy0\">=</span> portNum;\n\tS.<span class=\"me0\">ServerName</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"st0\">\"Unknown\"</span>;\n \n\t\
+      <span class=\"kw2\">Return</span> S;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>You'll see the above function called in conjunction with the function\
+      \ below in the HTTP Link class.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">Function</span> AddToList<span class=\"br0\">(</span><span\
+      \ class=\"kw9\">GameInfo</span>.<span class=\"me0\">ServerResponseLine</span>\
+      \ S<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\tMyServersList.<span\
+      \ class=\"me0\">MyOnReceivedServer</span><span class=\"br0\">(</span>S<span\
+      \ class=\"br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <p>Quite simply, that just adds the server to the list. Nothing more to it.</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">function</span>\
+      \ PingServer<span class=\"br0\">(</span> <span class=\"kw5\">int</span> listid,\
+      \ ServerQueryClient.<span class=\"me0\">EPingCause</span> PingCause, <span class=\"\
+      kw9\">GameInfo</span>.<span class=\"me0\">ServerResponseLine</span> s <span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n \n\t<span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span> PingCause <span class=\"sy0\">==</span>\
+      \ PC_Clicked <span class=\"br0\">)</span>\n\t\tSQC.<span class=\"me0\">PingServer</span><span\
+      \ class=\"br0\">(</span> listid, PingCause, s.<span class=\"me0\">IP</span>,\
+      \ s.<span class=\"me0\">QueryPort</span>, QI_RulesAndPlayers, s <span class=\"\
+      br0\">)</span>;\n\t<span class=\"kw2\">else</span>\n\t\tSQC.<span class=\"me0\"\
+      >PingServer</span><span class=\"br0\">(</span> listid, PingCause, s.<span class=\"\
+      me0\">IP</span>, s.<span class=\"me0\">QueryPort</span>, QI_Ping, s <span class=\"\
+      br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>PingServer.\
+      \ Pings the server. Simple huh? (this might be left over from the Favourites\
+      \ tab superclass, I'm not sure...).</p>\n<p>And the below functions are just\
+      \ set to do nothing, because that's what they should do for this tab.</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">function</span>\
+      \ <span class=\"kw5\">bool</span> AddIPClick<span class=\"br0\">(</span>GUIComponent\
+      \ Sender<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n<span class=\"\
+      br0\">}</span>\n \n<span class=\"kw1\">function</span> SaveFavorites<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n<span\
+      \ class=\"br0\">}</span></pre></div>\n</div>\n<p>And finally, the defaultproperties,\
+      \ where the caption for this tab is set.</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">DefaultProperties</span>\n<span class=\"br0\">{</span>\n\
+      \tPageCaption<span class=\"sy0\">=</span><span class=\"st0\">\"BY Servers\"\
+      </span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n<h3><span class=\"\
+      mw-headline\" id=\"Loading_the_tab\">Loading the tab</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Will/Creating_A_HTTP_Server_List_Tab?section=4\"\
+      \ title=\"Edit section: Loading the tab\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Although this bit was very simple, I'm still kinda\
+      \ peeved that epic/DE didn't include any way to load the tab without having\
+      \ to use some silly \"summon\" command. Ah well, since this class is basically\
+      \ one simple function, I'll paste it all below and explain it.</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">function</span> <span class=\"kw4\"\
+      >PostBeginPlay</span><span class=\"br0\">(</span><span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n\t<span class=\"kw1\">local</span> ServerBrowser\
+      \ SB;\n\t<span class=\"kw1\">local</span> Browser_ServerListPageFavorites BYServerListPage;\n\
+      \ \n\t<span class=\"kw2\">ForEach</span> <span class=\"kw3\">AllObjects</span><span\
+      \ class=\"br0\">(</span><span class=\"kw1\">Class</span><span class=\"st0\"\
+      >'ServerBrowser'</span>,SB<span class=\"br0\">)</span>\t<span class=\"co1\"\
+      >// Search to see if it is already added, if not, add it.</span>\n\t\t<span\
+      \ class=\"br0\">{</span>\n\t\t<span class=\"kw2\">If</span> <span class=\"br0\"\
+      >(</span>SB <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span><span\
+      \ class=\"br0\">)</span>\n\t\t\t<span class=\"br0\">{</span>\n\t\t\tBYServerListPage\
+      \ <span class=\"sy0\">=</span> <span class=\"kw1\">new</span><span class=\"\
+      br0\">(</span><span class=\"kw5\">None</span><span class=\"br0\">)</span> <span\
+      \ class=\"kw1\">class</span><span class=\"st0\">'BYBrowser_Page'</span>;\n\t\
+      \t\tSB.<span class=\"me0\">AddBrowserPage</span><span class=\"br0\">(</span>BYServerListPage<span\
+      \ class=\"br0\">)</span>;\n\t\t\t<span class=\"kw2\">Break</span>;\n\t\t\t<span\
+      \ class=\"br0\">}</span>\n\t\t<span class=\"br0\">}</span>\n \n\t<span class=\"\
+      kw4\">Destroy</span><span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">defaultproperties</span>\n\
+      <span class=\"br0\">{</span>\n\tbHidden<span class=\"sy0\">=</span><span class=\"\
+      kw6\">True</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>When\
+      \ this actor is spawned, it looks for the server browser. If it finds it, it\
+      \ adds my tab. It then kills itself. That simple, nothing more to it.</p>\n\
+      <h3><span class=\"mw-headline\" id=\"The_whole_lot\">The whole lot</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Will/Creating_A_HTTP_Server_List_Tab?section=5\" title=\"\
+      Edit section: The whole lot\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Well, for you people who just want the code so they\
+      \ can modify it and change it to suit their needs, I've pasted the whole three\
+      \ classes below.</p>\n<p><b>The HTTP Link:</b></p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw1\">Class</span> BYBrowser_HTTPLink <span\
+      \ class=\"kw1\">Extends</span> BufferedTCPLink;\n \n<span class=\"kw1\">Var</span>\
+      \ <span class=\"kw5\">String</span> ServerAddress;\n<span class=\"kw1\">Var</span>\
+      \ <span class=\"kw5\">String</span> ServerPath;\n<span class=\"kw1\">Var</span>\
+      \ <span class=\"kw5\">Int</span> ServerPort;\n<span class=\"kw1\">Var</span>\
+      \ BYBrowser_Page BYBP;\n<span class=\"kw1\">Var</span> Array<span class=\"sy0\"\
+      >&lt;</span>String<span class=\"sy0\">&gt;</span> LinesA;\n \n<span class=\"\
+      kw1\">Function</span> RetrieveServers<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n\tLinesA.<span class=\"me0\">Length</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>;\n\tResetBuffer<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n\tResolve<span class=\"\
+      br0\">(</span>ServerAddress<span class=\"br0\">)</span>;\n<span class=\"br0\"\
+      >}</span>\n \n<span class=\"kw1\">Function</span> Resolved<span class=\"br0\"\
+      >(</span>IpAddr Addr<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \tAddr.<span class=\"me0\">Port</span> <span class=\"sy0\">=</span> ServerPort;\n\
+      \ \n\t<span class=\"kw2\">If</span> <span class=\"br0\">(</span>BindPort<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"sy0\">==</span>\
+      \ <span class=\"nu0\">0</span><span class=\"br0\">)</span>\n\t\t<span class=\"\
+      kw2\">Return</span>;\n \n\tOpen<span class=\"br0\">(</span>Addr<span class=\"\
+      br0\">)</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">Event</span>\
+      \ Opened<span class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n\t<span class=\"kw1\">Local</span> <span class=\"kw5\">String</span>\
+      \ SendString;\n \n\tSendString <span class=\"sy0\">=</span> <span class=\"st0\"\
+      >\"GET \"</span> <span class=\"sy0\">$</span> <span class=\"st0\">\"http://\"\
+      </span> <span class=\"sy0\">$</span> ServerAddress <span class=\"sy0\">$</span>\
+      \ ServerPath <span class=\"sy0\">$</span> <span class=\"st0\">\" HTTP/1.0\"\
+      </span> <span class=\"sy0\">$</span> CRLF <span class=\"sy0\">$</span> <span\
+      \ class=\"st0\">\"Host: \"</span> <span class=\"sy0\">$</span> ServerAddress\
+      \ <span class=\"sy0\">$</span> CRLF <span class=\"sy0\">$</span> CRLF;\n \n\t\
+      SendBufferedData<span class=\"br0\">(</span>SendString<span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">Function</span> <span class=\"\
+      kw4\">Tick</span> <span class=\"br0\">(</span><span class=\"kw5\">Float</span>\
+      \ TimeDelta<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\tDoBufferQueueIO<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"kw1\">event</span> ReceivedText<span class=\"br0\">(</span><span\
+      \ class=\"kw5\">string</span> Text<span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n\t<span class=\"kw1\">Local</span> <span class=\"kw5\">int</span>\
+      \ I;\n \n\tSplitIntoLines<span class=\"br0\">(</span>Text<span class=\"br0\"\
+      >)</span>;\n \n\t<span class=\"kw2\">For</span> <span class=\"br0\">(</span>i<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0</span>;i<span class=\"sy0\">&lt;</span>linesa.<span\
+      \ class=\"me0\">length</span>;i<span class=\"sy0\">++</span><span class=\"br0\"\
+      >)</span>\n\t\t<span class=\"br0\">{</span>\n\t\tBYBP.<span class=\"me0\">AddToList</span><span\
+      \ class=\"br0\">(</span>BYBP.<span class=\"me0\">IPToServer</span><span class=\"\
+      br0\">(</span>linesa<span class=\"br0\">[</span>i<span class=\"br0\">]</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>;\n\t\t<span class=\"br0\"\
+      >}</span>\n \n\tBYBP.<span class=\"me0\">RefreshFinished</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n \n\tLinesA.<span class=\"me0\"\
+      >Length</span> <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>;\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">Function</span> SplitIntoLines<span\
+      \ class=\"br0\">(</span><span class=\"kw5\">String</span> Text<span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw1\">Local</span>\
+      \ <span class=\"kw5\">int</span> i;\n\t<span class=\"kw1\">Local</span> <span\
+      \ class=\"kw5\">String</span> Temp;\n \n\tText <span class=\"sy0\">=</span>\
+      \ <span class=\"kw3\">Mid</span><span class=\"br0\">(</span>Text, <span class=\"\
+      kw3\">InStr</span><span class=\"br0\">(</span>Text, CRLF<span class=\"br0\"\
+      >)</span> <span class=\"sy0\">+</span> <span class=\"nu0\">1</span><span class=\"\
+      br0\">)</span>; <span class=\"co1\">//Split off the headers</span>\n \n\t<span\
+      \ class=\"kw2\">Do</span>\t<span class=\"br0\">{</span>\n\t\tTemp <span class=\"\
+      sy0\">=</span> <span class=\"st0\">\"\"</span>;\n\t\tTemp <span class=\"sy0\"\
+      >=</span> <span class=\"kw3\">Left</span><span class=\"br0\">(</span>Text, <span\
+      \ class=\"kw3\">InStr</span><span class=\"br0\">(</span>Text, <span class=\"\
+      kw3\">Chr</span><span class=\"br0\">(</span><span class=\"nu0\">10</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n\
+      \ \n\t\t<span class=\"kw2\">If</span> <span class=\"br0\">(</span><span class=\"\
+      br0\">(</span>Temp <span class=\"sy0\">!=</span> <span class=\"st0\">\"\"</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"\
+      br0\">(</span>Temp <span class=\"sy0\">!=</span> <span class=\"kw3\">Chr</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">10</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"\
+      br0\">(</span>Temp <span class=\"sy0\">!=</span> <span class=\"kw3\">Chr</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">13</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\t\t<span class=\"br0\"\
+      >{</span>\n\t\t\tLinesA.<span class=\"me0\">Length</span> <span class=\"sy0\"\
+      >=</span> LinesA.<span class=\"me0\">Length</span> <span class=\"sy0\">+</span>\
+      \ <span class=\"nu0\">1</span>;\n\t\t\tLinesA<span class=\"br0\">[</span>LinesA.<span\
+      \ class=\"me0\">Length</span> <span class=\"sy0\">-</span><span class=\"nu0\"\
+      >1</span><span class=\"br0\">]</span> <span class=\"sy0\">=</span> Temp;\n\t\
+      \t\t<span class=\"br0\">}</span>\n\t\tText <span class=\"sy0\">=</span> <span\
+      \ class=\"kw3\">Mid</span><span class=\"br0\">(</span>Text, <span class=\"kw3\"\
+      >InStr</span><span class=\"br0\">(</span>Text, <span class=\"kw3\">Chr</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">10</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">+</span> <span class=\"nu0\">1</span><span\
+      \ class=\"br0\">)</span>;\n\t\ti<span class=\"sy0\">++</span>;\n\t\t<span class=\"\
+      br0\">}</span> Until <span class=\"br0\">(</span><span class=\"br0\">(</span><span\
+      \ class=\"kw3\">InStr</span><span class=\"br0\">(</span>Text, <span class=\"\
+      kw3\">Chr</span><span class=\"br0\">(</span><span class=\"nu0\">10</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span> <span class=\"sy0\">==</span>\
+      \ <span class=\"sy0\">-</span><span class=\"nu0\">1</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">||</span> <span class=\"br0\">(</span>i <span\
+      \ class=\"sy0\">&gt;</span> <span class=\"nu0\">50</span><span class=\"br0\"\
+      >)</span><span class=\"br0\">)</span>; <span class=\"co1\">//put in to stop\
+      \ a massive loop which might happen</span>\n<span class=\"br0\">}</span>\n \n\
+      <span class=\"kw1\">DefaultProperties</span>\n<span class=\"br0\">{</span>\n\
+      \tServerAddress<span class=\"sy0\">=</span><span class=\"st0\">\"byut.net\"\
+      </span>\n\tServerPath<span class=\"sy0\">=</span><span class=\"st0\">\"/serverlist2k3.php\"\
+      </span>\n\tServerPort<span class=\"sy0\">=</span><span class=\"nu0\">80</span>\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p><b>And now, the server\
+      \ tab:</b></p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n\
+      <div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\"\
+      >Class</span> BYBrowser_Page <span class=\"kw1\">extends</span> Browser_ServerListPageFavorites;\n\
+      \ \n<span class=\"kw1\">Var</span> BYBrowser_HTTPLink BYB;\n \n<span class=\"\
+      kw1\">function</span> InitComponent<span class=\"br0\">(</span>GUIController\
+      \ MyController, GUIComponent MyOwner<span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n\t<span class=\"kw6\">Super</span><span class=\"br0\">(</span>Browser_ServerListPageBase<span\
+      \ class=\"br0\">)</span>.<span class=\"me0\">Initcomponent</span><span class=\"\
+      br0\">(</span>MyController, MyOwner<span class=\"br0\">)</span>;\n \n\t<span\
+      \ class=\"kw2\">if</span><span class=\"br0\">(</span>SQC <span class=\"sy0\"\
+      >==</span> <span class=\"kw5\">None</span> <span class=\"br0\">)</span> <span\
+      \ class=\"co1\">//needed for pingage, etc</span>\n\t\t<span class=\"br0\">{</span>\n\
+      \t\tSQC <span class=\"sy0\">=</span> PlayerOwner<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>.<span class=\"kw7\">Level</span>.<span class=\"kw4\"\
+      >Spawn</span><span class=\"br0\">(</span><span class=\"kw1\">class</span><span\
+      \ class=\"st0\">'ServerQueryClient'</span><span class=\"br0\">)</span>;\n\t\t\
+      SQC.<span class=\"me0\">OnReceivedPingInfo</span> <span class=\"sy0\">=</span>\
+      \ MyServersList.<span class=\"me0\">MyReceivedPingInfo</span>;\n\t\tSQC.<span\
+      \ class=\"me0\">OnPingTimeout</span> <span class=\"sy0\">=</span> MyServersList.<span\
+      \ class=\"me0\">MyPingTimeout</span>;\n\t\t<span class=\"br0\">}</span>\n \n\
+      \t<span class=\"co1\">//edit buttons</span>\n\tGUIButton<span class=\"br0\"\
+      >(</span>GUIPanel<span class=\"br0\">(</span>Controls<span class=\"br0\">[</span><span\
+      \ class=\"nu0\">1</span><span class=\"br0\">]</span><span class=\"br0\">)</span>.<span\
+      \ class=\"me0\">Controls</span><span class=\"br0\">[</span><span class=\"nu0\"\
+      >1</span><span class=\"br0\">]</span><span class=\"br0\">)</span>.<span class=\"\
+      me0\">Caption</span> <span class=\"sy0\">=</span> <span class=\"st0\">\"RE-PING\
+      \ LIST\"</span>;\n\tGUIButton<span class=\"br0\">(</span>GUIPanel<span class=\"\
+      br0\">(</span>Controls<span class=\"br0\">[</span><span class=\"nu0\">1</span><span\
+      \ class=\"br0\">]</span><span class=\"br0\">)</span>.<span class=\"me0\">Controls</span><span\
+      \ class=\"br0\">[</span><span class=\"nu0\">6</span><span class=\"br0\">]</span><span\
+      \ class=\"br0\">)</span>.<span class=\"me0\">bVisible</span><span class=\"sy0\"\
+      >=</span><span class=\"kw6\">False</span>;\n\tGUIButton<span class=\"br0\">(</span>GUIPanel<span\
+      \ class=\"br0\">(</span>Controls<span class=\"br0\">[</span><span class=\"nu0\"\
+      >1</span><span class=\"br0\">]</span><span class=\"br0\">)</span>.<span class=\"\
+      me0\">Controls</span><span class=\"br0\">[</span><span class=\"nu0\">7</span><span\
+      \ class=\"br0\">]</span><span class=\"br0\">)</span>.<span class=\"me0\">Caption</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"st0\">\"REFRESH LIST\"</span>;\n\
+      \tGUIButton<span class=\"br0\">(</span>GUIPanel<span class=\"br0\">(</span>Controls<span\
+      \ class=\"br0\">[</span><span class=\"nu0\">1</span><span class=\"br0\">]</span><span\
+      \ class=\"br0\">)</span>.<span class=\"me0\">Controls</span><span class=\"br0\"\
+      >[</span><span class=\"nu0\">7</span><span class=\"br0\">]</span><span class=\"\
+      br0\">)</span>.<span class=\"me0\">OnClick</span> <span class=\"sy0\">=</span>\
+      \ RefreshClick;\n\tStatusBar.<span class=\"me0\">WinWidth</span><span class=\"\
+      sy0\">=</span><span class=\"nu0\">0.8</span>;\n \n\tRefreshList<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"kw1\">Function</span> RefreshList<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw2\"\
+      >ForEach</span> PlayerOwner<span class=\"br0\">(</span><span class=\"br0\">)</span>.<span\
+      \ class=\"kw7\">Level</span>.<span class=\"kw2\">AllActors</span><span class=\"\
+      br0\">(</span><span class=\"kw1\">Class</span><span class=\"st0\">'BYBrowser_HTTPLink'</span>,\
+      \ BYB<span class=\"br0\">)</span>\n\t\t<span class=\"kw2\">Break</span>;\n\t\
+      <span class=\"kw2\">if</span><span class=\"br0\">(</span>BYB <span class=\"\
+      sy0\">==</span> <span class=\"kw5\">None</span><span class=\"br0\">)</span>\n\
+      \t\tBYB <span class=\"sy0\">=</span> PlayerOwner<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>.<span class=\"kw7\">Level</span>.<span class=\"kw4\"\
+      >Spawn</span><span class=\"br0\">(</span><span class=\"kw1\">class</span><span\
+      \ class=\"st0\">'BYBrowser_HTTPLink'</span><span class=\"br0\">)</span>;\n \n\
+      \tBYB.<span class=\"me0\">BYBP</span> <span class=\"sy0\">=</span> <span class=\"\
+      kw6\">Self</span>;\n \n\tMyServersList.<span class=\"me0\">Clear</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>; <span class=\"co1\">//Clear\
+      \ the current list</span>\n\tBYB.<span class=\"me0\">RetrieveServers</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"kw1\">Function</span> RefreshFinished<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\tMyServersList.<span\
+      \ class=\"me0\">AutoPingServers</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">Function</span>\
+      \ <span class=\"kw9\">GameInfo</span>.<span class=\"me0\">ServerResponseLine</span>\
+      \ IPToServer<span class=\"br0\">(</span><span class=\"kw5\">string</span> Address<span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw1\"\
+      >local</span> <span class=\"kw9\">GameInfo</span>.<span class=\"me0\">ServerResponseLine</span>\
+      \ S;\n\t<span class=\"kw1\">local</span> <span class=\"kw5\">string</span> ipString,\
+      \ portString;\n\t<span class=\"kw1\">local</span> <span class=\"kw5\">int</span>\
+      \ colonPos, portNum;\n \n\t<span class=\"co1\">// Parse text to find IP and\
+      \ possibly port number</span>\n\tcolonPos <span class=\"sy0\">=</span> <span\
+      \ class=\"kw3\">InStr</span><span class=\"br0\">(</span>address, <span class=\"\
+      st0\">\":\"</span><span class=\"br0\">)</span>;\n\t<span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span>colonPos <span class=\"sy0\">&lt;</span> <span class=\"\
+      nu0\">0</span><span class=\"br0\">)</span>\n\t\t<span class=\"br0\">{</span>\n\
+      \t\tipString <span class=\"sy0\">=</span> address;\n\t\tportNum <span class=\"\
+      sy0\">=</span> <span class=\"nu0\">7777</span>;\n\t\t<span class=\"br0\">}</span>\n\
+      \t<span class=\"kw2\">else</span>\n\t\t<span class=\"br0\">{</span>\n\t\tipString\
+      \ <span class=\"sy0\">=</span> <span class=\"kw3\">Left</span><span class=\"\
+      br0\">(</span>address, colonPos<span class=\"br0\">)</span>;\n\t\tportString\
+      \ <span class=\"sy0\">=</span> <span class=\"kw3\">Mid</span><span class=\"\
+      br0\">(</span>address, colonPos<span class=\"sy0\">+</span><span class=\"nu0\"\
+      >1</span><span class=\"br0\">)</span>;\n\t\tportNum <span class=\"sy0\">=</span>\
+      \ <span class=\"kw5\">int</span><span class=\"br0\">(</span>portString<span\
+      \ class=\"br0\">)</span> ;\n\t\t<span class=\"br0\">}</span>\n \n\tS.<span class=\"\
+      me0\">IP</span> <span class=\"sy0\">=</span> ipString;\n\tS.<span class=\"me0\"\
+      >Port</span> <span class=\"sy0\">=</span> portNum;\n\tS.<span class=\"me0\"\
+      >QueryPort</span> <span class=\"sy0\">=</span> portNum;\n\tS.<span class=\"\
+      me0\">ServerName</span> <span class=\"sy0\">=</span> <span class=\"st0\">\"\
+      Unknown\"</span>;\n \n\t<span class=\"kw2\">Return</span> S;\n<span class=\"\
+      br0\">}</span>\n \n<span class=\"kw1\">Function</span> AddToList<span class=\"\
+      br0\">(</span><span class=\"kw9\">GameInfo</span>.<span class=\"me0\">ServerResponseLine</span>\
+      \ S<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\tMyServersList.<span\
+      \ class=\"me0\">MyOnReceivedServer</span><span class=\"br0\">(</span>S<span\
+      \ class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\"\
+      >function</span> PingServer<span class=\"br0\">(</span> <span class=\"kw5\"\
+      >int</span> listid, ServerQueryClient.<span class=\"me0\">EPingCause</span>\
+      \ PingCause, <span class=\"kw9\">GameInfo</span>.<span class=\"me0\">ServerResponseLine</span>\
+      \ s <span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n \n\t<span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span> PingCause <span class=\"sy0\">==</span>\
+      \ PC_Clicked <span class=\"br0\">)</span>\n\t\tSQC.<span class=\"me0\">PingServer</span><span\
+      \ class=\"br0\">(</span> listid, PingCause, s.<span class=\"me0\">IP</span>,\
+      \ s.<span class=\"me0\">QueryPort</span>, QI_RulesAndPlayers, s <span class=\"\
+      br0\">)</span>;\n\t<span class=\"kw2\">else</span>\n\t\tSQC.<span class=\"me0\"\
+      >PingServer</span><span class=\"br0\">(</span> listid, PingCause, s.<span class=\"\
+      me0\">IP</span>, s.<span class=\"me0\">QueryPort</span>, QI_Ping, s <span class=\"\
+      br0\">)</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"co1\">//Functions\
+      \ that I now want to mean nothing</span>\n<span class=\"kw1\">function</span>\
+      \ <span class=\"kw5\">bool</span> AddIPClick<span class=\"br0\">(</span>GUIComponent\
+      \ Sender<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n<span class=\"\
+      br0\">}</span>\n \n<span class=\"kw1\">function</span> SaveFavorites<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n<span\
+      \ class=\"br0\">}</span>\n \n<span class=\"kw1\">DefaultProperties</span>\n\
+      <span class=\"br0\">{</span>\n\tPageCaption<span class=\"sy0\">=</span><span\
+      \ class=\"st0\">\"BY Servers\"</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p><b>And finally, the loader:</b></p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">class</span> Load <span class=\"kw1\">extends</span>\
+      \ <span class=\"kw9\">Actor</span>;\n \n<span class=\"kw1\">function</span>\
+      \ <span class=\"kw4\">PostBeginPlay</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw1\"\
+      >local</span> ServerBrowser SB;\n\t<span class=\"kw1\">local</span> Browser_ServerListPageFavorites\
+      \ BYServerListPage;\n \n\t<span class=\"kw2\">ForEach</span> <span class=\"\
+      kw3\">AllObjects</span><span class=\"br0\">(</span><span class=\"kw1\">Class</span><span\
+      \ class=\"st0\">'ServerBrowser'</span>,SB<span class=\"br0\">)</span> <span\
+      \ class=\"co1\">//add the tab.</span>\n\t\t<span class=\"br0\">{</span>\n\t\t\
+      <span class=\"kw2\">If</span> <span class=\"br0\">(</span>SB <span class=\"\
+      sy0\">!=</span> <span class=\"kw5\">None</span><span class=\"br0\">)</span>\n\
+      \t\t\t<span class=\"br0\">{</span>\n\t\t\tBYServerListPage <span class=\"sy0\"\
+      >=</span> <span class=\"kw1\">new</span><span class=\"br0\">(</span><span class=\"\
+      kw5\">None</span><span class=\"br0\">)</span> <span class=\"kw1\">class</span><span\
+      \ class=\"st0\">'BYBrowser_Page'</span>;\n\t\t\tSB.<span class=\"me0\">AddBrowserPage</span><span\
+      \ class=\"br0\">(</span>BYServerListPage<span class=\"br0\">)</span>;\n\t\t\t\
+      <span class=\"kw2\">Break</span>;\n\t\t\t<span class=\"br0\">}</span>\n\t\t\
+      <span class=\"br0\">}</span>\n \n\t<span class=\"kw4\">Destroy</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"kw1\">defaultproperties</span>\n<span class=\"br0\">{</span>\n\
+      \tbHidden<span class=\"sy0\">=</span><span class=\"kw6\">True</span>\n<span\
+      \ class=\"br0\">}</span></pre></div>\n</div>\n<p>And there it is!!</p>\n<h3><span\
+      \ class=\"mw-headline\" id=\"Why.3F.3F.21\">Why??!</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Will/Creating_A_HTTP_Server_List_Tab?section=6\"\
+      \ title=\"Edit section: Why??!\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>The above was all written to create a server browser\
+      \ tab that will pick up servers currently running on Blueyonder games (A GSP\
+      \ which also happens to be part of my ISP). It took me a while to do and figure\
+      \ out, so I figured the wiki may like it.</p>\n<hr />\n<p><b>Will:</b> GEBUS\
+      \ CHRIST!! That's gotta be the biggest amount I've added to the wiki since I\
+      \ wrote the stuff on interactions. Please read through, point out code errors,\
+      \ logic errors, spelling errors, grammar errors, or any kind of errors you want.&#160;:)</p>\n\
+      <p><b>Will:</b> ARGH GODDAMNS**THEADED*****INGB*STARDS!!&#160;:|</p>\n<p>I just\
+      \ found out (via Wormbo), that epics latest beta patch (2179) prevents the problem\
+      \ of using custom server tabs as a root for a clientside hack by totally f*cking\
+      \ you up all together. You cant use them AT ALL. F*ck people by not including\
+      \ a way to add tabs automatically, f*ck people by not including a stock tab\
+      \ that can be used to download a server list from a wevserver, then f*ck em\
+      \ all again by removed the possibility for custom server tabs. GG epic. &gt;:|\
+      \ &gt;:| &gt;:|</p>\n<p><b>Mychaeel:</b> Chill. – So, what exactly did they\
+      \ change?</p>\n<p><b>Will:</b> I'm not exactly sure (I dont have the patch),\
+      \ but it now seems they've added those kind of packages that are loaded clientside\
+      \ and not preset serverside into the checks. Even the basic server tab itself\
+      \ will prevent you from joining a server, which is why I am hacked off - because\
+      \ they provide no alternative method of adding your own server tab while destroying\
+      \ the possibility of using one loaded yourself. Could this be a result of the\
+      \ email sent to DrSin about the ability to use tabs like that as a cheat?</p>\n\
+      <p><b>Mychaeel:</b> Yes, I think it could. To be honest I had expected that\
+      \ the client purity check worked like that all the time.</p>\n<p>What would\
+      \ help might be a way to have auto-creation of server tabs or other objects\
+      \ when the (full-screen) menu is displayed, and giving those objects some sort\
+      \ of notification just before the user leaves the menu to go (back) into the\
+      \ game to give them a chance to auto-destruct before a purity check is done.\
+      \ Or they could \"freeze\" all objects client-side from packages that aren't\
+      \ present on the server (no Tick, no PostRender, and generally no function calls\
+      \ possible).</p>\n\n<!-- \nNewPP limit report\nCPU time usage: 0.436 seconds\n\
+      Real time usage: 0.440 seconds\nPreprocessor visited node count: 193/1000000\n\
+      Preprocessor generated node count: 408/1000000\nPost‐expand include size: 0/2097152\
+      \ bytes\nTemplate argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\n\
+      Expensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion expansion\
+      \ time report (%,ms,calls,template)\n100.00%    0.000      1 - -total\n-->\n\
+      \n<!-- Saved in parser cache with key wiki:pcache:idhash:3727-0!*!0!!en!*!*\
+      \ and timestamp 20221120210303 and revision id 9465\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: false
+    name: "Legacy:BufferedTCPLink"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Creating A HTTP Server List Tab"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Will/Creating_A_HTTP_Server_List_Tab"
+    byteoffset: 0
+    anchor: "Creating_A_HTTP_Server_List_Tab"
+  - toclevel: 2
+    level: "3"
+    line: "Talking to the webserver"
+    number: "1.1"
+    index: "2"
+    fromtitle: "Legacy:Will/Creating_A_HTTP_Server_List_Tab"
+    byteoffset: 314
+    anchor: "Talking_to_the_webserver"
+  - toclevel: 2
+    level: "3"
+    line: "The tab itself"
+    number: "1.2"
+    index: "3"
+    fromtitle: "Legacy:Will/Creating_A_HTTP_Server_List_Tab"
+    byteoffset: 3627
+    anchor: "The_tab_itself"
+  - toclevel: 2
+    level: "3"
+    line: "Loading the tab"
+    number: "1.3"
+    index: "4"
+    fromtitle: "Legacy:Will/Creating_A_HTTP_Server_List_Tab"
+    byteoffset: 7859
+    anchor: "Loading_the_tab"
+  - toclevel: 2
+    level: "3"
+    line: "The whole lot"
+    number: "1.4"
+    index: "5"
+    fromtitle: "Legacy:Will/Creating_A_HTTP_Server_List_Tab"
+    byteoffset: 8721
+    anchor: "The_whole_lot"
+  - toclevel: 2
+    level: "3"
+    line: "Why??!"
+    number: "1.5"
+    index: "6"
+    fromtitle: "Legacy:Will/Creating_A_HTTP_Server_List_Tab"
+    byteoffset: 13162
+    anchor: "Why.3F.3F.21"
+  displaytitle: "Legacy:Will/Creating A HTTP Server List Tab"
+  iwlinks: []
+  wikitext:
+    text: "==Creating A HTTP Server List Tab==\n\nThis page basically explains the\
+      \ steps I've taken over the last day or so to create a server tab that will\
+      \ pull it's list of servers from a file on a webserver somewhere. It took me\
+      \ a fair while because I'd not looked at server tabs or how they all go together\
+      \ before at all.\n\n===Talking to the webserver===\n\nIf you want to pull some\
+      \ data from a web server, you have to talk to this server. This is the part\
+      \ that gave me the most greif in figuring it out (mainly that my CR and LF and\
+      \ CRLF variables weren't set &ndash; it worked once I'd set them).\n\nThis part\
+      \ is going to be a [[Legacy:BufferedTCPLink|BufferedTCPLink]] subclass.\n\n\
+      You need to declare a few variables first:\n\n<uscript>\nVar String ServerAddress;\
+      \ //the server address, ie: www.beyondunreal.com\nVar String ServerPath; //The\
+      \ path to connect to, ie: /index.php\nVar Int ServerPort; //The port on the\
+      \ server to connect to\nVar BYBrowser_Page BYBP; //A link to the browser page\
+      \ itself. Used later, and set by the browser page. \nVar Array<String> LinesA;\
+      \ //This holds the results of your query\n</uscript>\n\nRighto. That's sorted.\
+      \ Now onto the function and events.\n\n<uscript>\nFunction RetrieveServers()\n\
+      {\n\tLinesA.Length = 0;\n\tResetBuffer();\n\tResolve(ServerAddress);\n}\n</uscript>\n\
+      \nThis should be fairly self explanatory. It resets the string array, resets\
+      \ the buffer (which also sets the CR, LF, and CRLF variables), and tries to\
+      \ resolve the server address to an IP. If the resolve succeeds, event \"Resolved\"\
+      \ is fired off, which nicely brings me onto the next one...:\n\n<uscript>\n\
+      Function Resolved(IpAddr Addr)\n{\n\tAddr.Port = ServerPort;\n\n\tIf (BindPort()\
+      \ == 0)\n\t\tReturn;\n\n\tOpen(Addr);\n}\n</uscript>\n\nBasically, this sets\
+      \ the port to be used, attempts to bind a port, and opens a connection to the\
+      \ remote server. When the connection is opened, Event \"Opened\" is called.\n\
+      \n<uscript>\nEvent Opened()\n{\n\tLocal String SendString;\n\n\tSendString =\
+      \ \"GET \" $ \"http://\" $ ServerAddress $ ServerPath $ \" HTTP/1.0\" $ CRLF\
+      \ $ \"Host: \" $ ServerAddress $ CRLF $ CRLF;\n\n\tSendBufferedData(SendString);\n\
+      }\n</uscript>\n\nThis function quite simply creates the string to be sent to\
+      \ the server (requesting the document), and then adds it to the send buffer.\n\
+      \nNow we're onto the processing of the data that is returned, all handled in\
+      \ these next two functions:\n\n<uscript>\nevent ReceivedText(string Text)\n\
+      {\n\tLocal int I;\n\tSplitIntoLines(Text);\n\tFor (i=0;i<linesa.length;i++)\n\
+      \t\t{\n\t\tBYBP.AddToList(BYBP.IPToServer(linesa[i]));\n\t\t}\n\tBYBP.RefreshFinished();\n\
+      \tLinesA.Length = 0;\n}\n\nFunction SplitIntoLines(String Text)\n{\n\tLocal\
+      \ int i;\n\tLocal String Temp;\n\n\tText = Mid(Text, InStr(Text, CRLF) + 1);\
+      \ //Split off the headers\n\n\tDo\t{\n\t\tTemp = \"\";\n\t\tTemp = Left(Text,\
+      \ InStr(Text, Chr(10)));\n\n\t\tIf ((Temp != \"\") && (Temp != Chr(10)) && (Temp\
+      \ != Chr(13)))\n\t\t\t{\n\t\t\tLinesA.Length = LinesA.Length + 1;\n\t\t\tLinesA[LinesA.Length\
+      \ -1] = Temp;\n\t\t\t}\n\t\tText = Mid(Text, InStr(Text, Chr(10)) + 1);\n\t\t\
+      i++;\n\t\t} Until ((InStr(Text, Chr(10)) == -1) || (i > 200)); //put in to stop\
+      \ a massive loop which might happen\n}\n</uscript>\n\nRecievedText is called\
+      \ when, you guessed it, some text is received. It then calls the SplitIntoLines\
+      \ function, who's job it is to remove the headers (all before one CRLF), and\
+      \ then split the remainder into IP's (Seperarated by LF's). The IP's are all\
+      \ added into the dynamic array, and this is used back in the RecievedText function\
+      \ to add the IP's into the server tab's list. The array is then reset.\n\nAnd\
+      \ of course, you need the defaultproperties:\n\n<uscript>\nDefaultProperties\n\
+      {\n\tServerAddress=\"byut.net\"\n\tServerPath=\"/serverlist2k3.php\"\n\tServerPort=80\n\
+      }\n</uscript>\n\n===The tab itself===\n\nThis is probably one of the bits that\
+      \ caused me the LEAST greif. I decided to subclass it from the Favourites tab,\
+      \ because that is closest to what I want it to be.\n\nOnly one variable here:\n\
+      \n<uscript>\nVar BYBrowser_HTTPLink BYB;\n</uscript>\n\nThat's just a reference\
+      \ to the HTTPLink, which is needed to actually query the HTTP server to get\
+      \ the server list.\n\nInitComponent, I think this is one of the places that\
+      \ gave me the least greif. It's all very simple and straightforward.\n\n<uscript>\n\
+      function InitComponent(GUIController MyController, GUIComponent MyOwner)\n{\n\
+      \tSuper(Browser_ServerListPageBase).Initcomponent(MyController, MyOwner);\n\n\
+      \tif(SQC == None ) //needed for pingage, etc\n\t\t{\n\t\tSQC = PlayerOwner().Level.Spawn(class'ServerQueryClient');\n\
+      \t\tSQC.OnReceivedPingInfo = MyServersList.MyReceivedPingInfo;\n\t\tSQC.OnPingTimeout\
+      \ = MyServersList.MyPingTimeout;\n\t\t}\n\n\t//edit buttons\n\tGUIButton(GUIPanel(Controls[1]).Controls[1]).Caption\
+      \ = \"RE-PING LIST\";\n\tGUIButton(GUIPanel(Controls[1]).Controls[6]).bVisible=False;\n\
+      \tGUIButton(GUIPanel(Controls[1]).Controls[7]).Caption = \"REFRESH LIST\";\n\
+      \tGUIButton(GUIPanel(Controls[1]).Controls[7]).OnClick = RefreshClick;\n\tStatusBar.WinWidth=0.8;\n\
+      \n\tRefreshList();\n}\n</uscript>\n\nSkip out the favoutites class in the Super\
+      \ call, else you'll be just messing around, and server query client is something\
+      \ I left out at first, before I realised it was needed to actually talk to the\
+      \ servers themselves. The rest is just altering the buttons, as the Favourites\
+      \ tab leaves out one, and renames another. I changed them back to what they\
+      \ should be.\n\nNext bit is the RefreshList function, which handles loading\
+      \ and using the HTTP Link class.\n\n<uscript>\nFunction RefreshList()\n{\n\t\
+      ForEach PlayerOwner().Level.AllActors(Class'BYBrowser_HTTPLink', BYB)\n\t\t\
+      Break;\n\tif(BYB == None)\n\t\tBYB = PlayerOwner().Level.Spawn(class'BYBrowser_HTTPLink');\n\
+      \n\tBYB.BYBP = Self;\n\n\tMyServersList.Clear(); //Clear the current list\n\t\
+      BYB.RetrieveServers();\n}\n</uscript>\n\nBasically, all that does is find (or\
+      \ create) the HTTP Link, set it's BYBP value (see the section above), clears\
+      \ the current server list, then calls RetrieveServers on the HTTP Link &ndash;\
+      \ which as you'll know initiates the connection, etc.\n\n<uscript>\nFunction\
+      \ RefreshFinished()\n{\n\tMyServersList.AutoPingServers();\n}\n</uscript>\n\n\
+      This diddy function is just called at the end of an update to force the servers\
+      \ to refresh, re-ping, etc.\n\nThe following function was ripped right out of\
+      \ another class, and all it does is turn an IP into a ServerResponseLine which\
+      \ is needed to add it to the list.\n\n<uscript>\nFunction GameInfo.ServerResponseLine\
+      \ IPToServer(string Address)\n{\n\tlocal GameInfo.ServerResponseLine S;\n\t\
+      local string ipString, portString;\n\tlocal int colonPos, portNum;\n\n\t// Parse\
+      \ text to find IP and possibly port number\n\tcolonPos = InStr(address, \":\"\
+      );\n\tif(colonPos < 0)\n\t\t{\n\t\tipString = address;\n\t\tportNum = 7777;\n\
+      \t\t}\n\telse\n\t\t{\n\t\tipString = Left(address, colonPos);\n\t\tportString\
+      \ = Mid(address, colonPos+1);\n\t\tportNum = int(portString);\n\t\t}\n\t\n\t\
+      S.IP = ipString;\n\tS.Port = portNum;\n\tS.QueryPort = portNum;\n\tS.ServerName\
+      \ = \"Unknown\";\n\n\tReturn S;\n}\n</uscript>\n\nYou'll see the above function\
+      \ called in conjunction with the function below in the HTTP Link class.\n\n\
+      <uscript>\nFunction AddToList(GameInfo.ServerResponseLine S)\n{\n\tMyServersList.MyOnReceivedServer(S);\n\
+      }\n</uscript>\n\nQuite simply, that just adds the server to the list. Nothing\
+      \ more to it.\n\n<uscript>\nfunction PingServer( int listid, ServerQueryClient.EPingCause\
+      \ PingCause, GameInfo.ServerResponseLine s )\n{\n\n\tif( PingCause == PC_Clicked\
+      \ )\n\t\tSQC.PingServer( listid, PingCause, s.IP, s.QueryPort, QI_RulesAndPlayers,\
+      \ s );\n\telse\n\t\tSQC.PingServer( listid, PingCause, s.IP, s.QueryPort, QI_Ping,\
+      \ s );\n}\n</uscript>\n\nPingServer. Pings the server. Simple huh? (this might\
+      \ be left over from the Favourites tab superclass, I'm not sure...).\n\nAnd\
+      \ the below functions are just set to do nothing, because that's what they should\
+      \ do for this tab.\n\n<uscript>\nfunction bool AddIPClick(GUIComponent Sender)\n\
+      {\n}\n\nfunction SaveFavorites()\n{\n}\n</uscript>\n\nAnd finally, the defaultproperties,\
+      \ where the caption for this tab is set.\n\n<uscript>\nDefaultProperties\n{\n\
+      \tPageCaption=\"BY Servers\"\n}\n</uscript>\n\n===Loading the tab===\n\nAlthough\
+      \ this bit was very simple, I'm still kinda peeved that epic/DE didn't include\
+      \ any way to load the tab without having to use some silly \"summon\" command.\
+      \ Ah well, since this class is basically one simple function, I'll paste it\
+      \ all below and explain it.\n\n<uscript>\nfunction PostBeginPlay()\n{\n\tlocal\
+      \ ServerBrowser SB;\n\tlocal Browser_ServerListPageFavorites BYServerListPage;\n\
+      \t\n\tForEach AllObjects(Class'ServerBrowser',SB)\t// Search to see if it is\
+      \ already added, if not, add it.\n\t\t{\n\t\tIf (SB != None)\n\t\t\t{\n\t\t\t\
+      BYServerListPage = new(None) class'BYBrowser_Page';\n\t\t\tSB.AddBrowserPage(BYServerListPage);\n\
+      \t\t\tBreak;\n\t\t\t}\n\t\t}\n\n\tDestroy();\n}\n\ndefaultproperties\n{\n\t\
+      bHidden=True\n}\n</uscript>\n\nWhen this actor is spawned, it looks for the\
+      \ server browser. If it finds it, it adds my tab. It then kills itself. That\
+      \ simple, nothing more to it.\n\n===The whole lot===\n\nWell, for you people\
+      \ who just want the code so they can modify it and change it to suit their needs,\
+      \ I've pasted the whole three classes below.\n\n'''The HTTP Link:'''\n\n<uscript>\n\
+      Class BYBrowser_HTTPLink Extends BufferedTCPLink;\n\nVar String ServerAddress;\n\
+      Var String ServerPath;\nVar Int ServerPort;\nVar BYBrowser_Page BYBP;\nVar Array<String>\
+      \ LinesA;\n\nFunction RetrieveServers()\n{\n\tLinesA.Length = 0;\n\tResetBuffer();\n\
+      \tResolve(ServerAddress);\n}\n\nFunction Resolved(IpAddr Addr)\n{\n\tAddr.Port\
+      \ = ServerPort;\n\n\tIf (BindPort() == 0)\n\t\tReturn;\n\n\tOpen(Addr);\n}\n\
+      \nEvent Opened()\n{\n\tLocal String SendString;\n\n\tSendString = \"GET \" $\
+      \ \"http://\" $ ServerAddress $ ServerPath $ \" HTTP/1.0\" $ CRLF $ \"Host:\
+      \ \" $ ServerAddress $ CRLF $ CRLF;\n\n\tSendBufferedData(SendString);\n}\n\n\
+      Function Tick (Float TimeDelta)\n{\n\tDoBufferQueueIO();\n}\n\nevent ReceivedText(string\
+      \ Text)\n{\n\tLocal int I;\n\n\tSplitIntoLines(Text);\n\n\tFor (i=0;i<linesa.length;i++)\n\
+      \t\t{\n\t\tBYBP.AddToList(BYBP.IPToServer(linesa[i]));\n\t\t}\n\n\tBYBP.RefreshFinished();\n\
+      \n\tLinesA.Length = 0;\n}\n\nFunction SplitIntoLines(String Text)\n{\n\tLocal\
+      \ int i;\n\tLocal String Temp;\n\n\tText = Mid(Text, InStr(Text, CRLF) + 1);\
+      \ //Split off the headers\n\n\tDo\t{\n\t\tTemp = \"\";\n\t\tTemp = Left(Text,\
+      \ InStr(Text, Chr(10)));\n\n\t\tIf ((Temp != \"\") && (Temp != Chr(10)) && (Temp\
+      \ != Chr(13)))\n\t\t\t{\n\t\t\tLinesA.Length = LinesA.Length + 1;\n\t\t\tLinesA[LinesA.Length\
+      \ -1] = Temp;\n\t\t\t}\n\t\tText = Mid(Text, InStr(Text, Chr(10)) + 1);\n\t\t\
+      i++;\n\t\t} Until ((InStr(Text, Chr(10)) == -1) || (i > 50)); //put in to stop\
+      \ a massive loop which might happen\n}\n\nDefaultProperties\n{\n\tServerAddress=\"\
+      byut.net\"\n\tServerPath=\"/serverlist2k3.php\"\n\tServerPort=80\n}\n</uscript>\n\
+      \n'''And now, the server tab:'''\n\n<uscript>\nClass BYBrowser_Page extends\
+      \ Browser_ServerListPageFavorites;\n\nVar BYBrowser_HTTPLink BYB;\n\nfunction\
+      \ InitComponent(GUIController MyController, GUIComponent MyOwner)\n{\n\tSuper(Browser_ServerListPageBase).Initcomponent(MyController,\
+      \ MyOwner);\n\n\tif(SQC == None ) //needed for pingage, etc\n\t\t{\n\t\tSQC\
+      \ = PlayerOwner().Level.Spawn(class'ServerQueryClient');\n\t\tSQC.OnReceivedPingInfo\
+      \ = MyServersList.MyReceivedPingInfo;\n\t\tSQC.OnPingTimeout = MyServersList.MyPingTimeout;\n\
+      \t\t}\n\n\t//edit buttons\n\tGUIButton(GUIPanel(Controls[1]).Controls[1]).Caption\
+      \ = \"RE-PING LIST\";\n\tGUIButton(GUIPanel(Controls[1]).Controls[6]).bVisible=False;\n\
+      \tGUIButton(GUIPanel(Controls[1]).Controls[7]).Caption = \"REFRESH LIST\";\n\
+      \tGUIButton(GUIPanel(Controls[1]).Controls[7]).OnClick = RefreshClick;\n\tStatusBar.WinWidth=0.8;\n\
+      \n\tRefreshList();\n}\n\nFunction RefreshList()\n{\n\tForEach PlayerOwner().Level.AllActors(Class'BYBrowser_HTTPLink',\
+      \ BYB)\n\t\tBreak;\n\tif(BYB == None)\n\t\tBYB = PlayerOwner().Level.Spawn(class'BYBrowser_HTTPLink');\n\
+      \n\tBYB.BYBP = Self;\n\n\tMyServersList.Clear(); //Clear the current list\n\t\
+      BYB.RetrieveServers();\n}\n\nFunction RefreshFinished()\n{\n\tMyServersList.AutoPingServers();\n\
+      }\n\nFunction GameInfo.ServerResponseLine IPToServer(string Address)\n{\n\t\
+      local GameInfo.ServerResponseLine S;\n\tlocal string ipString, portString;\n\
+      \tlocal int colonPos, portNum;\n\n\t// Parse text to find IP and possibly port\
+      \ number\n\tcolonPos = InStr(address, \":\");\n\tif(colonPos < 0)\n\t\t{\n\t\
+      \tipString = address;\n\t\tportNum = 7777;\n\t\t}\n\telse\n\t\t{\n\t\tipString\
+      \ = Left(address, colonPos);\n\t\tportString = Mid(address, colonPos+1);\n\t\
+      \tportNum = int(portString) ;\n\t\t}\n\t\n\tS.IP = ipString;\n\tS.Port = portNum;\n\
+      \tS.QueryPort = portNum;\n\tS.ServerName = \"Unknown\";\n\n\tReturn S;\n}\n\n\
+      Function AddToList(GameInfo.ServerResponseLine S)\n{\n\tMyServersList.MyOnReceivedServer(S);\n\
+      }\n\nfunction PingServer( int listid, ServerQueryClient.EPingCause PingCause,\
+      \ GameInfo.ServerResponseLine s )\n{\n\n\tif( PingCause == PC_Clicked )\n\t\t\
+      SQC.PingServer( listid, PingCause, s.IP, s.QueryPort, QI_RulesAndPlayers, s\
+      \ );\n\telse\n\t\tSQC.PingServer( listid, PingCause, s.IP, s.QueryPort, QI_Ping,\
+      \ s );\n}\n\n//Functions that I now want to mean nothing\nfunction bool AddIPClick(GUIComponent\
+      \ Sender)\n{\n}\n\nfunction SaveFavorites()\n{\n}\n\nDefaultProperties\n{\n\t\
+      PageCaption=\"BY Servers\"\n}\n</uscript>\n\n'''And finally, the loader:'''\n\
+      \n<uscript>\nclass Load extends Actor;\n\nfunction PostBeginPlay()\n{\n\tlocal\
+      \ ServerBrowser SB;\n\tlocal Browser_ServerListPageFavorites BYServerListPage;\n\
+      \t\n\tForEach AllObjects(Class'ServerBrowser',SB) //add the tab.\n\t\t{\n\t\t\
+      If (SB != None)\n\t\t\t{\n\t\t\tBYServerListPage = new(None) class'BYBrowser_Page';\n\
+      \t\t\tSB.AddBrowserPage(BYServerListPage);\n\t\t\tBreak;\n\t\t\t}\n\t\t}\n\n\
+      \tDestroy();\n}\n\ndefaultproperties\n{\n\tbHidden=True\n}\n</uscript>\n\nAnd\
+      \ there it is!!\n\n===Why??!===\n\nThe above was all written to create a server\
+      \ browser tab that will pick up servers currently running on Blueyonder games\
+      \ (A GSP which also happens to be part of my ISP). It took me a while to do\
+      \ and figure out, so I figured the wiki may like it.\n\n----\n\n'''Will:'''\
+      \ GEBUS CHRIST!! That's gotta be the biggest amount I've added to the wiki since\
+      \ I wrote the stuff on interactions. Please read through, point out code errors,\
+      \ logic errors, spelling errors, grammar errors, or any kind of errors you want.\
+      \ :)\n\n'''Will:''' ARGH GODDAMNS**THEADED*****INGB*STARDS!! :|\n\nI just found\
+      \ out (via Wormbo), that epics latest beta patch (2179) prevents the problem\
+      \ of using custom server tabs as a root for a clientside hack by totally f*cking\
+      \ you up all together. You cant use them AT ALL. F*ck people by not including\
+      \ a way to add tabs automatically, f*ck people by not including a stock tab\
+      \ that can be used to download a server list from a wevserver, then f*ck em\
+      \ all again by removed the possibility for custom server tabs. GG epic. >:|\
+      \ >:| >:|\n\n'''Mychaeel:''' Chill. &ndash; So, what exactly did they change?\n\
+      \n'''Will:''' I'm not exactly sure (I dont have the patch), but it now seems\
+      \ they've added those kind of packages that are loaded clientside and not preset\
+      \ serverside into the checks. Even the basic server tab itself will prevent\
+      \ you from joining a server, which is why I am hacked off - because they provide\
+      \ no alternative method of adding your own server tab while destroying the possibility\
+      \ of using one loaded yourself. Could this be a result of the email sent to\
+      \ DrSin about the ability to use tabs like that as a cheat?\n\n'''Mychaeel:'''\
+      \ Yes, I think it could.  To be honest I had expected that the client purity\
+      \ check worked like that all the time.\n\nWhat would help might be a way to\
+      \ have auto-creation of server tabs or other objects when the (full-screen)\
+      \ menu is displayed, and giving those objects some sort of notification just\
+      \ before the user leaves the menu to go (back) into the game to give them a\
+      \ chance to auto-destruct before a purity check is done.  Or they could \"freeze\"\
+      \ all objects client-side from packages that aren't present on the server (no\
+      \ Tick, no PostRender, and generally no function calls possible)."
+  properties: []
+  revId: 9465
+name: "Legacy:Will/Creating A HTTP Server List Tab"
+revision:
+  revid: 9465
+  parentid: 9466
+  user: "Mychaeel"
+  timestamp: 1042589314.000000000
+  comment: "*"
+timestamp: 1668977925.238317000

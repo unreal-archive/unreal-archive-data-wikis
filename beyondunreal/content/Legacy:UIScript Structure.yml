@@ -1,0 +1,283 @@
+---
+parse:
+  title: "Legacy:UIScript Structure"
+  text:
+    text: "<p><a href=\"/Legacy:User_Interface\" title=\"Legacy:User Interface\">User\
+      \ Interface</a> scripts appear to be quite complicated at first, but they have\
+      \ quite a simple hierarchical structure. It appears to be quite straightforward\
+      \ to define any kind of interface function, but the work is in figuring out\
+      \ what all the commands mean!</p>\n<p>The whole of the <a href=\"/Legacy:Unreal_2\"\
+      \ title=\"Legacy:Unreal 2\">Unreal 2</a> UI seems to derive from a single root\
+      \ object, defined like this:</p>\n<pre>[Root]\nClass=FixedSizeContainer\nComponent=SomeComponent\n\
+      </pre>\n<p>and so on. At this level, the \"Component\" is something like the\
+      \ main menu, the objectives screen, or the main HUD.</p>\n<p>I shall pick a\
+      \ relatively simple component to illustrate the main points of the UIScript\
+      \ functionality.</p>\n<hr />\n<p>I've been working on UIScripts for a while,\
+      \ and thought I'd write out how to create your own HUD element in <a href=\"\
+      /Legacy:Unreal_2\" title=\"Legacy:Unreal 2\">Unreal 2</a>. This is my first\
+      \ try at editing a Wiki, so bear with me. With that said, let's get to it.</p>\n\
+      <p>First, let me say one thing; The UIScript interface isn't as illogical as\
+      \ it may seem at first...it's nature is just really counter-intuitive. This\
+      \ is because UIScripts, while robust and logical, are a quite separate entity\
+      \ from the UnrealScript hierarchy. Indeed, it appears Legend had some problems\
+      \ with the HUD, and the UIScript is a hacked-out system that happened to stay\
+      \ in for the final version...</p>\n<p>Quoth HUD.uc from U2's source...</p>\n\
+      <blockquote class=\"legacyquote\">\n<p>//NEW: disabled because it doesn't compile.\
+      \ Currently using UIConsole, etc to do all drawing so we really don't need this\
+      \ anyway.</p>\n</blockquote>\n<p>Ugh. Okay, anyway, let's make a UI component.\
+      \ We'll create a health bar, so that we don't have to tangle with extra functionality,\
+      \ and focus on the intricacies of UIScripting.</p>\n<p>Our UIScript will define\
+      \ two textures: one to serve as the background for our component, and one to\
+      \ serve as a visual meter of the remaining health. We'll use two different \"\
+      subcomponents\" to accomplish this: one to hold the textures, and one to be\
+      \ the actual health bar.</p>\n<p>Open up Notepad (or WOTgreal, etc.) and create\
+      \ a file in the UIScripts subdirectory called \"PVNNinjaHUD.ui\" (if you want\
+      \ to follow the nomenclature of my mod, Pirates versus Ninjas):</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"br0\">[</span>Root<span class=\"br0\">]</span>\n\
+      <span class=\"kw1\">Class</span><span class=\"sy0\">=</span>FixedSizeContainer\n\
+      Component<span class=\"sy0\">=</span>NinjaHUDTextures\nComponent<span class=\"\
+      sy0\">=</span>NinjaHealth\n \n<span class=\"br0\">[</span>NinjaHUDTextures<span\
+      \ class=\"br0\">]</span>\n<span class=\"kw1\">Class</span><span class=\"sy0\"\
+      >=</span>Image\n<span class=\"kw5\">Material</span><span class=\"sy0\">=</span>khakiPVN.<span\
+      \ class=\"kw9\">HUD</span>.<span class=\"me0\">PVNNinjaHUD</span>\nImage2<span\
+      \ class=\"sy0\">=</span>HealthMeter,<span class=\"nu0\">0</span>,<span class=\"\
+      nu0\">32</span>,<span class=\"nu0\">134</span>,<span class=\"nu0\">37</span>\n\
+      Image2<span class=\"sy0\">=</span>NinjaHealthTex,<span class=\"nu0\">0</span>,<span\
+      \ class=\"nu0\">0</span>,<span class=\"nu0\">81</span>,<span class=\"nu0\">27</span>\n\
+      \ \n<span class=\"br0\">[</span>NinjaHealth<span class=\"br0\">]</span>\n<span\
+      \ class=\"kw1\">Class</span><span class=\"sy0\">=</span>FixedSizeContainer\n\
+      Component<span class=\"sy0\">=</span>ImageComponent\n\tImage<span class=\"sy0\"\
+      >=</span>NinjaHealthTex\nComponent<span class=\"sy0\">=</span>ImageWipe\n\t\
+      TopImage<span class=\"sy0\">=</span>HealthMeter\n\tAccess<span class=\"sy0\"\
+      >=</span><span class=\"kw8\">Player</span>,GetHealthPct\n\tAutoSize<span class=\"\
+      sy0\">=</span><span class=\"kw6\">true</span>\n\t<span class=\"kw7\">Location</span><span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">30</span>,<span class=\"nu0\">5</span>\n\
+      Component<span class=\"sy0\">=</span>LabelShadow\n\tAccess<span class=\"sy0\"\
+      >=</span><span class=\"kw8\">Player</span>,GetHealthString\n\tFont<span class=\"\
+      sy0\">=</span>HUD_Fonts.<span class=\"me0\">Micro12</span>\n\t<span class=\"\
+      kw7\">Location</span><span class=\"sy0\">=-</span><span class=\"nu0\">5</span>,<span\
+      \ class=\"nu0\">6</span>\nAlign<span class=\"sy0\">=</span>HardLeft,HardTop\n\
+      <span class=\"kw7\">Location</span><span class=\"sy0\">=</span><span class=\"\
+      nu0\">100</span>,<span class=\"nu0\">100</span></pre></div>\n</div>\n<p>UIScripts\
+      \ consist of a bunch of \"component\" definitions. At the very least, the component\
+      \ must be named (accomplished in the first line), and given a type (accomplished\
+      \ in the second line, \"Class=\"). Following that, what attributes are assigned\
+      \ depends on the component's nature.</p>\n<p>So, let's deconstruct what's going\
+      \ on here, section by section.</p>\n<p>[Root] defines, well, the \"root\" component,\
+      \ which is actually named after the text file. Thus, [Root] defines the UI component\
+      \ named \"PVNNinjaHUD\", whose prototype is the filename of the very UIScript\
+      \ we're editing. [Root]'s type is always FixedSizeContainer...it appears to\
+      \ be pointless to use any other types here. Now you provide \"prototypes,\"\
+      \ as it were, for each of your subcomponents, just to let Unreal 2 know what's\
+      \ going to be built. In this file, we declare the two aforementioned components\
+      \ for textures and a health bar.</p>\n<p>Now, you create a subsection that is\
+      \ named after each one of your subcomponents, and define them. NinjaHUDTextures's\
+      \ type is image, to signify that it holds images for your other components.\
+      \ The source of your textures, defined in the \"Material=\" line, must be a\
+      \ texture that exists in an Unreal package. For mine, the HUD images for this\
+      \ particular HUD are stored in khakiPVN.HUD.PVNNinjaHUD. After that, you simply\
+      \ have to split the image into pieces, using \"Image2=\" lines to declare individual\
+      \ components. First, you name the subcomponent, then give the Cartesian coordinates\
+      \ of the object's upper-leftmost pixel, then the Cartesian coordinates of the\
+      \ object's lower-rightmost pixel. Simple, eh? Yeah, I thought so too.</p>\n\
+      <p>Now we're getting to the most important part; the subcomponent definition\
+      \ of the actual health bar. \"Class=FixedSizeContainer\" defines the health\
+      \ bar's type. The health bar consists of three different \"sub-subcomponents.\"\
+      \ The \"Component=\" lines are not names that you invent here, as they were\
+      \ in the [Root] definition–instead, they are predefined types that you instanciate\
+      \ and modify. We'll have three parts: The background, the health meter, and\
+      \ the numeric health value. The background is defined by the \"ImageComponent\"\
+      \ section. The \"ImageWipe\" line declares an image whose size changes depending\
+      \ on a value of some sort. First, you define the image that will be used, then\
+      \ how the object will be accessed. \"GetHealthPct\" is a member function of\
+      \ Player's class (which is U2Controller). Next, AutoSize will do just that;\
+      \ automatically resize itself whenever the GetHealthPct value changes. The \"\
+      Location=\" line establishes Cartesian coordinates relative to the upper-leftmost\
+      \ pixel of the entire object. Finally, LabelShadow is an object that displays\
+      \ text. To get its text, it calls Player's GetHealthString function, and renders\
+      \ using the Micro12 font that is part of a HUD_Fonts package. The Location represents,\
+      \ again, relative Cartesian coordinates.</p>\n<p>After that, you establish absolute\
+      \ screen coordinates for the object, and you're set!</p>\n<p>...But, how do\
+      \ you use it? Well, here's the approach I used. Create a custom gametype...</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">class</span> PVNGameInfo\
+      \ <span class=\"kw1\">extends</span> U2GameInfo;\n \n<span class=\"co2\">#exec\
+      \ texture Import File=Textures\\khakiPVN.UIMisc.Common.tga Group=UIMisc name=Common</span>\n\
+      <span class=\"co2\">#exec texture Import File=Textures\\khakiPVN.HUD.PVNNinjaHUD.tga\
+      \ Group=HUD name=PVNNinjaHUD</span>\n<span class=\"co1\">//#exec OBJ LOAD FILE=Textures\\\
+      khakiPVN.utx</span>\n \n<span class=\"kw1\">var</span> ComponentHandle NinjaHealth;\n\
+      \ \n<span class=\"kw1\">event</span> NotifyHack<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\tNinjaHealth <span\
+      \ class=\"sy0\">=</span> <span class=\"kw1\">class</span><span class=\"st0\"\
+      >'UIConsole'</span>.<span class=\"kw1\">static</span>.<span class=\"me0\">LoadComponent</span><span\
+      \ class=\"br0\">(</span> <span class=\"st0\">\"PVNNinjaHUD\"</span> <span class=\"\
+      br0\">)</span>;\n\t<span class=\"kw1\">class</span><span class=\"st0\">'UIConsole'</span>.<span\
+      \ class=\"kw1\">static</span>.<span class=\"me0\">AddComponent</span><span class=\"\
+      br0\">(</span>NinjaHealth<span class=\"br0\">)</span>;\n\t<span class=\"kw6\"\
+      >Super</span>.<span class=\"me0\">NotifyHack</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\"\
+      >defaultproperties</span>\n<span class=\"br0\">{</span>\n    bDisplayHud<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">true</span>\n    GameName<span class=\"\
+      sy0\">=</span><span class=\"st0\">\"Pirates Versus Ninjas\"</span>\n\tAirControl<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0.850000</span>\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p>The NotifyHack() function is what matters\
+      \ here. You make a ComponentHandle variable, and that variable holds a loaded\
+      \ instance of your UI. To instanciate your UI, use the LoadComponent() function,\
+      \ as shown. The argument is a string that represents the name of your UIScript\
+      \ file (without the \".ui\" on the end). If you want, you can use an optional\
+      \ second argument that only loads a subcomponent out of that script. That wouldn't\
+      \ work here, as we have to load both the textures AND the health bar. After\
+      \ that, you pass the newly-loaded NinjaHealth object into the AddComponent()\
+      \ function, and you have yourself a working UI! Just create a map in UnrealEd\
+      \ that specifies your new GameType in its LevelInfo.</p>\n<hr />\n<p><b>scumble:</b>\
+      \ working on it. I'm just trying to put some stuff down and build it up...</p>\n\
+      <p>please provide backlinks!</p>\n<p>I don't know what else I can link that's\
+      \ relevant at the moment.</p>\n<p>Well... <a href=\"/Legacy:User_Interface\"\
+      \ title=\"Legacy:User Interface\">User Interface</a>, the page that comes here.</p>\n\
+      <p><b>Khakionion:</b> Decided to contribute what I've learned thus far. What'd\
+      \ be really useful is a listing of all possible class/component types...</p>\n\
+      <p><b>Foxpaw:</b> Eek. I made a system like this for my UT2003 mod. And here\
+      \ I thought I was being original.&#160;:P Uhmmm, welll.... Mines better! Fahahahaha!&#160;:P</p>\n\
+      <hr />\n<p><a href=\"/Legacy:Category_To_Do\" title=\"Legacy:Category To Do\"\
+      \ class=\"mw-redirect\">category to do</a></p>\n\n<!-- \nNewPP limit report\n\
+      CPU time usage: 0.075 seconds\nReal time usage: 0.171 seconds\nPreprocessor\
+      \ visited node count: 16/1000000\nPreprocessor generated node count: 97/1000000\n\
+      Post‐expand include size: 362/2097152 bytes\nTemplate argument size: 133/2097152\
+      \ bytes\nHighest expansion depth: 3/40\nExpensive parser function count: 0/100\n\
+      -->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n100.00%\
+      \   17.288      1 - -total\n100.00%   17.288      1 - Template:Innerbox\n-->\n\
+      \n<!-- Saved in parser cache with key wiki:pcache:idhash:3438-0!*!0!*!*!*!*\
+      \ and timestamp 20221118192452 and revision id 8848\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Category To Do"
+  - ns: 100
+    exists: true
+    name: "Legacy:User Interface"
+  - ns: 100
+    exists: true
+    name: "Legacy:Unreal 2"
+  templates:
+  - ns: 10
+    exists: true
+    name: "Template:Innerbox"
+  images: []
+  externallinks: []
+  sections: []
+  displaytitle: "Legacy:UIScript Structure"
+  iwlinks: []
+  wikitext:
+    text: "[[Legacy:User Interface|User Interface]] scripts appear to be quite complicated\
+      \ at first, but they have quite a simple hierarchical structure. It appears\
+      \ to be quite straightforward to define any kind of interface function, but\
+      \ the work is in figuring out what all the commands mean!\n\nThe whole of the\
+      \ [[Legacy:Unreal 2|Unreal 2]] UI seems to derive from a single root object,\
+      \ defined like this:\n\n [Root]\n Class=FixedSizeContainer\n Component=SomeComponent\n\
+      \nand so on. At this level, the \"Component\" is something like the main menu,\
+      \ the objectives screen, or the main HUD.\n\nI shall pick a relatively simple\
+      \ component to illustrate the main points of the UIScript functionality.\n\n\
+      ----\n\nI've been working on UIScripts for a while, and thought I'd write out\
+      \ how to create your own HUD element in [[Legacy:Unreal 2|Unreal 2]].  This\
+      \ is my first try at editing a Wiki, so bear with me.  With that said, let's\
+      \ get to it.  \n\nFirst, let me say one thing;  The UIScript interface isn't\
+      \ as illogical as it may seem at first...it's nature is just really counter-intuitive.\
+      \  This is because UIScripts, while robust and logical, are a quite separate\
+      \ entity from the UnrealScript hierarchy.  Indeed, it appears Legend had some\
+      \ problems with the HUD, and the UIScript is a hacked-out system that happened\
+      \ to stay in for the final version...\n\nQuoth HUD.uc from U2's source...\n\n\
+      {{innerbox| //NEW: disabled because it doesn't compile.  Currently using UIConsole,\
+      \ etc to do all drawing so we really don't need this anyway.\n\n}}\n\nUgh. \
+      \ Okay, anyway, let's make a UI component.  We'll create a health bar, so that\
+      \ we don't have to tangle with extra functionality, and focus on the intricacies\
+      \ of UIScripting.  \n\nOur UIScript will define two textures: one to serve as\
+      \ the background for our component, and one to serve as a visual meter of the\
+      \ remaining health.  We'll use two different \"subcomponents\" to accomplish\
+      \ this: one to hold the textures, and one to be the actual health bar.  \n\n\
+      Open up Notepad (or WOTgreal, etc.) and create a file in the UIScripts subdirectory\
+      \ called \"PVNNinjaHUD.ui\" (if you want to follow the nomenclature of my mod,\
+      \ Pirates versus Ninjas):\n\n<uscript>\n[Root]\nClass=FixedSizeContainer\nComponent=NinjaHUDTextures\n\
+      Component=NinjaHealth\n\n[NinjaHUDTextures]\nClass=Image\nMaterial=khakiPVN.HUD.PVNNinjaHUD\n\
+      Image2=HealthMeter,0,32,134,37\nImage2=NinjaHealthTex,0,0,81,27\n\n[NinjaHealth]\n\
+      Class=FixedSizeContainer\nComponent=ImageComponent\n\tImage=NinjaHealthTex\n\
+      Component=ImageWipe\n\tTopImage=HealthMeter\n\tAccess=Player,GetHealthPct\n\t\
+      AutoSize=true\n\tLocation=30,5\nComponent=LabelShadow\n\tAccess=Player,GetHealthString\n\
+      \tFont=HUD_Fonts.Micro12\n\tLocation=-5,6\nAlign=HardLeft,HardTop\nLocation=100,100\n\
+      </uscript>\n\nUIScripts consist of a bunch of \"component\" definitions.  At\
+      \ the very least, the component must be named (accomplished in the first line),\
+      \ and given a type (accomplished in the second line, \"Class=\").  Following\
+      \ that, what attributes are assigned depends on the component's nature.  \n\n\
+      So, let's deconstruct what's going on here, section by section.  \n\n[Root]\
+      \ defines, well, the \"root\" component, which is actually named after the text\
+      \ file.  Thus, [Root] defines the UI component named \"PVNNinjaHUD\", whose\
+      \ prototype is the filename of the very UIScript we're editing.  [Root]'s type\
+      \ is always FixedSizeContainer...it appears to be pointless to use any other\
+      \ types here.  Now you provide \"prototypes,\" as it were, for each of your\
+      \ subcomponents, just to let Unreal 2 know what's going to be built.  In this\
+      \ file, we declare the two aforementioned components for textures and a health\
+      \ bar.  \n\nNow, you create a subsection that is named after each one of your\
+      \ subcomponents, and define them.  NinjaHUDTextures's type is image, to signify\
+      \ that it holds images for your other components.  The source of your textures,\
+      \ defined in the \"Material=\" line, must be a texture that exists in an Unreal\
+      \ package.  For mine, the HUD images for this particular HUD are stored in khakiPVN.HUD.PVNNinjaHUD.\
+      \  After that, you simply have to split the image into pieces, using \"Image2=\"\
+      \ lines to declare individual components.  First, you name the subcomponent,\
+      \ then give the Cartesian coordinates of the object's upper-leftmost pixel,\
+      \ then the Cartesian coordinates of the object's lower-rightmost pixel.  Simple,\
+      \ eh?  Yeah, I thought so too.  \n\nNow we're getting to the most important\
+      \ part; the subcomponent definition of the actual health bar.  \"Class=FixedSizeContainer\"\
+      \ defines the health bar's type.  The health bar consists of three different\
+      \ \"sub-subcomponents.\"  The \"Component=\" lines are not names that you invent\
+      \ here, as they were in the [Root] definition&ndash;instead, they are predefined\
+      \ types that you instanciate and modify.  We'll have three parts:  The background,\
+      \ the health meter, and the numeric health value.  The background is defined\
+      \ by the \"ImageComponent\" section.  The \"ImageWipe\" line declares an image\
+      \ whose size changes depending on a value of some sort.  First, you define the\
+      \ image that will be used, then how the object will be accessed.  \"GetHealthPct\"\
+      \ is a member function of Player's class (which is U2Controller).  Next, AutoSize\
+      \ will do just that; automatically resize itself whenever the GetHealthPct value\
+      \ changes.  The \"Location=\" line establishes Cartesian coordinates relative\
+      \ to the upper-leftmost pixel of the entire object.  Finally, LabelShadow is\
+      \ an object that displays text.  To get its text, it calls Player's GetHealthString\
+      \ function, and renders using the Micro12 font that is part of a HUD_Fonts package.\
+      \  The Location represents, again, relative Cartesian coordinates.  \n\nAfter\
+      \ that, you establish absolute screen coordinates for the object, and you're\
+      \ set!\n\n...But, how do you use it?  Well, here's the approach I used.  Create\
+      \ a custom gametype...\n\n<uscript>\nclass PVNGameInfo extends U2GameInfo;\n\
+      \n#exec texture Import File=Textures\\khakiPVN.UIMisc.Common.tga Group=UIMisc\
+      \ name=Common\n#exec texture Import File=Textures\\khakiPVN.HUD.PVNNinjaHUD.tga\
+      \ Group=HUD name=PVNNinjaHUD\n//#exec OBJ LOAD FILE=Textures\\khakiPVN.utx\n\
+      \nvar ComponentHandle NinjaHealth;\n\nevent NotifyHack()\n{\n\tNinjaHealth =\
+      \ class'UIConsole'.static.LoadComponent( \"PVNNinjaHUD\" );\n\tclass'UIConsole'.static.AddComponent(NinjaHealth);\n\
+      \tSuper.NotifyHack();\n}\n\ndefaultproperties\n{\n    bDisplayHud=true\n   \
+      \ GameName=\"Pirates Versus Ninjas\"\n\tAirControl=0.850000\n}\n</uscript>\n\
+      \nThe NotifyHack() function is what matters here.  You make a ComponentHandle\
+      \ variable, and that variable holds a loaded instance of your UI.  To instanciate\
+      \ your UI, use the LoadComponent() function, as shown.  The argument is a string\
+      \ that represents the name of your UIScript file (without the \".ui\" on the\
+      \ end).  If you want, you can use an optional second argument that only loads\
+      \ a subcomponent out of that script.  That wouldn't work here, as we have to\
+      \ load both the textures AND the health bar.  After that, you pass the newly-loaded\
+      \ NinjaHealth object into the AddComponent() function, and you have yourself\
+      \ a working UI!  Just create a map in UnrealEd that specifies your new GameType\
+      \ in its LevelInfo.  \n\n----\n\n'''scumble:''' working on it. I'm just trying\
+      \ to put some stuff down and build it up...\n\nplease provide backlinks!\n\n\
+      I don't know what else I can link that's relevant at the moment.\n\nWell...\
+      \ [[Legacy:User Interface|User Interface]], the page that comes here.\n\n'''Khakionion:'''\
+      \ Decided to contribute what I've learned thus far.  What'd be really useful\
+      \ is a listing of all possible class/component types...\n\n'''Foxpaw:''' Eek.\
+      \ I made a system like this for my UT2003 mod. And here I thought I was being\
+      \ original. :P Uhmmm, welll.... Mines better! Fahahahaha! :P\n\n----\n\n[[Legacy:Category\
+      \ To Do|category to do]]"
+  properties: []
+  revId: 8848
+name: "Legacy:UIScript Structure"
+revision:
+  revid: 8848
+  parentid: 8849
+  user: "Foxpaw"
+  timestamp: 1072330777.000000000
+  comment: "*"
+timestamp: 1668799271.952952000

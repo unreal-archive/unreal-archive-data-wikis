@@ -1,0 +1,290 @@
+---
+parse:
+  title: "Legacy:BruteForce/AST"
+  text:
+    text: "<h2><span class=\"mw-headline\" id=\"Example_tree\">Example tree</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:BruteForce/AST?section=1\" title=\"Edit section: Example\
+      \ tree\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>It's wise to write a function to draw the current AST, this way you can easily\
+      \ spot errors.</p>\n<p>The PrintTree() below gives the following tree for this\
+      \ piece of code:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">var</span> <span class=\"kw5\">int</span> x;          \n<span class=\"\
+      kw1\">var</span> <span class=\"kw5\">int</span> y;          \nx <span class=\"\
+      sy0\">=</span> <span class=\"nu0\">1</span><span class=\"sy0\">+</span><span\
+      \ class=\"nu0\">2</span><span class=\"sy0\">*</span><span class=\"nu0\">3</span><span\
+      \ class=\"sy0\">-</span><span class=\"nu0\">5</span>;        \ny <span class=\"\
+      sy0\">=</span> <span class=\"br0\">(</span>x<span class=\"sy0\">+</span><span\
+      \ class=\"nu0\">2</span><span class=\"br0\">)</span><span class=\"sy0\">/</span><span\
+      \ class=\"nu0\">5</span>;        \nprint<span class=\"br0\">(</span><span class=\"\
+      st0\">\"\"</span><span class=\"sy0\">+</span>x<span class=\"sy0\">+</span><span\
+      \ class=\"st0\">\" \"</span><span class=\"sy0\">+</span>y<span class=\"br0\"\
+      >)</span>;</pre></div>\n</div>\n<pre>+– var              \n|   +– int      \
+      \    \n|   +– x            \n+– var              \n|   +– int          \n| \
+      \  +– y            \n+– =                \n|   +– x            \n|   +– -  \
+      \          \n|   |   +– +        \n|   |   |   +– 1    \n|   |   |   +– *  \
+      \  \n|   |   |   |   +– 2\n|   |   |   |   +– 3\n|   |   +– 5        \n+– =\
+      \                \n|   +– y            \n|   +– /            \n|   |   +– +\
+      \        \n|   |   |   +– x    \n|   |   |   +– 2    \n|   |   +– 5        \n\
+      +– print            \n|   +– +            \n|   |   +– +        \n|   |   |\
+      \   +– +    \n|   |   |   |   +–  \n|   |   |   |   +– x\n|   |   |   +–   \
+      \   \n|   |   +– y        \n</pre>\n<h2><span class=\"mw-headline\" id=\"The_code\"\
+      >The code</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:BruteForce/AST?section=2\" title=\"Edit section:\
+      \ The code\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"coMULTI\">/**\n  The compiled\
+      \ code ready to be executed\n*/</span>\n<span class=\"kw1\">class</span> AST\
+      \ <span class=\"kw1\">extends</span> <span class=\"kw8\">Object</span> <span\
+      \ class=\"kw1\">config</span><span class=\"br0\">(</span>BruteForce<span class=\"\
+      br0\">)</span>;\n \n<span class=\"kw1\">enum</span> NodeType\n<span class=\"\
+      br0\">{</span>\n  NT_Keyword,\n  NT_Identifier,\n  NT_String,\n  NT_Integer,\n\
+      \  NT_Float,\n  NT_Boolean,\n  NT_Function,\n<span class=\"br0\">}</span>;</pre></div>\n\
+      </div>\n<p>These are the kind of tree nodes we have in the tree. The most important\
+      \ is the NT_Keyword, this defines a piece of code to execute, it's usualy a\
+      \ root node.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">struct</span> Node\n<span class=\"br0\">{</span>\n  <span class=\"kw1\"\
+      >var</span> NodeType type;\n  <span class=\"kw1\">var</span> <span class=\"\
+      kw5\">string</span> value;\n  <span class=\"kw1\">var</span> <span class=\"\
+      kw5\">int</span> parent;\n  <span class=\"kw1\">var</span> array<span class=\"\
+      sy0\">&lt;</span>int<span class=\"sy0\">&gt;</span> children;\n<span class=\"\
+      br0\">}</span>;\n<span class=\"kw1\">var</span> <span class=\"kw1\">config</span>\
+      \ array<span class=\"sy0\">&lt;</span>Node<span class=\"sy0\">&gt;</span> Tree;</pre></div>\n\
+      </div>\n<p>A tree is simply an array with all nodes, each node has pointers\
+      \ to it's children and a pointer to it's parent. These pointers are actualy\
+      \ just the index in the array.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">var</span> <span class=\"kw1\">private</span> <span class=\"\
+      kw5\">int</span> currentNode;</pre></div>\n</div>\n<p>The current root node</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">function</span>\
+      \ Create<span class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n  Tree.<span class=\"me0\">length</span> <span class=\"sy0\"\
+      >=</span> <span class=\"nu0\">0</span>;\n  currentNode <span class=\"sy0\">=</span>\
+      \ <span class=\"sy0\">-</span><span class=\"nu0\">1</span>;\n<span class=\"\
+      br0\">}</span>\n \n<span class=\"coMULTI\">/**\n  The real add node\n*/</span>\n\
+      <span class=\"kw1\">private</span> <span class=\"kw1\">function</span> <span\
+      \ class=\"kw5\">int</span> AddNode<span class=\"br0\">(</span>NodeType inType,\
+      \ <span class=\"kw5\">string</span> inValue, <span class=\"kw5\">int</span>\
+      \ inParent<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n  <span\
+      \ class=\"kw1\">local</span> <span class=\"kw5\">int</span> i;\n  i <span class=\"\
+      sy0\">=</span> Tree.<span class=\"me0\">length</span>;\n  Tree.<span class=\"\
+      me0\">length</span> <span class=\"sy0\">=</span> i<span class=\"sy0\">+</span><span\
+      \ class=\"nu0\">1</span>;\n  Tree<span class=\"br0\">[</span>i<span class=\"\
+      br0\">]</span>.<span class=\"me0\">type</span> <span class=\"sy0\">=</span>\
+      \ inType;\n  Tree<span class=\"br0\">[</span>i<span class=\"br0\">]</span>.<span\
+      \ class=\"me0\">value</span> <span class=\"sy0\">=</span> inValue;\n  Tree<span\
+      \ class=\"br0\">[</span>i<span class=\"br0\">]</span>.<span class=\"me0\">parent</span>\
+      \ <span class=\"sy0\">=</span> inParent;\n  <span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span>inParent <span class=\"sy0\">&gt;</span> <span class=\"\
+      sy0\">-</span><span class=\"nu0\">1</span><span class=\"br0\">)</span>\n  <span\
+      \ class=\"br0\">{</span>\n    Tree<span class=\"br0\">[</span>inParent<span\
+      \ class=\"br0\">]</span>.<span class=\"me0\">children</span>.<span class=\"\
+      me0\">length</span> <span class=\"sy0\">=</span> Tree<span class=\"br0\">[</span>inParent<span\
+      \ class=\"br0\">]</span>.<span class=\"me0\">children</span>.<span class=\"\
+      me0\">length</span><span class=\"sy0\">+</span><span class=\"nu0\">1</span>;\n\
+      \    Tree<span class=\"br0\">[</span>inParent<span class=\"br0\">]</span>.<span\
+      \ class=\"me0\">children</span><span class=\"br0\">[</span>Tree<span class=\"\
+      br0\">[</span>inParent<span class=\"br0\">]</span>.<span class=\"me0\">children</span>.<span\
+      \ class=\"me0\">length</span><span class=\"sy0\">-</span><span class=\"nu0\"\
+      >1</span><span class=\"br0\">]</span> <span class=\"sy0\">=</span> i;\n  <span\
+      \ class=\"br0\">}</span>\n  <span class=\"kw2\">return</span> i;\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p>This will add a node to the tree, and\
+      \ as child to it's parent (when set).</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"coMULTI\">/**\n  Open a new Root to the tree\n*/</span>\n\
+      <span class=\"kw1\">function</span> AddRoot<span class=\"br0\">(</span>NodeType\
+      \ inType, <span class=\"kw5\">string</span> inValue<span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n  currentNode <span class=\"sy0\">=</span> AddNode<span\
+      \ class=\"br0\">(</span>inType, inValue, currentNode<span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>This will add a new node\
+      \ and set the current root node to the newly added node.</p>\n<div dir=\"ltr\"\
+      \ class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"coMULTI\">/**\n  Close a Root node \n*/</span>\n\
+      <span class=\"kw1\">function</span> CloseRoot<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n  currentNode <span\
+      \ class=\"sy0\">=</span> Tree<span class=\"br0\">[</span>currentNode<span class=\"\
+      br0\">]</span>.<span class=\"me0\">parent</span>;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>Close the current root by setting the root node to the previous root\
+      \ node.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div\
+      \ class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"coMULTI\"\
+      >/**\n  Add a child to the current node, doesn't set a new root\n*/</span>\n\
+      <span class=\"kw1\">function</span> AddChild<span class=\"br0\">(</span>NodeType\
+      \ inType, <span class=\"kw5\">string</span> inValue<span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n  AddNode<span class=\"br0\">(</span>inType, inValue,\
+      \ currentNode<span class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n \n\
+      <span class=\"coMULTI\">/**\n  Move previous node down a notch\n*/</span>\n\
+      <span class=\"kw1\">function</span> SwitchNode<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw1\"\
+      >local</span> <span class=\"kw5\">int</span> lastSib;\n  <span class=\"co1\"\
+      >// set new parent</span>\n  lastSib <span class=\"sy0\">=</span> Tree<span\
+      \ class=\"br0\">[</span>Tree<span class=\"br0\">[</span>currentNode<span class=\"\
+      br0\">]</span>.<span class=\"me0\">parent</span><span class=\"br0\">]</span>.<span\
+      \ class=\"me0\">children</span><span class=\"br0\">[</span>Tree<span class=\"\
+      br0\">[</span>Tree<span class=\"br0\">[</span>currentNode<span class=\"br0\"\
+      >]</span>.<span class=\"me0\">parent</span><span class=\"br0\">]</span>.<span\
+      \ class=\"me0\">children</span>.<span class=\"me0\">length</span><span class=\"\
+      sy0\">-</span><span class=\"nu0\">2</span><span class=\"br0\">]</span>;\n  Tree<span\
+      \ class=\"br0\">[</span>currentNode<span class=\"br0\">]</span>.<span class=\"\
+      me0\">children</span>.<span class=\"me0\">length</span> <span class=\"sy0\"\
+      >=</span> Tree<span class=\"br0\">[</span>currentNode<span class=\"br0\">]</span>.<span\
+      \ class=\"me0\">children</span>.<span class=\"me0\">length</span><span class=\"\
+      sy0\">+</span><span class=\"nu0\">1</span>;\n  Tree<span class=\"br0\">[</span>currentNode<span\
+      \ class=\"br0\">]</span>.<span class=\"me0\">children</span><span class=\"br0\"\
+      >[</span>Tree<span class=\"br0\">[</span>currentNode<span class=\"br0\">]</span>.<span\
+      \ class=\"me0\">children</span>.<span class=\"me0\">length</span><span class=\"\
+      sy0\">-</span><span class=\"nu0\">1</span><span class=\"br0\">]</span> <span\
+      \ class=\"sy0\">=</span> lastSib;\n  <span class=\"co1\">// remove child pointer\
+      \ from previous parent</span>\n  Tree<span class=\"br0\">[</span>Tree<span class=\"\
+      br0\">[</span>lastSib<span class=\"br0\">]</span>.<span class=\"me0\">parent</span><span\
+      \ class=\"br0\">]</span>.<span class=\"me0\">children</span>.<span class=\"\
+      me0\">remove</span><span class=\"br0\">(</span>Tree<span class=\"br0\">[</span>Tree<span\
+      \ class=\"br0\">[</span>lastSib<span class=\"br0\">]</span>.<span class=\"me0\"\
+      >parent</span><span class=\"br0\">]</span>.<span class=\"me0\">children</span>.<span\
+      \ class=\"me0\">length</span><span class=\"sy0\">-</span><span class=\"nu0\"\
+      >2</span> ,<span class=\"nu0\">1</span><span class=\"br0\">)</span>;\n<span\
+      \ class=\"br0\">}</span></pre></div>\n</div>\n<p>This will move the previous\
+      \ node added to a child of the last added root node</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"coMULTI\">/**\n  Print the tree\n*/</span>\n\
+      <span class=\"kw1\">function</span> PrintTree<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw1\"\
+      >local</span> <span class=\"kw5\">int</span> i;\n  <span class=\"kw2\">for</span>\
+      \ <span class=\"br0\">(</span>i <span class=\"sy0\">=</span> <span class=\"\
+      nu0\">0</span>; i <span class=\"sy0\">&lt;</span> Tree.<span class=\"me0\">length</span>;\
+      \ i<span class=\"sy0\">++</span><span class=\"br0\">)</span>\n  <span class=\"\
+      br0\">{</span>\n    <span class=\"kw2\">if</span> <span class=\"br0\">(</span>Tree<span\
+      \ class=\"br0\">[</span>i<span class=\"br0\">]</span>.<span class=\"me0\">parent</span>\
+      \ <span class=\"sy0\">==</span> <span class=\"sy0\">-</span><span class=\"nu0\"\
+      >1</span><span class=\"br0\">)</span> PrintSubTree<span class=\"br0\">(</span>i,\
+      \ <span class=\"nu0\">0</span><span class=\"br0\">)</span>;\n  <span class=\"\
+      br0\">}</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>This will\
+      \ make an ASCII drawing of the current state of the AST, as you can see above.</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"coMULTI\">/**\n  Internal\
+      \ function for printing the tree\n*/</span>\n<span class=\"kw1\">private</span>\
+      \ <span class=\"kw1\">function</span> PrintSubTree<span class=\"br0\">(</span><span\
+      \ class=\"kw5\">int</span> root, <span class=\"kw5\">int</span> depth<span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">int</span> i;\n  <span class=\"kw1\">local</span> <span\
+      \ class=\"kw5\">string</span> tmp;\n  <span class=\"kw2\">for</span> <span class=\"\
+      br0\">(</span>i <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>; i\
+      \ <span class=\"sy0\">&lt;</span> depth; i<span class=\"sy0\">++</span><span\
+      \ class=\"br0\">)</span> tmp <span class=\"sy0\">=</span> tmp<span class=\"\
+      sy0\">$</span><span class=\"st0\">\"|   \"</span>;\n  <span class=\"kw3\">Log</span><span\
+      \ class=\"br0\">(</span>tmp<span class=\"sy0\">$</span><span class=\"st0\">\"\
+      +--\"</span><span class=\"sy0\">@</span>Tree<span class=\"br0\">[</span>root<span\
+      \ class=\"br0\">]</span>.<span class=\"me0\">value</span><span class=\"br0\"\
+      >)</span>;\n  <span class=\"kw2\">for</span> <span class=\"br0\">(</span>i <span\
+      \ class=\"sy0\">=</span> <span class=\"nu0\">0</span>; i <span class=\"sy0\"\
+      >&lt;</span> Tree<span class=\"br0\">[</span>root<span class=\"br0\">]</span>.<span\
+      \ class=\"me0\">children</span>.<span class=\"me0\">length</span>; i<span class=\"\
+      sy0\">++</span><span class=\"br0\">)</span>\n  <span class=\"br0\">{</span>\n\
+      \    PrintSubTree<span class=\"br0\">(</span>Tree<span class=\"br0\">[</span>root<span\
+      \ class=\"br0\">]</span>.<span class=\"me0\">children</span><span class=\"br0\"\
+      >[</span>i<span class=\"br0\">]</span>, depth<span class=\"sy0\">+</span><span\
+      \ class=\"nu0\">1</span><span class=\"br0\">)</span>;\n  <span class=\"br0\"\
+      >}</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n\n<!-- \nNewPP\
+      \ limit report\nCPU time usage: 0.169 seconds\nReal time usage: 0.258 seconds\n\
+      Preprocessor visited node count: 42/1000000\nPreprocessor generated node count:\
+      \ 212/1000000\nPost‐expand include size: 0/2097152 bytes\nTemplate argument\
+      \ size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser function\
+      \ count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:603-0!*!*!!*!*!* and timestamp 20221118154734 and revision\
+      \ id 1816\n -->\n"
+  categories: []
+  links: []
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Example tree"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:BruteForce/AST"
+    byteoffset: 0
+    anchor: "Example_tree"
+  - toclevel: 1
+    level: "2"
+    line: "The code"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:BruteForce/AST"
+    byteoffset: 1152
+    anchor: "The_code"
+  displaytitle: "Legacy:BruteForce/AST"
+  iwlinks: []
+  wikitext:
+    text: "==Example tree ==\n\nIt's wise to write a function to draw the current\
+      \ AST, this way you can easily spot errors.\n\nThe PrintTree() below gives the\
+      \ following tree for this piece of code:\n\n<uscript>\nvar int x;          \n\
+      var int y;          \nx = 1+2*3-5;        \ny = (x+2)/5;        \nprint(\"\"\
+      +x+\" \"+y);  \n</uscript>\n\n +&ndash; var              \n |   +&ndash; int\
+      \          \n |   +&ndash; x            \n +&ndash; var              \n |  \
+      \ +&ndash; int          \n |   +&ndash; y            \n +&ndash; =         \
+      \       \n |   +&ndash; x            \n |   +&ndash; -            \n |   | \
+      \  +&ndash; +        \n |   |   |   +&ndash; 1    \n |   |   |   +&ndash; *\
+      \    \n |   |   |   |   +&ndash; 2\n |   |   |   |   +&ndash; 3\n |   |   +&ndash;\
+      \ 5        \n +&ndash; =                \n |   +&ndash; y            \n |  \
+      \ +&ndash; /            \n |   |   +&ndash; +        \n |   |   |   +&ndash;\
+      \ x    \n |   |   |   +&ndash; 2    \n |   |   +&ndash; 5        \n +&ndash;\
+      \ print            \n |   +&ndash; +            \n |   |   +&ndash; +      \
+      \  \n |   |   |   +&ndash; +    \n |   |   |   |   +&ndash;  \n |   |   |  \
+      \ |   +&ndash; x\n |   |   |   +&ndash;      \n |   |   +&ndash; y        \n\
+      \n==The code ==\n\n<uscript>\n/**\n  The compiled code ready to be executed\n\
+      */\nclass AST extends Object config(BruteForce);\n\nenum NodeType\n{\n  NT_Keyword,\n\
+      \  NT_Identifier,\n  NT_String,\n  NT_Integer,\n  NT_Float,\n  NT_Boolean,\n\
+      \  NT_Function,\n};\n</uscript>\n\nThese are the kind of tree nodes we have\
+      \ in the tree. The most important is the NT_Keyword, this defines a piece of\
+      \ code to execute, it's usualy a root node.\n\n<uscript>\n\nstruct Node\n{\n\
+      \  var NodeType type;\n  var string value;\n  var int parent;\n  var array<int>\
+      \ children;\n};\nvar config array<Node> Tree;\n</uscript>\n\nA tree is simply\
+      \ an array with all nodes, each node has pointers to it's children and a pointer\
+      \ to it's parent. These pointers are actualy just the index in the array.\n\n\
+      <uscript>\n\nvar private int currentNode;\n</uscript>\n\nThe current root node\n\
+      \n<uscript>\n\nfunction Create()\n{\n  Tree.length = 0;\n  currentNode = -1;\n\
+      }\n\n/**\n  The real add node\n*/\nprivate function int AddNode(NodeType inType,\
+      \ string inValue, int inParent)\n{\n  local int i;\n  i = Tree.length;\n  Tree.length\
+      \ = i+1;\n  Tree[i].type = inType;\n  Tree[i].value = inValue;\n  Tree[i].parent\
+      \ = inParent;\n  if (inParent > -1)\n  {\n    Tree[inParent].children.length\
+      \ = Tree[inParent].children.length+1;\n    Tree[inParent].children[Tree[inParent].children.length-1]\
+      \ = i;\n  }\n  return i;\n}\n</uscript>\n\nThis will add a node to the tree,\
+      \ and as child to it's parent (when set).\n\n<uscript>\n\n/**\n  Open a new\
+      \ Root to the tree\n*/\nfunction AddRoot(NodeType inType, string inValue)\n\
+      {\n  currentNode = AddNode(inType, inValue, currentNode);\n}\n</uscript>\n\n\
+      This will add a new node and set the current root node to the newly added node.\n\
+      \n<uscript>\n\n/**\n  Close a Root node \n*/\nfunction CloseRoot()\n{\n  currentNode\
+      \ = Tree[currentNode].parent;\n}\n</uscript>\n\nClose the current root by setting\
+      \ the root node to the previous root node.\n\n<uscript>\n\n/**\n  Add a child\
+      \ to the current node, doesn't set a new root\n*/\nfunction AddChild(NodeType\
+      \ inType, string inValue)\n{\n  AddNode(inType, inValue, currentNode);\n}\n\n\
+      /**\n  Move previous node down a notch\n*/\nfunction SwitchNode()\n{\n  local\
+      \ int lastSib;\n  // set new parent\n  lastSib = Tree[Tree[currentNode].parent].children[Tree[Tree[currentNode].parent].children.length-2];\n\
+      \  Tree[currentNode].children.length = Tree[currentNode].children.length+1;\n\
+      \  Tree[currentNode].children[Tree[currentNode].children.length-1] = lastSib;\n\
+      \  // remove child pointer from previous parent\n  Tree[Tree[lastSib].parent].children.remove(Tree[Tree[lastSib].parent].children.length-2\
+      \ ,1);\n}\n</uscript>\n\nThis will move the previous node added to a child of\
+      \ the last added root node\n\n<uscript>\n\n/**\n  Print the tree\n*/\nfunction\
+      \ PrintTree()\n{\n  local int i;\n  for (i = 0; i < Tree.length; i++)\n  {\n\
+      \    if (Tree[i].parent == -1) PrintSubTree(i, 0);\n  }\n}\n</uscript>\n\nThis\
+      \ will make an ASCII drawing of the current state of the AST, as you can see\
+      \ above.\n\n<uscript>\n\n/**\n  Internal function for printing the tree\n*/\n\
+      private function PrintSubTree(int root, int depth)\n{\n  local int i;\n  local\
+      \ string tmp;\n  for (i = 0; i < depth; i++) tmp = tmp$\"|   \";\n  Log(tmp$\"\
+      +--\"@Tree[root].value);\n  for (i = 0; i < Tree[root].children.length; i++)\n\
+      \  {\n    PrintSubTree(Tree[root].children[i], depth+1);\n  }\n}\n</uscript>"
+  properties: []
+  revId: 1816
+name: "Legacy:BruteForce/AST"
+revision:
+  revid: 1816
+  parentid: 1817
+  user: "El Muerte TDS"
+  timestamp: 1051110248.000000000
+  comment: "*"
+timestamp: 1668786378.710228000

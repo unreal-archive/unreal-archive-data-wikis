@@ -1,0 +1,492 @@
+---
+parse:
+  title: "Legacy:Creating An Interaction From A Mutator"
+  text:
+    text: "<p>So you want to use an interaction - but dont know how to create one\
+      \ and have it work offline and online? Read on and see...&#160;:)</p>\n<p>Interactions\
+      \ are created by calling</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw9\">PlayerController</span>.<span class=\"kw8\">Player</span>.<span class=\"\
+      kw8\">interactionMaster</span>.<span class=\"me0\">AddInteraction</span><span\
+      \ class=\"br0\">(</span>\n  <span class=\"st0\">\"mypackage.interactionclass\"\
+      </span>, \n  <span class=\"kw9\">PlayerController</span>.<span class=\"kw8\"\
+      >Player</span><span class=\"br0\">)</span>;</pre></div>\n</div>\n<p>where:</p>\n\
+      <ul>\n<li><i>mypackage</i> is the name of the <a href=\"/Legacy:Package\" title=\"\
+      Legacy:Package\">package</a> the interaction class is contained in</li>\n<li><i>interactionclass</i>\
+      \ is the name of the class that extends interaction.</li>\n</ul>\n<p>This <i>mypackage.interactionclass</i>\
+      \ format is maintained throughout all the code samples on this page.</p>\n<p>The\
+      \ problem with this? An <a href=\"/Legacy:InteractionMaster\" title=\"Legacy:InteractionMaster\"\
+      >InteractionMaster</a> is client-side, so you need to do a couple of things\
+      \ to allow this to work online. First off, you need to make your mutator execute\
+      \ client-side. Mainly adding these two lines to your defaultproperties:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw7\">RemoteRole</span><span\
+      \ class=\"sy0\">=</span><span class=\"kw7\">ROLE_SimulatedProxy</span>\nbAlwaysRelevant<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">True</span></pre></div>\n</div>\n\
+      <p>You also need a <a href=\"/Legacy:Simulated_Function\" title=\"Legacy:Simulated\
+      \ Function\">simulated function</a> that will run clientside and locate the\
+      \ 'local' playercontroller. Let's use <code><a href=\"/edit/Legacy:Tick?redlink=1\"\
+      \ class=\"new\" title=\"Legacy:Tick (page does not exist)\">Tick</a></code>.</p>\n\
+      <p>Getting the local <a href=\"/Legacy:PlayerController\" title=\"Legacy:PlayerController\"\
+      >PlayerController</a> requires a simple call to Level.GetLocalPlayerController().</p>\n\
+      <p>Now we have a mutator that executes client-side, a function that can locate\
+      \ the local playercontroller, and we know how to create an interaction. Put\
+      \ it all together and you should have something that looks like:</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">class</span> icu_mut <span class=\"\
+      kw1\">extends</span> <span class=\"kw9\">Mutator</span>;\n \n<span class=\"\
+      kw1\">var</span> <span class=\"kw5\">bool</span> bAffectSpectators; <span class=\"\
+      co1\">// If this is set to true, an interaction will be created for spectators</span>\n\
+      <span class=\"kw1\">var</span> <span class=\"kw5\">bool</span> bAffectPlayers;\
+      \ <span class=\"co1\">// If this is set to true, an interaction will be created\
+      \ for players</span>\n<span class=\"kw1\">var</span> <span class=\"kw5\">bool</span>\
+      \ bHasInteraction;\n \n<span class=\"kw1\">function</span> <span class=\"kw4\"\
+      >PreBeginPlay</span><span class=\"br0\">(</span><span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n\t<span class=\"co1\">//Log(\"ICU Mutator Started\"\
+      ); // Always comment out your logs unless they're errors</span>\n<span class=\"\
+      br0\">}</span>\n \n<span class=\"kw1\">simulated</span> <span class=\"kw1\"\
+      >function</span> <span class=\"kw4\">Tick</span><span class=\"br0\">(</span><span\
+      \ class=\"kw5\">float</span> DeltaTime<span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n\t<span class=\"kw1\">local</span> <span class=\"kw9\">PlayerController</span>\
+      \ PC;\n \n\t<span class=\"co1\">// If the player has an interaction already,\
+      \ exit function.</span>\n\t<span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span>bHasInteraction<span class=\"br0\">)</span>\n\t\t<span class=\"kw2\"\
+      >Return</span>;\n\tPC <span class=\"sy0\">=</span> <span class=\"kw7\">Level</span>.<span\
+      \ class=\"me0\">GetLocalPlayerController</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n \n\t<span class=\"co1\">// Run a check to see whether\
+      \ this mutator should create an interaction for the player</span>\n\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span> PC <span class=\"sy0\">!=</span>\
+      \ <span class=\"kw5\">None</span> <span class=\"sy0\">&amp;&amp;</span> <span\
+      \ class=\"br0\">(</span><span class=\"br0\">(</span>PC.<span class=\"me0\">PlayerReplicationInfo</span>.<span\
+      \ class=\"me0\">bIsSpectator</span> <span class=\"sy0\">&amp;&amp;</span> bAffectSpectators<span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">||</span> <span class=\"br0\">(</span>bAffectPlayers\
+      \ <span class=\"sy0\">&amp;&amp;</span> <span class=\"sy0\">!</span>PC.<span\
+      \ class=\"me0\">PlayerReplicationInfo</span>.<span class=\"me0\">bIsSpectator</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span> <span class=\"br0\">)</span>\n\
+      \t<span class=\"br0\">{</span>\n\t\tPC.<span class=\"kw8\">Player</span>.<span\
+      \ class=\"kw8\">InteractionMaster</span>.<span class=\"me0\">AddInteraction</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">\"ICU.icu_interaction\"</span>,\
+      \ PC.<span class=\"kw8\">Player</span><span class=\"br0\">)</span>; <span class=\"\
+      co1\">// Create the interaction</span>\n\t\tbHasInteraction <span class=\"sy0\"\
+      >=</span> <span class=\"kw6\">True</span>; <span class=\"co1\">// Set the variable\
+      \ so this lot isn't called again</span>\n\t<span class=\"br0\">}</span>\n<span\
+      \ class=\"br0\">}</span>\n \n<span class=\"kw1\">DefaultProperties</span>\n\
+      <span class=\"br0\">{</span>\n     bAffectSpectators<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">false</span>\n     bAffectPlayers<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">true</span>\n     <span class=\"kw7\">RemoteRole</span><span\
+      \ class=\"sy0\">=</span><span class=\"kw7\">ROLE_SimulatedProxy</span>\n   \
+      \  bAlwaysRelevant<span class=\"sy0\">=</span><span class=\"kw6\">true</span>\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>Now you have the Mutator\
+      \ part done.</p>\n<h2><span class=\"mw-headline\" id=\"Adding_an_Interaction_through_a_GameRule.\"\
+      >Adding an Interaction through a GameRule.</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Creating_An_Interaction_From_A_Mutator?section=1\"\
+      \ title=\"Edit section: Adding an Interaction through a GameRule.\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>Using that first\
+      \ block of code, you can add an Interaction through a <a href=\"/Legacy:GameRules\"\
+      \ title=\"Legacy:GameRules\">GameRules</a> actor as well. Adding an interaction\
+      \ is possible at any point that you have access to the PlayerController.</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw9\">PlayerController</span>.<span\
+      \ class=\"kw8\">Player</span>.<span class=\"kw8\">interactionMaster</span>.<span\
+      \ class=\"me0\">AddInteraction</span><span class=\"br0\">(</span><span class=\"\
+      st0\">\"mypackage.interactionclass\"</span>, <span class=\"kw9\">PlayerController</span>.<span\
+      \ class=\"kw8\">Player</span><span class=\"br0\">)</span>;</pre></div>\n</div>\n\
+      <p>This is essentially the same code just contained in a <a href=\"/Legacy:GameRules\"\
+      \ title=\"Legacy:GameRules\">GameRules</a> instead of a <a href=\"/Legacy:Mutator\"\
+      \ title=\"Legacy:Mutator\">Mutator</a>. It is simply to show an additional way\
+      \ of appending an <a href=\"/Legacy:Interaction\" title=\"Legacy:Interaction\"\
+      >Interaction</a> to the <a href=\"/Legacy:PlayerController\" title=\"Legacy:PlayerController\"\
+      >PlayerController</a>'s InteractionMaster.</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">function</span> <span class=\"kw5\">bool</span> OverridePickupQuery<span\
+      \ class=\"br0\">(</span><span class=\"kw9\">Pawn</span> Other, <span class=\"\
+      kw9\">Pickup</span> item, <span class=\"kw1\">out</span> <span class=\"kw5\"\
+      >byte</span> bAllowPickup<span class=\"br0\">)</span>  <span class=\"br0\">{</span>\n\
+      \ \n    <span class=\"kw1\">local</span> <span class=\"kw9\">PlayerController</span>\
+      \ PC;\n \n    PC <span class=\"sy0\">=</span> <span class=\"kw9\">PlayerController</span><span\
+      \ class=\"br0\">(</span>Other.<span class=\"kw9\">Controller</span><span class=\"\
+      br0\">)</span>;\n \n\t<span class=\"co1\">// Run a check to see whether this\
+      \ mutator should create an interaction for the player</span>\n\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span> PC <span class=\"sy0\">!=</span>\
+      \ <span class=\"kw5\">None</span> <span class=\"sy0\">&amp;&amp;</span> <span\
+      \ class=\"br0\">(</span><span class=\"br0\">(</span>PC.<span class=\"me0\">PlayerReplicationInfo</span>.<span\
+      \ class=\"me0\">bIsSpectator</span> <span class=\"sy0\">&amp;&amp;</span> bAffectSpectators<span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">||</span> <span class=\"br0\">(</span>bAffectPlayers\
+      \ <span class=\"sy0\">&amp;&amp;</span> <span class=\"sy0\">!</span>PC.<span\
+      \ class=\"me0\">PlayerReplicationInfo</span>.<span class=\"me0\">bIsSpectator</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span> <span class=\"br0\">)</span>\n\
+      \t<span class=\"br0\">{</span>\n\t\tPC.<span class=\"kw8\">Player</span>.<span\
+      \ class=\"kw8\">InteractionMaster</span>.<span class=\"me0\">AddInteraction</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">\"mypackage.interactionclass\"</span>,\
+      \ PC.<span class=\"kw8\">Player</span><span class=\"br0\">)</span>; <span class=\"\
+      co1\">// Create the interaction</span>\n\t\tbHasInteraction <span class=\"sy0\"\
+      >=</span> <span class=\"kw6\">True</span>; <span class=\"co1\">// Set the variable\
+      \ so this lot isn't called again</span>\n\t<span class=\"br0\">}</span>\n \n\
+      <span class=\"co1\">//...Rest of the OverridePickupQuery code.</span></pre></div>\n\
+      </div>\n<h2><span class=\"mw-headline\" id=\"Adding_an_Interaction_through_a_new_third_party_class.\"\
+      >Adding an Interaction through a new third party class.</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Creating_An_Interaction_From_A_Mutator?section=2\"\
+      \ title=\"Edit section: Adding an Interaction through a new third party class.\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>Instead\
+      \ of making the mutator client side, you can have the mutator create a new class\
+      \ that is responsible for creating the interactions. Here's an example of using\
+      \ this method:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">class</span> SuperWeaponBarMutator <span class=\"kw1\">extends</span>\
+      \ <span class=\"kw9\">Mutator</span>;\n \n<span class=\"kw1\">function</span>\
+      \ <span class=\"kw4\">PostBeginPlay</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span> <span class=\"br0\">{</span>\n\t<span class=\"kw4\"\
+      >Spawn</span><span class=\"br0\">(</span><span class=\"kw1\">class</span><span\
+      \ class=\"st0\">'SWBReplicator'</span><span class=\"br0\">)</span>;\n<span class=\"\
+      br0\">}</span>\n \n<span class=\"kw1\">defaultproperties</span> <span class=\"\
+      br0\">{</span>\n     \tGroupName<span class=\"sy0\">=</span><span class=\"st0\"\
+      >\"SuperWeaponBar\"</span>\n     \tFriendlyName<span class=\"sy0\">=</span><span\
+      \ class=\"st0\">\"Super Weapon Bar\"</span>\n     \tDescription<span class=\"\
+      sy0\">=</span><span class=\"st0\">\"Creates a new look and feel for the weapon\
+      \ bar.\"</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>Here's\
+      \ the 3rd party class:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">class</span> SWBReplicator <span class=\"kw1\">extends</span> ReplicationInfo;\n\
+      \ \n<span class=\"kw1\">var</span> <span class=\"kw5\">bool</span> bUpdated;\n\
+      \ \n<span class=\"kw1\">simulated</span> <span class=\"kw1\">function</span>\
+      \ <span class=\"kw4\">Tick</span><span class=\"br0\">(</span><span class=\"\
+      kw5\">float</span> dt<span class=\"br0\">)</span> <span class=\"br0\">{</span>\n\
+      \t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"kw7\"\
+      >Level</span>.<span class=\"me0\">NetMode</span> <span class=\"sy0\">!=</span>\
+      \ NM_DedicatedServer <span class=\"sy0\">&amp;&amp;</span> <span class=\"kw7\"\
+      >Level</span>.<span class=\"me0\">GetLocalPlayerController</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span> <span class=\"sy0\">!=</span> <span\
+      \ class=\"kw5\">None</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"\
+      sy0\">!</span>bUpdated<span class=\"br0\">)</span> <span class=\"br0\">{</span>\n\
+      <span class=\"co1\">//Add extra conditions if needed.</span>\n\t\t<span class=\"\
+      kw7\">Level</span>.<span class=\"me0\">GetLocalPlayerController</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>.<span class=\"kw8\">Player</span>.<span\
+      \ class=\"kw8\">interactionMaster</span>.<span class=\"me0\">AddInteraction</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">\"SuperWeaponBar.SuperWeaponBarInteract\"\
+      </span>, <span class=\"kw7\">Level</span>.<span class=\"me0\">GetLocalPlayerController</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>.<span class=\"kw8\">Player</span><span\
+      \ class=\"br0\">)</span>;\n\t\tbUpdated <span class=\"sy0\">=</span> <span class=\"\
+      kw6\">true</span>;\n\t<span class=\"br0\">}</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<h2><span class=\"mw-headline\" id=\"Putting_Interactions_to_use\">Putting\
+      \ Interactions to use</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Creating_An_Interaction_From_A_Mutator?section=3\"\
+      \ title=\"Edit section: Putting Interactions to use\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<p>Interactions can do a whole\
+      \ load of stuff though, so choose a section relating to what you want to do:</p>\n\
+      <p><a href=\"/Legacy:HUD_Interactions\" title=\"Legacy:HUD Interactions\">HUD\
+      \ Interactions</a></p>\n<p><a href=\"/Legacy:Keypress_Interactions\" title=\"\
+      Legacy:Keypress Interactions\">Keypress Interactions</a></p>\n<p><a href=\"\
+      /Legacy:Message_Interactions\" title=\"Legacy:Message Interactions\">Message\
+      \ Interactions</a></p>\n<hr />\n<p><b>Will:</b> Any problems understanding this?\
+      \ Anything I could do to make it clearer? If so: tell me, or do it yourself&#160;;)</p>\n\
+      <p><b>Bjorn:</b> I've removed the .Player.Actor.Pawn in PC.Player.Actor.Pawn.PlayerReplicationInfo\
+      \ because the PRI is already available from the PlayerController (Controller).\
+      \ Oh and, this document was just what I needed and does a good job at explaining\
+      \ stuff to the point, thanks a bunch!</p>\n<p><b>Boksha:</b> Some minor changes\
+      \ in the comments. Anyway, if the local player is not affected by this mutator,\
+      \ the foreach command will go on forever, slowing it down more than it should.\
+      \ Someone think of a workaround for this. Also, damnation. Apparently Mychaeel\
+      \ added something after I load the editing page, so I removed it. Here it is:</p>\n\
+      <p><b>Mychaeel:</b> A thought just occurred to me: If the only purpose of creating\
+      \ an interaction from a mutator is being able to paint something on the HUD,\
+      \ there might be a less problem-prone way to achieve the same goal (from what\
+      \ I gather interactions don't play well when players try to connect to a different\
+      \ server using the \"open\" console command). I didn't look into that yet so\
+      \ I might be way off, but could it be possible to exploit <a href=\"/Legacy:LocalMessage\"\
+      \ title=\"Legacy:LocalMessage\">LocalMessage</a>'s RenderComplexMessage function\
+      \ to paint arbitrary stuff on the client's HUD?</p>\n<p><b>Rork:</b> I downloaded\
+      \ the ICU mutator that is supposed to work online, but it doesn't: clients don't\
+      \ get the interaction, except if they are on the server (listen server). Do\
+      \ I live in twilight zone&#160;?&#160;;)</p>\n<p><b>Wormbo:</b> The usual preparations\
+      \ for client-side mods apply: Add the package to the ServerPackages list on\
+      \ the server and use UCC MasterMD5 to calculate the package's checksum before\
+      \ running the mod on the server.</p>\n<p><b>Rork:</b> Oh well I feel stupid\
+      \ now... Thanks Wormbo.</p>\n<p><b>Mychaeel:</b> At least the \"ucc mastermd5\"\
+      \ step should be obsolete as of UT2003 patch 1 – isn't it, Wormbo?</p>\n<p><b>Wormbo:</b>\
+      \ Oh right, forgot that.</p>\n<p><b>Burtlo:</b> I was about to create a <a href=\"\
+      /Legacy:Mutator\" title=\"Legacy:Mutator\">Mutator</a> to include an interaction\
+      \ and I thought there must be a way to perform this in a <a href=\"/Legacy:GameRules\"\
+      \ title=\"Legacy:GameRules\">GameRules</a>. It worked. So I thought it would\
+      \ be appropriate to mention it here, that it is obviously possible to implement.\
+      \ And perhaps slightly more effecient because it's not on the <i>Tick</i> method.\
+      \ But that is something I don't know enough about to make a comment. Oh sh*t.\
+      \ This is interaction from a mutator. Is there even one for gamerule or other.\
+      \ Perhaps this should be retitled or moved to <a href=\"/edit/Legacy:Implementing_An_Interaction?redlink=1\"\
+      \ class=\"new\" title=\"Legacy:Implementing An Interaction (page does not exist)\"\
+      >Implementing an Interaction</a>. Boy I'm slow.</p>\n<p><b>NickR:</b> For adding\
+      \ an interaction via a GameInfo, I would use the PostLogin function.</p>\n<p><b>Burtlo:</b>\
+      \ So NickR would you write one for GameInfo, and then we could perhaps create\
+      \ a series of pages for registering/adding interactions and include all the\
+      \ ways of doing it. From the <a href=\"/Legacy:Keypress_Interactions\" title=\"\
+      Legacy:Keypress Interactions\">Keypress Interactions</a> I found this one, but\
+      \ it seems narrow to say that it can only be done in a <a href=\"/Legacy:Mutator\"\
+      \ title=\"Legacy:Mutator\">Mutator</a>.</p>\n<p><b>Melaneus:</b> I have been\
+      \ creating extra classes that the mutator spawns and makes them responsible\
+      \ for giving out interactions. I make one that runs through the Level.Controller\
+      \ list, and when it finds a new controller it spawns another class that's a\
+      \ subclass of ReplicationInfo and is owned by the new controller. It then calls\
+      \ a function that replicates to the client, and in this function is the call\
+      \ to create the interaction. I don't know... is running through the Level.ControllerList\
+      \ every tick going to slow things down much? Was my explanation a bit too weird?\
+      \ You could also just have a separate class that ran a tick that added an interaction\
+      \ only when Role &lt; Role_Authority or it's a listen or standalone.</p>\n<p><b>Newbie:</b>\
+      \ How do I get keypress events in UT1?</p>\n<p><b>porkmanii:</b> In reply to\
+      \ Mychaeel's previous comment about \"less problem-prone ways to paint to the\
+      \ HUD\": In UT2004 (the <a rel=\"nofollow\" class=\"external text\" href=\"\
+      http://udn.epicgames.com/Two/HeadsUpDisplayReference\">UDN</a> says v3323 and\
+      \ up), <a href=\"/Legacy:HudOverlay\" title=\"Legacy:HudOverlay\">HudOverlays</a>\
+      \ (Engine.HudOverlay) can be used to render to the HUD. My mutator (Alternate\
+      \ HUDs) finds the local PlayerController (similarly to the example on this page),\
+      \ and then spawns a HudOverlay and adds it to the player's HUD's array of HudOverlays\
+      \ (<a href=\"/Legacy:HUD\" title=\"Legacy:HUD\">HUD</a>.Overlays). Once the\
+      \ HUD is done rendering (in <a href=\"/Legacy:HUD\" title=\"Legacy:HUD\">HUD</a>.PostRender()),\
+      \ it calls HudOverlay.Render() for each HudOverlay in the Overlays array. This\
+      \ seems to work just as well in network games as Instant Action.</p>\n<p><b>Tango\
+      \ Whiskey:</b> I keep seeing the tick function and am fuzzy on exactly what\
+      \ it's doing in terms of being called. At the top of the tree, it's an event\
+      \ in Actor. 1. Is the Engine calling actor.tick or is actor.tick simply available\
+      \ to be called. 2. For the tick function in this mutator, what is passing it\
+      \ the DeltaTime parm and how? Do I really need to use it here?</p>\n<p><b>porkmanii:</b>\
+      \ Actor.Tick() is called by the engine each and every tick/frame. DeltaTime\
+      \ is the time that has passed since the last tick/frame. According to <a href=\"\
+      /Legacy:Actor/Methods\" title=\"Legacy:Actor/Methods\">Actor/Methods</a>, Tick\
+      \ is not called for any actor which has bStatic=True.</p>\n<p><b>bloodlust:</b>\
+      \ So if you create an interaction using a 3rd party class, does that mean the\
+      \ interaction can be accessed from the server? Like if you need access to ScreentoWorld\
+      \ on the server?</p>\n<p><b>UncleSus:</b> Can i use this to add additional buttons,\
+      \ like more weapon altfires for my mod?</p>\n\n<!-- \nNewPP limit report\nCPU\
+      \ time usage: 0.161 seconds\nReal time usage: 0.231 seconds\nPreprocessor visited\
+      \ node count: 74/1000000\nPreprocessor generated node count: 156/1000000\nPost‐\
+      expand include size: 0/2097152 bytes\nTemplate argument size: 0/2097152 bytes\n\
+      Highest expansion depth: 2/40\nExpensive parser function count: 0/100\n-->\n\
+      \n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n100.00% \
+      \   0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:761-0!*!0!!*!*!*\
+      \ and timestamp 20221118122737 and revision id 46418\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:HudOverlay"
+  - ns: 100
+    exists: true
+    name: "Legacy:PlayerController"
+  - ns: 100
+    exists: true
+    name: "Legacy:HUD Interactions"
+  - ns: 100
+    exists: true
+    name: "Legacy:Keypress Interactions"
+  - ns: 100
+    exists: true
+    name: "Legacy:LocalMessage"
+  - ns: 100
+    exists: true
+    name: "Legacy:HUD"
+  - ns: 100
+    exists: true
+    name: "Legacy:Simulated Function"
+  - ns: 100
+    exists: true
+    name: "Legacy:Interaction"
+  - ns: 100
+    exists: true
+    name: "Legacy:Actor/Methods"
+  - ns: 100
+    exists: true
+    name: "Legacy:InteractionMaster"
+  - ns: 100
+    exists: true
+    name: "Legacy:GameRules"
+  - ns: 100
+    exists: true
+    name: "Legacy:Mutator"
+  - ns: 100
+    exists: true
+    name: "Legacy:Package"
+  - ns: 100
+    exists: true
+    name: "Legacy:Message Interactions"
+  - ns: 100
+    exists: false
+    name: "Legacy:Implementing An Interaction"
+  - ns: 100
+    exists: false
+    name: "Legacy:Tick"
+  templates: []
+  images: []
+  externallinks:
+  - "http://udn.epicgames.com/Two/HeadsUpDisplayReference"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Adding an Interaction through a GameRule."
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Creating_An_Interaction_From_A_Mutator"
+    byteoffset: 2657
+    anchor: "Adding_an_Interaction_through_a_GameRule."
+  - toclevel: 1
+    level: "2"
+    line: "Adding an Interaction through a new third party class."
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Creating_An_Interaction_From_A_Mutator"
+    byteoffset: 4000
+    anchor: "Adding_an_Interaction_through_a_new_third_party_class."
+  - toclevel: 1
+    level: "2"
+    line: "Putting Interactions to use"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:Creating_An_Interaction_From_A_Mutator"
+    byteoffset: 4998
+    anchor: "Putting_Interactions_to_use"
+  displaytitle: "Legacy:Creating An Interaction From A Mutator"
+  iwlinks: []
+  wikitext:
+    text: "So you want to use an interaction - but dont know how to create one and\
+      \ have it work offline and online? Read on and see... :)\n\nInteractions are\
+      \ created by calling\n\n<uscript>PlayerController.Player.interactionMaster.AddInteraction(\n\
+      \  \"mypackage.interactionclass\", \n  PlayerController.Player);\n</uscript>\n\
+      \nwhere:\n* ''mypackage'' is the name of the [[Legacy:Package|package]] the\
+      \ interaction class is contained in\n* ''interactionclass'' is the name of the\
+      \ class that extends interaction. \n\nThis ''mypackage.interactionclass'' format\
+      \ is maintained throughout all the code samples on this page.\n\nThe problem\
+      \ with this? An [[Legacy:InteractionMaster|InteractionMaster]] is client-side,\
+      \ so you need to do a couple of things to allow this to work online. First off,\
+      \ you need to make your mutator execute client-side. Mainly adding these two\
+      \ lines to your defaultproperties:\n\n<uscript>\nRemoteRole=ROLE_SimulatedProxy\n\
+      bAlwaysRelevant=True\n</uscript>\n\nYou also need a [[Legacy:Simulated Function|simulated\
+      \ function]] that will run clientside and locate the 'local' playercontroller.\
+      \ Let's use <code>[[Legacy:Tick|Tick]]</code>.\n\nGetting the local [[Legacy:PlayerController|PlayerController]]\
+      \ requires a simple call to Level.GetLocalPlayerController().\n\nNow we have\
+      \ a mutator that executes client-side, a function that can locate the local\
+      \ playercontroller, and we know how to create an interaction. Put it all together\
+      \ and you should have something that looks like:\n\n<uscript>\nclass icu_mut\
+      \ extends Mutator;\n\nvar bool bAffectSpectators; // If this is set to true,\
+      \ an interaction will be created for spectators\nvar bool bAffectPlayers; //\
+      \ If this is set to true, an interaction will be created for players\nvar bool\
+      \ bHasInteraction;\n\nfunction PreBeginPlay()\n{\n\t//Log(\"ICU Mutator Started\"\
+      ); // Always comment out your logs unless they're errors\n}\n\nsimulated function\
+      \ Tick(float DeltaTime)\n{\n\tlocal PlayerController PC;\n\n\t// If the player\
+      \ has an interaction already, exit function.\n\tif (bHasInteraction)\n\t\tReturn;\n\
+      \tPC = Level.GetLocalPlayerController();\n\n\t// Run a check to see whether\
+      \ this mutator should create an interaction for the player\n\tif ( PC != None\
+      \ && ((PC.PlayerReplicationInfo.bIsSpectator && bAffectSpectators) || (bAffectPlayers\
+      \ && !PC.PlayerReplicationInfo.bIsSpectator)) )\n\t{\n\t\tPC.Player.InteractionMaster.AddInteraction(\"\
+      ICU.icu_interaction\", PC.Player); // Create the interaction\n\t\tbHasInteraction\
+      \ = True; // Set the variable so this lot isn't called again\n\t}\n}\n\nDefaultProperties\n\
+      {\n     bAffectSpectators=false\n     bAffectPlayers=true\n     RemoteRole=ROLE_SimulatedProxy\n\
+      \     bAlwaysRelevant=true\n}\n</uscript>\n\nNow you have the Mutator part done.\
+      \ \n\n==Adding an Interaction through a GameRule.==\n\nUsing that first block\
+      \ of code, you can add an Interaction through a [[Legacy:GameRules|GameRules]]\
+      \ actor as well. Adding an interaction is possible at any point that you have\
+      \ access to the PlayerController.\n\n<uscript>\nPlayerController.Player.interactionMaster.AddInteraction(\"\
+      mypackage.interactionclass\", PlayerController.Player);\n</uscript>\n\nThis\
+      \ is essentially the same code just contained in a [[Legacy:GameRules|GameRules]]\
+      \ instead of a [[Legacy:Mutator|Mutator]].  It is simply to show an additional\
+      \ way of appending an [[Legacy:Interaction|Interaction]] to the [[Legacy:PlayerController|PlayerController]]'s\
+      \ InteractionMaster.\n\n<uscript>\nfunction bool OverridePickupQuery(Pawn Other,\
+      \ Pickup item, out byte bAllowPickup)  {\n\n    local PlayerController PC;\n\
+      \n    PC = PlayerController(Other.Controller);\n\n\t// Run a check to see whether\
+      \ this mutator should create an interaction for the player\n\tif ( PC != None\
+      \ && ((PC.PlayerReplicationInfo.bIsSpectator && bAffectSpectators) || (bAffectPlayers\
+      \ && !PC.PlayerReplicationInfo.bIsSpectator)) )\n\t{\n\t\tPC.Player.InteractionMaster.AddInteraction(\"\
+      mypackage.interactionclass\", PC.Player); // Create the interaction\n\t\tbHasInteraction\
+      \ = True; // Set the variable so this lot isn't called again\n\t}\n\n//...Rest\
+      \ of the OverridePickupQuery code.\n</uscript>\n\n==Adding an Interaction through\
+      \ a new third party class.==\n\nInstead of making the mutator client side, you\
+      \ can have the mutator create a new class that is responsible for creating the\
+      \ interactions. Here's an example of using this method:\n\n<uscript>\nclass\
+      \ SuperWeaponBarMutator extends Mutator;\n\nfunction PostBeginPlay() {\n\tSpawn(class'SWBReplicator');\n\
+      }\n\ndefaultproperties {\n     \tGroupName=\"SuperWeaponBar\"\n     \tFriendlyName=\"\
+      Super Weapon Bar\"\n     \tDescription=\"Creates a new look and feel for the\
+      \ weapon bar.\"\n}\n</uscript>\n\nHere's the 3rd party class:\n\n<uscript>\n\
+      class SWBReplicator extends ReplicationInfo;\n\nvar bool bUpdated;\n\nsimulated\
+      \ function Tick(float dt) {\n\tif (Level.NetMode != NM_DedicatedServer && Level.GetLocalPlayerController()\
+      \ != None && !bUpdated) {\n//Add extra conditions if needed.\n\t\tLevel.GetLocalPlayerController().Player.interactionMaster.AddInteraction(\"\
+      SuperWeaponBar.SuperWeaponBarInteract\", Level.GetLocalPlayerController().Player);\n\
+      \t\tbUpdated = true;\n\t}\n}\n</uscript>\n\n==Putting Interactions to use==\n\
+      \nInteractions can do a whole load of stuff though, so choose a section relating\
+      \ to what you want to do:\n\n[[Legacy:HUD Interactions|HUD Interactions]]\n\n\
+      [[Legacy:Keypress Interactions|Keypress Interactions]]\n\n[[Legacy:Message Interactions|Message\
+      \ Interactions]]\n\n----\n\n'''Will:''' Any problems understanding this? Anything\
+      \ I could do to make it clearer? If so: tell me, or do it yourself ;)\n\n'''Bjorn:'''\
+      \ I've removed the .Player.Actor.Pawn in PC.Player.Actor.Pawn.PlayerReplicationInfo\
+      \ because the PRI is already available from the PlayerController (Controller).\
+      \ Oh and, this document was just what I needed and does a good job at explaining\
+      \ stuff to the point, thanks a bunch!\n\n'''Boksha:''' Some minor changes in\
+      \ the comments. Anyway, if the local player is not affected by this mutator,\
+      \ the foreach command will go on forever, slowing it down more than it should.\
+      \ Someone think of a workaround for this. Also, damnation. Apparently Mychaeel\
+      \ added something after I load the editing page, so I removed it. Here it is:\n\
+      \n'''Mychaeel:''' A thought just occurred to me:  If the only purpose of creating\
+      \ an interaction from a mutator is being able to paint something on the HUD,\
+      \ there might be a less problem-prone way to achieve the same goal (from what\
+      \ I gather interactions don't play well when players try to connect to a different\
+      \ server using the \"open\" console command).  I didn't look into that yet so\
+      \ I might be way off, but could it be possible to exploit [[Legacy:LocalMessage|LocalMessage]]'s\
+      \ RenderComplexMessage function to paint arbitrary stuff on the client's HUD?\n\
+      \n'''Rork:''' I downloaded the ICU mutator that is supposed to work online,\
+      \ but it doesn't: clients don't get the interaction, except if they are on the\
+      \ server (listen server). Do I live in twilight zone ? ;)\n\n'''Wormbo:''' The\
+      \ usual preparations for client-side mods apply: Add the package to the ServerPackages\
+      \ list on the server and use UCC MasterMD5 to calculate the package's checksum\
+      \ before running the mod on the server.\n\n'''Rork:''' Oh well I feel stupid\
+      \ now... Thanks Wormbo.\n\n'''Mychaeel:''' At least the \"ucc mastermd5\" step\
+      \ should be obsolete as of UT2003 patch 1 &ndash; isn't it, Wormbo?\n\n'''Wormbo:'''\
+      \ Oh right, forgot that.\n\n'''Burtlo:''' I was about to create a [[Legacy:Mutator|Mutator]]\
+      \ to include an interaction and I thought there must be a way to perform this\
+      \ in a [[Legacy:GameRules|GameRules]].  It worked.  So I thought it would be\
+      \ appropriate to mention it here, that it is obviously possible to implement.\
+      \  And perhaps slightly more effecient because it's not on the ''Tick'' method.\
+      \  But that is something I don't know enough about to make a comment.  Oh sh*t.\
+      \  This is interaction from a mutator.  Is there even one for gamerule or other.\
+      \  Perhaps this should be retitled or moved to [[Legacy:Implementing An Interaction|Implementing\
+      \ an Interaction]].  Boy I'm slow.\n\n'''NickR:''' For adding an interaction\
+      \ via a GameInfo, I would use the PostLogin function.\n\n'''Burtlo:''' So NickR\
+      \ would you write one for GameInfo, and then we could perhaps create a series\
+      \ of pages for registering/adding interactions and include all the ways of doing\
+      \ it.  From the [[Legacy:Keypress Interactions|Keypress Interactions]] I found\
+      \ this one, but it seems narrow to say that it can only be done in a [[Legacy:Mutator|Mutator]].\n\
+      \n'''Melaneus:''' I have been creating extra classes that the mutator spawns\
+      \ and makes them responsible for giving out interactions. I make one that runs\
+      \ through the Level.Controller list, and when it finds a new controller it spawns\
+      \ another class that's a subclass of ReplicationInfo and is owned by the new\
+      \ controller. It then calls a function that replicates to the client, and in\
+      \ this function is the call to create the interaction. I don't know... is running\
+      \ through the Level.ControllerList every tick going to slow things down much?\
+      \ Was my explanation a bit too weird? You could also just have a separate class\
+      \ that ran a tick that added an interaction only when Role < Role_Authority\
+      \ or it's a listen or standalone.\n\n'''Newbie:''' How do I get keypress events\
+      \ in UT1?\n\n'''porkmanii:''' In reply to Mychaeel's previous comment about\
+      \ \"less problem-prone ways to paint to the HUD\": In UT2004 (the [http://udn.epicgames.com/Two/HeadsUpDisplayReference\
+      \ UDN] says v3323 and up), [[Legacy:HudOverlay|HudOverlay]]s (Engine.HudOverlay)\
+      \ can be used to render to the HUD.  My mutator (Alternate HUDs) finds the local\
+      \ PlayerController (similarly to the example on this page), and then spawns\
+      \ a HudOverlay and adds it to the player's HUD's array of HudOverlays ([[Legacy:HUD|HUD]].Overlays).\
+      \  Once the HUD is done rendering (in [[Legacy:HUD|HUD]].PostRender()), it calls\
+      \ HudOverlay.Render() for each HudOverlay in the Overlays array.  This seems\
+      \ to work just as well in network games as Instant Action.\n\n'''Tango Whiskey:'''\
+      \ I keep seeing the tick function and am fuzzy on exactly what it's doing in\
+      \ terms of being called.  At the top of the tree, it's an event in Actor.  1.\
+      \ Is the Engine calling actor.tick or is actor.tick simply available to be called.\
+      \  2.  For the tick function in this mutator, what is passing it the DeltaTime\
+      \ parm and how?  Do I really need to use it here?\n\n'''porkmanii:''' Actor.Tick()\
+      \ is called by the engine each and every tick/frame.  DeltaTime is the time\
+      \ that has passed since the last tick/frame.  According to [[Legacy:Actor/Methods|Actor/Methods]],\
+      \ Tick is not called for any actor which has bStatic=True.\n\n'''bloodlust:'''\
+      \ So if you create an interaction using a 3rd party class, does that mean the\
+      \ interaction can be accessed from the server? Like if you need access to ScreentoWorld\
+      \ on the server?\n\n'''UncleSus:''' Can i use this to add additional buttons,\
+      \ like more weapon altfires for my mod?"
+  properties: []
+  revId: 46418
+name: "Legacy:Creating An Interaction From A Mutator"
+revision:
+  revid: 46418
+  parentid: 2175
+  user: "UncleSus"
+  timestamp: 1619757791.000000000
+  comment: "/* Putting Interactions to use */"
+timestamp: 1668774458.319162000

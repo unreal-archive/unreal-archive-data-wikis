@@ -1,0 +1,319 @@
+---
+parse:
+  title: "Legacy:Carrying Multiple Flags"
+  text:
+    text: "<p>Carrying multiple flags adds a fun element to flag-related game types,\
+      \ but it's a bit tricky to pull off because certain things weren't quite designed\
+      \ to work that way. There are two parts to making it work: getting the visual\
+      \ effect of the player carrying all those flags, and working around the fact\
+      \ that <a href=\"/Legacy:PlayerReplicationInfo\" title=\"Legacy:PlayerReplicationInfo\"\
+      >PlayerReplicationInfo</a> only has the one <tt>HasFlag</tt> field.</p>\n<p>The\
+      \ visual effect part works completely differently in UT and UT2003/04, because\
+      \ the regular effect of carrying a single flag is different.</p>\n<h2><span\
+      \ class=\"mw-headline\" id=\"The_visual_effect_in_UT\">The visual effect in\
+      \ UT</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Carrying_Multiple_Flags?section=1\" title=\"\
+      Edit section: The visual effect in UT\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>I'll discuss how this was done in <a rel=\"nofollow\"\
+      \ class=\"external text\" href=\"http://uncommonplace.com/games/ctf4.html\"\
+      >CTF4</a>.</p>\n<p>The tricky thing about this effect in UT is that when you\
+      \ see a player carrying a flag, the flag you see <i>isn't</i> the real <a href=\"\
+      /Legacy:CTFFlag_(UT)\" title=\"Legacy:CTFFlag (UT)\">CTFFlag</a> object; the\
+      \ real flag stays where it was and just goes invisible. The effect is apparently\
+      \ some hard-wired thing that the game automatically draws whenever the <a href=\"\
+      /Legacy:PlayerReplicationInfo_(UT)\" title=\"Legacy:PlayerReplicationInfo (UT)\"\
+      >PlayerReplicationInfo</a>'s HeldFlag field has something in it. So in order\
+      \ to immitate that, I created a HeldFlag class (subclassing <a href=\"/Legacy:Effects_(UT)\"\
+      \ title=\"Legacy:Effects (UT)\">Effects (UT)</a>) to be the fake carried flag.</p>\n\
+      <p>In CTF4Flag's Held.BeginState function, it looks at the other flags in the\
+      \ game to see if the new holder is also holding one of them. If so, it creates\
+      \ a HeldFlag object. There are actually three HeldFlag classes, each with a\
+      \ different offset in its default properties. Later flags have a bigger offset\
+      \ than flags picked up earlier.</p>\n<p>To get the HeldFlag to follow the player,\
+      \ at first I tried using <a href=\"/Legacy:PhysicsType\" title=\"Legacy:PhysicsType\"\
+      >PHYS_Trailer</a>, but the flag didn't maintain the correct relative location\
+      \ when the player turned. So I ended up having to use a simulated Tick function\
+      \ to constantly update the flag's position. The weird thing is it still doesn't\
+      \ exactly match the behavior of the game's built-in held flag effect, so I have\
+      \ no idea what method they used.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">simulated</span> <span class=\"kw1\">function</span> <span\
+      \ class=\"kw4\">Tick</span><span class=\"br0\">(</span><span class=\"kw5\">float</span>\
+      \ DeltaTime<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span\
+      \ class=\"kw1\">local</span> <span class=\"kw5\">vector</span> X,Y,Z;\n \n\t\
+      <span class=\"kw3\">GetAxes</span><span class=\"br0\">(</span><span class=\"\
+      kw7\">Owner</span>.<span class=\"kw7\">Rotation</span>,X,Y,Z<span class=\"br0\"\
+      >)</span>;\n\t<span class=\"kw4\">SetLocation</span><span class=\"br0\">(</span><span\
+      \ class=\"kw7\">Owner</span>.<span class=\"kw7\">Location</span> <span class=\"\
+      sy0\">-</span> <span class=\"br0\">(</span>X <span class=\"sy0\">*</span> <span\
+      \ class=\"br0\">(</span><span class=\"nu0\">28</span><span class=\"sy0\">+</span>Distance<span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span> <span class=\"sy0\">+</span>\
+      \ <span class=\"br0\">(</span>Z <span class=\"sy0\">*</span> <span class=\"\
+      nu0\">20</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n\t\
+      <span class=\"kw4\">SetRotation</span><span class=\"br0\">(</span><span class=\"\
+      kw7\">Owner</span>.<span class=\"kw7\">Rotation</span><span class=\"br0\">)</span>;\n\
+      \t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"kw9\"\
+      >Pawn</span><span class=\"br0\">(</span><span class=\"kw7\">Owner</span><span\
+      \ class=\"br0\">)</span>.<span class=\"me0\">PlayerReplicationInfo</span>.<span\
+      \ class=\"me0\">HasFlag</span> <span class=\"sy0\">==</span> <span class=\"\
+      kw5\">None</span><span class=\"br0\">)</span>\n\t\t<span class=\"kw4\">Destroy</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>Distance is of course the offset value, and goes up by 10 for each\
+      \ additional held flag.</p>\n<h2><span class=\"mw-headline\" id=\"The_visual_effect_in_UT2003.2F04\"\
+      >The visual effect in UT2003/04</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Carrying_Multiple_Flags?section=2\"\
+      \ title=\"Edit section: The visual effect in UT2003/04\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<p>This one is much easier, because\
+      \ the flag object is actually attached to the player. In fact the behavior is\
+      \ implemented one level down, in the <a href=\"/Legacy:GameObject\" title=\"\
+      Legacy:GameObject\">GameObject</a> class. In Held.BeginState, it calls the <a\
+      \ href=\"/Legacy:UnrealPawn\" title=\"Legacy:UnrealPawn\">UnrealPawn</a> holder's\
+      \ HoldGameObject function. That function anchors the flag to either the pawn\
+      \ itself or one of its bones, depending on whether there's anything in its GameObjBone\
+      \ field.</p>\n<p>So in <a rel=\"nofollow\" class=\"external text\" href=\"http://uncommonplace.com/games/flagdom.html\"\
+      >Flag Domination</a>, my FDFlag class simply lets all that stuff happen, and\
+      \ then calls SetRelativeLocation to change its offset based on any other flags\
+      \ that might already be held.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw7\">game</span> <span class=\"sy0\">=</span> FDGame<span class=\"\
+      br0\">(</span><span class=\"kw7\">Level</span>.<span class=\"kw7\">Game</span><span\
+      \ class=\"br0\">)</span>;\n<span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span><span class=\"kw7\">game</span> <span class=\"sy0\">!=</span> <span\
+      \ class=\"kw5\">none</span><span class=\"br0\">)</span> <span class=\"br0\"\
+      >{</span>\n\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw7\">game</span>.<span class=\"me0\">bMultiCarry</span><span class=\"\
+      br0\">)</span> <span class=\"br0\">{</span>\n\t\t<span class=\"kw2\">for</span>\
+      \ <span class=\"br0\">(</span>i <span class=\"sy0\">=</span> <span class=\"\
+      nu0\">0</span>; i <span class=\"sy0\">&lt;</span> <span class=\"nu0\">3</span>;\
+      \ i<span class=\"sy0\">++</span><span class=\"br0\">)</span> <span class=\"\
+      br0\">{</span>\n\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw7\">game</span>.<span class=\"me0\">Bases</span><span class=\"br0\"\
+      >[</span>i<span class=\"br0\">]</span> <span class=\"sy0\">==</span> <span class=\"\
+      kw5\">none</span><span class=\"br0\">)</span> <span class=\"kw2\">continue</span>;\n\
+      \t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      kw7\">game</span>.<span class=\"me0\">Bases</span><span class=\"br0\">[</span>i<span\
+      \ class=\"br0\">]</span>.<span class=\"me0\">myFlag</span>.<span class=\"me0\"\
+      >Holder</span> <span class=\"sy0\">==</span> Holder<span class=\"br0\">)</span>\n\
+      \t\t\t\tholderCount<span class=\"sy0\">++</span>;\n\t\t<span class=\"br0\">}</span>\n\
+      \t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>holderCount <span\
+      \ class=\"sy0\">&gt;</span> <span class=\"nu0\">1</span><span class=\"br0\"\
+      >)</span> <span class=\"br0\">{</span>\n\t\t\trelLoc <span class=\"sy0\">=</span>\
+      \ <span class=\"kw7\">RelativeLocation</span>;\n\t\t\t<span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span>relLoc <span class=\"sy0\">==</span> <span class=\"\
+      kw3\">vect</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>,<span\
+      \ class=\"nu0\">0</span>,<span class=\"nu0\">0</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span>\n\t\t\t\trelLoc <span class=\"sy0\">=</span> <span\
+      \ class=\"kw3\">vect</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>,<span\
+      \ class=\"sy0\">-</span><span class=\"nu0\">10</span>,<span class=\"nu0\">0</span><span\
+      \ class=\"br0\">)</span>;\n\t\t\t<span class=\"kw4\">SetRelativeLocation</span><span\
+      \ class=\"br0\">(</span>relLoc <span class=\"sy0\">*</span> holderCount<span\
+      \ class=\"br0\">)</span>;\n\t\t<span class=\"br0\">}</span>\n\t<span class=\"\
+      br0\">}</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n<h2><span\
+      \ class=\"mw-headline\" id=\"Getting_around_HeldFlag\">Getting around HeldFlag</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Carrying_Multiple_Flags?section=3\" title=\"Edit section:\
+      \ Getting around HeldFlag\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>This works the same in UT and UT2003/04, and there are two parts to it. One\
+      \ is to make sure that any time you're checking to see if a player is carrying\
+      \ a particular flag, you check the flag's Holder or HolderPRI, and <i>not</i>\
+      \ the player's HeldFlag field, since HeldFlag could point to another flag that\
+      \ the player is also carrying.</p>\n<p>The second is to make sure flags get\
+      \ dropped properly. You just need to make sure that any time a flag's Drop method\
+      \ is called, you go through all the flags and make sure any other flags with\
+      \ the same holder also get dropped. And don't forget to avoid the potential\
+      \ infinite loops where flags are continuously telling each other to Drop.</p>\n\
+      <p>Here's how I did it in Flag Domination 2003/04. Note that the additional\
+      \ flags also give themselves some additional random velocity so they don't all\
+      \ land in the same place.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>Holder <span class=\"sy0\">!=</span>\
+      \ <span class=\"kw5\">none</span><span class=\"br0\">)</span> <span class=\"\
+      br0\">{</span>\n\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>HolderPRI.<span\
+      \ class=\"me0\">HasFlag</span> <span class=\"sy0\">==</span> <span class=\"\
+      kw6\">self</span><span class=\"br0\">)</span> <span class=\"br0\">{</span>\n\
+      \t\t<span class=\"kw7\">game</span> <span class=\"sy0\">=</span> FDGame<span\
+      \ class=\"br0\">(</span><span class=\"kw7\">Level</span>.<span class=\"kw7\"\
+      >Game</span><span class=\"br0\">)</span>;\n\t\t<span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span><span class=\"kw7\">game</span> <span class=\"\
+      sy0\">!=</span> <span class=\"kw5\">none</span><span class=\"br0\">)</span>\n\
+      \t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      kw7\">game</span>.<span class=\"me0\">bMultiCarry</span><span class=\"br0\"\
+      >)</span>\n\t\t\t\t<span class=\"kw2\">for</span> <span class=\"br0\">(</span>i\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>; i <span class=\"\
+      sy0\">&lt;</span> <span class=\"nu0\">3</span>; i<span class=\"sy0\">++</span><span\
+      \ class=\"br0\">)</span> <span class=\"br0\">{</span>\n\t\t\t\t\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span><span class=\"kw7\">game</span>.<span\
+      \ class=\"me0\">Bases</span><span class=\"br0\">[</span>i<span class=\"br0\"\
+      >]</span> <span class=\"sy0\">==</span> <span class=\"kw5\">none</span><span\
+      \ class=\"br0\">)</span> <span class=\"kw2\">break</span>;\n\t\t\t\t\t<span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"br0\">(</span><span\
+      \ class=\"kw7\">game</span>.<span class=\"me0\">Bases</span><span class=\"br0\"\
+      >[</span>i<span class=\"br0\">]</span>.<span class=\"me0\">myFlag</span>.<span\
+      \ class=\"me0\">Holder</span> <span class=\"sy0\">==</span> Holder<span class=\"\
+      br0\">)</span> <span class=\"sy0\">&amp;&amp;</span>\n\t\t\t\t\t\t<span class=\"\
+      br0\">(</span><span class=\"kw7\">game</span>.<span class=\"me0\">Bases</span><span\
+      \ class=\"br0\">[</span>i<span class=\"br0\">]</span>.<span class=\"me0\">myFlag</span>\
+      \ <span class=\"sy0\">!=</span> <span class=\"kw6\">self</span><span class=\"\
+      br0\">)</span><span class=\"br0\">)</span> <span class=\"br0\">{</span>\n\t\t\
+      \t\t\t\t<span class=\"kw7\">game</span>.<span class=\"me0\">Bases</span><span\
+      \ class=\"br0\">[</span>i<span class=\"br0\">]</span>.<span class=\"me0\">myFlag</span>.<span\
+      \ class=\"me0\">Drop</span><span class=\"br0\">(</span>newVel<span class=\"\
+      br0\">)</span>;\n\t\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t<span class=\"\
+      br0\">}</span>\n\t<span class=\"br0\">}</span>\n\t<span class=\"kw2\">else</span>\
+      \ <span class=\"br0\">{</span>\n\t\t<span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span><span class=\"kw3\">VSize</span><span class=\"br0\">(</span>newVel<span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">&lt;</span> Holder.<span class=\"\
+      me0\">GroundSpeed</span><span class=\"sy0\">/</span><span class=\"nu0\">2</span><span\
+      \ class=\"br0\">)</span>\n\t\t\tnewVel <span class=\"sy0\">=</span> Holder.<span\
+      \ class=\"me0\">GroundSpeed</span><span class=\"sy0\">*</span><span class=\"\
+      kw5\">vector</span><span class=\"br0\">(</span><span class=\"kw3\">RotRand</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n\
+      \t\tnewVel <span class=\"sy0\">*=</span> <span class=\"nu0\">1</span> <span\
+      \ class=\"sy0\">+</span> <span class=\"nu0\">2</span><span class=\"sy0\">*</span><span\
+      \ class=\"kw3\">FRand</span><span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>;\n\t<span class=\"br0\">}</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>This was done differently in CTF4 for UT2004 (it's actually in the\
+      \ base 4-team code, and can be used by other 4-team mods). It uses a custom\
+      \ PlayerReplicationInfo class, with a HasFlags dynamic array.</p>\n\n<!-- \n\
+      NewPP limit report\nCPU time usage: 0.093 seconds\nReal time usage: 0.167 seconds\n\
+      Preprocessor visited node count: 33/1000000\nPreprocessor generated node count:\
+      \ 84/1000000\nPost‐expand include size: 23/2097152 bytes\nTemplate argument\
+      \ size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser function\
+      \ count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:849-0!*!0!!*!*!* and timestamp 20221120210416 and revision\
+      \ id 2368\n -->\n"
+  categories:
+  - sortkey: "Carrying Multiple Flags"
+    name: "Legacy_Tutorial"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:PlayerReplicationInfo"
+  - ns: 100
+    exists: true
+    name: "Legacy:Effects (UT)"
+  - ns: 100
+    exists: true
+    name: "Legacy:CTFFlag (UT)"
+  - ns: 100
+    exists: true
+    name: "Legacy:GameObject"
+  - ns: 100
+    exists: true
+    name: "Legacy:PlayerReplicationInfo (UT)"
+  - ns: 100
+    exists: true
+    name: "Legacy:PhysicsType"
+  - ns: 100
+    exists: true
+    name: "Legacy:UnrealPawn"
+  templates: []
+  images: []
+  externallinks:
+  - "http://uncommonplace.com/games/ctf4.html"
+  - "http://uncommonplace.com/games/flagdom.html"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "The visual effect in UT"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Carrying_Multiple_Flags"
+    byteoffset: 545
+    anchor: "The_visual_effect_in_UT"
+  - toclevel: 1
+    level: "2"
+    line: "The visual effect in UT2003/04"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Carrying_Multiple_Flags"
+    byteoffset: 2345
+    anchor: "The_visual_effect_in_UT2003.2F04"
+  - toclevel: 1
+    level: "2"
+    line: "Getting around HeldFlag"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:Carrying_Multiple_Flags"
+    byteoffset: 3437
+    anchor: "Getting_around_HeldFlag"
+  displaytitle: "Legacy:Carrying Multiple Flags"
+  iwlinks: []
+  wikitext:
+    text: "Carrying multiple flags adds a fun element to flag-related game types,\
+      \ but it's a bit tricky to pull off because certain things weren't quite designed\
+      \ to work that way. There are two parts to making it work: getting the visual\
+      \ effect of the player carrying all those flags, and working around the fact\
+      \ that [[Legacy:PlayerReplicationInfo|PlayerReplicationInfo]] only has the one\
+      \ <tt>HasFlag</tt> field.\n\nThe visual effect part works completely differently\
+      \ in UT and UT2003/04, because the regular effect of carrying a single flag\
+      \ is different.\n\n==The visual effect in UT==\n\nI'll discuss how this was\
+      \ done in [http://uncommonplace.com/games/ctf4.html CTF4].\n\nThe tricky thing\
+      \ about this effect in UT is that when you see a player carrying a flag, the\
+      \ flag you see ''isn't'' the real [[Legacy:CTFFlag (UT)|CTFFlag]] object; the\
+      \ real flag stays where it was and just goes invisible. The effect is apparently\
+      \ some hard-wired thing that the game automatically draws whenever the [[Legacy:PlayerReplicationInfo\
+      \ (UT)|PlayerReplicationInfo]]'s HeldFlag field has something in it. So in order\
+      \ to immitate that, I created a HeldFlag class (subclassing [[Legacy:Effects\
+      \ (UT)|Effects (UT)]]) to be the fake carried flag.\n\nIn CTF4Flag's Held.BeginState\
+      \ function, it looks at the other flags in the game to see if the new holder\
+      \ is also holding one of them. If so, it creates a HeldFlag object. There are\
+      \ actually three HeldFlag classes, each with a different offset in its default\
+      \ properties. Later flags have a bigger offset than flags picked up earlier.\n\
+      \nTo get the HeldFlag to follow the player, at first I tried using [[Legacy:PhysicsType|PHYS_Trailer]],\
+      \ but the flag didn't maintain the correct relative location when the player\
+      \ turned. So I ended up having to use a simulated Tick function to constantly\
+      \ update the flag's position. The weird thing is it still doesn't exactly match\
+      \ the behavior of the game's built-in held flag effect, so I have no idea what\
+      \ method they used.\n\n<uscript>\nsimulated function Tick(float DeltaTime)\n\
+      {\n\tlocal vector X,Y,Z;\n\t\n\tGetAxes(Owner.Rotation,X,Y,Z);\n\tSetLocation(Owner.Location\
+      \ - (X * (28+Distance)) + (Z * 20));\n\tSetRotation(Owner.Rotation);\n\tif (Pawn(Owner).PlayerReplicationInfo.HasFlag\
+      \ == None)\n\t\tDestroy();\n}\n</uscript>\n\nDistance is of course the offset\
+      \ value, and goes up by 10 for each additional held flag.\n\n==The visual effect\
+      \ in UT2003/04==\n\nThis one is much easier, because the flag object is actually\
+      \ attached to the player. In fact the behavior is implemented one level down,\
+      \ in the [[Legacy:GameObject|GameObject]] class. In Held.BeginState, it calls\
+      \ the [[Legacy:UnrealPawn|UnrealPawn]] holder's HoldGameObject function. That\
+      \ function anchors the flag to either the pawn itself or one of its bones, depending\
+      \ on whether there's anything in its GameObjBone field.\n\nSo in [http://uncommonplace.com/games/flagdom.html\
+      \ Flag Domination], my FDFlag class simply lets all that stuff happen, and then\
+      \ calls SetRelativeLocation to change its offset based on any other flags that\
+      \ might already be held.\n\n<uscript>\ngame = FDGame(Level.Game);\nif (game\
+      \ != none) {\n\tif (game.bMultiCarry) {\n\t\tfor (i = 0; i < 3; i++) {\n\t\t\
+      \tif (game.Bases[i] == none) continue;\n\t\t\tif (game.Bases[i].myFlag.Holder\
+      \ == Holder)\n\t\t\t\tholderCount++;\n\t\t}\n\t\tif (holderCount > 1) {\n\t\t\
+      \trelLoc = RelativeLocation;\n\t\t\tif (relLoc == vect(0,0,0))\n\t\t\t\trelLoc\
+      \ = vect(0,-10,0);\n\t\t\tSetRelativeLocation(relLoc * holderCount);\n\t\t}\n\
+      \t}\n}\n</uscript>\n\n==Getting around HeldFlag==\n\nThis works the same in\
+      \ UT and UT2003/04, and there are two parts to it. One is to make sure that\
+      \ any time you're checking to see if a player is carrying a particular flag,\
+      \ you check the flag's Holder or HolderPRI, and ''not'' the player's HeldFlag\
+      \ field, since HeldFlag could point to another flag that the player is also\
+      \ carrying.\n\nThe second is to make sure flags get dropped properly. You just\
+      \ need to make sure that any time a flag's Drop method is called, you go through\
+      \ all the flags and make sure any other flags with the same holder also get\
+      \ dropped. And don't forget to avoid the potential infinite loops where flags\
+      \ are continuously telling each other to Drop.\n\nHere's how I did it in Flag\
+      \ Domination 2003/04. Note that the additional flags also give themselves some\
+      \ additional random velocity so they don't all land in the same place.\n\n<uscript>\n\
+      if (Holder != none) {\n\tif (HolderPRI.HasFlag == self) {\n\t\tgame = FDGame(Level.Game);\n\
+      \t\tif (game != none)\n\t\t\tif (game.bMultiCarry)\n\t\t\t\tfor (i = 0; i <\
+      \ 3; i++) {\n\t\t\t\t\tif (game.Bases[i] == none) break;\n\t\t\t\t\tif ((game.Bases[i].myFlag.Holder\
+      \ == Holder) &&\n\t\t\t\t\t\t(game.Bases[i].myFlag != self)) {\n\t\t\t\t\t\t\
+      game.Bases[i].myFlag.Drop(newVel);\n\t\t\t\t\t}\n\t\t\t\t}\n\t}\n\telse {\n\t\
+      \tif (VSize(newVel) < Holder.GroundSpeed/2)\n\t\t\tnewVel = Holder.GroundSpeed*vector(RotRand());\n\
+      \t\tnewVel *= 1 + 2*FRand();\n\t}\n}\n</uscript>\n\nThis was done differently\
+      \ in CTF4 for UT2004 (it's actually in the base 4-team code, and can be used\
+      \ by other 4-team mods). It uses a custom PlayerReplicationInfo class, with\
+      \ a HasFlags dynamic array.\n\n[[Category:Legacy Tutorial|{{PAGENAME}}]]"
+  properties: []
+  revId: 2368
+name: "Legacy:Carrying Multiple Flags"
+revision:
+  revid: 2368
+  parentid: 2369
+  user: "Uncommon"
+  timestamp: 1099850809.000000000
+  comment: "*"
+timestamp: 1668977997.664522000

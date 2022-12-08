@@ -1,0 +1,1028 @@
+---
+parse:
+  title: "Legacy:Hit Prediction"
+  text:
+    text: "<p>This is an Open Source implementation of the Hit Prediction for UT2003,\
+      \ which is explained at <a href=\"/Legacy:Lag_Compensation\" title=\"Legacy:Lag\
+      \ Compensation\">Lag Compensation</a>.</p>\n<p>Feel free to use and improve\
+      \ the code for whatever you want, but if you modify it, please let us know about\
+      \ the modifications.</p>\n<p>I don't offer a download here because I don't think\
+      \ that the implementation is polished and \"foolproof\" enough yet.</p>\n<p>This\
+      \ example implementation will use a modified Instagib gametype with only one\
+      \ modified gun.</p>\n<p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\"\
+      >\n<h2>Contents</h2>\n</div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a\
+      \ href=\"#Sourcecode\"><span class=\"tocnumber\">1</span> <span class=\"toctext\"\
+      >Sourcecode</span></a>\n<ul>\n<li class=\"toclevel-2 tocsection-2\"><a href=\"\
+      #The_LocationTrail_class\"><span class=\"tocnumber\">1.1</span> <span class=\"\
+      toctext\">The LocationTrail class</span></a></li>\n<li class=\"toclevel-2 tocsection-3\"\
+      ><a href=\"#The_Game_Replication_class\"><span class=\"tocnumber\">1.2</span>\
+      \ <span class=\"toctext\">The Game Replication class</span></a>\n<ul>\n<li class=\"\
+      toclevel-3 tocsection-4\"><a href=\"#Discussion\"><span class=\"tocnumber\"\
+      >1.2.1</span> <span class=\"toctext\">Discussion</span></a></li>\n</ul>\n</li>\n\
+      <li class=\"toclevel-2 tocsection-5\"><a href=\"#The_Player_class\"><span class=\"\
+      tocnumber\">1.3</span> <span class=\"toctext\">The Player class</span></a>\n\
+      <ul>\n<li class=\"toclevel-3 tocsection-6\"><a href=\"#Discussion_2\"><span\
+      \ class=\"tocnumber\">1.3.1</span> <span class=\"toctext\">Discussion</span></a></li>\n\
+      </ul>\n</li>\n<li class=\"toclevel-2 tocsection-7\"><a href=\"#The_Pawn_class\"\
+      ><span class=\"tocnumber\">1.4</span> <span class=\"toctext\">The Pawn class</span></a>\n\
+      <ul>\n<li class=\"toclevel-3 tocsection-8\"><a href=\"#Discussion_3\"><span\
+      \ class=\"tocnumber\">1.4.1</span> <span class=\"toctext\">Discussion</span></a></li>\n\
+      </ul>\n</li>\n<li class=\"toclevel-2 tocsection-9\"><a href=\"#The_Weapon_class\"\
+      ><span class=\"tocnumber\">1.5</span> <span class=\"toctext\">The Weapon class</span></a>\n\
+      <ul>\n<li class=\"toclevel-3 tocsection-10\"><a href=\"#Discussion_4\"><span\
+      \ class=\"tocnumber\">1.5.1</span> <span class=\"toctext\">Discussion</span></a></li>\n\
+      </ul>\n</li>\n<li class=\"toclevel-2 tocsection-11\"><a href=\"#The_WeaponFire_class\"\
+      ><span class=\"tocnumber\">1.6</span> <span class=\"toctext\">The WeaponFire\
+      \ class</span></a></li>\n<li class=\"toclevel-2 tocsection-12\"><a href=\"#Discussion_5\"\
+      ><span class=\"tocnumber\">1.7</span> <span class=\"toctext\">Discussion</span></a></li>\n\
+      </ul>\n</li>\n<li class=\"toclevel-1 tocsection-13\"><a href=\"#Related_Topics\"\
+      ><span class=\"tocnumber\">2</span> <span class=\"toctext\">Related Topics</span></a></li>\n\
+      </ul>\n</div>\n<p></p>\n<h2><span class=\"mw-headline\" id=\"Sourcecode\">Sourcecode</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Hit_Prediction?section=1\" title=\"Edit section: Sourcecode\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>To\
+      \ make the source managable, I will post it in chunks and not in one whole,\
+      \ with a discussion for each chunk.</p>\n<h3><span class=\"mw-headline\" id=\"\
+      The_LocationTrail_class\">The LocationTrail class</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Hit_Prediction?section=2\"\
+      \ title=\"Edit section: The LocationTrail class\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">class</span> LocationTrail <span class=\"kw1\">extends</span> <span class=\"\
+      kw8\">Object</span>;\n \n<span class=\"kw1\">var</span> <span class=\"kw5\"\
+      >float</span> TimeStamp;\n<span class=\"kw1\">var</span> <span class=\"kw5\"\
+      >vector</span> <span class=\"kw7\">Location</span>;\n<span class=\"kw1\">var</span>\
+      \ <span class=\"kw5\">Rotator</span> <span class=\"kw7\">Rotation</span>;\n\
+      <span class=\"kw1\">var</span> LocationTrail Next;</pre></div>\n</div>\n<p>Simply\
+      \ a class to hold a trail node.</p>\n<h3><span class=\"mw-headline\" id=\"The_Game_Replication_class\"\
+      >The Game Replication class</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Hit_Prediction?section=3\"\
+      \ title=\"Edit section: The Game Replication class\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h3>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">class</span> PredictionReplicationInfo <span class=\"\
+      kw1\">extends</span> GameReplicationInfo;\n \n<span class=\"kw1\">var</span>\
+      \ <span class=\"kw5\">float</span> PackageTimeStamp; <span class=\"co1\">//\
+      \ Constantly replicated to the client to TimeStamp shot packages for prediction</span>\n\
+      \ \n<span class=\"kw1\">replication</span>\n<span class=\"br0\">{</span>\n\t\
+      <span class=\"kw1\">reliable</span> <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span> bNetDirty <span class=\"sy0\">&amp;&amp;</span> <span class=\"\
+      br0\">(</span><span class=\"kw7\">Role</span> <span class=\"sy0\">==</span>\
+      \ <span class=\"kw7\">ROLE_Authority</span><span class=\"br0\">)</span> <span\
+      \ class=\"br0\">)</span>\n\t\tPackageTimeStamp;\n<span class=\"br0\">}</span>\n\
+      \ \n \n<span class=\"kw1\">function</span> <span class=\"kw4\">Tick</span><span\
+      \ class=\"br0\">(</span> <span class=\"kw5\">float</span> DeltaTime<span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n\tPackageTimeStamp <span class=\"\
+      sy0\">=</span> <span class=\"kw7\">Level</span>.<span class=\"me0\">TimeSeconds</span>;\n\
+      \ \n\t<span class=\"kw6\">Super</span>.<span class=\"kw4\">Tick</span><span\
+      \ class=\"br0\">(</span>DeltaTime<span class=\"br0\">)</span>;\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<h4><span class=\"mw-headline\" id=\"Discussion\"\
+      >Discussion</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Hit_Prediction?section=4\" title=\"Edit section:\
+      \ Discussion\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h4>\n\
+      <p><b>Spark:</b> See <a href=\"/Legacy:Lag_Compensation\" title=\"Legacy:Lag\
+      \ Compensation\">lag compensation</a> for a discussion why it's neccessary to\
+      \ replicate the servertime constantly. It might be desirable to find a better\
+      \ solution though...</p>\n<h3><span class=\"mw-headline\" id=\"The_Player_class\"\
+      >The Player class</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Hit_Prediction?section=5\" title=\"Edit section:\
+      \ The Player class\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">class</span> PredictedPlayer\
+      \ <span class=\"kw1\">extends</span> <span class=\"kw9\">xPlayer</span>;\n \n\
+      <span class=\"kw1\">event</span> PlayerTick<span class=\"br0\">(</span> <span\
+      \ class=\"kw5\">float</span> DeltaTime <span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n\t<span class=\"kw6\">Super</span>.<span class=\"me0\">PlayerTick</span><span\
+      \ class=\"br0\">(</span>DeltaTime<span class=\"br0\">)</span>;\n \n\t<span class=\"\
+      co1\">// Increase PackageTimeStamp for smooth interpolated hit prediction</span>\n\
+      \tPredictionReplicationInfo<span class=\"br0\">(</span>GameReplicationInfo<span\
+      \ class=\"br0\">)</span>.<span class=\"me0\">PackageTimeStamp</span> <span class=\"\
+      sy0\">+=</span> DeltaTime;\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <h4><span class=\"mw-headline\" id=\"Discussion_2\">Discussion</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Hit_Prediction?section=6\"\
+      \ title=\"Edit section: Discussion\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h4>\n<p><b>Spark:</b> This is simply because a client will\
+      \ usually run at a higher FPS, so prediction isn't limited to the ~50ms steps\
+      \ of the server (a client will predict movement between those 50ms steps).</p>\n\
+      <h3><span class=\"mw-headline\" id=\"The_Pawn_class\">The Pawn class</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Hit_Prediction?section=7\" title=\"Edit section: The Pawn\
+      \ class\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">class</span> PredictedPawn\
+      \ <span class=\"kw1\">extends</span> <span class=\"kw9\">xPawn</span>;\n \n\
+      <span class=\"kw1\">var</span> LocationTrail LocationTrail;  <span class=\"\
+      co1\">// The actual trail of locations</span>\n<span class=\"kw1\">var</span>\
+      \ <span class=\"kw5\">vector</span> SavedLocation;         <span class=\"co1\"\
+      >// Used to restore location after timeshifting</span>\n<span class=\"kw1\"\
+      >var</span> <span class=\"kw5\">Rotator</span> SavedRotation;\n<span class=\"\
+      kw1\">var</span> <span class=\"kw5\">float</span> SavedTimeStamp;\n<span class=\"\
+      kw1\">var</span> <span class=\"kw5\">float</span> MaxTrailSeconds;        <span\
+      \ class=\"co1\">// How many seconds should be stored in trails</span>\n \n \n\
+      <span class=\"kw1\">event</span> <span class=\"kw4\">Tick</span><span class=\"\
+      br0\">(</span> <span class=\"kw5\">float</span> DeltaTime <span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw1\">local</span>\
+      \ LocationTrail Trail;\n \n\t<span class=\"kw6\">Super</span>.<span class=\"\
+      kw4\">Tick</span><span class=\"br0\">(</span>DeltaTime<span class=\"br0\">)</span>;\n\
+      \ \n\t<span class=\"co1\">// Store the new position and rotation in a LocationTrail</span>\n\
+      \tTrail <span class=\"sy0\">=</span> <span class=\"kw1\">new</span> <span class=\"\
+      br0\">(</span><span class=\"kw5\">none</span><span class=\"br0\">)</span> <span\
+      \ class=\"kw1\">class</span><span class=\"st0\">'LocationTrail'</span>;\n\t\
+      Trail.<span class=\"me0\">Next</span> <span class=\"sy0\">=</span> LocationTrail;\n\
+      \tLocationTrail <span class=\"sy0\">=</span> Trail;\n \n\tLocationTrail.<span\
+      \ class=\"kw7\">Location</span> <span class=\"sy0\">=</span> <span class=\"\
+      kw7\">Location</span>;\n\tLocationTrail.<span class=\"kw7\">Rotation</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"kw7\">Rotation</span>;\n\t<span\
+      \ class=\"co1\">// Using the timestamp which was saved at roundbegin and will\
+      \ be sent to the client</span>\n\tLocationTrail.<span class=\"me0\">TimeStamp</span>\
+      \ <span class=\"sy0\">=</span> PredictionReplicationInfo<span class=\"br0\"\
+      >(</span><span class=\"kw7\">Level</span>.<span class=\"kw7\">Game</span>.<span\
+      \ class=\"me0\">GameReplicationInfo</span><span class=\"br0\">)</span>.<span\
+      \ class=\"me0\">PackageTimeStamp</span>;\n \n\t<span class=\"co1\">// Free outdated\
+      \ LocationTrails</span>\n\t<span class=\"kw2\">for</span> <span class=\"br0\"\
+      >(</span> Trail<span class=\"sy0\">=</span>LocationTrail; Trail<span class=\"\
+      sy0\">!=</span><span class=\"kw5\">None</span>; Trail<span class=\"sy0\">=</span>Trail.<span\
+      \ class=\"me0\">next</span> <span class=\"br0\">)</span>\n\t<span class=\"br0\"\
+      >{</span>\n\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span> <span\
+      \ class=\"kw7\">Level</span>.<span class=\"me0\">TimeSeconds</span> <span class=\"\
+      sy0\">-</span> Trail.<span class=\"me0\">TimeStamp</span> <span class=\"sy0\"\
+      >&gt;</span> MaxTrailSeconds <span class=\"br0\">)</span>\n\t\t<span class=\"\
+      br0\">{</span>\n\t\t\tTrail.<span class=\"me0\">Next</span> <span class=\"sy0\"\
+      >=</span> <span class=\"kw5\">None</span>;\n\t\t\t<span class=\"kw2\">break</span>;\n\
+      \t\t<span class=\"br0\">}</span>\n\t<span class=\"br0\">}</span>\n<span class=\"\
+      br0\">}</span>\n \n<span class=\"kw1\">defaultproperties</span>\n<span class=\"\
+      br0\">{</span>\n\tMaxTrailSeconds<span class=\"sy0\">=</span><span class=\"\
+      nu0\">0.4</span>;\n<span class=\"br0\">}</span></pre></div>\n</div>\n<h4><span\
+      \ class=\"mw-headline\" id=\"Discussion_3\">Discussion</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Hit_Prediction?section=8\"\
+      \ title=\"Edit section: Discussion\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h4>\n<p><b>Spark:</b> I'm not sure if Tick() is the best place\
+      \ to store the trails. But it works and is pretty simple. It might be smarter\
+      \ to do this directly after playermovement though, but I couldn't find a place\
+      \ to hook this in (there probably is none, because actor movement is native).</p>\n\
+      <p>I use PackageTimeStamp for the timestamp because I wasn't sure weither ServerTime\
+      \ gets modified during a tick. It probably doesn't, in this case it would make\
+      \ no difference to use Level.ServerTime instead.</p>\n<h3><span class=\"mw-headline\"\
+      \ id=\"The_Weapon_class\">The Weapon class</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Hit_Prediction?section=9\"\
+      \ title=\"Edit section: The Weapon class\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>We need to modify each weapon that is supposed to\
+      \ be unlagged, so we need a new weaponclass. Should we need a lot of unlagged\
+      \ weapons, it would make sense to create a new baseclass but for this example\
+      \ there will be only one gun (a modified EnhancedShockrifle).</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">class</span> PredictedShockRifle <span\
+      \ class=\"kw1\">extends</span> SuperShockRifle;\n \n<span class=\"kw1\">replication</span>\n\
+      <span class=\"br0\">{</span>\n    <span class=\"co1\">// functions called by\
+      \ client on server</span>\n    <span class=\"kw1\">reliable</span> <span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span> Role<span class=\"sy0\">&lt;</span><span\
+      \ class=\"kw7\">ROLE_Authority</span> <span class=\"br0\">)</span>\n       \
+      \ ServerPredictedStartFire;\n<span class=\"br0\">}</span>\n \n \n<span class=\"\
+      co1\">//// client only ////</span>\n<span class=\"kw1\">simulated</span> <span\
+      \ class=\"kw1\">event</span> ClientStartFire<span class=\"br0\">(</span><span\
+      \ class=\"kw5\">int</span> Mode<span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n    <span class=\"kw2\">if</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw9\">Pawn</span><span class=\"br0\">(</span><span class=\"kw7\">Owner</span><span\
+      \ class=\"br0\">)</span>.<span class=\"kw9\">Controller</span>.<span class=\"\
+      kw3\">IsInState</span><span class=\"br0\">(</span><span class=\"st0\">'GameEnded'</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n        <span class=\"\
+      kw2\">return</span>;\n \n    <span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span><span class=\"kw7\">Role</span> <span class=\"sy0\">&lt;</span> <span\
+      \ class=\"kw7\">ROLE_Authority</span><span class=\"br0\">)</span>\n    <span\
+      \ class=\"br0\">{</span>\n        <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span>StartFire<span class=\"br0\">(</span>Mode<span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span>\n        <span class=\"br0\">{</span>\n\t\t\tServerPredictedStartFire<span\
+      \ class=\"br0\">(</span> Mode, PredictionReplicationInfo<span class=\"br0\"\
+      >(</span><span class=\"kw9\">PlayerController</span><span class=\"br0\">(</span><span\
+      \ class=\"kw7\">Instigator</span>.<span class=\"kw9\">Controller</span><span\
+      \ class=\"br0\">)</span>.<span class=\"me0\">GameReplicationInfo</span><span\
+      \ class=\"br0\">)</span>.<span class=\"me0\">PackageTimeStamp</span> <span class=\"\
+      br0\">)</span>;\n        <span class=\"br0\">}</span>\n    <span class=\"br0\"\
+      >}</span>\n    <span class=\"kw2\">else</span>\n    <span class=\"br0\">{</span>\n\
+      \        StartFire<span class=\"br0\">(</span>Mode<span class=\"br0\">)</span>;\n\
+      \    <span class=\"br0\">}</span>\n<span class=\"br0\">}</span>\n \n<span class=\"\
+      co1\">//// server only ////</span>\n<span class=\"kw1\">event</span> ServerPredictedStartFire<span\
+      \ class=\"br0\">(</span><span class=\"kw5\">byte</span> Mode, <span class=\"\
+      kw5\">float</span> ClientTimeStamp<span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n    <span class=\"kw2\">if</span> <span class=\"br0\">(</span>\
+      \ <span class=\"br0\">(</span>FireMode<span class=\"br0\">[</span>Mode<span\
+      \ class=\"br0\">]</span>.<span class=\"me0\">NextFireTime</span> <span class=\"\
+      sy0\">&lt;=</span> <span class=\"kw7\">Level</span>.<span class=\"me0\">TimeSeconds</span>\
+      \ <span class=\"sy0\">+</span> FireMode<span class=\"br0\">[</span>Mode<span\
+      \ class=\"br0\">]</span>.<span class=\"me0\">PreFireTime</span><span class=\"\
+      br0\">)</span>\n\t\t<span class=\"sy0\">&amp;&amp;</span> StartFire<span class=\"\
+      br0\">(</span>Mode<span class=\"br0\">)</span> <span class=\"br0\">)</span>\n\
+      \    <span class=\"br0\">{</span>\n        FireMode<span class=\"br0\">[</span>Mode<span\
+      \ class=\"br0\">]</span>.<span class=\"me0\">ServerStartFireTime</span> <span\
+      \ class=\"sy0\">=</span> <span class=\"kw7\">Level</span>.<span class=\"me0\"\
+      >TimeSeconds</span>;\n\tPredictedShockBeamFire<span class=\"br0\">(</span>FireMode<span\
+      \ class=\"br0\">[</span>Mode<span class=\"br0\">]</span><span class=\"br0\"\
+      >)</span>.<span class=\"me0\">ClientStartFireTime</span> <span class=\"sy0\"\
+      >=</span> ClientTimeStamp; <span class=\"co1\">// Stupid hack but it works as\
+      \ long as we can trust the FireMode property. Clean code would check if this\
+      \ really is a PredictedShockBeamFire.</span>\n        FireMode<span class=\"\
+      br0\">[</span>Mode<span class=\"br0\">]</span>.<span class=\"me0\">bServerDelayStartFire</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"kw6\">false</span>;\n    <span\
+      \ class=\"br0\">}</span>\n    <span class=\"kw2\">else</span>\n        FireMode<span\
+      \ class=\"br0\">[</span>Mode<span class=\"br0\">]</span>.<span class=\"me0\"\
+      >bServerDelayStartFire</span> <span class=\"sy0\">=</span> <span class=\"kw6\"\
+      >true</span>;\n<span class=\"br0\">}</span>\n \n \n<span class=\"kw1\">defaultproperties</span>\n\
+      <span class=\"br0\">{</span>\n\tFireModeClass<span class=\"br0\">(</span><span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span><span class=\"sy0\">=</span>PredictedShockBeamFire;\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<h4><span class=\"mw-headline\"\
+      \ id=\"Discussion_4\">Discussion</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Hit_Prediction?section=10\"\
+      \ title=\"Edit section: Discussion\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h4>\n<p><b>Spark:</b> I decided to create a new ServerStartFire\
+      \ function, so the timestamp can be transmitted. ClientStartFire is simply modified\
+      \ to call the new ServerStartFire.</p>\n<h3><span class=\"mw-headline\" id=\"\
+      The_WeaponFire_class\">The WeaponFire class</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Hit_Prediction?section=11\"\
+      \ title=\"Edit section: The WeaponFire class\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>This is a huge one, so I split it up in even smaller\
+      \ pieces.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n\
+      <div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\"\
+      >class</span> PredictedShockBeamFire <span class=\"kw1\">extends</span> SuperShockBeamFire;\n\
+      \ \n<span class=\"co1\">// --- Prediction ---</span>\n<span class=\"kw1\">var</span>\
+      \ <span class=\"kw5\">float</span> ClientStartFireTime;\t<span class=\"co1\"\
+      >// This is the time the client actually started shooting</span>\n \n<span class=\"\
+      kw1\">function</span> DoTrace<span class=\"br0\">(</span><span class=\"kw5\"\
+      >Vector</span> Start, <span class=\"kw5\">Rotator</span> Dir<span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n    <span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">Vector</span> X, End, HitLocation, HitNormal, RefNormal;\n\
+      \    <span class=\"kw1\">local</span> <span class=\"kw9\">Actor</span> Other;\n\
+      \    <span class=\"kw1\">local</span> <span class=\"kw5\">int</span> Damage;\n\
+      \    <span class=\"kw1\">local</span> <span class=\"kw5\">bool</span> bDoReflect;\n\
+      \    <span class=\"kw1\">local</span> <span class=\"kw5\">int</span> ReflectNum;\n\
+      \ \n    ReflectNum <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>;\n\
+      \    <span class=\"kw2\">while</span> <span class=\"br0\">(</span><span class=\"\
+      kw6\">true</span><span class=\"br0\">)</span>\n    <span class=\"br0\">{</span>\n\
+      \        bDoReflect <span class=\"sy0\">=</span> <span class=\"kw6\">false</span>;\n\
+      \        X <span class=\"sy0\">=</span> <span class=\"kw5\">Vector</span><span\
+      \ class=\"br0\">(</span>Dir<span class=\"br0\">)</span>;\n        End <span\
+      \ class=\"sy0\">=</span> Start <span class=\"sy0\">+</span> TraceRange <span\
+      \ class=\"sy0\">*</span> X;\n \n\t\t<span class=\"co1\">// *** HIT PREDICTION\
+      \ ***</span>\n\t\t<span class=\"co1\">// Timeshift all pawns to make them match\
+      \ the clients reality (hopefully) before doing the trace</span>\n\t\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span> ClientStartFireTime <span class=\"\
+      sy0\">&gt;</span> <span class=\"nu0\">0</span> <span class=\"br0\">)</span>\n\
+      \t\t\tTimeShiftPawns<span class=\"br0\">(</span>ClientStartFireTime<span class=\"\
+      br0\">)</span>;\n \n        Other <span class=\"sy0\">=</span> <span class=\"\
+      kw4\">Trace</span><span class=\"br0\">(</span>HitLocation, HitNormal, End, Start,\
+      \ <span class=\"kw6\">true</span><span class=\"br0\">)</span>;\n \n\t\t<span\
+      \ class=\"co1\">// Revert all pawns to their original position</span>\n\t\t\
+      <span class=\"kw2\">if</span> <span class=\"br0\">(</span> ClientStartFireTime\
+      \ <span class=\"sy0\">&gt;</span> <span class=\"nu0\">0</span> <span class=\"\
+      br0\">)</span>\n\t\t\tUnShiftPawns<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n \n \n        <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span> Other <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span>\
+      \ <span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span>Other <span\
+      \ class=\"sy0\">!=</span> <span class=\"kw7\">Instigator</span> <span class=\"\
+      sy0\">||</span> ReflectNum <span class=\"sy0\">&gt;</span> <span class=\"nu0\"\
+      >0</span><span class=\"br0\">)</span> <span class=\"br0\">)</span>\n       \
+      \ <span class=\"br0\">{</span>\n            <span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span>bReflective <span class=\"sy0\">&amp;&amp;</span> Other.<span\
+      \ class=\"kw3\">IsA</span><span class=\"br0\">(</span><span class=\"st0\">'xPawn'</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"\
+      kw9\">xPawn</span><span class=\"br0\">(</span>Other<span class=\"br0\">)</span>.<span\
+      \ class=\"me0\">CheckReflect</span><span class=\"br0\">(</span>HitLocation,\
+      \ RefNormal, DamageMin<span class=\"sy0\">*</span><span class=\"nu0\">0.25</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n            <span class=\"\
+      br0\">{</span>\n                bDoReflect <span class=\"sy0\">=</span> <span\
+      \ class=\"kw6\">true</span>;\n                HitNormal <span class=\"sy0\"\
+      >=</span> <span class=\"kw3\">Vect</span><span class=\"br0\">(</span><span class=\"\
+      nu0\">0</span>,<span class=\"nu0\">0</span>,<span class=\"nu0\">0</span><span\
+      \ class=\"br0\">)</span>;\n            <span class=\"br0\">}</span>\n      \
+      \      <span class=\"kw2\">else</span> <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span><span class=\"sy0\">!</span>Other.<span class=\"me0\">bWorldGeometry</span><span\
+      \ class=\"br0\">)</span>\n            <span class=\"br0\">{</span>\n       \
+      \         Damage <span class=\"sy0\">=</span> <span class=\"br0\">(</span>DamageMin\
+      \ <span class=\"sy0\">+</span> <span class=\"kw3\">Rand</span><span class=\"\
+      br0\">(</span>DamageMax <span class=\"sy0\">-</span> DamageMin<span class=\"\
+      br0\">)</span><span class=\"br0\">)</span> <span class=\"sy0\">*</span> DamageAtten;\n\
+      \                Other.<span class=\"kw4\">TakeDamage</span><span class=\"br0\"\
+      >(</span>Damage, <span class=\"kw7\">Instigator</span>, HitLocation, Momentum<span\
+      \ class=\"sy0\">*</span>X, <span class=\"kw9\">DamageType</span><span class=\"\
+      br0\">)</span>;\n                HitNormal <span class=\"sy0\">=</span> <span\
+      \ class=\"kw3\">Vect</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>,<span\
+      \ class=\"nu0\">0</span>,<span class=\"nu0\">0</span><span class=\"br0\">)</span>;\n\
+      \            <span class=\"br0\">}</span>\n            <span class=\"kw2\">else</span>\
+      \ <span class=\"kw2\">if</span> <span class=\"br0\">(</span> <span class=\"\
+      kw9\">WeaponAttachment</span><span class=\"br0\">(</span><span class=\"kw9\"\
+      >Weapon</span>.<span class=\"me0\">ThirdPersonActor</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span> <span\
+      \ class=\"br0\">)</span>\n\t\t\t\t<span class=\"kw9\">WeaponAttachment</span><span\
+      \ class=\"br0\">(</span><span class=\"kw9\">Weapon</span>.<span class=\"me0\"\
+      >ThirdPersonActor</span><span class=\"br0\">)</span>.<span class=\"me0\">UpdateHit</span><span\
+      \ class=\"br0\">(</span>Other,HitLocation,HitNormal<span class=\"br0\">)</span>;\n\
+      \        <span class=\"br0\">}</span>\n        <span class=\"kw2\">else</span>\n\
+      \        <span class=\"br0\">{</span>\n            HitLocation <span class=\"\
+      sy0\">=</span> End;\n            HitNormal <span class=\"sy0\">=</span> <span\
+      \ class=\"kw3\">Vect</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>,<span\
+      \ class=\"nu0\">0</span>,<span class=\"nu0\">0</span><span class=\"br0\">)</span>;\n\
+      \        <span class=\"br0\">}</span>\n \n\t\t<span class=\"co1\">// Not here,\
+      \ we will do it clientside. :)</span>\n        <span class=\"co1\">// SpawnBeamEffect(Start,\
+      \ Dir, HitLocation, HitNormal, ReflectNum);</span>\n \n        <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>bDoReflect <span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"sy0\">++</span>ReflectNum <span class=\"sy0\">&lt;</span> <span\
+      \ class=\"nu0\">4</span><span class=\"br0\">)</span>\n        <span class=\"\
+      br0\">{</span>\n            <span class=\"co1\">//Log(\"reflecting off\"@Other@Start@HitLocation);</span>\n\
+      \            Start <span class=\"sy0\">=</span> HitLocation;\n            Dir\
+      \ <span class=\"sy0\">=</span> <span class=\"kw5\">Rotator</span><span class=\"\
+      br0\">(</span>RefNormal<span class=\"br0\">)</span>; <span class=\"co1\">//Rotator(\
+      \ X - 2.0*RefNormal*(X dot RefNormal) );</span>\n        <span class=\"br0\"\
+      >}</span>\n        <span class=\"kw2\">else</span>\n        <span class=\"br0\"\
+      >{</span>\n            <span class=\"kw2\">break</span>;\n        <span class=\"\
+      br0\">}</span>\n    <span class=\"br0\">}</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>The only important difference here is, that we timeshift all pawns\
+      \ before we do the hit detection trace. Thsi will get more clear later but it's\
+      \ really the most important thing and why we do all this in fact. This will\
+      \ do the hit detection in the timeframe the client saw when triggering the shot.</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"co1\">// Do the beameffect\
+      \ clientside</span>\n<span class=\"kw1\">function</span> DoClientTrace<span\
+      \ class=\"br0\">(</span><span class=\"kw5\">Vector</span> Start, <span class=\"\
+      kw5\">Rotator</span> Dir<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \    <span class=\"kw1\">local</span> <span class=\"kw5\">Vector</span> X, End,\
+      \ HitLocation, HitNormal, RefNormal;\n    <span class=\"kw1\">local</span> <span\
+      \ class=\"kw9\">Actor</span> Other;\n    <span class=\"kw1\">local</span> <span\
+      \ class=\"kw5\">bool</span> bDoReflect;\n    <span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">int</span> ReflectNum;\n \n    ReflectNum <span class=\"\
+      sy0\">=</span> <span class=\"nu0\">0</span>;\n    <span class=\"kw2\">while</span>\
+      \ <span class=\"br0\">(</span><span class=\"kw6\">true</span><span class=\"\
+      br0\">)</span>\n    <span class=\"br0\">{</span>\n        bDoReflect <span class=\"\
+      sy0\">=</span> <span class=\"kw6\">false</span>;\n        X <span class=\"sy0\"\
+      >=</span> <span class=\"kw5\">Vector</span><span class=\"br0\">(</span>Dir<span\
+      \ class=\"br0\">)</span>;\n        End <span class=\"sy0\">=</span> Start <span\
+      \ class=\"sy0\">+</span> TraceRange <span class=\"sy0\">*</span> X;\n \n   \
+      \     Other <span class=\"sy0\">=</span> <span class=\"kw4\">Trace</span><span\
+      \ class=\"br0\">(</span>HitLocation, HitNormal, End, Start, <span class=\"kw6\"\
+      >true</span><span class=\"br0\">)</span>;\n \n        <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span> Other <span class=\"sy0\">!=</span> <span class=\"\
+      kw5\">None</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\"\
+      >(</span>Other <span class=\"sy0\">!=</span> <span class=\"kw7\">Instigator</span>\
+      \ <span class=\"sy0\">||</span> ReflectNum <span class=\"sy0\">&gt;</span> <span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span> <span class=\"br0\">)</span>\n\
+      \        <span class=\"br0\">{</span>\n            <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span>bReflective <span class=\"sy0\">&amp;&amp;</span>\
+      \ Other.<span class=\"kw3\">IsA</span><span class=\"br0\">(</span><span class=\"\
+      st0\">'xPawn'</span><span class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"kw9\">xPawn</span><span class=\"br0\">(</span>Other<span class=\"\
+      br0\">)</span>.<span class=\"me0\">CheckReflect</span><span class=\"br0\">(</span>HitLocation,\
+      \ RefNormal, DamageMin<span class=\"sy0\">*</span><span class=\"nu0\">0.25</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n            <span class=\"\
+      br0\">{</span>\n                bDoReflect <span class=\"sy0\">=</span> <span\
+      \ class=\"kw6\">true</span>;\n                HitNormal <span class=\"sy0\"\
+      >=</span> <span class=\"kw3\">Vect</span><span class=\"br0\">(</span><span class=\"\
+      nu0\">0</span>,<span class=\"nu0\">0</span>,<span class=\"nu0\">0</span><span\
+      \ class=\"br0\">)</span>;\n            <span class=\"br0\">}</span>\n      \
+      \      <span class=\"kw2\">else</span> <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span><span class=\"sy0\">!</span>Other.<span class=\"me0\">bWorldGeometry</span><span\
+      \ class=\"br0\">)</span>\n            <span class=\"br0\">{</span>\n       \
+      \         HitNormal <span class=\"sy0\">=</span> <span class=\"kw3\">Vect</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">0</span>,<span class=\"nu0\">0</span>,<span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span>;\n            <span class=\"\
+      br0\">}</span>\n        <span class=\"br0\">}</span>\n        <span class=\"\
+      kw2\">else</span>\n        <span class=\"br0\">{</span>\n            HitLocation\
+      \ <span class=\"sy0\">=</span> End;\n            HitNormal <span class=\"sy0\"\
+      >=</span> <span class=\"kw3\">Vect</span><span class=\"br0\">(</span><span class=\"\
+      nu0\">0</span>,<span class=\"nu0\">0</span>,<span class=\"nu0\">0</span><span\
+      \ class=\"br0\">)</span>;\n        <span class=\"br0\">}</span>\n \n       \
+      \ SpawnBeamEffect<span class=\"br0\">(</span>Start, Dir, HitLocation, HitNormal,\
+      \ ReflectNum<span class=\"br0\">)</span>;\n \n        <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span>bDoReflect <span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"sy0\">++</span>ReflectNum <span class=\"sy0\">&lt;</span> <span\
+      \ class=\"nu0\">4</span><span class=\"br0\">)</span>\n        <span class=\"\
+      br0\">{</span>\n            <span class=\"co1\">//Log(\"reflecting off\"@Other@Start@HitLocation);</span>\n\
+      \            Start <span class=\"sy0\">=</span> HitLocation;\n            Dir\
+      \ <span class=\"sy0\">=</span> <span class=\"kw5\">Rotator</span><span class=\"\
+      br0\">(</span>RefNormal<span class=\"br0\">)</span>; <span class=\"co1\">//Rotator(\
+      \ X - 2.0*RefNormal*(X dot RefNormal) );</span>\n        <span class=\"br0\"\
+      >}</span>\n        <span class=\"kw2\">else</span>\n        <span class=\"br0\"\
+      >{</span>\n            <span class=\"kw2\">break</span>;\n        <span class=\"\
+      br0\">}</span>\n    <span class=\"br0\">}</span>\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"kw1\">function</span> DoClientFireEffect<span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>        \
+      \            \n    <span class=\"kw1\">local</span> <span class=\"kw5\">Vector</span>\
+      \ StartTrace;\n    <span class=\"kw1\">local</span> <span class=\"kw5\">Rotator</span>\
+      \ R, Aim;\n \n    <span class=\"kw7\">Instigator</span>.<span class=\"kw4\"\
+      >MakeNoise</span><span class=\"br0\">(</span><span class=\"nu0\">1.0</span><span\
+      \ class=\"br0\">)</span>;\n \n    <span class=\"co1\">// the to-hit trace always\
+      \ starts right in front of the eye</span>\n    StartTrace <span class=\"sy0\"\
+      >=</span> <span class=\"kw9\">Weapon</span>.<span class=\"kw7\">Owner</span>.<span\
+      \ class=\"kw7\">Location</span> <span class=\"sy0\">+</span> <span class=\"\
+      kw9\">Pawn</span><span class=\"br0\">(</span><span class=\"kw9\">Weapon</span>.<span\
+      \ class=\"kw7\">Owner</span><span class=\"br0\">)</span>.<span class=\"me0\"\
+      >EyePosition</span><span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \    Aim <span class=\"sy0\">=</span> AdjustAim<span class=\"br0\">(</span>StartTrace,\
+      \ AimError<span class=\"br0\">)</span>;\n\tR <span class=\"sy0\">=</span> <span\
+      \ class=\"kw5\">rotator</span><span class=\"br0\">(</span><span class=\"kw5\"\
+      >vector</span><span class=\"br0\">(</span>Aim<span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">+</span> <span class=\"kw3\">VRand</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span><span class=\"sy0\">*</span><span class=\"\
+      kw3\">FRand</span><span class=\"br0\">(</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">*</span>Spread<span class=\"br0\">)</span>;\n    DoClientTrace<span\
+      \ class=\"br0\">(</span>StartTrace, R<span class=\"br0\">)</span>;\n<span class=\"\
+      br0\">}</span>\n \n<span class=\"kw1\">event</span> ModeDoFire<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t\
+      <span class=\"kw6\">Super</span>.<span class=\"me0\">ModeDoFire</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n \n\t<span class=\"co1\"\
+      >// client</span>\n\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw7\">Instigator</span>.<span class=\"me0\">IsLocallyControlled</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\n\
+      \t<span class=\"br0\">{</span>\n\t\tDoClientFireEffect<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n\t<span class=\"br0\">}</span>\n<span class=\"br0\"\
+      >}</span></pre></div>\n</div>\n<p>This will just render the shockbeam at the\
+      \ clientside. Not sure if it's the best way to do it, as it was just a quick\
+      \ hack to make it work.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      co1\">// *** Hit Prediction Timeshifting Functions ***</span>\n \n<span class=\"\
+      kw1\">function</span> TimeShiftPawns<span class=\"br0\">(</span><span class=\"\
+      kw5\">float</span> TimeStamp<span class=\"br0\">)</span>\n<span class=\"br0\"\
+      >{</span>\n\t<span class=\"kw1\">local</span> <span class=\"kw9\">Controller</span>\
+      \ C;\n\t<span class=\"kw1\">local</span> PredictedPawn P;\n\t<span class=\"\
+      kw1\">local</span> LocationTrail CurrentTrail, LateTrail, OldTrail;\n\t<span\
+      \ class=\"kw1\">local</span> <span class=\"kw5\">float</span> interp;\n\t<span\
+      \ class=\"kw1\">local</span> <span class=\"kw5\">vector</span> LerpedLocation;\n\
+      \t<span class=\"kw1\">local</span> <span class=\"kw5\">Rotator</span> LerpedRotation;\n\
+      \ \n\t<span class=\"kw2\">for</span> <span class=\"br0\">(</span> C<span class=\"\
+      sy0\">=</span><span class=\"kw7\">Level</span>.<span class=\"me0\">ControllerList</span>;\
+      \ C<span class=\"sy0\">!=</span><span class=\"kw5\">None</span>; C<span class=\"\
+      sy0\">=</span>C.<span class=\"me0\">NextController</span> <span class=\"br0\"\
+      >)</span>\n\t<span class=\"br0\">{</span>\n\t\t<span class=\"co1\">// Do not\
+      \ shift the attacker because she should already be where she was when she did\
+      \ the shot.</span>\n\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>\
+      \ PredictedPawn<span class=\"br0\">(</span>C.<span class=\"kw9\">Pawn</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">!=</span><span class=\"kw5\">None</span>\
+      \ <span class=\"sy0\">&amp;&amp;</span> C.<span class=\"kw9\">Pawn</span> <span\
+      \ class=\"sy0\">!=</span> <span class=\"kw9\">Weapon</span>.<span class=\"kw7\"\
+      >Owner</span> <span class=\"br0\">)</span>\n\t\t\tP <span class=\"sy0\">=</span>\
+      \ PredictedPawn<span class=\"br0\">(</span>C.<span class=\"kw9\">Pawn</span><span\
+      \ class=\"br0\">)</span>;\n\t\t<span class=\"kw2\">else</span>\n\t\t\t<span\
+      \ class=\"kw2\">continue</span>;\n \n\t\tLateTrail <span class=\"sy0\">=</span>\
+      \ <span class=\"kw5\">None</span>;\n\t\tOldTrail <span class=\"sy0\">=</span>\
+      \ <span class=\"kw5\">None</span>;\n \n\t\t<span class=\"co1\">// Find the sandwitching\
+      \ trail timestamps</span>\n\t\t<span class=\"kw2\">for</span> <span class=\"\
+      br0\">(</span> CurrentTrail<span class=\"sy0\">=</span>P.<span class=\"me0\"\
+      >LocationTrail</span>; CurrentTrail<span class=\"sy0\">!=</span><span class=\"\
+      kw5\">None</span>; CurrentTrail<span class=\"sy0\">=</span>CurrentTrail.<span\
+      \ class=\"me0\">Next</span> <span class=\"br0\">)</span>\n\t\t<span class=\"\
+      br0\">{</span>\n\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>\
+      \ CurrentTrail.<span class=\"me0\">TimeStamp</span> <span class=\"sy0\">&gt;</span>\
+      \ TimeStamp <span class=\"br0\">)</span>\n\t\t\t\tLateTrail <span class=\"sy0\"\
+      >=</span> CurrentTrail;\n\t\t\t<span class=\"kw2\">else</span> <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span> OldTrail <span class=\"sy0\">==</span>\
+      \ <span class=\"kw5\">None</span> <span class=\"br0\">)</span>\n\t\t\t\tOldTrail\
+      \ <span class=\"sy0\">=</span> CurrentTrail;\n\t\t\t<span class=\"kw2\">else</span>\n\
+      \t\t\t\t<span class=\"kw2\">break</span>;\n\t\t<span class=\"br0\">}</span>\n\
+      \ \n\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span> LateTrail\
+      \ <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span> <span class=\"\
+      sy0\">&amp;&amp;</span> OldTrail <span class=\"sy0\">!=</span> <span class=\"\
+      kw5\">None</span> <span class=\"br0\">)</span>\n\t\t<span class=\"br0\">{</span>\n\
+      \t\t\t<span class=\"co1\">// Save original location</span>\n\t\t\tP.<span class=\"\
+      me0\">SavedLocation</span> <span class=\"sy0\">=</span> P.<span class=\"kw7\"\
+      >Location</span>;\n\t\t\tP.<span class=\"me0\">SavedRotation</span> <span class=\"\
+      sy0\">=</span> P.<span class=\"kw7\">Rotation</span>;\n\t\t\tP.<span class=\"\
+      me0\">SavedTimeStamp</span> <span class=\"sy0\">=</span> <span class=\"kw7\"\
+      >Level</span>.<span class=\"me0\">TimeSeconds</span>;\n \n\t\t\t<span class=\"\
+      co1\">// Interpolate between closest trails and move pawn to this location</span>\n\
+      \t\t\t<span class=\"co1\">// Find alpha value for interpolation based on timestamps</span>\n\
+      \t\t\tinterp <span class=\"sy0\">=</span> <span class=\"br0\">(</span> TimeStamp\
+      \ <span class=\"sy0\">-</span> OldTrail.<span class=\"me0\">TimeStamp</span>\
+      \ <span class=\"br0\">)</span> <span class=\"sy0\">/</span> <span class=\"br0\"\
+      >(</span> LateTrail.<span class=\"me0\">TimeStamp</span> <span class=\"sy0\"\
+      >-</span> OldTrail.<span class=\"me0\">TimeStamp</span> <span class=\"br0\"\
+      >)</span>; \n\t\t\tinterp <span class=\"sy0\">=</span> <span class=\"kw3\">FClamp</span><span\
+      \ class=\"br0\">(</span> interp, <span class=\"nu0\">0</span>, <span class=\"\
+      nu0\">1</span> <span class=\"br0\">)</span>;\n \n\t\t\t<span class=\"co1\">//Log(\"\
+      OldTimeStamp: \"$OldTrail.TimeStamp$\", LateTimeStamp: \"$LateTrail.TimeStamp$\"\
+      , TimeStamp: \"$TimeStamp);</span>\n\t\t\t<span class=\"co1\">//Log(\"Resulting\
+      \ Alpha: \"$interp); </span>\n \n\t\t\tLerpedLocation.<span class=\"me0\">X</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"kw3\">Lerp</span><span class=\"\
+      br0\">(</span> interp, OldTrail.<span class=\"kw7\">Location</span>.<span class=\"\
+      me0\">X</span>, LateTrail.<span class=\"kw7\">Location</span>.<span class=\"\
+      me0\">X</span> <span class=\"br0\">)</span>;\n\t\t\tLerpedLocation.<span class=\"\
+      me0\">Y</span> <span class=\"sy0\">=</span> <span class=\"kw3\">Lerp</span><span\
+      \ class=\"br0\">(</span> interp, OldTrail.<span class=\"kw7\">Location</span>.<span\
+      \ class=\"me0\">Y</span>, LateTrail.<span class=\"kw7\">Location</span>.<span\
+      \ class=\"me0\">Y</span> <span class=\"br0\">)</span>;\n\t\t\tLerpedLocation.<span\
+      \ class=\"me0\">Z</span> <span class=\"sy0\">=</span> <span class=\"kw3\">Lerp</span><span\
+      \ class=\"br0\">(</span> interp, OldTrail.<span class=\"kw7\">Location</span>.<span\
+      \ class=\"me0\">Z</span>, LateTrail.<span class=\"kw7\">Location</span>.<span\
+      \ class=\"me0\">Z</span> <span class=\"br0\">)</span>;\n \n\t\t\t<span class=\"\
+      co1\">//Log(\"OldLocation: \"$OldTrail.Location$\", LateLocation: \"$LateTrail.Location$\"\
+      , LerpedLocation: \"$LerpedLocation);</span>\n \n\t\t\tLerpedRotation.<span\
+      \ class=\"me0\">Pitch</span> <span class=\"sy0\">=</span> <span class=\"kw3\"\
+      >Lerp</span><span class=\"br0\">(</span> interp, OldTrail.<span class=\"kw7\"\
+      >Rotation</span>.<span class=\"me0\">Pitch</span>, LateTrail.<span class=\"\
+      kw7\">Rotation</span>.<span class=\"me0\">Pitch</span> <span class=\"br0\">)</span>;\n\
+      \t\t\tLerpedRotation.<span class=\"me0\">Yaw</span> <span class=\"sy0\">=</span>\
+      \ <span class=\"kw3\">Lerp</span><span class=\"br0\">(</span> interp, OldTrail.<span\
+      \ class=\"kw7\">Rotation</span>.<span class=\"me0\">Yaw</span>, LateTrail.<span\
+      \ class=\"kw7\">Rotation</span>.<span class=\"me0\">Yaw</span> <span class=\"\
+      br0\">)</span>;\n\t\t\tLerpedRotation.<span class=\"me0\">Roll</span> <span\
+      \ class=\"sy0\">=</span> <span class=\"kw3\">Lerp</span><span class=\"br0\"\
+      >(</span> interp, OldTrail.<span class=\"kw7\">Rotation</span>.<span class=\"\
+      me0\">Roll</span>, LateTrail.<span class=\"kw7\">Rotation</span>.<span class=\"\
+      me0\">Roll</span> <span class=\"br0\">)</span>;\n \n\t\t\t<span class=\"co1\"\
+      >//Log(\"OldRotation: \"$OldTrail.Rotation$\", LateRotation: \"$LateTrail.Rotation$\"\
+      , LerpedRotation: \"$LerpedRotation);</span>\n \n\t\t\tP.<span class=\"kw4\"\
+      >SetLocation</span><span class=\"br0\">(</span> LerpedLocation <span class=\"\
+      br0\">)</span>;\n\t\t\tP.<span class=\"kw4\">SetRotation</span><span class=\"\
+      br0\">(</span> LerpedRotation <span class=\"br0\">)</span>;\n\t\t<span class=\"\
+      br0\">}</span>\n\t\t<span class=\"kw2\">else</span> <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span> LateTrail <span class=\"sy0\">!=</span> <span\
+      \ class=\"kw5\">None</span> <span class=\"br0\">)</span>\n\t\t<span class=\"\
+      br0\">{</span>\n\t\t\t<span class=\"co1\">// Save original location</span>\n\
+      \t\t\tP.<span class=\"me0\">SavedLocation</span> <span class=\"sy0\">=</span>\
+      \ P.<span class=\"kw7\">Location</span>;\n\t\t\tP.<span class=\"me0\">SavedRotation</span>\
+      \ <span class=\"sy0\">=</span> P.<span class=\"kw7\">Rotation</span>;\n\t\t\t\
+      P.<span class=\"me0\">SavedTimeStamp</span> <span class=\"sy0\">=</span> <span\
+      \ class=\"kw7\">Level</span>.<span class=\"me0\">TimeSeconds</span>;\n \n\t\t\
+      \t<span class=\"co1\">// TimeStamp is out of reach, move pawn to latest trail</span>\n\
+      \t\t\tP.<span class=\"kw4\">SetLocation</span><span class=\"br0\">(</span> LateTrail.<span\
+      \ class=\"kw7\">Location</span> <span class=\"br0\">)</span>;\n\t\t\tP.<span\
+      \ class=\"kw4\">SetRotation</span><span class=\"br0\">(</span> LateTrail.<span\
+      \ class=\"kw7\">Rotation</span> <span class=\"br0\">)</span>;\n\t\t<span class=\"\
+      br0\">}</span>\n\t<span class=\"br0\">}</span>\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"kw1\">function</span> UnShiftPawns<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw1\"\
+      >local</span> <span class=\"kw9\">Controller</span> C;\n\t<span class=\"kw1\"\
+      >local</span> PredictedPawn P;\n \n\t<span class=\"kw2\">for</span> <span class=\"\
+      br0\">(</span> C<span class=\"sy0\">=</span><span class=\"kw7\">Level</span>.<span\
+      \ class=\"me0\">ControllerList</span>; C<span class=\"sy0\">!=</span><span class=\"\
+      kw5\">None</span>; C<span class=\"sy0\">=</span>C.<span class=\"me0\">NextController</span>\
+      \ <span class=\"br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span> PredictedPawn<span class=\"br0\"\
+      >(</span>C.<span class=\"kw9\">Pawn</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">!=</span><span class=\"kw5\">None</span> <span class=\"sy0\"\
+      >&amp;&amp;</span> C.<span class=\"kw9\">Pawn</span> <span class=\"sy0\">!=</span>\
+      \ <span class=\"kw9\">Weapon</span>.<span class=\"kw7\">Owner</span> <span class=\"\
+      br0\">)</span>\n\t\t\tP <span class=\"sy0\">=</span> PredictedPawn<span class=\"\
+      br0\">(</span>C.<span class=\"kw9\">Pawn</span><span class=\"br0\">)</span>;\n\
+      \t\t<span class=\"kw2\">else</span>\n\t\t\t<span class=\"kw2\">continue</span>;\n\
+      \ \n\t\t<span class=\"co1\">// Make sure that saved location is of this tick\
+      \ before moving</span>\n\t\t<span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span> P.<span class=\"me0\">SavedTimeStamp</span> <span class=\"sy0\">==</span>\
+      \ <span class=\"kw7\">Level</span>.<span class=\"me0\">TimeSeconds</span> <span\
+      \ class=\"br0\">)</span>\n\t\t<span class=\"br0\">{</span>\n\t\t\tP.<span class=\"\
+      kw4\">SetLocation</span><span class=\"br0\">(</span> P.<span class=\"me0\">SavedLocation</span>\
+      \ <span class=\"br0\">)</span>;\n\t\t\tP.<span class=\"kw4\">SetRotation</span><span\
+      \ class=\"br0\">(</span> P.<span class=\"me0\">SavedRotation</span> <span class=\"\
+      br0\">)</span>;\n\t\t<span class=\"br0\">}</span>\n\t<span class=\"br0\">}</span>\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>And last but not least\
+      \ the actual timeshifting functions (if more than one weapon is used, those\
+      \ should be moved to a new common base class if possible).</p>\n<p>Finally you\
+      \ need a new Gametype or Mutator to replace the Pawn and PlayerController with\
+      \ out custom ones, use the new GameReplicationInfo class and make sure that\
+      \ only our Instagib rifle is used (a modified version of the Instagib mutator\
+      \ will do). I don't post this here because it's a rather common task.</p>\n\
+      <h3><span class=\"mw-headline\" id=\"Discussion_5\">Discussion</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Hit_Prediction?section=12\"\
+      \ title=\"Edit section: Discussion\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p><b>Spark:</b> That's it! I hope that those who actually\
+      \ use this code will actively help to improve the code, because a well working\
+      \ hit prediction could be quite important for mods trying to compete with the\
+      \ huge Counter-Strike (and for every other mod featuring hitscan weapons of\
+      \ course). It would be a pity if everyone would have to create this rather common\
+      \ functionality on his own, that's why I wrote this. Another cool thing would\
+      \ be a Mutator replacing all weapons with predicted counterparts that could\
+      \ be used for all basic gametypes. Maybe it would even be possible without subclassing\
+      \ Pawn and PlayerController, but I'm not sure.</p>\n<p>Things that should be\
+      \ looked at and really need improvement are:</p>\n<dl>\n<dt>Resetting the trails</dt>\n\
+      <dd>If a player respawns or teleports, the trail should be resetted, otherwise\
+      \ the interpolation would move the pawn at a place he never visited. The chance\
+      \ that this leads to an accidental hit is basically null, that's why I didn't\
+      \ bother yet but it's certainly crack.&#160;:) Another thing is, that the trails\
+      \ should probably be cleaned after a pawn is destroyed (not sure if this is\
+      \ automatic).</dd>\n<dt>Rapid fire guns</dt>\n<dd>Those guns in UT2003 only\
+      \ send StartFire and a StopFire signals, so with the above code, the ClientTimeStamp\
+      \ would also be replicated only once. This means that the ClientFireTime time\
+      \ has to be increased just like the ServerFireTime. This is not a problem (as\
+      \ long as you think of it), but it can lead to inaccuracies with flakey latency.\
+      \ How could this be solved? Maybe constantly replicate the current PackageTimeStamp\
+      \ to the server while shooting?</dd>\n<dt>Accuracy</dt>\n<dd>The current code\
+      \ seems to be pretty accurate, in tests I could hit reliable with pings up to\
+      \ 400. But still there might be inaccuracies so this should constantly be reviewed\
+      \ and ultimately it would be great to have some usefull debug functions, for\
+      \ example to show the hitbox or a client trace which checks weither you should\
+      \ have hit and then compares this to what the server says. There might be countless\
+      \ other improvements, but I think this is good for a start.</dd>\n</dl>\n<p><b>capt.k:</b>\
+      \ I made a similar implementation for my UT mod. Haven't extensively tested\
+      \ this, so I dunno if it's any better or worse than what you've got above, but\
+      \ it's pretty much the same except for a couple things: I got around subclassing\
+      \ controller or pawn by using an inventory item which is given to each respawning\
+      \ player to manage each LocationTrail list. LocationTrail is an Actor, so it\
+      \ can now be destroyed on command, and in its Destroyed() it destroys the next\
+      \ link as well – the idea is that it insures that all LocationTrails are eventually\
+      \ removed. If the inventory item is destroyed, it destroys the head of the Trail\
+      \ list, and the head destroys all the children. I also had the LocationTrails\
+      \ only spawed via a timer at intervals of 0.02. Mainly for the sake of uniformity\
+      \ and so we know how many LocationTrails may exist at any given time (and to\
+      \ be consistent w/ Neil Toronto's implementation); again, I dunno if it's any\
+      \ better or worse, but I figure since the position is interpolated anyway, it's\
+      \ an acceptable tradeoff. Unfortunately, I wasn't astute enough to come up with\
+      \ a way to pass the client's timestamp to determine how far back to rewind position\
+      \ to, so instead I just used the player's ping. hth.</p>\n<p><b>Spoon:</b></p>\n\
+      <p>In \"PredictedPawn\", on the client side, \"Level.Game.GameReplicationInfo\"\
+      \ is \"None\" So on the client side you get an \"access none\" errors. To get\
+      \ rid of the errors, I just wrapped the code block with an \"if( ROLE == ROLE_Authority)\"\
+      \ so the client can not run the code.</p>\n<p>note: I remove the other problem\
+      \ I was having due to a error on my part and not an error related to this code.</p>\n\
+      <p><b>Xian:</b> Well the code looks nice but those while (True) loops would\
+      \ look scary to me if I'd be a processor&#160;:) Regardless, I was wondering\
+      \ why you're not using Engine.PlayerController.GameReplicationInfo instead of\
+      \ Engine.GameInfo.GameReplicationInfo since the first is replicated on both\
+      \ the Server and Client, and there'd be no need to divide between replication\
+      \ Roles.</p>\n<p><b>Graphik:</b> A little tip for you, Xian: you may want to\
+      \ check the revision history on a page before you reply to something said in\
+      \ 2003.&#160;:) Spoon hasn't been around for a while.</p>\n<p><b>Xian:</b> I\
+      \ do, but there are people still reading this. And I am just trying to post\
+      \ for them&#160;:)</p>\n<p>I for one didn't move from UE1 and don't plan to\
+      \ until UE3 is out. So I am still reading UT related stuff. It doesn't mean\
+      \ that just cos UT2004 is out people will not read 2003 related stuff.</p>\n\
+      <h2><span class=\"mw-headline\" id=\"Related_Topics\">Related Topics</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Hit_Prediction?section=13\" title=\"Edit section: Related\
+      \ Topics\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <ul>\n<li><a href=\"/Legacy:Lag_Compensation\" title=\"Legacy:Lag Compensation\"\
+      >Lag Compensation</a></li>\n</ul>\n<p><a rel=\"nofollow\" class=\"external text\"\
+      \ href=\"http://www.planetquake.com/code3arena/tutorials/tutorial41.shtml\"\
+      >Unlagged Tutorial</a> (A hit prediction implementation for Quake 3 Arena)</p>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.270 seconds\nReal time usage:\
+      \ 0.496 seconds\nPreprocessor visited node count: 123/1000000\nPreprocessor\
+      \ generated node count: 216/1000000\nPost‐expand include size: 0/2097152 bytes\n\
+      Template argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive\
+      \ parser function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report\
+      \ (%,ms,calls,template)\n100.00%    0.000      1 - -total\n-->\n\n<!-- Saved\
+      \ in parser cache with key wiki:pcache:idhash:1412-0!*!0!!en!*!* and timestamp\
+      \ 20221118022813 and revision id 3574\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Lag Compensation"
+  templates: []
+  images: []
+  externallinks:
+  - "http://www.planetquake.com/code3arena/tutorials/tutorial41.shtml"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Sourcecode"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Hit_Prediction"
+    byteoffset: 481
+    anchor: "Sourcecode"
+  - toclevel: 2
+    level: "3"
+    line: "The LocationTrail class"
+    number: "1.1"
+    index: "2"
+    fromtitle: "Legacy:Hit_Prediction"
+    byteoffset: 610
+    anchor: "The_LocationTrail_class"
+  - toclevel: 2
+    level: "3"
+    line: "The Game Replication class"
+    number: "1.2"
+    index: "3"
+    fromtitle: "Legacy:Hit_Prediction"
+    byteoffset: 827
+    anchor: "The_Game_Replication_class"
+  - toclevel: 3
+    level: "4"
+    line: "Discussion"
+    number: "1.2.1"
+    index: "4"
+    fromtitle: "Legacy:Hit_Prediction"
+    byteoffset: 1249
+    anchor: "Discussion"
+  - toclevel: 2
+    level: "3"
+    line: "The Player class"
+    number: "1.3"
+    index: "5"
+    fromtitle: "Legacy:Hit_Prediction"
+    byteoffset: 1468
+    anchor: "The_Player_class"
+  - toclevel: 3
+    level: "4"
+    line: "Discussion"
+    number: "1.3.1"
+    index: "6"
+    fromtitle: "Legacy:Hit_Prediction"
+    byteoffset: 1775
+    anchor: "Discussion_2"
+  - toclevel: 2
+    level: "3"
+    line: "The Pawn class"
+    number: "1.4"
+    index: "7"
+    fromtitle: "Legacy:Hit_Prediction"
+    byteoffset: 1996
+    anchor: "The_Pawn_class"
+  - toclevel: 3
+    level: "4"
+    line: "Discussion"
+    number: "1.4.1"
+    index: "8"
+    fromtitle: "Legacy:Hit_Prediction"
+    byteoffset: 3115
+    anchor: "Discussion_3"
+  - toclevel: 2
+    level: "3"
+    line: "The Weapon class"
+    number: "1.5"
+    index: "9"
+    fromtitle: "Legacy:Hit_Prediction"
+    byteoffset: 3627
+    anchor: "The_Weapon_class"
+  - toclevel: 3
+    level: "4"
+    line: "Discussion"
+    number: "1.5.1"
+    index: "10"
+    fromtitle: "Legacy:Hit_Prediction"
+    byteoffset: 5235
+    anchor: "Discussion_4"
+  - toclevel: 2
+    level: "3"
+    line: "The WeaponFire class"
+    number: "1.6"
+    index: "11"
+    fromtitle: "Legacy:Hit_Prediction"
+    byteoffset: 5427
+    anchor: "The_WeaponFire_class"
+  - toclevel: 2
+    level: "3"
+    line: "Discussion"
+    number: "1.7"
+    index: "12"
+    fromtitle: "Legacy:Hit_Prediction"
+    byteoffset: 13662
+    anchor: "Discussion_5"
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "2"
+    index: "13"
+    fromtitle: "Legacy:Hit_Prediction"
+    byteoffset: 18246
+    anchor: "Related_Topics"
+  displaytitle: "Legacy:Hit Prediction"
+  iwlinks: []
+  wikitext:
+    text: "This is an Open Source implementation of the Hit Prediction for UT2003,\
+      \ which is explained at [[Legacy:Lag Compensation|Lag Compensation]].\n\nFeel\
+      \ free to use and improve the code for whatever you want, but if you modify\
+      \ it, please let us know about the modifications.\n\nI don't offer a download\
+      \ here because I don't think that the implementation is polished and \"foolproof\"\
+      \ enough yet.\n\nThis example implementation will use a modified Instagib gametype\
+      \ with only one modified gun.\n\n==Sourcecode ==\n\nTo make the source managable,\
+      \ I will post it in chunks and not in one whole, with a discussion for each\
+      \ chunk.\n\n===The LocationTrail class ===\n\n<uscript>\nclass LocationTrail\
+      \ extends Object;\n\nvar float TimeStamp;\nvar vector Location;\nvar Rotator\
+      \ Rotation;\nvar LocationTrail Next;\n</uscript>\n\nSimply a class to hold a\
+      \ trail node.\n\n===The Game Replication class ===\n\n<uscript>\nclass PredictionReplicationInfo\
+      \ extends GameReplicationInfo;\n\nvar float PackageTimeStamp; // Constantly\
+      \ replicated to the client to TimeStamp shot packages for prediction\n\nreplication\n\
+      {\n\treliable if ( bNetDirty && (Role == ROLE_Authority) )\n\t\tPackageTimeStamp;\n\
+      }\n\n\nfunction Tick( float DeltaTime)\n{\n\tPackageTimeStamp = Level.TimeSeconds;\n\
+      \n\tSuper.Tick(DeltaTime);\n}\n</uscript>\n\n====Discussion ====\n\n'''Spark:'''\
+      \ See [[Legacy:Lag Compensation|lag compensation]] for a discussion why it's\
+      \ neccessary to replicate the servertime constantly. It might be desirable to\
+      \ find a better solution though...\n\n===The Player class ===\n\n<uscript>\n\
+      class PredictedPlayer extends xPlayer;\n\nevent PlayerTick( float DeltaTime\
+      \ )\n{\n\tSuper.PlayerTick(DeltaTime);\n\t\n\t// Increase PackageTimeStamp for\
+      \ smooth interpolated hit prediction\n\tPredictionReplicationInfo(GameReplicationInfo).PackageTimeStamp\
+      \ += DeltaTime;\n}\n</uscript>\n\n====Discussion ====\n\n'''Spark:''' This is\
+      \ simply because a client will usually run at a higher FPS, so prediction isn't\
+      \ limited to the ~50ms steps of the server (a client will predict movement between\
+      \ those 50ms steps).\n\n===The Pawn class ===\n\n<uscript>\nclass PredictedPawn\
+      \ extends xPawn;\n\nvar LocationTrail LocationTrail;  // The actual trail of\
+      \ locations\nvar vector SavedLocation;         // Used to restore location after\
+      \ timeshifting\nvar Rotator SavedRotation;\nvar float SavedTimeStamp;\nvar float\
+      \ MaxTrailSeconds;        // How many seconds should be stored in trails\n\n\
+      \nevent Tick( float DeltaTime )\n{\n\tlocal LocationTrail Trail;\n\n\tSuper.Tick(DeltaTime);\n\
+      \t\n\t// Store the new position and rotation in a LocationTrail\n\tTrail = new\
+      \ (none) class'LocationTrail';\n\tTrail.Next = LocationTrail;\n\tLocationTrail\
+      \ = Trail;\n\t\n\tLocationTrail.Location = Location;\n\tLocationTrail.Rotation\
+      \ = Rotation;\n\t// Using the timestamp which was saved at roundbegin and will\
+      \ be sent to the client\n\tLocationTrail.TimeStamp = PredictionReplicationInfo(Level.Game.GameReplicationInfo).PackageTimeStamp;\n\
+      \t\n\t// Free outdated LocationTrails\n\tfor ( Trail=LocationTrail; Trail!=None;\
+      \ Trail=Trail.next )\n\t{\n\t\tif ( Level.TimeSeconds - Trail.TimeStamp > MaxTrailSeconds\
+      \ )\n\t\t{\n\t\t\tTrail.Next = None;\n\t\t\tbreak;\n\t\t}\n\t}\n}\n\ndefaultproperties\n\
+      {\n\tMaxTrailSeconds=0.4;\n}\n</uscript>\n\n====Discussion ====\n\n'''Spark:'''\
+      \ I'm not sure if Tick() is the best place to store the trails. But it works\
+      \ and is pretty simple. It might be smarter to do this directly after playermovement\
+      \ though, but I couldn't find a place to hook this in (there probably is none,\
+      \ because actor movement is native).\n\nI use PackageTimeStamp for the timestamp\
+      \ because I wasn't sure weither ServerTime gets modified during a tick. It probably\
+      \ doesn't, in this case it would make no difference to use Level.ServerTime\
+      \ instead.\n\n===The Weapon class ===\n\nWe need to modify each weapon that\
+      \ is supposed to be unlagged, so we need a new weaponclass. Should we need a\
+      \ lot of unlagged weapons, it would make sense to create a new baseclass but\
+      \ for this example there will be only one gun (a modified EnhancedShockrifle).\n\
+      \n<uscript>\nclass PredictedShockRifle extends SuperShockRifle;\n\nreplication\n\
+      {\n    // functions called by client on server\n    reliable if( Role<ROLE_Authority\
+      \ )\n        ServerPredictedStartFire;\n}\n\n\n//// client only ////\nsimulated\
+      \ event ClientStartFire(int Mode)\n{\n    if (Pawn(Owner).Controller.IsInState('GameEnded'))\n\
+      \        return;\n        \n    if (Role < ROLE_Authority)\n    {\n        if\
+      \ (StartFire(Mode))\n        {\n\t\t\tServerPredictedStartFire( Mode, PredictionReplicationInfo(PlayerController(Instigator.Controller).GameReplicationInfo).PackageTimeStamp\
+      \ );\n        }\n    }\n    else\n    {\n        StartFire(Mode);\n    }\n}\n\
+      \n//// server only ////\nevent ServerPredictedStartFire(byte Mode, float ClientTimeStamp)\n\
+      {\n    if ( (FireMode[Mode].NextFireTime <= Level.TimeSeconds + FireMode[Mode].PreFireTime)\n\
+      \t\t&& StartFire(Mode) )\n    {\n        FireMode[Mode].ServerStartFireTime\
+      \ = Level.TimeSeconds;\n\tPredictedShockBeamFire(FireMode[Mode]).ClientStartFireTime\
+      \ = ClientTimeStamp; // Stupid hack but it works as long as we can trust the\
+      \ FireMode property. Clean code would check if this really is a PredictedShockBeamFire.\n\
+      \        FireMode[Mode].bServerDelayStartFire = false;\n    }\n    else\n  \
+      \      FireMode[Mode].bServerDelayStartFire = true;\n}\n\n\ndefaultproperties\n\
+      {\n\tFireModeClass(0)=PredictedShockBeamFire;\n}\n</uscript>\n\n====Discussion\
+      \ ====\n\n'''Spark:''' I decided to create a new ServerStartFire function, so\
+      \ the timestamp can be transmitted. ClientStartFire is simply modified to call\
+      \ the new ServerStartFire.\n\n===The WeaponFire class ===\n\nThis is a huge\
+      \ one, so I split it up in even smaller pieces.\n\n<uscript>\nclass PredictedShockBeamFire\
+      \ extends SuperShockBeamFire;\n\n// --- Prediction ---\nvar float ClientStartFireTime;\t\
+      // This is the time the client actually started shooting\n\nfunction DoTrace(Vector\
+      \ Start, Rotator Dir)\n{\n    local Vector X, End, HitLocation, HitNormal, RefNormal;\n\
+      \    local Actor Other;\n    local int Damage;\n    local bool bDoReflect;\n\
+      \    local int ReflectNum;\n\n    ReflectNum = 0;\n    while (true)\n    {\n\
+      \        bDoReflect = false;\n        X = Vector(Dir);\n        End = Start\
+      \ + TraceRange * X;\n\n\t\t// *** HIT PREDICTION ***\n\t\t// Timeshift all pawns\
+      \ to make them match the clients reality (hopefully) before doing the trace\n\
+      \t\tif ( ClientStartFireTime > 0 )\n\t\t\tTimeShiftPawns(ClientStartFireTime);\n\
+      \n        Other = Trace(HitLocation, HitNormal, End, Start, true);\n\n\t\t//\
+      \ Revert all pawns to their original position\n\t\tif ( ClientStartFireTime\
+      \ > 0 )\n\t\t\tUnShiftPawns();\n\t\t\t\n\n        if ( Other != None && (Other\
+      \ != Instigator || ReflectNum > 0) )\n        {\n            if (bReflective\
+      \ && Other.IsA('xPawn') && xPawn(Other).CheckReflect(HitLocation, RefNormal,\
+      \ DamageMin*0.25))\n            {\n                bDoReflect = true;\n    \
+      \            HitNormal = Vect(0,0,0);\n            }\n            else if (!Other.bWorldGeometry)\n\
+      \            {\n                Damage = (DamageMin + Rand(DamageMax - DamageMin))\
+      \ * DamageAtten;\n                Other.TakeDamage(Damage, Instigator, HitLocation,\
+      \ Momentum*X, DamageType);\n                HitNormal = Vect(0,0,0);\n     \
+      \       }\n            else if ( WeaponAttachment(Weapon.ThirdPersonActor) !=\
+      \ None )\n\t\t\t\tWeaponAttachment(Weapon.ThirdPersonActor).UpdateHit(Other,HitLocation,HitNormal);\n\
+      \        }\n        else\n        {\n            HitLocation = End;\n      \
+      \      HitNormal = Vect(0,0,0);\n        }\n\n\t\t// Not here, we will do it\
+      \ clientside. :)\n        // SpawnBeamEffect(Start, Dir, HitLocation, HitNormal,\
+      \ ReflectNum);\n\n        if (bDoReflect && ++ReflectNum < 4)\n        {\n \
+      \           //Log(\"reflecting off\"@Other@Start@HitLocation);\n           \
+      \ Start = HitLocation;\n            Dir = Rotator(RefNormal); //Rotator( X -\
+      \ 2.0*RefNormal*(X dot RefNormal) );\n        }\n        else\n        {\n \
+      \           break;\n        }\n    }\n}\n</uscript>\n\nThe only important difference\
+      \ here is, that we timeshift all pawns before we do the hit detection trace.\
+      \ Thsi will get more clear later but it's really the most important thing and\
+      \ why we do all this in fact. This will do the hit detection in the timeframe\
+      \ the client saw when triggering the shot.\n\n<uscript>\n// Do the beameffect\
+      \ clientside\nfunction DoClientTrace(Vector Start, Rotator Dir)\n{\n    local\
+      \ Vector X, End, HitLocation, HitNormal, RefNormal;\n    local Actor Other;\n\
+      \    local bool bDoReflect;\n    local int ReflectNum;\n\n    ReflectNum = 0;\n\
+      \    while (true)\n    {\n        bDoReflect = false;\n        X = Vector(Dir);\n\
+      \        End = Start + TraceRange * X;\n\n        Other = Trace(HitLocation,\
+      \ HitNormal, End, Start, true);\n\n        if ( Other != None && (Other != Instigator\
+      \ || ReflectNum > 0) )\n        {\n            if (bReflective && Other.IsA('xPawn')\
+      \ && xPawn(Other).CheckReflect(HitLocation, RefNormal, DamageMin*0.25))\n  \
+      \          {\n                bDoReflect = true;\n                HitNormal\
+      \ = Vect(0,0,0);\n            }\n            else if (!Other.bWorldGeometry)\n\
+      \            {\n                HitNormal = Vect(0,0,0);\n            }\n  \
+      \      }\n        else\n        {\n            HitLocation = End;\n        \
+      \    HitNormal = Vect(0,0,0);\n        }\n\n        SpawnBeamEffect(Start, Dir,\
+      \ HitLocation, HitNormal, ReflectNum);\n\n        if (bDoReflect && ++ReflectNum\
+      \ < 4)\n        {\n            //Log(\"reflecting off\"@Other@Start@HitLocation);\n\
+      \            Start = HitLocation;\n            Dir = Rotator(RefNormal); //Rotator(\
+      \ X - 2.0*RefNormal*(X dot RefNormal) );\n        }\n        else\n        {\n\
+      \            break;\n        }\n    }\n}\n\nfunction DoClientFireEffect()\n\
+      {                    \n    local Vector StartTrace;\n    local Rotator R, Aim;\n\
+      \n    Instigator.MakeNoise(1.0);\n\n    // the to-hit trace always starts right\
+      \ in front of the eye\n    StartTrace = Weapon.Owner.Location + Pawn(Weapon.Owner).EyePosition();\n\
+      \    Aim = AdjustAim(StartTrace, AimError);\n\tR = rotator(vector(Aim) + VRand()*FRand()*Spread);\n\
+      \    DoClientTrace(StartTrace, R);\n}\n\nevent ModeDoFire()\n{\n\tSuper.ModeDoFire();\n\
+      \t\n\t// client\n\tif (Instigator.IsLocallyControlled())\n\t{\n\t\tDoClientFireEffect();\n\
+      \t}\n}\n</uscript>\n\nThis will just render the shockbeam at the clientside.\
+      \ Not sure if it's the best way to do it, as it was just a quick hack to make\
+      \ it work.\n\n<uscript>\n// *** Hit Prediction Timeshifting Functions ***\n\n\
+      function TimeShiftPawns(float TimeStamp)\n{\n\tlocal Controller C;\n\tlocal\
+      \ PredictedPawn P;\n\tlocal LocationTrail CurrentTrail, LateTrail, OldTrail;\n\
+      \tlocal float interp;\n\tlocal vector LerpedLocation;\n\tlocal Rotator LerpedRotation;\n\
+      \t\n\tfor ( C=Level.ControllerList; C!=None; C=C.NextController )\n\t{\n\t\t\
+      // Do not shift the attacker because she should already be where she was when\
+      \ she did the shot.\n\t\tif ( PredictedPawn(C.Pawn)!=None && C.Pawn != Weapon.Owner\
+      \ )\n\t\t\tP = PredictedPawn(C.Pawn);\n\t\telse\n\t\t\tcontinue;\n\t\t\t\n\t\
+      \tLateTrail = None;\n\t\tOldTrail = None;\n\t\n\t\t// Find the sandwitching\
+      \ trail timestamps\n\t\tfor ( CurrentTrail=P.LocationTrail; CurrentTrail!=None;\
+      \ CurrentTrail=CurrentTrail.Next )\n\t\t{\n\t\t\tif ( CurrentTrail.TimeStamp\
+      \ > TimeStamp )\n\t\t\t\tLateTrail = CurrentTrail;\n\t\t\telse if ( OldTrail\
+      \ == None )\n\t\t\t\tOldTrail = CurrentTrail;\n\t\t\telse\n\t\t\t\tbreak;\n\t\
+      \t}\n\t\t\n\t\tif ( LateTrail != None && OldTrail != None )\n\t\t{\n\t\t\t//\
+      \ Save original location\n\t\t\tP.SavedLocation = P.Location;\n\t\t\tP.SavedRotation\
+      \ = P.Rotation;\n\t\t\tP.SavedTimeStamp = Level.TimeSeconds;\n\t\t\n\t\t\t//\
+      \ Interpolate between closest trails and move pawn to this location\n\t\t\t\
+      // Find alpha value for interpolation based on timestamps\n\t\t\tinterp = (\
+      \ TimeStamp - OldTrail.TimeStamp ) / ( LateTrail.TimeStamp - OldTrail.TimeStamp\
+      \ ); \n\t\t\tinterp = FClamp( interp, 0, 1 );\n\t\t\t\n\t\t\t//Log(\"OldTimeStamp:\
+      \ \"$OldTrail.TimeStamp$\", LateTimeStamp: \"$LateTrail.TimeStamp$\", TimeStamp:\
+      \ \"$TimeStamp);\n\t\t\t//Log(\"Resulting Alpha: \"$interp); \n\t\t\t\n\t\t\t\
+      LerpedLocation.X = Lerp( interp, OldTrail.Location.X, LateTrail.Location.X );\n\
+      \t\t\tLerpedLocation.Y = Lerp( interp, OldTrail.Location.Y, LateTrail.Location.Y\
+      \ );\n\t\t\tLerpedLocation.Z = Lerp( interp, OldTrail.Location.Z, LateTrail.Location.Z\
+      \ );\n\t\t\t\n\t\t\t//Log(\"OldLocation: \"$OldTrail.Location$\", LateLocation:\
+      \ \"$LateTrail.Location$\", LerpedLocation: \"$LerpedLocation);\n\t\t\t\n\t\t\
+      \tLerpedRotation.Pitch = Lerp( interp, OldTrail.Rotation.Pitch, LateTrail.Rotation.Pitch\
+      \ );\n\t\t\tLerpedRotation.Yaw = Lerp( interp, OldTrail.Rotation.Yaw, LateTrail.Rotation.Yaw\
+      \ );\n\t\t\tLerpedRotation.Roll = Lerp( interp, OldTrail.Rotation.Roll, LateTrail.Rotation.Roll\
+      \ );\n\t\t\t\n\t\t\t//Log(\"OldRotation: \"$OldTrail.Rotation$\", LateRotation:\
+      \ \"$LateTrail.Rotation$\", LerpedRotation: \"$LerpedRotation);\n\t\t\t\n\t\t\
+      \tP.SetLocation( LerpedLocation );\n\t\t\tP.SetRotation( LerpedRotation );\n\
+      \t\t}\n\t\telse if ( LateTrail != None )\n\t\t{\n\t\t\t// Save original location\n\
+      \t\t\tP.SavedLocation = P.Location;\n\t\t\tP.SavedRotation = P.Rotation;\n\t\
+      \t\tP.SavedTimeStamp = Level.TimeSeconds;\n\t\t\n\t\t\t// TimeStamp is out of\
+      \ reach, move pawn to latest trail\n\t\t\tP.SetLocation( LateTrail.Location\
+      \ );\n\t\t\tP.SetRotation( LateTrail.Rotation );\n\t\t}\n\t}\n}\n\nfunction\
+      \ UnShiftPawns()\n{\n\tlocal Controller C;\n\tlocal PredictedPawn P;\n\n\tfor\
+      \ ( C=Level.ControllerList; C!=None; C=C.NextController )\n\t{\n\t\tif ( PredictedPawn(C.Pawn)!=None\
+      \ && C.Pawn != Weapon.Owner )\n\t\t\tP = PredictedPawn(C.Pawn);\n\t\telse\n\t\
+      \t\tcontinue;\n\t\n\t\t// Make sure that saved location is of this tick before\
+      \ moving\n\t\tif ( P.SavedTimeStamp == Level.TimeSeconds )\n\t\t{\n\t\t\tP.SetLocation(\
+      \ P.SavedLocation );\n\t\t\tP.SetRotation( P.SavedRotation );\n\t\t}\n\t}\n\
+      }\n</uscript>\n\nAnd last but not least the actual timeshifting functions (if\
+      \ more than one weapon is used, those should be moved to a new common base class\
+      \ if possible).\n\nFinally you need a new Gametype or Mutator to replace the\
+      \ Pawn and PlayerController with out custom ones, use the new GameReplicationInfo\
+      \ class and make sure that only our Instagib rifle is used (a modified version\
+      \ of the Instagib mutator will do). I don't post this here because it's a rather\
+      \ common task.\n\n===Discussion ===\n\n'''Spark:''' That's it! I hope that those\
+      \ who actually use this code will actively help to improve the code, because\
+      \ a well working hit prediction could be quite important for mods trying to\
+      \ compete with the huge Counter-Strike (and for every other mod featuring hitscan\
+      \ weapons of course). It would be a pity if everyone would have to create this\
+      \ rather common functionality on his own, that's why I wrote this. Another cool\
+      \ thing would be a Mutator replacing all weapons with predicted counterparts\
+      \ that could be used for all basic gametypes. Maybe it would even be possible\
+      \ without subclassing Pawn and PlayerController, but I'm not sure.\n\nThings\
+      \ that should be looked at and really need improvement are:\n;Resetting the\
+      \ trails: If a player respawns or teleports, the trail should be resetted, otherwise\
+      \ the interpolation would move the pawn at a place he never visited. The chance\
+      \ that this leads to an accidental hit is basically null, that's why I didn't\
+      \ bother yet but it's certainly crack. :) Another thing is, that the trails\
+      \ should probably be cleaned after a pawn is destroyed (not sure if this is\
+      \ automatic).\n;Rapid fire guns: Those guns in UT2003 only send StartFire and\
+      \ a StopFire signals, so with the above code, the ClientTimeStamp would also\
+      \ be replicated only once. This means that the ClientFireTime time has to be\
+      \ increased just like the ServerFireTime. This is not a problem (as long as\
+      \ you think of it), but it can lead to inaccuracies with flakey latency. How\
+      \ could this be solved? Maybe constantly replicate the current PackageTimeStamp\
+      \ to the server while shooting?\n;Accuracy: The current code seems to be pretty\
+      \ accurate, in tests I could hit reliable with pings up to 400. But still there\
+      \ might be inaccuracies so this should constantly be reviewed and ultimately\
+      \ it would be great to have some usefull debug functions, for example to show\
+      \ the hitbox or a client trace which checks weither you should have hit and\
+      \ then compares this to what the server says. There might be countless other\
+      \ improvements, but I think this is good for a start.\n\n'''capt.k:'''  I made\
+      \ a similar implementation for my UT mod.  Haven't extensively tested this,\
+      \ so I dunno if it's any better or worse than what you've got above, but it's\
+      \ pretty much the same except for a couple things:  I got around subclassing\
+      \ controller or pawn by using an inventory item which is given to each respawning\
+      \ player to manage each LocationTrail list.  LocationTrail is an Actor, so it\
+      \ can now be destroyed on command, and in its Destroyed() it destroys the next\
+      \ link as well &ndash; the idea is that it insures that all LocationTrails are\
+      \ eventually removed.  If the inventory item is destroyed, it destroys the head\
+      \ of the Trail list, and the head destroys all the children.  I also had the\
+      \ LocationTrails only spawed via a timer at intervals of 0.02.  Mainly for the\
+      \ sake of uniformity and so we know how many LocationTrails may exist at any\
+      \ given time (and to be consistent w/ Neil Toronto's implementation); again,\
+      \ I dunno if it's any better or worse, but I figure since the position is interpolated\
+      \ anyway, it's an acceptable tradeoff.  Unfortunately, I wasn't astute enough\
+      \ to come up with a way to pass the client's timestamp to determine how far\
+      \ back to rewind position to, so instead I just used the player's ping.  hth.\n\
+      \n'''Spoon:''' \n\nIn \"PredictedPawn\", on the client side, \"Level.Game.GameReplicationInfo\"\
+      \ is \"None\" So on the client side you get an \"access none\" errors. To get\
+      \ rid of the errors, I just wrapped the code block with an \"if( ROLE == ROLE_Authority)\"\
+      \ so the client can not run the code.\n\nnote: I remove the other problem I\
+      \ was having due to a error on my part and not an error related to this code.\n\
+      \n'''Xian:''' Well the code looks nice but those while (True) loops would look\
+      \ scary to me if I'd be a processor :) Regardless, I was wondering why you're\
+      \ not using Engine.PlayerController.GameReplicationInfo instead of Engine.GameInfo.GameReplicationInfo\
+      \ since the first is replicated on both the Server and Client, and there'd be\
+      \ no need to divide between replication Roles.\n\n'''Graphik:''' A little tip\
+      \ for you, Xian: you may want to check the revision history on a page before\
+      \ you reply to something said in 2003. :) Spoon hasn't been around for a while.\n\
+      \n'''Xian:''' I do, but there are people still reading this. And I am just trying\
+      \ to post for them :)\n\nI for one didn't move from UE1 and don't plan to until\
+      \ UE3 is out. So I am still reading UT related stuff. It doesn't mean that just\
+      \ cos UT2004 is out people will not read 2003 related stuff.\n\n==Related Topics\
+      \ ==\n* [[Legacy:Lag Compensation|Lag Compensation]]\n\n[http://www.planetquake.com/code3arena/tutorials/tutorial41.shtml\
+      \ Unlagged Tutorial] (A hit prediction implementation for Quake 3 Arena)"
+  properties: []
+  revId: 3574
+name: "Legacy:Hit Prediction"
+revision:
+  revid: 3574
+  parentid: 3575
+  user: "Xian"
+  timestamp: 1144767108.000000000
+  comment: "*"
+timestamp: 1668764855.614714000

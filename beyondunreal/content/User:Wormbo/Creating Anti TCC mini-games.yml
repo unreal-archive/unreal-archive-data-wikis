@@ -1,0 +1,266 @@
+---
+parse:
+  title: "User:Wormbo/Creating Anti TCC mini-games"
+  text:
+    text: "<p>Remember that <b>PlayWaitingGame</b> command Anti TCC used to kick people\
+      \ for before I added the secured console? Well, this feature has been put to\
+      \ good use now and can launch server-configurable mini-games for spectators.\
+      \ The only problem is: There are no games for it yet. This article explains\
+      \ the interface such mini-games need to satisfy and potential strategies for\
+      \ implementing them.</p>\n<p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"\
+      toctitle\">\n<h2>Contents</h2>\n</div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"\
+      ><a href=\"#Anti_TCC_mini-game_interface\"><span class=\"tocnumber\">1</span>\
+      \ <span class=\"toctext\">Anti TCC mini-game interface</span></a></li>\n<li\
+      \ class=\"toclevel-1 tocsection-2\"><a href=\"#Handling_start_requests\"><span\
+      \ class=\"tocnumber\">2</span> <span class=\"toctext\">Handling start requests</span></a></li>\n\
+      </ul>\n</div>\n<p></p>\n<h2><span class=\"mw-headline\" id=\"Anti_TCC_mini-game_interface\"\
+      >Anti TCC mini-game interface</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/User:Wormbo/Creating_Anti_TCC_mini-games?section=1\"\
+      \ title=\"Edit section: Anti TCC mini-game interface\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<p>The interface is as simple\
+      \ as it could possibly get. Whenever Anti TCC catches the console command <code>Mutate\
+      \ PlayWaitingGame</code> (or just <code>PlayWaitingGame</code> if the console\
+      \ is secured), it spawns an instance of the class specified in <code>WaitingGameClass=...</code>\
+      \ under <code>[AntiTCC2009r<i>?</i>.MutAntiTCCFinal]</code>. This configuration\
+      \ option isn't exposed to the webadmin interface yet, but spectators will see\
+      \ a corresponding info message during initial checks in their console. The code\
+      \ in the Anti TCC mutator spawning the game class instance is roughly as follows:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">function</span>\
+      \ Mutate<span class=\"br0\">(</span><span class=\"kw5\">string</span> MutateString,\
+      \ <span class=\"kw9\">PlayerController</span> Sender<span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n  <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span>Sender <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span>\
+      \ <span class=\"sy0\">&amp;&amp;</span> Sender.<span class=\"me0\">PlayerReplicationInfo</span>.<span\
+      \ class=\"me0\">bOnlySpectator</span> <span class=\"sy0\">&amp;&amp;</span>\
+      \ MutateString ~<span class=\"sy0\">=</span> <span class=\"st0\">\"PlayWaitingGame\"\
+      </span> <span class=\"sy0\">&amp;&amp;</span> WaitingGameClass <span class=\"\
+      sy0\">!=</span> <span class=\"kw5\">None</span><span class=\"br0\">)</span>\
+      \ <span class=\"br0\">{</span>\n    <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span><span class=\"kw7\">Level</span>.<span class=\"me0\">TimeSeconds</span>\
+      \ <span class=\"sy0\">&lt;</span> Sender.<span class=\"me0\">NextLoginTime</span><span\
+      \ class=\"br0\">)</span> <span class=\"br0\">{</span>\n      <span class=\"\
+      kw2\">return</span>;\n    <span class=\"br0\">}</span>\n    Sender.<span class=\"\
+      me0\">NextLoginTime</span> <span class=\"sy0\">=</span> <span class=\"kw7\"\
+      >Level</span>.<span class=\"me0\">TimeSeconds</span> <span class=\"sy0\">+</span>\
+      \ Sender.<span class=\"me0\">LoginDelay</span>;\n    <span class=\"kw4\">Spawn</span><span\
+      \ class=\"br0\">(</span>WaitingGameclass, Sender<span class=\"br0\">)</span>;\n\
+      \    <span class=\"kw2\">return</span>;\n  <span class=\"br0\">}</span>\n  <span\
+      \ class=\"kw6\">Super</span>.<span class=\"me0\">Mutate</span><span class=\"\
+      br0\">(</span>MutateString, Sender<span class=\"br0\">)</span>;\n  <span class=\"\
+      co1\">// ...</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>Using\
+      \ <code>NextLoginTime</code> and <code>LoginDelay</code> lowers the potential\
+      \ for abuse by limiting the number of spawns within a given time interval. Anti\
+      \ TCC restricts the login delay to values greater than zero, with the default\
+      \ being 1.0 game seconds.</p>\n<p>The <i>WaitingGameClass</i> itself must be\
+      \ a subclass of <a href=\"/UE2:Info_(UT2004)\" title=\"UE2:Info (UT2004)\">Info</a>\
+      \ and reside in a package the client has access to. That only means the package\
+      \ must not have the <i>ServersideOnly</i> flag and should have the <i>AllowDownload</i>\
+      \ flag. It will automatically be added to the ServerPackages by Anti TCC. The\
+      \ game name displayed in the client info message about a mini-game being available\
+      \ defaults to the class name, but can be customized by implementing the <a href=\"\
+      /UE2:Actor_(UT2004)#GetLocalString\" title=\"UE2:Actor (UT2004)\">GetLocalString</a>()\
+      \ function in that class. Anti TCC will not pass any of the optional parameters\
+      \ to it.</p>\n<p>Example implementation:</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">class</span> ExampleGame <span class=\"kw1\">extends</span>\
+      \ <span class=\"kw9\">Info</span>;\n \n<span class=\"kw1\">var</span> <span\
+      \ class=\"kw1\">localized</span> <span class=\"kw5\">string</span> GameName;\n\
+      \ \n<span class=\"kw1\">static</span> <span class=\"kw1\">function</span> <span\
+      \ class=\"kw5\">string</span> GetLocalString<span class=\"br0\">(</span><span\
+      \ class=\"kw1\">optional</span> <span class=\"kw5\">int</span> MsgSwitch, <span\
+      \ class=\"kw1\">optional</span> PlayerReplicationInfo PRI1, <span class=\"kw1\"\
+      >optional</span> PlayerReplicationInfo PRI2<span class=\"br0\">)</span>\n<span\
+      \ class=\"br0\">{</span>\n  <span class=\"kw2\">return</span> <span class=\"\
+      kw1\">default</span>.<span class=\"me0\">GameName</span>;\n<span class=\"br0\"\
+      >}</span>\n \n<span class=\"kw1\">defaultproperties</span>\n<span class=\"br0\"\
+      >{</span>\n  GameName <span class=\"sy0\">=</span> <span class=\"st0\">\"Mini-Game\
+      \ example\"</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>Of\
+      \ course this example doesn't do anything yet, except stay around and take up\
+      \ memory. (This is actually a bad thing!)</p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Handling_start_requests\">Handling start requests</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/User:Wormbo/Creating_Anti_TCC_mini-games?section=2\"\
+      \ title=\"Edit section: Handling start requests\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>The interface is extremely simple and pushes all responsibilities\
+      \ to the mini-game implementation. As you can see in the previous section, Anti\
+      \ TCC unconditionally spawns the <i>WaitingGameClass</i> with the requesting\
+      \ <a href=\"/UE2:PlayerController_(UT2004)\" title=\"UE2:PlayerController (UT2004)\"\
+      >PlayerController</a> as <i>Owner</i>. An implementation needs to handle the\
+      \ case where a player sends <code>PlayWaitingGame</code> while the game is already\
+      \ open.</p>\n<p>One potential solution for this problem could be keeping a globally\
+      \ unique instance of the <i>WaitingGameClass</i> and additional instances only\
+      \ notify that main instance. Here's a potential way to do this:</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">function</span> <span class=\"kw4\"\
+      >PreBeginPlay</span><span class=\"br0\">(</span><span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n  <span class=\"kw1\">local</span> ExampleGame\
+      \ <span class=\"kw7\">Game</span>;\n  <span class=\"kw1\">local</span> <span\
+      \ class=\"kw9\">PlayerController</span> Requester;\n \n  Requester <span class=\"\
+      sy0\">=</span> <span class=\"kw9\">PlayerController</span><span class=\"br0\"\
+      >(</span><span class=\"kw7\">Owner</span><span class=\"br0\">)</span>;\n \n\
+      \  <span class=\"co1\">// try to find an active instance</span>\n  <span class=\"\
+      kw2\">foreach</span> <span class=\"kw2\">DynamicActors</span><span class=\"\
+      br0\">(</span><span class=\"kw1\">class</span><span class=\"st0\">'ExampleGame'</span>,\
+      \ <span class=\"kw7\">Game</span><span class=\"br0\">)</span> <span class=\"\
+      br0\">{</span>\n    <span class=\"kw2\">if</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw7\">Game</span> <span class=\"sy0\">!=</span> <span class=\"kw6\"\
+      >Self</span><span class=\"br0\">)</span> <span class=\"br0\">{</span>\n    \
+      \  <span class=\"kw7\">Game</span>.<span class=\"me0\">StartGame</span><span\
+      \ class=\"br0\">(</span>Requester<span class=\"br0\">)</span>; <span class=\"\
+      co1\">// start the game on the main instance</span>\n      <span class=\"kw4\"\
+      >Destroy</span><span class=\"br0\">(</span><span class=\"br0\">)</span>; <span\
+      \ class=\"co1\">// get rid of this additional instance</span>\n      <span class=\"\
+      kw2\">return</span>;\n    <span class=\"br0\">}</span>\n  <span class=\"br0\"\
+      >}</span>\n \n  <span class=\"co1\">// no active instance found, initialize\
+      \ this one as the main instance</span>\n  Initialize<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n \n  <span class=\"co1\">// start the game for the\
+      \ requesting player</span>\n  <span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span>Requester <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span><span\
+      \ class=\"br0\">)</span>\n    StartGame<span class=\"br0\">(</span>Requester<span\
+      \ class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"coMULTI\"\
+      >/**\nInitialize the main instance.\nThis could, for example, load stats or\
+      \ game states from previous games\nif you implemented them in a way that stores\
+      \ them serversidely.\n*/</span>\n<span class=\"kw1\">function</span> Initialize<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \  <span class=\"co1\">// ...</span>\n<span class=\"br0\">}</span>\n \n<span\
+      \ class=\"coMULTI\">/**\nActually start a game for the specified player.\nThis\
+      \ function should make sure the player isn't already playing.\n*/</span>\n<span\
+      \ class=\"kw1\">function</span> StartGame<span class=\"br0\">(</span><span class=\"\
+      kw9\">PlayerController</span> <span class=\"kw8\">Player</span><span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"co1\">// ...</span>\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>The implementation of <i>StartGame()</i>\
+      \ depends on how you handle the replication part. It's probably a good idea\
+      \ to have one replicated actor per player and maintain a list of them in the\
+      \ main <i>WaitingGameClass</i> instance.</p>\n<table style=\"\" class=\"metadata\
+      \ plainlinks ambox ambox-content\">\n<tr>\n<td class=\"ambox-image\"></td>\n\
+      <td class=\"ambox-text\">The following things need to be done on this page or\
+      \ in this section:<br />\n<ul>\n<li>add example for managing the replication\
+      \ actor list</li>\n</ul>\n</td>\n</tr>\n</table>\n\n<!-- \nNewPP limit report\n\
+      CPU time usage: 0.090 seconds\nReal time usage: 0.371 seconds\nPreprocessor\
+      \ visited node count: 59/1000000\nPreprocessor generated node count: 282/1000000\n\
+      Post‐expand include size: 867/2097152 bytes\nTemplate argument size: 247/2097152\
+      \ bytes\nHighest expansion depth: 5/40\nExpensive parser function count: 1/100\n\
+      -->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n100.00%\
+      \   61.735      1 - -total\n100.00%   61.735      1 - Template:Todo\n 63.54%\
+      \   39.228      1 - Template:Ambox\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:28909-0!*!0!!en!*!* and timestamp 20221117234202 and revision\
+      \ id 42851\n -->\n"
+  categories:
+  - sortkey: "Creating Anti TCC mini-games"
+    name: "Programming_tutorials"
+  - sortkey: "Wormbo/Creating Anti TCC mini-games"
+    name: "Pages_needing_cleanup"
+  links:
+  - ns: 104
+    exists: true
+    name: "UE2:PlayerController (UT2004)"
+  - ns: 104
+    exists: true
+    name: "UE2:Actor (UT2004)"
+  - ns: 3
+    exists: false
+    name: "User talk:Wormbo/Creating Anti TCC mini-games"
+  - ns: 104
+    exists: true
+    name: "UE2:Info (UT2004)"
+  templates:
+  - ns: 10
+    exists: true
+    name: "Template:Ambox"
+  - ns: 10
+    exists: true
+    name: "Template:Todo"
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Anti TCC mini-game interface"
+    number: "1"
+    index: "1"
+    fromtitle: "User:Wormbo/Creating_Anti_TCC_mini-games"
+    byteoffset: 400
+    anchor: "Anti_TCC_mini-game_interface"
+  - toclevel: 1
+    level: "2"
+    line: "Handling start requests"
+    number: "2"
+    index: "2"
+    fromtitle: "User:Wormbo/Creating_Anti_TCC_mini-games"
+    byteoffset: 2810
+    anchor: "Handling_start_requests"
+  displaytitle: "User:Wormbo/Creating Anti TCC mini-games"
+  iwlinks: []
+  wikitext:
+    text: "Remember that '''PlayWaitingGame''' command Anti TCC used to kick people\
+      \ for before I added the secured console? Well, this feature has been put to\
+      \ good use now and can launch server-configurable mini-games for spectators.\
+      \ The only problem is: There are no games for it yet. This article explains\
+      \ the interface such mini-games need to satisfy and potential strategies for\
+      \ implementing them.\n\n__TOC__\n==Anti TCC mini-game interface==\nThe interface\
+      \ is as simple as it could possibly get. Whenever Anti TCC catches the console\
+      \ command <code>Mutate PlayWaitingGame</code> (or just <code>PlayWaitingGame</code>\
+      \ if the console is secured), it spawns an instance of the class specified in\
+      \ <code>WaitingGameClass=...</code> under <code>[AntiTCC2009r''?''.MutAntiTCCFinal]</code>.\
+      \ This configuration option isn't exposed to the webadmin interface yet, but\
+      \ spectators will see a corresponding info message during initial checks in\
+      \ their console. The code in the Anti TCC mutator spawning the game class instance\
+      \ is roughly as follows:\n<uscript>\nfunction Mutate(string MutateString, PlayerController\
+      \ Sender)\n{\n  if (Sender != None && Sender.PlayerReplicationInfo.bOnlySpectator\
+      \ && MutateString ~= \"PlayWaitingGame\" && WaitingGameClass != None) {\n  \
+      \  if (Level.TimeSeconds < Sender.NextLoginTime) {\n      return;\n    }\n \
+      \   Sender.NextLoginTime = Level.TimeSeconds + Sender.LoginDelay;\n    Spawn(WaitingGameclass,\
+      \ Sender);\n    return;\n  }\n  Super.Mutate(MutateString, Sender);\n  // ...\n\
+      } \n</uscript>\nUsing <code>NextLoginTime </code> and <code>LoginDelay</code>\
+      \ lowers the potential for abuse by limiting the number of spawns within a given\
+      \ time interval. Anti TCC restricts the login delay to values greater than zero,\
+      \ with the default being 1.0 game seconds.\n\nThe ''WaitingGameClass'' itself\
+      \ must be a subclass of [[UE2:Info (UT2004)|Info]] and reside in a package the\
+      \ client has access to. That only means the package must not have the ''ServersideOnly''\
+      \ flag and should have the ''AllowDownload'' flag. It will automatically be\
+      \ added to the ServerPackages by Anti TCC. The game name displayed in the client\
+      \ info message about a mini-game being available defaults to the class name,\
+      \ but can be customized by implementing the [[UE2:Actor (UT2004)#GetLocalString|GetLocalString]]()\
+      \ function in that class. Anti TCC will not pass any of the optional parameters\
+      \ to it.\n\nExample implementation:\n<uscript>\nclass ExampleGame extends Info;\n\
+      \nvar localized string GameName;\n\nstatic function string GetLocalString(optional\
+      \ int MsgSwitch, optional PlayerReplicationInfo PRI1, optional PlayerReplicationInfo\
+      \ PRI2)\n{\n  return default.GameName;\n}\n\ndefaultproperties\n{\n  GameName\
+      \ = \"Mini-Game example\"\n}\n</uscript>\n\nOf course this example doesn't do\
+      \ anything yet, except stay around and take up memory. (This is actually a bad\
+      \ thing!)\n\n==Handling start requests==\nThe interface is extremely simple\
+      \ and pushes all responsibilities to the mini-game implementation. As you can\
+      \ see in the previous section, Anti TCC unconditionally spawns the ''WaitingGameClass''\
+      \ with the requesting [[UE2:PlayerController (UT2004)|PlayerController]] as\
+      \ ''Owner''. An implementation needs to handle the case where a player sends\
+      \ <code>PlayWaitingGame</code> while the game is already open.\n\nOne potential\
+      \ solution for this problem could be keeping a globally unique instance of the\
+      \ ''WaitingGameClass'' and additional instances only notify that main instance.\
+      \ Here's a potential way to do this:\n<uscript>\nfunction PreBeginPlay()\n{\n\
+      \  local ExampleGame Game;\n  local PlayerController Requester;\n\n  Requester\
+      \ = PlayerController(Owner);\n\n  // try to find an active instance\n  foreach\
+      \ DynamicActors(class'ExampleGame', Game) {\n    if (Game != Self) {\n     \
+      \ Game.StartGame(Requester); // start the game on the main instance\n      Destroy();\
+      \ // get rid of this additional instance\n      return;\n    }\n  }\n\n  //\
+      \ no active instance found, initialize this one as the main instance\n  Initialize();\n\
+      \n  // start the game for the requesting player\n  if (Requester != None)\n\
+      \    StartGame(Requester);\n}\n\n/**\nInitialize the main instance.\nThis could,\
+      \ for example, load stats or game states from previous games\nif you implemented\
+      \ them in a way that stores them serversidely.\n*/\nfunction Initialize()\n\
+      {\n  // ...\n}\n\n/**\nActually start a game for the specified player.\nThis\
+      \ function should make sure the player isn't already playing.\n*/\nfunction\
+      \ StartGame(PlayerController Player)\n{\n  // ...\n}\n</uscript>\nThe implementation\
+      \ of ''StartGame()'' depends on how you handle the replication part. It's probably\
+      \ a good idea to have one replicated actor per player and maintain a list of\
+      \ them in the main ''WaitingGameClass'' instance.\n\n{{todo|\n* add example\
+      \ for managing the replication actor list\n\n}}\n\n[[Category:Programming tutorials|{{SUBPAGENAME}}]]"
+  properties: []
+  revId: 42851
+name: "User:Wormbo/Creating Anti TCC mini-games"
+revision:
+  revid: 42851
+  parentid: 0
+  user: "Wormbo"
+  timestamp: 1270211435.000000000
+  comment: "rough start"
+timestamp: 1668761024.687703000

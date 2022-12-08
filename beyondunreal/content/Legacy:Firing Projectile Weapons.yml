@@ -1,0 +1,264 @@
+---
+parse:
+  title: "Legacy:Firing Projectile Weapons"
+  text:
+    text: "<p><a href=\"/Legacy:How_UT2003_Weapons_Work\" title=\"Legacy:How UT2003\
+      \ Weapons Work\">How UT2003 Weapons Work</a>: Projectile Weapons</p>\n<p></p>\n\
+      <div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n</div>\n\
+      <ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#Easy_Way\"><span class=\"\
+      tocnumber\">1</span> <span class=\"toctext\">Easy Way</span></a></li>\n<li class=\"\
+      toclevel-1 tocsection-2\"><a href=\"#In_English\"><span class=\"tocnumber\"\
+      >2</span> <span class=\"toctext\">In English</span></a>\n<ul>\n<li class=\"\
+      toclevel-2 tocsection-3\"><a href=\"#The_Second_Chain\"><span class=\"tocnumber\"\
+      >2.1</span> <span class=\"toctext\">The Second Chain</span></a></li>\n<li class=\"\
+      toclevel-2 tocsection-4\"><a href=\"#The_First_Chain\"><span class=\"tocnumber\"\
+      >2.2</span> <span class=\"toctext\">The First Chain</span></a>\n<ul>\n<li class=\"\
+      toclevel-3 tocsection-5\"><a href=\"#The_First_Chain:_Server\"><span class=\"\
+      tocnumber\">2.2.1</span> <span class=\"toctext\">The First Chain: Server</span></a></li>\n\
+      </ul>\n</li>\n</ul>\n</li>\n</ul>\n</div>\n<p></p>\n<h3><span class=\"mw-headline\"\
+      \ id=\"Easy_Way\">Easy Way</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Firing_Projectile_Weapons?section=1\"\
+      \ title=\"Edit section: Easy Way\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<div class=\"center\">\n<div class=\"floatnone\"><a href=\"\
+      /File:Legacy_projectilefireflow.jpeg\" class=\"image\" title=\"Projectile Fire\
+      \ Flowchart\"><img alt=\"Projectile Fire Flowchart\" src=\"/w/images/Legacy_projectilefireflow.jpeg\"\
+      \ width=\"817\" height=\"1057\" /></a></div>\n</div>\n<h3><span class=\"mw-headline\"\
+      \ id=\"In_English\">In English</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Firing_Projectile_Weapons?section=2\"\
+      \ title=\"Edit section: In English\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>The player hits the Fire button. The engine then executes\
+      \ the alias attached to Fire. The alias fire is set to Button bFire, and the\
+      \ exec command Fire(). Check <a href=\"/Legacy:Binding_Keys\" title=\"Legacy:Binding\
+      \ Keys\">aliases</a> for more information on how this works but basically bFire\
+      \ is a boolean variable that is automatically set by the engine to true when\
+      \ the fire button is being held down, and false when the fire button is released.\
+      \ The engine has a native event set such that when bFire is held down the Pawn.Weapons.WeaponFire.ModeDoFire()\
+      \ is called. As well PlayerController.Fire() is called. It's important to note\
+      \ that these are two distinctly separate chains of events.</p>\n<h4><span class=\"\
+      mw-headline\" id=\"The_Second_Chain\">The Second Chain</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Firing_Projectile_Weapons?section=3\"\
+      \ title=\"Edit section: The Second Chain\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h4>\n<p>The second chain is shorter, and as such will be examined\
+      \ first. PlayerController.Fire() checks to see if the game is currently paused,\
+      \ and if it is unpauses the game and returns without further action. If the\
+      \ game is not paused, PlayerController.Fire() calls Pawn.Fire().</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">exec</span> <span class=\"kw1\">function</span>\
+      \ Fire<span class=\"br0\">(</span> <span class=\"kw1\">optional</span> <span\
+      \ class=\"kw5\">float</span> F <span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n    <span class=\"kw2\">if</span> <span class=\"br0\">(</span>\
+      \ <span class=\"kw7\">Level</span>.<span class=\"me0\">Pauser</span> <span class=\"\
+      sy0\">==</span> PlayerReplicationInfo <span class=\"br0\">)</span>\n    <span\
+      \ class=\"br0\">{</span>\n        SetPause<span class=\"br0\">(</span><span\
+      \ class=\"kw6\">false</span><span class=\"br0\">)</span>;\n        <span class=\"\
+      kw2\">return</span>;\n    <span class=\"br0\">}</span>\n    <span class=\"kw9\"\
+      >Pawn</span>.<span class=\"me0\">Fire</span><span class=\"br0\">(</span>F<span\
+      \ class=\"br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <p>Pawn.Fire() checks to see if there's a valid weapon, and if so executes Weapon.Fire().\
+      \ You'll note the check against None; this prevents access nones from appearing\
+      \ when the player does not have a valid weapon. Similar error checking code\
+      \ should be introduced in any code you write.</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw1\">function</span> Fire<span class=\"br0\"\
+      >(</span> <span class=\"kw1\">optional</span> <span class=\"kw5\">float</span>\
+      \ F <span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n    <span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span> <span class=\"kw9\">Weapon</span><span\
+      \ class=\"sy0\">!=</span><span class=\"kw5\">None</span> <span class=\"br0\"\
+      >)</span>\n        <span class=\"kw9\">Weapon</span>.<span class=\"me0\">Fire</span><span\
+      \ class=\"br0\">(</span>F<span class=\"br0\">)</span>;\n<span class=\"br0\"\
+      >}</span></pre></div>\n</div>\n<p>Weapon.Fire() would seem to be the function\
+      \ that actually fires the weapon, but this is not true. The base Weapon.Fire()\
+      \ is actually empty. As an abstract class this would be expected, except that\
+      \ most every class that derives from Weapon fails to override Fire() with their\
+      \ own function. It is, effectively, blank for every weapon included with Unreal\
+      \ Tournament 2003.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">simulated</span> <span class=\"kw1\">function</span> Fire<span class=\"\
+      br0\">(</span><span class=\"kw5\">float</span> F<span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <h4><span class=\"mw-headline\" id=\"The_First_Chain\">The First Chain</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Firing_Projectile_Weapons?section=4\" title=\"Edit section:\
+      \ The First Chain\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h4>\n\
+      <p>The actual processing of the firing of the weapon occurs in the first chain\
+      \ of events mentioned above. There is no visible link in the UnrealScript code\
+      \ provided by Epic or extracted from UnrealEd from Unreal Tournament 2003 between\
+      \ the Fire alias and ModeDoFire(). The link is handled by the engine, natively,\
+      \ through the boolean variable bFire and ModeDoFire().</p>\n<p>ModeDoFire is\
+      \ called based upon the player's currently selected weapon, and whether or not\
+      \ we're in the Fire or AltFire chain of events. They proceed identically; the\
+      \ major difference is that FireModeClass(0).ModeDoFire() is called with Fire,\
+      \ and FireModeClass(1).ModeDoFire() is called with AltFire. (<i>FireModeClass(x)\
+      \ is defined in the weapon class, and directs the engine to the appropriate\
+      \ class to be called when a weapon is fired. See <a href=\"/Legacy:Weapon\"\
+      \ title=\"Legacy:Weapon\">Weapon</a> for more information.</i>)</p>\n<p>The\
+      \ first thing ModeDoFire does is check if firing is currently allowed. A variety\
+      \ of circumstances may exist to prevent firing: a timer may have to expire between\
+      \ shots, the player may not have ammunition, the player may be dead. If any\
+      \ of these circumstances are met ModeDoFire simply exits and acts as if fire\
+      \ was not pressed. Then, again, we split off into two chains of possible events.</p>\n\
+      <h6><span class=\"mw-headline\" id=\"The_First_Chain:_Server\">The First Chain:\
+      \ Server</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Firing_Projectile_Weapons?section=5\" title=\"\
+      Edit section: The First Chain: Server\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h6>\n<hr />\n<p><b>Wormbo:</b> There's a small error in the\
+      \ Projectile Fire Flowchart. The ProcessTouch function isn't called by the engine.\
+      \ Instead the engine calls the Touch function which calculates the exact hitlocation\
+      \ and calls ProcessTouch.</p>\n<p><b>Dante:</b> It seems as if UT is calling\
+      \ Weapon.ClientStartFire/Weapon.ServerStartFire which sets WeaponFire.bIsFiring\
+      \ = true (in Weapon.StartFire) which might be the trigger to call modeDoFire.</p>\n\
+      <p><b>Ceej:</b> Excellent flowchart, thank you. This is really the page to start\
+      \ with when attempting to understand weapons. The general weapon firing page\
+      \ still has the misleading PlayerController.Fire() call chain front and center.\
+      \ Maybe move the flowchart onto the general page and save this for projectile\
+      \ specifics?</p>\n<p><b>Solid Snake:</b> I've been dealing with the weapon code\
+      \ a lot now for the last 12 hours, and it seems that there is a little more\
+      \ complxities to this than detailed about. Other statements such as ServerStartFire(),\
+      \ ClientStartFire() and StartFire() all seem to play an important role into\
+      \ what makes the gun fire, of course you can always called DoFireMode to force\
+      \ fire the gun, but you miss out some other checks as well that may be important\
+      \ to make sure that the gun is fired properly over a network game. I'm not exactly\
+      \ to sure about this at the moment, but I will report back about this on my\
+      \ studies in this area. The one thing I can say is that Epic certainly doesn't\
+      \ make any easier to decipher what exactly is going on.</p>\n\n<!-- \nNewPP\
+      \ limit report\nCPU time usage: 0.124 seconds\nReal time usage: 0.145 seconds\n\
+      Preprocessor visited node count: 46/1000000\nPreprocessor generated node count:\
+      \ 84/1000000\nPost‐expand include size: 0/2097152 bytes\nTemplate argument size:\
+      \ 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser function\
+      \ count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:1252-0!*!0!!en!5!* and timestamp 20221118160751 and revision\
+      \ id 3228\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:How UT2003 Weapons Work"
+  - ns: 100
+    exists: true
+    name: "Legacy:Binding Keys"
+  - ns: 100
+    exists: true
+    name: "Legacy:Weapon"
+  templates: []
+  images:
+  - "Legacy_projectilefireflow.jpeg"
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "3"
+    line: "Easy Way"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Firing_Projectile_Weapons"
+    byteoffset: 80
+    anchor: "Easy_Way"
+  - toclevel: 1
+    level: "3"
+    line: "In English"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Firing_Projectile_Weapons"
+    byteoffset: 171
+    anchor: "In_English"
+  - toclevel: 2
+    level: "4"
+    line: "The Second Chain"
+    number: "2.1"
+    index: "3"
+    fromtitle: "Legacy:Firing_Projectile_Weapons"
+    byteoffset: 845
+    anchor: "The_Second_Chain"
+  - toclevel: 2
+    level: "4"
+    line: "The First Chain"
+    number: "2.2"
+    index: "4"
+    fromtitle: "Legacy:Firing_Projectile_Weapons"
+    byteoffset: 2158
+    anchor: "The_First_Chain"
+  - toclevel: 3
+    level: "6"
+    line: "The First Chain:  Server"
+    number: "2.2.1"
+    index: "5"
+    fromtitle: "Legacy:Firing_Projectile_Weapons"
+    byteoffset: 3442
+    anchor: "The_First_Chain:_Server"
+  displaytitle: "Legacy:Firing Projectile Weapons"
+  iwlinks: []
+  wikitext:
+    text: "[[Legacy:How UT2003 Weapons Work|How UT2003 Weapons Work]]: Projectile\
+      \ Weapons\n\n===Easy Way===\n\n[[Image:Legacy_projectilefireflow.jpeg|center|Projectile\
+      \ Fire Flowchart]]\n\n===In English===\n\nThe player hits the Fire button. \
+      \ The engine then executes the alias attached to Fire.  The alias fire is set\
+      \ to Button bFire, and the exec command Fire().  Check [[Legacy:Binding Keys|aliases]]\
+      \ for more information on how this works but basically bFire is a boolean variable\
+      \ that is automatically set by the engine to true when the fire button is being\
+      \ held down, and false when the fire button is released.  The engine has a native\
+      \ event set such that when bFire is held down the Pawn.Weapons.WeaponFire.ModeDoFire()\
+      \ is called.  As well PlayerController.Fire() is called.  It's important to\
+      \ note that these are two distinctly separate chains of events.\n\n====The Second\
+      \ Chain====\n\nThe second chain is shorter, and as such will be examined first.\
+      \  PlayerController.Fire() checks to see if the game is currently paused, and\
+      \ if it is unpauses the game and returns without further action.  If the game\
+      \ is not paused, PlayerController.Fire() calls Pawn.Fire().\n\n<uscript>\nexec\
+      \ function Fire( optional float F )\n{\n    if ( Level.Pauser == PlayerReplicationInfo\
+      \ )\n    {\n        SetPause(false);\n        return;\n    }\n    Pawn.Fire(F);\n\
+      }\n</uscript>\n\nPawn.Fire() checks to see if there's a valid weapon, and if\
+      \ so executes Weapon.Fire().  You'll note the check against None; this prevents\
+      \ access nones from appearing when the player does not have a valid weapon.\
+      \  Similar error checking code should be introduced in any code you write.\n\
+      \n<uscript>\nfunction Fire( optional float F )\n{\n    if( Weapon!=None )\n\
+      \        Weapon.Fire(F);\n}\n</uscript>\n\nWeapon.Fire() would seem to be the\
+      \ function that actually fires the weapon, but this is not true.  The base Weapon.Fire()\
+      \ is actually empty.  As an abstract class this would be expected, except that\
+      \ most every class that derives from Weapon fails to override Fire() with their\
+      \ own function.  It is, effectively, blank for every weapon included with Unreal\
+      \ Tournament 2003.\n\n<uscript>\nsimulated function Fire(float F)\n{\n}\n</uscript>\n\
+      \n====The First Chain====\n\nThe actual processing of the firing of the weapon\
+      \ occurs in the first chain of events mentioned above.  There is no visible\
+      \ link in the UnrealScript code provided by Epic or extracted from UnrealEd\
+      \ from Unreal Tournament 2003 between the Fire alias and ModeDoFire().  The\
+      \ link is handled by the engine, natively, through the boolean variable bFire\
+      \ and ModeDoFire().\n\nModeDoFire is called based upon the player's currently\
+      \ selected weapon, and whether or not we're in the Fire or AltFire chain of\
+      \ events.  They proceed identically; the major difference is that FireModeClass(0).ModeDoFire()\
+      \ is called with Fire, and FireModeClass(1).ModeDoFire() is called with AltFire.\
+      \  (''FireModeClass(x) is defined in the weapon class, and directs the engine\
+      \ to the appropriate class to be called when a weapon is fired. See [[Legacy:Weapon|Weapon]]\
+      \ for more information.'')\n\nThe first thing ModeDoFire does is check if firing\
+      \ is currently allowed.  A variety of circumstances may exist to prevent firing:\
+      \  a timer may have to expire between shots, the player may not have ammunition,\
+      \ the player may be dead.  If any of these circumstances are met ModeDoFire\
+      \ simply exits and acts as if fire was not pressed.  Then, again, we split off\
+      \ into two chains of possible events.\n\n======The First Chain:  Server======\n\
+      \n----\n\n'''Wormbo:''' There's a small error in the Projectile Fire Flowchart.\
+      \ The ProcessTouch function isn't called by the engine. Instead the engine calls\
+      \ the Touch function which calculates the exact hitlocation and calls ProcessTouch.\n\
+      \n'''Dante:''' It seems as if UT is calling Weapon.ClientStartFire/Weapon.ServerStartFire\
+      \ which sets WeaponFire.bIsFiring = true (in Weapon.StartFire) which might be\
+      \ the trigger to call modeDoFire.\n\n'''Ceej:''' Excellent flowchart, thank\
+      \ you. This is really the page to start with when attempting to understand weapons.\
+      \ The general weapon firing page still has the misleading PlayerController.Fire()\
+      \ call chain front and center. Maybe move the flowchart onto the general page\
+      \ and save this for projectile specifics?\n\n'''Solid Snake:''' I've been dealing\
+      \ with the weapon code a lot now for the last 12 hours, and it seems that there\
+      \ is a little more complxities to this than detailed about. Other statements\
+      \ such as ServerStartFire(), ClientStartFire() and StartFire() all seem to play\
+      \ an important role into what makes the gun fire, of course you can always called\
+      \ DoFireMode to force fire the gun, but you miss out some other checks as well\
+      \ that may be important to make sure that the gun is fired properly over a network\
+      \ game. I'm not exactly to sure about this at the moment, but I will report\
+      \ back about this on my studies in this area. The one thing I can say is that\
+      \ Epic certainly doesn't make any easier to decipher what exactly is going on."
+  properties: []
+  revId: 3228
+name: "Legacy:Firing Projectile Weapons"
+revision:
+  revid: 3228
+  parentid: 3229
+  user: "210-55-121-166.dialup.xtra.co.nz"
+  timestamp: 1073703505.000000000
+  comment: "Solid Snake adds thoughts"
+timestamp: 1668787520.450478000

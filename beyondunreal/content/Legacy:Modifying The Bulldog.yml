@@ -1,0 +1,928 @@
+---
+parse:
+  title: "Legacy:Modifying The Bulldog"
+  text:
+    text: "<p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n\
+      </div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#Introduction\"\
+      ><span class=\"tocnumber\">1</span> <span class=\"toctext\">Introduction</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-2\"><a href=\"#Tutorials\"><span class=\"\
+      tocnumber\">2</span> <span class=\"toctext\">Tutorials</span></a>\n<ul>\n<li\
+      \ class=\"toclevel-2 tocsection-3\"><a href=\"#Making_the_Bulldog_drive_faster\"\
+      ><span class=\"tocnumber\">2.1</span> <span class=\"toctext\">Making the Bulldog\
+      \ drive faster</span></a></li>\n<li class=\"toclevel-2 tocsection-4\"><a href=\"\
+      #Using_the_TorqueCurves_for_Gears\"><span class=\"tocnumber\">2.2</span> <span\
+      \ class=\"toctext\">Using the TorqueCurves for Gears</span></a></li>\n<li class=\"\
+      toclevel-2 tocsection-5\"><a href=\"#Adding_Shadow_to_the_Bulldog\"><span class=\"\
+      tocnumber\">2.3</span> <span class=\"toctext\">Adding Shadow to the Bulldog</span></a></li>\n\
+      </ul>\n</li>\n<li class=\"toclevel-1 tocsection-6\"><a href=\"#Related_Topics\"\
+      ><span class=\"tocnumber\">3</span> <span class=\"toctext\">Related Topics</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-7\"><a href=\"#Discussion\"><span class=\"\
+      tocnumber\">4</span> <span class=\"toctext\">Discussion</span></a></li>\n</ul>\n\
+      </div>\n<p></p>\n<h2><span class=\"mw-headline\" id=\"Introduction\">Introduction</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Modifying_The_Bulldog?section=1\" title=\"Edit section:\
+      \ Introduction\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>A lot of people will want to play around with the demo vehicle that comes\
+      \ with <a href=\"/Legacy:UT2003\" title=\"Legacy:UT2003\" class=\"mw-redirect\"\
+      >UT2003</a>, the Bulldog. This page holds information about how to change certain\
+      \ aspects of the Bulldog.</p>\n<p>The Bulldog in UT2004 is the same code, but\
+      \ due to the move of KVehicle from a subclass of Pawn to a subclass of Vehicle,\
+      \ and with all the other changes that took place for Vehicle support in UT2004,\
+      \ the Bulldog is broken. To fix it, see the UT2004 Fix section on the <a href=\"\
+      /Legacy:Bulldog\" title=\"Legacy:Bulldog\">Bulldog</a> page.</p>\n<h2><span\
+      \ class=\"mw-headline\" id=\"Tutorials\">Tutorials</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Modifying_The_Bulldog?section=2\"\
+      \ title=\"Edit section: Tutorials\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<h3><span class=\"mw-headline\" id=\"Making_the_Bulldog_drive_faster\"\
+      >Making the Bulldog drive faster</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Modifying_The_Bulldog?section=3\"\
+      \ title=\"Edit section: Making the Bulldog drive faster\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h3>\n<p>This question was asked on\
+      \ the BU coding forum and is interesting because it needs general insight on\
+      \ how acceleration and speed are done on vehicles in general. To find out about\
+      \ this, an important function to observe is the following function taken from\
+      \ the <a href=\"/Legacy:KCar\" title=\"Legacy:KCar\">KCar</a> class:</p>\n<div\
+      \ dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"co1\">// Tell it your\
+      \ current throttle, and it will give you an output torque</span>\n<span class=\"\
+      co1\">// This is currently like an electric motor</span>\n<span class=\"kw1\"\
+      >function</span> <span class=\"kw5\">float</span> <span class=\"kw8\">Engine</span><span\
+      \ class=\"br0\">(</span><span class=\"kw5\">float</span> Throttle<span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">float</span> torque;\n \n\ttorque <span class=\"sy0\"\
+      >=</span> <span class=\"kw3\">Abs</span><span class=\"br0\">(</span>Throttle<span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">*</span> Gear <span class=\"sy0\"\
+      >*</span> <span class=\"kw3\">InterpCurveEval</span><span class=\"br0\">(</span>TorqueCurve,\
+      \ WheelSpinSpeed<span class=\"br0\">)</span>;\n \n\tGraphData<span class=\"\
+      br0\">(</span><span class=\"st0\">\"SpinSpeed\"</span>, WheelSpinSpeed<span\
+      \ class=\"br0\">)</span>;\n\tGraphData<span class=\"br0\">(</span><span class=\"\
+      st0\">\"Torque\"</span>, torque<span class=\"br0\">)</span>;\n \n\t<span class=\"\
+      kw2\">return</span> <span class=\"sy0\">-</span><span class=\"nu0\">1</span>\
+      \ <span class=\"sy0\">*</span> torque;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>It calculates the torque of the wheels using Throttle (player presses\
+      \ up or down), the gear (forwards or backwards) and the wheel spin speed in\
+      \ combination with a torque curve. The calculated torque is in its turn applied\
+      \ to the KMotorTorque property of the <a href=\"/Legacy:KCarWheelJoint\" title=\"\
+      Legacy:KCarWheelJoint\">KCarWheelJoint</a> associated with every tire (<a href=\"\
+      /Legacy:KTire\" title=\"Legacy:KTire\">KTire</a>.WheelJoint). So to increase\
+      \ the maximum speed of the Bulldog or its acceleration, we only need to change\
+      \ the TorqueCurve. This can be done in the <a href=\"/Legacy:Default_Properties\"\
+      \ title=\"Legacy:Default Properties\">Default Properties</a> of a (user written)\
+      \ subclass by overriding the default value in the Bulldog class.</p>\n<p>The\
+      \ default value for TorqueCurve in the Bulldog class is:</p>\n<div dir=\"ltr\"\
+      \ class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\">TorqueCurve<span class=\"sy0\">=</span><span class=\"\
+      br0\">(</span>Points<span class=\"sy0\">=</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">(</span>InVal<span class=\"sy0\">=</span><span class=\"nu0\"\
+      >0</span>,OutVal<span class=\"sy0\">=</span><span class=\"nu0\">270</span><span\
+      \ class=\"br0\">)</span>,<span class=\"br0\">(</span>InVal<span class=\"sy0\"\
+      >=</span><span class=\"nu0\">200000</span>,OutVal<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">270</span><span class=\"br0\">)</span>,<span class=\"br0\">(</span>InVal<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">300000</span>,OutVal<span class=\"\
+      sy0\">=</span><span class=\"nu0\">0</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span></pre></div>\n</div>\n<dl>\n\
+      <dd><b>Note:</b> If you are using UnrealEd you can't see the default properties\
+      \ section of the class in it's source. Instead, you can right-click the class\
+      \ in the class tree and choose 'Default Properties...'. The above value will\
+      \ be under the KCar rollout.</dd>\n</dl>\n<p>Basically this value of TorqueCurve\
+      \ means the acceleration will be constant while wheel spin speed is between\
+      \ 0 and 200000, and that it will linearly decrease between 200000 and 300000.\
+      \ For RPM, these values will probably need to be divided by 65535 (see <a href=\"\
+      http://udn.epicgames.com/Two/KarmaReference\" class=\"extiw\" title=\"udn2:KarmaReference\"\
+      >udn2:KarmaReference</a>). The InterpCurveEval function will probably work the\
+      \ three coordinates in a curve so the actual \"wheel-spin -&gt; torque\" relation\
+      \ will be a somewhat smoothed out version.</p>\n<p>To <b>increase the maximum\
+      \ speed</b> of the Bulldog, you can simply make the torque last on higher wheel\
+      \ spin speeds by increasing the last two InVal numbers.</p>\n<p>To <b>increase\
+      \ the acceleration</b> of the Bulldog, you can increase the value of the OutVal\
+      \ properties. This will not have a very noticable effect though, because the\
+      \ wheels will slid very much. But decreasing acceleration works very well.</p>\n\
+      <p>Be carefull though, the Bulldog is not build on such high speeds. The front\
+      \ wheels will quickly lift from the air and make steering impossible, and you'll\
+      \ run into some rock eventually and fly miles away. Of course, the steering\
+      \ problem could in its turn be worked around by deviding the weight of the Bulldog\
+      \ to have more mass in the front. Something that could be covered in a tutorial\
+      \ on coding <a href=\"/Legacy:Karma\" title=\"Legacy:Karma\">Karma</a> objects\
+      \ I think.</p>\n<h3><span class=\"mw-headline\" id=\"Using_the_TorqueCurves_for_Gears\"\
+      >Using the TorqueCurves for Gears</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Modifying_The_Bulldog?section=4\"\
+      \ title=\"Edit section: Using the TorqueCurves for Gears\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h3>\n<p><b>Kaoh:</b> I would like\
+      \ to add some info to the TorqueCurve info, first time so i hope I do it correctly&#160;;).</p>\n\
+      <p><b>Note</b> To do this you need to subclass the Bulldog, you cant do this\
+      \ when you place a bulldog or something.</p>\n<p>The Curve can be build with\
+      \ as much points as you want. All points consist of 2 pairs the InVal and OutVal\
+      \ as shown above. The Outval is the acceleration the vehicle will have, the\
+      \ Inval specify's the wheelspin range for what this OutVal is valid for. Check\
+      \ the above examples for more info on this.</p>\n<p>This means that the acceleration\
+      \ will always be only attached to the wheelspin. With gears you want to simulate\
+      \ the loss of acceleration when the car drives too slow for that gear, this\
+      \ can't be done with one Curve.</p>\n<p>Think of this as Gears in a car where\
+      \ you actually change the gear to get a better Curve for that speed.</p>\n<p>The\
+      \ best way to do that is to specify multiple gear ratios.</p>\n<div dir=\"ltr\"\
+      \ class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\">TorqueCurve<span class=\"br0\">[</span><span class=\"\
+      nu0\">1</span><span class=\"br0\">]</span><span class=\"sy0\">=</span><span\
+      \ class=\"br0\">(</span>Points<span class=\"sy0\">=</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">(</span>InVal<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0</span>,OutVal<span class=\"sy0\">=</span><span class=\"nu0\"\
+      >270</span><span class=\"br0\">)</span>,<span class=\"br0\">(</span>InVal<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">200000</span>,OutVal<span class=\"\
+      sy0\">=</span><span class=\"nu0\">270</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\nTorqueCurve<span class=\"\
+      br0\">[</span><span class=\"nu0\">2</span><span class=\"br0\">]</span><span\
+      \ class=\"sy0\">=</span><span class=\"br0\">(</span>Points<span class=\"sy0\"\
+      >=</span><span class=\"br0\">(</span><span class=\"br0\">(</span>InVal<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0</span>,OutVal<span class=\"sy0\"\
+      >=</span><span class=\"nu0\">2</span><span class=\"br0\">)</span>,<span class=\"\
+      br0\">(</span>InVal<span class=\"sy0\">=</span><span class=\"nu0\">200000</span>,OutVal<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">270</span><span class=\"br0\">)</span>,<span\
+      \ class=\"br0\">(</span>InVal<span class=\"sy0\">=</span><span class=\"nu0\"\
+      >300000</span>,OutVal<span class=\"sy0\">=</span><span class=\"nu0\">0</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span><span class=\"br0\">)</span></pre></div>\n\
+      </div>\n<p>This will make it so that in the first gear you can only go up to\
+      \ 200000 wheelspin but with good acceleration. In the second gear you will now\
+      \ accelerate really bad till you hit that 200000 wheelspin and then accelerate\
+      \ good up to 300000.</p>\n<p>This is rather simple to implement to a vehicle\
+      \ with gears.</p>\n<p>You can now simply change the code in the engine function\
+      \ to use the correct Curve and add some code that switches gears.</p>\n<div\
+      \ dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"co1\">// Tell it your\
+      \ current throttle, and it will give you an output torque</span>\n<span class=\"\
+      co1\">// This is currently like an electric motor</span>\n<span class=\"kw1\"\
+      >function</span> <span class=\"kw5\">float</span> <span class=\"kw8\">Engine</span><span\
+      \ class=\"br0\">(</span><span class=\"kw5\">float</span> Throttle<span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">float</span> torque;\n \n\ttorque <span class=\"sy0\"\
+      >=</span> <span class=\"kw3\">Abs</span><span class=\"br0\">(</span>Throttle<span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">*</span> Gear <span class=\"sy0\"\
+      >*</span> <span class=\"kw3\">InterpCurveEval</span><span class=\"br0\">(</span>TorqueCurve<span\
+      \ class=\"br0\">[</span>Gear<span class=\"br0\">]</span>, WheelSpinSpeed<span\
+      \ class=\"br0\">)</span>;\n \n\tGraphData<span class=\"br0\">(</span><span class=\"\
+      st0\">\"SpinSpeed\"</span>, WheelSpinSpeed<span class=\"br0\">)</span>;\n\t\
+      GraphData<span class=\"br0\">(</span><span class=\"st0\">\"Torque\"</span>,\
+      \ torque<span class=\"br0\">)</span>;\n \n\t<span class=\"kw2\">return</span>\
+      \ <span class=\"sy0\">-</span><span class=\"nu0\">1</span> <span class=\"sy0\"\
+      >*</span> torque;\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>As you\
+      \ can see I made of the TorqueCurve a Array so you can easely add more curves\
+      \ depending on the amount of gears you want.</p>\n<p>This way you can let a\
+      \ fith gear accelerate almost to none but a first gear with good speed.</p>\n\
+      <p><b>Note</b> The actual speed of the vehicle is based primairly on the Torque\
+      \ that is genererated on the wheels. The second major factor is the size of\
+      \ the wheels. When you increase the size of the wheels and keep the torgue the\
+      \ same, you will drive faster because very simply the rotation stays the same.</p>\n\
+      <p>I hope this helps some people.</p>\n<p>Thanks to Bjorn for giving this info\
+      \ in the first place, helped me out a lot</p>\n<p><b>Birelli:</b> If I'm reading\
+      \ the above code right, it needs a slight tweak in that you can't both multiply\
+      \ by the current gear AND reference the correct torque curve with it, unless\
+      \ your torque curves are all going to take into account the fact that when you\
+      \ kick the bulldog into second gear you're going to automatically double the\
+      \ torque. I think if you actually used that code above it would be readily apparent\
+      \ that there was a problem with it the first time you shifted gears and your\
+      \ acceleration suddenly doubled&#160;;).</p>\n<p><b>Foxpaw:</b> Actually the\
+      \ approximate speed of the vehicle is based on the rate at which the wheels\
+      \ are turning multiplied by their radius, multiplied by the \"coefficient of\
+      \ traction\" which is some mangled native version of the friction of the wheels\
+      \ on the ground. Torque causes the wheels to accelerate. They will cease accelerating\
+      \ when their torque and their angular resistance to acceleration reach equilibrium.\
+      \ If the same amount of torque continues higher, it will increase max speed,\
+      \ but only to a point. (The default bulldog does not reach the equlibrium.)\
+      \ You might also consider than the first curve in the above will allow you to\
+      \ get maximum torque at ANY wheel spin speed, you need to terminate it by having\
+      \ the last value be 0 or whatever amount you wanted for the wheels to reach\
+      \ the equilibrium point. I'll refactor this into the above someday.&#160;:P</p>\n\
+      <h3><span class=\"mw-headline\" id=\"Adding_Shadow_to_the_Bulldog\">Adding Shadow\
+      \ to the Bulldog</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Modifying_The_Bulldog?section=5\" title=\"Edit\
+      \ section: Adding Shadow to the Bulldog\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>If you have driven around with the Bulldog you must\
+      \ have noticed that it didn't have any shadow. Adding shadow to the Bulldog\
+      \ would make blend much more realistically into its environment. There's a reason\
+      \ for not having shadow on the Bulldog though, it's because it is slow. It's\
+      \ even very slow when viewing the Bulldog from very close (only tested on Radeon\
+      \ 8500, needs confirmation for other cards). But slow or not, let's add it anyway.</p>\n\
+      <p><a href=\"/Legacy:Create_A_Subclass\" title=\"Legacy:Create A Subclass\"\
+      >Create A Subclass</a> of the Bulldog, eg \"MyBulldog\" in your own \"MyPackage\"\
+      . Once you've set that up, read on. In <a href=\"/Legacy:UT2003\" title=\"Legacy:UT2003\"\
+      \ class=\"mw-redirect\">UT2003</a>, shadows are cast by <a href=\"/Legacy:ShadowProjector\"\
+      \ title=\"Legacy:ShadowProjector\">ShadowProjectors</a>. Our own Bulldog will\
+      \ need a shadow projector associated with it so add this variable:</p>\n<div\
+      \ dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">var</span> <span\
+      \ class=\"kw9\">ShadowProjector</span> BulldogShadow;</pre></div>\n</div>\n\
+      <p>We only have to make sure that the shadow is spawned as soon as the Bulldog\
+      \ is spawned. This can be done in the function PostBeginPlay(). The spawned\
+      \ shadow will also need to be removed as soon as the Bulldog is removed. This\
+      \ can be done in the function Destroyed(). Here's the code to add to you MyBulldog\
+      \ class:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n\
+      <div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\"\
+      >simulated</span> <span class=\"kw1\">function</span> <span class=\"kw4\">PostBeginPlay</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \t<span class=\"kw6\">Super</span>.<span class=\"kw4\">PostBeginPlay</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n \n\t<span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span><span class=\"kw7\">Level</span>.<span\
+      \ class=\"me0\">NetMode</span> <span class=\"sy0\">!=</span> NM_DedicatedServer<span\
+      \ class=\"br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t\tBulldogShadow\
+      \ <span class=\"sy0\">=</span> <span class=\"kw4\">Spawn</span><span class=\"\
+      br0\">(</span><span class=\"kw1\">class</span><span class=\"st0\">'ShadowProjector'</span>,\
+      \ <span class=\"kw6\">self</span>, <span class=\"st0\">''</span>, <span class=\"\
+      kw7\">Location</span><span class=\"br0\">)</span>;\n\t\tBulldogShadow.<span\
+      \ class=\"me0\">ShadowActor</span> <span class=\"sy0\">=</span> <span class=\"\
+      kw6\">self</span>;\n\t\tBulldogShadow.<span class=\"me0\">bBlobShadow</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"kw6\">false</span>;\n\t\tBulldogShadow.<span\
+      \ class=\"me0\">LightDirection</span> <span class=\"sy0\">=</span> <span class=\"\
+      kw3\">Normal</span><span class=\"br0\">(</span><span class=\"kw3\">vect</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">1</span>,<span class=\"nu0\">1</span>,<span\
+      \ class=\"nu0\">6</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n\
+      \t\tBulldogShadow.<span class=\"me0\">LightDistance</span> <span class=\"sy0\"\
+      >=</span> <span class=\"nu0\">1200</span>;\n\t\tBulldogShadow.<span class=\"\
+      me0\">MaxTraceDistance</span> <span class=\"sy0\">=</span> <span class=\"nu0\"\
+      >350</span>;\n\t\tBulldogShadow.<span class=\"me0\">InitShadow</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n\t<span class=\"br0\">}</span>\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">simulated</span> <span\
+      \ class=\"kw1\">function</span> <span class=\"kw4\">Destroyed</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t\
+      <span class=\"kw2\">if</span> <span class=\"br0\">(</span>BulldogShadow <span\
+      \ class=\"sy0\">!=</span> <span class=\"kw5\">None</span><span class=\"br0\"\
+      >)</span> BulldogShadow.<span class=\"kw4\">Destroy</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>;\n\t<span class=\"kw6\">Super</span>.<span\
+      \ class=\"kw4\">Destroyed</span><span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>;\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>Notice that\
+      \ we don't need to update the shadow ourselves, the <a href=\"/Legacy:ShadowProjector\"\
+      \ title=\"Legacy:ShadowProjector\">ShadowProjector</a> will take care of that\
+      \ in its Tick() function. At this stage only the chassis of the Bulldog will\
+      \ cast a shadow. Of course, this doesn't look quite right so we'll need to add\
+      \ shadow to the tires too. I'll leave it to your own practice to subclass BulldogTire\
+      \ with your own MyBulldogTire class and add shadow casting to it.</p>\n<p>Now\
+      \ I assume you have created a MyBulldogTire class and added shadow casting to\
+      \ that one. We still have to make our MyBulldog class use those tires. <a href=\"\
+      /Legacy:KCar\" title=\"Legacy:KCar\">KCar</a> has declared two variables for\
+      \ us to use for specifying the tires of any such vehicle:</p>\n<div dir=\"ltr\"\
+      \ class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">var</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw9\">KCar</span><span class=\"br0\">)</span> class<span class=\"\
+      sy0\">&lt;</span>KTire<span class=\"sy0\">&gt;</span> FrontTire<span class=\"\
+      re0\">Class</span>&lt; SEMI &gt;\n<span class=\"kw1\">var</span> <span class=\"\
+      br0\">(</span><span class=\"kw9\">KCar</span><span class=\"br0\">)</span> class<span\
+      \ class=\"sy0\">&lt;</span>KTire<span class=\"sy0\">&gt;</span> RearTire<span\
+      \ class=\"re0\">Class</span>&lt; SEMI &gt;</pre></div>\n</div>\n<p>Notice how\
+      \ the Bulldog class sets these to BulldogTire in its own defaultproperties.\
+      \ We will set them to our own tire class like this:</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw1\">defaultproperties</span>\n<span class=\"\
+      br0\">{</span>\n\tFrontTireClass<span class=\"sy0\">=</span><span class=\"kw1\"\
+      >class</span><span class=\"st0\">'MyBulldogTire'</span>\n\tRearTireClass<span\
+      \ class=\"sy0\">=</span><span class=\"kw1\">class</span><span class=\"st0\"\
+      >'MyBulldogTire'</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <p>And we're done. Our Bulldog and its tires will now be casting a nice shadow\
+      \ on the ground as well as on other static meshes like other Bulldogs. Here's\
+      \ a screenshot showing off the effect:</p>\n<div class=\"center\">\n<div class=\"\
+      floatnone\"><a href=\"/File:Legacy_BulldogShadowOnCrop.jpeg\" class=\"image\"\
+      ><img alt=\"Legacy BulldogShadowOnCrop.jpeg\" src=\"/w/images/Legacy_BulldogShadowOnCrop.jpeg\"\
+      \ width=\"250\" height=\"208\" /></a></div>\n</div>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Related_Topics\">Related Topics</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Modifying_The_Bulldog?section=6\"\
+      \ title=\"Edit section: Related Topics\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<ul>\n<li><a href=\"/Legacy:Vehicles\" title=\"Legacy:Vehicles\"\
+      >Vehicles</a></li>\n<li><a href=\"/Legacy:KVehicle\" title=\"Legacy:KVehicle\"\
+      >KVehicle</a>\n<ul>\n<li><a href=\"/Legacy:KCar\" title=\"Legacy:KCar\">KCar</a>\n\
+      <ul>\n<li><a href=\"/Legacy:Bulldog\" title=\"Legacy:Bulldog\">Bulldog</a></li>\n\
+      </ul>\n</li>\n</ul>\n</li>\n<li><a href=\"/Legacy:KVehicleFactory\" title=\"\
+      Legacy:KVehicleFactory\">KVehicleFactory</a>\n<ul>\n<li><a href=\"/Legacy:BulldogFactory\"\
+      \ title=\"Legacy:BulldogFactory\">BulldogFactory</a></li>\n</ul>\n</li>\n</ul>\n\
+      <h2><span class=\"mw-headline\" id=\"Discussion\">Discussion</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Modifying_The_Bulldog?section=7\"\
+      \ title=\"Edit section: Discussion\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p><b>Bjorn:</b> Please comment. It's my first real addition\
+      \ to the Wiki so I would like to know if it's ok. Also, any requests on more\
+      \ info are welcome.</p>\n<p><b>Highlander:</b> Looks great, i was wondering\
+      \ if there was any bot support (ie: ai controlled vehicles) at all.</p>\n<p><b>AZTEX:</b>\
+      \ Very cool, I wonderd how to increase the Bulldog's mass to make it less like\
+      \ a fether and more like well a brick with weel's \"which it is!\" (aztex_original@hotmail)</p>\n\
+      <p><b>Bjorn:</b> Thanks for these suggestions. I'll look into the AI and weight,\
+      \ but I don't think AI will be easy if at all doable.</p>\n<p><b>AlphaOne:</b>\
+      \ I think there is a solution to fast spinning wheels. It was outlined in the\
+      \ Karma reference at UDN. It shows that for fast spinnig hinges there is a special\
+      \ value that can be set to TRUE to prevent calculation errors.</p>\n<p><b>Bjorn:</b>\
+      \ Thanks, I'll try this out.</p>\n<p><b>Kaoh:</b> I added some Gear for TorqueCurve\
+      \ info, I hope i did it correctly it is my first change on Wiki. If it doesnt\
+      \ have enough new value please feel free to remove it again.</p>\n<p><b>Chema:</b>\
+      \ To tweak the Bulldog on the fly, get on it and do a \"editobj bulldog\" in\
+      \ console (and, if you have not tryed before, give a look to \"editobj xPawn\"\
+      \ -player- and \"editobj LevelInfo0\" -wolrd-). More <a href=\"/Legacy:Console_Commands/Debugging_Console_Commands\"\
+      \ title=\"Legacy:Console Commands/Debugging Console Commands\">Console Commands/Debugging\
+      \ Console Commands</a>.</p>\n<p><b>Foxpaw:</b> This may not work for all parameters\
+      \ - the Karma physics are only updated if you call the relevant function after\
+      \ changing it's values. This will work fine for some things like the torque\
+      \ curves, however.</p>\n<hr />\n<p><b>AlphaOne:</b> About the 'Slow Shadows'\
+      \ → to solve the problem just use proxy geometry to cast shadows. Use somthing\
+      \ low poly, such as the shapes used by <b>KARMA</b> to calculate collisions.\
+      \ That should increase the performance.</p>\n<p><b>The_Watcher:</b> Does anyone\
+      \ know how to go about using proxy geometry to cast shadows. I am a little confused.\
+      \ Thank you.</p>\n<p><b>Solid Snake:</b> What he means is that the Bulldog mesh\
+      \ itself has a lot of polygons and so on, which is probably not needed in creating\
+      \ a rather accurate yet blurry shadow. What he means is that when you want the\
+      \ shadow, spawn another actor which has a similiar shape to the Bulldog but\
+      \ a lot less polycounts and since that shape[aka 3D model] has less polys and\
+      \ then generate the shadow from that mesh and it will be much quicker.</p>\n\
+      <hr />\n<p><b>Daid303:</b> It is in the text above, but not very clear</p>\n\
+      <p>If you want it faster: TorqueCurve=(Points=((InVal=0,OutVal=270),(InVal=400000,OutVal=270),(InVal=500000,OutVal=0)))</p>\n\
+      <p>If you want it faster accalitation: TorqueCurve=(Points=((InVal=0,OutVal=500),(InVal=400000,OutVal=500),(InVal=500000,OutVal=0)))</p>\n\
+      <p><b>Daid303:</b> ProjectX if you are xtremely bored then help building up\
+      \ these pages: <a href=\"/Legacy:Vehicles\" title=\"Legacy:Vehicles\">Vehicles</a>\
+      \ <a href=\"/Legacy:KVehicle\" title=\"Legacy:KVehicle\">KVehicle</a> <a href=\"\
+      /Legacy:KCar\" title=\"Legacy:KCar\">KCar</a></p>\n<p><b>ProjectX:</b> I would\
+      \ but my train of thought is solely on mapping, get anywhere near coding and\
+      \ it de-rails, killing all the passengers (much like British rail really&#160;:)\
+      \ ) Anyway i really like what your doing, but is it possible to get a 1st person\
+      \ view camera inside that thing? would be well good. And a sort of system that\
+      \ if the bulldog was not used in, say, 1 minute, it is automatically destroyed,\
+      \ lowers fps and also, if you drive into a pit you cant get out of, you die,\
+      \ respawn and wait a bit for a new bulldog. (lets just say ive done that more\
+      \ than once, (and not just on UT2K3 either) thankyou AA).</p>\n<p><b>Daid303:</b>\
+      \ The 1 min no use time isn't that hard, the \"you're f*cked\" code is a lot\
+      \ harder.</p>\n<p><b>ProjectX:</b> What i meant was that you'd kill yourself\
+      \ with your own weapon and then respawn and wait</p>\n<p><b>Daid303:</b>A sort\
+      \ like, you press AltFire, and you hear. Tick....Tick....Tick.... And the next\
+      \ thing you remember is ariving at the gates of hell.</p>\n<p><b>ProjectX:</b>\
+      \ You could, or you could just get them to shoot themselves with a rocket launcher,\
+      \ would be much easier, you dont need to code anything for that. Just have to\
+      \ shoot yourself.</p>\n<p><b>Chema:</b> Using your shield gun is more fun, and\
+      \ sometimes you can actually get out of the hole hammer-jumping! Of course,\
+      \ for the purist scripter, a \"&lt;TAB&gt; suicide\" would seem more logical&#160;;-)</p>\n\
+      <hr />\n<p><b>Chimaira:</b> If you are making a copy of the bulldog in uED (almost)\
+      \ all of the default-propeteries are diffrent from the original bulldog...in\
+      \ some places there is no value over all.</p>\n<p>So...just open the default-propeteries\
+      \ of your car and the bulldog and \"copy\" all that is in the bulldog-DP.</p>\n\
+      <p>After you´ve done that you want to save your car right? So... save the package\
+      \ you made your car in.</p>\n<p>It´s just one big problem......when you try\
+      \ to save your class with your own car it says \"The file on disk(26,058)is\
+      \ larger than the file in memory(-1). Are you sure you want to overwrite it?\
+      \ 'yes/no'\"</p>\n<p>If you choose yes your file is deleted (-1 means nothing).</p>\n\
+      <p>I´ve tested all the values that you need to change and i found out that it\
+      \ is the karma-value that messes up everything.</p>\n<p>Does anyone know how\
+      \ i could prevent this error or(and) tell me about any other scripting-programs.</p>\n\
+      <p><b>Daid303:</b> Easy fix: Don't use UnrealEd (Use UCC make), it seems to\
+      \ messup as soon as you have InLine Objects (or how is that called?) After 1\
+      \ rebuild with UCC make (with custom Objects in default properties), you can\
+      \ step back to UnrealEd (if you want, but there are much better tools out there)</p>\n\
+      <hr />\n<p><b>ProjectX:</b> Does anyone know where the Uscript for the bulldog\
+      \ is once uve exported the scripts, i cant find it to edit it in notepad!</p>\n\
+      <p><b>BM.Deathwind:</b> I suggest using UDE to edit code. It should be in the\
+      \ UT2k3 \"System\" folder (Or you can get it from <a rel=\"nofollow\" class=\"\
+      external free\" href=\"http://unreal.epicgames.com/\">http://unreal.epicgames.com/</a>\
+      \ ). It builds the class heirarchy too, so you can find it that way.</p>\n<p><b>ProjectX;</b>\
+      \ thanx, ive got that dun now, i only have one more problem, when i load the\
+      \ new bulldog in a level, it appears, but when i walk up to it, and press [use]\
+      \ i cant get in it. The code i've changed is on a separate page: <a href=\"\
+      /Legacy:ProjectX/Code\" title=\"Legacy:ProjectX/Code\">ProjectX/Code</a></p>\n\
+      <p><b>Kaoh:</b> you need to change the triggers also, make a copy of the BulldogTrigger.uc\
+      \ and rename it, in there you can specify the correct class for you vehicle.</p>\n\
+      <hr />\n<p><b>Chema:</b> A question: to add shadow to the bulldog, you have\
+      \ to subclass it, and then change the Vehicles.Bulldogs in the map, or in Vehicles.BulldogFactory.VehicleClass,\
+      \ for MyPack.BulldogShadows. Or, as I did first, modifying the original Bulldog\
+      \ instead of subclassing it (Larry Wall's fault!). Of course, for VehicleDemo.ut2,\
+      \ the best way is to change Vehicles.BulldogFactory.VehicleClass, but what If\
+      \ I had several maps with spawned Bulldogs (but no factories)? I could edit\
+      \ the map, but how could I add the shadow to the original Bulls, only with code?\
+      \ Maybee with an intercepting function, like UT's SpawnNotify? Or redefining\
+      \ (oscuring?) the Bulldog?</p>\n<p>Supose there is no nice (\"objetive\") way\
+      \ to do such thing, but you know, its a subjetive doubt&#160;:-D</p>\n<p><b>Foxpaw:</b>\
+      \ You could use a mutator to do that. That would likely be the best way.</p>\n\
+      <p><b>Chema:</b> But what would I do in the mutator? Redefine/obscure the bulldog\
+      \ class?</p>\n<p><b>Foxpaw:</b> Mutators have an event called CheckReplacement\
+      \ and a function called ReplaceWith. This allows you to replace all instances\
+      \ of a given class with another class. It is used, for instance, in the Arena\
+      \ mutator to change all of the weapons. Likewise you could use the mutator to\
+      \ replace all instances of the Bulldog with your new, modified Bulldog. That\
+      \ way no maps would need to be modified, and backwards compatibility would also\
+      \ be retained if people wanted to play a map containing your modified bulldogs\
+      \ but would rather use the default bulldogs. The mutator could look something\
+      \ like the following, with \"NewBulldogClass\" replaced with whatever the class\
+      \ name of your modified bulldog is. It might not compile or work quite right,\
+      \ I didn't test it. But you get the idea:</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"co1\">// Replace all class instances of 'BullDog' with 'NewBulldogClass'.</span>\n\
+      <span class=\"kw1\">function</span> <span class=\"kw5\">bool</span> CheckReplacement<span\
+      \ class=\"br0\">(</span><span class=\"kw9\">Actor</span> Other, <span class=\"\
+      kw1\">out</span> <span class=\"kw5\">byte</span> bSuperRelevant<span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span> Other.<span class=\"kw3\">IsA</span><span class=\"\
+      br0\">(</span> <span class=\"st0\">'BullDog'</span> <span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">&amp;&amp;</span> <span class=\"sy0\">!</span>Other.<span\
+      \ class=\"kw3\">IsA</span><span class=\"br0\">(</span><span class=\"st0\">'NewBulldogClass'</span><span\
+      \ class=\"br0\">)</span> <span class=\"br0\">)</span>\n  <span class=\"br0\"\
+      >{</span>\n    ReplaceWith<span class=\"br0\">(</span> Other, NewBulldogClass\
+      \ <span class=\"br0\">)</span>;\n    <span class=\"kw2\">return</span> <span\
+      \ class=\"kw6\">false</span>;\n  <span class=\"br0\">}</span>\n \n  <span class=\"\
+      kw6\">Super</span>.<span class=\"me0\">CheckReplacement</span><span class=\"\
+      br0\">(</span> Other, bSuperRelevant <span class=\"br0\">)</span>;\n  <span\
+      \ class=\"kw2\">return</span> <span class=\"kw6\">true</span>;\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<hr />\n<p><b>Chema:</b> On a less bizarre\
+      \ side, I'm planning to finish the sound and force feedback code of the bullye.\
+      \ Has anyone done it already?</p>\n<p><b>Foxpaw:</b> I don't have any force\
+      \ feedback devices so I haven't tested that but the sounds (at least the ones\
+      \ I played around with) work fine. There just isn't any sounds set into the\
+      \ sound variables. All of the function calls, etc. are already in place, you\
+      \ just need to add sounds in the defaultproperties.</p>\n<p><b>Billy Boy:</b>\
+      \ How would I go about making the Bulldog smaller? I want to half its size for\
+      \ a smaller indoor arena.</p>\n<p><b>ProjectX (Finally decided to learn coding\
+      \ yay!!!):</b> Billy, all you do is change the static mesh scale in the default\
+      \ properties. I suggest you start using an IDE such as conTEXT or UDE to do\
+      \ your coding since UnrealEd won' let you do advanced stuff like custom models.</p>\n\
+      <p><b>Foxpaw:</b> Actually you can, it's just not very convenient. I too would\
+      \ not recommend using UnrealEd to modify script though. I used to just use notepad,\
+      \ but now I use <a href=\"/Legacy:TextPad\" title=\"Legacy:TextPad\">TextPad</a>.</p>\n\
+      <p><b>Erdrik:</b> I've been messing around with vehicle code for awhile(submited\
+      \ a hovertank code in the vehicles section), but I haven't really mess around\
+      \ with the wheels to much. I've been trying to make smaller wheels by simply\
+      \ scaling down the bulldog tires, but some odd things start happening. The collision\
+      \ and staticmesh are scaled down, as it actually looks smaller and I can bounce\
+      \ grenades around it accuratly. BUT, the wheel itself rest on the ground as\
+      \ if it were still as big as normal, making it look like the wheel is floating\
+      \ a bit off the ground. I'm assuming this is becuase the new scal isn't set\
+      \ properly in the Karma and was wondering if anyone new where I could go in\
+      \ the code to fix this?</p>\n<p><b>MythOpus:</b> I had some messings with vehicle\
+      \ code too. Most of the stuff I did caused errors and locked my computer up.\
+      \ Sigh... Anyways, to fix your wheel problem, I imagine that you haven't changed\
+      \ the position of the wheels (relative to the vehicle of course&#160;:)) . You'll\
+      \ have to experiment with this until you get what your looking for but if you\
+      \ look in the default properties and find a property called:</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\">     WheelFrontAlong<span class=\"sy0\">=-</span><span\
+      \ class=\"nu0\">100.000000</span>\n     WheelFrontAcross<span class=\"sy0\"\
+      >=</span><span class=\"nu0\">110.000000</span>\n     WheelRearAlong<span class=\"\
+      sy0\">=</span><span class=\"nu0\">115.000000</span>\n     WheelRearAcross<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">110.000000</span> \n     WheelVert<span\
+      \ class=\"sy0\">=-</span><span class=\"nu0\">15.000000</span> <span class=\"\
+      co1\">// For vertical alignment I believe ;)</span></pre></div>\n</div>\n<p><b>Erdrik:</b>\
+      \ No I already did that. I'm not having a problem with the wheels location.\
+      \ The problem is that even tho the graphic of the wheel is scaled down it still\
+      \ rolls on the ground as if it were bigger. the strange part is that weapon\
+      \ traces and projectiles collide properly!?</p>\n<p><b>MythOpus:</b> Well, did\
+      \ you make a new collision for the wheels? It doesn't need one&#160;:)</p>\n\
+      <p><b>Foxpaw:</b> Well, since it's a KTire, it's magic for Karma purposes. The\
+      \ original bulldog tire has a Karma collision hull but also a traditional collisionradius\
+      \ and collisionheight - maybe one of those is being used for the tire simulation.</p>\n\
+      <p><b>MythOpus:</b> Are you sure that the KTire has a karma collision hull?\
+      \ When you turn on that view karma collision button, it doesn't show an collision...</p>\n\
+      <p><b>Foxpaw:</b> Ah. That's because it has a \"Karma Primitive\" collision\
+      \ but no polygonal collision. You can use both, but the tire has only one. The\
+      \ \"Karma Primitive\" collision has to be specified in the modelling program,\
+      \ but allows you to do perfect spherical collision and cylinder collision. You\
+      \ can view these collision hulls by checking the \"Show Karma Primitives\" menu\
+      \ item.</p>\n<p><b>MythOpus:</b> I see&#160;:) It all becomes clear at last.</p>\n\
+      <p><b>WinterHummer:</b> I like what you all the work for the bulldog but i'm\
+      \ having trouble getting it to drive faster in UT2004. I've done the fix but\
+      \ i've tried \"KMaxSpeed\" Nope</p>\n<p><b>MythOpus:</b> I don't really deal\
+      \ with the workings of vehicles (I believe they should be EASIER to code), but\
+      \ I think you're better off working with UT2004's version of the vehicle code.\
+      \ It's more stable and works better. I also remember the last time I spawned\
+      \ a bulldog in UT2004. It moved for around 2 seconds then it just died and nothing\
+      \ could budge it.</p>\n<p><b>WinterHummer:</b> You're probably right about just\
+      \ working with the ut2004 SVehicle Code but its missing something and that is\
+      \ drivesplit. You know like front wheel driver or rear wheel drive.I got the\
+      \ going faster to work but now I cant get the wheelspin above 100000 &amp; change.\
+      \ Oh and changing the torecurve is having no effect.</p>\n\n<!-- \nNewPP limit\
+      \ report\nCPU time usage: 0.267 seconds\nReal time usage: 0.862 seconds\nPreprocessor\
+      \ visited node count: 105/1000000\nPreprocessor generated node count: 240/1000000\n\
+      Post‐expand include size: 21/2097152 bytes\nTemplate argument size: 0/2097152\
+      \ bytes\nHighest expansion depth: 2/40\nExpensive parser function count: 0/100\n\
+      -->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n100.00%\
+      \    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:2041-0!*!0!!en!5!*\
+      \ and timestamp 20221118020222 and revision id 4976\n -->\n"
+  categories:
+  - sortkey: "Modifying The Bulldog"
+    name: "Legacy_Tutorial"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:KVehicle"
+  - ns: 100
+    exists: true
+    name: "Legacy:Console Commands/Debugging Console Commands"
+  - ns: 100
+    exists: true
+    name: "Legacy:KCar"
+  - ns: 100
+    exists: true
+    name: "Legacy:Create A Subclass"
+  - ns: 100
+    exists: true
+    name: "Legacy:Vehicles"
+  - ns: 100
+    exists: true
+    name: "Legacy:Bulldog"
+  - ns: 100
+    exists: true
+    name: "Legacy:KCarWheelJoint"
+  - ns: 100
+    exists: true
+    name: "Legacy:KTire"
+  - ns: 100
+    exists: true
+    name: "Legacy:ShadowProjector"
+  - ns: 100
+    exists: true
+    name: "Legacy:Karma"
+  - ns: 100
+    exists: true
+    name: "Legacy:UT2003"
+  - ns: 100
+    exists: true
+    name: "Legacy:KVehicleFactory"
+  - ns: 100
+    exists: true
+    name: "Legacy:TextPad"
+  - ns: 100
+    exists: true
+    name: "Legacy:ProjectX/Code"
+  - ns: 100
+    exists: true
+    name: "Legacy:BulldogFactory"
+  - ns: 100
+    exists: true
+    name: "Legacy:Default Properties"
+  templates: []
+  images:
+  - "Legacy_BulldogShadowOnCrop.jpeg"
+  externallinks:
+  - "http://unreal.epicgames.com/"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Introduction"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Modifying_The_Bulldog"
+    byteoffset: 0
+    anchor: "Introduction"
+  - toclevel: 1
+    level: "2"
+    line: "Tutorials"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Modifying_The_Bulldog"
+    byteoffset: 520
+    anchor: "Tutorials"
+  - toclevel: 2
+    level: "3"
+    line: "Making the Bulldog drive faster"
+    number: "2.1"
+    index: "3"
+    fromtitle: "Legacy:Modifying_The_Bulldog"
+    byteoffset: 535
+    anchor: "Making_the_Bulldog_drive_faster"
+  - toclevel: 2
+    level: "3"
+    line: "Using the TorqueCurves for Gears"
+    number: "2.2"
+    index: "4"
+    fromtitle: "Legacy:Modifying_The_Bulldog"
+    byteoffset: 3591
+    anchor: "Using_the_TorqueCurves_for_Gears"
+  - toclevel: 2
+    level: "3"
+    line: "Adding Shadow to the Bulldog"
+    number: "2.3"
+    index: "5"
+    fromtitle: "Legacy:Modifying_The_Bulldog"
+    byteoffset: 7568
+    anchor: "Adding_Shadow_to_the_Bulldog"
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "3"
+    index: "6"
+    fromtitle: "Legacy:Modifying_The_Bulldog"
+    byteoffset: 10565
+    anchor: "Related_Topics"
+  - toclevel: 1
+    level: "2"
+    line: "Discussion"
+    number: "4"
+    index: "7"
+    fromtitle: "Legacy:Modifying_The_Bulldog"
+    byteoffset: 10791
+    anchor: "Discussion"
+  displaytitle: "Legacy:Modifying The Bulldog"
+  iwlinks:
+  - prefix: "udn2"
+    url: "http://udn.epicgames.com/Two/KarmaReference"
+    name: "udn2:KarmaReference"
+  wikitext:
+    text: "==Introduction==\n\nA lot of people will want to play around with the demo\
+      \ vehicle that comes with [[Legacy:UT2003|UT2003]], the Bulldog. This page holds\
+      \ information about how to change certain aspects of the Bulldog.\n\nThe Bulldog\
+      \ in UT2004 is the same code, but due to the move of KVehicle from a subclass\
+      \ of Pawn to a subclass of Vehicle, and with all the other changes that took\
+      \ place for Vehicle support in UT2004, the Bulldog is broken.  To fix it, see\
+      \ the UT2004 Fix section on the [[Legacy:Bulldog|Bulldog]] page.\n\n==Tutorials==\n\
+      \n===Making the Bulldog drive faster===\n\nThis question was asked on the BU\
+      \ coding forum and is interesting because it needs general insight on how acceleration\
+      \ and speed are done on vehicles in general. To find out about this, an important\
+      \ function to observe is the following function taken from the [[Legacy:KCar|KCar]]\
+      \ class:\n\n<uscript>\n// Tell it your current throttle, and it will give you\
+      \ an output torque\n// This is currently like an electric motor\nfunction float\
+      \ Engine(float Throttle)\n{\n\tlocal float torque;\n    \n\ttorque = Abs(Throttle)\
+      \ * Gear * InterpCurveEval(TorqueCurve, WheelSpinSpeed);\n\n\tGraphData(\"SpinSpeed\"\
+      , WheelSpinSpeed);\n\tGraphData(\"Torque\", torque);\n\n\treturn -1 * torque;\n\
+      }\n</uscript>\n\nIt calculates the torque of the wheels using Throttle (player\
+      \ presses up or down), the gear (forwards or backwards) and the wheel spin speed\
+      \ in combination with a torque curve. The calculated torque is in its turn applied\
+      \ to the KMotorTorque property of the [[Legacy:KCarWheelJoint|KCarWheelJoint]]\
+      \ associated with every tire ([[Legacy:KTire|KTire]].WheelJoint). So to increase\
+      \ the maximum speed of the Bulldog or its acceleration, we only need to change\
+      \ the TorqueCurve. This can be done in the [[Legacy:Default Properties|Default\
+      \ Properties]] of a (user written) subclass by overriding the default value\
+      \ in the Bulldog class.\n\nThe default value for TorqueCurve in the Bulldog\
+      \ class is:\n\n<uscript>\nTorqueCurve=(Points=((InVal=0,OutVal=270),(InVal=200000,OutVal=270),(InVal=300000,OutVal=0)))\n\
+      </uscript>\n\n:'''Note:''' If you are using UnrealEd you can't see the default\
+      \ properties section of the class in it's source. Instead, you can right-click\
+      \ the class in the class tree and choose 'Default Properties...'. The above\
+      \ value will be under the KCar rollout.\n\nBasically this value of TorqueCurve\
+      \ means the acceleration will be constant while wheel spin speed is between\
+      \ 0 and 200000, and that it will linearly decrease between 200000 and 300000.\
+      \ For RPM, these values will probably need to be divided by 65535 (see [[udn2:KarmaReference]]).\
+      \ The InterpCurveEval function will probably work the three coordinates in a\
+      \ curve so the actual \"wheel-spin -> torque\" relation will be a somewhat smoothed\
+      \ out version.\n\nTo '''increase the maximum speed''' of the Bulldog, you can\
+      \ simply make the torque last on higher wheel spin speeds by increasing the\
+      \ last two InVal numbers.\n\nTo '''increase the acceleration''' of the Bulldog,\
+      \ you can increase the value of the OutVal properties. This will not have a\
+      \ very noticable effect though, because the wheels will slid very much. But\
+      \ decreasing acceleration works very well.\n\nBe carefull though, the Bulldog\
+      \ is not build on such high speeds. The front wheels will quickly lift from\
+      \ the air and make steering impossible, and you'll run into some rock eventually\
+      \ and fly miles away. Of course, the steering problem could in its turn be worked\
+      \ around by deviding the weight of the Bulldog to have more mass in the front.\
+      \ Something that could be covered in a tutorial on coding [[Legacy:Karma|Karma]]\
+      \ objects I think.\n\n===Using the TorqueCurves for Gears===\n\n'''Kaoh:'''\
+      \ I would like to add some info to the TorqueCurve info, first time so i hope\
+      \ I do it correctly ;).\n\n'''Note''' To do this you need to subclass the Bulldog,\
+      \ you cant do this when you place a bulldog or something.\n\nThe Curve can be\
+      \ build with as much points as you want. All points consist of 2 pairs the InVal\
+      \ and OutVal as shown above. The Outval is the acceleration the vehicle will\
+      \ have, the Inval specify's the wheelspin range for what this OutVal is valid\
+      \ for. Check the above examples for more info on this.\n\nThis means that the\
+      \ acceleration will always be only attached to the wheelspin. With gears you\
+      \ want to simulate the loss of acceleration when the car drives too slow for\
+      \ that gear, this can't be done with one Curve.\n\nThink of this as Gears in\
+      \ a car where you actually change the gear to get a better Curve for that speed.\n\
+      \nThe best way to do that is to specify multiple gear ratios.\n\n<uscript>\n\
+      TorqueCurve[1]=(Points=((InVal=0,OutVal=270),(InVal=200000,OutVal=270)))\nTorqueCurve[2]=(Points=((InVal=0,OutVal=2),(InVal=200000,OutVal=270),(InVal=300000,OutVal=0)))\n\
+      </uscript>\n\nThis will make it so that in the first gear you can only go up\
+      \ to 200000 wheelspin but with good acceleration. In the second gear you will\
+      \ now accelerate really bad till you hit that 200000 wheelspin and then accelerate\
+      \ good up to 300000.\n\nThis is rather simple to implement to a vehicle with\
+      \ gears.\n\nYou can now simply change the code in the engine function to use\
+      \ the correct Curve and add some code that switches gears.\n\n<uscript>\n//\
+      \ Tell it your current throttle, and it will give you an output torque\n// This\
+      \ is currently like an electric motor\nfunction float Engine(float Throttle)\n\
+      {\n\tlocal float torque;\n    \n\ttorque = Abs(Throttle) * Gear * InterpCurveEval(TorqueCurve[Gear],\
+      \ WheelSpinSpeed);\n\n\tGraphData(\"SpinSpeed\", WheelSpinSpeed);\n\tGraphData(\"\
+      Torque\", torque);\n\n\treturn -1 * torque;\n}\n</uscript>\n\nAs you can see\
+      \ I made of the TorqueCurve a Array so you can easely add more curves depending\
+      \ on the amount of gears you want.\n\nThis way you can let a fith gear accelerate\
+      \ almost to none but a first gear with good speed.\n\n'''Note''' The actual\
+      \ speed of the vehicle is based primairly on the Torque that is genererated\
+      \ on the wheels. The second major factor is the size of the wheels. When you\
+      \ increase the size of the wheels and keep the torgue the same, you will drive\
+      \ faster because very simply the rotation stays the same.\n\nI hope this helps\
+      \ some people.\n\nThanks to Bjorn for giving this info in the first place, helped\
+      \ me out a lot\n\n'''Birelli:''' If I'm reading the above code right, it needs\
+      \ a slight tweak in that you can't both multiply by the current gear AND reference\
+      \ the correct torque curve with it, unless your torque curves are all going\
+      \ to take into account the fact that when you kick the bulldog into second gear\
+      \ you're going to automatically double the torque. I think if you actually used\
+      \ that code above it would be readily apparent that there was a problem with\
+      \ it the first time you shifted gears and your acceleration suddenly doubled\
+      \ ;).\n\n'''Foxpaw:''' Actually the approximate speed of the vehicle is based\
+      \ on the rate at which the wheels are turning multiplied by their radius, multiplied\
+      \ by the \"coefficient of traction\" which is some mangled native version of\
+      \ the friction of the wheels on the ground. Torque causes the wheels to accelerate.\
+      \ They will cease accelerating when their torque and their angular resistance\
+      \ to acceleration reach equilibrium. If the same amount of torque continues\
+      \ higher, it will increase max speed, but only to a point. (The default bulldog\
+      \ does not reach the equlibrium.) You might also consider than the first curve\
+      \ in the above will allow you to get maximum torque at ANY wheel spin speed,\
+      \ you need to terminate it by having the last value be 0 or whatever amount\
+      \ you wanted for the wheels to reach the equilibrium point. I'll refactor this\
+      \ into the above someday. :P\n\n===Adding Shadow to the Bulldog===\n\nIf you\
+      \ have driven around with the Bulldog you must have noticed that it didn't have\
+      \ any shadow. Adding shadow to the Bulldog would make blend much more realistically\
+      \ into its environment. There's a reason for not having shadow on the Bulldog\
+      \ though, it's because it is slow. It's even very slow when viewing the Bulldog\
+      \ from very close (only tested on Radeon 8500, needs confirmation for other\
+      \ cards). But slow or not, let's add it anyway.\n\n[[Legacy:Create A Subclass|Create\
+      \ A Subclass]] of the Bulldog, eg \"MyBulldog\" in your own \"MyPackage\". Once\
+      \ you've set that up, read on. In [[Legacy:UT2003|UT2003]], shadows are cast\
+      \ by [[Legacy:ShadowProjector|ShadowProjector]]s. Our own Bulldog will need\
+      \ a shadow projector associated with it so add this variable:\n\n<uscript>\n\
+      var ShadowProjector BulldogShadow;\n</uscript>\n\nWe only have to make sure\
+      \ that the shadow is spawned as soon as the Bulldog is spawned. This can be\
+      \ done in the function PostBeginPlay(). The spawned shadow will also need to\
+      \ be removed as soon as the Bulldog is removed. This can be done in the function\
+      \ Destroyed(). Here's the code to add to you MyBulldog class:\n\n<uscript>\n\
+      simulated function PostBeginPlay()\n{\n\tSuper.PostBeginPlay();\n\n\tif (Level.NetMode\
+      \ != NM_DedicatedServer)\n\t{\n\t\tBulldogShadow = Spawn(class'ShadowProjector',\
+      \ self, '', Location);\n\t\tBulldogShadow.ShadowActor = self;\n\t\tBulldogShadow.bBlobShadow\
+      \ = false;\n\t\tBulldogShadow.LightDirection = Normal(vect(1,1,6));\n\t\tBulldogShadow.LightDistance\
+      \ = 1200;\n\t\tBulldogShadow.MaxTraceDistance = 350;\n\t\tBulldogShadow.InitShadow();\n\
+      \t}\n}\n\nsimulated function Destroyed()\n{\n\tif (BulldogShadow != None) BulldogShadow.Destroy();\n\
+      \tSuper.Destroyed();\n}\n</uscript>\n\nNotice that we don't need to update the\
+      \ shadow ourselves, the [[Legacy:ShadowProjector|ShadowProjector]] will take\
+      \ care of that in its Tick() function. At this stage only the chassis of the\
+      \ Bulldog will cast a shadow. Of course, this doesn't look quite right so we'll\
+      \ need to add shadow to the tires too. I'll leave it to your own practice to\
+      \ subclass BulldogTire with your own MyBulldogTire class and add shadow casting\
+      \ to it.\n\nNow I assume you have created a MyBulldogTire class and added shadow\
+      \ casting to that one. We still have to make our MyBulldog class use those tires.\
+      \ [[Legacy:KCar|KCar]] has declared two variables for us to use for specifying\
+      \ the tires of any such vehicle:\n\n<uscript>\nvar (KCar) class<KTire> FrontTireClass;\n\
+      var (KCar) class<KTire> RearTireClass;\n</uscript>\n\nNotice how the Bulldog\
+      \ class sets these to BulldogTire in its own defaultproperties. We will set\
+      \ them to our own tire class like this:\n\n<uscript>\ndefaultproperties\n{\n\
+      \tFrontTireClass=class'MyBulldogTire'\n\tRearTireClass=class'MyBulldogTire'\n\
+      }\n</uscript>\n\nAnd we're done. Our Bulldog and its tires will now be casting\
+      \ a nice shadow on the ground as well as on other static meshes like other Bulldogs.\
+      \ Here's a screenshot showing off the effect:\n\n[[Image:Legacy_BulldogShadowOnCrop.jpeg|center|]]\n\
+      \n==Related Topics==\n* [[Legacy:Vehicles|Vehicles]]\n* [[Legacy:KVehicle|KVehicle]]\n\
+      ** [[Legacy:KCar|KCar]]\n*** [[Legacy:Bulldog|Bulldog]]\n* [[Legacy:KVehicleFactory|KVehicleFactory]]\n\
+      ** [[Legacy:BulldogFactory|BulldogFactory]]\n\n==Discussion==\n\n'''Bjorn:'''\
+      \ Please comment. It's my first real addition to the Wiki so I would like to\
+      \ know if it's ok. Also, any requests on more info are welcome.\n\n'''Highlander:'''\
+      \ Looks great, i was wondering if there was any bot support (ie: ai controlled\
+      \ vehicles) at all.\n\n'''AZTEX:''' Very cool, I wonderd how to increase the\
+      \ Bulldog's mass to make it less like a fether and more like well a brick with\
+      \ weel's \"which it is!\" (aztex_original@hotmail)\n\n'''Bjorn:''' Thanks for\
+      \ these suggestions. I'll look into the AI and weight, but I don't think AI\
+      \ will be easy if at all doable.\n\n'''AlphaOne:''' I think there is a solution\
+      \ to fast spinning wheels. It was outlined in the Karma reference at UDN. It\
+      \ shows that for fast spinnig hinges there is a special value that can be set\
+      \ to TRUE to prevent calculation errors.\n\n'''Bjorn:''' Thanks, I'll try this\
+      \ out.\n\n'''Kaoh:''' I added some Gear for TorqueCurve info, I hope i did it\
+      \ correctly it is my first change on Wiki. If it doesnt have enough new value\
+      \ please feel free to remove it again.\n\n'''Chema:''' To tweak the Bulldog\
+      \ on the fly, get on it and do a \"editobj bulldog\" in console (and, if you\
+      \ have not tryed before, give a look to \"editobj xPawn\" -player- and \"editobj\
+      \ LevelInfo0\" -wolrd-).  More [[Legacy:Console Commands/Debugging Console Commands|Console\
+      \ Commands/Debugging Console Commands]].\n\n'''Foxpaw:''' This may not work\
+      \ for all parameters - the Karma physics are only updated if you call the relevant\
+      \ function after changing it's values. This will work fine for some things like\
+      \ the torque curves, however.\n\n----\n\n'''AlphaOne:''' About the 'Slow Shadows'\
+      \ &rarr; to solve the problem just use proxy geometry to cast shadows. Use somthing\
+      \ low poly, such as the shapes used by '''KARMA''' to calculate collisions.\
+      \ That should increase the performance.\n\n'''The_Watcher:''' Does anyone know\
+      \ how to go about using proxy geometry to cast shadows. I am a little confused.\
+      \ Thank you.\n\n'''Solid Snake:''' What he means is that the Bulldog mesh itself\
+      \ has a lot of polygons and so on, which is probably not needed in creating\
+      \ a rather accurate yet blurry shadow. What he means is that when you want the\
+      \ shadow, spawn another actor which has a similiar shape to the Bulldog but\
+      \ a lot less polycounts and since that shape[aka 3D model] has less polys and\
+      \ then generate the shadow from that mesh and it will be much quicker.\n\n----\n\
+      \n'''Daid303:''' It is in the text above, but not very clear\n\nIf you want\
+      \ it faster: TorqueCurve=(Points=((InVal=0,OutVal=270),(InVal=400000,OutVal=270),(InVal=500000,OutVal=0)))\n\
+      \nIf you want it faster accalitation: TorqueCurve=(Points=((InVal=0,OutVal=500),(InVal=400000,OutVal=500),(InVal=500000,OutVal=0)))\n\
+      \n'''Daid303:''' ProjectX if you are xtremely bored then help building up these\
+      \ pages: [[Legacy:Vehicles|Vehicles]] [[Legacy:KVehicle|KVehicle]] [[Legacy:KCar|KCar]]\n\
+      \n'''ProjectX:''' I would but my train of thought is solely on mapping, get\
+      \ anywhere near coding and it de-rails, killing all the passengers (much like\
+      \ British rail really :) ) Anyway i really like what your doing, but is it possible\
+      \ to get a 1st person view camera inside that thing? would be well good. And\
+      \ a sort of system that if the bulldog was not used in, say, 1 minute, it is\
+      \ automatically destroyed, lowers fps and also, if you drive into a pit you\
+      \ cant get out of, you die, respawn and wait a bit for a new bulldog. (lets\
+      \ just say ive done that more than once, (and not just on UT2K3  either) thankyou\
+      \ AA).\n\n'''Daid303:''' The 1 min no use time isn't that hard, the \"you're\
+      \ f*cked\" code is a lot harder.\n\n'''ProjectX:''' What i meant was that you'd\
+      \ kill yourself with your own weapon and then respawn and wait\n\n'''Daid303:'''A\
+      \ sort like, you press AltFire, and you hear. Tick....Tick....Tick.... And the\
+      \ next thing you remember is ariving at the gates of hell.\n\n'''ProjectX:'''\
+      \ You could, or you could just get them to shoot themselves with a rocket launcher,\
+      \ would be much easier, you dont need to code anything for that. Just have to\
+      \ shoot yourself.\n\n'''Chema:''' Using your shield gun is more fun, and sometimes\
+      \ you can actually get out of the hole hammer-jumping! Of course, for the purist\
+      \ scripter, a \"<TAB> suicide\" would seem more logical ;-)\n\n----\n\n'''Chimaira:'''\
+      \ If you are making a copy of the bulldog in uED (almost) all of the default-propeteries\
+      \ are diffrent from the original bulldog...in some places there is no value\
+      \ over all.\n\nSo...just open the default-propeteries of your car and the bulldog\
+      \ and \"copy\" all that is in the bulldog-DP.\n\nAfter you´ve done that you\
+      \ want to save your car right? So... save the package you made your car in.\n\
+      \nIt´s just one big problem......when you try to save your class with your own\
+      \ car it says \"The file on disk(26,058)is larger than the file in memory(-1).\
+      \ Are you sure you want to overwrite it? 'yes/no'\" \n\nIf you choose yes your\
+      \ file is deleted (-1 means nothing).\n\nI´ve tested all the values that you\
+      \ need to change and i found out that it is the karma-value that messes up everything.\n\
+      \nDoes anyone know how i could prevent this error or(and) tell me about any\
+      \ other scripting-programs.\n\n'''Daid303:''' Easy fix: Don't use UnrealEd (Use\
+      \ UCC make), it seems to messup as soon as you have InLine Objects (or how is\
+      \ that called?) After 1 rebuild with UCC make (with custom Objects in default\
+      \ properties), you can step back to UnrealEd (if you want, but there are much\
+      \ better tools out there)\n\n----\n\n'''ProjectX:''' Does anyone know where\
+      \ the Uscript for the bulldog is once uve exported the scripts, i cant find\
+      \ it to edit it in notepad!\n\n'''BM.Deathwind:''' I suggest using UDE to edit\
+      \ code.  It should be in the UT2k3 \"System\" folder (Or you can get it from\
+      \ http://unreal.epicgames.com/ ).  It builds the class heirarchy too, so you\
+      \ can find it that way.\n\n'''ProjectX;''' thanx, ive got that dun now, i only\
+      \ have one more problem, when i load the new bulldog in a level, it appears,\
+      \ but when i walk up to it, and press [use] i cant get in it. The code i've\
+      \ changed is on a separate page: [[Legacy:ProjectX/Code|ProjectX/Code]]\n\n\
+      '''Kaoh:''' you need to change the triggers also, make a copy of the BulldogTrigger.uc\
+      \ and rename it, in there you can specify the correct class for you vehicle.\n\
+      \n----\n\n'''Chema:''' A question: to add shadow to the bulldog, you have to\
+      \ subclass it, and then change the Vehicles.Bulldogs in the map, or in Vehicles.BulldogFactory.VehicleClass,\
+      \ for MyPack.BulldogShadows.  Or, as I did first, modifying the original Bulldog\
+      \ instead of subclassing it (Larry Wall's fault!).  Of course, for VehicleDemo.ut2,\
+      \ the best way is to change Vehicles.BulldogFactory.VehicleClass, but what If\
+      \ I had several maps with spawned Bulldogs (but no factories)?  I could edit\
+      \ the map, but how could I add the shadow to the original Bulls, only with code?\
+      \  Maybee with an intercepting function, like UT's SpawnNotify?  Or redefining\
+      \ (oscuring?) the Bulldog?  \n\nSupose there is no nice (\"objetive\") way to\
+      \ do such thing, but you know, its a subjetive doubt :-D\n\n'''Foxpaw:''' You\
+      \ could use a mutator to do that. That would likely be the best way.\n\n'''Chema:'''\
+      \ But what would I do in the mutator? Redefine/obscure the bulldog class?\n\n\
+      '''Foxpaw:''' Mutators have an event called CheckReplacement and a function\
+      \ called ReplaceWith. This allows you to replace all instances of a given class\
+      \ with another class. It is used, for instance, in the Arena mutator to change\
+      \ all of the weapons. Likewise you could use the mutator to replace all instances\
+      \ of the Bulldog with your new, modified Bulldog. That way no maps would need\
+      \ to be modified, and backwards compatibility would also be retained if people\
+      \ wanted to play a map containing your modified bulldogs but would rather use\
+      \ the default bulldogs. The mutator could look something like the following,\
+      \ with \"NewBulldogClass\" replaced with whatever the class name of your modified\
+      \ bulldog is. It might not compile or work quite right, I didn't test it. But\
+      \ you get the idea:\n\n<uscript>\n// Replace all class instances of 'BullDog'\
+      \ with 'NewBulldogClass'.\nfunction bool CheckReplacement(Actor Other, out byte\
+      \ bSuperRelevant)\n{\n  if ( Other.IsA( 'BullDog' ) && !Other.IsA('NewBulldogClass')\
+      \ )\n  {\n    ReplaceWith( Other, NewBulldogClass );\n    return false;\n  }\n\
+      \n  Super.CheckReplacement( Other, bSuperRelevant );\n  return true;\n}\n</uscript>\n\
+      \n----\n\n'''Chema:''' On a less bizarre side, I'm planning to finish the sound\
+      \ and force feedback code of the bullye.  Has anyone done it already?\n\n'''Foxpaw:'''\
+      \ I don't have any force feedback devices so I haven't tested that but the sounds\
+      \ (at least the ones I played around with) work fine. There just isn't any sounds\
+      \ set into the sound variables. All of the function calls, etc. are already\
+      \ in place, you just need to add sounds in the defaultproperties.\n\n'''Billy\
+      \ Boy:''' How would I go about making the Bulldog smaller? I want to half its\
+      \ size for a smaller indoor arena.\n\n'''ProjectX (Finally decided to learn\
+      \ coding yay!!!):''' Billy, all you do is change the static mesh scale in the\
+      \ default properties. I suggest you start using an IDE such as conTEXT or UDE\
+      \ to do your coding since UnrealEd won' let you do advanced stuff like custom\
+      \ models.\n\n'''Foxpaw:''' Actually you can, it's just not very convenient.\
+      \ I too would not recommend using UnrealEd to modify script though. I used to\
+      \ just use notepad, but now I use [[Legacy:TextPad|TextPad]].\n\n'''Erdrik:'''\
+      \ I've been messing around with vehicle code for awhile(submited a hovertank\
+      \ code in the vehicles section), but I haven't really mess around with the wheels\
+      \ to much. I've been trying to make smaller wheels by simply scaling down the\
+      \ bulldog tires, but some odd things start happening. The collision and staticmesh\
+      \ are scaled down, as it actually looks smaller and I can bounce grenades around\
+      \ it accuratly. BUT, the wheel itself rest on the ground as if it were still\
+      \ as big as normal, making it look like the wheel is floating a bit off the\
+      \ ground. I'm assuming this is becuase the new scal isn't set properly in the\
+      \ Karma and was wondering if anyone new where I could go in the code to fix\
+      \ this?\n\n'''MythOpus:''' I had some messings with vehicle code too.  Most\
+      \ of the stuff I did caused errors and locked my computer up.  Sigh...  Anyways,\
+      \ to fix your wheel problem, I imagine that you haven't changed the position\
+      \ of the wheels (relative to the vehicle of course :)) .  You'll have to experiment\
+      \ with this until you get what your looking for but if you look in the default\
+      \ properties and find a property called:\n\n<uscript>\n     WheelFrontAlong=-100.000000\n\
+      \     WheelFrontAcross=110.000000\n     WheelRearAlong=115.000000\n     WheelRearAcross=110.000000\
+      \ \n     WheelVert=-15.000000 // For vertical alignment I believe ;)\n</uscript>\n\
+      \n'''Erdrik:''' No I already did that. I'm not having a problem with the wheels\
+      \ location. The problem is that even tho the graphic of the wheel is scaled\
+      \ down it still rolls on the ground as if it were bigger. the strange part is\
+      \ that weapon traces and projectiles collide properly!?\n\n'''MythOpus:''' Well,\
+      \ did you make a new collision for the wheels?  It doesn't need one :)\n\n'''Foxpaw:'''\
+      \ Well, since it's a KTire, it's magic for Karma purposes. The original bulldog\
+      \ tire has a Karma collision hull but also a traditional collisionradius and\
+      \ collisionheight - maybe one of those is being used for the tire simulation.\n\
+      \n'''MythOpus:''' Are you sure that the KTire has a karma collision hull?  When\
+      \ you turn on that view karma collision button, it doesn't show an collision...\n\
+      \n'''Foxpaw:''' Ah. That's because it has a \"Karma Primitive\" collision but\
+      \ no polygonal collision. You can use both, but the tire has only one. The \"\
+      Karma Primitive\" collision has to be specified in the modelling program, but\
+      \ allows you to do perfect spherical collision and cylinder collision. You can\
+      \ view these collision hulls by checking the \"Show Karma Primitives\" menu\
+      \ item.\n\n'''MythOpus:''' I see :)  It all becomes clear at last.\n\n'''WinterHummer:'''\
+      \ I like what you all the work for the bulldog but i'm having trouble getting\
+      \ it to drive faster in UT2004. I've done the fix but i've tried \"KMaxSpeed\"\
+      \ Nope\n\n'''MythOpus:''' I don't really deal with the workings of vehicles\
+      \ (I believe they should be EASIER to code), but I think you're better off working\
+      \ with UT2004's version of the vehicle code.  It's more stable and works better.\
+      \  I also remember the last time I spawned a bulldog in UT2004.  It moved for\
+      \ around 2 seconds then it just died and nothing could budge it.  \n\n'''WinterHummer:'''\
+      \ You're probably right about just working with the ut2004 SVehicle Code but\
+      \ its missing something and that is drivesplit. You know like front wheel driver\
+      \ or rear wheel drive.I got the going faster to work but now I cant get the\
+      \ wheelspin above 100000 & change. Oh and changing the torecurve is having no\
+      \ effect.\n\n[[Category:Legacy Tutorial|{{PAGENAME}}]]"
+  properties: []
+  revId: 4976
+name: "Legacy:Modifying The Bulldog"
+revision:
+  revid: 4976
+  parentid: 4978
+  user: "HSE-Toronto-ppp3477733.sympatico.ca"
+  timestamp: 1146517995.000000000
+  comment: "*"
+timestamp: 1668764712.802880000

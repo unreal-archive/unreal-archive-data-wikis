@@ -1,0 +1,642 @@
+---
+parse:
+  title: "Legacy:Keypress Interactions"
+  text:
+    text: "<p>KeyPress Interactions are pretty neat in my opinion. You can intercept\
+      \ on what type of press it is (Press, Hold, Release), or even pick up on axis\
+      \ movement.</p>\n<p>First off, you need to make your mutator class that will\
+      \ create your interaction. See <a href=\"/Legacy:Creating_An_Interaction_From_A_Mutator\"\
+      \ title=\"Legacy:Creating An Interaction From A Mutator\">Creating An Interaction\
+      \ From A Mutator</a> for this.</p>\n<p>Done that? Good...</p>\n<p>So thats the\
+      \ mutator part done. Next is the easy part!&#160;:)</p>\n<p>A simple interaction:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">Class</span> MyInteraction\
+      \ <span class=\"kw1\">extends</span> <span class=\"kw8\">Interaction</span>;\n\
+      \ \n<span class=\"kw1\">Function</span> Initialize<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n    <span class=\"kw3\"\
+      >Log</span><span class=\"br0\">(</span><span class=\"st0\">\"Interaction Initialized\"\
+      </span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>Dont forget to add</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      >bActive<span class=\"sy0\">=</span><span class=\"kw6\">True</span></pre></div>\n\
+      </div>\n<p>Under defaultproperties (else this interaction wont do anything).</p>\n\
+      <p>Now to see what is going on with these keypresses, add the following function\
+      \ under your initialize function.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">function</span> <span class=\"kw5\">bool</span> KeyEvent<span\
+      \ class=\"br0\">(</span>EInputKey Key, EInputAction Action, <span class=\"kw5\"\
+      >FLOAT</span> Delta <span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>Action <span class=\"\
+      sy0\">==</span> IST_Press<span class=\"br0\">)</span>\n\t\tViewportOwner.<span\
+      \ class=\"kw9\">Actor</span>.<span class=\"kw4\">ClientMessage</span><span class=\"\
+      br0\">(</span><span class=\"st0\">\"Key PRESSED:\"</span> <span class=\"sy0\"\
+      >@</span> Key<span class=\"br0\">)</span>;\n\t<span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span>Action <span class=\"sy0\">==</span> IST_Release<span\
+      \ class=\"br0\">)</span>\n\t\tViewportOwner.<span class=\"kw9\">Actor</span>.<span\
+      \ class=\"kw4\">ClientMessage</span><span class=\"br0\">(</span><span class=\"\
+      st0\">\"Key RELEASED:\"</span> <span class=\"sy0\">@</span> Key<span class=\"\
+      br0\">)</span>;\n\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>Action\
+      \ <span class=\"sy0\">==</span> IST_Hold<span class=\"br0\">)</span>\n\t\tViewportOwner.<span\
+      \ class=\"kw9\">Actor</span>.<span class=\"kw4\">ClientMessage</span><span class=\"\
+      br0\">(</span><span class=\"st0\">\"Key HELD:\"</span> <span class=\"sy0\">@</span>\
+      \ Key<span class=\"br0\">)</span>;\n\t<span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span>Action <span class=\"sy0\">==</span> IST_Axis<span class=\"br0\"\
+      >)</span>\n\t\tViewportOwner.<span class=\"kw9\">Actor</span>.<span class=\"\
+      kw4\">ClientMessage</span><span class=\"br0\">(</span><span class=\"st0\">\"\
+      Key AXIS:\"</span> <span class=\"sy0\">@</span> Key<span class=\"br0\">)</span>;\n\
+      \ \n\t<span class=\"kw2\">return</span> <span class=\"kw6\">false</span>;\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>This will make a small\
+      \ white message appear in the chat box in the bottom left of your screen telling\
+      \ you what you did, and which key you pressed. The keys are represented as numbers\
+      \ (try using Chr(Key) to convert them into letters and numbers. Remember keys\
+      \ like \"Home\" wont display properly like this), though you can use the ones\
+      \ listed in <code>Engine.Interactions</code> to match on a key that has been\
+      \ pressed.</p>\n<p>Note the <code>Return False;</code>. If you return \"True\"\
+      \ in this function, the <a href=\"/Legacy:InteractionMaster\" title=\"Legacy:InteractionMaster\"\
+      >InteractionMaster</a> will cease to iterate through the interactions, it will\
+      \ stop at yours.</p>\n<p>Another function, KeyType, can be used to build up\
+      \ a string from what keys have been pushed, as is demonstrated in <code>Engine.Console</code>.\
+      \ I think that is all there is to it.</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">function</span> <span class=\"kw5\">bool</span> KeyType<span\
+      \ class=\"br0\">(</span> EInputKey Key, <span class=\"kw1\">optional</span>\
+      \ <span class=\"kw5\">string</span> Unicode <span class=\"br0\">)</span>\n<span\
+      \ class=\"br0\">{</span>\n\t<span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span>bIgnoreKeys<span class=\"br0\">)</span>\t\t\n\t\t<span class=\"kw2\"\
+      >return</span> <span class=\"kw6\">true</span>;\n \n\t<span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span> Key<span class=\"sy0\">&gt;=</span>0x20 <span class=\"\
+      br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t\t<span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span> Unicode <span class=\"sy0\">!=</span> <span class=\"\
+      st0\">\"\"</span> <span class=\"br0\">)</span>\n\t\t\tTypedStr <span class=\"\
+      sy0\">=</span> TypedStr <span class=\"sy0\">$</span> Unicode;\n\t\t<span class=\"\
+      kw2\">else</span>\n\t\t\tTypedStr <span class=\"sy0\">=</span> TypedStr <span\
+      \ class=\"sy0\">$</span> <span class=\"kw3\">Chr</span><span class=\"br0\">(</span>Key<span\
+      \ class=\"br0\">)</span>;\n           <span class=\"kw2\">return</span><span\
+      \ class=\"br0\">(</span> <span class=\"kw6\">true</span> <span class=\"br0\"\
+      >)</span>;\n\t<span class=\"br0\">}</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>Now that you can see which does what, lets look at a practical use\
+      \ for it. I will be modifying ICU (which was created in the <a href=\"/Legacy:HUD_Interactions\"\
+      \ title=\"Legacy:HUD Interactions\">HUD Interactions</a> page) to highlight\
+      \ enemys when you push Page Up, and Friendlys when you push Page Down.</p>\n\
+      <p>I added this for the keypress function:</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">function</span> <span class=\"kw5\">bool</span> KeyEvent<span\
+      \ class=\"br0\">(</span>EInputKey Key, EInputAction Action, <span class=\"kw5\"\
+      >FLOAT</span> Delta <span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"br0\"\
+      >(</span>Action <span class=\"sy0\">==</span> IST_Press<span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span>Key <span\
+      \ class=\"sy0\">==</span> IK_PageUp<span class=\"br0\">)</span><span class=\"\
+      br0\">)</span>\n\t\tbDrawEnemy <span class=\"sy0\">=</span> <span class=\"kw6\"\
+      >True</span>;\n\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span\
+      \ class=\"br0\">(</span>Action <span class=\"sy0\">==</span> IST_Release<span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"\
+      br0\">(</span>Key <span class=\"sy0\">==</span> IK_PageUp<span class=\"br0\"\
+      >)</span><span class=\"br0\">)</span>\n\t\tbDrawEnemy <span class=\"sy0\">=</span>\
+      \ <span class=\"kw6\">False</span>;\n \n\t<span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span><span class=\"br0\">(</span>Action <span class=\"sy0\"\
+      >==</span> IST_Press<span class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"br0\">(</span>Key <span class=\"sy0\">==</span> IK_PageDown<span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\tbDrawFriendly <span\
+      \ class=\"sy0\">=</span> <span class=\"kw6\">True</span>;\n\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span><span class=\"br0\">(</span>Action\
+      \ <span class=\"sy0\">==</span> IST_Release<span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span>Key <span class=\"\
+      sy0\">==</span> IK_PageDown<span class=\"br0\">)</span><span class=\"br0\">)</span>\n\
+      \t\tbDrawFriendly <span class=\"sy0\">=</span> <span class=\"kw6\">False</span>;\n\
+      \ \n\t<span class=\"kw2\">return</span> <span class=\"kw6\">false</span>;\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>That, quite basically,\
+      \ sets bDrawEnemy to TRUE when PageUp is pressed, and to FALSE when it is released.\
+      \ The same for bDrawFriendly.</p>\n<p>I have added a couple of extra lines to\
+      \ the PostRender function to account for this, and only draw the right people:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">simulated</span>\
+      \ <span class=\"kw1\">function</span> PostRender<span class=\"br0\">(</span>\
+      \ <span class=\"kw8\">canvas</span> <span class=\"kw8\">Canvas</span> <span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw1\"\
+      >local</span> <span class=\"kw9\">Pawn</span> P;\n\t<span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">vector</span> CameraLocation, dir, ScreenLocation;\n\t\
+      <span class=\"kw1\">local</span> <span class=\"kw5\">rotator</span> CameraRotation;\n\
+      \t<span class=\"kw1\">local</span> <span class=\"kw5\">float</span> dist, draw_scale;\n\
+      \ \n\t<span class=\"kw2\">If</span> <span class=\"br0\">(</span><span class=\"\
+      br0\">(</span>bDrawEnemy<span class=\"br0\">)</span> <span class=\"sy0\">||</span>\
+      \ <span class=\"br0\">(</span>bDrawFriendly<span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span> <span class=\"co1\">//if none are true, dont do anything.\
+      \ Saves processing.</span>\n\t\t<span class=\"br0\">{</span>\n\t\t<span class=\"\
+      kw2\">foreach</span> ViewportOwner.<span class=\"kw9\">Actor</span>.<span class=\"\
+      kw2\">DynamicActors</span><span class=\"br0\">(</span><span class=\"kw1\">class</span><span\
+      \ class=\"st0\">'Pawn'</span>, P<span class=\"br0\">)</span>\n\t\t\t<span class=\"\
+      br0\">{</span>\n\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>ViewportOwner.<span\
+      \ class=\"kw9\">Actor</span>.<span class=\"kw9\">Pawn</span> <span class=\"\
+      sy0\">==</span> <span class=\"kw5\">None</span> <span class=\"sy0\">||</span>\
+      \ P <span class=\"sy0\">==</span> <span class=\"kw5\">None</span><span class=\"\
+      br0\">)</span>\n\t\t\t\t<span class=\"kw2\">Return</span>;\n \n\t\t\t<span class=\"\
+      co1\">//A trace to tell if you can see this thing</span>\n\t\t\t<span class=\"\
+      kw2\">If</span> <span class=\"br0\">(</span><span class=\"br0\">(</span><span\
+      \ class=\"kw8\">Canvas</span>.<span class=\"me0\">Viewport</span>.<span class=\"\
+      kw9\">Actor</span>.<span class=\"kw4\">FastTrace</span><span class=\"br0\">(</span>P.<span\
+      \ class=\"kw7\">Location</span>, ViewportOwner.<span class=\"kw9\">Actor</span>.<span\
+      \ class=\"kw9\">Pawn</span>.<span class=\"kw7\">Location</span><span class=\"\
+      br0\">)</span><span class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"br0\">(</span>P <span class=\"sy0\">!=</span> ViewportOwner.<span\
+      \ class=\"kw9\">Actor</span>.<span class=\"kw9\">Pawn</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span>P.<span\
+      \ class=\"me0\">PlayerReplicationInfo</span> <span class=\"sy0\">!=</span> <span\
+      \ class=\"kw5\">None</span><span class=\"br0\">)</span> <span class=\"sy0\"\
+      >&amp;&amp;</span> <span class=\"br0\">(</span>P.<span class=\"me0\">Health</span>\
+      \ <span class=\"sy0\">&gt;</span> <span class=\"nu0\">0</span><span class=\"\
+      br0\">)</span><span class=\"br0\">)</span>\n\t\t\t\t<span class=\"br0\">{</span>\n\
+      \t\t\t\t<span class=\"co1\">//Convert 3d location to 2d for display on the Canvas</span>\n\
+      \t\t\t\tScreenLocation <span class=\"sy0\">=</span> WorldToScreen<span class=\"\
+      br0\">(</span>P.<span class=\"kw7\">location</span><span class=\"br0\">)</span>;\n\
+      \t\t\t\t<span class=\"kw8\">Canvas</span>.<span class=\"me0\">GetCameraLocation</span><span\
+      \ class=\"br0\">(</span>CameraLocation, CameraRotation<span class=\"br0\">)</span>;\n\
+      \t\t\t\tdir <span class=\"sy0\">=</span> P.<span class=\"kw7\">Location</span>\
+      \ <span class=\"sy0\">-</span> CameraLocation;\n\t\t\t\tdist <span class=\"\
+      sy0\">=</span> <span class=\"kw3\">VSize</span><span class=\"br0\">(</span>dir<span\
+      \ class=\"br0\">)</span>; <span class=\"co1\">//Distance between me and them\t\
+      \t\t</span>\n \n\t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>dir\
+      \ dot <span class=\"kw5\">vector</span><span class=\"br0\">(</span>CameraRotation<span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">&gt;</span> <span class=\"nu0\"\
+      >0</span><span class=\"br0\">)</span>\n\t\t\t\t\t<span class=\"br0\">{</span>\n\
+      \t\t\t\t\tdraw_scale <span class=\"sy0\">=</span> <span class=\"nu0\">512</span>\
+      \ <span class=\"sy0\">/</span> dist; <span class=\"co1\">//Calculate the drawscale,\
+      \ 512 is the \"1:1\" distance.</span>\n\t\t\t\t\t<span class=\"co1\">//Set drawing\
+      \ params</span>\n\t\t\t\t\t<span class=\"kw8\">Canvas</span>.<span class=\"\
+      me0\">SetPos</span><span class=\"br0\">(</span>ScreenLocation.<span class=\"\
+      me0\">X</span> <span class=\"sy0\">-</span> <span class=\"br0\">(</span><span\
+      \ class=\"nu0\">32</span> <span class=\"sy0\">*</span> draw_scale<span class=\"\
+      br0\">)</span>, ScreenLocation.<span class=\"me0\">Y</span> <span class=\"sy0\"\
+      >-</span> <span class=\"br0\">(</span><span class=\"nu0\">32</span> <span class=\"\
+      sy0\">*</span> draw_scale<span class=\"br0\">)</span><span class=\"br0\">)</span>;\n\
+      \t\t\t\t\t<span class=\"kw8\">Canvas</span>.<span class=\"kw7\">Style</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">3</span>;\n\t\t\t\t\t<span\
+      \ class=\"kw8\">Canvas</span>.<span class=\"me0\">SetDrawColor</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">255</span>,<span class=\"nu0\">255</span>,<span\
+      \ class=\"nu0\">255</span><span class=\"br0\">)</span>;\n\t\t\t\t\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>bDrawEnemy<span class=\"br0\">)</span>\
+      \ <span class=\"co1\">//If PageUp is depressed (bDrawEnemy is true), see if\
+      \ the pawn is an enemy, if so, draw him!</span>\n\t\t\t\t\t\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span><span class=\"br0\">(</span>P.<span\
+      \ class=\"me0\">PlayerReplicationInfo</span>.<span class=\"me0\">Team</span>.<span\
+      \ class=\"me0\">TeamIndex</span> <span class=\"sy0\">!=</span> ViewportOwner.<span\
+      \ class=\"kw9\">Actor</span>.<span class=\"kw9\">Pawn</span>.<span class=\"\
+      me0\">PlayerReplicationInfo</span>.<span class=\"me0\">Team</span>.<span class=\"\
+      me0\">TeamIndex</span><span class=\"br0\">)</span> <span class=\"sy0\">||</span>\
+      \ <span class=\"br0\">(</span><span class=\"sy0\">!</span>GRI.<span class=\"\
+      me0\">bTeamGame</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\n\
+      \t\t\t\t\t\t\t<span class=\"kw8\">Canvas</span>.<span class=\"me0\">DrawIcon</span><span\
+      \ class=\"br0\">(</span><span class=\"kw5\">texture</span><span class=\"st0\"\
+      >'red'</span>, draw_scale<span class=\"br0\">)</span>;\n\t\t\t\t\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>bDrawFriendly<span class=\"br0\"\
+      >)</span> <span class=\"co1\">//If PageDown is depressed (bDrawFriendly is true),\
+      \ see if the pawn is an friendly, if so, draw him!</span>\n\t\t\t\t\t\t<span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span>P.<span class=\"me0\"\
+      >PlayerReplicationInfo</span>.<span class=\"me0\">Team</span>.<span class=\"\
+      me0\">TeamIndex</span> <span class=\"sy0\">==</span> ViewportOwner.<span class=\"\
+      kw9\">Actor</span>.<span class=\"kw9\">Pawn</span>.<span class=\"me0\">PlayerReplicationInfo</span>.<span\
+      \ class=\"me0\">Team</span>.<span class=\"me0\">TeamIndex</span><span class=\"\
+      br0\">)</span>\n\t\t\t\t\t\t\t<span class=\"kw8\">Canvas</span>.<span class=\"\
+      me0\">DrawIcon</span><span class=\"br0\">(</span><span class=\"kw5\">texture</span><span\
+      \ class=\"st0\">'green'</span>, draw_scale<span class=\"br0\">)</span>;\n\t\t\
+      \t\t\t<span class=\"br0\">}</span>\n\t\t\t\t<span class=\"br0\">}</span>\n\t\
+      \t\t<span class=\"br0\">}</span>\n\t\t<span class=\"br0\">}</span>\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p>I must also make sure</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\">bVisible<span class=\"sy0\">=</span><span class=\"kw6\"\
+      >True</span></pre></div>\n</div>\n<p>Is in defaultproperties, else any render\
+      \ functions will be ignored.</p>\n<p>Now I have a mutator that highlights my\
+      \ enemys in red when I push PageUp, and people on my team in green when I push\
+      \ PageDown. Neat, huh?</p>\n<p>Checkout <a href=\"/Legacy:InputKeyMap\" title=\"\
+      Legacy:InputKeyMap\">Input Key Mapping</a> for a full table of input keys, and\
+      \ their corresponding values.</p>\n<hr />\n<p>With a little work, I figured\
+      \ out how to use these with the GUIUserKeyBinding class, to allow the user to\
+      \ select the keys used by the Interaction.</p>\n<p>This part is in RadarInteraction.uc:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">var</span> <span\
+      \ class=\"kw5\">int</span> LastKey\n<span class=\"kw1\">var</span> <span class=\"\
+      kw5\">int</span> Zooming;\n<span class=\"kw1\">var</span> <span class=\"kw5\"\
+      >float</span> ZoomDelta\n \n<span class=\"co1\">// KeyEvent will detect keyup\
+      \ and keydown events for any keys bound to our</span>\n<span class=\"co1\">//\
+      \ zoom feature, and act accordingly</span>\n<span class=\"kw1\">function</span>\
+      \ <span class=\"kw5\">bool</span> KeyEvent<span class=\"br0\">(</span>EInputKey\
+      \ Key, EInputAction Action, <span class=\"kw5\">float</span> Delta<span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n \n\t<span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">string</span> tmp;\n \n<span class=\"co1\">// if the zoom\
+      \ key that is currently being held is released, end the zoom</span>\n\t<span\
+      \ class=\"kw2\">if</span><span class=\"br0\">(</span>Action <span class=\"sy0\"\
+      >==</span> IST_Release <span class=\"sy0\">&amp;&amp;</span> Zooming <span class=\"\
+      sy0\">!=</span><span class=\"nu0\">0</span> <span class=\"sy0\">&amp;&amp;</span>\
+      \ Key <span class=\"sy0\">==</span> LastKey<span class=\"br0\">)</span>\n\t\
+      <span class=\"br0\">{</span>\n\t\tLastKey<span class=\"sy0\">=-</span><span\
+      \ class=\"nu0\">1</span>;\n\t\tZooming<span class=\"sy0\">=</span><span class=\"\
+      nu0\">0</span>;\n\t\t<span class=\"kw2\">return</span> <span class=\"kw6\">True</span>;\n\
+      <span class=\"co1\">// a key has been pressed</span>\n\t<span class=\"br0\"\
+      >}</span> <span class=\"kw2\">else</span> <span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span>Action <span class=\"sy0\">==</span> IST_Press<span\
+      \ class=\"br0\">)</span> <span class=\"br0\">{</span>\n<span class=\"co1\">//\
+      \ big ugliness here, we use console commands to get the name of the numeric</span>\n\
+      <span class=\"co1\">// key, and then the alias bound to that keyname</span>\n\
+      \t\ttmp <span class=\"sy0\">=</span> ViewportOwner.<span class=\"kw9\">Actor</span>.<span\
+      \ class=\"kw4\">ConsoleCommand</span><span class=\"br0\">(</span><span class=\"\
+      st0\">\"KEYNAME\"</span><span class=\"sy0\">@</span>Key<span class=\"br0\">)</span>;\n\
+      \t\ttmp <span class=\"sy0\">=</span> ViewportOwner.<span class=\"kw9\">Actor</span>.<span\
+      \ class=\"kw4\">ConsoleCommand</span><span class=\"br0\">(</span><span class=\"\
+      st0\">\"KEYBINDING\"</span><span class=\"sy0\">@</span>tmp<span class=\"br0\"\
+      >)</span>;\n<span class=\"co1\">// if it's one of our two aliases (which don't\
+      \ actually exist), set the zoom</span>\n<span class=\"co1\">// direction, save\
+      \ the key that started the zoom, and eat the event</span>\n\t\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>tmp <span class=\"sy0\">==</span>\
+      \ <span class=\"st0\">\"tdzoomin\"</span><span class=\"br0\">)</span>\n\t\t\
+      <span class=\"br0\">{</span>\n\t\t\tLastKey <span class=\"sy0\">=</span> Key;\n\
+      \t\t\tZooming <span class=\"sy0\">=</span> <span class=\"sy0\">-</span><span\
+      \ class=\"nu0\">1</span>;\n\t\t\t<span class=\"kw2\">return</span> <span class=\"\
+      kw6\">True</span>;\n\t\t<span class=\"br0\">}</span> <span class=\"kw2\">else</span>\
+      \ <span class=\"kw2\">if</span> <span class=\"br0\">(</span>tmp ~<span class=\"\
+      sy0\">=</span> <span class=\"st0\">\"tdzoomout\"</span><span class=\"br0\">)</span>\
+      \ <span class=\"br0\">{</span>\n\t\t\tLastKey <span class=\"sy0\">=</span> Key;\n\
+      \t\t\tzooming <span class=\"sy0\">=</span> <span class=\"nu0\">1</span>;\n\t\
+      \t\t<span class=\"kw2\">return</span> <span class=\"kw6\">True</span>;\n\t\t\
+      <span class=\"br0\">}</span>\n\t<span class=\"br0\">}</span>\n<span class=\"\
+      co1\">// this event doesn't matter to us, so we pass it on for further processing</span>\n\
+      \t<span class=\"kw2\">return</span> <span class=\"kw6\">False</span>;\n<span\
+      \ class=\"br0\">}</span></pre></div>\n</div>\n<p>and this is from TacticalDisplayKeyBinding:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"co1\">// Custom Key Bindings</span>\n\
+      <span class=\"kw1\">class</span> TacticalDisplayKeyBinding <span class=\"kw1\"\
+      >extends</span> GUIUserKeyBinding;\n \n<span class=\"kw1\">defaultproperties</span>\n\
+      <span class=\"br0\">{</span>\n\tKeyData<span class=\"br0\">(</span><span class=\"\
+      nu0\">0</span><span class=\"br0\">)</span><span class=\"sy0\">=</span><span\
+      \ class=\"br0\">(</span>Alias<span class=\"sy0\">=</span><span class=\"st0\"\
+      >\"\"</span>,KeyLabel<span class=\"sy0\">=</span><span class=\"st0\">\"Tactical\
+      \ Display Controls\"</span>,bIsSection<span class=\"sy0\">=</span><span class=\"\
+      kw6\">True</span><span class=\"br0\">)</span>\n\tKeyData<span class=\"br0\"\
+      >(</span><span class=\"nu0\">1</span><span class=\"br0\">)</span><span class=\"\
+      sy0\">=</span><span class=\"br0\">(</span>alias<span class=\"sy0\">=</span><span\
+      \ class=\"st0\">\"tdzoomin\"</span>,KeyLabel<span class=\"sy0\">=</span><span\
+      \ class=\"st0\">\"Zoom In\"</span>,bIsSection<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">False</span><span class=\"br0\">)</span>\n\tKeyData<span class=\"\
+      br0\">(</span><span class=\"nu0\">2</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">=</span><span class=\"br0\">(</span>alias<span class=\"sy0\"\
+      >=</span><span class=\"st0\">\"tdzoomout\"</span>,KeyLabel<span class=\"sy0\"\
+      >=</span><span class=\"st0\">\"Zoom Out\"</span>,bIsSection<span class=\"sy0\"\
+      >=</span><span class=\"kw6\">False</span><span class=\"br0\">)</span>\n<span\
+      \ class=\"br0\">}</span></pre></div>\n</div>\n<p>The GUIUserKeyBinding allows\
+      \ the user to bind the keys aliases in the \"Controls\" tab of their settings.\
+      \ When they press a key, the interaction checks to see if it is bound to one\
+      \ of the two aliases, and takes action. This is adapted from the same code that\
+      \ the Controls tab uses to load the user's keybindings.</p>\n<hr />\n<p><b>Will:</b>\
+      \ Any problems understanding this? Anything I could do to make it clearer? If\
+      \ so: tell me, or do it yourself&#160;;)</p>\n<p><b>DJPaul:</b> Not for me -\
+      \ once again, brilliantly written. Cheers.</p>\n<p><b>Claw:</b> Hmm, this is\
+      \ excellently written. And now I finally realize what WorldToScreen() means.&#160;:rolleyes:</p>\n\
+      <p><b>CheshireCat:</b> Here's another KeyEvent example, that allows the user\
+      \ to select the keys used. Any questions?</p>\n<p><b>Mysterial:</b> Why would\
+      \ you want to do all that key binding stuff in KeyEvent() (in the last example)?\
+      \ Why not just use an exec function instead?</p>\n<p><b>Mychaeel:</b> Because\
+      \ exec functions only work in certain classes, and you might not want to create\
+      \ those classes. (It's a good idea not to replace game-relevant classes like\
+      \ xPlayer unless you absolutely have to for very good reasons <i>other</i> than\
+      \ doing things that could just as well be done less invasively, like what's\
+      \ described above.)</p>\n<p><b>Mysterial:</b> Ah, I was under the impression\
+      \ that Interactions were such a class. Obviously not&#160;;)</p>\n<p>Is there\
+      \ a list anywhere of classes in which exec functions work?</p>\n<p><b>Mychaeel:</b>\
+      \ Since you can register any amount of <a href=\"/Legacy:Interaction\" title=\"\
+      Legacy:Interaction\">Interaction</a> objects simultaneously (instead of having\
+      \ to replace an existing one by yours), they're safe and neat for modding. (Though\
+      \ Joe Wilcox says that they weren't meant to be used for that.) – I don't think\
+      \ there's a list of places where \"exec function\"s work. Sounds like an idea\
+      \ for a new page though.</p>\n<p><b>Tarquin:</b> exec function the same as <a\
+      \ href=\"/Legacy:Exec_Directive\" title=\"Legacy:Exec Directive\">exec directive</a>?</p>\n\
+      <p><b>Mychaeel:</b> No. See <a href=\"/Legacy:Function_Syntax\" title=\"Legacy:Function\
+      \ Syntax\">Function Syntax</a>.</p>\n<p><b>Nuleo:</b> Has anyone figured out\
+      \ a better way to use the GUIUserKeyBindings without using exec commands just\
+      \ to get the key names? In my interaction I was originally using this method</p>\n\
+      <pre>   if ((Action == IST_Press) &amp;&amp; (Key == IK_PageUp))\n        //Do\
+      \ something\n</pre>\n<p>But when I changed to this method (with a class extending\
+      \ GUIUserKeyBindings)</p>\n<pre>   tmp = ViewportOwner.Actor.ConsoleCommand(\"\
+      KEYNAME\"@Key);\n   tmp = ViewportOwner.Actor.ConsoleCommand(\"KEYBINDING\"\
+      @tmp);\n   // if it's one of our two aliases (which don't actually exist), set\
+      \ the zoom\n   // direction, save the key that started the zoom, and eat the\
+      \ event\n   if (tmp == \"tdzoomin\")\n        //Do something\n</pre>\n<p>I noticed\
+      \ a reduce in game speed and the sound was chopping up a bit.</p>\n<p><b>Ceej:</b>\
+      \ I've just been experimenting with this. For new game types, one place to install\
+      \ a keypress interaction seems to be in the InitInputSystem() event of your\
+      \ PlayerController subclass. For example:</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">event</span> InitInputSystem<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw6\"\
+      >super</span>.<span class=\"me0\">InitInputSystem</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>;\n\t<span class=\"kw8\">Player</span>.<span\
+      \ class=\"kw8\">interactionMaster</span>.<span class=\"me0\">AddInteraction</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">\"MyPackage.MyKeyInteraction\"</span>,\
+      \ <span class=\"kw8\">Player</span><span class=\"br0\">)</span>;\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p><b>Foxpaw:</b> Is it just me, or do interactions\
+      \ not pick up on joystick axes? Mine picks up my mouse axis movement, and joystick\
+      \ buttons, and joystick axes can be bound to stuff using preferences (so they\
+      \ appear to be being picked up by the game) but my interaction doesn't report\
+      \ any input when I move the joystick.</p>\n<p><b>Newbie:</b> How do I get keypress\
+      \ events for an actor in UT1?</p>\n<p><b>Meowcat:</b> @nuelo, I have not found\
+      \ a better way to locate the key yet, but you can use the initialize event to\
+      \ do a search for the key that you want, then save it for comparison. I have\
+      \ used this for an interaction and it works ok except that you cannot change\
+      \ it midgame</p>\n<p><b>Conzar:</b> You can also add the interaction to a new\
+      \ GameInfo object (ut2004) here.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">event</span> PostLogin<span class=\"br0\">(</span><span\
+      \ class=\"kw9\">PlayerController</span> NewPlayer<span class=\"br0\">)</span><span\
+      \ class=\"br0\">{</span>\n   <span class=\"kw6\">super</span>.<span class=\"\
+      me0\">PostLogin</span><span class=\"br0\">(</span>NewPlayer<span class=\"br0\"\
+      >)</span>;\n   NewPlayer.<span class=\"kw8\">Player</span>.<span class=\"kw8\"\
+      >interactionMaster</span>.<span class=\"me0\">AddInteraction</span><span class=\"\
+      br0\">(</span><span class=\"st0\">\"pkg.class\"</span>,NewPlayer.<span class=\"\
+      kw8\">Player</span><span class=\"br0\">)</span>;\n \n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p><b>Wormbo:</b> Your idea will only work in single player and on a\
+      \ listen server. Clients in network games won't see the interaction, though.</p>\n\
+      <p><b>Kungfu Hampster:</b> Is there a way to use an interaction to change the\
+      \ input of a key? For example, changing the right mouse button to be the use\
+      \ key?</p>\n<p><b>Foxpaw:</b> Yes. Depending on what exactly you're planning,\
+      \ you may be able to get any actor to do that.</p>\n<p>You could have a keypress\
+      \ interaction return true on right mouse button, (to prevent the regular right\
+      \ mouse button event from propogating) and also make it manually activate the\
+      \ \"Use\" function. (I think that it is in Pawn on Controller or something.)</p>\n\
+      <p>There's also a more direct approach which I'm hesitant to recommend, though\
+      \ it shouldn't have any problems unless maybe the game crashes. You can manually\
+      \ change the keybinds from any actor using set and get on the console. EG: (I've\
+      \ substituted Q for rightmouse, but I think \"RightMouse\" is the correct name\
+      \ for that input.)</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\">  <span class=\"\
+      kw1\">function</span> ChangeRMB<span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>\n  <span class=\"br0\">{</span>\n    <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span> Backup <span class=\"sy0\">==</span> <span class=\"\
+      st0\">\"\"</span> <span class=\"br0\">)</span>\n      Backup <span class=\"\
+      sy0\">=</span> <span class=\"kw4\">ConsoleCommand</span><span class=\"br0\"\
+      >(</span> <span class=\"st0\">\"Get Input Q\"</span> <span class=\"br0\">)</span>;\n\
+      \    <span class=\"kw4\">ConsoleCommand</span><span class=\"br0\">(</span> <span\
+      \ class=\"st0\">\"Set Input Q Use\"</span> <span class=\"br0\">)</span>;\n \
+      \ <span class=\"br0\">}</span>\n \n  <span class=\"kw1\">function</span> ChangeRMBBack<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n  <span class=\"br0\"\
+      >{</span>\n    <span class=\"kw4\">ConsoleCommand</span><span class=\"br0\"\
+      >(</span> <span class=\"st0\">\"Set Input Q \"</span><span class=\"sy0\">$</span>Backup\
+      \ <span class=\"br0\">)</span>;\n    Backup <span class=\"sy0\">=</span> <span\
+      \ class=\"st0\">\"\"</span>;\n  <span class=\"br0\">}</span>\n \n  <span class=\"\
+      kw1\">function</span> <span class=\"kw4\">Destroyed</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>\n  <span class=\"br0\">{</span>\n    ChangeRMBBack<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;  <span class=\"co1\">//\
+      \ Very important to make sure the keybind gets reset if the game is exited!</span>\n\
+      \ \n    <span class=\"kw6\">Super</span>.<span class=\"kw4\">Destroyed</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n  <span class=\"br0\"\
+      >}</span></pre></div>\n</div>\n<p><b>MythOpus:</b> I think this would also be\
+      \ useful for things other than Mutators... like on special secret areas in maps\
+      \ where you need a pass to get in... &#160;? Is it possible to intercept keys\
+      \ without using mutators or interactions?</p>\n<p><b>Kungfu Hampster:</b> I\
+      \ don't think so. There might be a way to grab the inputs from the playercontroller\
+      \ class, but using an interaction is really the best way to grab keypresses\
+      \ in my opinion.</p>\n<p><b>Mindcry:</b> I did some quick testing with stopwatch\
+      \ and found that:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\">tmp <span class=\"\
+      sy0\">=</span> ViewportOwner.<span class=\"kw9\">Actor</span>.<span class=\"\
+      kw4\">ConsoleCommand</span><span class=\"br0\">(</span><span class=\"st0\">\"\
+      KEYBINDING\"</span><span class=\"sy0\">@</span>ViewportOwner.<span class=\"\
+      kw9\">Actor</span>.<span class=\"kw4\">ConsoleCommand</span><span class=\"br0\"\
+      >(</span><span class=\"st0\">\"KEYNAME\"</span><span class=\"sy0\">@</span>Key<span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>;</pre></div>\n</div>\n\
+      <p>is about 3.3x faster than the</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      >   tmp <span class=\"sy0\">=</span> ViewportOwner.<span class=\"kw9\">Actor</span>.<span\
+      \ class=\"kw4\">ConsoleCommand</span><span class=\"br0\">(</span><span class=\"\
+      st0\">\"KEYNAME\"</span><span class=\"sy0\">@</span>Key<span class=\"br0\">)</span>;\n\
+      \   tmp <span class=\"sy0\">=</span> ViewportOwner.<span class=\"kw9\">Actor</span>.<span\
+      \ class=\"kw4\">ConsoleCommand</span><span class=\"br0\">(</span><span class=\"\
+      st0\">\"KEYBINDING\"</span><span class=\"sy0\">@</span>tmp<span class=\"br0\"\
+      >)</span>;</pre></div>\n</div>\n<p>found in base UT2004 code and several examples\
+      \ throughout this wiki.</p>\n\n<!-- \nNewPP limit report\nCPU time usage: 0.313\
+      \ seconds\nReal time usage: 0.397 seconds\nPreprocessor visited node count:\
+      \ 43/1000000\nPreprocessor generated node count: 284/1000000\nPost‐expand include\
+      \ size: 0/2097152 bytes\nTemplate argument size: 0/2097152 bytes\nHighest expansion\
+      \ depth: 2/40\nExpensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion\
+      \ expansion time report (%,ms,calls,template)\n100.00%    0.000      1 - -total\n\
+      -->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:1582-0!*!0!*!*!*!*\
+      \ and timestamp 20221117130156 and revision id 3935\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Exec Directive"
+  - ns: 100
+    exists: true
+    name: "Legacy:Creating An Interaction From A Mutator"
+  - ns: 100
+    exists: true
+    name: "Legacy:HUD Interactions"
+  - ns: 100
+    exists: true
+    name: "Legacy:Interaction"
+  - ns: 100
+    exists: true
+    name: "Legacy:Function Syntax"
+  - ns: 100
+    exists: true
+    name: "Legacy:InputKeyMap"
+  - ns: 100
+    exists: true
+    name: "Legacy:InteractionMaster"
+  templates: []
+  images: []
+  externallinks: []
+  sections: []
+  displaytitle: "Legacy:Keypress Interactions"
+  iwlinks: []
+  wikitext:
+    text: "KeyPress Interactions are pretty neat in my opinion. You can intercept\
+      \ on what type of press it is (Press, Hold, Release), or even pick up on axis\
+      \ movement.\n\nFirst off, you need to make your mutator class that will create\
+      \ your interaction. See [[Legacy:Creating An Interaction From A Mutator|Creating\
+      \ An Interaction From A Mutator]] for this.\n\nDone that? Good...\n\nSo thats\
+      \ the mutator part done. Next is the easy part! :)\n\nA simple interaction:\n\
+      \n<uscript>\nClass MyInteraction extends Interaction;\n\nFunction Initialize()\n\
+      {\n    Log(\"Interaction Initialized\");\n}\n</uscript>\n\nDont forget to add\n\
+      \n<uscript>\nbActive=True\n</uscript>\n\nUnder defaultproperties (else this\
+      \ interaction wont do anything).\n\nNow to see what is going on with these keypresses,\
+      \ add the following function under your initialize function.\n\n<uscript>\n\
+      function bool KeyEvent(EInputKey Key, EInputAction Action, FLOAT Delta )\n{\n\
+      \tif (Action == IST_Press)\n\t\tViewportOwner.Actor.ClientMessage(\"Key PRESSED:\"\
+      \ @ Key);\n\tif (Action == IST_Release)\n\t\tViewportOwner.Actor.ClientMessage(\"\
+      Key RELEASED:\" @ Key);\n\tif (Action == IST_Hold)\n\t\tViewportOwner.Actor.ClientMessage(\"\
+      Key HELD:\" @ Key);\n\tif (Action == IST_Axis)\n\t\tViewportOwner.Actor.ClientMessage(\"\
+      Key AXIS:\" @ Key);\n\n\treturn false;\n}\n</uscript>\n\nThis will make a small\
+      \ white message appear in the chat box in the bottom left of your screen telling\
+      \ you what you did, and which key you pressed. The keys are represented as numbers\
+      \ (try using Chr(Key) to convert them into letters and numbers. Remember keys\
+      \ like \"Home\" wont display properly like this), though you can use the ones\
+      \ listed in <code>Engine.Interactions</code> to match on a key that has been\
+      \ pressed.\n\nNote the <code>Return False;</code>. If you return \"True\" in\
+      \ this function, the [[Legacy:InteractionMaster|InteractionMaster]] will cease\
+      \ to iterate through the interactions, it will stop at yours.\n\nAnother function,\
+      \ KeyType, can be used to build up a string from what keys have been pushed,\
+      \ as is demonstrated in <code>Engine.Console</code>. I think that is all there\
+      \ is to it.\n\n<uscript>\nfunction bool KeyType( EInputKey Key, optional string\
+      \ Unicode )\n{\n\tif (bIgnoreKeys)\t\t\n\t\treturn true;\n\n\tif( Key>=0x20\
+      \ )\n\t{\n\t\tif( Unicode != \"\" )\n\t\t\tTypedStr = TypedStr $ Unicode;\n\t\
+      \telse\n\t\t\tTypedStr = TypedStr $ Chr(Key);\n           return( true );\n\t\
+      }\n}\n</uscript>\n\nNow that you can see which does what, lets look at a practical\
+      \ use for it. I will be modifying ICU (which was created in the [[Legacy:HUD\
+      \ Interactions|HUD Interactions]] page) to highlight enemys when you push Page\
+      \ Up, and Friendlys when you push Page Down.\n\nI added this for the keypress\
+      \ function:\n\n<uscript>\nfunction bool KeyEvent(EInputKey Key, EInputAction\
+      \ Action, FLOAT Delta )\n{\n\tif ((Action == IST_Press) && (Key == IK_PageUp))\n\
+      \t\tbDrawEnemy = True;\n\tif ((Action == IST_Release) && (Key == IK_PageUp))\n\
+      \t\tbDrawEnemy = False;\n\n\tif ((Action == IST_Press) && (Key == IK_PageDown))\n\
+      \t\tbDrawFriendly = True;\n\tif ((Action == IST_Release) && (Key == IK_PageDown))\n\
+      \t\tbDrawFriendly = False;\n\n\treturn false;\n}\n</uscript>\n\nThat, quite\
+      \ basically, sets bDrawEnemy to TRUE when PageUp is pressed, and to FALSE when\
+      \ it is released. The same for bDrawFriendly.\n\nI have added a couple of extra\
+      \ lines to the PostRender function to account for this, and only draw the right\
+      \ people:\n\n<uscript>\nsimulated function PostRender( canvas Canvas )\n{\n\t\
+      local Pawn P;\n\tlocal vector CameraLocation, dir, ScreenLocation;\n\tlocal\
+      \ rotator CameraRotation;\n\tlocal float dist, draw_scale;\n\n\tIf ((bDrawEnemy)\
+      \ || (bDrawFriendly)) //if none are true, dont do anything. Saves processing.\n\
+      \t\t{\n\t\tforeach ViewportOwner.Actor.DynamicActors(class'Pawn', P)\n\t\t\t\
+      {\n\t\t\tif (ViewportOwner.Actor.Pawn == None || P == None)\n\t\t\t\tReturn;\n\
+      \t\n\t\t\t//A trace to tell if you can see this thing\n\t\t\tIf ((Canvas.Viewport.Actor.FastTrace(P.Location,\
+      \ ViewportOwner.Actor.Pawn.Location)) && (P != ViewportOwner.Actor.Pawn) &&\
+      \ (P.PlayerReplicationInfo != None) && (P.Health > 0))\n\t\t\t\t{\n\t\t\t\t\
+      //Convert 3d location to 2d for display on the Canvas\n\t\t\t\tScreenLocation\
+      \ = WorldToScreen(P.location);\n\t\t\t\tCanvas.GetCameraLocation(CameraLocation,\
+      \ CameraRotation);\n\t\t\t\tdir = P.Location - CameraLocation;\n\t\t\t\tdist\
+      \ = VSize(dir); //Distance between me and them\t\t\t\n\t\t\t\t\n\t\t\t\tif (dir\
+      \ dot vector(CameraRotation) > 0)\n\t\t\t\t\t{\n\t\t\t\t\tdraw_scale = 512 /\
+      \ dist; //Calculate the drawscale, 512 is the \"1:1\" distance.\n\t\t\t\t\t\
+      //Set drawing params\n\t\t\t\t\tCanvas.SetPos(ScreenLocation.X - (32 * draw_scale),\
+      \ ScreenLocation.Y - (32 * draw_scale));\n\t\t\t\t\tCanvas.Style = 3;\n\t\t\t\
+      \t\tCanvas.SetDrawColor(255,255,255);\n\t\t\t\t\tif (bDrawEnemy) //If PageUp\
+      \ is depressed (bDrawEnemy is true), see if the pawn is an enemy, if so, draw\
+      \ him!\n\t\t\t\t\t\tif ((P.PlayerReplicationInfo.Team.TeamIndex != ViewportOwner.Actor.Pawn.PlayerReplicationInfo.Team.TeamIndex)\
+      \ || (!GRI.bTeamGame))\n\t\t\t\t\t\t\tCanvas.DrawIcon(texture'red', draw_scale);\n\
+      \t\t\t\t\tif (bDrawFriendly) //If PageDown is depressed (bDrawFriendly is true),\
+      \ see if the pawn is an friendly, if so, draw him!\n\t\t\t\t\t\tif (P.PlayerReplicationInfo.Team.TeamIndex\
+      \ == ViewportOwner.Actor.Pawn.PlayerReplicationInfo.Team.TeamIndex)\n\t\t\t\t\
+      \t\t\tCanvas.DrawIcon(texture'green', draw_scale);\n\t\t\t\t\t}\n\t\t\t\t}\n\
+      \t\t\t}\n\t\t}\n}\n</uscript>\n\nI must also make sure\n\n<uscript>\nbVisible=True\n\
+      </uscript>\n\nIs in defaultproperties, else any render functions will be ignored.\n\
+      \nNow I have a mutator that highlights my enemys in red when I push PageUp,\
+      \ and people on my team in green when I push PageDown. Neat, huh?\n\nCheckout\
+      \ [[Legacy:InputKeyMap | Input Key Mapping]] for a full table of input keys,\
+      \ and their corresponding values.\n\n----\n\nWith a little work, I figured out\
+      \ how to use these with the GUIUserKeyBinding class, to allow the user to select\
+      \ the keys used by the Interaction.\n\nThis part is in RadarInteraction.uc:\n\
+      \n<uscript>\nvar int LastKey\nvar int Zooming;\nvar float ZoomDelta\n\n// KeyEvent\
+      \ will detect keyup and keydown events for any keys bound to our\n// zoom feature,\
+      \ and act accordingly\nfunction bool KeyEvent(EInputKey Key, EInputAction Action,\
+      \ float Delta)\n{\n\n\tlocal string tmp;\n\n// if the zoom key that is currently\
+      \ being held is released, end the zoom\n\tif(Action == IST_Release && Zooming\
+      \ !=0 && Key == LastKey)\n\t{\n\t\tLastKey=-1;\n\t\tZooming=0;\n\t\treturn True;\n\
+      // a key has been pressed\n\t} else if (Action == IST_Press) {\n// big ugliness\
+      \ here, we use console commands to get the name of the numeric\n// key, and\
+      \ then the alias bound to that keyname\n\t\ttmp = ViewportOwner.Actor.ConsoleCommand(\"\
+      KEYNAME\"@Key);\n\t\ttmp = ViewportOwner.Actor.ConsoleCommand(\"KEYBINDING\"\
+      @tmp);\n// if it's one of our two aliases (which don't actually exist), set\
+      \ the zoom\n// direction, save the key that started the zoom, and eat the event\n\
+      \t\tif (tmp == \"tdzoomin\")\n\t\t{\n\t\t\tLastKey = Key;\n\t\t\tZooming = -1;\n\
+      \t\t\treturn True;\n\t\t} else if (tmp ~= \"tdzoomout\") {\n\t\t\tLastKey =\
+      \ Key;\n\t\t\tzooming = 1;\n\t\t\treturn True;\n\t\t}\n\t}\n// this event doesn't\
+      \ matter to us, so we pass it on for further processing\n\treturn False;\n}\n\
+      </uscript>\n\nand this is from TacticalDisplayKeyBinding:\n\n<uscript>\n// Custom\
+      \ Key Bindings\nclass TacticalDisplayKeyBinding extends GUIUserKeyBinding;\n\
+      \ndefaultproperties\n{\n\tKeyData(0)=(Alias=\"\",KeyLabel=\"Tactical Display\
+      \ Controls\",bIsSection=True)\n\tKeyData(1)=(alias=\"tdzoomin\",KeyLabel=\"\
+      Zoom In\",bIsSection=False)\n\tKeyData(2)=(alias=\"tdzoomout\",KeyLabel=\"Zoom\
+      \ Out\",bIsSection=False)\n}\n</uscript>\n\nThe GUIUserKeyBinding allows the\
+      \ user to bind the keys aliases in the \"Controls\" tab of their settings. \
+      \ When they press a key, the interaction checks to see if it is bound to one\
+      \ of the two aliases, and takes action.  This is adapted from the same code\
+      \ that the Controls tab uses to load the user's keybindings.\n\n----\n\n'''Will:'''\
+      \ Any problems understanding this? Anything I could do to make it clearer? If\
+      \ so: tell me, or do it yourself ;)\n\n'''DJPaul:''' Not for me - once again,\
+      \ brilliantly written.  Cheers.\n\n'''Claw:''' Hmm, this is excellently written.\
+      \ And now I finally realize what WorldToScreen() means. :rolleyes:\n\n'''CheshireCat:'''\
+      \ Here's another KeyEvent example, that allows the user to select the keys used.\
+      \  Any questions?\n\n'''Mysterial:''' Why would you want to do all that key\
+      \ binding stuff in KeyEvent() (in the last example)? Why not just use an exec\
+      \ function instead?\n\n'''Mychaeel:''' Because exec functions only work in certain\
+      \ classes, and you might not want to create those classes.  (It's a good idea\
+      \ not to replace game-relevant classes like xPlayer unless you absolutely have\
+      \ to for very good reasons ''other'' than doing things that could just as well\
+      \ be done less invasively, like what's described above.)\n\n'''Mysterial:'''\
+      \ Ah, I was under the impression that Interactions were such a class. Obviously\
+      \ not ;)\n\nIs there a list anywhere of classes in which exec functions work?\n\
+      \n'''Mychaeel:''' Since you can register any amount of [[Legacy:Interaction|Interaction]]\
+      \ objects simultaneously (instead of having to replace an existing one by yours),\
+      \ they're safe and neat for modding.  (Though Joe Wilcox says that they weren't\
+      \ meant to be used for that.) &ndash; I don't think there's a list of places\
+      \ where \"exec function\"s work.  Sounds like an idea for a new page though.\n\
+      \n'''Tarquin:''' exec function the same as [[Legacy:Exec Directive|exec directive]]?\n\
+      \n'''Mychaeel:''' No.  See [[Legacy:Function Syntax|Function Syntax]].\n\n'''Nuleo:'''\
+      \ Has anyone figured out a better way to use the GUIUserKeyBindings without\
+      \ using exec commands just to get the key names?  In my interaction I was originally\
+      \ using this method \n\n    if ((Action == IST_Press) && (Key == IK_PageUp))\n\
+      \         //Do something\n\nBut when I changed to this method (with a class\
+      \ extending GUIUserKeyBindings)\n\n    tmp = ViewportOwner.Actor.ConsoleCommand(\"\
+      KEYNAME\"@Key);\n    tmp = ViewportOwner.Actor.ConsoleCommand(\"KEYBINDING\"\
+      @tmp);\n    // if it's one of our two aliases (which don't actually exist),\
+      \ set the zoom\n    // direction, save the key that started the zoom, and eat\
+      \ the event\n    if (tmp == \"tdzoomin\")\n         //Do something\n\nI noticed\
+      \ a reduce in game speed and the sound was chopping up a bit.\n\n'''Ceej:'''\
+      \ I've just been experimenting with this. For new game types, one place to install\
+      \ a keypress interaction seems to be in the InitInputSystem() event of your\
+      \ PlayerController subclass. For example:\n\n<uscript>\nevent InitInputSystem()\n\
+      {\n\tsuper.InitInputSystem();\n\tPlayer.interactionMaster.AddInteraction(\"\
+      MyPackage.MyKeyInteraction\", Player);\n}\n</uscript>\n\n'''Foxpaw:''' Is it\
+      \ just me, or do interactions not pick up on joystick axes? Mine picks up my\
+      \ mouse axis movement, and joystick buttons, and joystick axes can be bound\
+      \ to stuff using preferences (so they appear to be being picked up by the game)\
+      \ but my interaction doesn't report any input when I move the joystick.\n\n\
+      '''Newbie:''' How do I get keypress events for an actor in UT1?\n\n'''Meowcat:'''\
+      \ @nuelo, I have not found a better way to locate the key yet, but you can use\
+      \ the initialize event to do a search for the key that you want, then save it\
+      \ for comparison.  I have used this for an interaction and it works ok except\
+      \ that you cannot change it midgame\n\n'''Conzar:''' You can also add the interaction\
+      \ to a new GameInfo object (ut2004) here.\n\n<uscript>\nevent PostLogin(PlayerController\
+      \ NewPlayer){\n   super.PostLogin(NewPlayer);\n   NewPlayer.Player.interactionMaster.AddInteraction(\"\
+      pkg.class\",NewPlayer.Player);\n\n}\n</uscript>\n\n'''Wormbo:''' Your idea will\
+      \ only work in single player and on a listen server. Clients in network games\
+      \ won't see the interaction, though.\n\n'''Kungfu Hampster:'''  Is there a way\
+      \ to use an interaction to change the input of a key?  For example, changing\
+      \ the right mouse button to be the use key?\n\n'''Foxpaw:''' Yes. Depending\
+      \ on what exactly you're planning, you may be able to get any actor to do that.\n\
+      \nYou could have a keypress interaction return true on right mouse button, (to\
+      \ prevent the regular right mouse button event from propogating) and also make\
+      \ it manually activate the \"Use\" function. (I think that it is in Pawn on\
+      \ Controller or something.)\n\nThere's also a more direct approach which I'm\
+      \ hesitant to recommend, though it shouldn't have any problems unless maybe\
+      \ the game crashes. You can manually change the keybinds from any actor using\
+      \ set and get on the console. EG: (I've substituted Q for rightmouse, but I\
+      \ think \"RightMouse\" is the correct name for that input.)\n\n<uscript>\n \
+      \ function ChangeRMB()\n  {\n    if ( Backup == \"\" )\n      Backup = ConsoleCommand(\
+      \ \"Get Input Q\" );\n    ConsoleCommand( \"Set Input Q Use\" );\n  }\n\n  function\
+      \ ChangeRMBBack()\n  {\n    ConsoleCommand( \"Set Input Q \"$Backup );\n   \
+      \ Backup = \"\";\n  }\n\n  function Destroyed()\n  {\n    ChangeRMBBack(); \
+      \ // Very important to make sure the keybind gets reset if the game is exited!\n\
+      \n    Super.Destroyed();\n  }\n</uscript>\n\n'''MythOpus:''' I think this would\
+      \ also be useful for things other than Mutators... like on special secret areas\
+      \ in maps where you need a pass to get in...  ?  Is it possible to intercept\
+      \ keys without using mutators or interactions?\n\n'''Kungfu Hampster:''' I don't\
+      \ think so.  There might be a way to grab the inputs from the playercontroller\
+      \ class, but using an interaction is really the best way to grab keypresses\
+      \ in my opinion.\n\n'''Mindcry:''' I did some quick testing with stopwatch and\
+      \ found that: \n\n<uscript>tmp = ViewportOwner.Actor.ConsoleCommand(\"KEYBINDING\"\
+      @ViewportOwner.Actor.ConsoleCommand(\"KEYNAME\"@Key));</uscript>\n\nis about\
+      \ 3.3x faster than the\n\n<uscript>   tmp = ViewportOwner.Actor.ConsoleCommand(\"\
+      KEYNAME\"@Key);\n   tmp = ViewportOwner.Actor.ConsoleCommand(\"KEYBINDING\"\
+      @tmp);</uscript>\n\nfound in base UT2004 code and several examples throughout\
+      \ this wiki."
+  properties: []
+  revId: 3935
+name: "Legacy:Keypress Interactions"
+revision:
+  revid: 3935
+  parentid: 3936
+  user: "Ip70-179-118-253.dc.dc.cox.net"
+  timestamp: 1127846256.000000000
+  comment: "*"
+timestamp: 1668774465.934480000

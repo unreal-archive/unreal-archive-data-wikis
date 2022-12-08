@@ -1,0 +1,824 @@
+---
+parse:
+  title: "Legacy:BruteForce/Compiler"
+  text:
+    text: "<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"\
+      uscript source-uscript\">\n<pre class=\"de1\"><span class=\"coMULTI\">/**\n\
+      \  Analyse and compile the language (create an AST)\n*/</span>\n<span class=\"\
+      kw1\">class</span> Compiler <span class=\"kw1\">extends</span> <span class=\"\
+      kw8\">Object</span> dependsOn<span class=\"br0\">(</span>Tokenizer<span class=\"\
+      br0\">)</span> dependsOn<span class=\"br0\">(</span>AST<span class=\"br0\">)</span>;\n\
+      \ \n<span class=\"co1\">// terminals</span>\n<span class=\"kw1\">const</span>\
+      \ __BEGIN                 <span class=\"sy0\">=</span> <span class=\"st0\">\"\
+      begin\"</span>;\n<span class=\"kw1\">const</span> __END                   <span\
+      \ class=\"sy0\">=</span> <span class=\"st0\">\"end\"</span>;\n<span class=\"\
+      kw1\">const</span> __SEMICOLON             <span class=\"sy0\">=</span> <span\
+      \ class=\"st0\">\";\"</span>;\n<span class=\"kw1\">const</span> __VAR      \
+      \             <span class=\"sy0\">=</span> <span class=\"st0\">\"var\"</span>;\n\
+      <span class=\"kw1\">const</span> __INTEGER               <span class=\"sy0\"\
+      >=</span> <span class=\"st0\">\"int\"</span>;\n<span class=\"kw1\">const</span>\
+      \ __STRING                <span class=\"sy0\">=</span> <span class=\"st0\">\"\
+      string\"</span>;\n<span class=\"kw1\">const</span> __FLOAT                 <span\
+      \ class=\"sy0\">=</span> <span class=\"st0\">\"float\"</span>;\n<span class=\"\
+      kw1\">const</span> __BOOLEAN               <span class=\"sy0\">=</span> <span\
+      \ class=\"st0\">\"bool\"</span>;\n<span class=\"kw1\">const</span> __FUNC  \
+      \                <span class=\"sy0\">=</span> <span class=\"st0\">\"function\"\
+      </span>;\n<span class=\"kw1\">const</span> __BECOMES               <span class=\"\
+      sy0\">=</span> <span class=\"st0\">\"=\"</span>;\n<span class=\"kw1\">const</span>\
+      \ __WHILE                 <span class=\"sy0\">=</span> <span class=\"st0\">\"\
+      while\"</span>;\n<span class=\"kw1\">const</span> __DO                    <span\
+      \ class=\"sy0\">=</span> <span class=\"st0\">\"do\"</span>;\n<span class=\"\
+      kw1\">const</span> __IF                    <span class=\"sy0\">=</span> <span\
+      \ class=\"st0\">\"if\"</span>;\n<span class=\"kw1\">const</span> __THEN    \
+      \              <span class=\"sy0\">=</span> <span class=\"st0\">\"then\"</span>;\n\
+      <span class=\"kw1\">const</span> __ELSE                  <span class=\"sy0\"\
+      >=</span> <span class=\"st0\">\"else\"</span>;\n<span class=\"kw1\">const</span>\
+      \ __LT                    <span class=\"sy0\">=</span> <span class=\"st0\">\"\
+      &lt;\"</span>;\n<span class=\"kw1\">const</span> __LE                    <span\
+      \ class=\"sy0\">=</span> <span class=\"st0\">\"&lt;=\"</span>;\n<span class=\"\
+      kw1\">const</span> __GT                    <span class=\"sy0\">=</span> <span\
+      \ class=\"st0\">\"&gt;\"</span>;\n<span class=\"kw1\">const</span> __GE    \
+      \                <span class=\"sy0\">=</span> <span class=\"st0\">\"&gt;=\"\
+      </span>;\n<span class=\"kw1\">const</span> __EQ                    <span class=\"\
+      sy0\">=</span> <span class=\"st0\">\"==\"</span>;\n<span class=\"kw1\">const</span>\
+      \ __NE                    <span class=\"sy0\">=</span> <span class=\"st0\">\"\
+      !=\"</span>;\n<span class=\"kw1\">const</span> __AND                   <span\
+      \ class=\"sy0\">=</span> <span class=\"st0\">\"&amp;&amp;\"</span>;\n<span class=\"\
+      kw1\">const</span> __OR                    <span class=\"sy0\">=</span> <span\
+      \ class=\"st0\">\"||\"</span>;\n<span class=\"kw1\">const</span> __PLUS    \
+      \              <span class=\"sy0\">=</span> <span class=\"st0\">\"+\"</span>;\n\
+      <span class=\"kw1\">const</span> __MINUS                 <span class=\"sy0\"\
+      >=</span> <span class=\"st0\">\"-\"</span>;\n<span class=\"kw1\">const</span>\
+      \ __MULTIPLY              <span class=\"sy0\">=</span> <span class=\"st0\">\"\
+      *\"</span>;\n<span class=\"kw1\">const</span> __DIVIDE                <span\
+      \ class=\"sy0\">=</span> <span class=\"st0\">\"/\"</span>;\n<span class=\"kw1\"\
+      >const</span> __MOD                   <span class=\"sy0\">=</span> <span class=\"\
+      st0\">\"%\"</span>;\n<span class=\"kw1\">const</span> __NOT                \
+      \   <span class=\"sy0\">=</span> <span class=\"st0\">\"!\"</span>;\n<span class=\"\
+      kw1\">const</span> __LBRACK                <span class=\"sy0\">=</span> <span\
+      \ class=\"st0\">\"(\"</span>;\n<span class=\"kw1\">const</span> __RBRACK   \
+      \             <span class=\"sy0\">=</span> <span class=\"st0\">\")\"</span>;\n\
+      <span class=\"kw1\">const</span> __TRUE                  <span class=\"sy0\"\
+      >=</span> <span class=\"st0\">\"true\"</span>;\n<span class=\"kw1\">const</span>\
+      \ __FALSE                 <span class=\"sy0\">=</span> <span class=\"st0\">\"\
+      false\"</span>;\n<span class=\"kw1\">const</span> __COMMA                 <span\
+      \ class=\"sy0\">=</span> <span class=\"st0\">\",\"</span>;\n<span class=\"co1\"\
+      >// terminals -- end</span></pre></div>\n</div>\n<p>All the terminals as defined\
+      \ in the <a href=\"/Legacy:BruteForce/EBNF\" title=\"Legacy:BruteForce/EBNF\"\
+      >grammar</a>, it's best to use constant instead of inline strings because this\
+      \ prevents you from making typos and it will also make it easier to change terminal.\
+      \ For example if you want to use <b>{</b> ... <b>}</b> instead of <b>begin</b>\
+      \ ... <b>end</b> you can simply change the constant value.</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">var</span> <span class=\"kw1\">private</span>\
+      \ Tokenizer t;\n<span class=\"kw1\">var</span> <span class=\"kw1\">private</span>\
+      \ AST a;\n \n<span class=\"kw1\">function</span> Compile<span class=\"br0\"\
+      >(</span>Tokenizer tokenizer, AST tree<span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n  t <span class=\"sy0\">=</span> tokenizer;\n  a <span class=\"\
+      sy0\">=</span> tree;\n  _program<span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>;\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>The main function\
+      \ of this class, this will start the parsing of the code.</p>\n<div dir=\"ltr\"\
+      \ class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">function</span> <span class=\"kw5\"\
+      >bool</span> has<span class=\"br0\">(</span>Tokenizer.<span class=\"me0\">tokenType</span>\
+      \ token, <span class=\"kw1\">optional</span> <span class=\"kw5\">string</span>\
+      \ text<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>text <span class=\"sy0\">==</span>\
+      \ <span class=\"st0\">\"\"</span><span class=\"br0\">)</span> <span class=\"\
+      kw2\">return</span> token ~<span class=\"sy0\">=</span> t.<span class=\"me0\"\
+      >currentToken</span><span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \  <span class=\"kw2\">return</span> <span class=\"br0\">(</span>text ~<span\
+      \ class=\"sy0\">=</span> t.<span class=\"me0\">tokenString</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span>token ~<span class=\"\
+      sy0\">=</span> t.<span class=\"me0\">currentToken</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p>The function has checks if the current\
+      \ token has the correct type, and optional if the token string is equal to the\
+      \ input.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n\
+      <div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\"\
+      >function</span> require<span class=\"br0\">(</span>Tokenizer.<span class=\"\
+      me0\">tokenType</span> token, <span class=\"kw1\">optional</span> <span class=\"\
+      kw5\">string</span> text<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \  <span class=\"kw1\">local</span> <span class=\"kw5\">bool</span> res;\n \
+      \ res <span class=\"sy0\">=</span> has<span class=\"br0\">(</span>token, text<span\
+      \ class=\"br0\">)</span>;\n  <span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span><span class=\"sy0\">!</span>res<span class=\"br0\">)</span>\n  <span\
+      \ class=\"br0\">{</span>\n    <span class=\"kw3\">Warn</span><span class=\"\
+      br0\">(</span><span class=\"st0\">\"Expected (\"</span><span class=\"sy0\">$</span>token<span\
+      \ class=\"sy0\">$</span><span class=\"st0\">\") <span class=\"es0\">\\\"</span>\"\
+      </span><span class=\"sy0\">$</span>text<span class=\"sy0\">$</span><span class=\"\
+      st0\">\"<span class=\"es0\">\\\"</span> but has (\"</span><span class=\"sy0\"\
+      >$</span>t.<span class=\"me0\">currentToken</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">$</span><span class=\"st0\">\")\
+      \ <span class=\"es0\">\\\"</span>\"</span><span class=\"sy0\">$</span>t.<span\
+      \ class=\"me0\">tokenString</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span><span class=\"sy0\">$</span><span class=\"st0\">\"<span class=\"\
+      es0\">\\\"</span> @ \"</span><span class=\"sy0\">$</span>t.<span class=\"me0\"\
+      >currentLine</span><span class=\"br0\">(</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">$</span><span class=\"st0\">\",\"</span><span class=\"sy0\"\
+      >$</span>t.<span class=\"me0\">currentPos</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>;\n    <span class=\"kw2\"\
+      >assert</span><span class=\"br0\">(</span><span class=\"kw6\">false</span><span\
+      \ class=\"br0\">)</span>;\n  <span class=\"br0\">}</span>\n<span class=\"br0\"\
+      >}</span></pre></div>\n</div>\n<p>Require does the same as <i>has()</i> except\
+      \ that if the result is false it will abort the whole compilation. <i>Require</i>\
+      \ is used to check for tokens that have to be there in order to for the language\
+      \ to be conform to the specification.</p>\n<p>Currently it uses <i>assert()</i>\
+      \ to stop the compilation, this will ofcourse stop the whole system, you may\
+      \ want to write a diffirent instruction here to stop compiling.</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">function</span> _program<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n \
+      \ _declarations<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n \
+      \ _statements<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n  require<span\
+      \ class=\"br0\">(</span>TT_EOF<span class=\"br0\">)</span>;\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p>The initial rule, note that it requires\
+      \ an end of file at the end, this is to ensure that no more declarations are\
+      \ possible after the main code has been finished.</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw1\">function</span> _declarations<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n \
+      \ <span class=\"kw2\">while</span> <span class=\"br0\">(</span>has<span class=\"\
+      br0\">(</span>TT_Identifier, __VAR<span class=\"br0\">)</span> <span class=\"\
+      sy0\">||</span> has<span class=\"br0\">(</span>TT_Identifier, __FUNC<span class=\"\
+      br0\">)</span><span class=\"br0\">)</span>\n  <span class=\"br0\">{</span>\n\
+      \    <span class=\"kw2\">if</span> <span class=\"br0\">(</span>has<span class=\"\
+      br0\">(</span>TT_Identifier, __VAR<span class=\"br0\">)</span><span class=\"\
+      br0\">)</span> _declaration<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \    <span class=\"kw2\">else</span> <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span>has<span class=\"br0\">(</span>TT_Identifier, __FUNC<span class=\"\
+      br0\">)</span><span class=\"br0\">)</span> _function<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n    require<span class=\"br0\">(</span>TT_Literal,\
+      \ __SEMICOLON<span class=\"br0\">)</span>;\n    t.<span class=\"me0\">nextToken</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n  <span class=\"br0\"\
+      >}</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>The declaration\
+      \ block, a declaration is either a <b>var</b> or <b>function</b>, while this\
+      \ is true we keep reading declarations. When it's not true it has to be a statement.</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">function</span>\
+      \ _declaration<span class=\"br0\">(</span><span class=\"br0\">)</span>\n<span\
+      \ class=\"br0\">{</span>\n  a.<span class=\"me0\">AddRoot</span><span class=\"\
+      br0\">(</span>NT_Keyword, __VAR<span class=\"br0\">)</span>;\n  t.<span class=\"\
+      me0\">nextToken</span><span class=\"br0\">(</span><span class=\"br0\">)</span>;\
+      \ <span class=\"co1\">// __VAR</span>\n  _type<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n  require<span class=\"br0\">(</span>TT_Identifier<span\
+      \ class=\"br0\">)</span>;\n  a.<span class=\"me0\">AddChild</span><span class=\"\
+      br0\">(</span>NT_Identifier, t.<span class=\"me0\">tokenString</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n  t.<span\
+      \ class=\"me0\">nextToken</span><span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>;\n  a.<span class=\"me0\">CloseRoot</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <p>A variable declaration, we start by adding a new root node to the <a href=\"\
+      /Legacy:BruteForce/AST\" title=\"Legacy:BruteForce/AST\">Legacy:BruteForce/AST</a>,\
+      \ next we decent into the type specification where type is added to the current\
+      \ root node. Next we should get the variable identifier which we also add to\
+      \ the current root node.</p>\n<p>At the end we close the current root node,\
+      \ everything required for a <i>var</i> AST node is not in the root node so we\
+      \ can close it to start with a new one.</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">function</span> _type<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span>has<span class=\"br0\">(</span>TT_Identifier,\
+      \ __INTEGER<span class=\"br0\">)</span><span class=\"br0\">)</span> \n  <span\
+      \ class=\"br0\">{</span>\n    a.<span class=\"me0\">AddChild</span><span class=\"\
+      br0\">(</span>NT_Keyword, __INTEGER<span class=\"br0\">)</span>;\n    t.<span\
+      \ class=\"me0\">nextToken</span><span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>;\n  <span class=\"br0\">}</span>\n  <span class=\"kw2\">else</span>\
+      \ <span class=\"kw2\">if</span> <span class=\"br0\">(</span>has<span class=\"\
+      br0\">(</span>TT_Identifier, __STRING<span class=\"br0\">)</span><span class=\"\
+      br0\">)</span> \n  <span class=\"br0\">{</span>\n    a.<span class=\"me0\">AddChild</span><span\
+      \ class=\"br0\">(</span>NT_Keyword, __STRING<span class=\"br0\">)</span>;\n\
+      \    t.<span class=\"me0\">nextToken</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n  <span class=\"br0\">}</span>\n  <span class=\"\
+      kw2\">else</span> <span class=\"kw2\">if</span> <span class=\"br0\">(</span>has<span\
+      \ class=\"br0\">(</span>TT_Identifier, __FLOAT<span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span> \n  <span class=\"br0\">{</span>\n    a.<span class=\"\
+      me0\">AddChild</span><span class=\"br0\">(</span>NT_Keyword, __FLOAT<span class=\"\
+      br0\">)</span>;\n    t.<span class=\"me0\">nextToken</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>;\n  <span class=\"br0\">}</span>\n  <span\
+      \ class=\"kw2\">else</span> <span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span>has<span class=\"br0\">(</span>TT_Identifier, __BOOLEAN<span class=\"\
+      br0\">)</span><span class=\"br0\">)</span> \n  <span class=\"br0\">{</span>\n\
+      \    a.<span class=\"me0\">AddChild</span><span class=\"br0\">(</span>NT_Keyword,\
+      \ __BOOLEAN<span class=\"br0\">)</span>;\n    t.<span class=\"me0\">nextToken</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n  <span class=\"br0\"\
+      >}</span>\n  <span class=\"kw2\">else</span> <span class=\"br0\">{</span>\n\
+      \    <span class=\"kw3\">Warn</span><span class=\"br0\">(</span><span class=\"\
+      st0\">\"Unrecognised type:\"</span><span class=\"sy0\">@</span>t.<span class=\"\
+      me0\">tokenString</span><span class=\"br0\">(</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">@</span><span class=\"st0\">\"@ \"</span><span class=\"sy0\"\
+      >$</span>t.<span class=\"me0\">currentLine</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">$</span><span class=\"st0\">\",\"\
+      </span><span class=\"sy0\">$</span>t.<span class=\"me0\">currentPos</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n\
+      \    <span class=\"kw2\">assert</span><span class=\"br0\">(</span><span class=\"\
+      kw6\">false</span><span class=\"br0\">)</span>;\n  <span class=\"br0\">}</span>\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>We only support four types\
+      \ at the moment, if the encounter something else it's wrong and we abort the\
+      \ compilation.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">function</span> _function<span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n  a.<span class=\"me0\">AddRoot</span><span\
+      \ class=\"br0\">(</span>NT_Keyword, __FUNC<span class=\"br0\">)</span>;\n  t.<span\
+      \ class=\"me0\">nextToken</span><span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>; <span class=\"co1\">// function</span>\n  _type<span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>;\n  require<span class=\"br0\">(</span>TT_Identifier<span\
+      \ class=\"br0\">)</span>;\n  a.<span class=\"me0\">AddRoot</span><span class=\"\
+      br0\">(</span>NT_Identifier, t.<span class=\"me0\">tokenString</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">)</span>; <span\
+      \ class=\"co1\">// function name</span>\n  t.<span class=\"me0\">nextToken</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n  require<span class=\"\
+      br0\">(</span>TT_Literal, __LBRACK<span class=\"br0\">)</span>;\n  t.<span class=\"\
+      me0\">nextToken</span><span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \  _arguments<span class=\"br0\">(</span><span class=\"br0\">)</span>;  \n \
+      \ require<span class=\"br0\">(</span>TT_Literal, __RBRACK<span class=\"br0\"\
+      >)</span>;\n  a.<span class=\"me0\">CloseRoot</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n  t.<span class=\"me0\">nextToken</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n  _declarations<span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>;\n  require<span class=\"br0\">(</span>TT_Identifier,\
+      \ __BEGIN<span class=\"br0\">)</span>;\n  t.<span class=\"me0\">nextToken</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n  _statements<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n  require<span class=\"br0\">(</span>TT_Identifier,\
+      \ __END<span class=\"br0\">)</span>;\n  t.<span class=\"me0\">nextToken</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n  a.<span class=\"me0\"\
+      >CloseRoot</span><span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>We received a function\
+      \ declarations, we start by adding a new root node of type <i>function</i>.\
+      \ Just like with the variable declaration we add the type of the function to\
+      \ the root node and the name of the function. But, unlike with the variable\
+      \ name we make the function name the new root node, to this root node we will\
+      \ add the function arguments.</p>\n<p>After we added the arguments, if any,\
+      \ we close the root node (the function name) and we start adding a declarations\
+      \ and statements block to the function root node.</p>\n<p>Note that I don't\
+      \ add the <b>begin</b>, <b>end</b>, etc to the AST. We don't need these things\
+      \ in the AST because in the AST we know how many <i>children</i> a block has.</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">function</span>\
+      \ _arguments<span class=\"br0\">(</span><span class=\"br0\">)</span>\n<span\
+      \ class=\"br0\">{</span>\n  <span class=\"kw2\">while</span> <span class=\"\
+      br0\">(</span><span class=\"sy0\">!</span>has<span class=\"br0\">(</span>TT_Literal,\
+      \ __RBRACK<span class=\"br0\">)</span><span class=\"br0\">)</span>\n  <span\
+      \ class=\"br0\">{</span>\n    a.<span class=\"me0\">AddRoot</span><span class=\"\
+      br0\">(</span>NT_Keyword, __VAR<span class=\"br0\">)</span>;\n    _type<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n    require<span class=\"\
+      br0\">(</span>TT_Identifier<span class=\"br0\">)</span>;\n    a.<span class=\"\
+      me0\">AddChild</span><span class=\"br0\">(</span>NT_Identifier, t.<span class=\"\
+      me0\">tokenString</span><span class=\"br0\">(</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span>;\n    t.<span class=\"me0\">nextToken</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n    a.<span class=\"me0\">CloseRoot</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n    <span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span>has<span class=\"br0\">(</span>TT_Literal,\
+      \ __SEMICOLON<span class=\"br0\">)</span><span class=\"br0\">)</span> t.<span\
+      \ class=\"me0\">nextToken</span><span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>;\n    <span class=\"kw2\">else</span> <span class=\"kw2\">break</span>;\n\
+      \  <span class=\"br0\">}</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>The function arguments are just defined as local variable of the\
+      \ function, the only reason we added them as children of the function name instead\
+      \ of the function because it's easy to assign values to those when we call the\
+      \ function.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">function</span> _statements<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw2\">while</span>\
+      \ <span class=\"br0\">(</span><span class=\"sy0\">!</span><span class=\"br0\"\
+      >(</span>has<span class=\"br0\">(</span>TT_Identifier, __END<span class=\"br0\"\
+      >)</span> <span class=\"sy0\">||</span> has<span class=\"br0\">(</span>TT_EOF<span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\n\
+      \  <span class=\"br0\">{</span>\n    _statement<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n    require<span class=\"br0\">(</span>TT_Literal,\
+      \ __SEMICOLON<span class=\"br0\">)</span>;\n    t.<span class=\"me0\">nextToken</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n  <span class=\"br0\"\
+      >}</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>Statements are\
+      \ read until the end of file.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">function</span> _statement<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span>has<span class=\"br0\">(</span>TT_Identifier,\
+      \ __WHILE<span class=\"br0\">)</span><span class=\"br0\">)</span> _whiledo<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n  <span class=\"kw2\"\
+      >else</span> <span class=\"kw2\">if</span> <span class=\"br0\">(</span>has<span\
+      \ class=\"br0\">(</span>TT_Identifier, __IF<span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span> _ifthenelse<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n  <span class=\"kw2\">else</span> <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span>has<span class=\"br0\">(</span>TT_Identifier<span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span> _assignment<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n  <span class=\"kw2\">else</span>\
+      \ <span class=\"br0\">{</span>\n    <span class=\"kw3\">Warn</span><span class=\"\
+      br0\">(</span><span class=\"st0\">\"Unrecognised statement:\"</span><span class=\"\
+      sy0\">@</span>t.<span class=\"me0\">tokenString</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">@</span><span class=\"st0\">\"@\
+      \ \"</span><span class=\"sy0\">$</span>t.<span class=\"me0\">currentLine</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span><span class=\"sy0\">$</span><span\
+      \ class=\"st0\">\",\"</span><span class=\"sy0\">$</span>t.<span class=\"me0\"\
+      >currentPos</span><span class=\"br0\">(</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span>;\n    <span class=\"kw2\">assert</span><span class=\"\
+      br0\">(</span><span class=\"kw6\">false</span><span class=\"br0\">)</span>;\n\
+      \  <span class=\"br0\">}</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>As defined in the <a href=\"/Legacy:BruteForce/EBNF\" title=\"Legacy:BruteForce/EBNF\"\
+      >Legacy:BruteForce/EBNF</a> a statement can be a <b>while ... do</b>, an <b>if\
+      \ ... then ... else</b> or an assignment. When we have something else as the\
+      \ current token something has to be wrong and we stop with compiling.</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">function</span>\
+      \ _whiledo<span class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n  a.<span class=\"me0\">AddRoot</span><span class=\"br0\">(</span>NT_Keyword,\
+      \ __WHILE<span class=\"br0\">)</span>;\n  t.<span class=\"me0\">nextToken</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>; <span class=\"co1\">//\
+      \ WHILE</span>\n  _expr<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \  require<span class=\"br0\">(</span>TT_Identifier, __DO<span class=\"br0\"\
+      >)</span>;\n  t.<span class=\"me0\">nextToken</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n  _codeblock<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n  a.<span class=\"me0\">CloseRoot</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>A while to begins with adding the new root node of type <i>while</i>,\
+      \ after that we add a child node with the expression, and a child node of a\
+      \ codeblock (these child nodes are added by the called functions)</p>\n<div\
+      \ dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">function</span>\
+      \ _codeblock<span class=\"br0\">(</span><span class=\"br0\">)</span>\n<span\
+      \ class=\"br0\">{</span>\n  <span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span>has<span class=\"br0\">(</span>TT_Identifier, __BEGIN<span class=\"\
+      br0\">)</span><span class=\"br0\">)</span>\n  <span class=\"br0\">{</span>\n\
+      \    a.<span class=\"me0\">AddRoot</span><span class=\"br0\">(</span>NT_Keyword,\
+      \ __BEGIN<span class=\"br0\">)</span>;\n    t.<span class=\"me0\">nextToken</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n    _statements<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n    require<span class=\"\
+      br0\">(</span>TT_Identifier, __END<span class=\"br0\">)</span>;\n    t.<span\
+      \ class=\"me0\">nextToken</span><span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>;\n    a.<span class=\"me0\">CloseRoot</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n  <span class=\"br0\">}</span>\n  <span class=\"\
+      kw2\">else</span> <span class=\"br0\">{</span>\n    _statement<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n  <span class=\"br0\">}</span>\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>If the code block starts\
+      \ with a begin we open a new root node because a code block may only add one\
+      \ child node to the current root node. This new root node will then get more\
+      \ than a group of statements and an <b>end</b> which will close the root node.</p>\n\
+      <p>If the code block doesn't start with a <b>begin</b> we asume it's just a\
+      \ single statement.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">function</span> _ifthenelse<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n  a.<span class=\"me0\">AddRoot</span><span\
+      \ class=\"br0\">(</span>NT_Keyword, __IF<span class=\"br0\">)</span>;\n  t.<span\
+      \ class=\"me0\">nextToken</span><span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>; <span class=\"co1\">// IF</span>\n  _expr<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n  require<span class=\"br0\">(</span>TT_Identifier,\
+      \ __THEN<span class=\"br0\">)</span>;\n  t.<span class=\"me0\">nextToken</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n  _codeblock<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n  <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span>has<span class=\"br0\">(</span>TT_Identifier,\
+      \ __ELSE<span class=\"br0\">)</span><span class=\"br0\">)</span>\n  <span class=\"\
+      br0\">{</span>\n    t.<span class=\"me0\">nextToken</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>;\n    _codeblock<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n  <span class=\"br0\">}</span>\n  a.<span class=\"\
+      me0\">CloseRoot</span><span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>This works just like the\
+      \ <b>while ... do</b> except that there might be a third child to be added to\
+      \ the <b>if</b> root node, the <b>else</b> is optional.</p>\n<div dir=\"ltr\"\
+      \ class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">function</span> _assignment<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n \
+      \ <span class=\"kw1\">local</span> <span class=\"kw5\">string</span> tmp;\n\
+      \  tmp <span class=\"sy0\">=</span> t.<span class=\"me0\">tokenString</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n  t.<span class=\"me0\"\
+      >nextToken</span><span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \  <span class=\"kw2\">if</span> <span class=\"br0\">(</span>has<span class=\"\
+      br0\">(</span>TT_Literal, __LBRACK<span class=\"br0\">)</span><span class=\"\
+      br0\">)</span> _functioncall<span class=\"br0\">(</span>tmp<span class=\"br0\"\
+      >)</span>;\n  <span class=\"kw2\">else</span> <span class=\"br0\">{</span>\n\
+      \    a.<span class=\"me0\">AddRoot</span><span class=\"br0\">(</span>NT_Keyword,\
+      \ __BECOMES<span class=\"br0\">)</span>;\n    a.<span class=\"me0\">AddChild</span><span\
+      \ class=\"br0\">(</span>NT_Identifier, tmp<span class=\"br0\">)</span>;\n  \
+      \  require<span class=\"br0\">(</span>TT_Operator, __BECOMES<span class=\"br0\"\
+      >)</span>;\n    t.<span class=\"me0\">nextToken</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n    _expr<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n    a.<span class=\"me0\">CloseRoot</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>;\n  <span class=\"br0\">}</span>\n<span\
+      \ class=\"br0\">}</span></pre></div>\n</div>\n<p>An assignment starts with a\
+      \ identifier, however this identifier can be a variable or a function, so we\
+      \ have to take a look at the next token if it's either a <b>becomes</b> or a\
+      \ left bracket. For this we had to make the compiler look a head one token (e.g.\
+      \ LL(2)).</p>\n<p>If it's really an assigment we will add a new root node of\
+      \ type <b>becomes</b> and we assign the childs identifier and expression to\
+      \ that node.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">function</span> _expr<span class=\"br0\">(</span><span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n  _boolex<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>This is\
+      \ an nice example of a useless looking function, but it might be usefull in\
+      \ the future when we want to add an operator with a lower precendance than the\
+      \ boolean expressions.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">function</span> _boolex<span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>  \n  _accum<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n  <span class=\"kw2\">while</span> <span class=\"\
+      br0\">(</span>has<span class=\"br0\">(</span>TT_Operator, __LT<span class=\"\
+      br0\">)</span><span class=\"sy0\">||</span>has<span class=\"br0\">(</span>TT_Operator,\
+      \ __LE<span class=\"br0\">)</span><span class=\"sy0\">||</span>has<span class=\"\
+      br0\">(</span>TT_Operator, __GT<span class=\"br0\">)</span><span class=\"sy0\"\
+      >||</span>has<span class=\"br0\">(</span>TT_Operator, __GE<span class=\"br0\"\
+      >)</span><span class=\"sy0\">||</span>\n    has<span class=\"br0\">(</span>TT_Operator,\
+      \ __EQ<span class=\"br0\">)</span><span class=\"sy0\">||</span>has<span class=\"\
+      br0\">(</span>TT_Operator, __NE<span class=\"br0\">)</span><span class=\"sy0\"\
+      >||</span>has<span class=\"br0\">(</span>TT_Operator, __AND<span class=\"br0\"\
+      >)</span><span class=\"sy0\">||</span>has<span class=\"br0\">(</span>TT_Operator,\
+      \ __OR<span class=\"br0\">)</span><span class=\"br0\">)</span>\n  <span class=\"\
+      br0\">{</span>\n    a.<span class=\"me0\">AddRoot</span><span class=\"br0\"\
+      >(</span>NT_Keyword, t.<span class=\"me0\">tokenString</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n  \
+      \  a.<span class=\"me0\">SwitchNode</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n    t.<span class=\"me0\">nextToken</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n    _accum<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n    a.<span class=\"me0\">CloseRoot</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n  <span class=\"br0\">}</span>\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>Well here is where it's\
+      \ get difficult, we first decent into the _accum() function which will finally\
+      \ result into a child node that can have a complete sub tree, or just a single\
+      \ child node. After that we might get one or more boolean operators. This is\
+      \ the infix notation, but we want to make our AST prefix. So we add a new root\
+      \ node for the current boolean operator and switch that root node around with\
+      \ the last child node in the current root.</p>\n<p>Let's take the following\
+      \ code: <code>x = 1 + 2</code></p>\n<table class=\"wikitable\">\n<tr>\n<td style=\"\
+      text-align: center\"><i>before swap</i></td>\n<td style=\"text-align: center\"\
+      ><i>after swap</i></td>\n</tr>\n<tr>\n<td>\n<pre>=\n x\n 1\n +\n  2\n</pre></td>\n\
+      <td>\n<pre>=\n x\n +\n  1\n  2\n</pre></td>\n<td></td>\n</tr>\n</table>\n<p>The\
+      \ same applies to the following few functions below</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw1\">function</span> _accum<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n \
+      \ _mult<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n  <span class=\"\
+      kw2\">while</span> <span class=\"br0\">(</span>has<span class=\"br0\">(</span>TT_Operator,\
+      \ __PLUS<span class=\"br0\">)</span><span class=\"sy0\">||</span>has<span class=\"\
+      br0\">(</span>TT_Operator, __MINUS<span class=\"br0\">)</span><span class=\"\
+      br0\">)</span>\n  <span class=\"br0\">{</span>\n    a.<span class=\"me0\">AddRoot</span><span\
+      \ class=\"br0\">(</span>NT_Keyword, t.<span class=\"me0\">tokenString</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n\
+      \    a.<span class=\"me0\">SwitchNode</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n    t.<span class=\"me0\">nextToken</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n    _mult<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n    a.<span class=\"me0\">CloseRoot</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n  <span class=\"br0\">}</span>\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">function</span> _mult<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \  _preop<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n  <span\
+      \ class=\"kw2\">while</span> <span class=\"br0\">(</span>has<span class=\"br0\"\
+      >(</span>TT_Operator, __MULTIPLY<span class=\"br0\">)</span><span class=\"sy0\"\
+      >||</span>has<span class=\"br0\">(</span>TT_Operator, __DIVIDE<span class=\"\
+      br0\">)</span><span class=\"sy0\">||</span>has<span class=\"br0\">(</span>TT_Operator,\
+      \ __MOD<span class=\"br0\">)</span><span class=\"br0\">)</span>\n  <span class=\"\
+      br0\">{</span>\n    a.<span class=\"me0\">AddRoot</span><span class=\"br0\"\
+      >(</span>NT_Keyword, t.<span class=\"me0\">tokenString</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n  \
+      \  a.<span class=\"me0\">SwitchNode</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n    t.<span class=\"me0\">nextToken</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n    _preop<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n    a.<span class=\"me0\">CloseRoot</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n  <span class=\"br0\">}</span>\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">function</span> _preop<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \  <span class=\"kw1\">local</span> <span class=\"kw5\">bool</span> open;\n\
+      \  open <span class=\"sy0\">=</span> <span class=\"kw6\">false</span>;\n  <span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span>has<span class=\"br0\"\
+      >(</span>TT_Operator, __MINUS<span class=\"br0\">)</span><span class=\"br0\"\
+      >)</span>\n  <span class=\"br0\">{</span>\n    open <span class=\"sy0\">=</span>\
+      \ <span class=\"kw6\">true</span>;\n    a.<span class=\"me0\">AddRoot</span><span\
+      \ class=\"br0\">(</span>NT_Keyword, __MINUS<span class=\"br0\">)</span>;\n \
+      \   a.<span class=\"me0\">AddChild</span><span class=\"br0\">(</span>NT_Integer,\
+      \ <span class=\"st0\">\"0\"</span><span class=\"br0\">)</span>;\n    t.<span\
+      \ class=\"me0\">nextToken</span><span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>;\n  <span class=\"br0\">}</span>\n  <span class=\"kw2\">else</span>\
+      \ <span class=\"kw2\">if</span> <span class=\"br0\">(</span>has<span class=\"\
+      br0\">(</span>TT_Operator, __NOT<span class=\"br0\">)</span><span class=\"br0\"\
+      >)</span>\n  <span class=\"br0\">{</span>\n    open <span class=\"sy0\">=</span>\
+      \ <span class=\"kw6\">true</span>;\n    a.<span class=\"me0\">AddRoot</span><span\
+      \ class=\"br0\">(</span>NT_Keyword, __NOT<span class=\"br0\">)</span>;\n   \
+      \ t.<span class=\"me0\">nextToken</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n  <span class=\"br0\">}</span>\n  _operand<span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>;\n  <span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span>open<span class=\"br0\">)</span> a.<span class=\"me0\"\
+      >CloseRoot</span><span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>For the <b>-</b> preoperator\
+      \ I've added a hack, it will be inserted into the AST as if it was <code>0 -\
+      \ operand</code></p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">function</span> _operand<span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">string</span> tmp;\n  <span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span>has<span class=\"br0\">(</span>TT_Identifier, __TRUE<span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n  <span class=\"br0\"\
+      >{</span>\n    a.<span class=\"me0\">AddChild</span><span class=\"br0\">(</span>NT_Boolean,\
+      \ t.<span class=\"me0\">tokenString</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>;\n    t.<span class=\"\
+      me0\">nextToken</span><span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \  <span class=\"br0\">}</span>\n  <span class=\"kw2\">else</span> <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>has<span class=\"br0\">(</span>TT_Identifier,\
+      \ __FALSE<span class=\"br0\">)</span><span class=\"br0\">)</span>\n  <span class=\"\
+      br0\">{</span>\n    a.<span class=\"me0\">AddChild</span><span class=\"br0\"\
+      >(</span>NT_Boolean, t.<span class=\"me0\">tokenString</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n  \
+      \  t.<span class=\"me0\">nextToken</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n  <span class=\"br0\">}</span>\n  <span class=\"kw2\">else</span>\
+      \ <span class=\"kw2\">if</span> <span class=\"br0\">(</span>has<span class=\"\
+      br0\">(</span>TT_Identifier<span class=\"br0\">)</span><span class=\"br0\">)</span>\n\
+      \  <span class=\"br0\">{</span>    \n    tmp <span class=\"sy0\">=</span> t.<span\
+      \ class=\"me0\">tokenString</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n    t.<span class=\"me0\">nextToken</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>;\n    <span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span>has<span class=\"br0\">(</span>TT_Literal, __LBRACK<span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span> <span class=\"co1\">//\
+      \ is function ??</span>\n    <span class=\"br0\">{</span>\n      _functioncall<span\
+      \ class=\"br0\">(</span>tmp<span class=\"br0\">)</span>;\n    <span class=\"\
+      br0\">}</span>\n    <span class=\"kw2\">else</span> <span class=\"br0\">{</span>\n\
+      \      a.<span class=\"me0\">AddChild</span><span class=\"br0\">(</span>NT_Identifier,\
+      \ tmp<span class=\"br0\">)</span>;\n    <span class=\"br0\">}</span>\n  <span\
+      \ class=\"br0\">}</span>\n  <span class=\"kw2\">else</span> <span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span>has<span class=\"br0\">(</span>TT_Integer<span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n  <span class=\"br0\"\
+      >{</span>\n    a.<span class=\"me0\">AddChild</span><span class=\"br0\">(</span>NT_Integer,\
+      \ t.<span class=\"me0\">tokenString</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>;\n    t.<span class=\"\
+      me0\">nextToken</span><span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \  <span class=\"br0\">}</span>\n  <span class=\"kw2\">else</span> <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>has<span class=\"br0\">(</span>TT_String<span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n  <span class=\"br0\"\
+      >{</span>\n    a.<span class=\"me0\">AddChild</span><span class=\"br0\">(</span>NT_String,\
+      \ t.<span class=\"me0\">tokenString</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>;\n    t.<span class=\"\
+      me0\">nextToken</span><span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \  <span class=\"br0\">}</span>\n  <span class=\"kw2\">else</span> <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>has<span class=\"br0\">(</span>TT_Float<span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n  <span class=\"br0\"\
+      >{</span>\n    a.<span class=\"me0\">AddChild</span><span class=\"br0\">(</span>NT_Float,\
+      \ t.<span class=\"me0\">tokenString</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>;\n    t.<span class=\"\
+      me0\">nextToken</span><span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \  <span class=\"br0\">}</span>\n  <span class=\"kw2\">else</span> <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>has<span class=\"br0\">(</span>TT_Literal,\
+      \ __LBRACK<span class=\"br0\">)</span><span class=\"br0\">)</span>\n  <span\
+      \ class=\"br0\">{</span>\n    t.<span class=\"me0\">nextToken</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n    _expr<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n    require<span class=\"br0\">(</span>TT_Literal,\
+      \ __RBRACK<span class=\"br0\">)</span>;\n    t.<span class=\"me0\">nextToken</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n  <span class=\"br0\"\
+      >}</span>\n  <span class=\"kw2\">else</span> <span class=\"br0\">{</span>\n\
+      \    <span class=\"kw3\">Warn</span><span class=\"br0\">(</span><span class=\"\
+      st0\">\"Unexpected token:\"</span><span class=\"sy0\">@</span>t.<span class=\"\
+      me0\">tokenString</span><span class=\"br0\">(</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">@</span><span class=\"st0\">\"@ \"</span><span class=\"sy0\"\
+      >$</span>t.<span class=\"me0\">currentLine</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">$</span><span class=\"st0\">\",\"\
+      </span><span class=\"sy0\">$</span>t.<span class=\"me0\">currentPos</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n\
+      \    <span class=\"kw2\">assert</span><span class=\"br0\">(</span><span class=\"\
+      kw6\">false</span><span class=\"br0\">)</span>;\n  <span class=\"br0\">}</span>\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>The operand function is\
+      \ the finaly stop, first we check if the the identifier is either a <b>true</b>\
+      \ or a <b>false</b>, if not we check if the identifier is either a variable\
+      \ or a function call. If it's just a variable we will add a normal child to\
+      \ the current root node.</p>\n<p>Next we check if it is a inline constant, or\
+      \ an expression between braces.</p>\n<p>If everything fails we have something\
+      \ wierd and stop compiling.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">function</span> _functioncall<span class=\"br0\">(</span><span class=\"\
+      kw5\">string</span> <span class=\"kw5\">name</span><span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n  a.<span class=\"me0\">AddRoot</span><span class=\"\
+      br0\">(</span>NT_Function, <span class=\"kw5\">name</span><span class=\"br0\"\
+      >)</span>;\n  t.<span class=\"me0\">nextToken</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n  <span class=\"kw2\">while</span> <span class=\"\
+      br0\">(</span><span class=\"sy0\">!</span>has<span class=\"br0\">(</span>TT_Literal,\
+      \ __RBRACK<span class=\"br0\">)</span><span class=\"br0\">)</span>\n  <span\
+      \ class=\"br0\">{</span>\n    _expr<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n    <span class=\"kw2\">if</span> <span class=\"br0\">(</span>has<span\
+      \ class=\"br0\">(</span>TT_Literal, __COMMA<span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span> t.<span class=\"me0\">nextToken</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n    <span class=\"kw2\">else</span>\
+      \ <span class=\"kw2\">break</span>;\n  <span class=\"br0\">}</span>\n  require<span\
+      \ class=\"br0\">(</span>TT_Literal, __RBRACK<span class=\"br0\">)</span>;\n\
+      \  t.<span class=\"me0\">nextToken</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>; <span class=\"co1\">// __RBRACK</span>\n  a.<span class=\"me0\"\
+      >CloseRoot</span><span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>If it's a function call\
+      \ we will add a new root with the function name, and give it the type <i>function</i>,\
+      \ as child nodes we add the arguments passed to it. And finally close the function\
+      \ call root.</p>\n<hr />\n<!-- \nNewPP limit report\nCPU time usage: 0.324 seconds\n\
+      Real time usage: 0.349 seconds\nPreprocessor visited node count: 70/1000000\n\
+      Preprocessor generated node count: 472/1000000\nPost‐expand include size: 48/2097152\
+      \ bytes\nTemplate argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\n\
+      Expensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion expansion\
+      \ time report (%,ms,calls,template)\n100.00%    0.000      1 - -total\n-->\n\
+      \n<!-- Saved in parser cache with key wiki:pcache:idhash:604-0!*!0!*!*!*!* and\
+      \ timestamp 20221118154741 and revision id 1818\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:BruteForce/AST"
+  - ns: 100
+    exists: true
+    name: "Legacy:BruteForce/EBNF"
+  templates: []
+  images: []
+  externallinks: []
+  sections: []
+  displaytitle: "Legacy:BruteForce/Compiler"
+  iwlinks: []
+  wikitext:
+    text: "<uscript>\n/**\n  Analyse and compile the language (create an AST)\n*/\n\
+      class Compiler extends Object dependsOn(Tokenizer) dependsOn(AST);\n\n// terminals\n\
+      const __BEGIN                 = \"begin\";\nconst __END                   =\
+      \ \"end\";\nconst __SEMICOLON             = \";\";\nconst __VAR            \
+      \       = \"var\";\nconst __INTEGER               = \"int\";\nconst __STRING\
+      \                = \"string\";\nconst __FLOAT                 = \"float\";\n\
+      const __BOOLEAN               = \"bool\";\nconst __FUNC                  = \"\
+      function\";\nconst __BECOMES               = \"=\";\nconst __WHILE         \
+      \        = \"while\";\nconst __DO                    = \"do\";\nconst __IF \
+      \                   = \"if\";\nconst __THEN                  = \"then\";\nconst\
+      \ __ELSE                  = \"else\";\nconst __LT                    = \"<\"\
+      ;\nconst __LE                    = \"<=\";\nconst __GT                    =\
+      \ \">\";\nconst __GE                    = \">=\";\nconst __EQ              \
+      \      = \"==\";\nconst __NE                    = \"!=\";\nconst __AND     \
+      \              = \"&&\";\nconst __OR                    = \"||\";\nconst __PLUS\
+      \                  = \"+\";\nconst __MINUS                 = \"-\";\nconst __MULTIPLY\
+      \              = \"*\";\nconst __DIVIDE                = \"/\";\nconst __MOD\
+      \                   = \"%\";\nconst __NOT                   = \"!\";\nconst\
+      \ __LBRACK                = \"(\";\nconst __RBRACK                = \")\";\n\
+      const __TRUE                  = \"true\";\nconst __FALSE                 = \"\
+      false\";\nconst __COMMA                 = \",\";\n// terminals -- end\n</uscript>\n\
+      \nAll the terminals as defined in the [[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/EBNF|grammar]],\
+      \ it's best to use constant instead of inline strings because this prevents\
+      \ you from making typos and it will also make it easier to change terminal.\
+      \ For example if you want to use '''{''' ... '''}''' instead of '''begin'''\
+      \ ... '''end''' you can simply change the constant value.\n\n<uscript>\nvar\
+      \ private Tokenizer t;\nvar private AST a;\n\nfunction Compile(Tokenizer tokenizer,\
+      \ AST tree)\n{\n  t = tokenizer;\n  a = tree;\n  _program();\n}\n</uscript>\n\
+      \nThe main function of this class, this will start the parsing of the code.\n\
+      \n<uscript>\n\nfunction bool has(Tokenizer.tokenType token, optional string\
+      \ text)\n{\n  if (text == \"\") return token ~= t.currentToken();\n  return\
+      \ (text ~= t.tokenString()) && (token ~= t.currentToken());\n}\n</uscript>\n\
+      \nThe function has checks if the current token has the correct type, and optional\
+      \ if the token string is equal to the input. \n\n<uscript>\n\nfunction require(Tokenizer.tokenType\
+      \ token, optional string text)\n{\n  local bool res;\n  res = has(token, text);\n\
+      \  if (!res)\n  {\n    Warn(\"Expected (\"$token$\") \\\"\"$text$\"\\\" but\
+      \ has (\"$t.currentToken()$\") \\\"\"$t.tokenString()$\"\\\" @ \"$t.currentLine()$\"\
+      ,\"$t.currentPos());\n    assert(false);\n  }\n}\n</uscript>\n\nRequire does\
+      \ the same as ''has()'' except that if the result is false it will abort the\
+      \ whole compilation. ''Require'' is used to check for tokens that have to be\
+      \ there in order to for the language to be conform to the specification. \n\n\
+      Currently it uses ''assert()'' to stop the compilation, this will ofcourse stop\
+      \ the whole system, you may want to write a diffirent instruction here to stop\
+      \ compiling.\n\n<uscript>\n\nfunction _program()\n{\n  _declarations();\n  _statements();\n\
+      \  require(TT_EOF);\n}\n</uscript>\n\nThe initial rule, note that it requires\
+      \ an end of file at the end, this is to ensure that no more declarations are\
+      \ possible after the main code has been finished.\n\n<uscript>\n\nfunction _declarations()\n\
+      {\n  while (has(TT_Identifier, __VAR) || has(TT_Identifier, __FUNC))\n  {\n\
+      \    if (has(TT_Identifier, __VAR)) _declaration();\n    else if (has(TT_Identifier,\
+      \ __FUNC)) _function();\n    require(TT_Literal, __SEMICOLON);\n    t.nextToken();\n\
+      \  }\n}\n</uscript>\n\nThe declaration block, a declaration is either a '''var'''\
+      \ or '''function''', while this is true we keep reading declarations. When it's\
+      \ not true it has to be a statement.\n\n<uscript>\n\nfunction _declaration()\n\
+      {\n  a.AddRoot(NT_Keyword, __VAR);\n  t.nextToken(); // __VAR\n  _type();\n\
+      \  require(TT_Identifier);\n  a.AddChild(NT_Identifier, t.tokenString());\n\
+      \  t.nextToken();\n  a.CloseRoot();\n}\n</uscript>\n\nA variable declaration,\
+      \ we start by adding a new root node to the [[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/AST]],\
+      \ next we decent into the type specification where type is added to the current\
+      \ root node. Next we should get the variable identifier which we also add to\
+      \ the current root node.\n\nAt the end we close the current root node, everything\
+      \ required for a ''var'' AST node is not in the root node so we can close it\
+      \ to start with a new one.\n\n<uscript>\n\nfunction _type()\n{\n  if (has(TT_Identifier,\
+      \ __INTEGER)) \n  {\n    a.AddChild(NT_Keyword, __INTEGER);\n    t.nextToken();\n\
+      \  }\n  else if (has(TT_Identifier, __STRING)) \n  {\n    a.AddChild(NT_Keyword,\
+      \ __STRING);\n    t.nextToken();\n  }\n  else if (has(TT_Identifier, __FLOAT))\
+      \ \n  {\n    a.AddChild(NT_Keyword, __FLOAT);\n    t.nextToken();\n  }\n  else\
+      \ if (has(TT_Identifier, __BOOLEAN)) \n  {\n    a.AddChild(NT_Keyword, __BOOLEAN);\n\
+      \    t.nextToken();\n  }\n  else {\n    Warn(\"Unrecognised type:\"@t.tokenString()@\"\
+      @ \"$t.currentLine()$\",\"$t.currentPos());\n    assert(false);\n  }\n}\n</uscript>\n\
+      \nWe only support four types at the moment, if the encounter something else\
+      \ it's wrong and we abort the compilation.\n\n<uscript>\n\nfunction _function()\n\
+      {\n  a.AddRoot(NT_Keyword, __FUNC);\n  t.nextToken(); // function\n  _type();\n\
+      \  require(TT_Identifier);\n  a.AddRoot(NT_Identifier, t.tokenString()); //\
+      \ function name\n  t.nextToken();\n  require(TT_Literal, __LBRACK);\n  t.nextToken();\n\
+      \  _arguments();  \n  require(TT_Literal, __RBRACK);\n  a.CloseRoot();\n  t.nextToken();\n\
+      \  _declarations();\n  require(TT_Identifier, __BEGIN);\n  t.nextToken();\n\
+      \  _statements();\n  require(TT_Identifier, __END);\n  t.nextToken();\n  a.CloseRoot();\n\
+      }\n</uscript>\n\nWe received a function declarations, we start by adding a new\
+      \ root node of type ''function''. Just like with the variable declaration we\
+      \ add the type of the function to the root node and the name of the function.\
+      \ But, unlike with the variable name we make the function name the new root\
+      \ node, to this root node we will add the function arguments. \n\nAfter we added\
+      \ the arguments, if any, we close the root node (the function name) and we start\
+      \ adding a declarations and statements block to the function root node.\n\n\
+      Note that I don't add the '''begin''', '''end''', etc to the AST. We don't need\
+      \ these things in the AST because in the AST we know how many ''children'' a\
+      \ block has.\n\n<uscript>\n\nfunction _arguments()\n{\n  while (!has(TT_Literal,\
+      \ __RBRACK))\n  {\n    a.AddRoot(NT_Keyword, __VAR);\n    _type();\n    require(TT_Identifier);\n\
+      \    a.AddChild(NT_Identifier, t.tokenString());\n    t.nextToken();\n    a.CloseRoot();\n\
+      \    if (has(TT_Literal, __SEMICOLON)) t.nextToken();\n    else break;\n  }\n\
+      }\n</uscript>\n\nThe function arguments are just defined as local variable of\
+      \ the function, the only reason we added them as children of the function name\
+      \ instead of the function because it's easy to assign values to those when we\
+      \ call the function.\n\n<uscript>\n\nfunction _statements()\n{\n  while (!(has(TT_Identifier,\
+      \ __END) || has(TT_EOF)))\n  {\n    _statement();\n    require(TT_Literal, __SEMICOLON);\n\
+      \    t.nextToken();\n  }\n}\n</uscript>\n\nStatements are read until the end\
+      \ of file.\n\n<uscript>\n\nfunction _statement()\n{\n  if (has(TT_Identifier,\
+      \ __WHILE)) _whiledo();\n  else if (has(TT_Identifier, __IF)) _ifthenelse();\n\
+      \  else if (has(TT_Identifier)) _assignment();\n  else {\n    Warn(\"Unrecognised\
+      \ statement:\"@t.tokenString()@\"@ \"$t.currentLine()$\",\"$t.currentPos());\n\
+      \    assert(false);\n  }\n}\n</uscript>\n\nAs defined in the [[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/EBNF]]\
+      \ a statement can be a '''while ... do''', an '''if ... then ... else''' or\
+      \ an assignment. When we have something else as the current token something\
+      \ has to be wrong and we stop with compiling.\n\n<uscript>\n\nfunction _whiledo()\n\
+      {\n  a.AddRoot(NT_Keyword, __WHILE);\n  t.nextToken(); // WHILE\n  _expr();\n\
+      \  require(TT_Identifier, __DO);\n  t.nextToken();\n  _codeblock();\n  a.CloseRoot();\n\
+      }\n</uscript>\n\nA while to begins with adding the new root node of type ''while'',\
+      \ after that we add a child node with the expression, and a child node of a\
+      \ codeblock (these child nodes are added by the called functions)\n\n<uscript>\n\
+      \nfunction _codeblock()\n{\n  if (has(TT_Identifier, __BEGIN))\n  {\n    a.AddRoot(NT_Keyword,\
+      \ __BEGIN);\n    t.nextToken();\n    _statements();\n    require(TT_Identifier,\
+      \ __END);\n    t.nextToken();\n    a.CloseRoot();\n  }\n  else {\n    _statement();\n\
+      \  }\n}\n</uscript>\n\nIf the code block starts with a begin we open a new root\
+      \ node because a code block may only add one child node to the current root\
+      \ node. This new root node will then get more than a group of statements and\
+      \ an '''end''' which will close the root node.\n\nIf the code block doesn't\
+      \ start with a '''begin''' we asume it's just a single statement.\n\n<uscript>\n\
+      \nfunction _ifthenelse()\n{\n  a.AddRoot(NT_Keyword, __IF);\n  t.nextToken();\
+      \ // IF\n  _expr();\n  require(TT_Identifier, __THEN);\n  t.nextToken();\n \
+      \ _codeblock();\n  if (has(TT_Identifier, __ELSE))\n  {\n    t.nextToken();\n\
+      \    _codeblock();\n  }\n  a.CloseRoot();\n}\n</uscript>\n\nThis works just\
+      \ like the '''while ... do''' except that there might be a third child to be\
+      \ added to the '''if''' root node, the '''else''' is optional.\n\n<uscript>\n\
+      \nfunction _assignment()\n{\n  local string tmp;\n  tmp = t.tokenString();\n\
+      \  t.nextToken();\n  if (has(TT_Literal, __LBRACK)) _functioncall(tmp);\n  else\
+      \ {\n    a.AddRoot(NT_Keyword, __BECOMES);\n    a.AddChild(NT_Identifier, tmp);\n\
+      \    require(TT_Operator, __BECOMES);\n    t.nextToken();\n    _expr();\n  \
+      \  a.CloseRoot();\n  }\n}\n</uscript>\n\nAn assignment starts with a identifier,\
+      \ however this identifier can be a variable or a function, so we have to take\
+      \ a look at the next token if it's either a '''becomes''' or a left bracket.\
+      \ For this we had to make the compiler look a head one token (e.g. LL(2)).\n\
+      \nIf it's really an assigment we will add a new root node of type '''becomes'''\
+      \ and we assign the childs identifier and expression to that node.\n\n<uscript>\n\
+      \nfunction _expr()\n{\n  _boolex();\n}\n</uscript>\n\nThis is an nice example\
+      \ of a useless looking function, but it might be usefull in the future when\
+      \ we want to add an operator with a lower precendance than the boolean expressions.\n\
+      \n<uscript>\n\nfunction _boolex()\n{  \n  _accum();\n  while (has(TT_Operator,\
+      \ __LT)||has(TT_Operator, __LE)||has(TT_Operator, __GT)||has(TT_Operator, __GE)||\n\
+      \    has(TT_Operator, __EQ)||has(TT_Operator, __NE)||has(TT_Operator, __AND)||has(TT_Operator,\
+      \ __OR))\n  {\n    a.AddRoot(NT_Keyword, t.tokenString());\n    a.SwitchNode();\n\
+      \    t.nextToken();\n    _accum();\n    a.CloseRoot();\n  }\n}\n</uscript>\n\
+      \nWell here is where it's get difficult, we first decent into the _accum() function\
+      \ which will finally result into a child node that can have a complete sub tree,\
+      \ or just a single child node. After that we might get one or more boolean operators.\
+      \ This is the infix notation, but we want to make our AST prefix. So we add\
+      \ a new root node for the current boolean operator and switch that root node\
+      \ around with the last child node in the current root.\n\nLet's take the following\
+      \ code: <code>x = 1 + 2</code>\n\n{| class=\"wikitable\"\n\n|-\n| style=\"text-align:\
+      \ center\" |''before swap''\n| style=\"text-align: center\" |''after swap''\
+      \ \n|-\n|\n =\n  x\n  1\n  +\n   2\n\n|\n =\n  x\n  +\n   1\n   2\n\n|\n|}\n\
+      \nThe same applies to the following few functions below\n\n<uscript>\n\nfunction\
+      \ _accum()\n{\n  _mult();\n  while (has(TT_Operator, __PLUS)||has(TT_Operator,\
+      \ __MINUS))\n  {\n    a.AddRoot(NT_Keyword, t.tokenString());\n    a.SwitchNode();\n\
+      \    t.nextToken();\n    _mult();\n    a.CloseRoot();\n  }\n}\n\nfunction _mult()\n\
+      {\n  _preop();\n  while (has(TT_Operator, __MULTIPLY)||has(TT_Operator, __DIVIDE)||has(TT_Operator,\
+      \ __MOD))\n  {\n    a.AddRoot(NT_Keyword, t.tokenString());\n    a.SwitchNode();\n\
+      \    t.nextToken();\n    _preop();\n    a.CloseRoot();\n  }\n}\n\nfunction _preop()\n\
+      {\n  local bool open;\n  open = false;\n  if (has(TT_Operator, __MINUS))\n \
+      \ {\n    open = true;\n    a.AddRoot(NT_Keyword, __MINUS);\n    a.AddChild(NT_Integer,\
+      \ \"0\");\n    t.nextToken();\n  }\n  else if (has(TT_Operator, __NOT))\n  {\n\
+      \    open = true;\n    a.AddRoot(NT_Keyword, __NOT);\n    t.nextToken();\n \
+      \ }\n  _operand();\n  if (open) a.CloseRoot();\n}\n</uscript>\n\nFor the '''-'''\
+      \ preoperator I've added a hack, it will be inserted into the AST as if it was\
+      \ <code>0 - operand</code>\n\n<uscript>\n\nfunction _operand()\n{\n  local string\
+      \ tmp;\n  if (has(TT_Identifier, __TRUE))\n  {\n    a.AddChild(NT_Boolean, t.tokenString());\n\
+      \    t.nextToken();\n  }\n  else if (has(TT_Identifier, __FALSE))\n  {\n   \
+      \ a.AddChild(NT_Boolean, t.tokenString());\n    t.nextToken();\n  }\n  else\
+      \ if (has(TT_Identifier))\n  {    \n    tmp = t.tokenString();\n    t.nextToken();\n\
+      \    if (has(TT_Literal, __LBRACK)) // is function ??\n    {\n      _functioncall(tmp);\n\
+      \    }\n    else {\n      a.AddChild(NT_Identifier, tmp);\n    }\n  }\n  else\
+      \ if (has(TT_Integer))\n  {\n    a.AddChild(NT_Integer, t.tokenString());\n\
+      \    t.nextToken();\n  }\n  else if (has(TT_String))\n  {\n    a.AddChild(NT_String,\
+      \ t.tokenString());\n    t.nextToken();\n  }\n  else if (has(TT_Float))\n  {\n\
+      \    a.AddChild(NT_Float, t.tokenString());\n    t.nextToken();\n  }\n  else\
+      \ if (has(TT_Literal, __LBRACK))\n  {\n    t.nextToken();\n    _expr();\n  \
+      \  require(TT_Literal, __RBRACK);\n    t.nextToken();\n  }\n  else {\n    Warn(\"\
+      Unexpected token:\"@t.tokenString()@\"@ \"$t.currentLine()$\",\"$t.currentPos());\n\
+      \    assert(false);\n  }\n}\n</uscript>\n\nThe operand function is the finaly\
+      \ stop, first we check if the the identifier is either a '''true''' or a '''false''',\
+      \ if not we check if the identifier is either a variable or a function call.\
+      \ If it's just a variable we will add a normal child to the current root node.\n\
+      \nNext we check if it is a inline constant, or an expression between braces.\n\
+      \nIf everything fails we have something wierd and stop compiling.\n\n<uscript>\n\
+      \nfunction _functioncall(string name)\n{\n  a.AddRoot(NT_Function, name);\n\
+      \  t.nextToken();\n  while (!has(TT_Literal, __RBRACK))\n  {\n    _expr();\n\
+      \    if (has(TT_Literal, __COMMA)) t.nextToken();\n    else break;\n  }\n  require(TT_Literal,\
+      \ __RBRACK);\n  t.nextToken(); // __RBRACK\n  a.CloseRoot();\n}\n</uscript>\n\
+      \nIf it's a function call we will add a new root with the function name, and\
+      \ give it the type ''function'', as child nodes we add the arguments passed\
+      \ to it. And finally close the function call root.\n\n----"
+  properties: []
+  revId: 1818
+name: "Legacy:BruteForce/Compiler"
+revision:
+  revid: 1818
+  parentid: 1819
+  user: "El Muerte TDS"
+  timestamp: 1051103771.000000000
+  comment: "*"
+timestamp: 1668786385.555108000

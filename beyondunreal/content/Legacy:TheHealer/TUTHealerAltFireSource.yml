@@ -1,0 +1,571 @@
+---
+parse:
+  title: "Legacy:TheHealer/TUTHealerAltFireSource"
+  text:
+    text: "<h2><span class=\"mw-headline\" id=\"TUTHealerAltFire_-_The_Healer_Part_6_of_9_-_Complete_Source_Code\"\
+      >TUTHealerAltFire - The Healer Part 6 of 9 - Complete Source Code</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:TheHealer/TUTHealerAltFireSource?section=1\" title=\"\
+      Edit section: TUTHealerAltFire - The Healer Part 6 of 9 - Complete Source Code\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"co1\">//------------------------------------------------------------------------------</span>\n\
+      <span class=\"co1\">// class name : TUTHealerAltFire</span>\n<span class=\"\
+      co1\">// class type : Weapon Fire</span>\n<span class=\"co1\">// description:\
+      \ The Healer's Secondary Fire mode</span>\n<span class=\"co1\">// author   \
+      \  : HSDanClark</span>\n<span class=\"co1\">//------------------------------------------------------------------------------</span>\n\
+      <span class=\"co1\">// TODO       :</span>\n<span class=\"co1\">//</span>\n\
+      <span class=\"co1\">//------------------------------------------------------------------------------</span>\n\
+      <span class=\"kw1\">class</span> TUTHealerAltFire <span class=\"kw1\">extends</span>\
+      \ <span class=\"kw8\">WeaponFire</span>;\n \n<span class=\"kw1\">var</span>\
+      \ TUTHealerBeamEffect Beam;\n<span class=\"kw1\">var</span> <span class=\"kw5\"\
+      >Sound</span> MakeLinkSound;\n<span class=\"kw1\">var</span> <span class=\"\
+      kw5\">float</span> UpTime;\n<span class=\"kw1\">var</span> <span class=\"kw9\"\
+      >Pawn</span> LockedPawn;\n<span class=\"kw1\">var</span> <span class=\"kw5\"\
+      >float</span> LinkBreakTime;\n<span class=\"kw1\">var</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span> <span class=\"kw5\">float</span> LinkBreakDelay;\n\
+      <span class=\"kw1\">var</span> <span class=\"kw5\">float</span> LinkScale<span\
+      \ class=\"br0\">[</span><span class=\"nu0\">6</span><span class=\"br0\">]</span>;\n\
+      \ \n<span class=\"kw1\">var</span> <span class=\"kw5\">string</span> MakeLinkForce;\n\
+      \ \n<span class=\"kw1\">var</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span> class<span class=\"sy0\">&lt;</span>DamageType<span class=\"\
+      sy0\">&gt;</span> <span class=\"kw9\">DamageType</span>;\n<span class=\"kw1\"\
+      >var</span><span class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"\
+      kw5\">int</span> Damage;\n<span class=\"kw1\">var</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span> <span class=\"kw5\">float</span> MomentumTransfer;\n\
+      \ \n<span class=\"kw1\">var</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span> <span class=\"kw5\">float</span> TraceRange;\n<span class=\"\
+      kw1\">var</span><span class=\"br0\">(</span><span class=\"br0\">)</span> <span\
+      \ class=\"kw5\">float</span> LinkFlexibility;\n \n<span class=\"kw1\">var</span>\t\
+      <span class=\"kw5\">bool</span> bDoHit;\n<span class=\"kw1\">var</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\t<span class=\"kw5\">bool</span>\
+      \ bFeedbackDeath;\n<span class=\"kw1\">var</span>\t<span class=\"kw5\">bool</span>\
+      \ bInitAimError;\n<span class=\"kw1\">var</span>\t<span class=\"kw5\">bool</span>\
+      \ bLinkFeedbackPlaying;\n<span class=\"kw1\">var</span>\t<span class=\"kw5\"\
+      >bool</span> bStartFire;\n \n<span class=\"kw1\">var</span> <span class=\"kw5\"\
+      >rotator</span> DesiredAimError, CurrentAimError;\n \n<span class=\"kw1\">simulated</span>\
+      \ <span class=\"kw1\">function</span> DestroyEffects<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n    <span class=\"kw6\"\
+      >Super</span>.<span class=\"me0\">DestroyEffects</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n    <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span> <span class=\"kw7\">Level</span>.<span class=\"me0\">NetMode</span>\
+      \ <span class=\"sy0\">!=</span> NM_Client <span class=\"br0\">)</span>\n   \
+      \ <span class=\"br0\">{</span>\n        <span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span>Beam <span class=\"sy0\">!=</span> <span class=\"kw5\"\
+      >None</span><span class=\"br0\">)</span>\n            Beam.<span class=\"kw4\"\
+      >Destroy</span><span class=\"br0\">(</span><span class=\"br0\">)</span>;\n \
+      \   <span class=\"br0\">}</span>\n<span class=\"br0\">}</span>\n \n<span class=\"\
+      kw1\">simulated</span> <span class=\"kw1\">function</span> ModeTick<span class=\"\
+      br0\">(</span><span class=\"kw5\">float</span> dt<span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n    <span class=\"kw1\">local</span> <span class=\"\
+      kw5\">Vector</span> StartTrace, EndTrace, X,Y,Z;\n    <span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">Vector</span> HitLocation, HitNormal, EndEffect;\n   \
+      \ <span class=\"kw1\">local</span> <span class=\"kw9\">Actor</span> Other;\n\
+      \    <span class=\"kw1\">local</span> <span class=\"kw5\">Rotator</span> Aim;\n\
+      \    <span class=\"kw1\">local</span> TUTHealer TUTHealer;\n    <span class=\"\
+      kw1\">local</span> <span class=\"kw5\">float</span> MT, Step;\n    <span class=\"\
+      kw1\">local</span> <span class=\"kw9\">bot</span> B;\n    <span class=\"kw1\"\
+      >local</span> <span class=\"kw5\">bool</span> bShouldStop;\n    <span class=\"\
+      kw1\">local</span> <span class=\"kw5\">int</span> AdjustedDamage;\n    <span\
+      \ class=\"kw1\">local</span> TUTHealerBeamEffect LB;\n \n    <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span><span class=\"sy0\">!</span>bIsFiring<span\
+      \ class=\"br0\">)</span>\n    <span class=\"br0\">{</span>\n\tbInitAimError\
+      \ <span class=\"sy0\">=</span> <span class=\"kw6\">true</span>;\n        <span\
+      \ class=\"kw2\">return</span>;\n    <span class=\"br0\">}</span>\n    TUTHealer\
+      \ <span class=\"sy0\">=</span> TUTHealer<span class=\"br0\">(</span><span class=\"\
+      kw9\">Weapon</span><span class=\"br0\">)</span>;\n \n \n    <span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span>FlashEmitter <span class=\"sy0\">!=</span>\
+      \ <span class=\"kw5\">None</span><span class=\"br0\">)</span>\n    <span class=\"\
+      br0\">{</span>\n        <span class=\"co1\">// set muzzle flash color</span>\n\
+      \        FlashEmitter.<span class=\"kw7\">Skins</span><span class=\"br0\">[</span><span\
+      \ class=\"nu0\">0</span><span class=\"br0\">]</span> <span class=\"sy0\">=</span>\
+      \ <span class=\"kw5\">Texture</span><span class=\"st0\">'XEffectMat.link_muz_red'</span>;\n\
+      \ \n        <span class=\"co1\">// adjust muzzle flash size to link size</span>\n\
+      \tFlashEmitter.<span class=\"me0\">mSizeRange</span><span class=\"br0\">[</span><span\
+      \ class=\"nu0\">0</span><span class=\"br0\">]</span> <span class=\"sy0\">=</span>\
+      \ FlashEmitter.<span class=\"kw1\">default</span>.<span class=\"me0\">mSizeRange</span><span\
+      \ class=\"br0\">[</span><span class=\"nu0\">0</span><span class=\"br0\">]</span>\
+      \ <span class=\"sy0\">*</span> <span class=\"nu0\">1</span>;\n\tFlashEmitter.<span\
+      \ class=\"me0\">mSizeRange</span><span class=\"br0\">[</span><span class=\"\
+      nu0\">1</span><span class=\"br0\">]</span> <span class=\"sy0\">=</span> FlashEmitter.<span\
+      \ class=\"me0\">mSizeRange</span><span class=\"br0\">[</span><span class=\"\
+      nu0\">0</span><span class=\"br0\">]</span>;\n    <span class=\"br0\">}</span>\n\
+      \ \n    <span class=\"kw2\">if</span> <span class=\"br0\">(</span> TUTHealer.<span\
+      \ class=\"kw9\">Ammo</span><span class=\"br0\">[</span>ThisModeNum<span class=\"\
+      br0\">]</span>.<span class=\"me0\">AmmoAmount</span> <span class=\"sy0\">&gt;=</span>\
+      \ AmmoPerFire <span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span><span\
+      \ class=\"br0\">(</span>UpTime <span class=\"sy0\">&gt;</span> <span class=\"\
+      nu0\">0.0</span><span class=\"br0\">)</span> <span class=\"sy0\">||</span> <span\
+      \ class=\"br0\">(</span><span class=\"kw7\">Instigator</span>.<span class=\"\
+      kw7\">Role</span> <span class=\"sy0\">&lt;</span> <span class=\"kw7\">ROLE_Authority</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span> <span class=\"br0\">)</span>\n\
+      \    <span class=\"br0\">{</span>\n        UpTime <span class=\"sy0\">-=</span>\
+      \ dt;\n        TUTHealer.<span class=\"me0\">GetViewAxes</span><span class=\"\
+      br0\">(</span>X,Y,Z<span class=\"br0\">)</span>;\n \n        <span class=\"\
+      co1\">// the to-hit trace always starts right in front of the eye</span>\n \
+      \       StartTrace <span class=\"sy0\">=</span> <span class=\"kw7\">Instigator</span>.<span\
+      \ class=\"kw7\">Location</span> <span class=\"sy0\">+</span> <span class=\"\
+      kw7\">Instigator</span>.<span class=\"me0\">EyePosition</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span> <span class=\"sy0\">+</span> X<span\
+      \ class=\"sy0\">*</span><span class=\"kw7\">Instigator</span>.<span class=\"\
+      kw7\">CollisionRadius</span>;\n \n        TraceRange <span class=\"sy0\">=</span>\
+      \ <span class=\"kw1\">default</span>.<span class=\"me0\">TraceRange</span>;\n\
+      \ \n        <span class=\"kw2\">if</span> <span class=\"br0\">(</span> <span\
+      \ class=\"kw7\">Instigator</span>.<span class=\"kw7\">Role</span> <span class=\"\
+      sy0\">&lt;</span> <span class=\"kw7\">ROLE_Authority</span> <span class=\"br0\"\
+      >)</span>\n        <span class=\"br0\">{</span>\n\t    <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span> Beam <span class=\"sy0\">==</span> <span class=\"\
+      kw5\">None</span> <span class=\"br0\">)</span>\n\t\t<span class=\"kw2\">foreach</span>\
+      \ <span class=\"kw2\">DynamicActors</span><span class=\"br0\">(</span><span\
+      \ class=\"kw1\">class</span><span class=\"st0\">'TUTHealerBeamEffect'</span>,\
+      \ LB <span class=\"br0\">)</span>\n\t\t    <span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span> <span class=\"sy0\">!</span>LB.<span class=\"me0\"\
+      >bDeleteMe</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\"\
+      >(</span>LB.<span class=\"kw7\">Instigator</span> <span class=\"sy0\">!=</span>\
+      \ <span class=\"kw5\">None</span><span class=\"br0\">)</span> <span class=\"\
+      sy0\">&amp;&amp;</span> <span class=\"br0\">(</span>LB.<span class=\"kw7\">Instigator</span>\
+      \ <span class=\"sy0\">==</span> <span class=\"kw7\">Instigator</span><span class=\"\
+      br0\">)</span> <span class=\"br0\">)</span>\n\t\t    <span class=\"br0\">{</span>\n\
+      \t\t\tBeam <span class=\"sy0\">=</span> LB;\n\t\t\t<span class=\"kw2\">break</span>;\n\
+      \t\t    <span class=\"br0\">}</span>\n\t\t    <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span> Beam <span class=\"sy0\">!=</span> <span class=\"\
+      kw5\">None</span> <span class=\"br0\">)</span>\n\t\t\tLockedPawn <span class=\"\
+      sy0\">=</span> Beam.<span class=\"me0\">LinkedPawn</span>;\n\t<span class=\"\
+      br0\">}</span>\n        <span class=\"kw2\">if</span> <span class=\"br0\">(</span>\
+      \ LockedPawn <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span> <span\
+      \ class=\"br0\">)</span>\n\t    TraceRange <span class=\"sy0\">*=</span> <span\
+      \ class=\"nu0\">1.5</span>;\n \n \n\t<span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span> LockedPawn <span class=\"sy0\">!=</span> <span class=\"kw5\"\
+      >None</span> <span class=\"br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t\
+      \    EndTrace <span class=\"sy0\">=</span> LockedPawn.<span class=\"kw7\">Location</span>\
+      \ <span class=\"sy0\">+</span> LockedPawn.<span class=\"me0\">EyeHeight</span><span\
+      \ class=\"sy0\">*</span><span class=\"kw3\">Vect</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">0</span>,<span class=\"nu0\">0</span>,<span class=\"nu0\">0.5</span><span\
+      \ class=\"br0\">)</span>; <span class=\"co1\">// beam ends at approx gun height</span>\n\
+      \t<span class=\"br0\">}</span>\n \n        <span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span> LockedPawn <span class=\"sy0\">==</span> <span class=\"\
+      kw5\">None</span> <span class=\"br0\">)</span>\n        <span class=\"br0\"\
+      >{</span>\n            <span class=\"kw2\">if</span> <span class=\"br0\">(</span>\
+      \ <span class=\"kw9\">Bot</span><span class=\"br0\">(</span><span class=\"kw7\"\
+      >Instigator</span>.<span class=\"kw9\">Controller</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span> <span\
+      \ class=\"br0\">)</span>\n            <span class=\"br0\">{</span>\n\t     \
+      \   <span class=\"kw2\">if</span> <span class=\"br0\">(</span> bInitAimError\
+      \ <span class=\"br0\">)</span>\n\t\t<span class=\"br0\">{</span>\n\t\t    CurrentAimError\
+      \ <span class=\"sy0\">=</span> AdjustAim<span class=\"br0\">(</span>StartTrace,\
+      \ AimError<span class=\"br0\">)</span>;\n\t\t    bInitAimError <span class=\"\
+      sy0\">=</span> <span class=\"kw6\">false</span>;\n\t\t<span class=\"br0\">}</span>\n\
+      \t\t<span class=\"kw2\">else</span>\n\t\t<span class=\"br0\">{</span>\n\t\t\
+      \    BoundError<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\t\
+      \t    CurrentAimError.<span class=\"me0\">Yaw</span> <span class=\"sy0\">=</span>\
+      \ CurrentAimError.<span class=\"me0\">Yaw</span> <span class=\"sy0\">+</span>\
+      \ <span class=\"kw7\">Instigator</span>.<span class=\"kw7\">Rotation</span>.<span\
+      \ class=\"me0\">Yaw</span>;\n\t\t<span class=\"br0\">}</span>\n\t\t<span class=\"\
+      co1\">// smooth aim error changes</span>\n\t\tStep <span class=\"sy0\">=</span>\
+      \ <span class=\"nu0\">7500.0</span> <span class=\"sy0\">*</span> dt;\n\t\t<span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span> DesiredAimError.<span\
+      \ class=\"me0\">Yaw</span> <span class=\"kw3\">ClockWiseFrom</span> CurrentAimError.<span\
+      \ class=\"me0\">Yaw</span> <span class=\"br0\">)</span>\n\t\t<span class=\"\
+      br0\">{</span>\n\t\t    CurrentAimError.<span class=\"me0\">Yaw</span> <span\
+      \ class=\"sy0\">+=</span> Step;\n\t\t    <span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span> <span class=\"sy0\">!</span><span class=\"br0\">(</span>DesiredAimError.<span\
+      \ class=\"me0\">Yaw</span> <span class=\"kw3\">ClockWiseFrom</span> CurrentAimError.<span\
+      \ class=\"me0\">Yaw</span><span class=\"br0\">)</span> <span class=\"br0\">)</span>\n\
+      \t\t    <span class=\"br0\">{</span>\n\t\t        CurrentAimError.<span class=\"\
+      me0\">Yaw</span> <span class=\"sy0\">=</span> DesiredAimError.<span class=\"\
+      me0\">Yaw</span>;\n\t\t\tDesiredAimError <span class=\"sy0\">=</span> AdjustAim<span\
+      \ class=\"br0\">(</span>StartTrace, AimError<span class=\"br0\">)</span>;\n\t\
+      \t    <span class=\"br0\">}</span>\n\t\t<span class=\"br0\">}</span>\n\t\t<span\
+      \ class=\"kw2\">else</span>\n\t\t<span class=\"br0\">{</span>\n\t\t    CurrentAimError.<span\
+      \ class=\"me0\">Yaw</span> <span class=\"sy0\">-=</span> Step;\n\t\t    <span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span> DesiredAimError.<span\
+      \ class=\"me0\">Yaw</span> <span class=\"kw3\">ClockWiseFrom</span> CurrentAimError.<span\
+      \ class=\"me0\">Yaw</span> <span class=\"br0\">)</span>\n\t\t    <span class=\"\
+      br0\">{</span>\n\t\t        CurrentAimError.<span class=\"me0\">Yaw</span> <span\
+      \ class=\"sy0\">=</span> DesiredAimError.<span class=\"me0\">Yaw</span>;\n\t\
+      \t\tDesiredAimError <span class=\"sy0\">=</span> AdjustAim<span class=\"br0\"\
+      >(</span>StartTrace, AimError<span class=\"br0\">)</span>;\n\t\t    <span class=\"\
+      br0\">}</span>\n\t\t<span class=\"br0\">}</span>\n\t\tCurrentAimError.<span\
+      \ class=\"me0\">Yaw</span> <span class=\"sy0\">=</span> CurrentAimError.<span\
+      \ class=\"me0\">Yaw</span> <span class=\"sy0\">-</span> <span class=\"kw7\"\
+      >Instigator</span>.<span class=\"kw7\">Rotation</span>.<span class=\"me0\">Yaw</span>;\n\
+      \t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span> BoundError<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"br0\">)</span>\n\
+      \t\t    DesiredAimError <span class=\"sy0\">=</span> AdjustAim<span class=\"\
+      br0\">(</span>StartTrace, AimError<span class=\"br0\">)</span>;\n\t        CurrentAimError.<span\
+      \ class=\"me0\">Yaw</span> <span class=\"sy0\">=</span> CurrentAimError.<span\
+      \ class=\"me0\">Yaw</span> <span class=\"sy0\">+</span> <span class=\"kw7\"\
+      >Instigator</span>.<span class=\"kw7\">Rotation</span>.<span class=\"me0\">Yaw</span>;\n\
+      \t\tAim <span class=\"sy0\">=</span> <span class=\"kw5\">Rotator</span><span\
+      \ class=\"br0\">(</span><span class=\"kw7\">Instigator</span>.<span class=\"\
+      kw9\">Controller</span>.<span class=\"me0\">Target</span>.<span class=\"kw7\"\
+      >Location</span> <span class=\"sy0\">-</span> StartTrace<span class=\"br0\"\
+      >)</span>;\n \n\t\tAim.<span class=\"me0\">Yaw</span> <span class=\"sy0\">=</span>\
+      \ CurrentAimError.<span class=\"me0\">Yaw</span>;\n \n\t\t<span class=\"co1\"\
+      >// save difference</span>\n\t\tCurrentAimError.<span class=\"me0\">Yaw</span>\
+      \ <span class=\"sy0\">=</span> CurrentAimError.<span class=\"me0\">Yaw</span>\
+      \ <span class=\"sy0\">-</span> <span class=\"kw7\">Instigator</span>.<span class=\"\
+      kw7\">Rotation</span>.<span class=\"me0\">Yaw</span>;\n            <span class=\"\
+      br0\">}</span>\n\t    <span class=\"kw2\">else</span>\n\t        Aim <span class=\"\
+      sy0\">=</span> AdjustAim<span class=\"br0\">(</span>StartTrace, AimError<span\
+      \ class=\"br0\">)</span>;\n \n            X <span class=\"sy0\">=</span> <span\
+      \ class=\"kw5\">Vector</span><span class=\"br0\">(</span>Aim<span class=\"br0\"\
+      >)</span>;\n            EndTrace <span class=\"sy0\">=</span> StartTrace <span\
+      \ class=\"sy0\">+</span> TraceRange <span class=\"sy0\">*</span> X;\n      \
+      \  <span class=\"br0\">}</span>\n \n        Other <span class=\"sy0\">=</span>\
+      \ <span class=\"kw4\">Trace</span><span class=\"br0\">(</span>HitLocation, HitNormal,\
+      \ EndTrace, StartTrace, <span class=\"kw6\">true</span><span class=\"br0\">)</span>;\n\
+      \        <span class=\"kw2\">if</span> <span class=\"br0\">(</span>Other <span\
+      \ class=\"sy0\">!=</span> <span class=\"kw5\">None</span> <span class=\"sy0\"\
+      >&amp;&amp;</span> Other <span class=\"sy0\">!=</span> <span class=\"kw7\">Instigator</span><span\
+      \ class=\"br0\">)</span>\n\t    EndEffect <span class=\"sy0\">=</span> HitLocation;\n\
+      \        <span class=\"kw2\">else</span>\n\t    EndEffect <span class=\"sy0\"\
+      >=</span> EndTrace;\n\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>Beam\
+      \ <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span><span class=\"\
+      br0\">)</span>\n            Beam.<span class=\"me0\">EndEffect</span> <span\
+      \ class=\"sy0\">=</span> EndEffect;\n \n\t<span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span> <span class=\"kw7\">Instigator</span>.<span class=\"\
+      kw7\">Role</span> <span class=\"sy0\">&lt;</span> <span class=\"kw7\">ROLE_Authority</span>\
+      \ <span class=\"br0\">)</span>\n            <span class=\"kw2\">return</span>;\n\
+      \ \n        <span class=\"kw2\">if</span> <span class=\"br0\">(</span>Other\
+      \ <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span> <span class=\"\
+      sy0\">&amp;&amp;</span> Other <span class=\"sy0\">!=</span> <span class=\"kw7\"\
+      >Instigator</span><span class=\"br0\">)</span>\n        <span class=\"br0\"\
+      >{</span>\n            <span class=\"co1\">// beam is updated every frame, but\
+      \ damage is only done based on the firing rate</span>\n            <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>bDoHit<span class=\"br0\">)</span>\n\
+      \            <span class=\"br0\">{</span>\n                <span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span>Beam <span class=\"sy0\">!=</span> <span\
+      \ class=\"kw5\">None</span><span class=\"br0\">)</span>\n\t\t    Beam.<span\
+      \ class=\"me0\">bLockedOn</span> <span class=\"sy0\">=</span> <span class=\"\
+      kw6\">false</span>;\n \n                    <span class=\"kw7\">Instigator</span>.<span\
+      \ class=\"kw4\">MakeNoise</span><span class=\"br0\">(</span><span class=\"nu0\"\
+      >1.0</span><span class=\"br0\">)</span>;\n \n                    AdjustedDamage\
+      \ <span class=\"sy0\">=</span> Damage;\n \n                    <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span> <span class=\"sy0\">!</span>Other.<span\
+      \ class=\"me0\">bWorldGeometry</span> <span class=\"br0\">)</span>\n       \
+      \             <span class=\"br0\">{</span>\n                        <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span><span class=\"kw7\">Level</span>.<span\
+      \ class=\"kw7\">Game</span>.<span class=\"me0\">bTeamGame</span> <span class=\"\
+      sy0\">&amp;&amp;</span> <span class=\"kw9\">Pawn</span><span class=\"br0\">(</span>Other<span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span>\
+      \ <span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span><span class=\"\
+      kw9\">Pawn</span><span class=\"br0\">(</span>Other<span class=\"br0\">)</span>.<span\
+      \ class=\"me0\">PlayerReplicationInfo</span> <span class=\"sy0\">!=</span> <span\
+      \ class=\"kw5\">None</span><span class=\"br0\">)</span>\n\t\t\t\t\t<span class=\"\
+      sy0\">&amp;&amp;</span> <span class=\"kw9\">Pawn</span><span class=\"br0\">(</span>Other<span\
+      \ class=\"br0\">)</span>.<span class=\"me0\">PlayerReplicationInfo</span>.<span\
+      \ class=\"me0\">Team</span> <span class=\"sy0\">==</span> <span class=\"kw7\"\
+      >Instigator</span>.<span class=\"me0\">PlayerReplicationInfo</span>.<span class=\"\
+      me0\">Team</span><span class=\"br0\">)</span>\n                            AdjustedDamage\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>; <span class=\"\
+      co1\">// so even if friendly fire is on you can't hurt teammates</span>\n \n\
+      \                        <span class=\"kw2\">if</span> <span class=\"br0\">(</span>Other.<span\
+      \ class=\"kw7\">Physics</span> <span class=\"sy0\">==</span> <span class=\"\
+      kw7\">PHYS_Falling</span> <span class=\"sy0\">||</span> Other.<span class=\"\
+      kw7\">Physics</span> <span class=\"sy0\">==</span> <span class=\"kw7\">PHYS_Flying</span>\
+      \ <span class=\"sy0\">||</span> Other.<span class=\"kw7\">Physics</span> <span\
+      \ class=\"sy0\">==</span> <span class=\"kw7\">PHYS_Swimming</span><span class=\"\
+      br0\">)</span>\n                            MT <span class=\"sy0\">=</span>\
+      \ <span class=\"kw9\">DeathMatch</span><span class=\"br0\">(</span><span class=\"\
+      kw7\">Level</span>.<span class=\"kw7\">Game</span><span class=\"br0\">)</span>.<span\
+      \ class=\"me0\">LinkLockDownFactor</span> <span class=\"sy0\">*</span> MomentumTransfer;\n\
+      \                        <span class=\"kw2\">else</span>\n                 \
+      \           MT <span class=\"sy0\">=</span> <span class=\"nu0\">0.0</span>;\n\
+      \ \n                        Other.<span class=\"kw4\">TakeDamage</span><span\
+      \ class=\"br0\">(</span>AdjustedDamage, <span class=\"kw7\">Instigator</span>,\
+      \ HitLocation, MT<span class=\"sy0\">*</span>X, <span class=\"kw9\">DamageType</span><span\
+      \ class=\"br0\">)</span>;\n \n                        <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span>Beam <span class=\"sy0\">!=</span> <span class=\"\
+      kw5\">None</span><span class=\"br0\">)</span>\n                            Beam.<span\
+      \ class=\"me0\">bLockedOn</span> <span class=\"sy0\">=</span> <span class=\"\
+      kw6\">true</span>;\n                    <span class=\"br0\">}</span>\n     \
+      \       <span class=\"br0\">}</span>\n \n        <span class=\"br0\">}</span>\n\
+      \ \n        <span class=\"kw2\">if</span> <span class=\"br0\">(</span> bShouldStop\
+      \ <span class=\"br0\">)</span>\n\t    B.<span class=\"me0\">StopFiring</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n        <span class=\"\
+      kw2\">else</span>\n\t<span class=\"br0\">{</span>\n\t    <span class=\"co1\"\
+      >// beam effect is created and destroyed when firing starts and stops</span>\n\
+      \ \n            <span class=\"kw2\">if</span> <span class=\"br0\">(</span> <span\
+      \ class=\"br0\">(</span>Beam <span class=\"sy0\">==</span> <span class=\"kw5\"\
+      >None</span><span class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span>\
+      \ bIsFiring <span class=\"br0\">)</span>\n\t        Beam <span class=\"sy0\"\
+      >=</span> <span class=\"kw4\">Spawn</span><span class=\"br0\">(</span><span\
+      \ class=\"kw1\">class</span><span class=\"st0\">'NCHealerBeamEffect'</span>,<span\
+      \ class=\"kw7\">Instigator</span><span class=\"br0\">)</span>;\n \n\t    <span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span>Beam <span class=\"sy0\"\
+      >!=</span> <span class=\"kw5\">None</span><span class=\"br0\">)</span>\n\t \
+      \   <span class=\"br0\">{</span>\n\t        Beam.<span class=\"me0\">LinkColor</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">1</span>;\n\t\tBeam.<span\
+      \ class=\"me0\">LinkedPawn</span> <span class=\"sy0\">=</span> LockedPawn;\n\
+      \t\tBeam.<span class=\"me0\">bHitSomething</span> <span class=\"sy0\">=</span>\
+      \ <span class=\"br0\">(</span>Other <span class=\"sy0\">!=</span> <span class=\"\
+      kw5\">None</span><span class=\"br0\">)</span>;\n\t\tBeam.<span class=\"me0\"\
+      >EndEffect</span> <span class=\"sy0\">=</span> EndEffect;\n\t    <span class=\"\
+      br0\">}</span>\n\t<span class=\"br0\">}</span>\n    <span class=\"br0\">}</span>\n\
+      \    <span class=\"kw2\">else</span>\n    <span class=\"br0\">{</span>\n   \
+      \     StopFiring<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \    <span class=\"br0\">}</span>\n \n    bStartFire <span class=\"sy0\">=</span>\
+      \ <span class=\"kw6\">false</span>;\n    bDoHit <span class=\"sy0\">=</span>\
+      \ <span class=\"kw6\">false</span>;\n<span class=\"br0\">}</span>\n \n<span\
+      \ class=\"kw1\">function</span> <span class=\"kw5\">bool</span> BoundError<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \    CurrentAimError.<span class=\"me0\">Yaw</span> <span class=\"sy0\">=</span>\
+      \ CurrentAimError.<span class=\"me0\">Yaw</span> <span class=\"sy0\">&amp;</span>\
+      \ <span class=\"nu0\">65535</span>;\n    <span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span> CurrentAimError.<span class=\"me0\">Yaw</span> <span\
+      \ class=\"sy0\">&gt;</span> <span class=\"nu0\">2048</span> <span class=\"br0\"\
+      >)</span>\n    <span class=\"br0\">{</span>\n        <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span> CurrentAimError.<span class=\"me0\">Yaw</span>\
+      \ <span class=\"sy0\">&lt;</span> <span class=\"nu0\">32768</span> <span class=\"\
+      br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t    CurrentAimError.<span\
+      \ class=\"me0\">Yaw</span> <span class=\"sy0\">=</span> <span class=\"nu0\"\
+      >2048</span>;\n\t    <span class=\"kw2\">return</span> <span class=\"kw6\">true</span>;\n\
+      \t<span class=\"br0\">}</span>\n\t<span class=\"kw2\">else</span> <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span> CurrentAimError.<span class=\"\
+      me0\">Yaw</span> <span class=\"sy0\">&lt;</span> <span class=\"nu0\">63487</span>\
+      \ <span class=\"br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t    CurrentAimError.<span\
+      \ class=\"me0\">Yaw</span> <span class=\"sy0\">=</span> <span class=\"nu0\"\
+      >63487</span>;\n\t    <span class=\"kw2\">return</span> <span class=\"kw6\"\
+      >true</span>;\n\t<span class=\"br0\">}</span>\n    <span class=\"br0\">}</span>\n\
+      \    <span class=\"kw2\">return</span> <span class=\"kw6\">false</span>;\n<span\
+      \ class=\"br0\">}</span>\n \n<span class=\"kw1\">function</span> DoFireEffect<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \    bDoHit <span class=\"sy0\">=</span> <span class=\"kw6\">true</span>;\n\
+      \    UpTime <span class=\"sy0\">=</span> FireRate<span class=\"sy0\">+</span><span\
+      \ class=\"nu0\">0.1</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"\
+      kw1\">function</span> PlayFiring<span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n    <span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span><span class=\"kw9\">Weapon</span>.<span class=\"kw9\"\
+      >Ammo</span><span class=\"br0\">[</span>ThisModeNum<span class=\"br0\">]</span>.<span\
+      \ class=\"me0\">AmmoAmount</span> <span class=\"sy0\">&gt;=</span> AmmoPerFire<span\
+      \ class=\"br0\">)</span>\n\tClientPlayForceFeedback<span class=\"br0\">(</span><span\
+      \ class=\"st0\">\"BLinkGunBeam1\"</span><span class=\"br0\">)</span>;\n    <span\
+      \ class=\"kw6\">Super</span>.<span class=\"me0\">PlayFiring</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"kw1\">function</span> StopFiring<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n    <span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span>Beam <span class=\"sy0\">!=</span> <span\
+      \ class=\"kw5\">None</span><span class=\"br0\">)</span>\n    <span class=\"\
+      br0\">{</span>\n        Beam.<span class=\"kw4\">Destroy</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n        Beam <span class=\"sy0\"\
+      >=</span> <span class=\"kw5\">None</span>;\n    <span class=\"br0\">}</span>\n\
+      \ \n    bStartFire <span class=\"sy0\">=</span> <span class=\"kw6\">true</span>;\n\
+      \    bFeedbackDeath <span class=\"sy0\">=</span> <span class=\"kw6\">false</span>;\n\
+      \    StopForceFeedback<span class=\"br0\">(</span><span class=\"st0\">\"BLinkGunBeam1\"\
+      </span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n \n<span\
+      \ class=\"kw1\">simulated</span> <span class=\"kw1\">function</span> <span class=\"\
+      kw5\">vector</span> GetFireStart<span class=\"br0\">(</span><span class=\"kw5\"\
+      >vector</span> X, <span class=\"kw5\">vector</span> Y, <span class=\"kw5\">vector</span>\
+      \ Z<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n    <span class=\"\
+      kw2\">return</span> <span class=\"kw7\">Instigator</span>.<span class=\"kw7\"\
+      >Location</span> <span class=\"sy0\">+</span> <span class=\"kw7\">Instigator</span>.<span\
+      \ class=\"me0\">EyePosition</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">+</span> X<span class=\"sy0\">*</span><span\
+      \ class=\"kw7\">Instigator</span>.<span class=\"kw7\">CollisionRadius</span>;\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">defaultproperties</span>\n\
+      <span class=\"br0\">{</span>\n    NoAmmoSound<span class=\"sy0\">=</span><span\
+      \ class=\"kw5\">Sound</span><span class=\"st0\">'WeaponSounds.P1Reload5'</span>\n\
+      \ \n    AmmoClass<span class=\"sy0\">=</span><span class=\"kw1\">class</span><span\
+      \ class=\"st0\">'TUTHealerAmmo'</span>\n    AmmoPerFire<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">1</span>\n    <span class=\"kw9\">DamageType</span><span class=\"\
+      sy0\">=</span><span class=\"kw1\">class</span><span class=\"st0\">'DamTypeLinkShaft'</span>\n\
+      \    Damage<span class=\"sy0\">=</span><span class=\"nu0\">10</span>\n    MomentumTransfer<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">20000.0</span>\n    bPawnRapidFireAnim<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">true</span>\n \n    FireAnim<span\
+      \ class=\"sy0\">=</span>AltFire\n    FireEndAnim<span class=\"sy0\">=</span><span\
+      \ class=\"kw5\">None</span>\n \n    MakeLinkSound<span class=\"sy0\">=</span><span\
+      \ class=\"kw5\">Sound</span><span class=\"st0\">'WeaponSounds.LinkGun.LinkActivated'</span>\n\
+      \    MakeLinkForce<span class=\"sy0\">=</span><span class=\"st0\">\"LinkActivated\"\
+      </span>\n \n    FlashEmitterClass<span class=\"sy0\">=</span><span class=\"\
+      kw1\">class</span><span class=\"st0\">'xEffects.LinkMuzFlashBeam1st'</span>\n\
+      \ \n    TraceRange<span class=\"sy0\">=</span><span class=\"nu0\">1100</span>\
+      \      <span class=\"co1\">// range of everything</span>\n    LinkFlexibility<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0.64</span> <span class=\"co1\"\
+      >// determines how easy it is to maintain a link.</span>\n                 \
+      \        <span class=\"co1\">// 1=must aim directly at linkee, 0=linkee can\
+      \ be 90 degrees to either side of you</span>\n \n    LinkBreakDelay<span class=\"\
+      sy0\">=</span><span class=\"nu0\">0.5</span>   <span class=\"co1\">// link will\
+      \ stay established for this long extra when blocked (so you don't have to worry\
+      \ about every last tree getting in the way)</span>\n \n    FireRate<span class=\"\
+      sy0\">=</span><span class=\"nu0\">0.2</span>\n \n    BotRefireRate<span class=\"\
+      sy0\">=</span><span class=\"nu0\">0.99</span>\n    WarnTargetPct<span class=\"\
+      sy0\">=+</span><span class=\"nu0\">0.2</span>\n \n    ShakeOffsetMag<span class=\"\
+      sy0\">=</span><span class=\"br0\">(</span>X<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0.0</span>,Y<span class=\"sy0\">=</span><span class=\"nu0\"\
+      >1.0</span>,Z<span class=\"sy0\">=</span><span class=\"nu0\">1.0</span><span\
+      \ class=\"br0\">)</span>\n    ShakeOffsetRate<span class=\"sy0\">=</span><span\
+      \ class=\"br0\">(</span>X<span class=\"sy0\">=</span><span class=\"nu0\">1000.0</span>,Y<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">1000.0</span>,Z<span class=\"sy0\"\
+      >=</span><span class=\"nu0\">1000.0</span><span class=\"br0\">)</span>\n   \
+      \ ShakeOffsetTime<span class=\"sy0\">=</span><span class=\"nu0\">3</span>\n\
+      \    ShakeRotMag<span class=\"sy0\">=</span><span class=\"br0\">(</span>X<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0.0</span>,Y<span class=\"sy0\"\
+      >=</span><span class=\"nu0\">0.0</span>,Z<span class=\"sy0\">=</span><span class=\"\
+      nu0\">60.0</span><span class=\"br0\">)</span>\n    ShakeRotRate<span class=\"\
+      sy0\">=</span><span class=\"br0\">(</span>X<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0.0</span>,Y<span class=\"sy0\">=</span><span class=\"nu0\"\
+      >0.0</span>,Z<span class=\"sy0\">=</span><span class=\"nu0\">4000.0</span><span\
+      \ class=\"br0\">)</span>\n    ShakeRotTime<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">6</span>\n \n    bInitAimError<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">true</span>\n \n    LinkScale<span class=\"br0\">(</span><span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span><span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0.0</span>\n    LinkScale<span class=\"br0\">(</span><span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span><span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0.5</span>\n    LinkScale<span class=\"br0\">(</span><span class=\"\
+      nu0\">2</span><span class=\"br0\">)</span><span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0.9</span>\n    LinkScale<span class=\"br0\">(</span><span class=\"\
+      nu0\">3</span><span class=\"br0\">)</span><span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">1.2</span>\n    LinkScale<span class=\"br0\">(</span><span class=\"\
+      nu0\">4</span><span class=\"br0\">)</span><span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">1.4</span>\n    LinkScale<span class=\"br0\">(</span><span class=\"\
+      nu0\">5</span><span class=\"br0\">)</span><span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">1.5</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.125 seconds\nReal time usage:\
+      \ 0.125 seconds\nPreprocessor visited node count: 5/1000000\nPreprocessor generated\
+      \ node count: 28/1000000\nPost‐expand include size: 0/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:3129-0!*!*!*!*!*!* and timestamp 20221120202939 and revision\
+      \ id 8189\n -->\n"
+  categories: []
+  links: []
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "TUTHealerAltFire - The Healer Part 6 of 9 - Complete Source Code"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:TheHealer/TUTHealerAltFireSource"
+    byteoffset: 0
+    anchor: "TUTHealerAltFire_-_The_Healer_Part_6_of_9_-_Complete_Source_Code"
+  displaytitle: "Legacy:TheHealer/TUTHealerAltFireSource"
+  iwlinks: []
+  wikitext:
+    text: "==TUTHealerAltFire - The Healer Part 6 of 9 - Complete Source Code==\n\n\
+      <uscript>\n//------------------------------------------------------------------------------\n\
+      // class name : TUTHealerAltFire\n// class type : Weapon Fire\n// description:\
+      \ The Healer's Secondary Fire mode\n// author     : HSDanClark\n//------------------------------------------------------------------------------\n\
+      // TODO       :\n//\n//------------------------------------------------------------------------------\n\
+      class TUTHealerAltFire extends WeaponFire;\n\nvar TUTHealerBeamEffect Beam;\n\
+      var Sound MakeLinkSound;\nvar float UpTime;\nvar Pawn LockedPawn;\nvar float\
+      \ LinkBreakTime;\nvar() float LinkBreakDelay;\nvar float LinkScale[6];\n\nvar\
+      \ string MakeLinkForce;\n\nvar() class<DamageType> DamageType;\nvar() int Damage;\n\
+      var() float MomentumTransfer;\n\nvar() float TraceRange;\nvar() float LinkFlexibility;\n\
+      \nvar\tbool bDoHit;\nvar()\tbool bFeedbackDeath;\nvar\tbool bInitAimError;\n\
+      var\tbool bLinkFeedbackPlaying;\nvar\tbool bStartFire;\n\nvar rotator DesiredAimError,\
+      \ CurrentAimError;\n\nsimulated function DestroyEffects()\n{\n    Super.DestroyEffects();\n\
+      \    if ( Level.NetMode != NM_Client )\n    {\n        if (Beam != None)\n \
+      \           Beam.Destroy();\n    }\n}\n\nsimulated function ModeTick(float dt)\n\
+      {\n    local Vector StartTrace, EndTrace, X,Y,Z;\n    local Vector HitLocation,\
+      \ HitNormal, EndEffect;\n    local Actor Other;\n    local Rotator Aim;\n  \
+      \  local TUTHealer TUTHealer;\n    local float MT, Step;\n    local bot B;\n\
+      \    local bool bShouldStop;\n    local int AdjustedDamage;\n    local TUTHealerBeamEffect\
+      \ LB;\n\n    if (!bIsFiring)\n    {\n\tbInitAimError = true;\n        return;\n\
+      \    }\n    TUTHealer = TUTHealer(Weapon);\n\n\n    if (FlashEmitter != None)\n\
+      \    {\n        // set muzzle flash color\n        FlashEmitter.Skins[0] = Texture'XEffectMat.link_muz_red';\n\
+      \n        // adjust muzzle flash size to link size\n\tFlashEmitter.mSizeRange[0]\
+      \ = FlashEmitter.default.mSizeRange[0] * 1;\n\tFlashEmitter.mSizeRange[1] =\
+      \ FlashEmitter.mSizeRange[0];\n    }\n\n    if ( TUTHealer.Ammo[ThisModeNum].AmmoAmount\
+      \ >= AmmoPerFire && ((UpTime > 0.0) || (Instigator.Role < ROLE_Authority)) )\n\
+      \    {\n        UpTime -= dt;\n        TUTHealer.GetViewAxes(X,Y,Z);\n\n   \
+      \     // the to-hit trace always starts right in front of the eye\n        StartTrace\
+      \ = Instigator.Location + Instigator.EyePosition() + X*Instigator.CollisionRadius;\n\
+      \n        TraceRange = default.TraceRange;\n\n        if ( Instigator.Role <\
+      \ ROLE_Authority )\n        {\n\t    if ( Beam == None )\n\t\tforeach DynamicActors(class'TUTHealerBeamEffect',\
+      \ LB )\n\t\t    if ( !LB.bDeleteMe && (LB.Instigator != None) && (LB.Instigator\
+      \ == Instigator) )\n\t\t    {\n\t\t\tBeam = LB;\n\t\t\tbreak;\n\t\t    }\n\t\
+      \t    if ( Beam != None )\n\t\t\tLockedPawn = Beam.LinkedPawn;\n\t}\n      \
+      \  if ( LockedPawn != None )\n\t    TraceRange *= 1.5;\n\n\n\tif ( LockedPawn\
+      \ != None )\n\t{\n\t    EndTrace = LockedPawn.Location + LockedPawn.EyeHeight*Vect(0,0,0.5);\
+      \ // beam ends at approx gun height\n\t}\n\n        if ( LockedPawn == None\
+      \ )\n        {\n            if ( Bot(Instigator.Controller) != None )\n    \
+      \        {\n\t        if ( bInitAimError )\n\t\t{\n\t\t    CurrentAimError =\
+      \ AdjustAim(StartTrace, AimError);\n\t\t    bInitAimError = false;\n\t\t}\n\t\
+      \telse\n\t\t{\n\t\t    BoundError();\n\t\t    CurrentAimError.Yaw = CurrentAimError.Yaw\
+      \ + Instigator.Rotation.Yaw;\n\t\t}\n\t\t// smooth aim error changes\n\t\tStep\
+      \ = 7500.0 * dt;\n\t\tif ( DesiredAimError.Yaw ClockWiseFrom CurrentAimError.Yaw\
+      \ )\n\t\t{\n\t\t    CurrentAimError.Yaw += Step;\n\t\t    if ( !(DesiredAimError.Yaw\
+      \ ClockWiseFrom CurrentAimError.Yaw) )\n\t\t    {\n\t\t        CurrentAimError.Yaw\
+      \ = DesiredAimError.Yaw;\n\t\t\tDesiredAimError = AdjustAim(StartTrace, AimError);\n\
+      \t\t    }\n\t\t}\n\t\telse\n\t\t{\n\t\t    CurrentAimError.Yaw -= Step;\n\t\t\
+      \    if ( DesiredAimError.Yaw ClockWiseFrom CurrentAimError.Yaw )\n\t\t    {\n\
+      \t\t        CurrentAimError.Yaw = DesiredAimError.Yaw;\n\t\t\tDesiredAimError\
+      \ = AdjustAim(StartTrace, AimError);\n\t\t    }\n\t\t}\n\t\tCurrentAimError.Yaw\
+      \ = CurrentAimError.Yaw - Instigator.Rotation.Yaw;\n\t\tif ( BoundError() )\n\
+      \t\t    DesiredAimError = AdjustAim(StartTrace, AimError);\n\t        CurrentAimError.Yaw\
+      \ = CurrentAimError.Yaw + Instigator.Rotation.Yaw;\n\t\tAim = Rotator(Instigator.Controller.Target.Location\
+      \ - StartTrace);\n\n\t\tAim.Yaw = CurrentAimError.Yaw;\n\n\t\t// save difference\n\
+      \t\tCurrentAimError.Yaw = CurrentAimError.Yaw - Instigator.Rotation.Yaw;\n \
+      \           }\n\t    else\n\t        Aim = AdjustAim(StartTrace, AimError);\n\
+      \n            X = Vector(Aim);\n            EndTrace = StartTrace + TraceRange\
+      \ * X;\n        }\n\n        Other = Trace(HitLocation, HitNormal, EndTrace,\
+      \ StartTrace, true);\n        if (Other != None && Other != Instigator)\n\t\
+      \    EndEffect = HitLocation;\n        else\n\t    EndEffect = EndTrace;\n\t\
+      if (Beam != None)\n            Beam.EndEffect = EndEffect;\n\n\tif ( Instigator.Role\
+      \ < ROLE_Authority )\n            return;\n\n        if (Other != None && Other\
+      \ != Instigator)\n        {\n            // beam is updated every frame, but\
+      \ damage is only done based on the firing rate\n            if (bDoHit)\n  \
+      \          {\n                if (Beam != None)\n\t\t    Beam.bLockedOn = false;\n\
+      \n                    Instigator.MakeNoise(1.0);\n\n                    AdjustedDamage\
+      \ = Damage;\n\n                    if ( !Other.bWorldGeometry )\n          \
+      \          {\n                        if (Level.Game.bTeamGame && Pawn(Other)\
+      \ != None && (Pawn(Other).PlayerReplicationInfo != None)\n\t\t\t\t\t&& Pawn(Other).PlayerReplicationInfo.Team\
+      \ == Instigator.PlayerReplicationInfo.Team)\n                            AdjustedDamage\
+      \ = 0; // so even if friendly fire is on you can't hurt teammates\n\n      \
+      \                  if (Other.Physics == PHYS_Falling || Other.Physics == PHYS_Flying\
+      \ || Other.Physics == PHYS_Swimming)\n                            MT = DeathMatch(Level.Game).LinkLockDownFactor\
+      \ * MomentumTransfer;\n                        else\n                      \
+      \      MT = 0.0;\n\n                        Other.TakeDamage(AdjustedDamage,\
+      \ Instigator, HitLocation, MT*X, DamageType);\n\n                        if\
+      \ (Beam != None)\n                            Beam.bLockedOn = true;\n     \
+      \               }\n            }\n\n        }\n\n        if ( bShouldStop )\n\
+      \t    B.StopFiring();\n        else\n\t{\n\t    // beam effect is created and\
+      \ destroyed when firing starts and stops\n\n            if ( (Beam == None)\
+      \ && bIsFiring )\n\t        Beam = Spawn(class'NCHealerBeamEffect',Instigator);\n\
+      \n\t    if (Beam != None)\n\t    {\n\t        Beam.LinkColor = 1;\n\t\tBeam.LinkedPawn\
+      \ = LockedPawn;\n\t\tBeam.bHitSomething = (Other != None);\n\t\tBeam.EndEffect\
+      \ = EndEffect;\n\t    }\n\t}\n    }\n    else\n    {\n        StopFiring();\n\
+      \    }\n\n    bStartFire = false;\n    bDoHit = false;\n}\n\nfunction bool BoundError()\n\
+      {\n    CurrentAimError.Yaw = CurrentAimError.Yaw & 65535;\n    if ( CurrentAimError.Yaw\
+      \ > 2048 )\n    {\n        if ( CurrentAimError.Yaw < 32768 )\n\t{\n\t    CurrentAimError.Yaw\
+      \ = 2048;\n\t    return true;\n\t}\n\telse if ( CurrentAimError.Yaw < 63487\
+      \ )\n\t{\n\t    CurrentAimError.Yaw = 63487;\n\t    return true;\n\t}\n    }\n\
+      \    return false;\n}\n\nfunction DoFireEffect()\n{\n    bDoHit = true;\n  \
+      \  UpTime = FireRate+0.1;\n}\n\nfunction PlayFiring()\n{\n    if (Weapon.Ammo[ThisModeNum].AmmoAmount\
+      \ >= AmmoPerFire)\n\tClientPlayForceFeedback(\"BLinkGunBeam1\");\n    Super.PlayFiring();\n\
+      }\n\nfunction StopFiring()\n{\n    if (Beam != None)\n    {\n        Beam.Destroy();\n\
+      \        Beam = None;\n    }\n\n    bStartFire = true;\n    bFeedbackDeath =\
+      \ false;\n    StopForceFeedback(\"BLinkGunBeam1\");\n}\n\nsimulated function\
+      \ vector GetFireStart(vector X, vector Y, vector Z)\n{\n    return Instigator.Location\
+      \ + Instigator.EyePosition() + X*Instigator.CollisionRadius;\n}\n\ndefaultproperties\n\
+      {\n    NoAmmoSound=Sound'WeaponSounds.P1Reload5'\n\n    AmmoClass=class'TUTHealerAmmo'\n\
+      \    AmmoPerFire=1\n    DamageType=class'DamTypeLinkShaft'\n    Damage=10\n\
+      \    MomentumTransfer=20000.0\n    bPawnRapidFireAnim=true\n\n    FireAnim=AltFire\n\
+      \    FireEndAnim=None\n\n    MakeLinkSound=Sound'WeaponSounds.LinkGun.LinkActivated'\n\
+      \    MakeLinkForce=\"LinkActivated\"\n\n    FlashEmitterClass=class'xEffects.LinkMuzFlashBeam1st'\n\
+      \n    TraceRange=1100      // range of everything\n    LinkFlexibility=0.64\
+      \ // determines how easy it is to maintain a link.\n                       \
+      \  // 1=must aim directly at linkee, 0=linkee can be 90 degrees to either side\
+      \ of you\n\n    LinkBreakDelay=0.5   // link will stay established for this\
+      \ long extra when blocked (so you don't have to worry about every last tree\
+      \ getting in the way)\n\n    FireRate=0.2\n\n    BotRefireRate=0.99\n    WarnTargetPct=+0.2\n\
+      \n    ShakeOffsetMag=(X=0.0,Y=1.0,Z=1.0)\n    ShakeOffsetRate=(X=1000.0,Y=1000.0,Z=1000.0)\n\
+      \    ShakeOffsetTime=3\n    ShakeRotMag=(X=0.0,Y=0.0,Z=60.0)\n    ShakeRotRate=(X=0.0,Y=0.0,Z=4000.0)\n\
+      \    ShakeRotTime=6\n\n    bInitAimError=true\n\n    LinkScale(0)=0.0\n    LinkScale(1)=0.5\n\
+      \    LinkScale(2)=0.9\n    LinkScale(3)=1.2\n    LinkScale(4)=1.4\n    LinkScale(5)=1.5\n\
+      }\n</uscript>"
+  properties: []
+  revId: 8189
+name: "Legacy:TheHealer/TUTHealerAltFireSource"
+revision:
+  revid: 8189
+  parentid: 0
+  user: "HSDanClark"
+  timestamp: 1069658501.000000000
+  comment: "*"
+timestamp: 1668975920.599290000

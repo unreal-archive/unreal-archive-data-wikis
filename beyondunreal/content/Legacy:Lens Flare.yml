@@ -1,0 +1,564 @@
+---
+parse:
+  title: "Legacy:Lens Flare"
+  text:
+    text: "<p>A <b>lens flare</b> is a visual effect assembled of several circles/hexagons\
+      \ that – when the person is moving – move opposite of the light source and don't\
+      \ stay on one spot. So they move in the direction that the person is moving.\
+      \ The color of lens flares is generally related to the color of the light. A\
+      \ lens flare is a result of compound lens systems used in cameras and other\
+      \ optical devices, and so some consideration should be given to their use -\
+      \ lens flares do not occur on light sources viewed with the naked eye. Also,\
+      \ lens flares can make it harder to see, so be careful that their use does not\
+      \ adversely impact gameplay.</p>\n<p>The textures that are displayed around\
+      \ light sources, but stick at the place where the light is are <a href=\"/Legacy:Corona\"\
+      \ title=\"Legacy:Corona\">coronas</a>. For some reason they're frequently erroneously\
+      \ called \"lens flare\" as well.</p>\n<div class=\"center\">\n<div class=\"\
+      floatnone\"><a href=\"/File:Legacy_corona.gif\" class=\"image\"><img alt=\"\
+      Legacy corona.gif\" src=\"/w/images/Legacy_corona.gif\" width=\"400\" height=\"\
+      400\" /></a></div>\n</div>\n<h2><span class=\"mw-headline\" id=\"Lens_Flare_in_the_Unreal_Engine\"\
+      >Lens Flare in the Unreal Engine</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Lens_Flare?section=1\"\
+      \ title=\"Edit section: Lens Flare in the Unreal Engine\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<p>No support for lens flares\
+      \ is built in to the Unreal Engine, but lens flares can be created using UnrealScript.\
+      \ This should be possible with any version of the Unreal Engine, though the\
+      \ specific Unrealscript code required will vary. Lens flares can be created\
+      \ two ways - by drawing them directly onto the screen using the <a href=\"/Legacy:Canvas\"\
+      \ title=\"Legacy:Canvas\">Canvas</a>, or by creating non-colliding actors in\
+      \ the world. Using actors allows you to make better use of hardware graphics\
+      \ acceleration, though drawing to the <a href=\"/Legacy:Canvas\" title=\"Legacy:Canvas\"\
+      >Canvas</a> will require marginally less memory. Drawing to the <a href=\"/Legacy:Canvas\"\
+      \ title=\"Legacy:Canvas\">Canvas</a> may also produce slightly better results,\
+      \ as actors may be clipped by nearby meshes. Both solutions should have negligible\
+      \ impact on performance. With either solution, Unrealscript will be needed to\
+      \ compute the correct positions for the lens flares.</p>\n<h2><span class=\"\
+      mw-headline\" id=\"Making_Lens_Flares\">Making Lens Flares</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Lens_Flare?section=2\"\
+      \ title=\"Edit section: Making Lens Flares\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>Here's the code I used for a proof of concept I threw\
+      \ together a short while back. References can be found in the comments.</p>\n\
+      <p>The idea is that a light source is creating a glare against the \"lens\"\
+      \ through which we are viewing the world – in this case the canvas. The flare\
+      \ effect is then created by drawing a series of coronas along a vector on the\
+      \ canvas which passes through both the light source and the center of the screen.</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"co1\">//-----------------------------------------------------------</span>\n\
+      <span class=\"co1\">// FlareInteraction.</span>\n<span class=\"co1\">// Adds\
+      \ 1337 lens flares for lights w/ coronas.</span>\n<span class=\"co1\">// (c)\
+      \ 2002 jasonyu</span>\n<span class=\"co1\">//-----------------------------------------------------------</span>\n\
+      <span class=\"kw1\">class</span> FlareInteraction <span class=\"kw1\">extends</span>\
+      \ <span class=\"kw8\">Interaction</span>;\n \n<span class=\"co2\">#exec OBJ\
+      \ LOAD FILE=Textures\\FlareTextures.utx PACKAGE=LensFlare</span>\n \n<span class=\"\
+      kw1\">var</span> <span class=\"kw9\">Actor</span> PlayerOwner;\n<span class=\"\
+      kw1\">const</span> HLSMAX <span class=\"sy0\">=</span> <span class=\"nu0\">240</span>;\n\
+      <span class=\"kw1\">const</span> RGBMAX <span class=\"sy0\">=</span> <span class=\"\
+      nu0\">255</span>;\n \n \n<span class=\"kw1\">event</span> Initialized<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t\
+      PlayerOwner <span class=\"sy0\">=</span> ViewportOwner.<span class=\"kw9\">Actor</span>;\n\
+      \t<span class=\"kw3\">log</span><span class=\"br0\">(</span><span class=\"st0\"\
+      >\"Lensflare interaction initialized.\"</span><span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"co1\">// adapted from:</span>\n\
+      <span class=\"co1\">// http://plaza27.mbn.or.jp/~satomii/design/win32/hls2rgb.html</span>\n\
+      <span class=\"kw1\">final</span> <span class=\"kw1\">simulated</span> <span\
+      \ class=\"kw1\">function</span> <span class=\"kw5\">float</span> HueToRGB<span\
+      \ class=\"br0\">(</span><span class=\"kw5\">float</span> n1, <span class=\"\
+      kw5\">float</span> n2, <span class=\"kw5\">float</span> hue<span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span> hue <span class=\"sy0\">&lt;</span> <span class=\"\
+      nu0\">0</span> <span class=\"br0\">)</span> hue <span class=\"sy0\">+=</span>\
+      \ HLSMAX;\n\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span> hue\
+      \ <span class=\"sy0\">&gt;</span> HLSMAX <span class=\"br0\">)</span> hue <span\
+      \ class=\"sy0\">-=</span> HLSMAX;\n \n\t<span class=\"coMULTI\">/* return r,g,\
+      \ or b value from this tridrant */</span>\n\t<span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span> hue <span class=\"sy0\">&lt;</span> <span class=\"\
+      br0\">(</span>HLSMAX<span class=\"sy0\">/</span><span class=\"nu0\">6</span><span\
+      \ class=\"br0\">)</span> <span class=\"br0\">)</span>\n\t\t<span class=\"kw2\"\
+      >return</span> <span class=\"br0\">(</span> n1 <span class=\"sy0\">+</span>\
+      \ <span class=\"br0\">(</span><span class=\"br0\">(</span><span class=\"br0\"\
+      >(</span>n2<span class=\"sy0\">-</span>n1<span class=\"br0\">)</span><span class=\"\
+      sy0\">*</span>hue <span class=\"sy0\">+</span> <span class=\"br0\">(</span>HLSMAX<span\
+      \ class=\"sy0\">/</span><span class=\"nu0\">12</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">/</span><span class=\"br0\">(</span>HLSMAX<span\
+      \ class=\"sy0\">/</span><span class=\"nu0\">6</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span> <span class=\"br0\">)</span>;\n\t<span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span> hue <span class=\"sy0\">&lt;</span>\
+      \ <span class=\"br0\">(</span>HLSMAX<span class=\"sy0\">/</span><span class=\"\
+      nu0\">2</span><span class=\"br0\">)</span> <span class=\"br0\">)</span>\n\t\t\
+      <span class=\"kw2\">return</span> n2;\n\t<span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span> hue <span class=\"sy0\">&lt;</span> <span class=\"\
+      br0\">(</span><span class=\"br0\">(</span>HLSMAX<span class=\"sy0\">*</span><span\
+      \ class=\"nu0\">2</span><span class=\"br0\">)</span><span class=\"sy0\">/</span><span\
+      \ class=\"nu0\">3</span><span class=\"br0\">)</span> <span class=\"br0\">)</span>\n\
+      \t\t<span class=\"kw2\">return</span> <span class=\"br0\">(</span> n1 <span\
+      \ class=\"sy0\">+</span> <span class=\"br0\">(</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">(</span>n2<span class=\"sy0\">-</span>n1<span class=\"br0\"\
+      >)</span><span class=\"sy0\">*</span><span class=\"br0\">(</span><span class=\"\
+      br0\">(</span><span class=\"br0\">(</span>HLSMAX<span class=\"sy0\">*</span><span\
+      \ class=\"nu0\">2</span><span class=\"br0\">)</span><span class=\"sy0\">/</span><span\
+      \ class=\"nu0\">3</span><span class=\"br0\">)</span><span class=\"sy0\">-</span>hue<span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">+</span> <span class=\"br0\">(</span>HLSMAX<span\
+      \ class=\"sy0\">/</span><span class=\"nu0\">12</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">/</span><span class=\"br0\">(</span>HLSMAX<span\
+      \ class=\"sy0\">/</span><span class=\"nu0\">6</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span> <span class=\"br0\">)</span>;\n\t<span class=\"kw2\"\
+      >else</span>\n\t\t<span class=\"kw2\">return</span> n1;\n<span class=\"br0\"\
+      >}</span>\n \n \n<span class=\"kw1\">final</span> <span class=\"kw1\">simulated</span>\
+      \ <span class=\"kw1\">function</span> <span class=\"kw5\">Color</span> hls2rgb<span\
+      \ class=\"br0\">(</span><span class=\"kw5\">byte</span> hue, <span class=\"\
+      kw5\">byte</span> lum, <span class=\"kw5\">byte</span> sat<span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">Color</span> C;\n\t<span class=\"kw1\">local</span> <span\
+      \ class=\"kw5\">float</span> Magic1, Magic2;\n\t<span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">int</span> R,G,B;\n \n\t<span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span> sat<span class=\"sy0\">==</span><span class=\"\
+      nu0\">0</span><span class=\"br0\">)</span>\n\t<span class=\"br0\">{</span> \
+      \    <span class=\"coMULTI\">/* achromatic case */</span>\n\t\tC.<span class=\"\
+      me0\">R</span> <span class=\"sy0\">=</span> <span class=\"br0\">(</span>lum<span\
+      \ class=\"sy0\">*</span>RGBMAX<span class=\"br0\">)</span> <span class=\"sy0\"\
+      >/</span> HLSMAX;\n\t\tC.<span class=\"me0\">G</span> <span class=\"sy0\">=</span>\
+      \ C.<span class=\"me0\">R</span>;\n\t\tC.<span class=\"me0\">B</span> <span\
+      \ class=\"sy0\">=</span> C.<span class=\"me0\">R</span>;\n\t<span class=\"br0\"\
+      >}</span>\n\t<span class=\"kw2\">else</span>\n\t<span class=\"br0\">{</span>\
+      \       <span class=\"coMULTI\">/* chromatic case */</span>\n\t\t<span class=\"\
+      coMULTI\">/* set up magic numbers */</span>\n\t\t<span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span>lum <span class=\"sy0\">&lt;=</span> <span class=\"\
+      br0\">(</span>HLSMAX<span class=\"sy0\">/</span><span class=\"nu0\">2</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\t\tMagic2 <span class=\"\
+      sy0\">=</span> <span class=\"br0\">(</span>lum<span class=\"sy0\">*</span><span\
+      \ class=\"br0\">(</span>HLSMAX<span class=\"sy0\">+</span>sat<span class=\"\
+      br0\">)</span><span class=\"sy0\">+</span><span class=\"br0\">(</span>HLSMAX<span\
+      \ class=\"sy0\">/</span><span class=\"nu0\">2</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">/</span> HLSMAX;\n\t\t<span class=\"\
+      kw2\">else</span>\n\t\t\tMagic2 <span class=\"sy0\">=</span> lum<span class=\"\
+      sy0\">+</span>sat <span class=\"sy0\">-</span> <span class=\"br0\">(</span><span\
+      \ class=\"br0\">(</span>lum<span class=\"sy0\">*</span>sat<span class=\"br0\"\
+      >)</span><span class=\"sy0\">+</span><span class=\"br0\">(</span>HLSMAX<span\
+      \ class=\"sy0\">/</span><span class=\"nu0\">2</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">/</span> HLSMAX;\n \n\t\tMagic1\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">2</span><span class=\"sy0\"\
+      >*</span>lum <span class=\"sy0\">-</span> Magic2;\n \n\t\t<span class=\"coMULTI\"\
+      >/* get RGB, change units from HLSMAX to RGBMAX */</span>\n\t\tR <span class=\"\
+      sy0\">=</span> <span class=\"br0\">(</span>HueToRGB<span class=\"br0\">(</span>Magic1,\
+      \ Magic2, hue<span class=\"sy0\">+</span><span class=\"br0\">(</span>HLSMAX<span\
+      \ class=\"sy0\">/</span><span class=\"nu0\">3</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span>\n\t\t\t\t<span class=\"sy0\">*</span> RGBMAX <span\
+      \ class=\"sy0\">+</span> <span class=\"br0\">(</span>HLSMAX<span class=\"sy0\"\
+      >/</span><span class=\"nu0\">2</span><span class=\"br0\">)</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">/</span> HLSMAX;\n\t\tG <span class=\"sy0\"\
+      >=</span> <span class=\"br0\">(</span>HueToRGB<span class=\"br0\">(</span>Magic1,\
+      \ Magic2, hue<span class=\"br0\">)</span>\n\t\t\t\t<span class=\"sy0\">*</span>\
+      \ RGBMAX <span class=\"sy0\">+</span> <span class=\"br0\">(</span>HLSMAX<span\
+      \ class=\"sy0\">/</span><span class=\"nu0\">2</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">/</span> HLSMAX;\n \n\t\tB <span\
+      \ class=\"sy0\">=</span> <span class=\"br0\">(</span>HueToRGB<span class=\"\
+      br0\">(</span>Magic1, Magic2, hue<span class=\"sy0\">-</span><span class=\"\
+      br0\">(</span>HLSMAX<span class=\"sy0\">/</span><span class=\"nu0\">3</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\t\t\t<span class=\"\
+      sy0\">*</span> RGBMAX <span class=\"sy0\">+</span> <span class=\"br0\">(</span>HLSMAX<span\
+      \ class=\"sy0\">/</span><span class=\"nu0\">2</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">/</span> HLSMAX;\n\t<span class=\"\
+      br0\">}</span>\n \n\tC.<span class=\"me0\">R</span> <span class=\"sy0\">=</span>\
+      \ R;\n\tC.<span class=\"me0\">G</span> <span class=\"sy0\">=</span> G;\n\tC.<span\
+      \ class=\"me0\">B</span> <span class=\"sy0\">=</span> B;\n\tC.<span class=\"\
+      me0\">A</span> <span class=\"sy0\">=</span> <span class=\"nu0\">255</span>;\n\
+      \t<span class=\"kw2\">return</span> C;\n<span class=\"br0\">}</span>\n \n \n\
+      \ \n<span class=\"co1\">// adapted from:</span>\n<span class=\"co1\">// http://www.gamedev.net/reference/articles/article813.asp</span>\n\
+      <span class=\"kw1\">simulated</span> <span class=\"kw1\">function</span> PostRender<span\
+      \ class=\"br0\">(</span> <span class=\"kw8\">canvas</span> <span class=\"kw8\"\
+      >Canvas</span> <span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t\
+      <span class=\"kw1\">local</span> <span class=\"kw9\">Light</span> Other;\n\t\
+      <span class=\"kw1\">local</span> <span class=\"kw5\">float</span> Dist;\n\t\
+      <span class=\"kw1\">local</span> <span class=\"kw5\">Vector</span> X,Y,Z, Dir;\n\
+      \ \n\t<span class=\"kw1\">local</span> <span class=\"kw5\">Vector</span> V,\
+      \ C, L;\n\t<span class=\"kw1\">local</span> <span class=\"kw5\">float</span>\
+      \ Length;\n\t<span class=\"kw1\">local</span> <span class=\"kw5\">float</span>\
+      \ ScaleX, ScaleY;\n \n \n\t<span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span> ViewportOwner.<span class=\"kw9\">Actor</span>.<span class=\"kw9\"\
+      >Pawn</span> <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span> <span\
+      \ class=\"br0\">)</span> PlayerOwner <span class=\"sy0\">=</span> ViewportOwner.<span\
+      \ class=\"kw9\">Actor</span>.<span class=\"kw9\">Pawn</span>;\n\t<span class=\"\
+      kw2\">else</span> PlayerOwner <span class=\"sy0\">=</span> ViewportOwner.<span\
+      \ class=\"kw9\">Actor</span>;\n \n\t<span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span> PlayerOwner <span class=\"sy0\">!=</span> <span class=\"kw5\"\
+      >None</span> <span class=\"br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t\
+      \tScaleX <span class=\"sy0\">=</span> <span class=\"kw8\">Canvas</span>.<span\
+      \ class=\"me0\">SizeX</span> <span class=\"sy0\">/</span> <span class=\"nu0\"\
+      >640.0</span>;\n\t\tScaleY <span class=\"sy0\">=</span> <span class=\"kw8\"\
+      >Canvas</span>.<span class=\"me0\">SizeY</span> <span class=\"sy0\">/</span>\
+      \ <span class=\"nu0\">480.0</span>;\n \n\t\tC.<span class=\"me0\">X</span> <span\
+      \ class=\"sy0\">=</span> <span class=\"kw8\">Canvas</span>.<span class=\"me0\"\
+      >ClipX</span><span class=\"sy0\">/</span><span class=\"nu0\">2</span>;\n\t\t\
+      C.<span class=\"me0\">Y</span> <span class=\"sy0\">=</span> <span class=\"kw8\"\
+      >Canvas</span>.<span class=\"me0\">ClipY</span><span class=\"sy0\">/</span><span\
+      \ class=\"nu0\">2</span>;\n\t\t<span class=\"kw3\">GetAxes</span><span class=\"\
+      br0\">(</span>PlayerOwner.<span class=\"kw7\">Rotation</span>, X,Y,Z<span class=\"\
+      br0\">)</span>;\n\t\t<span class=\"kw2\">ForEach</span> PlayerOwner.<span class=\"\
+      kw2\">RadiusActors</span><span class=\"br0\">(</span><span class=\"kw1\">class</span><span\
+      \ class=\"st0\">'Light'</span>, Other, <span class=\"nu0\">2000</span><span\
+      \ class=\"br0\">)</span>\n\t\t<span class=\"br0\">{</span>\n\t\t\tDir <span\
+      \ class=\"sy0\">=</span> Other.<span class=\"kw7\">Location</span> <span class=\"\
+      sy0\">-</span> PlayerOwner.<span class=\"kw7\">Location</span>;\n\t\t\tDist\
+      \ <span class=\"sy0\">=</span> <span class=\"kw3\">VSize</span><span class=\"\
+      br0\">(</span>Dir<span class=\"br0\">)</span>;\n\t\t\tDir <span class=\"sy0\"\
+      >=</span> Dir<span class=\"sy0\">/</span>Dist;\n \n\t\t\t<span class=\"co1\"\
+      >// find an appropriate light source (bright, in FOV)</span>\n\t\t\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span> <span class=\"br0\">(</span>Dir\
+      \ Dot X<span class=\"br0\">)</span> <span class=\"sy0\">&gt;</span> <span class=\"\
+      nu0\">0.7</span> <span class=\"sy0\">&amp;&amp;</span> Other.<span class=\"\
+      me0\">bCorona</span> <span class=\"sy0\">&amp;&amp;</span>\n\t\t\t\t<span class=\"\
+      br0\">(</span>\n\t\t\t\t<span class=\"br0\">(</span>PlayerOwner.<span class=\"\
+      kw3\">IsA</span><span class=\"br0\">(</span><span class=\"st0\">'Pawn'</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span>  <span class=\"\
+      kw9\">Pawn</span><span class=\"br0\">(</span>PlayerOwner<span class=\"br0\"\
+      >)</span>.<span class=\"me0\">LineOfSightTo</span><span class=\"br0\">(</span>Other<span\
+      \ class=\"br0\">)</span> <span class=\"br0\">)</span> <span class=\"sy0\">||</span>\n\
+      \t\t\t\t<span class=\"br0\">(</span>PlayerOwner.<span class=\"kw3\">IsA</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Controller'</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"kw9\">Controller</span><span\
+      \ class=\"br0\">(</span>PlayerOwner<span class=\"br0\">)</span>.<span class=\"\
+      me0\">LineOfSightTo</span><span class=\"br0\">(</span>Other<span class=\"br0\"\
+      >)</span> <span class=\"br0\">)</span>\n\t\t\t\t<span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">&amp;&amp;</span>\n\t\t\t\tOther.<span class=\"me0\">LightRadius</span>\
+      \ <span class=\"sy0\">&gt;=</span> <span class=\"nu0\">64</span> <span class=\"\
+      sy0\">&amp;&amp;</span> Other.<span class=\"kw7\">DrawScale</span> <span class=\"\
+      sy0\">&gt;</span> <span class=\"nu0\">0.2</span> <span class=\"br0\">)</span>\n\
+      \t\t\t<span class=\"br0\">{</span>\n\t\t\t\t<span class=\"co1\">//Convert 3d\
+      \ location to 2d for display on the Canvas</span>\n\t\t\t\tL <span class=\"\
+      sy0\">=</span> WorldToScreen<span class=\"br0\">(</span>Other.<span class=\"\
+      kw7\">location</span><span class=\"br0\">)</span>;\n \n\t\t\t\tV.<span class=\"\
+      me0\">X</span> <span class=\"sy0\">=</span> L.<span class=\"me0\">X</span> <span\
+      \ class=\"sy0\">-</span> C.<span class=\"me0\">X</span>;\n\t\t\t\tV.<span class=\"\
+      me0\">Y</span> <span class=\"sy0\">=</span> L.<span class=\"me0\">Y</span> <span\
+      \ class=\"sy0\">-</span> C.<span class=\"me0\">Y</span>;\n\t\t\t\tLength <span\
+      \ class=\"sy0\">=</span> <span class=\"kw3\">VSize</span><span class=\"br0\"\
+      >(</span>V<span class=\"br0\">)</span>;\n\t\t\t\tV <span class=\"sy0\">=</span>\
+      \ <span class=\"kw3\">Normal</span><span class=\"br0\">(</span>V<span class=\"\
+      br0\">)</span>;\n \n\t\t\t\t<span class=\"kw8\">Canvas</span>.<span class=\"\
+      kw7\">Style</span> <span class=\"sy0\">=</span> PlayerOwner.<span class=\"me0\"\
+      >ERenderStyle</span>.<span class=\"kw7\">STY_Additive</span>;\n \n\t\t\t\t<span\
+      \ class=\"co1\">// tint the corona textures to match the hue of the light</span>\n\
+      \t\t\t\t<span class=\"kw8\">Canvas</span>.<span class=\"me0\">DrawColor</span>\
+      \ <span class=\"sy0\">=</span> hls2rgb<span class=\"br0\">(</span>Other.<span\
+      \ class=\"me0\">LightHue</span>, <span class=\"nu0\">15</span>, <span class=\"\
+      nu0\">75</span><span class=\"br0\">)</span>;\n \n\t\t\t\t<span class=\"co1\"\
+      >// place flares along directional vector</span>\n\t\t\t\t<span class=\"kw8\"\
+      >Canvas</span>.<span class=\"me0\">SetPos</span><span class=\"br0\">(</span>\
+      \ <span class=\"br0\">(</span>V.<span class=\"me0\">X</span><span class=\"sy0\"\
+      >*</span>Length<span class=\"sy0\">*</span><span class=\"nu0\">1.2</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">-</span><span class=\"nu0\">32</span><span\
+      \ class=\"sy0\">*</span>ScaleX<span class=\"sy0\">+</span>C.<span class=\"me0\"\
+      >X</span>, <span class=\"br0\">(</span>V.<span class=\"me0\">Y</span><span class=\"\
+      sy0\">*</span>Length<span class=\"sy0\">*</span><span class=\"nu0\">1.2</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">-</span><span class=\"nu0\">32</span><span\
+      \ class=\"sy0\">*</span>ScaleY<span class=\"sy0\">+</span>C.<span class=\"me0\"\
+      >Y</span> <span class=\"br0\">)</span>;\n\t\t\t\t<span class=\"kw8\">Canvas</span>.<span\
+      \ class=\"me0\">DrawTile</span><span class=\"br0\">(</span><span class=\"kw5\"\
+      >Texture</span><span class=\"st0\">'LensFlare3'</span>, <span class=\"nu0\"\
+      >64</span><span class=\"sy0\">*</span>ScaleX,<span class=\"nu0\">64</span><span\
+      \ class=\"sy0\">*</span>ScaleY,<span class=\"nu0\">0.0</span>, <span class=\"\
+      nu0\">0.0</span>, <span class=\"nu0\">128</span>, <span class=\"nu0\">128</span><span\
+      \ class=\"br0\">)</span>;\n \n\t\t\t\t<span class=\"kw8\">Canvas</span>.<span\
+      \ class=\"me0\">SetPos</span><span class=\"br0\">(</span> <span class=\"br0\"\
+      >(</span>V.<span class=\"me0\">X</span><span class=\"sy0\">*</span>Length<span\
+      \ class=\"br0\">)</span><span class=\"sy0\">-</span><span class=\"nu0\">32</span><span\
+      \ class=\"sy0\">*</span>ScaleX<span class=\"sy0\">+</span>C.<span class=\"me0\"\
+      >X</span>, <span class=\"br0\">(</span>V.<span class=\"me0\">Y</span><span class=\"\
+      sy0\">*</span>Length<span class=\"br0\">)</span><span class=\"sy0\">-</span><span\
+      \ class=\"nu0\">32</span><span class=\"sy0\">*</span>ScaleY<span class=\"sy0\"\
+      >+</span>C.<span class=\"me0\">Y</span> <span class=\"br0\">)</span>;\n\t\t\t\
+      \t<span class=\"kw8\">Canvas</span>.<span class=\"me0\">DrawTile</span><span\
+      \ class=\"br0\">(</span><span class=\"kw5\">Texture</span><span class=\"st0\"\
+      >'LensFlare1'</span>, <span class=\"nu0\">64</span><span class=\"sy0\">*</span>ScaleX,<span\
+      \ class=\"nu0\">64</span><span class=\"sy0\">*</span>ScaleY,<span class=\"nu0\"\
+      >0.0</span>, <span class=\"nu0\">0.0</span>, <span class=\"nu0\">128</span>,\
+      \ <span class=\"nu0\">128</span><span class=\"br0\">)</span>;\n \n\t\t\t\t<span\
+      \ class=\"kw8\">Canvas</span>.<span class=\"me0\">SetPos</span><span class=\"\
+      br0\">(</span> <span class=\"br0\">(</span>V.<span class=\"me0\">X</span><span\
+      \ class=\"sy0\">*</span>Length<span class=\"sy0\">*</span><span class=\"nu0\"\
+      >0.66</span><span class=\"br0\">)</span><span class=\"sy0\">-</span><span class=\"\
+      nu0\">64</span><span class=\"sy0\">*</span>ScaleX<span class=\"sy0\">+</span>C.<span\
+      \ class=\"me0\">X</span>, <span class=\"br0\">(</span>V.<span class=\"me0\"\
+      >Y</span><span class=\"sy0\">*</span>Length<span class=\"sy0\">*</span><span\
+      \ class=\"nu0\">0.66</span><span class=\"br0\">)</span><span class=\"sy0\">-</span><span\
+      \ class=\"nu0\">64</span><span class=\"sy0\">*</span>ScaleY<span class=\"sy0\"\
+      >+</span>C.<span class=\"me0\">Y</span> <span class=\"br0\">)</span>;\n\t\t\t\
+      \t<span class=\"kw8\">Canvas</span>.<span class=\"me0\">DrawTile</span><span\
+      \ class=\"br0\">(</span><span class=\"kw5\">Texture</span><span class=\"st0\"\
+      >'LensFlare1'</span>, <span class=\"nu0\">128</span><span class=\"sy0\">*</span>ScaleX,<span\
+      \ class=\"nu0\">128</span><span class=\"sy0\">*</span>ScaleY,<span class=\"\
+      nu0\">0.0</span>, <span class=\"nu0\">0.0</span>, <span class=\"nu0\">128</span>,\
+      \ <span class=\"nu0\">128</span><span class=\"br0\">)</span>;\n \n\t\t\t\t<span\
+      \ class=\"kw8\">Canvas</span>.<span class=\"me0\">SetPos</span><span class=\"\
+      br0\">(</span> <span class=\"br0\">(</span>V.<span class=\"me0\">X</span><span\
+      \ class=\"sy0\">*</span>Length<span class=\"sy0\">*</span><span class=\"nu0\"\
+      >0.33</span><span class=\"br0\">)</span><span class=\"sy0\">-</span><span class=\"\
+      nu0\">64</span><span class=\"sy0\">*</span>ScaleX<span class=\"sy0\">+</span>C.<span\
+      \ class=\"me0\">X</span>, <span class=\"br0\">(</span>V.<span class=\"me0\"\
+      >Y</span><span class=\"sy0\">*</span>Length<span class=\"sy0\">*</span><span\
+      \ class=\"nu0\">0.33</span><span class=\"br0\">)</span><span class=\"sy0\">-</span><span\
+      \ class=\"nu0\">64</span><span class=\"sy0\">*</span>ScaleY<span class=\"sy0\"\
+      >+</span>C.<span class=\"me0\">Y</span> <span class=\"br0\">)</span>;\n\t\t\t\
+      \t<span class=\"kw8\">Canvas</span>.<span class=\"me0\">DrawTile</span><span\
+      \ class=\"br0\">(</span><span class=\"kw5\">Texture</span><span class=\"st0\"\
+      >'LensFlare0'</span>, <span class=\"nu0\">128</span><span class=\"sy0\">*</span>ScaleX,<span\
+      \ class=\"nu0\">128</span><span class=\"sy0\">*</span>ScaleY,<span class=\"\
+      nu0\">0.0</span>, <span class=\"nu0\">0.0</span>, <span class=\"nu0\">128</span>,\
+      \ <span class=\"nu0\">128</span><span class=\"br0\">)</span>;\n \n\t\t\t\t<span\
+      \ class=\"kw8\">Canvas</span>.<span class=\"me0\">SetPos</span><span class=\"\
+      br0\">(</span> <span class=\"br0\">(</span>V.<span class=\"me0\">X</span><span\
+      \ class=\"sy0\">*</span>Length<span class=\"sy0\">*</span><span class=\"nu0\"\
+      >0.125</span><span class=\"br0\">)</span><span class=\"sy0\">-</span><span class=\"\
+      nu0\">64</span><span class=\"sy0\">*</span>ScaleX<span class=\"sy0\">+</span>C.<span\
+      \ class=\"me0\">X</span>, <span class=\"br0\">(</span>V.<span class=\"me0\"\
+      >Y</span><span class=\"sy0\">*</span>Length<span class=\"sy0\">*</span><span\
+      \ class=\"nu0\">0.125</span><span class=\"br0\">)</span><span class=\"sy0\"\
+      >-</span><span class=\"nu0\">64</span><span class=\"sy0\">*</span>ScaleY<span\
+      \ class=\"sy0\">+</span>C.<span class=\"me0\">Y</span> <span class=\"br0\">)</span>;\n\
+      \t\t\t\t<span class=\"kw8\">Canvas</span>.<span class=\"me0\">DrawTile</span><span\
+      \ class=\"br0\">(</span><span class=\"kw5\">Texture</span><span class=\"st0\"\
+      >'LensFlare2'</span>, <span class=\"nu0\">128</span><span class=\"sy0\">*</span>ScaleX,<span\
+      \ class=\"nu0\">128</span><span class=\"sy0\">*</span>ScaleY,<span class=\"\
+      nu0\">0.0</span>, <span class=\"nu0\">0.0</span>, <span class=\"nu0\">128</span>,\
+      \ <span class=\"nu0\">128</span><span class=\"br0\">)</span>;\n \n\t\t\t\t<span\
+      \ class=\"kw8\">Canvas</span>.<span class=\"me0\">SetPos</span><span class=\"\
+      br0\">(</span> <span class=\"br0\">(</span>V.<span class=\"me0\">X</span><span\
+      \ class=\"sy0\">*</span>Length<span class=\"sy0\">*-</span><span class=\"nu0\"\
+      >0.21</span><span class=\"br0\">)</span><span class=\"sy0\">-</span><span class=\"\
+      nu0\">64</span><span class=\"sy0\">*</span>ScaleX<span class=\"sy0\">+</span>C.<span\
+      \ class=\"me0\">X</span>, <span class=\"br0\">(</span>V.<span class=\"me0\"\
+      >Y</span><span class=\"sy0\">*</span>Length<span class=\"sy0\">*-</span><span\
+      \ class=\"nu0\">0.21</span><span class=\"br0\">)</span><span class=\"sy0\">-</span><span\
+      \ class=\"nu0\">64</span><span class=\"sy0\">*</span>ScaleY<span class=\"sy0\"\
+      >+</span>C.<span class=\"me0\">Y</span> <span class=\"br0\">)</span>;\n\t\t\t\
+      \t<span class=\"kw8\">Canvas</span>.<span class=\"me0\">DrawTile</span><span\
+      \ class=\"br0\">(</span><span class=\"kw5\">Texture</span><span class=\"st0\"\
+      >'LensFlare3'</span>, <span class=\"nu0\">128</span><span class=\"sy0\">*</span>ScaleX,<span\
+      \ class=\"nu0\">128</span><span class=\"sy0\">*</span>ScaleY,<span class=\"\
+      nu0\">0.0</span>, <span class=\"nu0\">0.0</span>, <span class=\"nu0\">128</span>,\
+      \ <span class=\"nu0\">128</span><span class=\"br0\">)</span>;\n \n\t\t\t\t<span\
+      \ class=\"kw8\">Canvas</span>.<span class=\"me0\">SetPos</span><span class=\"\
+      br0\">(</span> <span class=\"br0\">(</span>V.<span class=\"me0\">X</span><span\
+      \ class=\"sy0\">*</span>Length<span class=\"sy0\">*-</span><span class=\"nu0\"\
+      >0.30</span><span class=\"br0\">)</span><span class=\"sy0\">-</span><span class=\"\
+      nu0\">32</span><span class=\"sy0\">*</span>ScaleX<span class=\"sy0\">+</span>C.<span\
+      \ class=\"me0\">X</span>, <span class=\"br0\">(</span>V.<span class=\"me0\"\
+      >Y</span><span class=\"sy0\">*</span>Length<span class=\"sy0\">*-</span><span\
+      \ class=\"nu0\">0.30</span><span class=\"br0\">)</span><span class=\"sy0\">-</span><span\
+      \ class=\"nu0\">32</span><span class=\"sy0\">*</span>ScaleY<span class=\"sy0\"\
+      >+</span>C.<span class=\"me0\">Y</span> <span class=\"br0\">)</span>;\n\t\t\t\
+      \t<span class=\"kw8\">Canvas</span>.<span class=\"me0\">DrawTile</span><span\
+      \ class=\"br0\">(</span><span class=\"kw5\">Texture</span><span class=\"st0\"\
+      >'LensFlare4'</span>, <span class=\"nu0\">64</span><span class=\"sy0\">*</span>ScaleX,<span\
+      \ class=\"nu0\">64</span><span class=\"sy0\">*</span>ScaleY,<span class=\"nu0\"\
+      >0.0</span>, <span class=\"nu0\">0.0</span>, <span class=\"nu0\">128</span>,\
+      \ <span class=\"nu0\">128</span><span class=\"br0\">)</span>;\n \n\t\t\t\t<span\
+      \ class=\"kw8\">Canvas</span>.<span class=\"me0\">SetPos</span><span class=\"\
+      br0\">(</span> <span class=\"br0\">(</span>V.<span class=\"me0\">X</span><span\
+      \ class=\"sy0\">*</span>Length<span class=\"sy0\">*-</span><span class=\"nu0\"\
+      >0.5</span><span class=\"br0\">)</span><span class=\"sy0\">-</span><span class=\"\
+      nu0\">90</span><span class=\"sy0\">*</span>ScaleX<span class=\"sy0\">+</span>C.<span\
+      \ class=\"me0\">X</span>, <span class=\"br0\">(</span>V.<span class=\"me0\"\
+      >Y</span><span class=\"sy0\">*</span>Length<span class=\"sy0\">*-</span><span\
+      \ class=\"nu0\">0.5</span><span class=\"br0\">)</span><span class=\"sy0\">-</span><span\
+      \ class=\"nu0\">90</span><span class=\"sy0\">*</span>ScaleY<span class=\"sy0\"\
+      >+</span>C.<span class=\"me0\">Y</span> <span class=\"br0\">)</span>;\n\t\t\t\
+      \t<span class=\"kw8\">Canvas</span>.<span class=\"me0\">DrawTile</span><span\
+      \ class=\"br0\">(</span><span class=\"kw5\">Texture</span><span class=\"st0\"\
+      >'LensFlare4'</span>, <span class=\"nu0\">180</span><span class=\"sy0\">*</span>ScaleX,<span\
+      \ class=\"nu0\">180</span><span class=\"sy0\">*</span>ScaleY,<span class=\"\
+      nu0\">0.0</span>, <span class=\"nu0\">0.0</span>, <span class=\"nu0\">128</span>,\
+      \ <span class=\"nu0\">128</span><span class=\"br0\">)</span>;\n\t\t\t<span class=\"\
+      br0\">}</span>\n\t\t<span class=\"br0\">}</span>\n\t<span class=\"br0\">}</span>\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">defaultproperties</span>\n\
+      <span class=\"br0\">{</span>\n   bVisible<span class=\"sy0\">=</span><span class=\"\
+      kw6\">true</span>\n   bActive<span class=\"sy0\">=</span><span class=\"kw6\"\
+      >true</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>A compiled\
+      \ .u with textures and activating mutator may be located at <a rel=\"nofollow\"\
+      \ class=\"external free\" href=\"http://www.boilingpoint.com/~jasonyu/ut/LensFlare.zip\"\
+      >http://www.boilingpoint.com/~jasonyu/ut/LensFlare.zip</a></p>\n<p>Enjoy.</p>\n\
+      <p><b>capt.</b></p>\n<h2><span class=\"mw-headline\" id=\"Links\">Links</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Lens_Flare?section=3\" title=\"Edit section: Links\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h2>\n<p><a rel=\"nofollow\"\
+      \ class=\"external free\" href=\"http://www.wildtangent.com/developer/howtos/LensFlareHowTo/\"\
+      >http://www.wildtangent.com/developer/howtos/LensFlareHowTo/</a> - Explanation\
+      \ of how to calculate positions for lens flare effects.</p>\n<p><a rel=\"nofollow\"\
+      \ class=\"external free\" href=\"http://www.blackpawn.com/texts/lensflare/default.html\"\
+      >http://www.blackpawn.com/texts/lensflare/default.html</a> - Information on\
+      \ creating good textures for use with lens flares.</p>\n<p><a rel=\"nofollow\"\
+      \ class=\"external text\" href=\"http://www.cambridgeincolour.com/tutorials/lens-flare.html\"\
+      >Understanding Lens Flare</a> - Background on what causes lens flare and techniques\
+      \ to reduce it in photography.</p>\n<hr />\n<p><b>Ghost3021:</b> Wow! Lets combine\
+      \ this with realtime SquirrelZ's realtimeshadows....&#160;:D</p>\n<p><b>Wormbo:</b>\
+      \ Lense flares only appear when you use an optical device like a camera, that's\
+      \ why they are called <i>lense</i> flares. You will never see them with bare\
+      \ eyes, so why combine them with realistic real-time shadows? Both work independantly\
+      \ and that's a good thing, actually.</p>\n<p><b>GG-Xtreme:</b> It doesn't seem\
+      \ to come with the textures, and it doesn't use a default texture package. Does\
+      \ anyone have a download to LensFlares.utx?</p>\n\n<!-- \nNewPP limit report\n\
+      CPU time usage: 0.140 seconds\nReal time usage: 0.143 seconds\nPreprocessor\
+      \ visited node count: 20/1000000\nPreprocessor generated node count: 36/1000000\n\
+      Post‐expand include size: 0/2097152 bytes\nTemplate argument size: 0/2097152\
+      \ bytes\nHighest expansion depth: 2/40\nExpensive parser function count: 0/100\n\
+      -->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n100.00%\
+      \    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:1645-0!*!0!!*!5!*\
+      \ and timestamp 20221118085155 and revision id 4073\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Corona"
+  - ns: 100
+    exists: true
+    name: "Legacy:Canvas"
+  templates: []
+  images:
+  - "Legacy_corona.gif"
+  externallinks:
+  - "http://www.wildtangent.com/developer/howtos/LensFlareHowTo/"
+  - "http://www.blackpawn.com/texts/lensflare/default.html"
+  - "http://www.cambridgeincolour.com/tutorials/lens-flare.html"
+  - "http://www.boilingpoint.com/~jasonyu/ut/LensFlare.zip"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Lens Flare in the Unreal Engine"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Lens_Flare"
+    byteoffset: 886
+    anchor: "Lens_Flare_in_the_Unreal_Engine"
+  - toclevel: 1
+    level: "2"
+    line: "Making Lens Flares"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Lens_Flare"
+    byteoffset: 1774
+    anchor: "Making_Lens_Flares"
+  - toclevel: 1
+    level: "2"
+    line: "Links"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:Lens_Flare"
+    byteoffset: 7162
+    anchor: "Links"
+  displaytitle: "Legacy:Lens Flare"
+  iwlinks: []
+  wikitext:
+    text: "A '''lens flare''' is a visual effect assembled of several circles/hexagons\
+      \ that &ndash; when the person is moving &ndash; move opposite of the light\
+      \ source and don't stay on one spot. So they move in the direction that the\
+      \ person is moving. The color of lens flares is generally related to the color\
+      \ of the light. A lens flare is a result of compound lens systems used in cameras\
+      \ and other optical devices, and so some consideration should be given to their\
+      \ use - lens flares do not occur on light sources viewed with the naked eye.\
+      \ Also, lens flares can make it harder to see, so be careful that their use\
+      \ does not adversely impact gameplay.\n\nThe textures that are displayed around\
+      \ light sources, but stick at the place where the light is are [[Legacy:Corona|corona]]s.\
+      \ For some reason they're frequently erroneously called \"lens flare\" as well.\n\
+      \n[[Image:Legacy_corona.gif|center|]]\n\n==Lens Flare in the Unreal Engine==\n\
+      \nNo support for lens flares is built in to the Unreal Engine, but lens flares\
+      \ can be created using UnrealScript. This should be possible with any version\
+      \ of the Unreal Engine, though the specific Unrealscript code required will\
+      \ vary. Lens flares can be created two ways - by drawing them directly onto\
+      \ the screen using the [[Legacy:Canvas|Canvas]], or by creating non-colliding\
+      \ actors in the world. Using actors allows you to make better use of hardware\
+      \ graphics acceleration, though drawing to the [[Legacy:Canvas|Canvas]] will\
+      \ require marginally less memory. Drawing to the [[Legacy:Canvas|Canvas]] may\
+      \ also produce slightly better results, as actors may be clipped by nearby meshes.\
+      \ Both solutions should have negligible impact on performance. With either solution,\
+      \ Unrealscript will be needed to compute the correct positions for the lens\
+      \ flares.\n\n==Making Lens Flares ==\n\nHere's the code I used for a proof of\
+      \ concept I threw together a short while back.  References can be found in the\
+      \ comments.\n\nThe idea is that a light source is creating a glare against the\
+      \ \"lens\" through which we are viewing the world &ndash; in this case the canvas.\
+      \  The flare effect is then created by drawing a series of coronas along a vector\
+      \ on the canvas which passes through both the light source and the center of\
+      \ the screen.\n\n<uscript>\n//-----------------------------------------------------------\n\
+      // FlareInteraction.\n// Adds 1337 lens flares for lights w/ coronas.\n// (c)\
+      \ 2002 jasonyu\n//-----------------------------------------------------------\n\
+      class FlareInteraction extends Interaction;\n\n#exec OBJ LOAD FILE=Textures\\\
+      FlareTextures.utx PACKAGE=LensFlare\n\nvar Actor PlayerOwner;\nconst HLSMAX\
+      \ = 240;\nconst RGBMAX = 255;\n\n\nevent Initialized()\n{\n\tPlayerOwner = ViewportOwner.Actor;\n\
+      \tlog(\"Lensflare interaction initialized.\");\n}\n\n// adapted from:\n// http://plaza27.mbn.or.jp/~satomii/design/win32/hls2rgb.html\n\
+      final simulated function float HueToRGB(float n1, float n2, float hue)\n{\n\t\
+      if ( hue < 0 ) hue += HLSMAX;\n\tif ( hue > HLSMAX ) hue -= HLSMAX;\n\n\t/*\
+      \ return r,g, or b value from this tridrant */\n\tif ( hue < (HLSMAX/6) )\n\t\
+      \treturn ( n1 + (((n2-n1)*hue + (HLSMAX/12))/(HLSMAX/6)) );\n\tif ( hue < (HLSMAX/2)\
+      \ )\n\t\treturn n2;\n\tif ( hue < ((HLSMAX*2)/3) )\n\t\treturn ( n1 + (((n2-n1)*(((HLSMAX*2)/3)-hue)\
+      \ + (HLSMAX/12))/(HLSMAX/6)) );\n\telse\n\t\treturn n1;\n}\n\n\nfinal simulated\
+      \ function Color hls2rgb(byte hue, byte lum, byte sat)\n{\n\tlocal Color C;\n\
+      \tlocal float Magic1, Magic2;\n\tlocal int R,G,B;\n\n\tif ( sat==0)\n\t{   \
+      \  /* achromatic case */\n\t\tC.R = (lum*RGBMAX) / HLSMAX;\n\t\tC.G = C.R;\n\
+      \t\tC.B = C.R;\n\t}\n\telse\n\t{       /* chromatic case */\n\t\t/* set up magic\
+      \ numbers */\n\t\tif (lum <= (HLSMAX/2))\n\t\t\tMagic2 = (lum*(HLSMAX+sat)+(HLSMAX/2))\
+      \ / HLSMAX;\n\t\telse\n\t\t\tMagic2 = lum+sat - ((lum*sat)+(HLSMAX/2)) / HLSMAX;\n\
+      \n\t\tMagic1 = 2*lum - Magic2;\n\n\t\t/* get RGB, change units from HLSMAX to\
+      \ RGBMAX */\n\t\tR = (HueToRGB(Magic1, Magic2, hue+(HLSMAX/3))\n\t\t\t\t* RGBMAX\
+      \ + (HLSMAX/2)) / HLSMAX;\n\t\tG = (HueToRGB(Magic1, Magic2, hue)\n\t\t\t\t\
+      * RGBMAX + (HLSMAX/2)) / HLSMAX;\n\n\t\tB = (HueToRGB(Magic1, Magic2, hue-(HLSMAX/3))\n\
+      \t\t\t\t* RGBMAX + (HLSMAX/2)) / HLSMAX;\n\t}\n\n\tC.R = R;\n\tC.G = G;\n\t\
+      C.B = B;\n\tC.A = 255;\n\treturn C;\n}\n\n\n\n// adapted from:\n// http://www.gamedev.net/reference/articles/article813.asp\n\
+      simulated function PostRender( canvas Canvas )\n{\n\tlocal Light Other;\n\t\
+      local float Dist;\n\tlocal Vector X,Y,Z, Dir;\n\n\tlocal Vector V, C, L;\n\t\
+      local float Length;\n\tlocal float ScaleX, ScaleY;\n\n\n\tif ( ViewportOwner.Actor.Pawn\
+      \ != None ) PlayerOwner = ViewportOwner.Actor.Pawn;\n\telse PlayerOwner = ViewportOwner.Actor;\n\
+      \n\tif ( PlayerOwner != None )\n\t{\n\t\tScaleX = Canvas.SizeX / 640.0;\n\t\t\
+      ScaleY = Canvas.SizeY / 480.0;\n\n\t\tC.X = Canvas.ClipX/2;\n\t\tC.Y = Canvas.ClipY/2;\n\
+      \t\tGetAxes(PlayerOwner.Rotation, X,Y,Z);\n\t\tForEach PlayerOwner.RadiusActors(class'Light',\
+      \ Other, 2000)\n\t\t{\n\t\t\tDir = Other.Location - PlayerOwner.Location;\n\t\
+      \t\tDist = VSize(Dir);\n\t\t\tDir = Dir/Dist;\n\t\t\t\n\t\t\t// find an appropriate\
+      \ light source (bright, in FOV)\n\t\t\tif ( (Dir Dot X) > 0.7 && Other.bCorona\
+      \ &&\n\t\t\t\t(\n\t\t\t\t(PlayerOwner.IsA('Pawn') &&  Pawn(PlayerOwner).LineOfSightTo(Other)\
+      \ ) ||\n\t\t\t\t(PlayerOwner.IsA('Controller') && Controller(PlayerOwner).LineOfSightTo(Other)\
+      \ )\n\t\t\t\t) &&\n\t\t\t\tOther.LightRadius >= 64 && Other.DrawScale > 0.2\
+      \ )\n\t\t\t{\n\t\t\t\t//Convert 3d location to 2d for display on the Canvas\n\
+      \t\t\t\tL = WorldToScreen(Other.location);\n\n\t\t\t\tV.X = L.X - C.X;\n\t\t\
+      \t\tV.Y = L.Y - C.Y;\n\t\t\t\tLength = VSize(V);\n\t\t\t\tV = Normal(V);\n\n\
+      \t\t\t\tCanvas.Style = PlayerOwner.ERenderStyle.STY_Additive;\n\n\t\t\t\t//\
+      \ tint the corona textures to match the hue of the light\n\t\t\t\tCanvas.DrawColor\
+      \ = hls2rgb(Other.LightHue, 15, 75);\n\n\t\t\t\t// place flares along directional\
+      \ vector\n\t\t\t\tCanvas.SetPos( (V.X*Length*1.2)-32*ScaleX+C.X, (V.Y*Length*1.2)-32*ScaleY+C.Y\
+      \ );\n\t\t\t\tCanvas.DrawTile(Texture'LensFlare3', 64*ScaleX,64*ScaleY,0.0,\
+      \ 0.0, 128, 128);\n\n\t\t\t\tCanvas.SetPos( (V.X*Length)-32*ScaleX+C.X, (V.Y*Length)-32*ScaleY+C.Y\
+      \ );\n\t\t\t\tCanvas.DrawTile(Texture'LensFlare1', 64*ScaleX,64*ScaleY,0.0,\
+      \ 0.0, 128, 128);\n\n\t\t\t\tCanvas.SetPos( (V.X*Length*0.66)-64*ScaleX+C.X,\
+      \ (V.Y*Length*0.66)-64*ScaleY+C.Y );\n\t\t\t\tCanvas.DrawTile(Texture'LensFlare1',\
+      \ 128*ScaleX,128*ScaleY,0.0, 0.0, 128, 128);\n\n\t\t\t\tCanvas.SetPos( (V.X*Length*0.33)-64*ScaleX+C.X,\
+      \ (V.Y*Length*0.33)-64*ScaleY+C.Y );\n\t\t\t\tCanvas.DrawTile(Texture'LensFlare0',\
+      \ 128*ScaleX,128*ScaleY,0.0, 0.0, 128, 128);\n\n\t\t\t\tCanvas.SetPos( (V.X*Length*0.125)-64*ScaleX+C.X,\
+      \ (V.Y*Length*0.125)-64*ScaleY+C.Y );\n\t\t\t\tCanvas.DrawTile(Texture'LensFlare2',\
+      \ 128*ScaleX,128*ScaleY,0.0, 0.0, 128, 128);\n\n\t\t\t\tCanvas.SetPos( (V.X*Length*-0.21)-64*ScaleX+C.X,\
+      \ (V.Y*Length*-0.21)-64*ScaleY+C.Y );\n\t\t\t\tCanvas.DrawTile(Texture'LensFlare3',\
+      \ 128*ScaleX,128*ScaleY,0.0, 0.0, 128, 128);\n\n\t\t\t\tCanvas.SetPos( (V.X*Length*-0.30)-32*ScaleX+C.X,\
+      \ (V.Y*Length*-0.30)-32*ScaleY+C.Y );\n\t\t\t\tCanvas.DrawTile(Texture'LensFlare4',\
+      \ 64*ScaleX,64*ScaleY,0.0, 0.0, 128, 128);\n\n\t\t\t\tCanvas.SetPos( (V.X*Length*-0.5)-90*ScaleX+C.X,\
+      \ (V.Y*Length*-0.5)-90*ScaleY+C.Y );\n\t\t\t\tCanvas.DrawTile(Texture'LensFlare4',\
+      \ 180*ScaleX,180*ScaleY,0.0, 0.0, 128, 128);\n\t\t\t}\n\t\t}\n\t}\n}\n\ndefaultproperties\n\
+      {\n   bVisible=true\n   bActive=true\n}\n</uscript>\n\nA compiled .u with textures\
+      \ and activating mutator may be located at http://www.boilingpoint.com/~jasonyu/ut/LensFlare.zip\n\
+      \nEnjoy.\n\n'''capt.'''\n\n==Links==\n\nhttp://www.wildtangent.com/developer/howtos/LensFlareHowTo/\
+      \ - Explanation of how to calculate positions for lens flare effects.\n\nhttp://www.blackpawn.com/texts/lensflare/default.html\
+      \ - Information on creating good textures for use with lens flares.\n\n[http://www.cambridgeincolour.com/tutorials/lens-flare.html\
+      \ Understanding Lens Flare] - Background on what causes lens flare and techniques\
+      \ to reduce it in photography.\n\n----\n\n'''Ghost3021:''' Wow! Lets combine\
+      \ this with realtime SquirrelZ's realtimeshadows.... :D \n\n'''Wormbo:''' Lense\
+      \ flares only appear when you use an optical device like a camera, that's why\
+      \ they are called ''lense'' flares. You will never see them with bare eyes,\
+      \ so why combine them with realistic real-time shadows? Both work independantly\
+      \ and that's a good thing, actually.\n\n'''GG-Xtreme:''' It doesn't seem to\
+      \ come with the textures, and it doesn't use a default texture package. Does\
+      \ anyone have a download to LensFlares.utx?"
+  properties: []
+  revId: 4073
+name: "Legacy:Lens Flare"
+revision:
+  revid: 4073
+  parentid: 4074
+  user: "GG-Xtreme"
+  timestamp: 1172881848.000000000
+  comment: "*"
+timestamp: 1668764525.523850000

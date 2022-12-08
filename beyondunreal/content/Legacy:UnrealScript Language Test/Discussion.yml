@@ -1,0 +1,663 @@
+---
+parse:
+  title: "Legacy:UnrealScript Language Test/Discussion"
+  text:
+    text: "<blockquote class=\"legacyquote\">\n<p>Archived discussions about certain\
+      \ test cases</p>\n</blockquote>\n<h2><span class=\"mw-headline\" id=\"error006_whileuntil\"\
+      >error006_whileuntil</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:UnrealScript_Language_Test/Discussion?section=1\"\
+      \ title=\"Edit section: error006 whileuntil\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p><b>Evolution:</b> (can't remember if this is exactly\
+      \ how this one works, but it's something like this): while ( <i>expr</i> ) {\
+      \ ... } until ( <i>expr</i> ); compiles and works fine, though it's quite unexpected!</p>\n\
+      <p><b>Wormbo:</b> Not only \"while()...until();\" compiles (and evaluates both\
+      \ conditions at their corresponding places), but also \"do { ... }\", which\
+      \ basically is an unconditional infinite loop.</p>\n<p><b>El Muerte:</b> <tt>while\
+      \ (...) ... until(...);</tt> is clearly an error, it shouldn't compile and it\
+      \ doesn't even run properly, I think (see error006_whileuntil). <tt>while (...)\
+      \ do ... until (...);</tt> is the correct form. <tt>do ...</tt> should also\
+      \ be an error. Come to think of it, shouldn't <tt>do</tt> require braces? How\
+      \ do other curlybrace languages define this? <tt>while</tt> could easily accept\
+      \ an block or single line, but <tt>do</tt> should know where the statements\
+      \ end. For example, what <i>should</i> the following code do?</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\">    i<span class=\"sy0\">=</span><span class=\"nu0\">0</span>;\n\
+      \    <span class=\"kw2\">do</span>\n        <span class=\"kw2\">do</span>\n\
+      \            <span class=\"kw3\">log</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">\"x\"</span><span class=\"sy0\">@</span>i<span class=\"sy0\"\
+      >++</span><span class=\"br0\">)</span>;\n        until<span class=\"br0\">(</span>i\
+      \ <span class=\"sy0\">&lt;</span> <span class=\"nu0\">5</span><span class=\"\
+      br0\">)</span>;\n \n    <span class=\"kw2\">do</span>\n        <span class=\"\
+      kw3\">log</span><span class=\"br0\">(</span><span class=\"st0\">\"y\"</span><span\
+      \ class=\"sy0\">@</span>i<span class=\"sy0\">++</span><span class=\"br0\">)</span>;\n\
+      \    until<span class=\"br0\">(</span>i <span class=\"sy0\">&lt;</span> <span\
+      \ class=\"nu0\">10</span><span class=\"br0\">)</span>;</pre></div>\n</div>\n\
+      <p>Ofcourse it should keep printing \"x number\". But I think this goes against\
+      \ the principles of the curlybrance languages (this is not perl). And another\
+      \ idea, shouldn't an null condition evaluate to false instead of true?</p>\n\
+      <p><b>Wormbo:</b> The compiler actually seems to handle block start and end\
+      \ individually.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\">startwhile: <span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span>whilecondition<span class=\"\
+      br0\">)</span> <span class=\"br0\">{</span>                    <span class=\"\
+      co1\">// while (whilecondition) {</span>\n  <span class=\"co1\">// code block\
+      \                                      //   ...</span>\n  goto<span class=\"\
+      br0\">(</span><span class=\"st0\">'startwhile'</span><span class=\"br0\">)</span>;\
+      \                                <span class=\"co1\">// }</span>\n<span class=\"\
+      br0\">}</span>\n \nstartdountil:                                        <span\
+      \ class=\"co1\">// do {</span>\n<span class=\"co1\">// code block          \
+      \                              //   ...</span>\n<span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span><span class=\"sy0\">!</span>untilcondition<span\
+      \ class=\"br0\">)</span> goto<span class=\"br0\">(</span><span class=\"st0\"\
+      >'startdountil'</span><span class=\"br0\">)</span>;           <span class=\"\
+      co1\">// } until (untilcondition);</span>\n \n \nstartwhileuntil: <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>whilecondition<span class=\"br0\"\
+      >)</span> <span class=\"br0\">{</span>               <span class=\"co1\">//\
+      \ while (whilecondition) {</span>\n  <span class=\"co1\">// code block     \
+      \                                 //   ...</span>\n  <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span><span class=\"sy0\">!</span>untilcondition<span\
+      \ class=\"br0\">)</span> goto<span class=\"br0\">(</span><span class=\"st0\"\
+      >'startwhileuntil'</span><span class=\"br0\">)</span>;      <span class=\"co1\"\
+      >// } until (untilcondition);</span>\n<span class=\"br0\">}</span>\n \nstartdo:\
+      \                                             <span class=\"co1\">// do {</span>\n\
+      <span class=\"co1\">// code block                                        //\
+      \   ...</span>\ngoto<span class=\"br0\">(</span><span class=\"st0\">'startdo'</span><span\
+      \ class=\"br0\">)</span>;                                     <span class=\"\
+      co1\">// }</span></pre></div>\n</div>\n<p>In that context it also becomes obvious,\
+      \ why the do loop doesn't require braces – while doesn't require them either\
+      \ and the compiler doesn't seem to make a big difference there.</p>\n<h2><span\
+      \ class=\"mw-headline\" id=\"error009_invalidsuper_and_error010_superstates\"\
+      >error009_invalidsuper and error010_superstates</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:UnrealScript_Language_Test/Discussion?section=2\"\
+      \ title=\"Edit section: error009 invalidsuper and error010 superstates\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h2>\n<p><b>Wormbo:</b> It\
+      \ is possible to specify classes in the Super(ClassName).FunctionCall() construction\
+      \ that are not a super class. On the other hand it's not possible to specify\
+      \ super <i>states</i>.</p>\n<p><b>SuperApe:</b> Wormbo (or anyone), can you\
+      \ give an example of that?</p>\n<p><b>El Muerte:</b> super states?</p>\n<p><b>SuperApe:</b>\
+      \ I guess I wasn't clear what Wormbo was referring to. I was wondering which\
+      \ of \"<tt>Super(ClassName).FunctionCall()</tt>\" is code and which is explanation.\
+      \ An example of it's use was what I was after.</p>\n<p><b>OlympusMons:</b> Now\
+      \ Im not as good as you guys, but would \"<tt>Super(ClassName).FunctionCall()</tt>\"\
+      \ return the super of the current class or the super of the class in the brackets.\
+      \ \"<tt>Class(Super.ClassName).FunctionCall()</tt>\" wouldnt that be correct,\
+      \ because its usually \"<tt>class(class).function();</tt>\" and for a super\
+      \ state wouldnt it be \"<tt>Super.goto(\"StateTag\")</tt>\" anyways just ignore\
+      \ me if I dont have a clue. unless its \"<tt>Super.Class(ClassName).FunctionCall()</tt>\"\
+      \ but that kinda leaves it open for a \"<tt>Super.Class(Super.ClassName).FunctionCall()</tt>\"\
+      \ Ok now Im just being silly.</p>\n<p><b>Jimboh:</b></p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw1\">Class</span> A <span class=\"kw1\">extends</span>\
+      \ <span class=\"kw8\">Object</span>;\n<span class=\"kw1\">function</span> dothis<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"br0\">{</span>\n\
+      <span class=\"co1\">// does something cool</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"\
+      uscript source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">Class</span>\
+      \ B <span class=\"kw1\">extends</span> A;\n<br /><span class=\"kw1\">function</span>\
+      \ dothis<span class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"\
+      br0\">{</span>\n<span class=\"co1\">// does something uncool</span>\n\n<span\
+      \ class=\"br0\">}</span></pre></div>\n</div>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">Class</span> C <span class=\"kw1\">extends</span>\
+      \ B;\n<span class=\"kw1\">function</span> dothis<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span> <span class=\"br0\">{</span>\n<span class=\"co1\">//\
+      \ you don't wanna be uncool, so you wanna do something cool...</span>\n<span\
+      \ class=\"kw6\">Super</span><span class=\"br0\">(</span>A<span class=\"br0\"\
+      >)</span>.<span class=\"me0\">dothis</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <p>Thats how you use Super().</p>\n<p><b>OlympusMons:</b> Oh a super,super.\
+      \ I thought you were calling the super class not the super of the super. Still\
+      \ shouldnt this \"<tt>Class(Super.ClassName).FunctionCall()</tt>\" work?? Damn\
+      \ spawning and firemodes got me confused now!!</p>\n<p><b>Wormbo:</b> What I\
+      \ mean with \"super states\" is:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">class</span> SomeClass <span class=\"kw1\">extends</span>\
+      \ <span class=\"kw9\">Actor</span>;\n \n<span class=\"co1\">// Super() compiler\
+      \ bug:</span>\n<span class=\"kw1\">function</span> A<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"co1\"\
+      >// super call to sibling class function that doesn't exist in this or the super\
+      \ class</span>\n  <span class=\"kw6\">Super</span><span class=\"br0\">(</span>DestroyableTrigger<span\
+      \ class=\"br0\">)</span>.<span class=\"me0\">SpawnEffects</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>; <span class=\"co1\">// compiles\
+      \ and even executes! (spawns some visual effects)</span>\n<span class=\"br0\"\
+      >}</span>\n \n<span class=\"co1\">// Super states:</span>\n \n<span class=\"\
+      co1\">// new function, does not exist in Actor</span>\n<span class=\"kw1\">function</span>\
+      \ X<span class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n  <span class=\"kw3\">log</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">\"SomeClass global X\"</span><span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"co1\">// new state, does not\
+      \ exist in Actor</span>\n<span class=\"kw1\">state</span> BaseState\n<span class=\"\
+      br0\">{</span>\n  <span class=\"kw1\">function</span> X<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n  <span class=\"br0\">{</span>\n    <span class=\"\
+      kw3\">log</span><span class=\"br0\">(</span><span class=\"st0\">\"SomeClass\
+      \ BaseState X\"</span><span class=\"br0\">)</span>;\n    <span class=\"co1\"\
+      >// Super.X() -&gt; \"Error, Unknown Function 'X' in 'Class Engine.Actor'\"\
+      </span>\n    Global.<span class=\"me0\">X</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>; <span class=\"co1\">// logs the same</span>\n  <span\
+      \ class=\"br0\">}</span>\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\"\
+      >state</span> ExtendedState <span class=\"kw1\">extends</span> BaseState\n<span\
+      \ class=\"br0\">{</span>\n  <span class=\"kw1\">function</span> X<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>\n  <span class=\"br0\">{</span>\n\
+      \    <span class=\"kw3\">log</span><span class=\"br0\">(</span><span class=\"\
+      st0\">\"SomeClass ExtendedState X\"</span><span class=\"br0\">)</span>;\n  \
+      \  <span class=\"kw6\">Super</span>.<span class=\"me0\">X</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;  <span class=\"co1\">// \"SomeClass\
+      \ BaseState X\"</span>\n    Global.<span class=\"me0\">X</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>; <span class=\"co1\">// \"SomeClass\
+      \ global X\"</span>\n  <span class=\"br0\">}</span>\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"kw1\">state</span> AnotherExtendedState <span class=\"kw1\"\
+      >extends</span> ExtendedState\n<span class=\"br0\">{</span>\n  <span class=\"\
+      kw1\">function</span> X<span class=\"br0\">(</span><span class=\"br0\">)</span>\n\
+      \  <span class=\"br0\">{</span>\n    <span class=\"kw3\">log</span><span class=\"\
+      br0\">(</span><span class=\"st0\">\"SomeClass AnotherExtendedState X\"</span><span\
+      \ class=\"br0\">)</span>;\n    <span class=\"kw6\">Super</span>.<span class=\"\
+      me0\">X</span><span class=\"br0\">(</span><span class=\"br0\">)</span>;  <span\
+      \ class=\"co1\">// \"SomeClass ExtendedState X\"</span>\n    <span class=\"\
+      co1\">// it's not possible to call \"SomeClass BaseState X\" directly through\
+      \ a Super(Something).X() construction:</span>\n    <span class=\"co1\">// Super(BaseState).X()\
+      \ -&gt; \"Error, Bad class name 'BaseState'\"</span>\n    <span class=\"co1\"\
+      >// Super(SomeClass.BaseState).X() -&gt; \"Error, Missing ')' in 'super(classname)'\"\
+      </span>\n    Global.<span class=\"me0\">X</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>; <span class=\"co1\">// \"SomeClass global X\"</span>\n\
+      \  <span class=\"br0\">}</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>If the object is in state AnotherExtendedState, it will log the following\
+      \ when X is called:</p>\n<pre>SomeClass AnotherExtendedState X\nSomeClass ExtendedState\
+      \ X\nSomeClass BaseState X\nSomeClass global X\nSomeClass global X\nSomeClass\
+      \ global X\n</pre>\n<p>The calling structure looks like this:</p>\n<div style=\"\
+      font-family: monospace; white-space: preserve; line-height: 1em;\">AnotherExtendedState.X()<br\
+      \ /></div>\n<div style=\"font-family: monospace; white-space: preserve; line-height:\
+      \ 1em;\">__TREETAG_2__ExtendedState.X()<br /></div>\n<div style=\"font-family:\
+      \ monospace; white-space: preserve; line-height: 1em;\">__TREETAG_0____TREETAG_2__BaseState.X()<br\
+      \ /></div>\n<div style=\"font-family: monospace; white-space: preserve; line-height:\
+      \ 1em;\">__TREETAG_0____TREETAG_0____TREETAG_2__global X()<br /></div>\n<div\
+      \ style=\"font-family: monospace; white-space: preserve; line-height: 1em;\"\
+      >__TREETAG_0____TREETAG_2__global X()<br /></div>\n<div style=\"font-family:\
+      \ monospace; white-space: preserve; line-height: 1em;\">__TREETAG_2__global\
+      \ X()<br /></div>\n<p><b>OlympusMons:</b> Ahh yes thats very, very clever wormbo&#160;:D\
+      \ How did you ever come up with that concept, might be handy for some AI or\
+      \ something.</p>\n<p><b>Wormbo:</b> PlayerController already uses the concept\
+      \ of extending states within the sme class with BaseSpectating being the base\
+      \ state for Spectating, AttractMode and WaitingForPawn. The Bot class makes\
+      \ extensive use of <a href=\"/Legacy:Extending_States\" title=\"Legacy:Extending\
+      \ States\">extending states</a> as well:</p>\n<div style=\"font-family: monospace;\
+      \ white-space: preserve; line-height: 1em;\">MoveToGoal<br /></div>\n<div style=\"\
+      font-family: monospace; white-space: preserve; line-height: 1em;\">__TREETAG_2__MoveToGoalWithEnemy<br\
+      \ /></div>\n<div style=\"font-family: monospace; white-space: preserve; line-height:\
+      \ 1em;\">__TREETAG_0____TREETAG_2__Fallback<br /></div>\n<div style=\"font-family:\
+      \ monospace; white-space: preserve; line-height: 1em;\">__TREETAG_0____TREETAG_0____TREETAG_2__Retreating<br\
+      \ /></div>\n<div style=\"font-family: monospace; white-space: preserve; line-height:\
+      \ 1em;\">__TREETAG_0____TREETAG_2__Charging<br /></div>\n<div style=\"font-family:\
+      \ monospace; white-space: preserve; line-height: 1em;\">__TREETAG_0____TREETAG_2__VehicleCharging<br\
+      \ /></div>\n<div style=\"font-family: monospace; white-space: preserve; line-height:\
+      \ 1em;\">__TREETAG_0____TREETAG_2__Hunting<br /></div>\n<div style=\"font-family:\
+      \ monospace; white-space: preserve; line-height: 1em;\">__TREETAG_2__MoveToGoalNoEnemy<br\
+      \ /></div>\n<div style=\"font-family: monospace; white-space: preserve; line-height:\
+      \ 1em;\">__TREETAG_0____TREETAG_2__Roaming<br /></div>\n<div style=\"font-family:\
+      \ monospace; white-space: preserve; line-height: 1em;\">NoGoal<br /></div>\n\
+      <div style=\"font-family: monospace; white-space: preserve; line-height: 1em;\"\
+      >__TREETAG_2__RestFormation<br /></div>\n<p><b>El Muerte:</b> then what does\
+      \ the following do (and what should it, logically, do)?:</p>\n<div dir=\"ltr\"\
+      \ class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">class</span> B <span class=\"kw1\"\
+      >extends</span> A;\n \n<span class=\"kw1\">function</span> X<span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span> <span class=\"co1\">// override A.X</span>\n\
+      <span class=\"br0\">{</span>\n  <span class=\"kw3\">log</span><span class=\"\
+      br0\">(</span><span class=\"st0\">\"B.X\"</span><span class=\"br0\">)</span>;\n\
+      \  <span class=\"kw6\">super</span>.<span class=\"me0\">X</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>; <span class=\"co1\">// calls A.X</span>\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">state</span> <span class=\"\
+      kw7\">Base</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw1\">function</span>\
+      \ X<span class=\"br0\">(</span><span class=\"br0\">)</span>\n  <span class=\"\
+      br0\">{</span>\n    <span class=\"kw3\">log</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">\"Base.X\"</span><span class=\"br0\">)</span>;\n    global.<span\
+      \ class=\"me0\">X</span><span class=\"br0\">(</span><span class=\"br0\">)</span>;\
+      \ <span class=\"co1\">// calls B.X</span>\n  <span class=\"br0\">}</span>\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">state</span> ExtendedState1\
+      \ <span class=\"kw1\">extends</span> <span class=\"kw7\">Base</span>\n<span\
+      \ class=\"br0\">{</span>\n  <span class=\"kw1\">function</span> X<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>\n  <span class=\"br0\">{</span>\n\
+      \    <span class=\"kw3\">log</span><span class=\"br0\">(</span><span class=\"\
+      st0\">\"ExtendedState1.X\"</span><span class=\"br0\">)</span>;\n    <span class=\"\
+      kw6\">super</span>.<span class=\"me0\">X</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>; <span class=\"co1\">// calls B{Base}.X</span>\n  <span\
+      \ class=\"br0\">}</span>\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\"\
+      >state</span> ExtendedState2 <span class=\"kw1\">extends</span> <span class=\"\
+      kw7\">Base</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw1\">function</span>\
+      \ X<span class=\"br0\">(</span><span class=\"br0\">)</span>\n  <span class=\"\
+      br0\">{</span>\n    <span class=\"kw3\">log</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">\"ExtendedState2.X\"</span><span class=\"br0\">)</span>;\n \
+      \   <span class=\"kw6\">super</span><span class=\"br0\">(</span>A<span class=\"\
+      br0\">)</span>.<span class=\"me0\">X</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>; <span class=\"co1\">// &lt;-- does this call A.X();\
+      \ ??</span>\n  <span class=\"br0\">}</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>I'm not behind a a computer with UE right now, so I can't test it\
+      \ myself</p>\n<p><b>Switch`:</b> 3369 does this</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw1\">class</span> sbA <span class=\"kw1\"\
+      >extends</span> <span class=\"kw9\">Actor</span>;\n \n<span class=\"kw1\">function</span>\
+      \ X<span class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"co1\"\
+      >// A.X</span>\n<span class=\"br0\">{</span>\n  xlog<span class=\"br0\">(</span><span\
+      \ class=\"st0\">\"A.X\"</span><span class=\"br0\">)</span>;\n<span class=\"\
+      br0\">}</span>\n \n<span class=\"kw1\">simulated</span> <span class=\"kw1\"\
+      >final</span> <span class=\"kw1\">function</span> xLog <span class=\"br0\">(</span>\
+      \ <span class=\"kw1\">coerce</span> <span class=\"kw5\">string</span> s <span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n    <span class=\"kw3\"\
+      >Log</span><span class=\"br0\">(</span><span class=\"st0\">\"[\"</span> <span\
+      \ class=\"sy0\">$</span>GetStateName<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span><span class=\"sy0\">$</span> <span class=\"st0\">\"]\"</span>\
+      \ <span class=\"sy0\">@</span>S, <span class=\"kw5\">name</span><span class=\"\
+      br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n</div>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">class</span> sbB <span class=\"kw1\"\
+      >extends</span> sbA;\n \n<span class=\"kw1\">function</span> <span class=\"\
+      kw4\">PostBeginPlay</span><span class=\"br0\">(</span><span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n    X<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n    <span class=\"kw3\">gotostate</span><span class=\"br0\"\
+      >(</span><span class=\"st0\">'BaseState'</span><span class=\"br0\">)</span>;\n\
+      \    X<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n    <span class=\"\
+      kw3\">gotostate</span><span class=\"br0\">(</span><span class=\"st0\">'ExtendedState1'</span><span\
+      \ class=\"br0\">)</span>;\n    X<span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>;\n    <span class=\"kw3\">gotostate</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'ExtendedState2'</span><span class=\"br0\">)</span>;\n    X<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n\
+      <span class=\"br0\">(</span>...<span class=\"br0\">)</span></pre></div>\n</div>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\">ScriptLog: Fabricate sandbox.<span class=\"\
+      me0\">sbb</span>\nsbB0: <span class=\"br0\">[</span>sbB<span class=\"br0\">]</span>\
+      \ B.<span class=\"me0\">X</span>\nsbB0: <span class=\"br0\">[</span>sbB<span\
+      \ class=\"br0\">]</span> A.<span class=\"me0\">X</span>\nsbB0: <span class=\"\
+      br0\">[</span>BaseState<span class=\"br0\">]</span> BaseState.<span class=\"\
+      me0\">X</span>\nsbB0: <span class=\"br0\">[</span>BaseState<span class=\"br0\"\
+      >]</span> B.<span class=\"me0\">X</span>\nsbB0: <span class=\"br0\">[</span>BaseState<span\
+      \ class=\"br0\">]</span> A.<span class=\"me0\">X</span>\nsbB0: <span class=\"\
+      br0\">[</span>ExtendedState1<span class=\"br0\">]</span> ExtendedState1.<span\
+      \ class=\"me0\">X</span>\nsbB0: <span class=\"br0\">[</span>ExtendedState1<span\
+      \ class=\"br0\">]</span> BaseState.<span class=\"me0\">X</span>\nsbB0: <span\
+      \ class=\"br0\">[</span>ExtendedState1<span class=\"br0\">]</span> B.<span class=\"\
+      me0\">X</span>\nsbB0: <span class=\"br0\">[</span>ExtendedState1<span class=\"\
+      br0\">]</span> A.<span class=\"me0\">X</span>\nsbB0: <span class=\"br0\">[</span>ExtendedState2<span\
+      \ class=\"br0\">]</span> ExtendedState2.<span class=\"me0\">X</span>\nsbB0:\
+      \ <span class=\"br0\">[</span>ExtendedState2<span class=\"br0\">]</span> A.<span\
+      \ class=\"me0\">X</span></pre></div>\n</div>\n<p><b>SuperApe:</b> I appreciate\
+      \ the explanations and examples. This is very informative, seeing the abilities\
+      \ and limits. Thank you.</p>\n<p><b>El Muerte:</b> well, I think the result\
+      \ is wrong to the analogy of a normal super call in a state. So, this would\
+      \ be two new error cases (the super(nonParent) and the super(X) in a state.\
+      \ ).</p>\n<p><b>Switch`:</b> What should it call? B.X()?</p>\n<p><b>El Muerte:</b>\
+      \ It depends. The meaning of super has to be clearly defined in states. Either\
+      \ super calls the parent class or parent state. In the former super(A) should\
+      \ be possible and in the latter super(A) should be invalid. Maybe there needs\
+      \ to be a special super for states, but at this point it can't be fixed for\
+      \ UE2 (too much relies on the \"broken\" functionality).</p>\n<h2><span class=\"\
+      mw-headline\" id=\"error011_delegatevisibility\">error011_delegatevisibility</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:UnrealScript_Language_Test/Discussion?section=3\" title=\"\
+      Edit section: error011 delegatevisibility\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p><b>Switch`:</b> Delegates ignore private and protected\
+      \ keywords.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">class</span> sbA <span class=\"kw1\">extends</span> <span class=\"kw9\"\
+      >Actor</span>;\n \n<span class=\"kw1\">delegate</span> callpriv<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n<span class=\"kw1\">delegate</span>\
+      \ callprot<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n \n<span\
+      \ class=\"kw1\">function</span> <span class=\"kw4\">PostBeginPlay</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \    <span class=\"kw1\">local</span> sbB B;\n \n    B <span class=\"sy0\">=</span>\
+      \ <span class=\"kw4\">Spawn</span><span class=\"br0\">(</span><span class=\"\
+      kw1\">class</span><span class=\"st0\">'sbB'</span><span class=\"br0\">)</span>;\n\
+      \ \n    <span class=\"co1\">//B.priv(); // \"Error, Can't access private function\
+      \ 'priv' in 'sbB'\"</span>\n    <span class=\"co1\">//B.prot(); // \"Error,\
+      \ Can't access protected function 'prot' in 'sbB'\"</span>\n \n    callpriv\
+      \ <span class=\"sy0\">=</span> B.<span class=\"me0\">priv</span>;\n    callprot\
+      \ <span class=\"sy0\">=</span> B.<span class=\"me0\">prot</span>;\n    callpriv<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>; <span class=\"co1\">//\
+      \ \"Private called\"</span>\n    callprot<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>; <span class=\"co1\">// \"Protected called\"</span>\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">class</span> sbB <span class=\"kw1\">extends</span> <span\
+      \ class=\"kw9\">Actor</span>;\n \n<span class=\"kw1\">private</span> <span class=\"\
+      kw1\">function</span> priv<span class=\"br0\">(</span><span class=\"br0\">)</span>\
+      \ <span class=\"br0\">{</span> <span class=\"kw3\">Log</span><span class=\"\
+      br0\">(</span><span class=\"st0\">\"Private called\"</span>,<span class=\"kw5\"\
+      >name</span><span class=\"br0\">)</span>; <span class=\"br0\">}</span>\n<span\
+      \ class=\"kw1\">protected</span> <span class=\"kw1\">function</span> prot<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"br0\">{</span>\
+      \ <span class=\"kw3\">Log</span><span class=\"br0\">(</span><span class=\"st0\"\
+      >\"Protected called\"</span>,<span class=\"kw5\">name</span><span class=\"br0\"\
+      >)</span>; <span class=\"br0\">}</span></pre></div>\n</div>\n<p><b>El Muerte:</b>\
+      \ Well, it's partially correct. You should be able to assign private\\protected\
+      \ functions to a delegate, but only from a class that that has access to them\
+      \ to begin with. This is a nice \"security\" exploit. Will add it as 'bug' as\
+      \ soon as I have the time.</p>\n<p><b>Xian:</b> I was wondering, why does <b>this</b>\
+      \ drain the performance:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">function</span> switchUsage<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n   <span class=\"kw2\">switch</span>\
+      \ <span class=\"br0\">(</span><span class=\"nu0\">1234</span><span class=\"\
+      br0\">)</span>\n    <span class=\"br0\">{</span>\n        <span class=\"kw2\"\
+      >case</span> <span class=\"nu0\">0</span>:\n            dummy1<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n            <span class=\"kw2\"\
+      >break</span>;\n        <span class=\"kw1\">default</span>:\n            dummy3<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n            <span class=\"\
+      kw2\">break</span>; <span class=\"co1\">// useless and hurts performance</span>\n\
+      \    <span class=\"br0\">}</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>I'd say perhaps that it is one more line to parse, but surely this\
+      \ can't be the reason (can it?)...</p>\n<p><b>Wormbo:</b> The UnrealScript compiler\
+      \ in UnrealEngine 1 and 2 does no optimization whatsoever. So, let's see the\
+      \ more bytecode-like version of your example:</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw1\">function</span> switchUsage<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n \
+      \ <span class=\"kw2\">switch</span> <span class=\"br0\">(</span><span class=\"\
+      nu0\">1234</span><span class=\"br0\">)</span> <span class=\"br0\">{</span>\n\
+      \    <span class=\"kw2\">case</span> <span class=\"nu0\">0</span>:\n      dummy1<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n      goto <span class=\"\
+      st0\">'EndOfSwitchBlock'</span>;\n    <span class=\"kw1\">default</span>:\n\
+      \      dummy3<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n   \
+      \   goto <span class=\"st0\">'EndOfSwitchBlock'</span>;\n  <span class=\"br0\"\
+      >}</span>\n  EndOfSwitchBlock:\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <p>Every <i>break</i> is translated into an unconditional goto statement with\
+      \ the labels actually being translated to code offsets. Putting a <i>break</i>\
+      \ at the end of a <i>switch</i> block is a waste of processing time, because\
+      \ it's like an empty statement that takes time to process. Control flow would\
+      \ fall through to the first statement after the switch block anyway.</p>\n<p>This\
+      \ may not have much effect if used rarely, but it's a thing to consider if you\
+      \ want to squeeze the last bit of performance out of your code.</p>\n<p><b>Xian:</b>\
+      \ Thanks for the prompt reply Wormbo (as always&#160;:) ). I noticed the break-&gt;goto\
+      \ conversion while viewing code in UTPT, so now that I think of it, you're right\
+      \ and I was pretty close to the \"extra\" stop being more work. But, considering\
+      \ that I heard (and should be true me thinks) that a large nametable uses more\
+      \ resources... is there any difference between</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw1\">function</span> Stuff <span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n \
+      \   <span class=\"kw1\">local</span> <span class=\"kw9\">Actor</span> A;\n \n\
+      \    A <span class=\"sy0\">=</span> SomeActor;\n    A.<span class=\"kw4\">PostBeginPlay</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>; <span class=\"co1\">//\
+      \ run some \"whatever\" code</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>and</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">function</span> Stuff <span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n    <span class=\"kw1\">local</span>\
+      \ <span class=\"kw9\">Actor</span> A;\n \n    A <span class=\"sy0\">=</span>\
+      \ SomeActor;\n    A.<span class=\"kw4\">PostBeginPlay</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>; <span class=\"co1\">// run some \"whatever\"\
+      \ code</span>\n    A <span class=\"sy0\">=</span> <span class=\"kw5\">None</span>;\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>I have still to move to\
+      \ UE2 so I do miss the bench functions of UE2 (I think I'll switch to UE3 directly),\
+      \ but somebody told me that resetting a local var to None (or maybe even global)\
+      \ after I am done with it might improve performance... and yeah, you did notice\
+      \ I am an optimization hunter, so I am trying to get my \"hands\" on as many\
+      \ optimiz-es as I can&#160;:)</p>\n<p>Also, in regard to the 'import' command.\
+      \ All tests failed on UE1. It only supports \"import package X\" and \"import\
+      \ enum from &lt;packagename&gt;\", however I didn't notice what import package\
+      \ does... the error (on a missing import type) says \"missing enum, struct or\
+      \ package\", although it doesn't actually support struct importing... as for\
+      \ imported enums, it works even with enums that doesn't exist and I am not quite\
+      \ sure what it does; As for package importing, it works with any name *sigh*...\
+      \ Might be some unimplemented stuff left over since even on a successful syntax\
+      \ it says that the error is an import in the package, not the struct... well\
+      \ they have lots of experimental, such as Class GUIDs, import, within, Locales\
+      \ and so on... UE1 currently supports only 'within Object'. (still curious why\
+      \ they keep distributing the Core Package with all that unsupported stuff in\
+      \ it )</p>\n<p><b>Wormbo:</b> The difference is, that the second one is slower.\
+      \ It's actually slower that the additional break, because it's an assignment\
+      \ and those are awefully slow in UnrealScript. IMHO resetting locals to None\
+      \ is pointless in UnrealScript as the execution environment (including the locals)\
+      \ of the function is discarded anyway after the function returned.</p>\n<p>\"\
+      Import\" must be some kind of left-over. That functionality is done automatically\
+      \ by the compiler. I guess it was intended to be something like Java's import\
+      \ statements, but it's entirely redundant in UnrealScript. To use another package,\
+      \ simply make sure it's loaded (EditPackages or #exec obj load); to use an enum\
+      \ or struct from a different class, simply qualify it with the class name, like\
+      \ \"Actor.EDrawType\".</p>\n<p>\"Within\" has become an essential feature in\
+      \ UE2. For example, the classes PlayerInput, CheatManager (single-player \"\
+      cheat\" commands) and AdminBase (base class for admin console commands) are\
+      \ all declared as \"Within PlayerController\". XWebQueryHandler (the base class\
+      \ of web admin handlers) is declared \"within UTServerAdmin\", the WebApplication\
+      \ class for the webadmin interface. I'm pretty sure this will be further extended\
+      \ in UE3 with stuff like renderable actor components.</p>\n\n<!-- \nNewPP limit\
+      \ report\nCPU time usage: 0.336 seconds\nReal time usage: 0.879 seconds\nPreprocessor\
+      \ visited node count: 128/1000000\nPreprocessor generated node count: 389/1000000\n\
+      Post‐expand include size: 192/2097152 bytes\nTemplate argument size: 48/2097152\
+      \ bytes\nHighest expansion depth: 3/40\nExpensive parser function count: 0/100\n\
+      -->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n100.00%\
+      \   16.391      1 - -total\n100.00%   16.391      1 - Template:Innerbox\n-->\n\
+      \n<!-- Saved in parser cache with key wiki:pcache:idhash:3535-0!*!0!!*!*!* and\
+      \ timestamp 20221120202923 and revision id 9045\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Extending States"
+  templates:
+  - ns: 10
+    exists: true
+    name: "Template:Innerbox"
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "error006_whileuntil"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:UnrealScript_Language_Test/Discussion"
+    byteoffset: 63
+    anchor: "error006_whileuntil"
+  - toclevel: 1
+    level: "2"
+    line: "error009_invalidsuper and error010_superstates"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:UnrealScript_Language_Test/Discussion"
+    byteoffset: 2513
+    anchor: "error009_invalidsuper_and_error010_superstates"
+  - toclevel: 1
+    level: "2"
+    line: "error011_delegatevisibility"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:UnrealScript_Language_Test/Discussion"
+    byteoffset: 8752
+    anchor: "error011_delegatevisibility"
+  displaytitle: "Legacy:UnrealScript Language Test/Discussion"
+  iwlinks: []
+  wikitext:
+    text: "{{innerbox| Archived discussions about certain test cases\n\n}}\n\n==error006_whileuntil==\n\
+      \n'''Evolution:''' (can't remember if this is exactly how this one works, but\
+      \ it's something like this): while ( <i>expr</i> ) { ... } until ( <i>expr</i>\
+      \ ); compiles and works fine, though it's quite unexpected!\n\n'''Wormbo:'''\
+      \ Not only \"while()...until();\" compiles (and evaluates both conditions at\
+      \ their corresponding places), but also \"do { ... }\", which basically is an\
+      \ unconditional infinite loop.\n\n'''El Muerte:''' <tt>while (...) ... until(...);</tt>\
+      \ is clearly an error, it shouldn't compile and it doesn't even run properly,\
+      \ I think (see error006_whileuntil). <tt>while (...) do ... until (...);</tt>\
+      \ is the correct form. <tt>do ...</tt> should also be an error. Come to think\
+      \ of it, shouldn't <tt>do</tt> require braces? How do other curlybrace languages\
+      \ define this? <tt>while</tt> could easily accept an block or single line, but\
+      \ <tt>do</tt> should know where the statements end. For example, what ''should''\
+      \ the following code do?\n\n<uscript>\n    i=0;\n    do\n        do\n      \
+      \      log(\"x\"@i++);\n        until(i < 5);\n\n    do\n        log(\"y\"@i++);\n\
+      \    until(i < 10);\n</uscript>\n\nOfcourse it should keep printing \"x number\"\
+      . But I think this goes against the principles of the curlybrance languages\
+      \ (this is not perl). And another idea, shouldn't an null condition evaluate\
+      \ to false instead of true?\n\n'''Wormbo:''' The compiler actually seems to\
+      \ handle block start and end individually.\n\n<uscript>\nstartwhile: if (whilecondition)\
+      \ {                    // while (whilecondition) {\n  // code block        \
+      \                              //   ...\n  goto('startwhile');             \
+      \                   // }\n}\n\nstartdountil:                               \
+      \         // do {\n// code block                                        // \
+      \  ...\nif (!untilcondition) goto('startdountil');           // } until (untilcondition);\n\
+      \n\nstartwhileuntil: if (whilecondition) {               // while (whilecondition)\
+      \ {\n  // code block                                      //   ...\n  if (!untilcondition)\
+      \ goto('startwhileuntil');      // } until (untilcondition);\n}\n\nstartdo:\
+      \                                             // do {\n// code block       \
+      \                                 //   ...\ngoto('startdo');               \
+      \                      // }\n</uscript>\n\nIn that context it also becomes obvious,\
+      \ why the do loop doesn't require braces &ndash; while doesn't require them\
+      \ either and the compiler doesn't seem to make a big difference there.\n\n==error009_invalidsuper\
+      \ and error010_superstates==\n\n'''Wormbo:''' It is possible to specify classes\
+      \ in the Super(ClassName).FunctionCall() construction that are not a super class.\
+      \ On the other hand it's not possible to specify super ''states''.\n\n'''SuperApe:'''\
+      \ Wormbo (or anyone), can you give an example of that?\n\n'''El Muerte:''' super\
+      \ states?\n\n'''SuperApe:''' I guess I wasn't clear what Wormbo was referring\
+      \ to.  I was wondering which of \"<tt>Super(ClassName).FunctionCall()</tt>\"\
+      \ is code and which is explanation.  An example of it's use was what I was after.\n\
+      \n'''OlympusMons:''' Now Im not as good as you guys, but would \"<tt>Super(ClassName).FunctionCall()</tt>\"\
+      \ return the super of the current class or the super of the class in the brackets.\
+      \ \"<tt>Class(Super.ClassName).FunctionCall()</tt>\" wouldnt that be correct,\
+      \ because its usually \"<tt>class(class).function();</tt>\" and for a super\
+      \ state wouldnt it be \"<tt>Super.goto(\"StateTag\")</tt>\" anyways just ignore\
+      \ me if I dont have a clue. unless its \"<tt>Super.Class(ClassName).FunctionCall()</tt>\"\
+      \ but that kinda leaves it open for a \"<tt>Super.Class(Super.ClassName).FunctionCall()</tt>\"\
+      \ Ok now Im just being silly.\n\n'''Jimboh:''' <uscript>Class A extends Object;\n\
+      function dothis() {\n// does something cool\n}</uscript><uscript>Class B extends\
+      \ A;\nfunction dothis() {\n// does something uncool\n}</uscript>\n\n<uscript>Class\
+      \ C extends B;\nfunction dothis() {\n// you don't wanna be uncool, so you wanna\
+      \ do something cool...\nSuper(A).dothis();\n}</uscript> Thats how you use Super().\n\
+      \n'''OlympusMons:''' Oh a super,super. I thought you were calling the super\
+      \ class not the super of the super. Still shouldnt this \"<tt>Class(Super.ClassName).FunctionCall()</tt>\"\
+      \ work?? Damn spawning and firemodes got me confused now!!\n\n'''Wormbo:'''\
+      \ What I mean with \"super states\" is:\n\n<uscript>\nclass SomeClass extends\
+      \ Actor;\n\n// Super() compiler bug:\nfunction A()\n{\n  // super call to sibling\
+      \ class function that doesn't exist in this or the super class\n  Super(DestroyableTrigger).SpawnEffects();\
+      \ // compiles and even executes! (spawns some visual effects)\n}\n\n// Super\
+      \ states:\n\n// new function, does not exist in Actor\nfunction X()\n{\n  log(\"\
+      SomeClass global X\");\n}\n\n// new state, does not exist in Actor\nstate BaseState\n\
+      {\n  function X()\n  {\n    log(\"SomeClass BaseState X\");\n    // Super.X()\
+      \ -> \"Error, Unknown Function 'X' in 'Class Engine.Actor'\"\n    Global.X();\
+      \ // logs the same\n  }\n}\n\nstate ExtendedState extends BaseState\n{\n  function\
+      \ X()\n  {\n    log(\"SomeClass ExtendedState X\");\n    Super.X();  // \"SomeClass\
+      \ BaseState X\"\n    Global.X(); // \"SomeClass global X\"\n  }\n}\n\nstate\
+      \ AnotherExtendedState extends ExtendedState\n{\n  function X()\n  {\n    log(\"\
+      SomeClass AnotherExtendedState X\");\n    Super.X();  // \"SomeClass ExtendedState\
+      \ X\"\n    // it's not possible to call \"SomeClass BaseState X\" directly through\
+      \ a Super(Something).X() construction:\n    // Super(BaseState).X() -> \"Error,\
+      \ Bad class name 'BaseState'\"\n    // Super(SomeClass.BaseState).X() -> \"\
+      Error, Missing ')' in 'super(classname)'\"\n    Global.X(); // \"SomeClass global\
+      \ X\"\n  }\n}\n</uscript>\n\nIf the object is in state AnotherExtendedState,\
+      \ it will log the following when X is called:\n SomeClass AnotherExtendedState\
+      \ X\n SomeClass ExtendedState X\n SomeClass BaseState X\n SomeClass global X\n\
+      \ SomeClass global X\n SomeClass global X\n\nThe calling structure looks like\
+      \ this:\n\n+AnotherExtendedState.X()\n\n++ExtendedState.X()\n\n+++BaseState.X()\n\
+      \n++++global X()\n\n+++global X()\n\n++global X()\n\n'''OlympusMons:''' Ahh\
+      \ yes thats very, very clever wormbo :D How did you ever come up with that concept,\
+      \ might be handy for some AI or something.\n\n'''Wormbo:''' PlayerController\
+      \ already uses the concept of extending states within the sme class with BaseSpectating\
+      \ being the base state for Spectating, AttractMode and WaitingForPawn. The Bot\
+      \ class makes extensive use of [[Legacy:Extending States|extending states]]\
+      \ as well:\n\n+MoveToGoal\n\n++MoveToGoalWithEnemy\n\n+++Fallback\n\n++++Retreating\n\
+      \n+++Charging\n\n+++VehicleCharging\n\n+++Hunting\n\n++MoveToGoalNoEnemy\n\n\
+      +++Roaming\n\n+NoGoal\n\n++RestFormation\n\n'''El Muerte:''' then what does\
+      \ the following do (and what should it, logically, do)?:\n\n<uscript>\nclass\
+      \ B extends A;\n\nfunction X() // override A.X\n{\n  log(\"B.X\");\n  super.X();\
+      \ // calls A.X\n}\n\nstate Base\n{\n  function X()\n  {\n    log(\"Base.X\"\
+      );\n    global.X(); // calls B.X\n  }\n}\n\nstate ExtendedState1 extends Base\n\
+      {\n  function X()\n  {\n    log(\"ExtendedState1.X\");\n    super.X(); // calls\
+      \ B{Base}.X\n  }\n}\n\nstate ExtendedState2 extends Base\n{\n  function X()\n\
+      \  {\n    log(\"ExtendedState2.X\");\n    super(A).X(); // <-- does this call\
+      \ A.X(); ??\n  }\n}\n</uscript>\n\nI'm not behind a a computer with UE right\
+      \ now, so I can't test it myself\n\n'''Switch`:''' 3369 does this\n\n<uscript>\n\
+      class sbA extends Actor;\n\nfunction X() // A.X\n{\n  xlog(\"A.X\");\n}\n\n\
+      simulated final function xLog ( coerce string s )\n{\n    Log(\"[\" $GetStateName()$\
+      \ \"]\" @S, name);\n}\n</uscript>\n\n<uscript>\nclass sbB extends sbA;\n\nfunction\
+      \ PostBeginPlay()\n{\n    X();\n    gotostate('BaseState');\n    X();\n    gotostate('ExtendedState1');\n\
+      \    X();\n    gotostate('ExtendedState2');\n    X();\n}\n(...)\n</uscript>\n\
+      \n<uscript>\nScriptLog: Fabricate sandbox.sbb\nsbB0: [sbB] B.X\nsbB0: [sbB]\
+      \ A.X\nsbB0: [BaseState] BaseState.X\nsbB0: [BaseState] B.X\nsbB0: [BaseState]\
+      \ A.X\nsbB0: [ExtendedState1] ExtendedState1.X\nsbB0: [ExtendedState1] BaseState.X\n\
+      sbB0: [ExtendedState1] B.X\nsbB0: [ExtendedState1] A.X\nsbB0: [ExtendedState2]\
+      \ ExtendedState2.X\nsbB0: [ExtendedState2] A.X\n</uscript>\n\n'''SuperApe:'''\
+      \ I appreciate the explanations and examples.  This is very informative, seeing\
+      \ the abilities and limits.  Thank you.\n\n'''El Muerte:''' well, I think the\
+      \ result is wrong to the analogy of a normal super call in a state. So, this\
+      \ would be two new error cases (the super(nonParent) and the super(X) in a state.\
+      \ ).\n\n'''Switch`:''' What should it call? B.X()?\n\n'''El Muerte:''' It depends.\
+      \ The meaning of super has to be clearly defined in states. Either super calls\
+      \ the parent class or parent state. In the former super(A) should be possible\
+      \ and in the latter super(A) should be invalid. Maybe there needs to be a special\
+      \ super for states, but at this point it can't be fixed for UE2 (too much relies\
+      \ on the \"broken\" functionality).\n\n==error011_delegatevisibility==\n\n'''Switch`:'''\
+      \ Delegates ignore private and protected keywords.\n\n<uscript>\nclass sbA extends\
+      \ Actor;\n\ndelegate callpriv();\ndelegate callprot();\n\nfunction PostBeginPlay()\n\
+      {\n    local sbB B;\n\n    B = Spawn(class'sbB');\n\n    //B.priv(); // \"Error,\
+      \ Can't access private function 'priv' in 'sbB'\"\n    //B.prot(); // \"Error,\
+      \ Can't access protected function 'prot' in 'sbB'\"\n\n    callpriv = B.priv;\n\
+      \    callprot = B.prot;\n    callpriv(); // \"Private called\"\n    callprot();\
+      \ // \"Protected called\"\n}\n</uscript>\n\n<uscript>\nclass sbB extends Actor;\n\
+      \nprivate function priv() { Log(\"Private called\",name); }\nprotected function\
+      \ prot() { Log(\"Protected called\",name); }\n</uscript>\n\n'''El Muerte:'''\
+      \ Well, it's partially correct. You should be able to assign private\\protected\
+      \ functions to a delegate, but only from a class that that has access to them\
+      \ to begin with. This is a nice \"security\" exploit. Will add it as 'bug' as\
+      \ soon as I have the time.\n\n'''Xian:''' I was wondering, why does '''this'''\
+      \ drain the performance:\n\n<uscript>\nfunction switchUsage()\n{\n   switch\
+      \ (1234)\n    {\n        case 0:\n            dummy1();\n            break;\n\
+      \        default:\n            dummy3();\n            break; // useless and\
+      \ hurts performance\n    }\n}</uscript>\n\nI'd say perhaps that it is one more\
+      \ line to parse, but surely this can't be the reason (can it?)...\n\n'''Wormbo:'''\
+      \ The UnrealScript compiler in UnrealEngine 1 and 2 does no optimization whatsoever.\
+      \ So, let's see the more bytecode-like version of your example:\n\n<uscript>\n\
+      function switchUsage()\n{\n  switch (1234) {\n    case 0:\n      dummy1();\n\
+      \      goto 'EndOfSwitchBlock';\n    default:\n      dummy3();\n      goto 'EndOfSwitchBlock';\n\
+      \  }\n  EndOfSwitchBlock:\n}\n</uscript>\n\nEvery ''break'' is translated into\
+      \ an unconditional goto statement with the labels actually being translated\
+      \ to code offsets. Putting a ''break'' at the end of a ''switch'' block is a\
+      \ waste of processing time, because it's like an empty statement that takes\
+      \ time to process. Control flow would fall through to the first statement after\
+      \ the switch block anyway.\n\nThis may not have much effect if used rarely,\
+      \ but it's a thing to consider if you want to squeeze the last bit of performance\
+      \ out of your code.\n\n'''Xian:''' Thanks for the prompt reply Wormbo (as always\
+      \ :) ). I noticed the break->goto conversion while viewing code in UTPT, so\
+      \ now that I think of it, you're right and I was pretty close to the \"extra\"\
+      \ stop being more work. But, considering that I heard (and should be true me\
+      \ thinks) that a large nametable uses more resources... is there any difference\
+      \ between\n\n<uscript>\nfunction Stuff ()\n{\n    local Actor A;\n\n    A =\
+      \ SomeActor;\n    A.PostBeginPlay(); // run some \"whatever\" code\n}</uscript>\n\
+      \nand\n\n<uscript>\nfunction Stuff ()\n{\n    local Actor A;\n\n    A = SomeActor;\n\
+      \    A.PostBeginPlay(); // run some \"whatever\" code\n    A = None;\n}</uscript>\n\
+      \nI have still to move to UE2 so I do miss the bench functions of UE2 (I think\
+      \ I'll switch to UE3 directly), but somebody told me that resetting a local\
+      \ var to None (or maybe even global) after I am done with it might improve performance...\
+      \ and yeah, you did notice I am an optimization hunter, so I am trying to get\
+      \ my \"hands\" on as many optimiz-es as I can :)\n\nAlso, in regard to the 'import'\
+      \ command. All tests failed on UE1. It only supports \"import package X\" and\
+      \ \"import enum from <packagename>\", however I didn't notice what import package\
+      \ does... the error (on a missing import type) says \"missing enum, struct or\
+      \ package\", although it doesn't actually support struct importing... as for\
+      \ imported enums, it works even with enums that doesn't exist and I am not quite\
+      \ sure what it does; As for package importing, it works with any name *sigh*...\
+      \ Might be some unimplemented stuff left over since even on a successful syntax\
+      \ it says that the error is an import in the package, not the struct... well\
+      \ they have lots of experimental, such as Class GUIDs, import, within, Locales\
+      \ and so on... UE1 currently supports only 'within Object'. (still curious why\
+      \ they keep distributing the Core Package with all that unsupported stuff in\
+      \ it )\n\n'''Wormbo:''' The difference is, that the second one is slower. It's\
+      \ actually slower that the additional break, because it's an assignment and\
+      \ those are awefully slow in UnrealScript. IMHO resetting locals to None is\
+      \ pointless in UnrealScript as the execution environment (including the locals)\
+      \ of the function is discarded anyway after the function returned.\n\n\"Import\"\
+      \ must be some kind of left-over. That functionality is done automatically by\
+      \ the compiler. I guess it was intended to be something like Java's import statements,\
+      \ but it's entirely redundant in UnrealScript. To use another package, simply\
+      \ make sure it's loaded (EditPackages or #exec obj load); to use an enum or\
+      \ struct from a different class, simply qualify it with the class name, like\
+      \ \"Actor.EDrawType\".\n\n\"Within\" has become an essential feature in UE2.\
+      \ For example, the classes PlayerInput, CheatManager (single-player \"cheat\"\
+      \ commands) and AdminBase (base class for admin console commands) are all declared\
+      \ as \"Within PlayerController\". XWebQueryHandler (the base class of web admin\
+      \ handlers) is declared \"within UTServerAdmin\", the WebApplication class for\
+      \ the webadmin interface. I'm pretty sure this will be further extended in UE3\
+      \ with stuff like renderable actor components."
+  properties: []
+  revId: 9045
+name: "Legacy:UnrealScript Language Test/Discussion"
+revision:
+  revid: 9045
+  parentid: 9046
+  user: "Wormbo"
+  timestamp: 1188563941.000000000
+  comment: "*"
+timestamp: 1668975905.121784000

@@ -1,0 +1,661 @@
+---
+parse:
+  title: "Legacy:Ultimate FlashLight 2k3"
+  text:
+    text: "<p>A really nice flashlight for UT2003. <a rel=\"nofollow\" class=\"external\
+      \ text\" href=\"http://www.frag-ops.com/content/animations/FragOps-taclight.wmv\"\
+      >Watch it in action</a></p>\n<p><a rel=\"nofollow\" class=\"external text\"\
+      \ href=\"http://www.frag-ops.com/images/taclight.jpg\">ScreenShot</a></p>\n\
+      <p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n\
+      </div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#Summary\"><span\
+      \ class=\"tocnumber\">1</span> <span class=\"toctext\">Summary</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-2\"><a href=\"#What_You_Need\"><span class=\"\
+      tocnumber\">2</span> <span class=\"toctext\">What You Need</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-3\"><a href=\"#Effect_TacLightProjector.uc\"\
+      ><span class=\"tocnumber\">3</span> <span class=\"toctext\">Effect_TacLightProjector.uc</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-4\"><a href=\"#Effect_TacLightGlow.uc\"><span\
+      \ class=\"tocnumber\">4</span> <span class=\"toctext\">Effect_TacLightGlow.uc</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-5\"><a href=\"#Applications\"><span class=\"\
+      tocnumber\">5</span> <span class=\"toctext\">Applications</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-6\"><a href=\"#Final_Note\"><span class=\"\
+      tocnumber\">6</span> <span class=\"toctext\">Final Note</span></a>\n<ul>\n<li\
+      \ class=\"toclevel-2 tocsection-7\"><a href=\"#Comments\"><span class=\"tocnumber\"\
+      >6.1</span> <span class=\"toctext\">Comments</span></a></li>\n</ul>\n</li>\n\
+      </ul>\n</div>\n<p></p>\n<h2><span class=\"mw-headline\" id=\"Summary\">Summary</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Ultimate_FlashLight_2k3?section=1\" title=\"Edit section:\
+      \ Summary\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>I spent a few days trying to create a fairly realistic flashlight using projectors,\
+      \ then switched to dynamic lights after i didn't get the specific look i wanted,\
+      \ at the same time discovering they had a random darkening effect when projected\
+      \ onto certain terrain. This worked out better for the terrain issue, but i\
+      \ felt it looked too drab. What i ended up deciding on was a dynamic projector\
+      \ to get a focal point with adjustable FOV, and then keeping the light for ambience.\
+      \ To follow the FOV adjustment of the projector, i'm manually adjusting the\
+      \ LightRadius of the dynamic light, which is dependant on a trace done every\
+      \ tick. The resulting effect was quite stunning, and i decided it was too good\
+      \ to go unshared.</p>\n<p>On a side note, i made my projective texture light-affected,\
+      \ which seems to partially cure the darkening effect on terrain.</p>\n<h2><span\
+      \ class=\"mw-headline\" id=\"What_You_Need\">What You Need</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Ultimate_FlashLight_2k3?section=2\"\
+      \ title=\"Edit section: What You Need\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<ol>\n<li>A texture for the projector. I use a 256x256,\
+      \ DXT1 compressed bitmap. The full info is commented below.</li>\n</ol>\n<h2><span\
+      \ class=\"mw-headline\" id=\"Effect_TacLightProjector.uc\">Effect_TacLightProjector.uc</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Ultimate_FlashLight_2k3?section=3\" title=\"Edit section:\
+      \ Effect TacLightProjector.uc\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>Here is where everything takes place. <b>bHasLight</b>\
+      \ is toggled from an outside control. All you need to do is call <b>spawn(class'Effect_TacLightProjector',Owner);</b>\
+      \ where \"Owner\" is the pawn that will be owning the light. Then set its <b>bHasLight</b>\
+      \ variable, and the actor will take care of the rest.</p>\n<div dir=\"ltr\"\
+      \ class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"co1\">//=============================================================================</span>\n\
+      <span class=\"co1\">// © 2003 Matt 'SquirrelZero' Farber</span>\n<span class=\"\
+      co1\">//=============================================================================</span>\n\
+      <span class=\"co1\">// \"UT2k3 Ultimate Flashlight\"</span>\n<span class=\"\
+      co1\">// I wrote this using _both_ a dynamic projector and a dynamic light,\
+      \ with the </span>\n<span class=\"co1\">// dynamic projector as the focal point\
+      \ and lightsource providing general </span>\n<span class=\"co1\">// ambient\
+      \ illumination.  Either one by itself is pretty dull, but combine the </span>\n\
+      <span class=\"co1\">// two and you've got yourself a really nice effect if done\
+      \ correctly.</span>\n<span class=\"co1\">//=============================================================================</span>\n\
+      <span class=\"kw1\">class</span> Effect_TacLightProjector <span class=\"kw1\"\
+      >extends</span> <span class=\"kw9\">DynamicProjector</span>;\n \n<span class=\"\
+      co1\">// add a light too, there seems to be a problem with the projector darkening\
+      \ terrain sometimes</span>\n<span class=\"kw1\">var</span> Effect_TacLightGlow\
+      \ TacLightGlow;\n \n<span class=\"kw1\">var</span> <span class=\"kw9\">Pawn</span>\
+      \ LightPawn;\n<span class=\"kw1\">var</span> <span class=\"kw9\">Controller</span>\
+      \ LightController;\n<span class=\"kw1\">var</span> <span class=\"kw5\">bool</span>\
+      \ bHasLight;\n \n<span class=\"kw1\">replication</span>\n<span class=\"br0\"\
+      >{</span>\n\t<span class=\"co1\">// relevant variables needed by the client</span>\n\
+      \t<span class=\"kw1\">reliable</span> <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span><span class=\"kw7\">Role</span> <span class=\"sy0\">==</span>\
+      \ <span class=\"kw7\">ROLE_Authority</span><span class=\"br0\">)</span>\n\t\t\
+      LightPawn, LightController;\n \n\t<span class=\"co1\">// relevant variables\
+      \ needed by the client</span>\n\t<span class=\"kw1\">reliable</span> <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span><span class=\"kw7\">Role</span>\
+      \ <span class=\"sy0\">==</span> <span class=\"kw7\">ROLE_Authority</span><span\
+      \ class=\"br0\">)</span>\n\t\tbHasLight;\n<span class=\"br0\">}</span>\n \n\
+      <span class=\"co1\">// setup the pawn and controller variables, spawn the dynamic\
+      \ light</span>\n<span class=\"kw1\">simulated</span> <span class=\"kw1\">function</span>\
+      \ <span class=\"kw4\">PostBeginPlay</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw2\"\
+      >if</span><span class=\"br0\">(</span> bProjectActor <span class=\"br0\">)</span>\n\
+      \t\t<span class=\"kw4\">SetCollision</span><span class=\"br0\">(</span><span\
+      \ class=\"kw6\">True</span>, <span class=\"kw6\">False</span>, <span class=\"\
+      kw6\">False</span><span class=\"br0\">)</span>;\n\t<span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span><span class=\"kw7\">Owner</span> <span class=\"\
+      sy0\">!=</span> <span class=\"kw5\">None</span><span class=\"br0\">)</span>\n\
+      \t<span class=\"br0\">{</span>\n\t\tLightPawn <span class=\"sy0\">=</span> <span\
+      \ class=\"kw9\">Pawn</span><span class=\"br0\">(</span><span class=\"kw7\">Owner</span><span\
+      \ class=\"br0\">)</span>;\n\t\tLightController <span class=\"sy0\">=</span>\
+      \ LightPawn.<span class=\"kw9\">Controller</span>;\n\t<span class=\"br0\">}</span>\n\
+      \t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>TacLightGlow <span\
+      \ class=\"sy0\">==</span> <span class=\"kw5\">None</span> <span class=\"sy0\"\
+      >&amp;&amp;</span> <span class=\"kw7\">Role</span> <span class=\"sy0\">==</span>\
+      \ <span class=\"kw7\">ROLE_Authority</span><span class=\"br0\">)</span>\n\t\
+      <span class=\"br0\">{</span>\n\t\tTacLightGlow <span class=\"sy0\">=</span>\
+      \ <span class=\"kw4\">spawn</span><span class=\"br0\">(</span><span class=\"\
+      kw1\">class</span><span class=\"st0\">'Effect_TacLightGlow'</span><span class=\"\
+      br0\">)</span>;\n\t<span class=\"br0\">}</span>\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"co1\">// updates the taclight projector and dynamic light\
+      \ positions</span>\n<span class=\"kw1\">simulated</span> <span class=\"kw1\"\
+      >function</span> <span class=\"kw4\">Tick</span><span class=\"br0\">(</span><span\
+      \ class=\"kw5\">float</span> DeltaTime<span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n\t<span class=\"kw1\">local</span> <span class=\"kw5\">vector</span>\
+      \ StartTrace,EndTrace,X,Y,Z,HitLocation,HitNormal;\n\t<span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">material</span> SurfaceMat;\n\t<span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">float</span> BeamLength;\n \n\t<span class=\"co1\">//\
+      \ we're changing its location and rotation, so detach it</span>\n\tDetachProjector<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n \n\t<span class=\"co1\"\
+      >// fallback</span>\n\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>LightPawn\
+      \ <span class=\"sy0\">==</span> <span class=\"kw5\">None</span> <span class=\"\
+      sy0\">||</span> LightController <span class=\"sy0\">==</span> <span class=\"\
+      kw5\">None</span> <span class=\"sy0\">||</span> <span class=\"sy0\">!</span>bHasLight<span\
+      \ class=\"br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>TacLightGlow <span class=\"sy0\"\
+      >!=</span> <span class=\"kw5\">None</span><span class=\"br0\">)</span>\n\t\t\
+      \tTacLightGlow.<span class=\"me0\">bDynamicLight</span> <span class=\"sy0\"\
+      >=</span> <span class=\"kw6\">false</span>;\n\t\t<span class=\"kw2\">return</span>;\n\
+      \t<span class=\"br0\">}</span>\n \n\t<span class=\"co1\">// ok, first we need\
+      \ to get a location directly in front of the player</span>\n\tStartTrace <span\
+      \ class=\"sy0\">=</span> LightPawn.<span class=\"kw7\">Location</span> <span\
+      \ class=\"sy0\">+</span> LightPawn.<span class=\"me0\">EyePosition</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n\t<span class=\"kw3\"\
+      >GetAxes</span><span class=\"br0\">(</span>LightController.<span class=\"me0\"\
+      >GetViewRotation</span><span class=\"br0\">(</span><span class=\"br0\">)</span>,X,Y,Z<span\
+      \ class=\"br0\">)</span>;\n \n\t<span class=\"co1\">// not too far out, we don't\
+      \ want a flashlight that can shine across the map</span>\n\tEndTrace <span class=\"\
+      sy0\">=</span> StartTrace <span class=\"sy0\">+</span> <span class=\"nu0\">1800</span><span\
+      \ class=\"sy0\">*</span><span class=\"kw5\">vector</span><span class=\"br0\"\
+      >(</span>LightController.<span class=\"me0\">GetViewRotation</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n\t\
+      <span class=\"kw4\">Trace</span><span class=\"br0\">(</span>HitLocation,HitNormal,EndTrace,StartTrace,<span\
+      \ class=\"kw6\">true</span>,,SurfaceMat<span class=\"br0\">)</span>;\n \n\t\
+      <span class=\"co1\">// find out how far the first hit was</span>\n\tBeamLength\
+      \ <span class=\"sy0\">=</span> <span class=\"kw3\">VSize</span><span class=\"\
+      br0\">(</span>StartTrace<span class=\"sy0\">-</span>HitLocation<span class=\"\
+      br0\">)</span>;\n \n\t<span class=\"co1\">// clear the base, we're going to\
+      \ be doing some adjustments</span>\n\t<span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span><span class=\"kw7\">Base</span> <span class=\"sy0\">!=</span>\
+      \ <span class=\"kw5\">None</span><span class=\"br0\">)</span>;\n\t\t<span class=\"\
+      kw4\">SetBase</span><span class=\"br0\">(</span><span class=\"kw5\">none</span><span\
+      \ class=\"br0\">)</span>;\n \n\t<span class=\"co1\">// this makes a neat focus\
+      \ effect when you get close to a wall</span>\n\t<span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span>BeamLength <span class=\"sy0\">&lt;=</span> <span\
+      \ class=\"nu0\">90</span><span class=\"br0\">)</span>\n\t<span class=\"br0\"\
+      >{</span>\n\t\t<span class=\"kw4\">SetLocation</span><span class=\"br0\">(</span>StartTrace<span\
+      \ class=\"sy0\">+</span><span class=\"kw5\">vector</span><span class=\"br0\"\
+      >(</span>LightController.<span class=\"me0\">GetViewRotation</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">*</span><span class=\"kw3\">Max</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">0.2</span><span class=\"sy0\">*</span>BeamLength<span\
+      \ class=\"br0\">)</span>, <span class=\"nu0\">1</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span>;\n\t\t<span class=\"kw4\">SetBase</span><span class=\"\
+      br0\">(</span>LightPawn<span class=\"br0\">)</span>;\n\t\t<span class=\"kw4\"\
+      >SetRotation</span><span class=\"br0\">(</span>LightController.<span class=\"\
+      me0\">GetViewRotation</span><span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span><span class=\"br0\">)</span>;\n\t\t<span class=\"kw4\">SetDrawScale</span><span\
+      \ class=\"br0\">(</span><span class=\"kw3\">FMax</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">0.02</span>,<span class=\"br0\">(</span>BeamLength<span class=\"\
+      sy0\">/</span><span class=\"nu0\">90</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">*</span><span class=\"kw1\">Default</span>.<span\
+      \ class=\"kw7\">DrawScale</span><span class=\"br0\">)</span>;\n\t<span class=\"\
+      br0\">}</span>\n\t<span class=\"co1\">// else we project it normally, positioning\
+      \ slightly in front of the player</span>\n\t<span class=\"kw2\">else</span>\
+      \ \n\t<span class=\"br0\">{</span>\n\t\t<span class=\"kw4\">SetLocation</span><span\
+      \ class=\"br0\">(</span>StartTrace<span class=\"sy0\">+</span><span class=\"\
+      kw5\">vector</span><span class=\"br0\">(</span>LightController.<span class=\"\
+      me0\">GetViewRotation</span><span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span><span class=\"br0\">)</span><span class=\"sy0\">*</span><span class=\"\
+      nu0\">80</span><span class=\"br0\">)</span>;\n\t\t<span class=\"kw4\">SetBase</span><span\
+      \ class=\"br0\">(</span>LightPawn<span class=\"br0\">)</span>;\n\t\t<span class=\"\
+      kw4\">SetRotation</span><span class=\"br0\">(</span>LightController.<span class=\"\
+      me0\">GetViewRotation</span><span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span><span class=\"br0\">)</span>;\n\t\t<span class=\"kw4\">SetDrawScale</span><span\
+      \ class=\"br0\">(</span><span class=\"kw1\">Default</span>.<span class=\"kw7\"\
+      >DrawScale</span><span class=\"br0\">)</span>;\n\t<span class=\"br0\">}</span>\n\
+      \ \n\t<span class=\"co1\">// reattach it</span>\n\tAttachProjector<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n \n\t<span class=\"co1\">// turns\
+      \ the dynamic light on if it's off</span>\n\t<span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span><span class=\"sy0\">!</span>TacLightGlow.<span class=\"\
+      me0\">bDynamicLight</span><span class=\"br0\">)</span>\n\t\tTacLightGlow.<span\
+      \ class=\"me0\">bDynamicLight</span> <span class=\"sy0\">=</span> <span class=\"\
+      kw6\">true</span>;\n \n\t<span class=\"co1\">// better than tracing for the\
+      \ actor, makes it more projector-like</span>\n\t<span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span>SurfaceMat <span class=\"sy0\">!=</span> <span\
+      \ class=\"kw5\">None</span><span class=\"br0\">)</span>\n\t<span class=\"br0\"\
+      >{</span>\n\t\t<span class=\"co1\">// again, neat focus effect up close, starts\
+      \ earlier than the dynamic projector</span>\n\t\t<span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span>BeamLength <span class=\"sy0\">&lt;=</span> <span\
+      \ class=\"nu0\">100</span><span class=\"br0\">)</span>\n\t\t<span class=\"br0\"\
+      >{</span>\n\t\t\tTacLightGlow.<span class=\"me0\">LightBrightness</span> <span\
+      \ class=\"sy0\">=</span> TacLightGlow.<span class=\"kw1\">Default</span>.<span\
+      \ class=\"me0\">LightBrightness</span> <span class=\"sy0\">*</span> <span class=\"\
+      br0\">(</span><span class=\"nu0\">1.0</span> <span class=\"sy0\">+</span> <span\
+      \ class=\"br0\">(</span><span class=\"nu0\">1.0</span> <span class=\"sy0\">-</span>\
+      \ <span class=\"br0\">(</span>BeamLength<span class=\"sy0\">/</span><span class=\"\
+      nu0\">100</span><span class=\"br0\">)</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span>;\n\t\t\tTaclightGlow.<span class=\"me0\">LightRadius</span>\
+      \ <span class=\"sy0\">=</span> TacLightGlow.<span class=\"kw1\">Default</span>.<span\
+      \ class=\"me0\">LightRadius</span> <span class=\"sy0\">*</span> <span class=\"\
+      kw3\">FMax</span><span class=\"br0\">(</span><span class=\"nu0\">0.3</span>,<span\
+      \ class=\"br0\">(</span>BeamLength<span class=\"sy0\">/</span><span class=\"\
+      nu0\">100</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n\t\
+      \t<span class=\"br0\">}</span>\n\t\t<span class=\"co1\">// else we scale its\
+      \ radius and brightness depending on distance from the material</span>\n\t\t\
+      <span class=\"kw2\">else</span>\n\t\t<span class=\"br0\">{</span>\n\t\t\t<span\
+      \ class=\"co1\">// fades the lightsource out as it moves farther away</span>\n\
+      \t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>BeamLength <span\
+      \ class=\"sy0\">&gt;=</span> <span class=\"nu0\">1300</span><span class=\"br0\"\
+      >)</span>\n\t\t\t\tTacLightGlow.<span class=\"me0\">LightBrightness</span> <span\
+      \ class=\"sy0\">=</span> TacLightGlow.<span class=\"kw1\">Default</span>.<span\
+      \ class=\"me0\">LightBrightness</span> <span class=\"sy0\">*</span> <span class=\"\
+      br0\">(</span><span class=\"br0\">(</span><span class=\"nu0\">1800</span><span\
+      \ class=\"sy0\">-</span>BeamLength<span class=\"br0\">)</span><span class=\"\
+      sy0\">/</span><span class=\"nu0\">500</span><span class=\"br0\">)</span>;\n\t\
+      \t\t<span class=\"co1\">// else normal brightness</span>\n\t\t\t<span class=\"\
+      kw2\">else</span>\n\t\t\t\tTacLightGlow.<span class=\"me0\">LightBrightness</span>\
+      \ <span class=\"sy0\">=</span> TacLightGlow.<span class=\"kw1\">Default</span>.<span\
+      \ class=\"me0\">LightBrightness</span>;\n \n\t\t\t<span class=\"co1\">// this\
+      \ makes the light act more like a spotlight, resizing depending on distance</span>\n\
+      \t\t\tTacLightGlow.<span class=\"me0\">LightRadius</span> <span class=\"sy0\"\
+      >=</span> TacLightGlow.<span class=\"kw1\">Default</span>.<span class=\"me0\"\
+      >LightRadius</span> <span class=\"sy0\">+</span> <span class=\"br0\">(</span><span\
+      \ class=\"nu0\">4.5</span> <span class=\"sy0\">*</span> <span class=\"br0\"\
+      >(</span>BeamLength<span class=\"sy0\">/</span><span class=\"nu0\">1900</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>;\n\t\t<span class=\"br0\"\
+      >}</span>\n\t\tTacLightGlow.<span class=\"kw4\">SetLocation</span><span class=\"\
+      br0\">(</span>HitLocation<span class=\"sy0\">-</span><span class=\"kw5\">vector</span><span\
+      \ class=\"br0\">(</span>LightController.<span class=\"me0\">GetViewRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">*</span><span class=\"nu0\">64</span><span class=\"br0\">)</span>;\n\
+      \t\tTacLightGlow.<span class=\"kw4\">SetRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"kw5\">rotator</span><span class=\"br0\">(</span>HitLocation<span class=\"\
+      sy0\">-</span>StartTrace<span class=\"br0\">)</span><span class=\"br0\">)</span>;\n\
+      \ \n\t<span class=\"br0\">}</span>\n\t<span class=\"co1\">// else if the trace\
+      \ returned nothing, then we put the light right in front of the player, scale\
+      \ its brightness down,</span>\n\t<span class=\"co1\">// and give it normal radius.\
+      \  This makes it seem as if the light is casting a dull glow  onto the ground\
+      \ in front </span>\n\t<span class=\"co1\">// of the player, and is dim enough\
+      \ for players to not notice the transition.</span>\n\t<span class=\"kw2\">else</span>\n\
+      \t<span class=\"br0\">{</span>\n\t\tTacLightGlow.<span class=\"me0\">LightRadius</span>\
+      \ <span class=\"sy0\">=</span> TacLightGlow.<span class=\"kw1\">Default</span>.<span\
+      \ class=\"me0\">LightRadius</span>;\n\t\tTacLightGlow.<span class=\"me0\">LightBrightness</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">50</span>;\n\t\tTacLightGlow.<span\
+      \ class=\"kw4\">SetLocation</span><span class=\"br0\">(</span>StartTrace<span\
+      \ class=\"sy0\">+</span><span class=\"kw5\">vector</span><span class=\"br0\"\
+      >(</span>LightController.<span class=\"me0\">GetViewRotation</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">*</span><span class=\"nu0\">100</span><span class=\"br0\">)</span>;\n\
+      \t<span class=\"br0\">}</span>\n<span class=\"br0\">}</span>\n \n<span class=\"\
+      kw1\">defaultproperties</span>\n<span class=\"br0\">{</span>\n\t<span class=\"\
+      co1\">// for my projtexture, i'm using a 256x256 DXT1 texture, created in the\
+      \ same way as the bulldog headlights --</span>\n\t<span class=\"co1\">// just\
+      \ a bright white circle dead center on a black background.  Make sure the texture\
+      \ is set to TC_Clamp</span>\n\t<span class=\"co1\">// or it'll repeat itself\
+      \ over the whole surface.</span>\n\tProjTexture<span class=\"sy0\">=</span><span\
+      \ class=\"kw5\">Texture</span><span class=\"st0\">'FOMisc.Projected.TacLight'</span>\n\
+      \tMaterialBlendingOp<span class=\"sy0\">=</span>PB_Modulate\n\tFrameBufferBlendingOp<span\
+      \ class=\"sy0\">=</span>PB_Add\n\tMaxTraceDistance<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">1600</span>\n\tbClipBSP<span class=\"sy0\">=</span><span class=\"\
+      kw6\">True</span>\n\tbProjectOnUnlit<span class=\"sy0\">=</span><span class=\"\
+      kw6\">True</span>\n\tbGradient<span class=\"sy0\">=</span><span class=\"kw6\"\
+      >True</span>\n\tbProjectOnAlpha<span class=\"sy0\">=</span><span class=\"kw6\"\
+      >True</span>\n\tbProjectOnParallelBSP<span class=\"sy0\">=</span><span class=\"\
+      kw6\">True</span>\n\tbLightChanged<span class=\"sy0\">=</span><span class=\"\
+      kw6\">True</span>\n\t<span class=\"kw7\">RemoteRole</span><span class=\"sy0\"\
+      >=</span><span class=\"kw7\">ROLE_SimulatedProxy</span>\n\t<span class=\"kw7\"\
+      >DrawScale</span><span class=\"sy0\">=</span><span class=\"nu0\">0.21000</span>\n\
+      \tFOV<span class=\"sy0\">=</span><span class=\"nu0\">5</span>\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<h2><span class=\"mw-headline\" id=\"Effect_TacLightGlow.uc\"\
+      >Effect_TacLightGlow.uc</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Ultimate_FlashLight_2k3?section=4\"\
+      \ title=\"Edit section: Effect TacLightGlow.uc\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>A dynamic light used by the <b>Effect_TacLightProjector</b>\
+      \ class to provide extra ambience.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"co1\">//=============================================================================</span>\n\
+      <span class=\"co1\">// © 2003 Matt 'SquirrelZero' Farber</span>\n<span class=\"\
+      co1\">//=============================================================================</span>\n\
+      <span class=\"kw1\">class</span> Effect_TacLightGlow <span class=\"kw1\">extends</span>\
+      \ <span class=\"kw9\">Light</span>;\n \n<span class=\"kw1\">function</span>\
+      \ <span class=\"kw4\">PostBeginPlay</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw4\"\
+      >SetTimer</span><span class=\"br0\">(</span><span class=\"nu0\">1.0</span>,<span\
+      \ class=\"kw6\">True</span><span class=\"br0\">)</span>;\n<span class=\"br0\"\
+      >}</span>\n \n<span class=\"co1\">// makes bots \"see\" the light when it's\
+      \ on</span>\n<span class=\"kw1\">function</span> <span class=\"kw4\">Timer</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \t<span class=\"kw4\">MakeNoise</span><span class=\"br0\">(</span><span class=\"\
+      nu0\">0.3</span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"kw1\">defaultproperties</span>\n<span class=\"br0\">{</span>\n\
+      \t<span class=\"kw5\">Texture</span><span class=\"sy0\">=</span>S_Light\n\t\
+      LightType<span class=\"sy0\">=</span>LT_Steady\n\tLightEffect<span class=\"\
+      sy0\">=</span>LE_None\n\tLightBrightness<span class=\"sy0\">=</span><span class=\"\
+      nu0\">180</span>\n\tLightSaturation<span class=\"sy0\">=</span><span class=\"\
+      nu0\">255</span>\n\tLightRadius<span class=\"sy0\">=</span><span class=\"nu0\"\
+      >3.0</span>\n\tLightPeriod<span class=\"sy0\">=</span><span class=\"nu0\">34</span>\n\
+      \t<span class=\"kw7\">CollisionRadius</span><span class=\"sy0\">=+</span><span\
+      \ class=\"nu0\">0005.000000</span>\n\t<span class=\"kw7\">CollisionHeight</span><span\
+      \ class=\"sy0\">=+</span><span class=\"nu0\">0005.000000</span>\n\tbHidden<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">true</span>\n\tbStatic<span class=\"\
+      sy0\">=</span><span class=\"kw6\">false</span>\n\tbNoDelete<span class=\"sy0\"\
+      >=</span><span class=\"kw6\">false</span>\n\tbMovable<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">true</span>\n\tbDynamicLight<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">false</span>\n\tbDirectional<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">true</span>\n\t<span class=\"kw7\">RemoteRole</span><span class=\"\
+      sy0\">=</span><span class=\"kw7\">ROLE_SimulatedProxy</span>\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<h2><span class=\"mw-headline\" id=\"Applications\"\
+      >Applications</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Ultimate_FlashLight_2k3?section=5\" title=\"\
+      Edit section: Applications\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>In my case, i created a specialized exec function\
+      \ in my <b>PlayerController</b> class for toggling the light on or off, named\
+      \ <b>ToggleItem()</b>. Since my light will only be used by specific weapons\
+      \ and not all the time, the exec then calls my custom function <b>SpecialFire()</b>,\
+      \ declared in my <b>Weapon</b> class, on the currently held weapon. By default\
+      \ <b>SpecialFire()</b> is a blank function, but on taclight weapons here is\
+      \ where i insert my trigger for the light. This then calls a client-&gt;server\
+      \ (Reliable if Role &lt; ROLE_Authority) replicated function, and the server\
+      \ spawns the light if it doesn't exist, else toggles it on or off if it does\
+      \ (<b>bHasLight = true;</b> or <b>bHasLight = false;</b>). The <b>Owner</b>\
+      \ of the light is always the weapon's <b>Instigator</b>, since by default the\
+      \ Instigator is replicated in the WeaponClass. To see how to specify the Owner\
+      \ when spawning the projector, look at the <b>spawn()</b> function in the <b>Actor</b>\
+      \ class.</p>\n<h2><span class=\"mw-headline\" id=\"Final_Note\">Final Note</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Ultimate_FlashLight_2k3?section=6\" title=\"Edit section:\
+      \ Final Note\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>That's all there is to it, the projector actor handles nearly everything\
+      \ on its own. If you intend to use this method, please contact me and let me\
+      \ know, only because i'd like to hear how you made use of it.</p>\n<h3><span\
+      \ class=\"mw-headline\" id=\"Comments\">Comments</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Ultimate_FlashLight_2k3?section=7\"\
+      \ title=\"Edit section: Comments\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p><b>MythOpus:</b> Wow, this looks good. I've been looking\
+      \ for a flshlight for awhile now. My search is over&#160;:D I have a question\
+      \ though... how did you get this ingame and how do you turn it on&#160;?? I've\
+      \ compiled it.. what next?</p>\n<p><b>SquirrelZero:</b> Thanks =]. I added an\
+      \ 'applications' section, to explain how i put it to use.</p>\n<p><b>MythOpus:</b>\
+      \ I see... Way outta my league&#160;:) So this is for Face Off then&#160;?</p>\n\
+      <p><b>SquirrelZero:</b> nah, different mod coming out soon. <a rel=\"nofollow\"\
+      \ class=\"external text\" href=\"http://www.frag-ops.com\">Frag.Ops</a></p>\n\
+      <p><b>Foxpaw:</b> Could this page be renamed to something simpler, like just\
+      \ Flashlight or Creating a flashlight or something to that effect? \"Ultimate\
+      \ Flashlight 2K3\" sound like \"Xtreme Advertising\" run amok.</p>\n<p><b>SquirrelZero:</b>\
+      \ what am i advertising? This a free script. I'm not forcing anyone to use it\
+      \ over another one. Ultimate FlashLight 2k3 is the name of the program, i made\
+      \ it up in exactly 5 seconds, because honestly i didn't care what it was called\
+      \ as long as it was useful for someone. I mean cmon, that's along the same lines\
+      \ as asking someone to rename their mutator or mod. I'm sorry that my choice\
+      \ doesn't agree with you, but i think you're a bit too \"Xtreme\" yourself.</p>\n\
+      <p><b>Mosquito:</b> IN BEFORE THE LOCK!! wait... this isn't a forum.... oh well.\
+      \ Hey? how did you record the video WITH sound?!</p>\n<p><b>Dark Pulse:</b>\
+      \ He probably dumped Pictures repeatedly (I know there's a console command for\
+      \ this) and then Did a Rip of Audio using total Recorder or something, then\
+      \ bundled them together.</p>\n<p><b>(v)adOnion:</b> Be glad he's sharing his\
+      \ code - a lot of people don't and you'll have to figure stuff out all on your\
+      \ own.</p>\n<p><b>Bslayerw:</b> SquirrelZero, FragOps looks awesome. Thanks\
+      \ for sharing the code. It's people like you that make the modding community\
+      \ a better place. Sharing code like this is very valuable.</p>\n<p><b>RegularX:</b>\
+      \ Ditto here SZ. I just started researching into some good flashlight code,\
+      \ had kinda wondered about a path like this, then found this page. Exactly what\
+      \ I was looking for. Thanks for sharing, this will shave off a lot of frustration\
+      \ I think&#160;:)</p>\n<p><b>SquirrelZero:</b> I've gotten quite a few requests\
+      \ over the past few days on how to actually implement it in your own code, so\
+      \ i think i'll add some detailed examples soon. Gimme a few days to think them\
+      \ up tho&#160;:)</p>\n<p><b>MythOpus:</b> I know your probably busy with FragOps.\
+      \ (Impressive BTW) but how are those 'examples' coming along&#160;:P I want\
+      \ to just put the turn on flashlight exec function in my playercontroller but\
+      \ I don't want it to have anything to do with the current weapon. Any ideas?</p>\n\
+      <p><b>EricBlade:</b> I popped this in as a mutator in my game, and everything\
+      \ seems to be good on it, except that i'm not actually getting any light. &#160;:(\
+      \ I don't know if I know enough to debug this, either. All the code seems to\
+      \ be functioning.. am I having replication issues?</p>\n<p><b>MythOpus:</b>\
+      \ Well, I haven't looked at this in a long time, but I don't think that it actually\
+      \ gives off light, as a light actor would. It should only display a projector\
+      \ of a light. Unless, that's the thing you're talking about.</p>\n<p><b>EricBlade:</b>\
+      \ Turned out it was replication issues.. a tad difficult thing to work with\
+      \ in a mutator, i'm thinking.. so i implemented it into my playercontroller,\
+      \ and spent an hour or so before realising that exec function flashlight() {\
+      \ .. } doesn't work, for no obvious reason.&#160;:) Now, I have it working,\
+      \ though it obviously makes a much better spot/pointlight than a flashlight.\
+      \ Since it is implemented as both a projector, and a light, it should give off\
+      \ light, and it does (although I had to change the \"if(TacLightGlow == None\
+      \ &amp;&amp; Role == ROLE_AUTHORITY)\" to just if(TacLightGlow == None), else\
+      \ there was no light glow on the local players end, and the local players end\
+      \ filled with a zillion Accessed Nones.&#160;:) Now, to see if I can make it\
+      \ more flashlight like.. if anyone has suggestions, i'd love to hear&#160;:)</p>\n\
+      <p><b>MythOpus:</b>Modify the texture so that it will have those... flashlight\
+      \ 'rings' around the light?</p>\n<p><b>EricBlade:</b>Looks like that would be\
+      \ the first order. It looks like the Light part of this really doesn't seem\
+      \ to work. I actually commented out all the code having to do with the LightGlow,\
+      \ and it worked almost identically, except I didn't get weird spot flashes on\
+      \ parts of the level..</p>\n<p><b>SuperApe:</b> A different <a rel=\"nofollow\"\
+      \ class=\"external text\" href=\"http://forums.unrealplayground.com/showthread.php?t=38185\"\
+      >Flashlight example</a> for UT200x. Not sure how it compares to this one, but\
+      \ it includes bot support, etc. Comments welcome on the UP forums.</p>\n\n<!--\
+      \ \nNewPP limit report\nCPU time usage: 0.110 seconds\nReal time usage: 0.224\
+      \ seconds\nPreprocessor visited node count: 45/1000000\nPreprocessor generated\
+      \ node count: 72/1000000\nPost‐expand include size: 0/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:3464-0!*!*!!en!*!* and timestamp 20221118025115 and revision\
+      \ id 8900\n -->\n"
+  categories: []
+  links: []
+  templates: []
+  images: []
+  externallinks:
+  - "http://www.frag-ops.com/images/taclight.jpg"
+  - "http://www.frag-ops.com/content/animations/FragOps-taclight.wmv"
+  - "http://forums.unrealplayground.com/showthread.php?t=38185"
+  - "http://www.frag-ops.com"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Summary"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Ultimate_FlashLight_2k3"
+    byteoffset: 182
+    anchor: "Summary"
+  - toclevel: 1
+    level: "2"
+    line: "What You Need"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Ultimate_FlashLight_2k3"
+    byteoffset: 1042
+    anchor: "What_You_Need"
+  - toclevel: 1
+    level: "2"
+    line: "Effect_TacLightProjector.uc"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:Ultimate_FlashLight_2k3"
+    byteoffset: 1169
+    anchor: "Effect_TacLightProjector.uc"
+  - toclevel: 1
+    level: "2"
+    line: "Effect_TacLightGlow.uc"
+    number: "4"
+    index: "4"
+    fromtitle: "Legacy:Ultimate_FlashLight_2k3"
+    byteoffset: 7062
+    anchor: "Effect_TacLightGlow.uc"
+  - toclevel: 1
+    level: "2"
+    line: "Applications"
+    number: "5"
+    index: "5"
+    fromtitle: "Legacy:Ultimate_FlashLight_2k3"
+    byteoffset: 7928
+    anchor: "Applications"
+  - toclevel: 1
+    level: "2"
+    line: "Final Note"
+    number: "6"
+    index: "6"
+    fromtitle: "Legacy:Ultimate_FlashLight_2k3"
+    byteoffset: 8927
+    anchor: "Final_Note"
+  - toclevel: 2
+    level: "3"
+    line: "Comments"
+    number: "6.1"
+    index: "7"
+    fromtitle: "Legacy:Ultimate_FlashLight_2k3"
+    byteoffset: 9154
+    anchor: "Comments"
+  displaytitle: "Legacy:Ultimate FlashLight 2k3"
+  iwlinks: []
+  wikitext:
+    text: "A really nice flashlight for UT2003.  [http://www.frag-ops.com/content/animations/FragOps-taclight.wmv\
+      \ Watch it in action]\n\n[http://www.frag-ops.com/images/taclight.jpg ScreenShot]\n\
+      \n==Summary ==\n\nI spent a few days trying to create a fairly realistic flashlight\
+      \ using projectors, then switched to dynamic lights after i didn't get the specific\
+      \ look i wanted, at the same time discovering they had a random darkening effect\
+      \ when projected onto certain terrain.  This worked out better for the terrain\
+      \ issue, but i felt it looked too drab. What i ended up deciding on was a dynamic\
+      \ projector to get a focal point with adjustable FOV, and then keeping the light\
+      \ for ambience. To follow the FOV adjustment of the projector, i'm manually\
+      \ adjusting the LightRadius of the dynamic light, which is dependant on a trace\
+      \ done every tick.  The resulting effect was quite stunning, and i decided it\
+      \ was too good to go unshared.\n\nOn a side note, i made my projective texture\
+      \ light-affected, which seems to partially cure the darkening effect on terrain.\n\
+      \n==What You Need ==\n# A texture for the projector. I use a 256x256, DXT1 compressed\
+      \ bitmap.  The full info is commented below.\n\n==Effect_TacLightProjector.uc\
+      \ ==\n\nHere is where everything takes place.  <b>bHasLight</b> is toggled from\
+      \ an outside control. All you need to do is call <b>spawn(class'Effect_TacLightProjector',Owner);</b>\
+      \ where \"Owner\" is the pawn that will be owning the light. Then set its <b>bHasLight</b>\
+      \ variable, and the actor will take care of the rest.\n\n<uscript>\n//=============================================================================\n\
+      // © 2003 Matt 'SquirrelZero' Farber\n//=============================================================================\n\
+      // \"UT2k3 Ultimate Flashlight\"\n// I wrote this using _both_ a dynamic projector\
+      \ and a dynamic light, with the \n// dynamic projector as the focal point and\
+      \ lightsource providing general \n// ambient illumination.  Either one by itself\
+      \ is pretty dull, but combine the \n// two and you've got yourself a really\
+      \ nice effect if done correctly.\n//=============================================================================\n\
+      class Effect_TacLightProjector extends DynamicProjector;\n\n// add a light too,\
+      \ there seems to be a problem with the projector darkening terrain sometimes\n\
+      var Effect_TacLightGlow TacLightGlow;\n\nvar Pawn LightPawn;\nvar Controller\
+      \ LightController;\nvar bool bHasLight;\n\nreplication\n{\n\t// relevant variables\
+      \ needed by the client\n\treliable if (Role == ROLE_Authority)\n\t\tLightPawn,\
+      \ LightController;\n\n\t// relevant variables needed by the client\n\treliable\
+      \ if (Role == ROLE_Authority)\n\t\tbHasLight;\n}\n\n// setup the pawn and controller\
+      \ variables, spawn the dynamic light\nsimulated function PostBeginPlay()\n{\n\
+      \tif( bProjectActor )\n\t\tSetCollision(True, False, False);\n\tif (Owner !=\
+      \ None)\n\t{\n\t\tLightPawn = Pawn(Owner);\n\t\tLightController = LightPawn.Controller;\n\
+      \t}\n\tif (TacLightGlow == None && Role == ROLE_Authority)\n\t{\n\t\tTacLightGlow\
+      \ = spawn(class'Effect_TacLightGlow');\n\t}\n}\n\n// updates the taclight projector\
+      \ and dynamic light positions\nsimulated function Tick(float DeltaTime)\n{\n\
+      \tlocal vector StartTrace,EndTrace,X,Y,Z,HitLocation,HitNormal;\n\tlocal material\
+      \ SurfaceMat;\n\tlocal float BeamLength;\n\n\t// we're changing its location\
+      \ and rotation, so detach it\n\tDetachProjector();\n\n\t// fallback\n\tif (LightPawn\
+      \ == None || LightController == None || !bHasLight)\n\t{\n\t\tif (TacLightGlow\
+      \ != None)\n\t\t\tTacLightGlow.bDynamicLight = false;\n\t\treturn;\n\t}\n\n\t\
+      // ok, first we need to get a location directly in front of the player\n\tStartTrace\
+      \ = LightPawn.Location + LightPawn.EyePosition();\n\tGetAxes(LightController.GetViewRotation(),X,Y,Z);\n\
+      \n\t// not too far out, we don't want a flashlight that can shine across the\
+      \ map\n\tEndTrace = StartTrace + 1800*vector(LightController.GetViewRotation());\n\
+      \tTrace(HitLocation,HitNormal,EndTrace,StartTrace,true,,SurfaceMat);\n\n\t//\
+      \ find out how far the first hit was\n\tBeamLength = VSize(StartTrace-HitLocation);\n\
+      \n\t// clear the base, we're going to be doing some adjustments\n\tif (Base\
+      \ != None);\n\t\tSetBase(none);\n\n\t// this makes a neat focus effect when\
+      \ you get close to a wall\n\tif (BeamLength <= 90)\n\t{\n\t\tSetLocation(StartTrace+vector(LightController.GetViewRotation())*Max((0.2*BeamLength),\
+      \ 1));\n\t\tSetBase(LightPawn);\n\t\tSetRotation(LightController.GetViewRotation());\n\
+      \t\tSetDrawScale(FMax(0.02,(BeamLength/90))*Default.DrawScale);\n\t}\n\t// else\
+      \ we project it normally, positioning slightly in front of the player\n\telse\
+      \ \n\t{\n\t\tSetLocation(StartTrace+vector(LightController.GetViewRotation())*80);\n\
+      \t\tSetBase(LightPawn);\n\t\tSetRotation(LightController.GetViewRotation());\n\
+      \t\tSetDrawScale(Default.DrawScale);\n\t}\n\n\t// reattach it\n\tAttachProjector();\n\
+      \n\t// turns the dynamic light on if it's off\n\tif (!TacLightGlow.bDynamicLight)\n\
+      \t\tTacLightGlow.bDynamicLight = true;\n\n\t// better than tracing for the actor,\
+      \ makes it more projector-like\n\tif (SurfaceMat != None)\n\t{\n\t\t// again,\
+      \ neat focus effect up close, starts earlier than the dynamic projector\n\t\t\
+      if (BeamLength <= 100)\n\t\t{\n\t\t\tTacLightGlow.LightBrightness = TacLightGlow.Default.LightBrightness\
+      \ * (1.0 + (1.0 - (BeamLength/100)));\n\t\t\tTaclightGlow.LightRadius = TacLightGlow.Default.LightRadius\
+      \ * FMax(0.3,(BeamLength/100));\n\t\t}\n\t\t// else we scale its radius and\
+      \ brightness depending on distance from the material\n\t\telse\n\t\t{\n\t\t\t\
+      // fades the lightsource out as it moves farther away\n\t\t\tif (BeamLength\
+      \ >= 1300)\n\t\t\t\tTacLightGlow.LightBrightness = TacLightGlow.Default.LightBrightness\
+      \ * ((1800-BeamLength)/500);\n\t\t\t// else normal brightness\n\t\t\telse\n\t\
+      \t\t\tTacLightGlow.LightBrightness = TacLightGlow.Default.LightBrightness;\n\
+      \n\t\t\t// this makes the light act more like a spotlight, resizing depending\
+      \ on distance\n\t\t\tTacLightGlow.LightRadius = TacLightGlow.Default.LightRadius\
+      \ + (4.5 * (BeamLength/1900));\n\t\t}\n\t\tTacLightGlow.SetLocation(HitLocation-vector(LightController.GetViewRotation())*64);\n\
+      \t\tTacLightGlow.SetRotation(rotator(HitLocation-StartTrace));\n\n\t}\n\t//\
+      \ else if the trace returned nothing, then we put the light right in front of\
+      \ the player, scale its brightness down,\n\t// and give it normal radius.  This\
+      \ makes it seem as if the light is casting a dull glow  onto the ground in front\
+      \ \n\t// of the player, and is dim enough for players to not notice the transition.\n\
+      \telse\n\t{\n\t\tTacLightGlow.LightRadius = TacLightGlow.Default.LightRadius;\n\
+      \t\tTacLightGlow.LightBrightness = 50;\n\t\tTacLightGlow.SetLocation(StartTrace+vector(LightController.GetViewRotation())*100);\n\
+      \t}\n}\n\ndefaultproperties\n{\n\t// for my projtexture, i'm using a 256x256\
+      \ DXT1 texture, created in the same way as the bulldog headlights --\n\t// just\
+      \ a bright white circle dead center on a black background.  Make sure the texture\
+      \ is set to TC_Clamp\n\t// or it'll repeat itself over the whole surface.\n\t\
+      ProjTexture=Texture'FOMisc.Projected.TacLight'\n\tMaterialBlendingOp=PB_Modulate\n\
+      \tFrameBufferBlendingOp=PB_Add\n\tMaxTraceDistance=1600\n\tbClipBSP=True\n\t\
+      bProjectOnUnlit=True\n\tbGradient=True\n\tbProjectOnAlpha=True\n\tbProjectOnParallelBSP=True\n\
+      \tbLightChanged=True\n\tRemoteRole=ROLE_SimulatedProxy\n\tDrawScale=0.21000\n\
+      \tFOV=5\n}\n</uscript>\n\n==Effect_TacLightGlow.uc ==\n\nA dynamic light used\
+      \ by the <b>Effect_TacLightProjector</b> class to provide extra ambience.\n\n\
+      <uscript>\n//=============================================================================\n\
+      // © 2003 Matt 'SquirrelZero' Farber\n//=============================================================================\n\
+      class Effect_TacLightGlow extends Light;\n\nfunction PostBeginPlay()\n{\n\t\
+      SetTimer(1.0,True);\n}\n\n// makes bots \"see\" the light when it's on\nfunction\
+      \ Timer()\n{\n\tMakeNoise(0.3);\n}\n\ndefaultproperties\n{\n\tTexture=S_Light\n\
+      \tLightType=LT_Steady\n\tLightEffect=LE_None\n\tLightBrightness=180\n\tLightSaturation=255\n\
+      \tLightRadius=3.0\n\tLightPeriod=34\n\tCollisionRadius=+0005.000000\n\tCollisionHeight=+0005.000000\n\
+      \tbHidden=true\n\tbStatic=false\n\tbNoDelete=false\n\tbMovable=true\n\tbDynamicLight=false\n\
+      \tbDirectional=true\n\tRemoteRole=ROLE_SimulatedProxy\n}\n</uscript>\n\n==Applications\
+      \ ==\n\nIn my case, i created a specialized exec function in my <b>PlayerController</b>\
+      \ class for toggling the light on or off, named <b>ToggleItem()</b>.  Since\
+      \ my light will only be used by specific weapons and not all the time, the exec\
+      \ then calls my custom function <b>SpecialFire()</b>, declared in my <b>Weapon</b>\
+      \ class, on the currently held weapon.  By default <b>SpecialFire()</b> is a\
+      \ blank function, but on taclight weapons here is where i insert my trigger\
+      \ for the light.  This then calls a client->server (Reliable if Role < ROLE_Authority)\
+      \ replicated function, and the server spawns the light if it doesn't exist,\
+      \ else toggles it on or off if it does (<b>bHasLight = true;</b> or <b>bHasLight\
+      \ = false;</b>).  The <b>Owner</b> of the light is always the weapon's <b>Instigator</b>,\
+      \ since by default the Instigator is replicated in the WeaponClass.  To see\
+      \ how to specify the Owner when spawning the projector, look at the <b>spawn()</b>\
+      \ function in the <b>Actor</b> class.\n\n==Final Note ==\n\nThat's all there\
+      \ is to it, the projector actor handles nearly everything on its own.  If you\
+      \ intend to use this method, please contact me and let me know, only because\
+      \ i'd like to hear how you made use of it.\n\n===Comments===\n\n'''MythOpus:'''\
+      \ Wow, this looks good.  I've been looking for a flshlight for awhile now. \
+      \ My search is over :D  I have a question though...  how did you get this ingame\
+      \ and how do you turn it on ??  I've compiled it.. what next?\n\n'''SquirrelZero:'''\
+      \ Thanks =].  I added an 'applications' section, to explain how i put it to\
+      \ use.\n\n'''MythOpus:''' I see... Way outta my league :)  So this is for Face\
+      \ Off then ?\n\n'''SquirrelZero:''' nah, different mod coming out soon.  [http://www.frag-ops.com\
+      \ Frag.Ops]\n\n'''Foxpaw:''' Could this page be renamed to something simpler,\
+      \ like just Flashlight or Creating a flashlight or something to that effect?\
+      \ \"Ultimate Flashlight 2K3\" sound like \"Xtreme Advertising\" run amok.\n\n\
+      '''SquirrelZero:''' what am i advertising?  This a free script.  I'm not forcing\
+      \ anyone to use it over another one.  Ultimate FlashLight 2k3 is the name of\
+      \ the program, i made it up in exactly 5 seconds, because honestly i didn't\
+      \ care what it was called as long as it was useful for someone.  I mean cmon,\
+      \ that's along the same lines as asking someone to rename their mutator or mod.\
+      \  I'm sorry that my choice doesn't agree with you, but i think you're a bit\
+      \ too \"Xtreme\" yourself.\n\n'''Mosquito:''' IN BEFORE THE LOCK!! wait... this\
+      \ isn't a forum.... oh well. Hey? how did you record the video WITH sound?!\n\
+      \n'''Dark Pulse:''' He probably dumped Pictures repeatedly (I know there's a\
+      \ console command for this) and then Did a Rip of Audio using total Recorder\
+      \ or something, then bundled them together.\n\n'''(v)adOnion:''' Be glad he's\
+      \ sharing his code - a lot of people don't and you'll have to figure stuff out\
+      \ all on your own.\n\n'''Bslayerw:''' SquirrelZero, FragOps looks awesome. Thanks\
+      \ for sharing the code. It's people like you that make the modding community\
+      \ a better place. Sharing code like this is very valuable.\n\n'''RegularX:'''\
+      \ Ditto here SZ.  I just started researching into some good flashlight code,\
+      \ had kinda wondered about a path like this, then found this page.  Exactly\
+      \ what I was looking for.  Thanks for sharing, this will shave off a lot of\
+      \ frustration I think :)\n\n'''SquirrelZero:''' I've gotten quite a few requests\
+      \ over the past few days on how to actually implement it in your own code, so\
+      \ i think i'll add some detailed examples soon.  Gimme a few days to think them\
+      \ up tho :)\n\n'''MythOpus:''' I know your probably busy with FragOps. (Impressive\
+      \ BTW) but how are those 'examples' coming along :P  I want to just put the\
+      \ turn on flashlight exec function in my playercontroller but I don't want it\
+      \ to have anything to do with the current weapon.  Any ideas?\n\n'''EricBlade:'''\
+      \ I popped this in as a mutator in my game, and everything seems to be good\
+      \ on it, except that i'm not actually getting any light.  :( I don't know if\
+      \ I know enough to debug this, either.  All the code seems to be functioning..\
+      \ am I having replication issues?\n\n'''MythOpus:''' Well, I haven't looked\
+      \ at this in a long time, but I don't think that it actually gives off light,\
+      \ as a light actor would.  It should only display a projector of a light.  Unless,\
+      \ that's the thing you're talking about.\n\n'''EricBlade:''' Turned out it was\
+      \ replication issues.. a tad difficult thing to work with in a mutator, i'm\
+      \ thinking.. so i implemented it into my playercontroller, and spent an hour\
+      \ or so before realising that exec function flashlight() { .. } doesn't work,\
+      \ for no obvious reason. :)  Now, I have it working, though it obviously makes\
+      \ a much better spot/pointlight than a flashlight.   Since it is implemented\
+      \ as both a projector, and a light, it should give off light, and it does (although\
+      \ I had to change the \"if(TacLightGlow == None && Role == ROLE_AUTHORITY)\"\
+      \ to just if(TacLightGlow == None), else there was no light glow on the local\
+      \ players end, and the local players end filled with a zillion Accessed Nones.\
+      \ :)  Now, to see if I can make it more flashlight like.. if anyone has suggestions,\
+      \ i'd love to hear :)\n\n'''MythOpus:'''Modify the texture so that it will have\
+      \ those... flashlight 'rings' around the light?\n\n'''EricBlade:'''Looks like\
+      \ that would be the first order.  It looks like the Light part of this really\
+      \ doesn't seem to work.  I actually commented out all the code having to do\
+      \ with the LightGlow, and it worked almost identically, except I didn't get\
+      \ weird spot flashes on parts of the level.. \n\n'''SuperApe:''' A different\
+      \ [http://forums.unrealplayground.com/showthread.php?t=38185 Flashlight example]\
+      \ for UT200x.  Not sure how it compares to this one, but it includes bot support,\
+      \ etc.  Comments welcome on the UP forums."
+  properties: []
+  revId: 8900
+name: "Legacy:Ultimate FlashLight 2k3"
+revision:
+  revid: 8900
+  parentid: 8901
+  user: "SuperApe"
+  timestamp: 1141659445.000000000
+  comment: "another flashlight"
+timestamp: 1668764827.181546000

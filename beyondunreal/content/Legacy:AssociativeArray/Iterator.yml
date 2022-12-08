@@ -1,0 +1,331 @@
+---
+parse:
+  title: "Legacy:AssociativeArray/Iterator"
+  text:
+    text: "<h2><span class=\"mw-headline\" id=\"Iterator\">Iterator</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:AssociativeArray/Iterator?section=1\"\
+      \ title=\"Edit section: Iterator\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>A script-only iterator must use a different syntax\
+      \ from the built-in <a href=\"/Legacy:UnrealScript\" title=\"Legacy:UnrealScript\"\
+      >UnrealScript</a> <a href=\"/Legacy:Iterator\" title=\"Legacy:Iterator\">iterators</a>.\
+      \ The syntax used here is \"close\" to that used in C++'s STL. Traversing an\
+      \ unthreaded binary search tree in order requires keeping track of the progress\
+      \ of the traversal; this is done in the activation stack in a recursive solution.\
+      \ It must be done explicitly with an iterator.</p>\n<h3><span class=\"mw-headline\"\
+      \ id=\"AssociativeArrayIterator\">AssociativeArrayIterator</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:AssociativeArray/Iterator?section=2\"\
+      \ title=\"Edit section: AssociativeArrayIterator\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p><b>Warning</b> this code is not insertion safe. That\
+      \ is, if elements are added to the associative array during a traversal, there\
+      \ is no way of knowing whether the nodes will be visited in the traversal. It\
+      \ is even less deletion save but this implementation of associative arrays doesn't\
+      \ support deletion.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">class</span> AssociativeArrayIterator\n    <span class=\"kw1\">extends</span>\
+      \ <span class=\"kw8\">Object</span>;\n<span class=\"coMULTI\">/* A forward,\
+      \ read-only, in-order iterator for traversing an associative\n   array (a binary\
+      \ search tree (BST)). The iterator is associated with a\n   particular associative\
+      \ array, keeping track of its current position and\n   a stack of \"open\" nodes.\n\
+      \ \n   An in-order traversal visits the nodes of a BST in sorted order by their\n\
+      \   keys. The typical description of the traversal is recursive: \"left\n  \
+      \ subtree, current node, right subtree\". This means: do an in-order\n   traversal\
+      \ of the left subtree, then visit the current node, then do an\n   in-order\
+      \ traversal of the right subtree. Called on the root node of the\n   tree, this\
+      \ will visit each node in sorted key order.\n \n   An iterator cannot be recursive:\
+      \ each call to next should return the\n   next element in the collection being\
+      \ interated over. Thus the iterator\n   must capture the state of one step in\
+      \ the recursive, in-order\n   traversal. The iterator uses a stack to keep a\
+      \ collection of \"opened\"\n   but not yet visited nodes. These are exactly\
+      \ the nodes that would have\n   been current in each recursive call down to\
+      \ the node being visited\n   (curr_); the stack simulates the calling stack\
+      \ for the recursive version\n   of the function and we can push and pop \"activation\
+      \ records\", one at a\n   time, to complete a traversal of the BST.\n*/</span>\n\
+      \ \n<span class=\"coMULTI\">/* The state of an iterator is captured in the binary\
+      \ tree being traversed,\n   the current node, and the collection of open but\
+      \ not visited nodes.\n*/</span>\n<span class=\"kw1\">var</span> <span class=\"\
+      kw1\">private</span> AssociativeArray tree_;\n<span class=\"kw1\">var</span>\
+      \ <span class=\"kw1\">private</span> AssociativeArrayNode curr_;\n<span class=\"\
+      kw1\">var</span> <span class=\"kw1\">private</span> AssociativeArrayNodeStack\
+      \ stack_;\n<span class=\"coMULTI\">/* Traversal order is determined by the contents\
+      \ of stack; the iterator must\n   know when to push the root node onto the stack\
+      \ */</span>\n<span class=\"kw1\">var</span> <span class=\"kw1\">private</span>\
+      \ <span class=\"kw5\">bool</span> started_;\n \n<span class=\"coMULTI\">/* Initialize\
+      \ the iterator. aaTree is the associative array this iterator\n   is iterating\
+      \ across. bSetCurrentNodeNone is set true if the current node\n   should NOT\
+      \ be set to the first node in the tree. This backward logic is\n   required\
+      \ to handle the \"optionalness\" of the parameter; if no parameter\n   is provided\
+      \ on the call, the boolean value is false.\n*/</span>\n<span class=\"kw1\">function</span>\
+      \ init<span class=\"br0\">(</span>AssociativeArray aaTree, <span class=\"kw1\"\
+      >optional</span> <span class=\"kw5\">bool</span> bSetCurrentNodeNone<span class=\"\
+      br0\">)</span> \n<span class=\"br0\">{</span>\n  started_ <span class=\"sy0\"\
+      >=</span> <span class=\"kw6\">false</span>;\n  tree_ <span class=\"sy0\">=</span>\
+      \ aaTree;\n  stack_ <span class=\"sy0\">=</span> <span class=\"kw1\">new</span><span\
+      \ class=\"br0\">(</span><span class=\"kw5\">None</span><span class=\"br0\">)</span>\
+      \ <span class=\"kw1\">class</span><span class=\"st0\">'AssociativeArrayNodeStack'</span>;\n\
+      \  <span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      sy0\">!</span>bSetCurrentNodeNone<span class=\"br0\">)</span>\n    next<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\
+      \ <span class=\"co1\">// init</span>\n \n<span class=\"coMULTI\">/* Get the\
+      \ first value from the current iterator position, the key in the\n   key/value\
+      \ pair. */</span>\n<span class=\"kw1\">function</span> <span class=\"kw5\">string</span>\
+      \ first<span class=\"br0\">(</span><span class=\"br0\">)</span> \n<span class=\"\
+      br0\">{</span>\n  <span class=\"kw2\">return</span> curr_.<span class=\"me0\"\
+      >key</span>;\n<span class=\"br0\">}</span> <span class=\"co1\">// first</span>\n\
+      \ \n<span class=\"coMULTI\">/* get the second value from the current iterator\
+      \ position, the value in\n   the key/value pair. */</span>\n<span class=\"kw1\"\
+      >function</span> <span class=\"kw5\">string</span> second<span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span> \n<span class=\"br0\">{</span>\n  <span\
+      \ class=\"kw2\">return</span> curr_.<span class=\"me0\">value</span>;\n<span\
+      \ class=\"br0\">}</span> <span class=\"co1\">// second</span>\n \n<span class=\"\
+      kw1\">function</span> AssociativeArray getCollection<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw2\"\
+      >return</span> tree_;\n<span class=\"br0\">}</span> <span class=\"co1\">// getCollection</span>\n\
+      \ \n<span class=\"kw1\">function</span> <span class=\"kw5\">string</span> getIndex<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \  <span class=\"kw2\">return</span> curr_.<span class=\"me0\">key</span>;\n\
+      <span class=\"br0\">}</span> <span class=\"co1\">// getIndex</span>\n \n<span\
+      \ class=\"kw1\">function</span> dump<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">string</span> dumpString;\n \n  dumpString <span class=\"\
+      sy0\">=</span> <span class=\"kw5\">Name</span><span class=\"sy0\">$</span><span\
+      \ class=\"st0\">\".dump(): \"</span>\n               <span class=\"sy0\">$</span><span\
+      \ class=\"st0\">\"started_ = \"</span><span class=\"sy0\">$</span>started_\n\
+      \               <span class=\"sy0\">$</span><span class=\"st0\">\", tree_ =\
+      \ \"</span><span class=\"sy0\">$</span>tree_\n               <span class=\"\
+      sy0\">$</span><span class=\"st0\">\", stack_ = \"</span><span class=\"sy0\"\
+      >$</span>stack_\n               <span class=\"sy0\">$</span><span class=\"st0\"\
+      >\", curr_ = \"</span><span class=\"sy0\">$</span>curr_;\n  <span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span>curr_ <span class=\"sy0\">!=</span> <span\
+      \ class=\"kw5\">None</span><span class=\"br0\">)</span>\n    dumpString <span\
+      \ class=\"sy0\">=</span> dumpString\n                 <span class=\"sy0\">$</span><span\
+      \ class=\"st0\">\", curr_.key = \"</span><span class=\"sy0\">$</span>curr_.<span\
+      \ class=\"me0\">key</span>\n                 <span class=\"sy0\">$</span><span\
+      \ class=\"st0\">\", curr_.value = \"</span><span class=\"sy0\">$</span>curr_.<span\
+      \ class=\"me0\">value</span>;\n  <span class=\"kw3\">log</span><span class=\"\
+      br0\">(</span>dumpString, <span class=\"st0\">'DevAssociativeArray'</span><span\
+      \ class=\"br0\">)</span>;\n<span class=\"br0\">}</span> <span class=\"co1\"\
+      >// dump</span>\n \n \n<span class=\"coMULTI\">/* Comparison operator calls\
+      \ this function */</span>\n<span class=\"kw1\">function</span> <span class=\"\
+      kw5\">bool</span> same<span class=\"br0\">(</span>AssociativeArrayIterator other<span\
+      \ class=\"br0\">)</span> \n<span class=\"br0\">{</span>\n  <span class=\"kw2\"\
+      >return</span> <span class=\"br0\">(</span><span class=\"br0\">(</span>tree_\
+      \ <span class=\"sy0\">==</span> other.<span class=\"me0\">tree_</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"\
+      br0\">(</span>curr_ <span class=\"sy0\">==</span> other.<span class=\"me0\"\
+      >curr_</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n<span\
+      \ class=\"br0\">}</span> <span class=\"co1\">// same</span>\n \n<span class=\"\
+      coMULTI\">/* advance to the next element. The next element is the left-most\
+      \ child of\n   the root (first time through) or the left-most child of the right\n\
+      \   subtree (think about BST deletion routines and finding successor of a\n\
+      \   node to be deleted). */</span>\n<span class=\"kw1\">function</span> next<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> \n<span class=\"br0\">{</span>\n\
+      \  <span class=\"kw1\">local</span> AssociativeArrayNode p;\n \n  <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span><span class=\"sy0\">!</span>started_<span\
+      \ class=\"br0\">)</span> <span class=\"br0\">{</span>\n    p <span class=\"\
+      sy0\">=</span> tree_.<span class=\"me0\">root</span>;\n  <span class=\"br0\"\
+      >}</span> <span class=\"kw2\">else</span> <span class=\"br0\">{</span>\n   \
+      \ p <span class=\"sy0\">=</span> curr_;\n    <span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span>p <span class=\"sy0\">!=</span> <span class=\"kw5\"\
+      >None</span><span class=\"br0\">)</span>\n      p <span class=\"sy0\">=</span>\
+      \ p.<span class=\"me0\">right_child</span>;\n  <span class=\"br0\">}</span>\n\
+      \ \n  <span class=\"kw2\">do</span> <span class=\"br0\">{</span>\n    <span\
+      \ class=\"kw2\">while</span> <span class=\"br0\">(</span>p <span class=\"sy0\"\
+      >!=</span> <span class=\"kw5\">None</span><span class=\"br0\">)</span> <span\
+      \ class=\"br0\">{</span>\n      stack_.<span class=\"me0\">push</span><span\
+      \ class=\"br0\">(</span>p<span class=\"br0\">)</span>;\n      p <span class=\"\
+      sy0\">=</span> p.<span class=\"me0\">left_child</span>;\n    <span class=\"\
+      br0\">}</span> <span class=\"co1\">// push all the left children</span>\n \n\
+      \    <span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      sy0\">!</span>stack_.<span class=\"me0\">isEmpty</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span> <span class=\"br0\">{</span>\n\
+      \      p <span class=\"sy0\">=</span> stack_.<span class=\"me0\">pop</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n      started_ <span\
+      \ class=\"sy0\">=</span> <span class=\"kw6\">true</span>;\n      curr_ <span\
+      \ class=\"sy0\">=</span> p;\n      <span class=\"kw2\">return</span>;\n    <span\
+      \ class=\"br0\">}</span>\n  <span class=\"br0\">}</span> until <span class=\"\
+      br0\">(</span>stack_.<span class=\"me0\">isEmpty</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>;\n  curr_ <span class=\"\
+      sy0\">=</span> <span class=\"kw5\">None</span>;\n<span class=\"br0\">}</span>\
+      \ <span class=\"co1\">// next()</span>\n \n<span class=\"kw1\">defaultproperties</span>\
+      \ \n<span class=\"br0\">{</span>\n  started_ <span class=\"sy0\">=</span> <span\
+      \ class=\"kw6\">false</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <h3><span class=\"mw-headline\" id=\"AssociativeArrayNodeStack\">AssociativeArrayNodeStack</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:AssociativeArray/Iterator?section=3\" title=\"Edit section:\
+      \ AssociativeArrayNodeStack\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>The explicit state of an iteration in progress. A\
+      \ stack of <tt>AssociativeArrayNode</tt>s.</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">class</span> AssociativeArrayNodeStack\n    <span\
+      \ class=\"kw1\">extends</span> <span class=\"kw8\">Object</span>;\n<span class=\"\
+      coMULTI\">/* A stack of array nodes; used to implement iterators. */</span>\n\
+      \ \n \n<span class=\"coMULTI\">/* Implementation of the stack itself. Top of\
+      \ the stack is at\n   impl[impl.Length-1]\n*/</span>\n<span class=\"kw1\">var</span>\
+      \ <span class=\"kw1\">private</span> array<span class=\"sy0\">&lt;</span>AssociativeArrayNode<span\
+      \ class=\"sy0\">&gt;</span> impl;\n \n<span class=\"coMULTI\">/* is the stack\
+      \ currently empty? */</span>\n<span class=\"kw1\">function</span> <span class=\"\
+      kw5\">bool</span> isEmpty<span class=\"br0\">(</span><span class=\"br0\">)</span>\
+      \ \n<span class=\"br0\">{</span>\n  <span class=\"kw2\">return</span> <span\
+      \ class=\"br0\">(</span>impl.<span class=\"me0\">Length</span> <span class=\"\
+      sy0\">==</span> <span class=\"nu0\">0</span><span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span> <span class=\"co1\">// isEmpty</span>\n \n<span\
+      \ class=\"coMULTI\">/* Push the given AssociateArrayNode on the top of the stack.\
+      \ */</span>\n<span class=\"kw1\">function</span> push<span class=\"br0\">(</span>AssociativeArrayNode\
+      \ a<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n  impl<span class=\"\
+      br0\">[</span>impl.<span class=\"me0\">Length</span><span class=\"br0\">]</span>\
+      \ <span class=\"sy0\">=</span> a;\n<span class=\"br0\">}</span> <span class=\"\
+      co1\">// push</span>\n \n<span class=\"coMULTI\">/* Pop and top together: Return\
+      \ and remove the top element from the stack.\n   If there is no such node, return\
+      \ None. */</span>\n<span class=\"kw1\">function</span> AssociativeArrayNode\
+      \ pop<span class=\"br0\">(</span><span class=\"br0\">)</span> \n<span class=\"\
+      br0\">{</span>\n  <span class=\"kw1\">local</span> AssociativeArrayNode retval;\n\
+      \ \n  <span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      sy0\">!</span>isEmpty<span class=\"br0\">(</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span> <span class=\"br0\">{</span>\n    retval <span class=\"\
+      sy0\">=</span> impl<span class=\"br0\">[</span>impl.<span class=\"me0\">Length</span><span\
+      \ class=\"sy0\">-</span><span class=\"nu0\">1</span><span class=\"br0\">]</span>;\n\
+      \    impl.<span class=\"me0\">Remove</span><span class=\"br0\">(</span>impl.<span\
+      \ class=\"me0\">Length</span> <span class=\"sy0\">-</span> <span class=\"nu0\"\
+      >1</span>, <span class=\"nu0\">1</span><span class=\"br0\">)</span>;\n    <span\
+      \ class=\"kw2\">return</span> retval;\n  <span class=\"br0\">}</span> <span\
+      \ class=\"kw2\">else</span> <span class=\"br0\">{</span>\n    <span class=\"\
+      kw2\">return</span> <span class=\"kw5\">None</span>;\n  <span class=\"br0\"\
+      >}</span>\n<span class=\"br0\">}</span> <span class=\"co1\">// pop</span>\n\
+      <span class=\"co1\">// AssociativeArrayNodeStack</span></pre></div>\n</div>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.083 seconds\nReal time usage:\
+      \ 0.171 seconds\nPreprocessor visited node count: 22/1000000\nPreprocessor generated\
+      \ node count: 56/1000000\nPost‐expand include size: 0/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:443-0!*!0!!*!*!* and timestamp 20221120163446 and revision\
+      \ id 1475\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:UnrealScript"
+  - ns: 100
+    exists: true
+    name: "Legacy:Iterator"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Iterator"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:AssociativeArray/Iterator"
+    byteoffset: 0
+    anchor: "Iterator"
+  - toclevel: 2
+    level: "3"
+    line: "AssociativeArrayIterator"
+    number: "1.1"
+    index: "2"
+    fromtitle: "Legacy:AssociativeArray/Iterator"
+    byteoffset: 428
+    anchor: "AssociativeArrayIterator"
+  - toclevel: 2
+    level: "3"
+    line: "AssociativeArrayNodeStack"
+    number: "1.2"
+    index: "3"
+    fromtitle: "Legacy:AssociativeArray/Iterator"
+    byteoffset: 4944
+    anchor: "AssociativeArrayNodeStack"
+  displaytitle: "Legacy:AssociativeArray/Iterator"
+  iwlinks: []
+  wikitext:
+    text: "==Iterator==\n\nA script-only iterator must use a different syntax from\
+      \ the built-in [[Legacy:UnrealScript|UnrealScript]] [[Legacy:Iterator|iterators]].\
+      \ The syntax used here is \"close\" to that used in C++'s STL. Traversing an\
+      \ unthreaded binary search tree in order requires keeping track of the progress\
+      \ of the traversal; this is done in the activation stack in a recursive solution.\
+      \ It must be done explicitly with an iterator.\n\n===AssociativeArrayIterator===\n\
+      \n'''Warning''' this code is not insertion safe. That is, if elements are added\
+      \ to the associative array during a traversal, there is no way of knowing whether\
+      \ the nodes will be visited in the traversal. It is even less deletion save\
+      \ but this implementation of associative arrays doesn't support deletion.\n\n\
+      <uscript>\nclass AssociativeArrayIterator\n    extends Object;\n/* A forward,\
+      \ read-only, in-order iterator for traversing an associative\n   array (a binary\
+      \ search tree (BST)). The iterator is associated with a\n   particular associative\
+      \ array, keeping track of its current position and\n   a stack of \"open\" nodes.\n\
+      \n   An in-order traversal visits the nodes of a BST in sorted order by their\n\
+      \   keys. The typical description of the traversal is recursive: \"left\n  \
+      \ subtree, current node, right subtree\". This means: do an in-order\n   traversal\
+      \ of the left subtree, then visit the current node, then do an\n   in-order\
+      \ traversal of the right subtree. Called on the root node of the\n   tree, this\
+      \ will visit each node in sorted key order.\n\n   An iterator cannot be recursive:\
+      \ each call to next should return the\n   next element in the collection being\
+      \ interated over. Thus the iterator\n   must capture the state of one step in\
+      \ the recursive, in-order\n   traversal. The iterator uses a stack to keep a\
+      \ collection of \"opened\"\n   but not yet visited nodes. These are exactly\
+      \ the nodes that would have\n   been current in each recursive call down to\
+      \ the node being visited\n   (curr_); the stack simulates the calling stack\
+      \ for the recursive version\n   of the function and we can push and pop \"activation\
+      \ records\", one at a\n   time, to complete a traversal of the BST.\n*/\n\n\
+      /* The state of an iterator is captured in the binary tree being traversed,\n\
+      \   the current node, and the collection of open but not visited nodes.\n*/\n\
+      var private AssociativeArray tree_;\nvar private AssociativeArrayNode curr_;\n\
+      var private AssociativeArrayNodeStack stack_;\n/* Traversal order is determined\
+      \ by the contents of stack; the iterator must\n   know when to push the root\
+      \ node onto the stack */\nvar private bool started_;\n\n/* Initialize the iterator.\
+      \ aaTree is the associative array this iterator\n   is iterating across. bSetCurrentNodeNone\
+      \ is set true if the current node\n   should NOT be set to the first node in\
+      \ the tree. This backward logic is\n   required to handle the \"optionalness\"\
+      \ of the parameter; if no parameter\n   is provided on the call, the boolean\
+      \ value is false.\n*/\nfunction init(AssociativeArray aaTree, optional bool\
+      \ bSetCurrentNodeNone) \n{\n  started_ = false;\n  tree_ = aaTree;\n  stack_\
+      \ = new(None) class'AssociativeArrayNodeStack';\n  if (!bSetCurrentNodeNone)\n\
+      \    next();\n} // init\n\n/* Get the first value from the current iterator\
+      \ position, the key in the\n   key/value pair. */\nfunction string first() \n\
+      {\n  return curr_.key;\n} // first\n\n/* get the second value from the current\
+      \ iterator position, the value in\n   the key/value pair. */\nfunction string\
+      \ second() \n{\n  return curr_.value;\n} // second\n\nfunction AssociativeArray\
+      \ getCollection()\n{\n  return tree_;\n} // getCollection\n\nfunction string\
+      \ getIndex()\n{\n  return curr_.key;\n} // getIndex\n\nfunction dump()\n{\n\
+      \  local string dumpString;\n  \n  dumpString = Name$\".dump(): \"\n       \
+      \        $\"started_ = \"$started_\n               $\", tree_ = \"$tree_\n \
+      \              $\", stack_ = \"$stack_\n               $\", curr_ = \"$curr_;\n\
+      \  if (curr_ != None)\n    dumpString = dumpString\n                 $\", curr_.key\
+      \ = \"$curr_.key\n                 $\", curr_.value = \"$curr_.value;\n  log(dumpString,\
+      \ 'DevAssociativeArray');\n} // dump\n\n\n/* Comparison operator calls this\
+      \ function */\nfunction bool same(AssociativeArrayIterator other) \n{\n  return\
+      \ ((tree_ == other.tree_) && (curr_ == other.curr_));\n} // same\n\n/* advance\
+      \ to the next element. The next element is the left-most child of\n   the root\
+      \ (first time through) or the left-most child of the right\n   subtree (think\
+      \ about BST deletion routines and finding successor of a\n   node to be deleted).\
+      \ */\nfunction next() \n{\n  local AssociativeArrayNode p;\n  \n  if (!started_)\
+      \ {\n    p = tree_.root;\n  } else {\n    p = curr_;\n    if (p != None)\n \
+      \     p = p.right_child;\n  }\n\n  do {\n    while (p != None) {\n      stack_.push(p);\n\
+      \      p = p.left_child;\n    } // push all the left children\n\n    if (!stack_.isEmpty())\
+      \ {\n      p = stack_.pop();\n      started_ = true;\n      curr_ = p;\n   \
+      \   return;\n    }\n  } until (stack_.isEmpty());\n  curr_ = None;\n} // next()\n\
+      \ndefaultproperties \n{\n  started_ = false\n}\n</uscript>\n\n===AssociativeArrayNodeStack===\n\
+      \nThe explicit state of an iteration in progress. A stack of <tt>AssociativeArrayNode</tt>s.\n\
+      \n<uscript>\nclass AssociativeArrayNodeStack\n    extends Object;\n/* A stack\
+      \ of array nodes; used to implement iterators. */\n\n\n/* Implementation of\
+      \ the stack itself. Top of the stack is at\n   impl[impl.Length-1]\n*/\nvar\
+      \ private array<AssociativeArrayNode> impl;\n\n/* is the stack currently empty?\
+      \ */\nfunction bool isEmpty() \n{\n  return (impl.Length == 0);\n} // isEmpty\n\
+      \n/* Push the given AssociateArrayNode on the top of the stack. */\nfunction\
+      \ push(AssociativeArrayNode a)\n{\n  impl[impl.Length] = a;\n} // push\n\n/*\
+      \ Pop and top together: Return and remove the top element from the stack.\n\
+      \   If there is no such node, return None. */\nfunction AssociativeArrayNode\
+      \ pop() \n{\n  local AssociativeArrayNode retval;\n  \n  if (!isEmpty()) {\n\
+      \    retval = impl[impl.Length-1];\n    impl.Remove(impl.Length - 1, 1);\n \
+      \   return retval;\n  } else {\n    return None;\n  }\n} // pop\n// AssociativeArrayNodeStack\n\
+      </uscript>"
+  properties: []
+  revId: 1475
+name: "Legacy:AssociativeArray/Iterator"
+revision:
+  revid: 1475
+  parentid: 0
+  user: "Bcladd"
+  timestamp: 1062636551.000000000
+  comment: "*"
+timestamp: 1668961820.314554000

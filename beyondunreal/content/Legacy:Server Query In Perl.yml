@@ -1,0 +1,180 @@
+---
+parse:
+  title: "Legacy:Server Query In Perl"
+  text:
+    text: "<p><b>Querying game servers in Perl</b> can be useful if you want to display\
+      \ a server's status on a web site. You can use the following <a href=\"/Legacy:Perl\"\
+      \ title=\"Legacy:Perl\">Perl</a> snippet to do it.</p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Implementation\">Implementation</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Server_Query_In_Perl?section=1\"\
+      \ title=\"Edit section: Implementation\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>Created by <a href=\"/Legacy:Mychaeel\" title=\"Legacy:Mychaeel\"\
+      >Mychaeel</a> from scratch. Feel free to use, modify and enhance. Known limitations:</p>\n\
+      <ul>\n<li>This script expects the server's response to come as a single UDP\
+      \ datagram. If it doesn't, the sub's output will be truncated. A neater implementation\
+      \ would wait for and concatenate as many packets until the final one (marked\
+      \ by the string <code>\\final\\</code> at the end of it) has been received.</li>\n\
+      </ul>\n<ul>\n<li>Some enhanced error checking wouldn't hurt.</li>\n</ul>\n<h3><span\
+      \ class=\"mw-headline\" id=\"Code\">Code</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Server_Query_In_Perl?section=2\"\
+      \ title=\"Edit section: Code\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<pre>use Socket;\nuse Sys::Hostname;\n\n\n###############################################################################\n\
+      #\n#  serverQuery $server, [$port]\n#\n#  Queries an Unreal Tournament game\
+      \ server and returns a hash containing the\n#  information returned by the server,\
+      \ or a hash just containing an error\n#  description if the query failed.\n\
+      #\n\nsub serverQuery ($;$) {\n\n  my $addressServerHost = shift;\n  my $addressServerPort\
+      \ = shift;\n  \n  $addressServerPort = 7778\n    unless defined $addressServerPort;\n\
+      \  \n  my $protocol = getprotobyname 'udp';\n  my $addressClient = sockaddr_in\
+      \ 0, scalar gethostbyname hostname;\n  \n  socket SERVER, PF_INET, SOCK_DGRAM,\
+      \ $protocol \n    or return (error =&gt; 'Unable to create socket');\n  bind\
+      \ SERVER, $addressClient\n    or return (error =&gt; 'Unable to bind address');\n\
+      \n  my $addressServer = sockaddr_in $addressServerPort, inet_aton $addressServerHost\n\
+      \    or return (error =&gt; 'Server not found');\n    \n  send SERVER, '\\\\\
+      info\\\\', 0, $addressServer;\n  \n  my $handleRead = '';\n  vec($handleRead,\
+      \ fileno SERVER, 1) = 1;\n  select $handleRead, undef, undef, 10.0\n    or return\
+      \ (error =&gt; 'Query timed out');\n  \n  my $serverInfo;\n  recv SERVER, $serverInfo,\
+      \ 0x1000, 0\n    or return (error =&gt; 'Error receiving information');\n  \n\
+      \  close SERVER;\n  \n  $serverInfo =~ s/\\\\//;\n  $serverInfo =~ s/\\\\final\\\
+      \\$//;\n  \n  return split /\\\\/, $serverInfo;\n  }</pre>\n<h3><span class=\"\
+      mw-headline\" id=\"Usage\">Usage</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Server_Query_In_Perl?section=3\"\
+      \ title=\"Edit section: Usage\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>The sub serverQuery expects a server address and query\
+      \ port as its arguments and returns a hash containing the key/value pairs of\
+      \ the returned information. Call it as follows:</p>\n<pre>  %serverInfo = serverQuery\
+      \ '66.92.238.12', 7788;\n\n  print \"Results of server query:\\n\\n\";\n  print\
+      \ map \"$_: $serverInfo{$_}\\n\", keys %serverInfo;</pre>\n<p>That'll give you\
+      \ output along the following lines:</p>\n<pre>  Results of server query:\n\n\
+      \  gametype: CTFGame\n  hostport: 7787\n  gamever: 436\n  mapname: CTF-XV8\n\
+      \  hostname: [CSHP] Strangelove 2 MotherShip\n  maxplayers: 16\n  minnetver:\
+      \ 400\n  wantworldlog: false\n  numplayers: 1\n  maptitle: XV-8\n  worldlog:\
+      \ false\n  gamemode: openplaying\n  queryid: 30.1</pre>\n<p>Interpreting the\
+      \ individual items is up to you.</p>\n<hr />\n<p><b>capt. k.</b> – Dunno if/where\
+      \ you want to add this, but since it wasn't mentioned: you can also use the\
+      \ \"\\\\status\\\\\" query, which returns specifics of current server activity,\
+      \ including timelimit, scorelimit, goalteamscore, and the name/score/team of\
+      \ individual players present on the server. <a rel=\"nofollow\" class=\"external\
+      \ text\" href=\"http://www.boilingpoint.com/~jasonyu/test.pl?SERVER=213.221.175.65&amp;PORT=7790\"\
+      >example</a></p>\n<p><b>Mychaeel:</b> Good point; but I guess I'll have to change\
+      \ the script to receive multiple packets (as said above) for a query with a\
+      \ potentially lengthy result like that. Will do, at some point.</p>\n<p><b>El\
+      \ Muerte [TDS]:</b> and you can also combine queries in one request: \\basic\\\
+      \\rules\\ (note that a request begins and ends with a slash). Also the last\
+      \ query request MUST be a known request or else you won't receive anything.\
+      \ So if you want to get all info from a server, and the server supports team\
+      \ information it wise to do: \\teams\\\\echo\\. this was you will always receive\
+      \ \\echo\\. if a server is online. Also an important thing to think of is NOT\
+      \ to check for the \\final\\ is the reply. \\final\\ is not always returned\
+      \ (there are constructions where \\final\\ won't be returned. The best way to\
+      \ read stuff from a UDP is by polling an asynchrone socket.</p>\n\n<!-- \nNewPP\
+      \ limit report\nCPU time usage: 0.024 seconds\nReal time usage: 0.030 seconds\n\
+      Preprocessor visited node count: 26/1000000\nPreprocessor generated node count:\
+      \ 76/1000000\nPost‐expand include size: 0/2097152 bytes\nTemplate argument size:\
+      \ 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser function\
+      \ count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:2783-0!*!0!!*!*!* and timestamp 20221118022445 and revision\
+      \ id 7461\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Mychaeel"
+  - ns: 100
+    exists: true
+    name: "Legacy:Perl"
+  templates: []
+  images: []
+  externallinks:
+  - "http://www.boilingpoint.com/~jasonyu/test.pl?SERVER=213.221.175.65&PORT=7790"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Implementation"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Server_Query_In_Perl"
+    byteoffset: 173
+    anchor: "Implementation"
+  - toclevel: 2
+    level: "3"
+    line: "Code"
+    number: "1.1"
+    index: "2"
+    fromtitle: "Legacy:Server_Query_In_Perl"
+    byteoffset: 658
+    anchor: "Code"
+  - toclevel: 2
+    level: "3"
+    line: "Usage"
+    number: "1.2"
+    index: "3"
+    fromtitle: "Legacy:Server_Query_In_Perl"
+    byteoffset: 2048
+    anchor: "Usage"
+  displaytitle: "Legacy:Server Query In Perl"
+  iwlinks: []
+  wikitext:
+    text: "'''Querying game servers in Perl''' can be useful if you want to display\
+      \ a server's status on a web site.  You can use the following [[Legacy:Perl|Perl]]\
+      \ snippet to do it.\n\n==Implementation ==\n\nCreated by [[Legacy:Mychaeel|Mychaeel]]\
+      \ from scratch.  Feel free to use, modify and enhance.  Known limitations:\n\
+      \n* This script expects the server's response to come as a single UDP datagram.\
+      \  If it doesn't, the sub's output will be truncated.  A neater implementation\
+      \ would wait for and concatenate as many packets until the final one (marked\
+      \ by the string <code>\\final\\</code> at the end of it) has been received.\n\
+      \n* Some enhanced error checking wouldn't hurt.\n\n===Code ===\n\n<pre>use Socket;\n\
+      use Sys::Hostname;\n\n\n###############################################################################\n\
+      #\n#  serverQuery $server, [$port]\n#\n#  Queries an Unreal Tournament game\
+      \ server and returns a hash containing the\n#  information returned by the server,\
+      \ or a hash just containing an error\n#  description if the query failed.\n\
+      #\n\nsub serverQuery ($;$) {\n\n  my $addressServerHost = shift;\n  my $addressServerPort\
+      \ = shift;\n  \n  $addressServerPort = 7778\n    unless defined $addressServerPort;\n\
+      \  \n  my $protocol = getprotobyname 'udp';\n  my $addressClient = sockaddr_in\
+      \ 0, scalar gethostbyname hostname;\n  \n  socket SERVER, PF_INET, SOCK_DGRAM,\
+      \ $protocol \n    or return (error => 'Unable to create socket');\n  bind SERVER,\
+      \ $addressClient\n    or return (error => 'Unable to bind address');\n\n  my\
+      \ $addressServer = sockaddr_in $addressServerPort, inet_aton $addressServerHost\n\
+      \    or return (error => 'Server not found');\n    \n  send SERVER, '\\\\info\\\
+      \\', 0, $addressServer;\n  \n  my $handleRead = '';\n  vec($handleRead, fileno\
+      \ SERVER, 1) = 1;\n  select $handleRead, undef, undef, 10.0\n    or return (error\
+      \ => 'Query timed out');\n  \n  my $serverInfo;\n  recv SERVER, $serverInfo,\
+      \ 0x1000, 0\n    or return (error => 'Error receiving information');\n  \n \
+      \ close SERVER;\n  \n  $serverInfo =~ s/\\\\//;\n  $serverInfo =~ s/\\\\final\\\
+      \\$//;\n  \n  return split /\\\\/, $serverInfo;\n  }</pre>\n\n===Usage ===\n\
+      \nThe sub serverQuery expects a server address and query port as its arguments\
+      \ and returns a hash containing the key/value pairs of the returned information.\
+      \  Call it as follows:\n\n<pre>  %serverInfo = serverQuery '66.92.238.12', 7788;\n\
+      \n  print \"Results of server query:\\n\\n\";\n  print map \"$_: $serverInfo{$_}\\\
+      n\", keys %serverInfo;</pre>\n\nThat'll give you output along the following\
+      \ lines:\n\n<pre>  Results of server query:\n\n  gametype: CTFGame\n  hostport:\
+      \ 7787\n  gamever: 436\n  mapname: CTF-XV8\n  hostname: [CSHP] Strangelove 2\
+      \ MotherShip\n  maxplayers: 16\n  minnetver: 400\n  wantworldlog: false\n  numplayers:\
+      \ 1\n  maptitle: XV-8\n  worldlog: false\n  gamemode: openplaying\n  queryid:\
+      \ 30.1</pre>\n\nInterpreting the individual items is up to you.\n\n----\n\n\
+      '''capt. k.''' &ndash; Dunno if/where you want to add this, but since it wasn't\
+      \ mentioned: you can also use the \"\\\\status\\\\\" query, which returns specifics\
+      \ of current server activity, including timelimit, scorelimit, goalteamscore,\
+      \ and the name/score/team of individual players present on the server. [http://www.boilingpoint.com/~jasonyu/test.pl?SERVER=213.221.175.65&PORT=7790\
+      \ example]\n\n'''Mychaeel:'''  Good point; but I guess I'll have to change the\
+      \ script to receive multiple packets (as said above) for a query with a potentially\
+      \ lengthy result like that.  Will do, at some point.\n\n'''El Muerte [TDS]:'''\
+      \ and you can also combine queries in one request: \\basic\\\\rules\\ (note\
+      \ that a request begins and ends with a slash). Also the last query request\
+      \ MUST be a known request or else you won't receive anything. So if you want\
+      \ to get all info from a server, and the server supports team information it\
+      \ wise to do: \\teams\\\\echo\\. this was you will always receive \\echo\\.\
+      \ if a server is online. Also an important thing to think of is NOT to check\
+      \ for the \\final\\ is the reply. \\final\\ is not always returned (there are\
+      \ constructions where \\final\\ won't be returned. The best way to read stuff\
+      \ from a UDP is by polling an asynchrone socket."
+  properties: []
+  revId: 7461
+name: "Legacy:Server Query In Perl"
+revision:
+  revid: 7461
+  parentid: 7462
+  user: "El Muerte TDS"
+  timestamp: 1037444212.000000000
+  comment: "some query black magic"
+timestamp: 1668764758.875417000

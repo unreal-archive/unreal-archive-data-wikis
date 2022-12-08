@@ -1,0 +1,461 @@
+---
+parse:
+  title: "Legacy:Making A Class-Based Mod"
+  text:
+    text: "<h2><span class=\"mw-headline\" id=\"Dissecting_Riftwar:_an_early_UT2003_example\"\
+      >Dissecting Riftwar: an early UT2003 example</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Making_A_Class-Based_Mod?section=1\"\
+      \ title=\"Edit section: Dissecting Riftwar: an early UT2003 example\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h2>\n<p><b>Before you go\
+      \ any farther:</b> I would recommend looking <a href=\"/Legacy:RegularEngine/Player_Classes\"\
+      \ title=\"Legacy:RegularEngine/Player Classes\">RegularEngine/Player_Classes</a>\
+      \ instead. The RegularEngine is based on UT2004 code, so if you're still on\
+      \ UT2003, I cant' be sure it will work - but it's far more efficient, reliable\
+      \ and readable than what's on this page. <i>... RegX</i></p>\n<p>A class in\
+      \ <a href=\"/Legacy:Mod_Ideas/Riftwar\" title=\"Legacy:Mod Ideas/Riftwar\">Riftwar</a>\
+      \ is ultimately defined by a SpeciesType class. It holds what the class looks\
+      \ like, what it's base attributes are, and it's default weapon/powerup. This\
+      \ is somewhat based on the Species mute left in by Epic (and revived by Brizz).\
+      \ Riftwar creates custom Species classes which hold all the unique aspects that\
+      \ will make a player class a player class. So let's take a look at one of these\
+      \ classes, with some added comments:</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">class</span> SBSpecies_AlienB <span class=\"kw1\"\
+      >extends</span> SBSpecies;\n \n<span class=\"kw1\">function</span> getDescription<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"br0\">{</span><span\
+      \ class=\"br0\">}</span>  <span class=\"co1\">// deprecated</span>\n \n<span\
+      \ class=\"kw1\">defaultproperties</span><span class=\"br0\">{</span>   <span\
+      \ class=\"co1\">// all of the properties for Pawn.Setup - this is what the player\
+      \ class will look like.</span>\nFemaleMeshName <span class=\"sy0\">=</span>\
+      \ <span class=\"st0\">\"HumanFemaleA.EgyptFemaleA\"</span>;\nFemaleBodySkinName\
+      \ <span class=\"sy0\">=</span> <span class=\"st0\">\"PlayerSkins.EgyptFemaleABodyA\"\
+      </span>;\nFemaleFaceSkinName <span class=\"sy0\">=</span> <span class=\"st0\"\
+      >\"PlayerSkins.EgyptFemaleAHeadA\"</span>;\n \nMaleMeshName <span class=\"sy0\"\
+      >=</span> <span class=\"st0\">\"HumanMaleA.EgyptMaleA\"</span>;\n \n...\n<span\
+      \ class=\"me0\">FemaleSkeleton</span> <span class=\"sy0\">=</span> <span class=\"\
+      st0\">\"HumanMaleA.SkeletonMale\"</span>;\n \nGibGroup<span class=\"sy0\">=</span><span\
+      \ class=\"st0\">\"xEffects.xAlienGibGroup\"</span>\n \nRaceNum<span class=\"\
+      sy0\">=</span><span class=\"nu0\">1</span>\n<span class=\"br0\">}</span>\n \n\
+      <span class=\"kw1\">defaultproperties</span> <span class=\"br0\">{</span>\n\t\
+      ReceivedDamageScaling<span class=\"sy0\">=+</span><span class=\"nu0\">1.0</span>\
+      \  <span class=\"co1\">// Player class stats like speed and damage control</span>\n\
+      \tDamageScaling<span class=\"sy0\">=+</span><span class=\"nu0\">1.2</span>\n\
+      \t...\n\t<span class=\"me0\">DefaultItem</span><span class=\"sy0\">=</span><span\
+      \ class=\"st0\">\"xWeapons.ShockRifle\"</span>  <span class=\"co1\">// Default\
+      \ Weapon for this player Class</span>\n\tPowerUpCombo<span class=\"sy0\">=</span><span\
+      \ class=\"st0\">\"xGame.ComboSpeed\"</span>\n\tDefaultHealth<span class=\"sy0\"\
+      >=</span><span class=\"nu0\">120</span> \n        DefaultAdrenaline<span class=\"\
+      sy0\">=</span><span class=\"nu0\">0</span>\n        DefaultShieldAmount<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0</span>\n\t<span class=\"br0\"\
+      >}</span></pre></div>\n</div>\n<p>OK, so that's a \"player class\". How do you\
+      \ use it? Well, you have to get the <a href=\"/Legacy:Pawn\" title=\"Legacy:Pawn\"\
+      >Pawn</a> and <a href=\"/Legacy:Controller\" title=\"Legacy:Controller\">Controller</a>\
+      \ to set it up, and you have to get it all <a href=\"/Legacy:Replication\" title=\"\
+      Legacy:Replication\">replicated</a> on the network. Here's a tip - Species from\
+      \ the Pawn isn't replicated (it's considered client info), so you'll need to\
+      \ have the Controller tell the Pawn what to do with some replicated vars. Here\
+      \ is the order in which Riftwar takes a normal player who hasn't chosen a class\
+      \ and allows them to choose one:</p>\n<ol>\n<li>In RestartPlayer, the Controller\
+      \ is checked to determine if the player class has been chosen.</li>\n</ol>\n\
+      <ol>\n<li>If it's determined that the player hasn't chosen a class, it stops\
+      \ restarting the player, tells the controller to hide it's pawn and present\
+      \ the user with an interface to choose one.</li>\n</ol>\n<ol>\n<li>The interface\
+      \ selects the player class and assigns variables to the Controller to remember\
+      \ what class to use.</li>\n</ol>\n<ol>\n<li>The Controller destroys it's pawn\
+      \ and goes back to RestartPlayer</li>\n</ol>\n<ol>\n<li>RestartPlayer detects\
+      \ the new variables, assigns the Controller a pawn and sets variables on the\
+      \ pawn to determine what class to use. This is vital because the way pawns are(n't)\
+      \ replicated, they are the real authority online as to their appearance.</li>\n\
+      </ol>\n<ol>\n<li>The Pawn's setup uses these variables (in Riftwar, it's two\
+      \ ints) to know what mesh and skin to use and what species to assign.</li>\n\
+      </ol>\n<ol>\n<li>The ModifyPlayer function looks at the Species to determine\
+      \ modifications/weapons the player class has.</li>\n</ol>\n<ol>\n<li>RestartPlayer\
+      \ finishes, the player is in the game with it's new player class.</li>\n</ol>\n\
+      <p>Let's look at this with some more detail and point and the pieces of code\
+      \ which comprise it:</p>\n<p>The player hits RestartPlayer in the gameinfo when\
+      \ he gets to the level, there it checks to see if he has chosen a class:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">function</span>\
+      \ RestartPlayer<span class=\"br0\">(</span> <span class=\"kw9\">Controller</span>\
+      \ aPlayer <span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n    <span\
+      \ class=\"kw1\">local</span> <span class=\"kw9\">NavigationPoint</span> startSpot;\n\
+      \    <span class=\"kw1\">local</span> <span class=\"kw5\">int</span> TeamNum;\n\
+      \    <span class=\"kw1\">local</span> class<span class=\"sy0\">&lt;</span>Pawn<span\
+      \ class=\"sy0\">&gt;</span> DefaultPlayer<span class=\"re0\">Class</span>&lt;\
+      \ SEMI &gt;\n \n    ...\n    <span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span> aPlayer.<span class=\"kw9\">Pawn</span> <span class=\"sy0\">==</span>\
+      \ <span class=\"kw5\">None</span> <span class=\"br0\">)</span>\n    <span class=\"\
+      br0\">{</span>\n        aPlayer.<span class=\"kw3\">GotoState</span><span class=\"\
+      br0\">(</span><span class=\"st0\">'Dead'</span><span class=\"br0\">)</span>;\n\
+      \        <span class=\"kw2\">return</span>;\n    <span class=\"br0\">}</span>\n\
+      \ \n\t<span class=\"kw2\">if</span><span class=\"br0\">(</span>SBPlayer<span\
+      \ class=\"br0\">(</span>aPlayer<span class=\"br0\">)</span> <span class=\"sy0\"\
+      >!=</span> <span class=\"kw5\">none</span> <span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"sy0\">!</span>aPlayer.<span class=\"me0\">PlayerReplicationInfo</span>.<span\
+      \ class=\"me0\">bOutOfLives</span><span class=\"br0\">)</span> <span class=\"\
+      br0\">{</span>\n \n\t<span class=\"kw2\">if</span><span class=\"br0\">(</span>aPlayer.<span\
+      \ class=\"me0\">PlayerReplicationInfo</span>.<span class=\"me0\">Team</span>\
+      \ <span class=\"sy0\">==</span> <span class=\"kw5\">none</span><span class=\"\
+      br0\">)</span><span class=\"br0\">{</span>  <span class=\"co1\">// No team means\
+      \ they don't know what player class they are</span>\n\t\tSBPlayer<span class=\"\
+      br0\">(</span>aPlayer<span class=\"br0\">)</span>.<span class=\"me0\">overview</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;            <span class=\"\
+      co1\">// This function tells the Controller to hide the pawn, open the GUI</span>\n\
+      \t\t<span class=\"kw2\">return</span>;                                  <span\
+      \ class=\"co1\">// stop here - we can't restart the player yet</span>\n\t\t\
+      <span class=\"br0\">}</span><span class=\"kw2\">else</span><span class=\"br0\"\
+      >{</span>\n\t\tSBPawn<span class=\"br0\">(</span>aPlayer.<span class=\"kw9\"\
+      >Pawn</span><span class=\"br0\">)</span>.<span class=\"me0\">superSpecies</span>\
+      \ <span class=\"sy0\">=</span> SBPlayer<span class=\"br0\">(</span>aPlayer<span\
+      \ class=\"br0\">)</span>.<span class=\"me0\">superSpecies</span>;  <span class=\"\
+      co1\">// we know how to set this pawn, continue</span>\n\t\tSBPawn<span class=\"\
+      br0\">(</span>aPlayer.<span class=\"kw9\">Pawn</span><span class=\"br0\">)</span>.<span\
+      \ class=\"me0\">subSpecies</span> <span class=\"sy0\">=</span> SBPlayer<span\
+      \ class=\"br0\">(</span>aPlayer<span class=\"br0\">)</span>.<span class=\"me0\"\
+      >subSpecies</span>;\n   \t\t<span class=\"br0\">}</span>\n\t\t...\n\t<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p>There's some pawn spawning code and bot\
+      \ class choosing code surrounding it, but the meat if the if that says if they\
+      \ don't have a team, do the overview function in the custom controller, which\
+      \ looks like this:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">exec</span> <span class=\"kw1\">function</span> overview<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span> <span class=\"br0\">{</span>\n \n\
+      \  <span class=\"kw2\">if</span><span class=\"br0\">(</span>PlayerReplicationInfo.<span\
+      \ class=\"me0\">Team</span> <span class=\"sy0\">!=</span> <span class=\"kw5\"\
+      >none</span><span class=\"br0\">)</span> <span class=\"br0\">{</span><span class=\"\
+      kw2\">return</span>;<span class=\"br0\">}</span>\n     <span class=\"kw9\">Pawn</span>.<span\
+      \ class=\"kw4\">setCollision</span><span class=\"br0\">(</span><span class=\"\
+      kw6\">false</span>,<span class=\"kw6\">false</span>,<span class=\"kw6\">false</span><span\
+      \ class=\"br0\">)</span>;  <span class=\"co1\">// we might need the pawn info,\
+      \ so don't destroy it</span>\n     <span class=\"kw9\">Pawn</span>.<span class=\"\
+      me0\">bHidden</span><span class=\"sy0\">=</span><span class=\"kw6\">True</span>;\
+      \                     <span class=\"co1\">// but hide it from the game world</span>\n\
+      \     ClientOpenMenu<span class=\"br0\">(</span><span class=\"st0\">\"SpeciesBattle.SBTrader\"\
+      </span><span class=\"br0\">)</span>;  <span class=\"co1\">// open the GUIPage\
+      \ to decide a player class</span>\n \n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>So that will open the SBTrader, a GUIPage which is essentially the\
+      \ class chooser. From there, the player selects their class which results in:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">function</span>\
+      \ <span class=\"kw5\">bool</span> InternalOnClick<span class=\"br0\">(</span>GUIComponent\
+      \ Sender<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span\
+      \ class=\"kw1\">local</span> <span class=\"kw9\">PlayerController</span> pc;\n\
+      \t<span class=\"kw1\">local</span> SBPlayer spc;\n \n\tpc <span class=\"sy0\"\
+      >=</span> PlayerOwner<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \        spc <span class=\"sy0\">=</span> SBPlayer<span class=\"br0\">(</span>pc<span\
+      \ class=\"br0\">)</span>;\n        <span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span>spc<span class=\"sy0\">==</span><span class=\"kw5\">none</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">{</span><span class=\"kw2\">return</span>\
+      \ <span class=\"kw6\">false</span>;<span class=\"br0\">}</span>\n \n\t<span\
+      \ class=\"kw2\">if</span><span class=\"br0\">(</span>Sender<span class=\"sy0\"\
+      >==</span>Controls<span class=\"br0\">[</span><span class=\"nu0\">4</span><span\
+      \ class=\"br0\">]</span><span class=\"br0\">)</span> <span class=\"co1\">//\
+      \ close</span>\n\t<span class=\"br0\">{</span>\n \n\t\t<span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span>SpecList.<span class=\"me0\">List</span>.<span class=\"\
+      me0\">Get</span><span class=\"br0\">(</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">==</span> HumanATitle<span class=\"br0\">)</span> <span class=\"\
+      br0\">{</span>  <span class=\"co1\">// User has selected \"Human Soldier\"</span>\n\
+      \t\t\t\tspc.<span class=\"me0\">setSubSpecies</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">1</span><span class=\"br0\">)</span>;     <span class=\"co1\"\
+      >// Set the correct Team/Player Class to the Controller</span>\n\t\t\t\tspc.<span\
+      \ class=\"me0\">setSuperSpecies</span><span class=\"br0\">(</span><span class=\"\
+      nu0\">0</span><span class=\"br0\">)</span>;\n\t\t\t\tspc.<span class=\"me0\"\
+      >SetPlayerTeam</span><span class=\"br0\">(</span><span class=\"nu0\">0</span><span\
+      \ class=\"br0\">)</span>;\n\t\t\t\t<span class=\"br0\">}</span>\n...</pre></div>\n\
+      </div>\n<p>So selecting the \"Human Soldier\" in the list has the controller\
+      \ set the following vars - superSpecies and subSpecies, using client replicated\
+      \ functions:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">class</span> SBPlayer <span class=\"kw1\">extends</span> <span class=\"\
+      kw9\">xPlayer</span>;\n \n<span class=\"kw1\">var</span> <span class=\"kw5\"\
+      >bool</span> bIsFemale;\n<span class=\"kw1\">var</span> <span class=\"kw5\"\
+      >int</span> superSpecies;\n<span class=\"kw1\">var</span> <span class=\"kw5\"\
+      >int</span> subSpecies;\n<span class=\"kw1\">var</span> <span class=\"kw5\"\
+      >int</span> hCount,aCount,uCount;\n \n<span class=\"kw1\">replication</span>\n\
+      <span class=\"br0\">{</span>\n <span class=\"co1\">// Things the server should\
+      \ send to the client.</span>\n <span class=\"kw1\">reliable</span> <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span> bNetDirty <span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"br0\">(</span><span class=\"kw7\">Role</span> <span class=\"\
+      sy0\">==</span> <span class=\"kw7\">Role_Authority</span><span class=\"br0\"\
+      >)</span> <span class=\"br0\">)</span>\n  getTeamCount,hCount,aCount,uCount,bIsFemale,superSpecies,subSpecies;\n\
+      \ \n <span class=\"kw1\">reliable</span> <span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span> Role<span class=\"sy0\">&lt;</span><span class=\"kw7\"\
+      >ROLE_Authority</span> <span class=\"br0\">)</span>\n  gotype,goteam,clearSpecies,SetPlayerTeam,overview,ReturnToWorld,setSubSpecies;\n\
+      <span class=\"br0\">}</span>\n \n...\n<span class=\"kw1\">function</span> setSuperSpecies<span\
+      \ class=\"br0\">(</span><span class=\"kw5\">int</span> s<span class=\"br0\"\
+      >)</span> <span class=\"br0\">{</span>\n  superSpecies <span class=\"sy0\">=</span>\
+      \ s;\n  <span class=\"br0\">}</span>\n \n<span class=\"kw1\">function</span>\
+      \ setSubSpecies<span class=\"br0\">(</span><span class=\"kw5\">int</span> s<span\
+      \ class=\"br0\">)</span> <span class=\"br0\">{</span>\n  subSpecies <span class=\"\
+      sy0\">=</span> s;\n  <span class=\"br0\">}</span>\n \n...</pre></div>\n</div>\n\
+      <p>When you close the SBTrader <a href=\"/Legacy:GUIPage\" title=\"Legacy:GUIPage\"\
+      >GUIPage</a> it hits the ReturnToWorld function in the SBPlayer controller.\
+      \ All this does is destroy the current Pawn ( which didn't have the info to\
+      \ setup correctly ) and tell it to try again:</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw1\">function</span> ReturnToWorld<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span> <span class=\"br0\">{</span>\n  \
+      \ <span class=\"kw9\">Pawn</span>.<span class=\"kw4\">Destroy</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;                                <span\
+      \ class=\"co1\">// We'll get a new one</span>\n   <span class=\"kw3\">log</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">\"SBPlayer \"</span><span class=\"\
+      sy0\">$</span>PlayerReplicationInfo.<span class=\"me0\">Team</span><span class=\"\
+      br0\">)</span>;   <span class=\"co1\">// This should never be blank at this\
+      \ point</span>\n   <span class=\"kw3\">GotoState</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Returning'</span><span class=\"br0\">)</span>;            \
+      \            <span class=\"co1\">// Head back to RestartPlayer()</span>\n<span\
+      \ class=\"br0\">}</span></pre></div>\n</div>\n<p>The team is now set - so when\
+      \ we hit RestartPlayer, the pawn remains and gets a chance to setup it's mesh\
+      \ and skin. We have integers in our sub and superspecies to pick out what mesh\
+      \ and skin the pawn should use:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">simulated</span> <span class=\"kw1\">function</span> Setup<span\
+      \ class=\"br0\">(</span><span class=\"kw8\">xUtil</span>.<span class=\"me0\"\
+      >PlayerRecord</span> rec, <span class=\"kw1\">optional</span> <span class=\"\
+      kw5\">bool</span> bLoadNow<span class=\"br0\">)</span>\n<span class=\"br0\"\
+      >{</span>\n    <span class=\"kw2\">if</span><span class=\"br0\">(</span>PlayerReplicationInfo.<span\
+      \ class=\"me0\">Team</span> <span class=\"sy0\">!=</span> <span class=\"kw5\"\
+      >none</span><span class=\"br0\">)</span> <span class=\"br0\">{</span>    <span\
+      \ class=\"co1\">// this should be redundant</span>\n      <span class=\"kw2\"\
+      >if</span><span class=\"br0\">(</span>PlayerReplicationInfo.<span class=\"me0\"\
+      >Team</span>.<span class=\"me0\">TeamName</span> <span class=\"sy0\">==</span>\
+      \ <span class=\"st0\">\"Humans\"</span><span class=\"br0\">)</span><span class=\"\
+      br0\">{</span>SuperSpecies <span class=\"sy0\">=</span> <span class=\"nu0\"\
+      >0</span>;<span class=\"br0\">}</span>\n      <span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span>PlayerReplicationInfo.<span class=\"me0\">Team</span>.<span\
+      \ class=\"me0\">TeamName</span> <span class=\"sy0\">==</span> <span class=\"\
+      st0\">\"Aliens\"</span><span class=\"br0\">)</span><span class=\"br0\">{</span>SuperSpecies\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">1</span>;<span class=\"br0\"\
+      >}</span>\n      <span class=\"kw2\">if</span><span class=\"br0\">(</span>PlayerReplicationInfo.<span\
+      \ class=\"me0\">Team</span>.<span class=\"me0\">TeamName</span> <span class=\"\
+      sy0\">==</span> <span class=\"st0\">\"Undead\"</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">{</span>SuperSpecies <span class=\"sy0\">=</span> <span class=\"\
+      nu0\">2</span>;<span class=\"br0\">}</span>\n      <span class=\"br0\">}</span>\n\
+      \      <span class=\"co1\">//LOG(\"SBPAWN Super:\"$superSpecies$\" Sub:\"$SubSpecies);</span>\n\
+      \ \n      <span class=\"kw2\">if</span><span class=\"br0\">(</span>SuperSpecies\
+      \ <span class=\"sy0\">==</span> <span class=\"nu0\">0</span><span class=\"br0\"\
+      >)</span><span class=\"br0\">{</span>    <span class=\"co1\">// Is Human</span>\n\
+      \         <span class=\"kw2\">if</span> <span class=\"br0\">(</span> subSpecies\
+      \ <span class=\"sy0\">==</span> <span class=\"nu0\">1</span> <span class=\"\
+      br0\">)</span> <span class=\"br0\">{</span>  \n\t SBSpecies <span class=\"sy0\"\
+      >=</span> <span class=\"kw1\">class</span><span class=\"st0\">'SpeciesBattle.SBSpecies_HumanB'</span>;\
+      \  <span class=\"co1\">//Is Fatboy Class</span>\n\t Species <span class=\"sy0\"\
+      >=</span>  <span class=\"kw1\">class</span><span class=\"st0\">'SpeciesBattle.SBSpecies_HumanB'</span>;\n\
+      \t <span class=\"br0\">}</span><span class=\"kw2\">else</span> <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span> subSpecies <span class=\"sy0\"\
+      >==</span> <span class=\"nu0\">0</span> <span class=\"br0\">)</span><span class=\"\
+      br0\">{</span>\n\t Species <span class=\"sy0\">=</span> <span class=\"kw1\"\
+      >class</span><span class=\"st0\">'SpeciesBattle.SBSpecies_HumanA'</span>;  \
+      \  <span class=\"co1\">//Is Soldier Class</span>\n\t SBSpecies <span class=\"\
+      sy0\">=</span> <span class=\"kw1\">class</span><span class=\"st0\">'SpeciesBattle.SBSpecies_HumanA'</span>;\n\
+      \t <span class=\"br0\">}</span><span class=\"kw2\">else</span><span class=\"\
+      br0\">{</span>\n\t Species <span class=\"sy0\">=</span> <span class=\"kw1\"\
+      >class</span><span class=\"st0\">'SpeciesBattle.SBSpecies_HumanC'</span>;  \
+      \  <span class=\"co1\">//Is Mecher Class</span>\n\t SBSpecies <span class=\"\
+      sy0\">=</span> <span class=\"kw1\">class</span><span class=\"st0\">'SpeciesBattle.SBSpecies_HumanC'</span>;\n\
+      \         <span class=\"br0\">}</span>\n\t    <span class=\"br0\">}</span>\n\
+      \ \n\t  ...\n \n\t<span class=\"me0\">RagdollOverride</span> <span class=\"\
+      sy0\">=</span> rec.<span class=\"me0\">Ragdoll</span>;\n \n<span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span> Species.<span class=\"kw1\">static</span>.<span\
+      \ class=\"me0\">Setup</span><span class=\"br0\">(</span><span class=\"kw6\"\
+      >self</span>,rec<span class=\"br0\">)</span> <span class=\"br0\">)</span><span\
+      \ class=\"br0\">{</span>ResetPhysicsBasedAnim<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <p>Which in turn hits the Species setup, which I won't paste here as it basically\
+      \ just setups up the mesh and voice and is ugly but fairly straightforward.</p>\n\
+      <p>From there, the ModifyPlayer function in the SpeciesType and the GameRules\
+      \ that are added from the Gameinfo handle the rest of the customization.</p>\n\
+      <p>Another method is to simply trick the Pawn's setup to look at a specific\
+      \ PlayerName to setup the mesh and determine the species from a upl file - which\
+      \ is exactly how the game works normally. I'm personally not a big fan of upls\
+      \ for anything but bots, but it's a matter of preference. It would simplify\
+      \ the process some, however.</p>\n<p>So ... *whew* . Um. Any questions?</p>\n\
+      <hr />\n<p><b>Mychaeel:</b> Well. I think we have a <a href=\"/Category:Legacy_To_Do\"\
+      \ title=\"Category:Legacy To Do\">Category:Legacy To Do</a> (formatting, subheaders,\
+      \ maybe some of the phrasing)... &#160;:-)</p>\n<p><b>RegularX:</b> I need to\
+      \ add that I just put in a similar framework for Freehold that works on the\
+      \ same principle, but with about 1/4 of the code required for the Controller\
+      \ and the GameInfo classes. I have zero time to update this page correctly now\
+      \ (besides, a wise programmer will learn from my mistakes&#160;;) ) - but basically\
+      \ the species/class is held in a single var on the controller, the gameinfo\
+      \ checks for that to produce the class chooser, and otherwise goes to the super.</p>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.171 seconds\nReal time usage:\
+      \ 0.174 seconds\nPreprocessor visited node count: 24/1000000\nPreprocessor generated\
+      \ node count: 156/1000000\nPost‐expand include size: 24/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:1861-0!*!0!*!*!*!* and timestamp 20221118014908 and revision\
+      \ id 4569\n -->\n"
+  categories:
+  - sortkey: "Making A Class-Based Mod"
+    name: "Legacy_To_Do"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Replication"
+  - ns: 14
+    exists: true
+    name: "Category:Legacy To Do"
+  - ns: 100
+    exists: true
+    name: "Legacy:Mod Ideas/Riftwar"
+  - ns: 100
+    exists: true
+    name: "Legacy:Pawn"
+  - ns: 100
+    exists: true
+    name: "Legacy:GUIPage"
+  - ns: 100
+    exists: true
+    name: "Legacy:Controller"
+  - ns: 100
+    exists: true
+    name: "Legacy:RegularEngine/Player Classes"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Dissecting Riftwar: an early UT2003 example"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Making_A_Class-Based_Mod"
+    byteoffset: 0
+    anchor: "Dissecting_Riftwar:_an_early_UT2003_example"
+  displaytitle: "Legacy:Making A Class-Based Mod"
+  iwlinks: []
+  wikitext:
+    text: "==Dissecting Riftwar: an early UT2003 example ==\n\n'''Before you go any\
+      \ farther:''' I would recommend looking [[Legacy:RegularEngine/Player_Classes|RegularEngine/Player_Classes]]\
+      \ instead.  The RegularEngine is based on UT2004 code, so if you're still on\
+      \ UT2003, I cant' be sure it will work - but it's far more efficient, reliable\
+      \ and readable than what's on this page. '' ... RegX''\n\nA class in [[Legacy:Mod_Ideas/Riftwar|Riftwar]]\
+      \ is ultimately defined by a SpeciesType class. It holds what the class looks\
+      \ like, what it's base attributes are, and it's default weapon/powerup. This\
+      \ is somewhat based on the Species mute left in by Epic (and revived by Brizz).\
+      \ Riftwar creates custom Species classes which hold all the unique aspects that\
+      \ will make a player class a player class.  So let's take a look at one of these\
+      \ classes, with some added comments:\n\n<uscript>class SBSpecies_AlienB extends\
+      \ SBSpecies;\n\nfunction getDescription() {}  // deprecated\n\ndefaultproperties{\
+      \   // all of the properties for Pawn.Setup - this is what the player class\
+      \ will look like.\nFemaleMeshName = \"HumanFemaleA.EgyptFemaleA\";\nFemaleBodySkinName\
+      \ = \"PlayerSkins.EgyptFemaleABodyA\";\nFemaleFaceSkinName = \"PlayerSkins.EgyptFemaleAHeadA\"\
+      ;\n\nMaleMeshName = \"HumanMaleA.EgyptMaleA\";\n\n...\nFemaleSkeleton = \"HumanMaleA.SkeletonMale\"\
+      ;\n\nGibGroup=\"xEffects.xAlienGibGroup\"\n\nRaceNum=1\n}\n\ndefaultproperties\
+      \ {\n\tReceivedDamageScaling=+1.0  // Player class stats like speed and damage\
+      \ control\n\tDamageScaling=+1.2\n\t...\n\tDefaultItem=\"xWeapons.ShockRifle\"\
+      \  // Default Weapon for this player Class\n\tPowerUpCombo=\"xGame.ComboSpeed\"\
+      \n\tDefaultHealth=120 \n        DefaultAdrenaline=0\n        DefaultShieldAmount=0\n\
+      \t}\n</uscript>\n\nOK, so that's a \"player class\". How do you use it? Well,\
+      \ you have to get the [[Legacy:Pawn|Pawn]] and [[Legacy:Controller|Controller]]\
+      \ to set it up, and you have to get it all [[Legacy:Replication|replicated]]\
+      \ on the network. Here's a tip - Species from the Pawn isn't replicated (it's\
+      \ considered client info), so you'll need to have the Controller tell the Pawn\
+      \ what to do with some replicated vars.  Here is the order in which Riftwar\
+      \ takes a normal player who hasn't chosen a class and allows them to choose\
+      \ one:\n\n# In RestartPlayer, the Controller is checked to determine if the\
+      \ player class has been chosen.  \n\n# If it's determined that the player hasn't\
+      \ chosen a class, it stops restarting the player, tells the controller to hide\
+      \ it's pawn and present the user with an interface to choose one.\n\n# The interface\
+      \ selects the player class and assigns variables to the Controller to remember\
+      \ what class to use.\n\n# The Controller destroys it's pawn and goes back to\
+      \ RestartPlayer\n\n# RestartPlayer detects the new variables, assigns the Controller\
+      \ a pawn and sets variables on the pawn to determine what class to use.  This\
+      \ is vital because the way pawns are(n't) replicated, they are the real authority\
+      \ online as to their appearance. \n\n# The Pawn's setup uses these variables\
+      \ (in Riftwar, it's two ints) to know what mesh and skin to use and what species\
+      \ to assign.\n\n# The ModifyPlayer function looks at the Species to determine\
+      \ modifications/weapons the player class has.\n\n# RestartPlayer finishes, the\
+      \ player is in the game with it's new player class.\n\nLet's look at this with\
+      \ some more detail and point and the pieces of code which comprise it:\n\nThe\
+      \ player hits RestartPlayer in the gameinfo when he gets to the level, there\
+      \ it checks to see if he has chosen a class:\n\n<uscript>function RestartPlayer(\
+      \ Controller aPlayer )\n{\n    local NavigationPoint startSpot;\n    local int\
+      \ TeamNum;\n    local class<Pawn> DefaultPlayerClass;\n\n    ...\n    if ( aPlayer.Pawn\
+      \ == None )\n    {\n        aPlayer.GotoState('Dead');\n        return;\n  \
+      \  }\n\n\tif(SBPlayer(aPlayer) != none && !aPlayer.PlayerReplicationInfo.bOutOfLives)\
+      \ {\n\n\tif(aPlayer.PlayerReplicationInfo.Team == none){  // No team means they\
+      \ don't know what player class they are\n\t\tSBPlayer(aPlayer).overview(); \
+      \           // This function tells the Controller to hide the pawn, open the\
+      \ GUI\n\t\treturn;                                  // stop here - we can't\
+      \ restart the player yet\n\t\t}else{\n\t\tSBPawn(aPlayer.Pawn).superSpecies\
+      \ = SBPlayer(aPlayer).superSpecies;  // we know how to set this pawn, continue\n\
+      \t\tSBPawn(aPlayer.Pawn).subSpecies = SBPlayer(aPlayer).subSpecies;\n   \t\t\
+      }\n\t\t...\n\t}\n\n</uscript>\n\nThere's some pawn spawning code and bot class\
+      \ choosing code surrounding it, but the meat if the if that says if they don't\
+      \ have a team, do the overview function in the custom controller, which looks\
+      \ like this:\n\n<uscript>exec function overview() {\n\n  if(PlayerReplicationInfo.Team\
+      \ != none) {return;}\n     Pawn.setCollision(false,false,false);  // we might\
+      \ need the pawn info, so don't destroy it\n     Pawn.bHidden=True;         \
+      \            // but hide it from the game world\n     ClientOpenMenu(\"SpeciesBattle.SBTrader\"\
+      );  // open the GUIPage to decide a player class\n\n}\n</uscript>\n\nSo that\
+      \ will open the SBTrader, a GUIPage which is essentially the class chooser.\
+      \ From there, the player selects their class which results in:\n\n<uscript>function\
+      \ bool InternalOnClick(GUIComponent Sender)\n{\n\tlocal PlayerController pc;\n\
+      \tlocal SBPlayer spc;\n\n\tpc = PlayerOwner();\n        spc = SBPlayer(pc);\n\
+      \        if(spc==none){return false;}\n\n\tif(Sender==Controls[4]) // close\n\
+      \t{\n\n\t\tif(SpecList.List.Get() == HumanATitle) {  // User has selected \"\
+      Human Soldier\"\n\t\t\t\tspc.setSubSpecies(1);     // Set the correct Team/Player\
+      \ Class to the Controller\n\t\t\t\tspc.setSuperSpecies(0);\n\t\t\t\tspc.SetPlayerTeam(0);\n\
+      \t\t\t\t}\n...\n\n</uscript>\n\nSo selecting the \"Human Soldier\" in the list\
+      \ has the controller set the following vars - superSpecies and subSpecies, using\
+      \ client replicated functions:\n\n<uscript>class SBPlayer extends xPlayer;\n\
+      \nvar bool bIsFemale;\nvar int superSpecies;\nvar int subSpecies;\nvar int hCount,aCount,uCount;\n\
+      \nreplication\n{\n // Things the server should send to the client.\n reliable\
+      \ if ( bNetDirty && (Role == Role_Authority) )\n  getTeamCount,hCount,aCount,uCount,bIsFemale,superSpecies,subSpecies;\n\
+      \ \n reliable if( Role<ROLE_Authority )\n  gotype,goteam,clearSpecies,SetPlayerTeam,overview,ReturnToWorld,setSubSpecies;\n\
+      }\n\n...\nfunction setSuperSpecies(int s) {\n  superSpecies = s;\n  }\n\nfunction\
+      \ setSubSpecies(int s) {\n  subSpecies = s;\n  }\n\n...\n\n</uscript>\n\nWhen\
+      \ you close the SBTrader [[Legacy:GUIPage|GUIPage]] it hits the ReturnToWorld\
+      \ function in the SBPlayer controller. All this does is destroy the current\
+      \ Pawn ( which didn't have the info to setup correctly ) and tell it to try\
+      \ again:\n\n<uscript>\nfunction ReturnToWorld() {\n   Pawn.Destroy();      \
+      \                          // We'll get a new one\n   log(\"SBPlayer \"$PlayerReplicationInfo.Team);\
+      \   // This should never be blank at this point\n   GotoState('Returning');\
+      \                        // Head back to RestartPlayer()\n}\n</uscript>\n\n\
+      The team is now set - so when we hit RestartPlayer, the pawn remains and gets\
+      \ a chance to setup it's mesh and skin.  We have integers in our sub and superspecies\
+      \ to pick out what mesh and skin the pawn should use:\n\n<uscript>simulated\
+      \ function Setup(xUtil.PlayerRecord rec, optional bool bLoadNow)\n{\n    if(PlayerReplicationInfo.Team\
+      \ != none) {    // this should be redundant\n      if(PlayerReplicationInfo.Team.TeamName\
+      \ == \"Humans\"){SuperSpecies = 0;}\n      if(PlayerReplicationInfo.Team.TeamName\
+      \ == \"Aliens\"){SuperSpecies = 1;}\n      if(PlayerReplicationInfo.Team.TeamName\
+      \ == \"Undead\"){SuperSpecies = 2;}\n      }\n      //LOG(\"SBPAWN Super:\"\
+      $superSpecies$\" Sub:\"$SubSpecies);\n\t\n      if(SuperSpecies == 0){    //\
+      \ Is Human\n         if ( subSpecies == 1 ) {  \n\t SBSpecies = class'SpeciesBattle.SBSpecies_HumanB';\
+      \  //Is Fatboy Class\n\t Species =  class'SpeciesBattle.SBSpecies_HumanB';\n\
+      \t }else if ( subSpecies == 0 ){\n\t Species = class'SpeciesBattle.SBSpecies_HumanA';\
+      \    //Is Soldier Class\n\t SBSpecies = class'SpeciesBattle.SBSpecies_HumanA';\n\
+      \t }else{\n\t Species = class'SpeciesBattle.SBSpecies_HumanC';    //Is Mecher\
+      \ Class\n\t SBSpecies = class'SpeciesBattle.SBSpecies_HumanC';\n         }\n\
+      \t    }\n\n\t  ...\n\n\tRagdollOverride = rec.Ragdoll;\n\nif ( Species.static.Setup(self,rec)\
+      \ ){ResetPhysicsBasedAnim();} \n\n</uscript>\n\nWhich in turn hits the Species\
+      \ setup, which I won't paste here as it basically just setups up the mesh and\
+      \ voice and is ugly but fairly straightforward.\n\nFrom there, the ModifyPlayer\
+      \ function in the SpeciesType and the GameRules that are added from the Gameinfo\
+      \ handle the rest of the customization.\n\nAnother method is to simply trick\
+      \ the Pawn's setup to look at a specific PlayerName to setup the mesh and determine\
+      \ the species from a upl file - which is exactly how the game works normally.\
+      \ I'm personally not a big fan of upls for anything but bots, but it's a matter\
+      \ of preference. It would simplify the process some, however.\n\nSo ... *whew*\
+      \ . Um. Any questions?\n\n----\n\n'''Mychaeel:''' Well.  I think we have a [[:Category:Legacy\
+      \ To Do]] (formatting, subheaders, maybe some of the phrasing)...  :-)\n\n'''RegularX:'''\
+      \ I need to add that I just put in a similar framework for Freehold that works\
+      \ on the same principle, but with about 1/4 of the code required for the Controller\
+      \ and the GameInfo classes.  I have zero time to update this page correctly\
+      \ now (besides, a wise programmer will learn from my mistakes ;) ) - but basically\
+      \ the species/class is held in a single var on the controller, the gameinfo\
+      \ checks for that to produce the class chooser, and otherwise goes to the super.\n\
+      [[Category:Legacy To Do|{{PAGENAME}}]]"
+  properties: []
+  revId: 4569
+name: "Legacy:Making A Class-Based Mod"
+revision:
+  revid: 4569
+  parentid: 4571
+  user: "Ppp22-194.lns2.syd7.internode.on.net"
+  timestamp: 1158716957.000000000
+  comment: "*fixed typos, because, the"
+timestamp: 1668764365.263822000

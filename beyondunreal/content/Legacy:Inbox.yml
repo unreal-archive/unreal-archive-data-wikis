@@ -1,0 +1,441 @@
+---
+parse:
+  title: "Legacy:Inbox"
+  text:
+    text: "<p>This is a page for material that doesn't yet have a home. Add anything\
+      \ you like here, and seasoned contributors will at some point find it a home\
+      \ elsewhere in the Wiki. To get started, click the \"Edit text of this page\"\
+      \ link at the bottom of this page.</p>\n<h2><span class=\"mw-headline\" id=\"\
+      Example\">Example</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Inbox?section=1\" title=\"Edit section: Example\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>This\
+      \ is the body text. Here's a link to the <a href=\"/Legacy:New_Contributors_Quick_Start\"\
+      \ title=\"Legacy:New Contributors Quick Start\">New Contributors Quick Start</a>\
+      \ page.</p>\n<p>New paragraph. Check the above link for info on giving yourself\
+      \ a username &amp; your own user page on the system. Below is a rule-off. Start\
+      \ new entries below &amp; follow this markup.</p>\n<hr />\n<p><b>Mysterial:</b>\
+      \ In UT2003, GameInfo and Mutator have a function GetServerDetails() that allows\
+      \ modmakers to add to the info displayed by the server browser in the bottom\
+      \ left window.</p>\n<hr />\n<p>A problem some mods could have is that they want\
+      \ to modify all of a specific kind of object's properties, yet functions like\
+      \ <a href=\"/Legacy:Mutator\" title=\"Legacy:Mutator\">Mutator</a>'s IsRelevant()\
+      \ don't get called on them. This problem can be fixed with the code:</p>\n<div\
+      \ dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">local</span> <span\
+      \ class=\"kw8\">Object</span> O;\n \n<span class=\"kw2\">foreach</span> <span\
+      \ class=\"kw3\">AllObjects</span><span class=\"br0\">(</span><span class=\"\
+      kw1\">class</span><span class=\"st0\">'object'</span>, O<span class=\"br0\"\
+      >)</span>\n\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw3\">ClassIsChildOf</span><span class=\"br0\">(</span><span class=\"\
+      kw1\">Class</span><span class=\"br0\">(</span>O<span class=\"br0\">)</span>,\
+      \ <span class=\"kw1\">class</span><span class=\"st0\">'BaseClass'</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\t\t\tclass<span class=\"\
+      sy0\">&lt;</span>BaseClass<span class=\"sy0\">&gt;</span><span class=\"br0\"\
+      >(</span>O<span class=\"br0\">)</span>.<span class=\"kw1\">default</span>.<span\
+      \ class=\"me0\">SomeVariable</span> <span class=\"sy0\">=</span> SomeValue;</pre></div>\n\
+      </div>\n<p>This code needs only run once, and allows you to change the default\
+      \ properties of any class below some base class.</p>\n<p><b>Foxpaw:</b> You\
+      \ could do that with a lot less CPU usage by cutting out the middleman:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">local</span> <span\
+      \ class=\"kw8\">Object</span> O;\n \n<span class=\"kw2\">foreach</span> <span\
+      \ class=\"kw3\">AllObjects</span><span class=\"br0\">(</span><span class=\"\
+      kw1\">class</span><span class=\"st0\">'BaseClass'</span>, O<span class=\"br0\"\
+      >)</span>\n  class<span class=\"sy0\">&lt;</span>BaseClass<span class=\"sy0\"\
+      >&gt;</span><span class=\"br0\">(</span>O<span class=\"br0\">)</span>.<span\
+      \ class=\"kw1\">default</span>.<span class=\"me0\">SomeVariable</span> <span\
+      \ class=\"sy0\">=</span> SomeValue;</pre></div>\n</div>\n<p><b>Mysterial:</b>\
+      \ That doesn't work; the iterator would return actual objects, not classes that\
+      \ you could cast like that. Plus, the point is to change the default value for\
+      \ all subclasses of the BaseClass, not BaseClass itself.</p>\n<p><b>Foxpaw:</b>\
+      \ I see you are right about the class casting. I'm not sure where my head was\
+      \ when I wrote that bit. This one would work - and subclasses of that class\
+      \ will still get the call from the iterator:</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw1\">local</span> BaseClass O;\n \n<span class=\"\
+      kw2\">foreach</span> <span class=\"kw3\">AllObjects</span><span class=\"br0\"\
+      >(</span><span class=\"kw1\">class</span><span class=\"st0\">'BaseClass'</span>,\
+      \ O<span class=\"br0\">)</span>\n  O.<span class=\"kw1\">Class</span>.<span\
+      \ class=\"kw1\">default</span>.<span class=\"me0\">SomeVariable</span> <span\
+      \ class=\"sy0\">=</span> SomeValue;</pre></div>\n</div>\n<hr />\n<p><b>Mysterial:</b>\
+      \ It seems as though Actor references don't get properly set to None in objects\
+      \ not subclassed from Actor. I had an Interaction that set a variable to one\
+      \ of the local pawn's inventory items, and if that pawn died the game would\
+      \ often crash because the variable wasn't None even though the inventory item\
+      \ no longer existed.</p>\n<p>In addition, the game will randomly crash during\
+      \ garbage collection if an object that is no longer referenced (for example,\
+      \ a menu long closed) if that object contains an invalid Actor reference. The\
+      \ trademark of such a crash is a long list of (Some Object)-&gt;Serialize strings\
+      \ in the backtrace.</p>\n<hr />\n<p><b>Foxpaw:</b> This works, but is bad mojo.\
+      \ So don't do it. It's probrably unstable. If you have a wierd, really wierd\
+      \ bug, maybe it's caused by something like this. I did it by mistake before\
+      \ I realized that I was using something I hadn't declared in that class, but\
+      \ in a subclass of it.</p>\n<p>Ph3AR! A hole in the time-space continuum:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">class</span> ImAClass\
+      \ <span class=\"kw1\">extends</span> <span class=\"kw9\">Actor</span>;\n \n\
+      <span class=\"kw1\">var</span> Someotherclass Classtastic;\n \n<span class=\"\
+      kw1\">function</span> Ihavefunctions<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n  ClassTastic.<span class=\"me0\"\
+      >AStruct</span>.<span class=\"me0\">Avar</span> <span class=\"sy0\">=</span>\
+      \ <span class=\"nu0\">3</span>;\n<span class=\"br0\">}</span>\n<span class=\"\
+      co1\">// Blah blah blah.</span>\n \n<span class=\"kw1\">class</span> ASubclass\
+      \ <span class=\"kw1\">extends</span> ImA<span class=\"re0\">Class</span>&lt;\
+      \ SEMI &gt;\n \n<span class=\"kw1\">struct</span> StructDef\n<span class=\"\
+      br0\">{</span>\n  <span class=\"kw1\">var</span> <span class=\"kw5\">float</span>\
+      \ AVar;\n  <span class=\"kw1\">var</span> <span class=\"kw5\">string</span>\
+      \ AnotherVar;\n<span class=\"br0\">}</span>\n<span class=\"co1\">// And then\
+      \ some...</span>\n \n<span class=\"kw1\">class</span> Someotherclass <span class=\"\
+      kw1\">extends</span> <span class=\"kw9\">actor</span> dependson<span class=\"\
+      br0\">(</span>Asubclass<span class=\"br0\">)</span>;\n \n<span class=\"kw1\"\
+      >var</span> ASubclass.<span class=\"me0\">StructDef</span> Astruct;</pre></div>\n\
+      </div>\n<p>Note that we are calling something that hasn't really been defined\
+      \ yet. An even easier way of causng mayhem:</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">class</span> MyClass <span class=\"kw1\">extends</span>\
+      \ <span class=\"kw9\">Actor</span>;\n<span class=\"kw1\">var</span> MySubClass\
+      \ Submarine;\n \n<span class=\"kw1\">class</span> MySubClass <span class=\"\
+      kw1\">extends</span> My<span class=\"re0\">Class</span>&lt; SEMI &gt;</pre></div>\n\
+      </div>\n<p>Suffice it to say, don't refer to subclasses of a class within that\
+      \ same class, or the UEd Goblin will eat your babies! Alternatively, this type\
+      \ of wanton class looping results in GPFs if you make a wrong move.</p>\n<p><b>Wormbo:</b>\
+      \ That second thing works reasonably well with the <a href=\"/Legacy:Actor\"\
+      \ title=\"Legacy:Actor\">Actor</a> class and its Instigator variable which is\
+      \ a <a href=\"/Legacy:Pawn\" title=\"Legacy:Pawn\">Pawn</a> reference (subclass\
+      \ of Actor) or its Level variable which a <a href=\"/Legacy:LevelInfo\" title=\"\
+      Legacy:LevelInfo\">LevelInfo</a> reference (also a subclass of Actor).</p>\n\
+      <p><b>Foxpaw:</b> Well, yes, it works, it's just that it has a high risk of\
+      \ ceasing to work as a result of changes.. plus it's extremely poor OOP form,\
+      \ if you ask me.</p>\n<hr />\n<p><b>Foxpaw:</b> BSP that is extremely distant\
+      \ seems to not be drawn, or not be drawn properly. I made a cubic brush 2^18\
+      \ units per side and the surfaces did not show up at all when I subtracted it.\
+      \ A brush 2^17 units per side showed up but had a HOM effect in the editor.\
+      \ Brushes of 2^16 units per side and smaller seem to work fine. This seems to\
+      \ work fine if the surfaces are fake backdrop, however.</p>\n<p><b>Birelli:</b>\
+      \ To the BSP drawing thing - I imagine that has something to do with textures.\
+      \ When each \"tiling\" of the texture becomes less than 1 pixel, for instance,\
+      \ the algorithm might start to break down. This wouldn't necessarily happen\
+      \ with fake backdrop because the backdrop isn't drawn the same way.</p>\n<hr\
+      \ />\n<p><b>Foxpaw:</b> I noticed that if you override a function in a subclass\
+      \ that has one or more variables declared as \"out\" variables, if you change\
+      \ the declaration in the subclass and leave out the \"out\" keyword, the compiler\
+      \ will accept the new version and that variable will not be treated as an \"\
+      out\" variable for that class and it's subclasses. I'm not sure if this works\
+      \ the other way around. (making a non-out variable an out variable.)</p>\n<hr\
+      \ />\n<p><b>Foxpaw:</b> If you destroy an actor within KImpact, UT2003 gives\
+      \ you a GPF. I believe this is because the list of all colliding actors is generated,\
+      \ then each collision isis evaluated. As a result, after the actor is destroyed\
+      \ other things that were colliding with that actor still want to collide with\
+      \ it an there's a null pointer being accessed within the native code. But that's\
+      \ just speculation on WHY it GPFs. The workaround appears to be setting a flag\
+      \ so the actor can destroy itself in Tick.</p>\n<p><b>Mysterial:</b> This is\
+      \ true of pretty much every Karma event. In addition, you shouldn't edit the\
+      \ Karma properties of an object in a Karma function, for similar reasons. I\
+      \ *think* there are checks for these kinds of things in UT2004, but I'd take\
+      \ the safe path and just flag things for processing elsewhere.</p>\n<p><b>Foxpaw:</b>\
+      \ I really hope they do include checks.. I'd really like to be able to destroy\
+      \ objects from within the KImpact event. If one of the ships in my mod hits\
+      \ something going at any kind of speed, it takes damage, which may result in\
+      \ destruction.. so I've had to delay all destruction due to damage to the next\
+      \ tick, which is a bit hackier than I like.</p>\n<hr />\n<p><b>Foxpaw:</b> Apparently,\
+      \ using a reference in the default properties to call an iterator gives an \"\
+      invalid code token\" at runtime. IE, class'Whatever'.default.Singleton.SomeFunction()\
+      \ is okay, but foreach class'Whatever'.default.Singleton.AllObjects( class'etc',\
+      \ etc ) gives the invalid code token. I found this interesting as both seem\
+      \ like function calls and you can use an iterator like that for references not\
+      \ stored in the default properties.</p>\n<p>Also AllActors is amazingly slow.\
+      \ A Uscripted Dynamic array with all the same contents can be iterated through\
+      \ in roughly one quarter of the time.</p>\n<hr />\n<p>From Mod Authoring/Introduction\
+      \ to Gametypes</p>\n<h2><span class=\"mw-headline\" id=\"Update_for_UT2K4_:\"\
+      >Update for UT2K4&#160;:</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Inbox?section=2\" title=\"\
+      Edit section: Update for UT2K4\_:\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p><b>BigJohn:</b> This seems to have changed a bit in\
+      \ Unreal Tournament 2004. In order to make a gametype mod and have it appear\
+      \ under the game list, we now need to have 4 values in our GameType's class'\
+      \ defaultproperties&#160;:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">class</span> MyGame <span class=\"kw1\">extends</span> <span class=\"\
+      kw9\">DeathMatch</span>;\n \n<span class=\"kw1\">defaultproperties</span>\n\
+      <span class=\"br0\">{</span>\n   GameName<span class=\"sy0\">=</span><span class=\"\
+      st0\">\"My Game\"</span>\n   Acronym<span class=\"sy0\">=</span><span class=\"\
+      st0\">\"MG\"</span>\n   MapPrefix<span class=\"sy0\">=</span><span class=\"\
+      st0\">\"MG\"</span>\n   Description<span class=\"sy0\">=</span><span class=\"\
+      st0\">\"A bloody fight to the death!!!.\"</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>Also, there is no need for the Object line in the game's int file\
+      \ (But you do need the Preferences line!).</p>\n<p>Your MyPackage.int should\
+      \ look like this:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      br0\">[</span><span class=\"kw1\">Public</span><span class=\"br0\">]</span>\n\
+      Preferences<span class=\"sy0\">=</span><span class=\"br0\">(</span>Caption<span\
+      \ class=\"sy0\">=</span><span class=\"st0\">\"My Game\"</span>,Parent<span class=\"\
+      sy0\">=</span><span class=\"st0\">\"Game Types\"</span>,<span class=\"kw1\"\
+      >Class</span><span class=\"sy0\">=</span>MyPackage.<span class=\"me0\">MyGame</span>,Immediate<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">True</span><span class=\"br0\">)</span>\n\
+      \ \n<span class=\"br0\">[</span>MyGame<span class=\"br0\">]</span>\nGameName<span\
+      \ class=\"sy0\">=</span><span class=\"st0\">\"My Game\"</span>\nDescription<span\
+      \ class=\"sy0\">=</span><span class=\"st0\">\"A bloody fight to the death!!!.\"\
+      </span></pre></div>\n</div>\n<p>You can use the command</p>\n<p>ucc dumpint\
+      \ MyGame.u</p>\n<p>to create the [MyGame] section in the .int file.</p>\n<p>UCC\
+      \ can generate a .ucl file from our package's .u file. This can be achieved\
+      \ by typing this command:</p>\n<p>ucc exportcache MyGame.u MyGame.ucl</p>\n\
+      <p>Once this is done, the only thing left is to have a map in the UT2004\\Maps\
+      \ folder with the appropriate prefix, in the above case MG.</p>\n<hr />\n<p><b>Tarquin:</b>\
+      \ We can't edit these pages because they are by Epic. Please can we find another\
+      \ home for the above piece of text?</p>\n<p>Co11: Also, for ut2004.. it seems\
+      \ that Deathmatchplus and TeamGamePlus are no longer functional. Try just Deathmatch\
+      \ and TeamGame.</p>\n<p><b>Wormbo:</b> As stated on <a href=\"/Legacy:Mod_Authoring\"\
+      \ title=\"Legacy:Mod Authoring\">Mod Authoring</a> this whole tutorial is only\
+      \ for <a href=\"/Legacy:UT\" title=\"Legacy:UT\" class=\"mw-redirect\">UT</a>,\
+      \ not for newer engine versions. For anything else go to <a href=\"/Legacy:UnrealScript_Lessons\"\
+      \ title=\"Legacy:UnrealScript Lessons\">UnrealScript Lessons</a> or <a href=\"\
+      /Legacy:Making_Mods\" title=\"Legacy:Making Mods\">Making Mods</a>.</p>\n<p><a\
+      \ href=\"/Category:Legacy_To_Do\" title=\"Category:Legacy To Do\">Category:Legacy\
+      \ To Do</a> → Move content to the correct pages.</p>\n<hr />\n<p><b>Foxpaw:</b>\
+      \ I noticed something interesting today, apparently function arguments in subclasses\
+      \ need not have the same names as their original declarations, as long as they\
+      \ are of the same type and in the same order. IE, the following is valid:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">class</span> A <span\
+      \ class=\"kw1\">extends</span> <span class=\"kw8\">Object</span>;\n \n<span\
+      \ class=\"kw1\">function</span> F<span class=\"br0\">(</span> <span class=\"\
+      kw5\">float</span> P <span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \  <span class=\"co1\">// Do Stuff.</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"\
+      uscript source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">class</span>\
+      \ B <span class=\"kw1\">extends</span> A;\n \n<span class=\"kw1\">function</span>\
+      \ F<span class=\"br0\">(</span> <span class=\"kw5\">float</span> Q <span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw6\">Super</span>.<span\
+      \ class=\"me0\">F</span><span class=\"br0\">(</span> Q <span class=\"br0\">)</span>;\n\
+      \ \n  <span class=\"co1\">// Do some other stuff.</span>\n<span class=\"br0\"\
+      >}</span></pre></div>\n</div>\n<p>Of questionable value, but it's possible.\
+      \ I noticed that some of Epic's code uses \"dt\" as the argument name for tick\
+      \ some places instead of \"Delta,\" so I tested it in my own code and it seems\
+      \ to work.</p>\n<p><b>MythOpus:</b> Yep&#160;:D I caught on to that quite quickly.\
+      \ It helps to give more descriptive names to arguments in your code, rather\
+      \ than using epics stuff.</p>\n<p><b>Mychaeel:</b> Indeed. Usually, in any object-oriented\
+      \ language, only the function prototype – i.e. the function name, its return\
+      \ type and its parameter types, but not the symbolic parameter names – are relevant\
+      \ for resolving a function reference. (In many languages which support function\
+      \ pre-declaration, it's even valid to leave the parameter names out: <code>void\
+      \ foo(float, int)</code> is perfectly valid in C and C++.)</p>\n<hr />\n<p><b>Blip2:</b>\
+      \ I found this cool program for the text colours in UT this apparently causes\
+      \ problems with names but I have found it is useful with in-game coloured messages\
+      \ I would write happily write a paragraph or two about how to do this and where\
+      \ to get this program if I knew where to write it (any ideas?)</p>\n<p><b>Graphik:</b>\
+      \ Create a page for it.</p>\n\n<!-- \nNewPP limit report\nCPU time usage: 0.130\
+      \ seconds\nReal time usage: 0.134 seconds\nPreprocessor visited node count:\
+      \ 65/1000000\nPreprocessor generated node count: 200/1000000\nPost‐expand include\
+      \ size: 5/2097152 bytes\nTemplate argument size: 0/2097152 bytes\nHighest expansion\
+      \ depth: 2/40\nExpensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion\
+      \ expansion time report (%,ms,calls,template)\n100.00%    0.000      1 - -total\n\
+      -->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:1452-0!*!0!!*!*!*\
+      \ and timestamp 20221118012503 and revision id 3651\n -->\n"
+  categories:
+  - sortkey: "Inbox"
+    name: "Legacy_To_Do"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Making Mods"
+  - ns: 100
+    exists: true
+    name: "Legacy:Actor"
+  - ns: 100
+    exists: true
+    name: "Legacy:Mutator"
+  - ns: 100
+    exists: true
+    name: "Legacy:UT"
+  - ns: 100
+    exists: true
+    name: "Legacy:UnrealScript Lessons"
+  - ns: 100
+    exists: true
+    name: "Legacy:Pawn"
+  - ns: 14
+    exists: true
+    name: "Category:Legacy To Do"
+  - ns: 100
+    exists: true
+    name: "Legacy:New Contributors Quick Start"
+  - ns: 100
+    exists: true
+    name: "Legacy:LevelInfo"
+  - ns: 100
+    exists: true
+    name: "Legacy:Mod Authoring"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Example"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Inbox"
+    byteoffset: 254
+    anchor: "Example"
+  - toclevel: 1
+    level: "2"
+    line: "Update for UT2K4 :"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Inbox"
+    byteoffset: 7323
+    anchor: "Update_for_UT2K4_:"
+  displaytitle: "Legacy:Inbox"
+  iwlinks: []
+  wikitext:
+    text: "This is a page for material that doesn't yet have a home. Add anything\
+      \ you like here, and seasoned contributors will at some point find it a home\
+      \ elsewhere in the Wiki. To get started, click the \"Edit text of this page\"\
+      \ link at the bottom of this page.\n\n==Example ==\n\nThis is the body text.\
+      \ Here's a link to the [[Legacy:New Contributors Quick Start|New Contributors\
+      \ Quick Start]] page.\n\nNew paragraph. Check the above link for info on giving\
+      \ yourself a username & your own user page on the system. Below is a rule-off.\
+      \ Start new entries below & follow this markup.\n\n----\n\n'''Mysterial:'''\
+      \ In UT2003, GameInfo and Mutator have a function GetServerDetails() that allows\
+      \ modmakers to add to the info displayed by the server browser in the bottom\
+      \ left window.\n\n----\n\nA problem some mods could have is that they want to\
+      \ modify all of a specific kind of object's properties, yet functions like [[Legacy:Mutator|Mutator]]'s\
+      \ IsRelevant() don't get called on them. This problem can be fixed with the\
+      \ code:\n\n<uscript>\nlocal Object O;\n\nforeach AllObjects(class'object', O)\n\
+      \t\t\tif (ClassIsChildOf(Class(O), class'BaseClass'))\n\t\t\t\tclass<BaseClass>(O).default.SomeVariable\
+      \ = SomeValue;\n</uscript>\n\nThis code needs only run once, and allows you\
+      \ to change the default properties of any class below some base class.\n\n'''Foxpaw:'''\
+      \ You could do that with a lot less CPU usage by cutting out the middleman:\n\
+      \n<uscript>\nlocal Object O;\n\nforeach AllObjects(class'BaseClass', O)\n  class<BaseClass>(O).default.SomeVariable\
+      \ = SomeValue;\n</uscript>\n\n'''Mysterial:''' That doesn't work; the iterator\
+      \ would return actual objects, not classes that you could cast like that. Plus,\
+      \ the point is to change the default value for all subclasses of the BaseClass,\
+      \ not BaseClass itself.\n\n'''Foxpaw:''' I see you are right about the class\
+      \ casting. I'm not sure where my head was when I wrote that bit. This one would\
+      \ work - and subclasses of that class will still get the call from the iterator:\n\
+      \n<uscript>\nlocal BaseClass O;\n\nforeach AllObjects(class'BaseClass', O)\n\
+      \  O.Class.default.SomeVariable = SomeValue;\n</uscript>\n\n----\n\n'''Mysterial:'''\
+      \ It seems as though Actor references don't get properly set to None in objects\
+      \ not subclassed from Actor. I had an Interaction that set a variable to one\
+      \ of the local pawn's inventory items, and if that pawn died the game would\
+      \ often crash because the variable wasn't None even though the inventory item\
+      \ no longer existed.\n\nIn addition, the game will randomly crash during garbage\
+      \ collection if an object that is no longer referenced (for example, a menu\
+      \ long closed) if that object contains an invalid Actor reference. The trademark\
+      \ of such a crash is a long list of (Some Object)->Serialize strings in the\
+      \ backtrace.\n\n----\n\n'''Foxpaw:''' This works, but is bad mojo. So don't\
+      \ do it. It's probrably unstable. If you have a wierd, really wierd bug, maybe\
+      \ it's caused by something like this. I did it by mistake before I realized\
+      \ that I was using something I hadn't declared in that class, but in a subclass\
+      \ of it.\n\nPh3AR! A hole in the time-space continuum:\n\n<uscript>\nclass ImAClass\
+      \ extends Actor;\n\nvar Someotherclass Classtastic;\n\nfunction Ihavefunctions()\n\
+      {\n  ClassTastic.AStruct.Avar = 3;\n}\n// Blah blah blah.\n\nclass ASubclass\
+      \ extends ImAClass;\n\nstruct StructDef\n{\n  var float AVar;\n  var string\
+      \ AnotherVar;\n}\n// And then some...\n\nclass Someotherclass extends actor\
+      \ dependson(Asubclass);\n\nvar ASubclass.StructDef Astruct;\n</uscript>\n\n\
+      Note that we are calling something that hasn't really been defined yet. An even\
+      \ easier way of causng mayhem:\n\n<uscript>\nclass MyClass extends Actor;\n\
+      var MySubClass Submarine;\n\nclass MySubClass extends MyClass;\n</uscript>\n\
+      \nSuffice it to say, don't refer to subclasses of a class within that same class,\
+      \ or the UEd Goblin will eat your babies! Alternatively, this type of wanton\
+      \ class looping results in GPFs if you make a wrong move.\n\n'''Wormbo:''' That\
+      \ second thing works reasonably well with the [[Legacy:Actor|Actor]] class and\
+      \ its Instigator variable which is a [[Legacy:Pawn|Pawn]] reference (subclass\
+      \ of Actor) or its Level variable which a [[Legacy:LevelInfo|LevelInfo]] reference\
+      \ (also a subclass of Actor).\n\n'''Foxpaw:''' Well, yes, it works, it's just\
+      \ that it has a high risk of ceasing to work as a result of changes.. plus it's\
+      \ extremely poor OOP form, if you ask me.\n\n----\n\n'''Foxpaw:''' BSP that\
+      \ is extremely distant seems to not be drawn, or not be drawn properly. I made\
+      \ a cubic brush 2^18 units per side and the surfaces did not show up at all\
+      \ when I subtracted it. A brush 2^17 units per side showed up but had a HOM\
+      \ effect in the editor. Brushes of 2^16 units per side and smaller seem to work\
+      \ fine. This seems to work fine if the surfaces are fake backdrop, however.\n\
+      \n'''Birelli:''' To the BSP drawing thing - I imagine that has something to\
+      \ do with textures. When each \"tiling\" of the texture becomes less than 1\
+      \ pixel, for instance, the algorithm might start to break down. This wouldn't\
+      \ necessarily happen with fake backdrop because the backdrop isn't drawn the\
+      \ same way.\n\n----\n\n'''Foxpaw:''' I noticed that if you override a function\
+      \ in a subclass that has one or more variables declared as \"out\" variables,\
+      \ if you change the declaration in the subclass and leave out the \"out\" keyword,\
+      \ the compiler will accept the new version and that variable will not be treated\
+      \ as an \"out\" variable for that class and it's subclasses. I'm not sure if\
+      \ this works the other way around. (making a non-out variable an out variable.)\n\
+      \n----\n\n'''Foxpaw:''' If you destroy an actor within KImpact, UT2003 gives\
+      \ you a GPF. I believe this is because the list of all colliding actors is generated,\
+      \ then each collision isis evaluated. As a result, after the actor is destroyed\
+      \ other things that were colliding with that actor still want to collide with\
+      \ it an there's a null pointer being accessed within the native code. But that's\
+      \ just speculation on WHY it GPFs. The workaround appears to be setting a flag\
+      \ so the actor can destroy itself in Tick.\n\n'''Mysterial:''' This is true\
+      \ of pretty much every Karma event. In addition, you shouldn't edit the Karma\
+      \ properties of an object in a Karma function, for similar reasons. I *think*\
+      \ there are checks for these kinds of things in UT2004, but I'd take the safe\
+      \ path and just flag things for processing elsewhere.\n\n'''Foxpaw:''' I really\
+      \ hope they do include checks.. I'd really like to be able to destroy objects\
+      \ from within the KImpact event. If one of the ships in my mod hits something\
+      \ going at any kind of speed, it takes damage, which may result in destruction..\
+      \ so I've had to delay all destruction due to damage to the next tick, which\
+      \ is a bit hackier than I like.\n\n----\n\n'''Foxpaw:''' Apparently, using a\
+      \ reference in the default properties to call an iterator gives an \"invalid\
+      \ code token\" at runtime. IE, class'Whatever'.default.Singleton.SomeFunction()\
+      \ is okay, but foreach class'Whatever'.default.Singleton.AllObjects( class'etc',\
+      \ etc ) gives the invalid code token. I found this interesting as both seem\
+      \ like function calls and you can use an iterator like that for references not\
+      \ stored in the default properties.\n\nAlso AllActors is amazingly slow. A Uscripted\
+      \ Dynamic array with all the same contents can be iterated through in roughly\
+      \ one quarter of the time.\n\n----\n\nFrom Mod Authoring/Introduction to Gametypes\n\
+      \n==Update for UT2K4 :==\n\n'''BigJohn:''' This seems to have changed a bit\
+      \ in Unreal Tournament 2004. In order to make a gametype mod and have it appear\
+      \ under the game list, we now need to have 4 values in our GameType's class'\
+      \ defaultproperties :\n\n<uscript>\nclass MyGame extends DeathMatch;\n\ndefaultproperties\n\
+      {\n   GameName=\"My Game\"\n   Acronym=\"MG\"\n   MapPrefix=\"MG\"\n   Description=\"\
+      A bloody fight to the death!!!.\"\n}\n</uscript>\n\nAlso, there is no need for\
+      \ the Object line in the game's int file (But you do need the Preferences line!).\n\
+      \nYour MyPackage.int should look like this:\n\n<uscript>\n[Public]\nPreferences=(Caption=\"\
+      My Game\",Parent=\"Game Types\",Class=MyPackage.MyGame,Immediate=True)\n\n[MyGame]\n\
+      GameName=\"My Game\"\nDescription=\"A bloody fight to the death!!!.\"\n</uscript>\n\
+      \nYou can use the command \n\nucc dumpint MyGame.u \n\nto create the [MyGame]\
+      \ section in the .int file.\n\nUCC can generate a .ucl file from our package's\
+      \ .u file. This can be achieved by typing this command:\n\nucc exportcache MyGame.u\
+      \ MyGame.ucl\n\nOnce this is done, the only thing left is to have a map in the\
+      \ UT2004\\Maps folder with the appropriate prefix, in the above case MG.\n\n\
+      ----\n\n'''Tarquin:''' We can't edit these pages because they are by Epic. Please\
+      \ can we find another home for the above piece of text?\n\nCo11: Also, for ut2004..\
+      \ it seems that Deathmatchplus and TeamGamePlus are no longer functional. Try\
+      \ just Deathmatch and TeamGame.\n\n'''Wormbo:''' As stated on [[Legacy:Mod Authoring|Mod\
+      \ Authoring]] this whole tutorial is only for [[Legacy:UT|UT]], not for newer\
+      \ engine versions. For anything else go to [[Legacy:UnrealScript Lessons|UnrealScript\
+      \ Lessons]] or [[Legacy:Making Mods|Making Mods]].\n\n[[:Category:Legacy To\
+      \ Do]] &rarr; Move content to the correct pages.\n\n----\n\n'''Foxpaw:''' I\
+      \ noticed something interesting today, apparently function arguments in subclasses\
+      \ need not have the same names as their original declarations, as long as they\
+      \ are of the same type and in the same order. IE, the following is valid:\n\n\
+      <uscript>\nclass A extends Object;\n\nfunction F( float P )\n{\n  // Do Stuff.\n\
+      }\n</uscript>\n\n<uscript>\nclass B extends A;\n\nfunction F( float Q )\n{\n\
+      \  Super.F( Q );\n\n  // Do some other stuff.\n}\n</uscript>\n\nOf questionable\
+      \ value, but it's possible. I noticed that some of Epic's code uses \"dt\" as\
+      \ the argument name for tick some places instead of \"Delta,\" so I tested it\
+      \ in my own code and it seems to work.\n\n'''MythOpus:''' Yep :D  I caught on\
+      \ to that quite quickly.  It helps to give more descriptive names to arguments\
+      \ in your code, rather than using epics stuff.\n\n'''Mychaeel:''' Indeed.  Usually,\
+      \ in any object-oriented language, only the function prototype &ndash; i.e.\
+      \ the function name, its return type and its parameter types, but not the symbolic\
+      \ parameter names &ndash; are relevant for resolving a function reference. \
+      \ (In many languages which support function pre-declaration, it's even valid\
+      \ to leave the parameter names out: <code>void foo(float, int)</code> is perfectly\
+      \ valid in C and C++.)\n\n----\n\n'''Blip2:''' I found this cool program for\
+      \ the text colours in UT this apparently causes problems with names but I have\
+      \ found it is useful with in-game coloured messages I would write happily write\
+      \ a paragraph or two about how to do this and where to get this program if I\
+      \ knew where to write it (any ideas?)\n\n'''Graphik:''' Create a page for it.\n\
+      [[Category:Legacy To Do|{{PAGENAME}}]]"
+  properties: []
+  revId: 3651
+name: "Legacy:Inbox"
+revision:
+  revid: 3651
+  parentid: 3652
+  user: "Graphik"
+  timestamp: 1127341457.000000000
+  comment: "*"
+timestamp: 1668766141.900479000

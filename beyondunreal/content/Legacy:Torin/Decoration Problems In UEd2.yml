@@ -1,0 +1,270 @@
+---
+parse:
+  title: "Legacy:Torin/Decoration Problems In UEd2"
+  text:
+    text: "<p>28 May 2005</p>\n<p><b>Torin:</b> I found something interesting while\
+      \ looking at decorations; it appears that in UnrealEd2 a duplicate class name\
+      \ will be at least partially 'overridden' by an existing class name EVEN IF\
+      \ they subclass different classes. So the class definitions below will clash.\
+      \ Picking Actor-&gt;Decoration-&gt;ut_Decoration-&gt;Boulder1 from the Actor\
+      \ Class Browser will select the UnrealI.Boulder1 class, not the Botpack.Boulder1\
+      \ class.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n\
+      <div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\"\
+      >class</span> Botpack.<span class=\"me0\">Boulder1</span>\n<span class=\"co1\"\
+      >//=============================================================================</span>\n\
+      <span class=\"co1\">// boulder1.</span>\n<span class=\"co1\">//=============================================================================</span>\n\
+      <span class=\"kw1\">class</span> Boulder1 <span class=\"kw1\">extends</span>\
+      \ ut_Decoration;</pre></div>\n</div>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">class</span> UnrealI.<span class=\"me0\">Boulder1</span>\n\
+      <span class=\"co1\">//=============================================================================</span>\n\
+      <span class=\"co1\">// Boulder1.</span>\n<span class=\"co1\">//=============================================================================</span>\n\
+      <span class=\"kw1\">class</span> Boulder1 <span class=\"kw1\">extends</span>\
+      \ BigRock;\n \n<span class=\"kw1\">function</span> SpawnChunks<span class=\"\
+      br0\">(</span><span class=\"kw5\">int</span> num<span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n\t...</pre></div>\n</div>\n<blockquote class=\"\
+      legacyquote\">\n<p>Note: Anywhere in this where you see \"UnrealI\" the last\
+      \ two letters are l as in light and I as in index (or Lima Indigo if you like,\
+      \ or maybe 'ell' 'aye')</p>\n<p>Likewise for Boulder1 it's an 'ell' in the middle\
+      \ and a 'one' at the end.</p>\nOh, for pity's sake, this is a techie wiki! Why\
+      \ can't we use fonts where the number '1' and the lowercase 'l' and the uppercase\
+      \ 'I' all look different? Oh! I forgot the '</blockquote>\n<p><b>T-1:</b> SECONDED.</p>\n\
+      <p>If you look in UnrealTournament.ini in the [Editor.EditorEngine] section\
+      \ you will notice that the order is:</p>\n<blockquote class=\"legacyquote\"\
+      >\n<p>{{{1}}}</p>\n</blockquote>\n<p>If you comment out \"EditPackages=UnrealI\"\
+      \ the Actor-&gt;Projectile-&gt;BigRock-&gt;Boulder1 class is not shown in the\
+      \ Actor Class Browser. It is part of UnrealI! The Actor-&gt;Decoration-&gt;ut_Decoration-&gt;Boulder1\
+      \ now shows the expected Botpack definition.</p>\n<p>If you move the \"EditPackages=UnrealI\"\
+      \ somewhere after the \"EditPackages=Botpack\" then the Actor Class Browser\
+      \ shows both Boulder1 classes with the Botpack.Boulder1 definition.</p>\n<p>How\
+      \ about usage in a map? Does the game engine know the difference?</p>\n<p>OK,\
+      \ so we start with the \"EditPackages=UnrealI\" commented out. (I wanna see\
+      \ the Botpack.Boulder1 &lt;grin&gt;) Fire up the editor and make a 1024 cube\
+      \ subtraction for the room. Put in a Playerstart in one corner, the utDecoration-&gt;Boulder1\
+      \ in the diagonally opposite corner and a light in the middle. The boulder shows\
+      \ up half buried in the floor, but that would be normal for a boulder.</p>\n\
+      <p>Rebuild, Save, Play.</p>\n<p>You don't have to hide under that rock, you\
+      \ can get right inside it!</p>\n<p>OK, now close the editor (if you used the\
+      \ editor's autoplay), put \"EditPackages=UnrealI\" back where it belongs. This\
+      \ is an .ini file that gets modified by the game engine, so the game (including\
+      \ the editor) needs to be OFF when you modify it.</p>\n<p>Now start up UnrealEd2,\
+      \ Load up the test map and add in the UnrealI.Boulder1 from Actor-&gt;Projectile-&gt;BigRock-&gt;Boulder1\
+      \ near the light and about halfway to the ceiling so we can see it before it\
+      \ breaks &lt;grin&gt;.</p>\n<p>Rebuild, Save, Play.</p>\n<p>And voila! we see\
+      \ a big boulder in the corner and some rock chunks flying around. The game engine\
+      \ has no problem knowing the difference between our two \"Boulder1\" classes.\
+      \ Even rebuilding the map is not a problem, though if you right click on the\
+      \ Botpack.Boulder1 mesh in an editor view and select \"Edit Script\" you will\
+      \ be shown the script for \"UnrealI.Boulder1\".</p>\n<p>Finally, try exporting\
+      \ the map (File-&gt;Export) and check out the boulder situation.</p>\n<p>Oops!\
+      \ No mention of the source of the class at all! So depending on which EditPackages\
+      \ lines you have and their order in UnrealTournament.ini, if you import the\
+      \ .t3d file you might get two UnrealI.Boulder1 objects or two Botpack.Boulder1\
+      \ objects!</p>\n<p>We can manually add in the source of the class for each Boulder1\
+      \ in the .t3d file. The UnrealI.Boulder1 was moved so find the actor with Location\
+      \ and OldLocation values that are different and change the \"Begin Actor Class=Boulder1\"\
+      \ to \"Begin Actor Class=UnrealI.Boulder1 \". By process of elimination the\
+      \ other \"Begin Actor Class=Boulder1\" has to be \"Begin Actor Class=Botpack.Boulder1\"\
+      . Now it will Import properly.</p>\n<h4><span class=\"mw-headline\" id=\"Summary:\"\
+      >Summary:</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Torin/Decoration_Problems_In_UEd2?section=1\"\
+      \ title=\"Edit section: Summary:\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h4>\n<ol>\n<li>The \"Actor Class Browser\" can properly build\
+      \ the class tree view with two classes with the same name but from different\
+      \ packages and different subclassing.&#160;:D</li>\n</ol>\n<ol>\n<li>The \"\
+      Actor Class Browser\" can NOT select both objects from the class tree view with\
+      \ two classes with the same name but from different packages and different subclassing.\
+      \ The class from the package whose EditPackages= line is listed first in the\
+      \ [Editor.EditorEngine] section of UnrealTournament.ini will be accessible at\
+      \ both locations on the class tree view.&#160;:tdown:</li>\n</ol>\n<ol>\n<li>The\
+      \ \"Edit Script\" context menu item in the \"Actor Class Browser\" can NOT select\
+      \ both objects from the class tree view with two classes with the same name\
+      \ but from different packages and different subclassing. The class from the\
+      \ package whose EditPackages= line is listed first in the [Editor.EditorEngine]\
+      \ section of UnrealTournament.ini will be accessible at both locations on the\
+      \ class tree view.&#160;:tdown:</li>\n</ol>\n<ol>\n<li>The \"Edit Script\" context\
+      \ menu item for an actor object in the map views can NOT select both objects\
+      \ from the class tree with two classes with the same name but from different\
+      \ packages and different subclassing. The class from the package whose EditPackages=\
+      \ line is listed first in the [Editor.EditorEngine] section of UnrealTournament.ini\
+      \ will be shown. The window title will show the correct name for the object\
+      \ selected.&#160;:tdown:</li>\n</ol>\n<ol>\n<li>The \"Actor Properties\" context\
+      \ menu item for an actor object in the map views will correctly show the properties\
+      \ for the object when the class tree contains two classes with the same name\
+      \ but from different packages and different subclassing.&#160;:D</li>\n</ol>\n\
+      <ol>\n<li>The \"Select All &lt;name&gt;\" context menu item for an actor object\
+      \ in the map views will select all objects of both classes for a class tree\
+      \ with two classes with the same name but from different packages and different\
+      \ subclassing.&#160;:tdown:</li>\n</ol>\n<ol>\n<li>A map which was built with\
+      \ only one of the two packages available will correctly rebuild with two classes\
+      \ with the same name but from different packages and different subclassing,\
+      \ regardless of the order of the EditPackages= lines in the [Editor.EditorEngine]\
+      \ section of UnrealTournament.ini&#160;:D</li>\n</ol>\n<ol>\n<li>Exporting a\
+      \ map which uses two classes with the same name but from different packages\
+      \ and different subclassing to a .t3d file does not differentiate between the\
+      \ two different classes. The package names are NOT exported, only the class\
+      \ name.&#160;:tdown:</li>\n</ol>\n<ol>\n<li>Importing a .t3d file on an UnrealEd2\
+      \ installation with two classes with the same name but from different packages\
+      \ and different subclassing will use The class from the package whose EditPackages=\
+      \ line is listed first in the [Editor.EditorEngine] section of UnrealTournament.ini&#160;:tdown:</li>\n\
+      </ol>\n<ol>\n<li>Importing a .t3d file on an UnrealEd2 installation with packages\
+      \ specified for individual objects will succeed. If a .t3d file is manually\
+      \ edited so that object classes are specified as \"Begin Actor Class=&lt;package&gt;.&lt;class&gt;\
+      \ Name=&lt;name&gt;\" the correct objects will be inserted in the map. (Assuming\
+      \ that the packages are actually available.)&#160;:D</li>\n</ol>\n<h4><span\
+      \ class=\"mw-headline\" id=\"Conclusion:\">Conclusion:</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Torin/Decoration_Problems_In_UEd2?section=2\"\
+      \ title=\"Edit section: Conclusion:\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h4>\n<p>While the game engine appears to support two classes\
+      \ with the same name but from different packages and different subclassing,\
+      \ the editor does not in several ways. Since an existing map can in all cases\
+      \ tested be rebuilt without harm in spite of the problem, fixing the errors\
+      \ should not cause compatibility problems.</p>\n<p>Now, if I could just get\
+      \ my hands on the code...&#160;;)</p>\n\n<!-- \nNewPP limit report\nCPU time\
+      \ usage: 0.069 seconds\nReal time usage: 0.278 seconds\nPreprocessor visited\
+      \ node count: 48/1000000\nPreprocessor generated node count: 145/1000000\nPost‐\
+      expand include size: 1041/2097152 bytes\nTemplate argument size: 401/2097152\
+      \ bytes\nHighest expansion depth: 3/40\nExpensive parser function count: 0/100\n\
+      -->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n100.00%\
+      \   32.533      1 - -total\n 98.71%   32.114      2 - Template:Innerbox\n-->\n\
+      \n<!-- Saved in parser cache with key wiki:pcache:idhash:3114-0!*!*!!*!*!* and\
+      \ timestamp 20221118031804 and revision id 8165\n -->\n"
+  categories:
+  - sortkey: "Torin/Decoration Problems In UEd2"
+    name: "Legacy_Rant"
+  links: []
+  templates:
+  - ns: 10
+    exists: true
+    name: "Template:Innerbox"
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "4"
+    line: "Summary:"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Torin/Decoration_Problems_In_UEd2"
+    byteoffset: 4218
+    anchor: "Summary:"
+  - toclevel: 1
+    level: "4"
+    line: "Conclusion:"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Torin/Decoration_Problems_In_UEd2"
+    byteoffset: 7277
+    anchor: "Conclusion:"
+  displaytitle: "Legacy:Torin/Decoration Problems In UEd2"
+  iwlinks: []
+  wikitext:
+    text: "28 May 2005\n\n'''Torin:''' I found something interesting while looking\
+      \ at decorations; it appears that in UnrealEd2 a duplicate class name will be\
+      \ at least partially 'overridden' by an existing class name EVEN IF they subclass\
+      \ different classes. So the class definitions below will clash. Picking Actor->Decoration->ut_Decoration->Boulder1\
+      \ from the Actor Class Browser will select the UnrealI.Boulder1 class, not the\
+      \ Botpack.Boulder1 class.\n\n<uscript>\nclass Botpack.Boulder1\n//=============================================================================\n\
+      // boulder1.\n//=============================================================================\n\
+      class Boulder1 extends ut_Decoration;\n</uscript>\n\n<uscript>\nclass UnrealI.Boulder1\n\
+      //=============================================================================\n\
+      // Boulder1.\n//=============================================================================\n\
+      class Boulder1 extends BigRock;\n\nfunction SpawnChunks(int num)\n{\n\t...\n\
+      </uscript>\n\n{{innerbox|Note: Anywhere in this where you see \"UnrealI\" the\
+      \ last two letters are l as in light and I as in index (or Lima Indigo if you\
+      \ like, or maybe 'ell' 'aye')\n\nLikewise for Boulder1 it's an 'ell' in the\
+      \ middle and a 'one' at the end.\n\nOh, for pity's sake, this is a techie wiki!\
+      \ Why can't we use fonts where the number '1' and the lowercase 'l' and the\
+      \ uppercase 'I' all look different? Oh! I forgot the '|' OR-bar!\n\n}}\n\n'''T-1:'''\
+      \ SECONDED.\n\nIf you look in UnrealTournament.ini in the [Editor.EditorEngine]\
+      \ section you will notice that the order is:\n\n{{innerbox|...\n\n[Editor.EditorEngine]\n\
+      \n...\n\nEditPackages=UnrealI\n\nEditPackages=UMenu\n\nEditPackages=Botpack\n\
+      \n...\n\n}}\n\nIf you comment out \"EditPackages=UnrealI\" the Actor->Projectile->BigRock->Boulder1\
+      \ class is not shown in the Actor Class Browser. It is part of UnrealI! The\
+      \ Actor->Decoration->ut_Decoration->Boulder1 now shows the expected Botpack\
+      \ definition.\n\nIf you move the \"EditPackages=UnrealI\" somewhere after the\
+      \ \"EditPackages=Botpack\" then the Actor Class Browser shows both Boulder1\
+      \ classes with the Botpack.Boulder1 definition.\n\nHow about usage in a map?\
+      \ Does the game engine know the difference?\n\nOK, so we start with the \"EditPackages=UnrealI\"\
+      \ commented out. (I wanna see the Botpack.Boulder1 <grin>) Fire up the editor\
+      \ and make a 1024 cube subtraction for the room. Put in a Playerstart in one\
+      \ corner, the utDecoration->Boulder1 in the diagonally opposite corner and a\
+      \ light in the middle. The boulder shows up half buried in the floor, but that\
+      \ would be normal for a boulder.\n\nRebuild, Save, Play.\n\nYou don't have to\
+      \ hide under that rock, you can get right inside it!\n\nOK, now close the editor\
+      \ (if you used the editor's autoplay), put \"EditPackages=UnrealI\" back where\
+      \ it belongs. This is an .ini file that gets modified by the game engine, so\
+      \ the game (including the editor) needs to be OFF when you modify it.\n\nNow\
+      \ start up UnrealEd2, Load up the test map and add in the UnrealI.Boulder1 from\
+      \ Actor->Projectile->BigRock->Boulder1 near the light and about halfway to the\
+      \ ceiling so we can see it before it breaks <grin>.\n\nRebuild, Save, Play.\n\
+      \nAnd voila! we see a big boulder in the corner and some rock chunks flying\
+      \ around. The game engine has no problem knowing the difference between our\
+      \ two \"Boulder1\" classes. Even rebuilding the map is not a problem, though\
+      \ if you right click on the Botpack.Boulder1 mesh in an editor view and select\
+      \ \"Edit Script\" you will be shown the script for \"UnrealI.Boulder1\".\n\n\
+      Finally, try exporting the map (File->Export) and check out the boulder situation.\n\
+      \nOops! No mention of the source of the class at all! So depending on which\
+      \ EditPackages lines you have and their order in UnrealTournament.ini, if you\
+      \ import the .t3d file you might get two UnrealI.Boulder1 objects or two Botpack.Boulder1\
+      \ objects!\n\nWe can manually add in the source of the class for each Boulder1\
+      \ in the .t3d file. The UnrealI.Boulder1 was moved so find the actor with Location\
+      \ and OldLocation values that are different and change the \"Begin Actor Class=Boulder1\"\
+      \ to \"Begin Actor Class=UnrealI.Boulder1 \". By process of elimination the\
+      \ other \"Begin Actor Class=Boulder1\" has to be \"Begin Actor Class=Botpack.Boulder1\"\
+      . Now it will Import properly.\n\n====Summary:====\n\n#The \"Actor Class Browser\"\
+      \ can properly build the class tree view with two classes with the same name\
+      \ but from different packages and different subclassing. :D\n\n#The \"Actor\
+      \ Class Browser\" can NOT select both objects from the class tree view with\
+      \ two classes with the same name but from different packages and different subclassing.\
+      \ The class from the package whose EditPackages= line is listed first in the\
+      \ [Editor.EditorEngine] section of UnrealTournament.ini will be accessible at\
+      \ both locations on the class tree view. :tdown:\n\n#The \"Edit Script\" context\
+      \ menu item in the \"Actor Class Browser\" can NOT select both objects from\
+      \ the class tree view with two classes with the same name but from different\
+      \ packages and different subclassing. The class from the package whose EditPackages=\
+      \ line is listed first in the [Editor.EditorEngine] section of UnrealTournament.ini\
+      \ will be accessible at both locations on the class tree view. :tdown:\n\n#The\
+      \ \"Edit Script\" context menu item for an actor object in the map views can\
+      \ NOT select both objects from the class tree with two classes with the same\
+      \ name but from different packages and different subclassing. The class from\
+      \ the package whose EditPackages= line is listed first in the [Editor.EditorEngine]\
+      \ section of UnrealTournament.ini will be shown. The window title will show\
+      \ the correct name for the object selected. :tdown:\n\n#The \"Actor Properties\"\
+      \ context menu item for an actor object in the map views will correctly show\
+      \ the properties for the object when the class tree contains two classes with\
+      \ the same name but from different packages and different subclassing. :D\n\n\
+      #The \"Select All <name>\" context menu item for an actor object in the map\
+      \ views will select all objects of both classes for a class tree with two classes\
+      \ with the same name but from different packages and different subclassing.\
+      \ :tdown:\n\n#A map which was built with only one of the two packages available\
+      \ will correctly rebuild with two classes with the same name but from different\
+      \ packages and different subclassing, regardless of the order of the EditPackages=\
+      \ lines in the [Editor.EditorEngine] section of UnrealTournament.ini :D\n\n\
+      #Exporting a map which uses two classes with the same name but from different\
+      \ packages and different subclassing to a .t3d file does not differentiate between\
+      \ the two different classes. The package names are NOT exported, only the class\
+      \ name. :tdown:\n\n#Importing a .t3d file on an UnrealEd2 installation with\
+      \ two classes with the same name but from different packages and different subclassing\
+      \ will use The class from the package whose EditPackages= line is listed first\
+      \ in the [Editor.EditorEngine] section of UnrealTournament.ini :tdown:\n\n#Importing\
+      \ a .t3d file on an UnrealEd2 installation with packages specified for individual\
+      \ objects will succeed. If a .t3d file is manually edited so that object classes\
+      \ are specified as \"Begin Actor Class=<package>.<class> Name=<name>\" the correct\
+      \ objects will be inserted in the map. (Assuming that the packages are actually\
+      \ available.) :D\n\n====Conclusion:====\n\nWhile the game engine appears to\
+      \ support two classes with the same name but from different packages and different\
+      \ subclassing, the editor does not in several ways. Since an existing map can\
+      \ in all cases tested be rebuilt without harm in spite of the problem, fixing\
+      \ the errors should not cause compatibility problems.\n\nNow, if I could just\
+      \ get my hands on the code... ;)\n\n[[Category:Legacy Rant|{{PAGENAME}}]]"
+  properties: []
+  revId: 8165
+name: "Legacy:Torin/Decoration Problems In UEd2"
+revision:
+  revid: 8165
+  parentid: 8166
+  user: "T1"
+  timestamp: 1135964061.000000000
+  comment: "I second the font thing"
+timestamp: 1668784818.935140000

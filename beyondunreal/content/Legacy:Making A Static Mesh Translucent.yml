@@ -1,0 +1,273 @@
+---
+parse:
+  title: "Legacy:Making A Static Mesh Translucent"
+  text:
+    text: "<p>This page describes how to <b>dynamically</b> make Static mesh's appear\
+      \ translucent (similar to the way Style=STY_Translucent could do the same with\
+      \ actors in Unreal Engine1), what that means is you should be able to modify\
+      \ the textures on any existing Static mesh during runtime and make them appear\
+      \ translucent using the Alpha drawtype.</p>\n<p>In fact, you can do pretty much\
+      \ anything that can be done with the entire <a href=\"/Legacy:Material\" title=\"\
+      Legacy:Material\">Material</a>/<a href=\"/Legacy:Shader\" title=\"Legacy:Shader\"\
+      >Shader</a> system as this method relies on replacing a Static mesh's original\
+      \ textures.</p>\n<p>The process of making existing texture's translucent on\
+      \ a Static mesh is not actually too difficult (albeit there are problems described\
+      \ later), but the hard part is <a href=\"/Legacy:Dynamicly_Accessing_Original_Static_Mesh_Textures\"\
+      \ title=\"Legacy:Dynamicly Accessing Original Static Mesh Textures\">Dynamicly\
+      \ Accessing Original Static Mesh Textures</a> but thankfully there is a page\
+      \ to describe how that's done&#160;:) (and you will need the code from that\
+      \ page, it is not included here because I intend to update these pages seperately\
+      \ AND this is a slightly different subject)</p>\n<p>Here is the code I have\
+      \ used for making certain Static mesh's appear translucent, due to my limited\
+      \ knowledge of shaders I have had to limit this code in some respects (i.e.\
+      \ if some particular shader options are used it can interfere in such a way\
+      \ as to make the translucency effect not work) if you can improve on my workarounds\
+      \ for some shaders then please do as the code in it's current form is somewhat\
+      \ limited.</p>\n<p><b>NOTE:</b>You will find the latest <i>FindStaticMeshSkins</i>\
+      \ function code on the <a href=\"/Legacy:Dynamicly_Accessing_Original_Static_Mesh_Textures\"\
+      \ title=\"Legacy:Dynamicly Accessing Original Static Mesh Textures\">Dynamicly\
+      \ Accessing Original Static Mesh Textures</a> page.</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"co1\">// This function is used to create a\
+      \ new shader with an opacity channel at a certain Alpha (to create the translucency\
+      \ effect)</span>\n \n<span class=\"kw1\">simulated</span> <span class=\"kw1\"\
+      >function</span> <span class=\"kw5\">Shader</span> CreateNewTShader<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>\n \n<span class=\"br0\">{</span>\n\
+      \ \n\t<span class=\"kw1\">local</span> <span class=\"kw5\">Shader</span> ShaderObj;\n\
+      \ \n\tShaderObj <span class=\"sy0\">=</span> <span class=\"kw1\">New</span>\
+      \ <span class=\"kw1\">Class</span><span class=\"st0\">'Engine.Shader'</span>;\n\
+      \ \n\t<span class=\"co1\">// Creates translucency</span>\n \n\tShaderObj.<span\
+      \ class=\"me0\">Opacity</span> <span class=\"sy0\">=</span> <span class=\"kw1\"\
+      >New</span> <span class=\"kw1\">Class</span><span class=\"st0\">'Engine.ConstantColor'</span>;\n\
+      \ \n\t<span class=\"kw5\">ConstantColor</span><span class=\"br0\">(</span>ShaderObj.<span\
+      \ class=\"me0\">Opacity</span><span class=\"br0\">)</span>.<span class=\"kw5\"\
+      >Color</span>.<span class=\"me0\">A</span> <span class=\"sy0\">=</span> <span\
+      \ class=\"nu0\">128.0</span>;\n \n\t<span class=\"kw2\">return</span> ShaderObj;\n\
+      \ \n<span class=\"br0\">}</span>\n \n<span class=\"co1\">// This is the main\
+      \ function where most texture/shader changes are made</span>\n \n<span class=\"\
+      kw1\">simulated</span> <span class=\"kw1\">function</span> MakeActorTranslucent<span\
+      \ class=\"br0\">(</span><span class=\"kw9\">actor</span> A<span class=\"br0\"\
+      >)</span>\n \n<span class=\"br0\">{</span>\n \n\t<span class=\"kw1\">local</span>\
+      \ Array<span class=\"sy0\">&lt;</span>Material<span class=\"sy0\">&gt;</span>\
+      \ NewSkins;\n \n\t<span class=\"kw1\">local</span> <span class=\"kw5\">Material</span>\
+      \ TempMat;\n \n\t<span class=\"kw1\">local</span> <span class=\"kw5\">int</span>\
+      \ i;\n \n\t<span class=\"co1\">// First of all retrieve the list of existing\
+      \ skins</span>\n \n\tNewSkins <span class=\"sy0\">=</span> FindStaticMeshSkins<span\
+      \ class=\"br0\">(</span>A.<span class=\"kw5\">StaticMesh</span><span class=\"\
+      br0\">)</span>;\n \n\t<span class=\"co1\">// Then iterate that list and try\
+      \ to make the skin translucent (using a ConstantColor modifier to change the\
+      \ Alpha)</span>\n \n\t<span class=\"kw2\">for</span> <span class=\"br0\">(</span>i<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0</span>; i<span class=\"sy0\">&lt;</span>NewSkins.<span\
+      \ class=\"me0\">Length</span>; i<span class=\"sy0\">++</span><span class=\"\
+      br0\">)</span>\n \n\t<span class=\"br0\">{</span>\n \n\t\t<span class=\"co1\"\
+      >// If the skin is already a shader this creates some difficulty, the code will\
+      \ 'try' to compensate but you will notice that this will not work on a lot of\
+      \ things</span>\n \n\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw5\">Shader</span><span class=\"br0\">(</span>NewSkins<span class=\"\
+      br0\">[</span>i<span class=\"br0\">]</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">!=</span> <span class=\"kw5\">None</span><span class=\"br0\"\
+      >)</span>\n \n\t\t<span class=\"br0\">{</span>\n \n\t\t\t<span class=\"co1\"\
+      >// If SelfIllumination is set then your really screwed...This code tries to\
+      \ compensate with FallbackMaterial's...Open to suggestions here</span>\n \n\t\
+      \t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      kw5\">Shader</span><span class=\"br0\">(</span>NewSkins<span class=\"br0\">[</span>i<span\
+      \ class=\"br0\">]</span><span class=\"br0\">)</span>.<span class=\"me0\">SelfIllumination</span>\
+      \ <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span><span class=\"\
+      br0\">)</span>\n \n\t\t\t<span class=\"br0\">{</span>\n \n\t\t\t\t<span class=\"\
+      co1\">// Look for a useable FallbackMaterial, if you can't find one then get\
+      \ rid of the SelfIllumination (last resort)</span>\n \n\t\t\t\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>NewSkins<span class=\"br0\">[</span>i<span\
+      \ class=\"br0\">]</span>.<span class=\"me0\">FallbackMaterial</span> <span class=\"\
+      sy0\">!=</span> <span class=\"kw5\">None</span> <span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"br0\">(</span><span class=\"kw5\">Shader</span><span class=\"\
+      br0\">(</span>NewSkins<span class=\"br0\">[</span>i<span class=\"br0\">]</span>.<span\
+      \ class=\"me0\">FallbackMaterial</span><span class=\"br0\">)</span> <span class=\"\
+      sy0\">==</span> <span class=\"kw5\">none</span> <span class=\"sy0\">||</span>\
+      \ <span class=\"kw5\">Shader</span><span class=\"br0\">(</span>Newskins<span\
+      \ class=\"br0\">[</span>i<span class=\"br0\">]</span>.<span class=\"me0\">FallbackMaterial</span><span\
+      \ class=\"br0\">)</span>.<span class=\"me0\">SelfIllumination</span> <span class=\"\
+      sy0\">==</span> <span class=\"kw5\">none</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span>\n \n\t\t\t\t<span class=\"br0\">{</span>\n \n\t\t\t\
+      \t\t<span class=\"co1\">// If the FallbackMaterial is a shader itself then attempt\
+      \ to use it</span>\n \n\t\t\t\t\t<span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span><span class=\"kw5\">Shader</span><span class=\"br0\">(</span>NewSkins<span\
+      \ class=\"br0\">[</span>i<span class=\"br0\">]</span>.<span class=\"me0\">FallbackMaterial</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span><span\
+      \ class=\"br0\">)</span>\n \n\t\t\t\t\t\tNewSkins<span class=\"br0\">[</span>i<span\
+      \ class=\"br0\">]</span> <span class=\"sy0\">=</span> NewSkins<span class=\"\
+      br0\">[</span>i<span class=\"br0\">]</span>.<span class=\"me0\">FallbackMaterial</span>;\n\
+      \ \n\t\t\t\t\t<span class=\"kw2\">else</span>\n \n\t\t\t\t\t<span class=\"br0\"\
+      >{</span>\n \n\t\t\t\t\t\tTempMat <span class=\"sy0\">=</span> NewSkins<span\
+      \ class=\"br0\">[</span>i<span class=\"br0\">]</span>.<span class=\"me0\">FallbackMaterial</span>;\n\
+      \ \n\t\t\t\t\t\tNewSkins<span class=\"br0\">[</span>i<span class=\"br0\">]</span>\
+      \ <span class=\"sy0\">=</span> CreateNewTShader<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n \n\t\t\t\t\t\t<span class=\"kw5\">Shader</span><span\
+      \ class=\"br0\">(</span>NewSkins<span class=\"br0\">[</span>i<span class=\"\
+      br0\">]</span><span class=\"br0\">)</span>.<span class=\"me0\">Diffuse</span>\
+      \ <span class=\"sy0\">=</span> TempMat;\n \n\t\t\t\t\t<span class=\"br0\">}</span>\n\
+      \ \n\t\t\t\t<span class=\"br0\">}</span>\n \n\t\t\t\t<span class=\"kw2\">else</span>\
+      \ <span class=\"kw2\">if</span> <span class=\"br0\">(</span>NewSkins<span class=\"\
+      br0\">[</span>i<span class=\"br0\">]</span>.<span class=\"me0\">FallbackMaterial</span>\
+      \ <span class=\"sy0\">==</span> <span class=\"kw5\">None</span><span class=\"\
+      br0\">)</span>\n \n\t\t\t\t\t<span class=\"kw5\">Shader</span><span class=\"\
+      br0\">(</span>NewSkins<span class=\"br0\">[</span>i<span class=\"br0\">]</span><span\
+      \ class=\"br0\">)</span>.<span class=\"me0\">SelfIllumination</span> <span class=\"\
+      sy0\">=</span> <span class=\"kw5\">None</span>;\n \n\t\t\t<span class=\"br0\"\
+      >}</span>\n \n\t\t\t<span class=\"co1\">// Create translucency</span>\n \n\t\
+      \t\t<span class=\"kw5\">Shader</span><span class=\"br0\">(</span>NewSkins<span\
+      \ class=\"br0\">[</span>i<span class=\"br0\">]</span><span class=\"br0\">)</span>.<span\
+      \ class=\"me0\">Opacity</span> <span class=\"sy0\">=</span> <span class=\"kw1\"\
+      >New</span> <span class=\"kw1\">Class</span><span class=\"st0\">'Engine.ConstantColor'</span>;\n\
+      \ \n\t\t\t<span class=\"kw5\">ConstantColor</span><span class=\"br0\">(</span><span\
+      \ class=\"kw5\">Shader</span><span class=\"br0\">(</span>NewSkins<span class=\"\
+      br0\">[</span>i<span class=\"br0\">]</span><span class=\"br0\">)</span>.<span\
+      \ class=\"me0\">Opacity</span><span class=\"br0\">)</span>.<span class=\"kw5\"\
+      >Color</span>.<span class=\"me0\">A</span> <span class=\"sy0\">=</span> <span\
+      \ class=\"nu0\">128</span>;\n \n\t\t<span class=\"br0\">}</span>\n \n\t\t<span\
+      \ class=\"co1\">// If this is called then the translucency changes should take\
+      \ place perfectly</span>\n \n\t\t<span class=\"kw2\">else</span>\n \n\t\t<span\
+      \ class=\"br0\">{</span>\n \n\t\t\tTempMat <span class=\"sy0\">=</span> CreateNewTShader<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n \n\t\t\t<span class=\"\
+      kw5\">Shader</span><span class=\"br0\">(</span>TempMat<span class=\"br0\">)</span>.<span\
+      \ class=\"me0\">Diffuse</span> <span class=\"sy0\">=</span> NewSkins<span class=\"\
+      br0\">[</span>i<span class=\"br0\">]</span>;\n \n\t\t\tNewSkins<span class=\"\
+      br0\">[</span>i<span class=\"br0\">]</span> <span class=\"sy0\">=</span> TempMat;\n\
+      \ \n\t\t<span class=\"br0\">}</span>\n \n\t\t<span class=\"co1\">// Setup the\
+      \ actor's Skins array</span>\n \n\t\tA.<span class=\"kw7\">Skins</span><span\
+      \ class=\"br0\">[</span>i<span class=\"br0\">]</span> <span class=\"sy0\">=</span>\
+      \ NewSkins<span class=\"br0\">[</span>i<span class=\"br0\">]</span>;\n \n\t\
+      <span class=\"br0\">}</span>\n \n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<h2><span class=\"mw-headline\" id=\"Related_Topics\">Related Topics</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Making_A_Static_Mesh_Translucent?section=1\" title=\"\
+      Edit section: Related Topics\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<ul>\n<li><a href=\"/Legacy:Static_Mesh\" title=\"Legacy:Static\
+      \ Mesh\">Static Mesh</a></li>\n<li><a href=\"/Legacy:Dynamicly_Accessing_Original_Static_Mesh_Textures\"\
+      \ title=\"Legacy:Dynamicly Accessing Original Static Mesh Textures\">Dynamicly\
+      \ Accessing Original Static Mesh Textures</a></li>\n<li><a href=\"/Legacy:Material\"\
+      \ title=\"Legacy:Material\">Material</a></li>\n<li><a href=\"/Legacy:Shader\"\
+      \ title=\"Legacy:Shader\">Shader</a></li>\n</ul>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Comments\">Comments</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Making_A_Static_Mesh_Translucent?section=2\"\
+      \ title=\"Edit section: Comments\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p><b>Shambler:</b> When I created this code for my own\
+      \ purposes I didn't have to account for every single possible combination of\
+      \ shaders and modifiers, thus if people know a good way of improving this code\
+      \ to work with more combinations of modifers etc. then please UPDATE this page\
+      \ (and preferably the code too) thanks&#160;:)</p>\n\n<!-- \nNewPP limit report\n\
+      CPU time usage: 0.066 seconds\nReal time usage: 0.133 seconds\nPreprocessor\
+      \ visited node count: 16/1000000\nPreprocessor generated node count: 32/1000000\n\
+      Post‐expand include size: 0/2097152 bytes\nTemplate argument size: 0/2097152\
+      \ bytes\nHighest expansion depth: 2/40\nExpensive parser function count: 0/100\n\
+      -->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n100.00%\
+      \    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:2212-0!*!0!!*!*!*\
+      \ and timestamp 20221118123956 and revision id 5355\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Dynamicly Accessing Original Static Mesh Textures"
+  - ns: 100
+    exists: true
+    name: "Legacy:Shader"
+  - ns: 100
+    exists: true
+    name: "Legacy:Static Mesh"
+  - ns: 100
+    exists: true
+    name: "Legacy:Material"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Making_A_Static_Mesh_Translucent"
+    byteoffset: 4135
+    anchor: "Related_Topics"
+  - toclevel: 1
+    level: "2"
+    line: "Comments"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Making_A_Static_Mesh_Translucent"
+    byteoffset: 4364
+    anchor: "Comments"
+  displaytitle: "Legacy:Making A Static Mesh Translucent"
+  iwlinks: []
+  wikitext:
+    text: "This page describes how to '''dynamically''' make Static mesh's appear\
+      \ translucent (similar to the way Style=STY_Translucent could do the same with\
+      \ actors in Unreal Engine1), what that means is you should be able to modify\
+      \ the textures on any existing Static mesh during runtime and make them appear\
+      \ translucent using the Alpha drawtype.\n\nIn fact, you can do pretty much anything\
+      \ that can be done with the entire [[Legacy:Material|Material]]/[[Legacy:Shader|Shader]]\
+      \ system as this method relies on replacing a Static mesh's original textures.\n\
+      \nThe process of making existing texture's translucent on a Static mesh is not\
+      \ actually too difficult (albeit there are problems described later), but the\
+      \ hard part is [[Legacy:Dynamicly Accessing Original Static Mesh Textures|Dynamicly\
+      \ Accessing Original Static Mesh Textures]] but thankfully there is a page to\
+      \ describe how that's done :) (and you will need the code from that page, it\
+      \ is not included here because I intend to update these pages seperately AND\
+      \ this is a slightly different subject)\n\nHere is the code I have used for\
+      \ making certain Static mesh's appear translucent, due to my limited knowledge\
+      \ of shaders I have had to limit this code in some respects (i.e. if some particular\
+      \ shader options are used it can interfere in such a way as to make the translucency\
+      \ effect not work) if you can improve on my workarounds for some shaders then\
+      \ please do as the code in it's current form is somewhat limited.\n\n'''NOTE:'''You\
+      \ will find the latest ''FindStaticMeshSkins'' function code on the [[Legacy:Dynamicly\
+      \ Accessing Original Static Mesh Textures|Dynamicly Accessing Original Static\
+      \ Mesh Textures]] page.\n\n<UScript>\n\n// This function is used to create a\
+      \ new shader with an opacity channel at a certain Alpha (to create the translucency\
+      \ effect)\n\nsimulated function Shader CreateNewTShader()\n\n{\n\n\tlocal Shader\
+      \ ShaderObj;\n\n\tShaderObj = New Class'Engine.Shader';\n\n\t// Creates translucency\n\
+      \n\tShaderObj.Opacity = New Class'Engine.ConstantColor';\n\n\tConstantColor(ShaderObj.Opacity).Color.A\
+      \ = 128.0;\n\n\treturn ShaderObj;\n\n}\n\n// This is the main function where\
+      \ most texture/shader changes are made\n\nsimulated function MakeActorTranslucent(actor\
+      \ A)\n\n{\n\n\tlocal Array<Material> NewSkins;\n\n\tlocal Material TempMat;\n\
+      \n\tlocal int i;\n\n\t// First of all retrieve the list of existing skins\n\n\
+      \tNewSkins = FindStaticMeshSkins(A.StaticMesh);\n\n\t// Then iterate that list\
+      \ and try to make the skin translucent (using a ConstantColor modifier to change\
+      \ the Alpha)\n\n\tfor (i=0; i<NewSkins.Length; i++)\n\n\t{\n\n\t\t// If the\
+      \ skin is already a shader this creates some difficulty, the code will 'try'\
+      \ to compensate but you will notice that this will not work on a lot of things\n\
+      \n\t\tif (Shader(NewSkins[i]) != None)\n\n\t\t{\n\n\t\t\t// If SelfIllumination\
+      \ is set then your really screwed...This code tries to compensate with FallbackMaterial's...Open\
+      \ to suggestions here\n\n\t\t\tif (Shader(NewSkins[i]).SelfIllumination != None)\n\
+      \n\t\t\t{\n\n\t\t\t\t// Look for a useable FallbackMaterial, if you can't find\
+      \ one then get rid of the SelfIllumination (last resort)\n\n\t\t\t\tif (NewSkins[i].FallbackMaterial\
+      \ != None && (Shader(NewSkins[i].FallbackMaterial) == none || Shader(Newskins[i].FallbackMaterial).SelfIllumination\
+      \ == none))\n\n\t\t\t\t{\n\n\t\t\t\t\t// If the FallbackMaterial is a shader\
+      \ itself then attempt to use it\n\n\t\t\t\t\tif (Shader(NewSkins[i].FallbackMaterial)\
+      \ != None)\n\n\t\t\t\t\t\tNewSkins[i] = NewSkins[i].FallbackMaterial;\n\n\t\t\
+      \t\t\telse\n\n\t\t\t\t\t{\n\n\t\t\t\t\t\tTempMat = NewSkins[i].FallbackMaterial;\n\
+      \n\t\t\t\t\t\tNewSkins[i] = CreateNewTShader();\n\n\t\t\t\t\t\tShader(NewSkins[i]).Diffuse\
+      \ = TempMat;\n\n\t\t\t\t\t}\n\n\t\t\t\t}\n\n\t\t\t\telse if (NewSkins[i].FallbackMaterial\
+      \ == None)\n\n\t\t\t\t\tShader(NewSkins[i]).SelfIllumination = None;\n\n\t\t\
+      \t}\n\n\t\t\t// Create translucency\n\n\t\t\tShader(NewSkins[i]).Opacity = New\
+      \ Class'Engine.ConstantColor';\n\n\t\t\tConstantColor(Shader(NewSkins[i]).Opacity).Color.A\
+      \ = 128;\n\n\t\t}\n\n\t\t// If this is called then the translucency changes\
+      \ should take place perfectly\n\n\t\telse\n\n\t\t{\n\n\t\t\tTempMat = CreateNewTShader();\n\
+      \n\t\t\tShader(TempMat).Diffuse = NewSkins[i];\n\n\t\t\tNewSkins[i] = TempMat;\n\
+      \n\t\t}\n\n\t\t// Setup the actor's Skins array\n\n\t\tA.Skins[i] = NewSkins[i];\n\
+      \n\t}\n\n}\n\n</UScript>\n\n==Related Topics ==\n* [[Legacy:Static Mesh|Static\
+      \ Mesh]]\n* [[Legacy:Dynamicly Accessing Original Static Mesh Textures|Dynamicly\
+      \ Accessing Original Static Mesh Textures]]\n* [[Legacy:Material|Material]]\n\
+      * [[Legacy:Shader|Shader]]\n\n==Comments==\n\n'''Shambler:''' When I created\
+      \ this code for my own purposes I didn't have to account for every single possible\
+      \ combination of shaders and modifiers, thus if people know a good way of improving\
+      \ this code to work with more combinations of modifers etc. then please UPDATE\
+      \ this page (and preferably the code too) thanks :)"
+  properties: []
+  revId: 5355
+name: "Legacy:Making A Static Mesh Translucent"
+revision:
+  revid: 5355
+  parentid: 5356
+  user: "Shambler"
+  timestamp: 1109972132.000000000
+  comment: "Added code comment above \"MakeActorTranslucent\""
+timestamp: 1668775197.624138000

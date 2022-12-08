@@ -1,0 +1,306 @@
+---
+parse:
+  title: "Legacy:Taking Damage"
+  text:
+    text: "<p>The <a href=\"/Legacy:DamageType\" title=\"Legacy:DamageType\">DamageType</a>\
+      \ class in <a href=\"/Legacy:Actor_Class_Hierarchy_(UT)\" title=\"Legacy:Actor\
+      \ Class Hierarchy (UT)\">UT's Class Hierarchy</a> creates quite some confusion.\
+      \ It was intended to contain more specific information about how this kind of\
+      \ damage acts. However the <tt>TakeDamage</tt> and <tt>HurtRadius</tt> functions\
+      \ (these are used to damage <a href=\"/Legacy:Actor\" title=\"Legacy:Actor\"\
+      >Actors</a>) only take a <a href=\"/Legacy:Variable_Syntax\" title=\"Legacy:Variable\
+      \ Syntax\">variable</a> of type <i>Name</i> which cannot be used to access classes\
+      \ like the DamageType subclasses.</p>\n<p></p>\n<div id=\"toc\" class=\"toc\"\
+      >\n<div id=\"toctitle\">\n<h2>Contents</h2>\n</div>\n<ul>\n<li class=\"toclevel-1\
+      \ tocsection-1\"><a href=\"#How_do_damage_types_work.3F\"><span class=\"tocnumber\"\
+      >1</span> <span class=\"toctext\">How do damage types work?</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-2\"><a href=\"#Special_damage_type_death_messages\"\
+      ><span class=\"tocnumber\">2</span> <span class=\"toctext\">Special damage type\
+      \ death messages</span></a>\n<ul>\n<li class=\"toclevel-2 tocsection-3\"><a\
+      \ href=\"#Suicides\"><span class=\"tocnumber\">2.1</span> <span class=\"toctext\"\
+      >Suicides</span></a></li>\n<li class=\"toclevel-2 tocsection-4\"><a href=\"\
+      #Player_vs_player_kills\"><span class=\"tocnumber\">2.2</span> <span class=\"\
+      toctext\">Player vs player kills</span></a>\n<ul>\n<li class=\"toclevel-3 tocsection-5\"\
+      ><a href=\"#In_UT:\"><span class=\"tocnumber\">2.2.1</span> <span class=\"toctext\"\
+      >In UT:</span></a></li>\n</ul>\n</li>\n</ul>\n</li>\n<li class=\"toclevel-1\
+      \ tocsection-6\"><a href=\"#Related_topics\"><span class=\"tocnumber\">3</span>\
+      \ <span class=\"toctext\">Related topics</span></a></li>\n</ul>\n</div>\n<p></p>\n\
+      <h2><span class=\"mw-headline\" id=\"How_do_damage_types_work.3F\">How do damage\
+      \ types work?</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Taking_Damage?section=1\" title=\"Edit section:\
+      \ How do damage types work?\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>Damage types are passed as the last parameter of the\
+      \ <tt>TakeDamage</tt> function:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">function</span> <span class=\"kw4\">TakeDamage</span> <span\
+      \ class=\"br0\">(</span><span class=\"kw5\">int</span> Damage, <span class=\"\
+      kw9\">Pawn</span> InstigatedBy, <span class=\"kw5\">vector</span> HitLocation,\
+      \ <span class=\"kw5\">vector</span> Momentum, <span class=\"kw5\">name</span>\
+      \ <span class=\"kw9\">DamageType</span><span class=\"br0\">)</span></pre></div>\n\
+      </div>\n<p>Usually the <tt>DamageType</tt> parameter isn't used unless the damaged\
+      \ actor is a Pawn. In that case several other actors have the opportunity to\
+      \ reduce the amount of damage the Pawn receives.<br /></p>\n<p>First the current\
+      \ <a href=\"/Legacy:GameInfo_(UT)\" title=\"Legacy:GameInfo (UT)\">GameInfo\
+      \ (UT)</a>'s <tt>ReduceDamage</tt> function is called. This function returns\
+      \ 0 if the player is in a zone with <tt>bNeutralZone = True</tt>. Otherwise\
+      \ multiplies the damage by 1.5 if the game runs in Hardcore or Turbo mode and\
+      \ also by the DamageScaling property of the Pawn who was responsible for the\
+      \ damage. In team games the friendly fire scaling is also applied here. Custom\
+      \ GameInfo subclasses could also reduce the damage based on the damage type.<br\
+      \ /></p>\n<p>The next step depends on the Pawn's <tt>bIsPlayer</tt> property.\
+      \ If it is <tt>True</tt> then there are three possibilities:</p>\n<ol>\n<li>The\
+      \ Pawn's <tt>ReducedDamageType</tt> property has the value <tt>'All'</tt>. In\
+      \ this case the actual damage is set to 0.</li>\n<li>The Pawn's inventory list\
+      \ is not empty. The first <a href=\"/Legacy:Inventory_(UT)\" title=\"Legacy:Inventory\
+      \ (UT)\">Inventory (UT)</a> item gets a <tt>ReduceDamage</tt> call. The items\
+      \ create a temporary list of armor items sorted by the items' armor priorities\
+      \ based on the damage type and reduce the damage. As long as the damage is not\
+      \ 0 the next item in that list may reduce the damage through the <tt>ArmorAbsorbDamage</tt>\
+      \ function. (see <a href=\"/Legacy:Armor_Damage_Absorption\" title=\"Legacy:Armor\
+      \ Damage Absorption\">Armor Damage Absorption</a> for details)</li>\n<li>The\
+      \ Pawn's inventory list is empty. The damage remains unchanged.</li>\n</ol>\n\
+      <p>If <tt>bIsPlayer</tt> is <tt>False</tt> there are also two possibilities:</p>\n\
+      <ol>\n<li>The attacker is either a parent class or a subclass of the damaged\
+      \ Pawn. The actual damage is multiplied by the lower value of either <tt>1 -\
+      \ ReducedDamagePct</tt> (a Pawn class property) or <tt>0.35</tt>.</li>\n<li>The\
+      \ Pawn's <tt>ReducedDamageType</tt> property has the value <tt>'All'</tt> or\
+      \ is equal to the DamageType parameter. The actual damage is multiplied by <tt>1\
+      \ - ReducedDamagePct</tt>.</li>\n</ol>\n<p>Then the registered damage <a href=\"\
+      /Legacy:Mutator\" title=\"Legacy:Mutator\">mutators</a> are allowed to further\
+      \ adjust the damage (even if it is already 0) through their <tt>MutatorTakeDamage</tt>\
+      \ function.<br /></p>\n<p>Now the damage can be applied.</p>\n<p>If the health\
+      \ now goes below 0 the Pawn's <tt>Died</tt> function is called. Again the damage\
+      \ type is passed as a parameter:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">function</span> Died <span class=\"br0\">(</span><span\
+      \ class=\"kw9\">Pawn</span> Killer, <span class=\"kw5\">name</span> <span class=\"\
+      kw9\">DamageType</span>, <span class=\"kw5\">vector</span> HitLocation<span\
+      \ class=\"br0\">)</span></pre></div>\n</div>\n<p>The first thing this function\
+      \ does is ask the mutators if the Pawn may die by calling the <tt>PreventDeath</tt>\
+      \ function of the game type's <tt>BaseMutator</tt>. If it returns <tt>True</tt>\
+      \ the Pawn will not die. If it returns <tt>False</tt> the <tt>Killed</tt> function\
+      \ is called on all Pawns (including this one) and the GameInfo.<br /></p>\n\
+      <p>The GameInfo's <tt>Killed</tt> function is responsible for displaying all\
+      \ those kill-related messages. It also call's the GameInfo's <tt>ScoreKill</tt>\
+      \ function which in turn calls the <tt>ScoreKill</tt> function of the BaseMutator.</p>\n\
+      <h2><span class=\"mw-headline\" id=\"Special_damage_type_death_messages\">Special\
+      \ damage type death messages</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Taking_Damage?section=2\"\
+      \ title=\"Edit section: Special damage type death messages\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<h3><span class=\"mw-headline\"\
+      \ id=\"Suicides\">Suicides</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Taking_Damage?section=3\"\
+      \ title=\"Edit section: Suicides\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>A kill is considered as a suicide if either the killer\
+      \ is <tt>None</tt> or killer and victim are the same Pawn.</p>\n<dl>\n<dt>'Fell'&#160;</dt>\n\
+      <dd>\"<i>&lt;killed player's name&gt;</i> left a small crater.\"</dd>\n<dt>'Eradicated'&#160;</dt>\n\
+      <dd>\"<i>&lt;killed player's name&gt;</i> was blown up.\"</dd>\n<dt>'Drowned'&#160;</dt>\n\
+      <dd>\"<i>&lt;killed player's name&gt;</i> forgot to come up for air.\"</dd>\n\
+      <dt>'Burned'&#160;</dt>\n<dd>\"<i>&lt;killed player's name&gt;</i> was incinerated.\"\
+      </dd>\n<dt>'Corroded'&#160;</dt>\n<dd>\"<i>&lt;killed player's name&gt;</i>\
+      \ was slimed.\"</dd>\n<dt>'Mortared'&#160;</dt>\n<dd>\"<i>&lt;killed player's\
+      \ name&gt;</i> was blown up by a mortar.\"</dd>\n<dt>(any other)&#160;</dt>\n\
+      <dd>\"<i>&lt;killed player's name&gt;</i> killed his/her own dumb self.\"</dd>\n\
+      </dl>\n<h3><span class=\"mw-headline\" id=\"Player_vs_player_kills\">Player\
+      \ vs player kills</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Taking_Damage?section=4\" title=\"Edit section:\
+      \ Player vs player kills\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>(Both the killer and the victim have <tt>bIsPlayer = True</tt>.)</p>\n<p>If\
+      \ the damage type is not listed here, the <tt>DeathMessage</tt> of the weapon\
+      \ the killer <i>currently</i> has selected will be used. If the killer has no\
+      \ weapon (e.g. when he is dead) the message will empty.</p>\n<dl>\n<dt>'SpecialDamage'&#160;</dt>\n\
+      <dd>The <a href=\"/Legacy:LevelInfo\" title=\"Legacy:LevelInfo\">LevelInfo</a>'s\
+      \ <tt>SpecialDamageString</tt> is used as death message.</dd>\n</dl>\n<h4><span\
+      \ class=\"mw-headline\" id=\"In_UT:\">In UT:</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Taking_Damage?section=5\"\
+      \ title=\"Edit section: In UT:\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h4>\n<dl>\n<dt>'RedeemerDeath'&#160;</dt>\n<dd>\"<i>&lt;victim's\
+      \ player name&gt;</i> was vaporized by <i>&lt;killer's player name&gt;</i>'s\
+      \ Redeemer!!\"</dd>\n<dt>'RocketDeath', 'GrenadeDeath'&#160;</dt>\n<dd>\"<i>&lt;victim's\
+      \ player name&gt;</i> was smacked down by <i>&lt;killer's player name&gt;</i>'s\
+      \ Rocket Launcher!!\"</dd>\n<dt>'Eradicated'&#160;</dt>\n<dd>\"<i>&lt;victim's\
+      \ player name&gt;</i> was eradicated by the unholy power of <i>&lt;killer's\
+      \ player name&gt;</i>!!\"</dd>\n<dt>'Gibbed'&#160;</dt>\n<dd>\"<i>&lt;victim's\
+      \ player name&gt;</i> was telefragged by <i>&lt;killer's player name&gt;</i>!\"\
+      </dd>\n</dl>\n<h2><span class=\"mw-headline\" id=\"Related_topics\">Related\
+      \ topics</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Taking_Damage?section=6\" title=\"Edit section:\
+      \ Related topics\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <ul>\n<li><a href=\"/Legacy:Armor_Damage_Absorption\" title=\"Legacy:Armor Damage\
+      \ Absorption\">Armor Damage Absorption</a></li>\n<li><a href=\"/Legacy:Message_Placeholder\"\
+      \ title=\"Legacy:Message Placeholder\">Message Placeholder</a></li>\n</ul>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.055 seconds\nReal time usage:\
+      \ 0.057 seconds\nPreprocessor visited node count: 42/1000000\nPreprocessor generated\
+      \ node count: 70/1000000\nPost‐expand include size: 0/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:3078-0!*!0!!en!*!* and timestamp 20221117190922 and revision\
+      \ id 46220\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Actor Class Hierarchy (UT)"
+  - ns: 100
+    exists: true
+    name: "Legacy:Inventory (UT)"
+  - ns: 100
+    exists: true
+    name: "Legacy:Actor"
+  - ns: 100
+    exists: true
+    name: "Legacy:GameInfo (UT)"
+  - ns: 100
+    exists: true
+    name: "Legacy:Variable Syntax"
+  - ns: 100
+    exists: true
+    name: "Legacy:Armor Damage Absorption"
+  - ns: 100
+    exists: true
+    name: "Legacy:Message Placeholder"
+  - ns: 100
+    exists: true
+    name: "Legacy:DamageType"
+  - ns: 100
+    exists: true
+    name: "Legacy:Mutator"
+  - ns: 100
+    exists: true
+    name: "Legacy:LevelInfo"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "How do damage types work?"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Taking_Damage"
+    byteoffset: 478
+    anchor: "How_do_damage_types_work.3F"
+  - toclevel: 1
+    level: "2"
+    line: "Special damage type death messages"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Taking_Damage"
+    byteoffset: 3676
+    anchor: "Special_damage_type_death_messages"
+  - toclevel: 2
+    level: "3"
+    line: "Suicides"
+    number: "2.1"
+    index: "3"
+    fromtitle: "Legacy:Taking_Damage"
+    byteoffset: 3717
+    anchor: "Suicides"
+  - toclevel: 2
+    level: "3"
+    line: "Player vs player kills"
+    number: "2.2"
+    index: "4"
+    fromtitle: "Legacy:Taking_Damage"
+    byteoffset: 4319
+    anchor: "Player_vs_player_kills"
+  - toclevel: 3
+    level: "4"
+    line: "In UT:"
+    number: "2.2.1"
+    index: "5"
+    fromtitle: "Legacy:Taking_Damage"
+    byteoffset: 4735
+    anchor: "In_UT:"
+  - toclevel: 1
+    level: "2"
+    line: "Related topics"
+    number: "3"
+    index: "6"
+    fromtitle: "Legacy:Taking_Damage"
+    byteoffset: 5214
+    anchor: "Related_topics"
+  displaytitle: "Legacy:Taking Damage"
+  iwlinks: []
+  wikitext:
+    text: "The [[Legacy:DamageType|DamageType]] class in [[Legacy:Actor Class Hierarchy\
+      \ (UT)|UT's Class Hierarchy]] creates quite some confusion. It was intended\
+      \ to contain more specific information about how this kind of damage acts. However\
+      \ the <tt>TakeDamage</tt> and <tt>HurtRadius</tt> functions (these are used\
+      \ to damage [[Legacy:Actor|Actors]]) only take a [[Legacy:Variable Syntax|variable]]\
+      \ of type ''Name'' which cannot be used to access classes like the DamageType\
+      \ subclasses.\n\n==How do damage types work? ==\n\nDamage types are passed as\
+      \ the last parameter of the <tt>TakeDamage</tt> function:\n\n<uscript>function\
+      \ TakeDamage (int Damage, Pawn InstigatedBy, vector HitLocation, vector Momentum,\
+      \ name DamageType)</uscript>\n\nUsually the <tt>DamageType</tt> parameter isn't\
+      \ used unless the damaged actor is a Pawn. In that case several other actors\
+      \ have the opportunity to reduce the amount of damage the Pawn receives.<br\
+      \ />\n\nFirst the current [[Legacy:GameInfo (UT)|GameInfo (UT)]]'s <tt>ReduceDamage</tt>\
+      \ function is called. This function returns 0 if the player is in a zone with\
+      \ <tt>bNeutralZone = True</tt>. Otherwise multiplies the damage by 1.5 if the\
+      \ game runs in Hardcore or Turbo mode and also by the DamageScaling property\
+      \ of the Pawn who was responsible for the damage. In team games the friendly\
+      \ fire scaling is also applied here. Custom GameInfo subclasses could also reduce\
+      \ the damage based on the damage type.<br>\n\nThe next step depends on the Pawn's\
+      \ <tt>bIsPlayer</tt> property. If it is <tt>True</tt> then there are three possibilities:\n\
+      # The Pawn's <tt>ReducedDamageType</tt> property has the value <tt>'All'</tt>.\
+      \ In this case the actual damage is set to 0.\n# The Pawn's inventory list is\
+      \ not empty. The first [[Legacy:Inventory (UT)|Inventory (UT)]] item gets a\
+      \ <tt>ReduceDamage</tt> call. The items create a temporary list of armor items\
+      \ sorted by the items' armor priorities based on the damage type and reduce\
+      \ the damage. As long as the damage is not 0 the next item in that list may\
+      \ reduce the damage through the <tt>ArmorAbsorbDamage</tt> function. (see [[Legacy:Armor\
+      \ Damage Absorption|Armor Damage Absorption]] for details)\n# The Pawn's inventory\
+      \ list is empty. The damage remains unchanged.\n\nIf <tt>bIsPlayer</tt> is <tt>False</tt>\
+      \ there are also two possibilities:\n# The attacker is either a parent class\
+      \ or a subclass of the damaged Pawn. The actual damage is multiplied by the\
+      \ lower value of either <tt>1 - ReducedDamagePct</tt> (a Pawn class property)\
+      \ or <tt>0.35</tt>.\n# The Pawn's <tt>ReducedDamageType</tt> property has the\
+      \ value <tt>'All'</tt> or is equal to the DamageType parameter. The actual damage\
+      \ is multiplied by <tt>1 - ReducedDamagePct</tt>.\n\nThen the registered damage\
+      \ [[Legacy:Mutator|mutators]] are allowed to further adjust the damage (even\
+      \ if it is already 0) through their <tt>MutatorTakeDamage</tt> function.<br>\n\
+      \nNow the damage can be applied.\n\nIf the health now goes below 0 the Pawn's\
+      \ <tt>Died</tt> function is called. Again the damage type is passed as a parameter:\n\
+      \n<uscript>function Died (Pawn Killer, name DamageType, vector HitLocation)</uscript>\n\
+      \nThe first thing this function does is ask the mutators if the Pawn may die\
+      \ by calling the <tt>PreventDeath</tt> function of the game type's <tt>BaseMutator</tt>.\
+      \ If it returns <tt>True</tt> the Pawn will not die. If it returns <tt>False</tt>\
+      \ the <tt>Killed</tt> function is called on all Pawns (including this one) and\
+      \ the GameInfo.<br>\n\nThe GameInfo's <tt>Killed</tt> function is responsible\
+      \ for displaying all those kill-related messages. It also call's the GameInfo's\
+      \ <tt>ScoreKill</tt> function which in turn calls the <tt>ScoreKill</tt> function\
+      \ of the BaseMutator.\n\n==Special damage type death messages ==\n\n===Suicides\
+      \ ===\n\nA kill is considered as a suicide if either the killer is <tt>None</tt>\
+      \ or killer and victim are the same Pawn.\n; 'Fell' : \"<i><killed player's\
+      \ name></i> left a small crater.\"\n; 'Eradicated' : \"<i><killed player's name></i>\
+      \ was blown up.\"\n; 'Drowned' : \"<i><killed player's name></i> forgot to come\
+      \ up for air.\"\n; 'Burned' : \"<i><killed player's name></i> was incinerated.\"\
+      \n; 'Corroded' : \"<i><killed player's name></i> was slimed.\"\n; 'Mortared'\
+      \ : \"<i><killed player's name></i> was blown up by a mortar.\"\n; (any other)\
+      \ : \"<i><killed player's name></i> killed his/her own dumb self.\"\n\n===Player\
+      \ vs player kills ===\n\n(Both the killer and the victim have <tt>bIsPlayer\
+      \ = True</tt>.)\n\nIf the damage type is not listed here, the <tt>DeathMessage</tt>\
+      \ of the weapon the killer ''currently'' has selected will be used. If the killer\
+      \ has no weapon (e.g. when he is dead) the message will empty.\n; 'SpecialDamage'\
+      \ : The [[Legacy:LevelInfo|LevelInfo]]'s <tt>SpecialDamageString</tt> is used\
+      \ as death message.\n\n====In UT: ====\n; 'RedeemerDeath' : \"<i><victim's player\
+      \ name></i> was vaporized by <i><killer's player name></i>'s Redeemer!!\"\n\
+      ; 'RocketDeath', 'GrenadeDeath' : \"<i><victim's player name></i> was smacked\
+      \ down by <i><killer's player name></i>'s Rocket Launcher!!\"\n; 'Eradicated'\
+      \ : \"<i><victim's player name></i> was eradicated by the unholy power of <i><killer's\
+      \ player name></i>!!\"\n; 'Gibbed' : \"<i><victim's player name></i> was telefragged\
+      \ by <i><killer's player name></i>!\"\n\n==Related topics ==\n* [[Legacy:Armor\
+      \ Damage Absorption|Armor Damage Absorption]]\n* [[Legacy:Message Placeholder|Message\
+      \ Placeholder]]"
+  properties: []
+  revId: 46220
+name: "Legacy:Taking Damage"
+revision:
+  revid: 46220
+  parentid: 46219
+  user: "SeriousBarbie"
+  timestamp: 1441827092.000000000
+  comment: "another spell fix"
+timestamp: 1668763360.978457000

@@ -1,0 +1,311 @@
+---
+parse:
+  title: "Legacy:CheckReplacement"
+  text:
+    text: "<p><a href=\"/Legacy:UT2004\" title=\"Legacy:UT2004\" class=\"mw-redirect\"\
+      >UT2004</a>, Version Only.</p>\n<p>Ok so you've got your new weapon and you\
+      \ want to use it in a game. To do this, we create a new weapon <a href=\"/Legacy:Mutator\"\
+      \ title=\"Legacy:Mutator\">Mutator</a> and override the CheckReplacement() function.\
+      \ This function is called for every Actor entering the game (whether being loaded\
+      \ with the map, or spawned on-the-fly), and you can use it to make substitutions\
+      \ and modifications as they are initialized.</p>\n<p></p>\n<div id=\"toc\" class=\"\
+      toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n</div>\n<ul>\n<li class=\"\
+      toclevel-1 tocsection-1\"><a href=\"#First:_Make_a_subclass_of_Mutator\"><span\
+      \ class=\"tocnumber\">1</span> <span class=\"toctext\">First: Make a subclass\
+      \ of Mutator</span></a></li>\n<li class=\"toclevel-1 tocsection-2\"><a href=\"\
+      #Second:_Swap_weapon_bases.2Fpickups.2Fetc_in_CheckReplacement.28.29\"><span\
+      \ class=\"tocnumber\">2</span> <span class=\"toctext\">Second: Swap weapon bases/pickups/etc\
+      \ in CheckReplacement()</span></a></li>\n<li class=\"toclevel-1 tocsection-3\"\
+      ><a href=\"#Third:_Add_default_properties_to_describe_the_new_Mutator\"><span\
+      \ class=\"tocnumber\">3</span> <span class=\"toctext\">Third: Add default properties\
+      \ to describe the new Mutator</span></a></li>\n<li class=\"toclevel-1 tocsection-4\"\
+      ><a href=\"#Discussion\"><span class=\"tocnumber\">4</span> <span class=\"toctext\"\
+      >Discussion</span></a></li>\n</ul>\n</div>\n<p></p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"First:_Make_a_subclass_of_Mutator\">First: Make a subclass of Mutator</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:CheckReplacement?section=1\" title=\"Edit section: First:\
+      \ Make a subclass of Mutator\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>This will allow you to do all the changes before the\
+      \ level starts, and will automatically iterate though all the level actors,\
+      \ allowing to you to look for any instances of the class you wish to replace.</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">class</span> NewWeaponMutator\
+      \ <span class=\"kw1\">extends</span> <span class=\"kw9\">Mutator</span>;</pre></div>\n\
+      </div>\n<h2><span class=\"mw-headline\" id=\"Second:_Swap_weapon_bases.2Fpickups.2Fetc_in_CheckReplacement.28.29\"\
+      >Second: Swap weapon bases/pickups/etc in CheckReplacement()</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:CheckReplacement?section=2\"\
+      \ title=\"Edit section: Second: Swap weapon bases/pickups/etc in CheckReplacement()\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>We\
+      \ use CheckReplacement(), a probing function, to typecast <i>Other</i> to different\
+      \ subclasses to qualify them and to grab extra info and make substitutions,\
+      \ as needed:</p>\n<p><i>Note: The local variables (</i>i <i>and</i> L<i>) are\
+      \ only necessary if your mod is for UT2004 and you want it to work on Onslaught\
+      \ maps.</i></p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">function</span> <span class=\"kw5\">bool</span> CheckReplacement<span\
+      \ class=\"br0\">(</span> <span class=\"kw9\">Actor</span> Other, <span class=\"\
+      kw1\">out</span> <span class=\"kw5\">byte</span> bSuperRelevant <span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n   <span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">int</span> i;                <span class=\"co1\">// for\
+      \ UT2004 Onslaught weapon lockers</span>\n   <span class=\"kw1\">local</span>\
+      \ WeaponLocker L;       <span class=\"co1\">// for UT2004 Onslaught weapon lockers</span>\n\
+      \ \n   bSuperRelevant <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>;</pre></div>\n\
+      </div>\n<p>Inside the function the first check is to see if <i>Other</i> is\
+      \ the right class (xWeaponBase). This is to stop the second check going wrong:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\">   <span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span>XWeaponBase<span class=\"br0\">(</span>Other<span class=\"\
+      br0\">)</span> <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span><span\
+      \ class=\"br0\">)</span></pre></div>\n</div>\n<p>Now that we know that <i>Other</i>\
+      \ is a xWeaponBase and its WeaponType is the class we want to replace, we override\
+      \ it with our new WeaponType:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      >   <span class=\"br0\">{</span>\n      <span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span>XWeaponBase<span class=\"br0\">(</span>Other<span class=\"\
+      br0\">)</span>.<span class=\"me0\">WeaponType</span> <span class=\"sy0\">==</span>\
+      \ <span class=\"kw1\">Class</span><span class=\"st0\">'WeaponClassWantToReplace'</span><span\
+      \ class=\"br0\">)</span> \n         XWeaponbase<span class=\"br0\">(</span>Other<span\
+      \ class=\"br0\">)</span>.<span class=\"me0\">WeaponType</span> <span class=\"\
+      sy0\">=</span> <span class=\"kw1\">Class</span><span class=\"st0\">'NewWeaponClass'</span>;\
+      \ \n      <span class=\"kw2\">else</span> \n         <span class=\"kw2\">return</span>\
+      \ <span class=\"kw6\">true</span>; \n   <span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>As we've only modified weapon bases so far, you need to do the same\
+      \ thing again, checking for the weapon pickup class to grab any stray weapons\
+      \ of that class lying about in the level for whatever reason (e.g. if they are\
+      \ placed on the map itself, or when a player is killed and drops it). Remember\
+      \ the mutator has to work on other people's levels too, so it should be able\
+      \ to cope with any setup they come up with. So we add:</p>\n<p><i>Note: We use\
+      \ \"~=\" for a case-insensitive string comparison, but rememeber that class\
+      \ names are fully-qualified. You \"PickupClassWantToReplace\" would be something\
+      \ like \"XWeapons.Minigun\".</i></p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      >   <span class=\"kw2\">else</span> <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span>WeaponPickup<span class=\"br0\">(</span>Other<span class=\"br0\"\
+      >)</span> <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span><span\
+      \ class=\"br0\">)</span> \n   <span class=\"br0\">{</span> \n      <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span><span class=\"kw5\">String</span><span\
+      \ class=\"br0\">(</span>Other.<span class=\"kw1\">Class</span><span class=\"\
+      br0\">)</span> ~<span class=\"sy0\">=</span> <span class=\"st0\">\"PickupClassWantToReplace\"\
+      </span><span class=\"br0\">)</span> \n         ReplaceWith<span class=\"br0\"\
+      >(</span>Other, <span class=\"st0\">\"NewPickupClass\"</span><span class=\"\
+      br0\">)</span>;\n      <span class=\"kw2\">else</span> \n         <span class=\"\
+      kw2\">return</span> <span class=\"kw6\">true</span>; \n   <span class=\"br0\"\
+      >}</span></pre></div>\n</div>\n<p>This next section is only for UT2004, and\
+      \ adds support for Onslaught mode's WeaponLockers. Basically, it searches through\
+      \ each WeaponLocker's inventory (array), weapon by weapon, replacing the old\
+      \ weapon class with the new:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      >   <span class=\"kw2\">else</span> <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span> WeaponLocker<span class=\"br0\">(</span>Other<span class=\"br0\"\
+      >)</span> <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span> <span\
+      \ class=\"br0\">)</span>\n   <span class=\"br0\">{</span>\n      L <span class=\"\
+      sy0\">=</span> WeaponLocker<span class=\"br0\">(</span>Other<span class=\"br0\"\
+      >)</span>;\n      <span class=\"kw2\">for</span> <span class=\"br0\">(</span>i\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>; i <span class=\"\
+      sy0\">&lt;</span> L.<span class=\"me0\">Weapons</span>.<span class=\"me0\">Length</span>;\
+      \ i<span class=\"sy0\">++</span><span class=\"br0\">)</span>\n         <span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span> <span class=\"kw5\">string</span><span\
+      \ class=\"br0\">(</span> L.<span class=\"me0\">Weapons</span><span class=\"\
+      br0\">[</span>i<span class=\"br0\">]</span>.<span class=\"me0\">WeaponClass</span>\
+      \ <span class=\"br0\">)</span> ~<span class=\"sy0\">=</span> <span class=\"\
+      st0\">\"WeaponClassWantToReplace\"</span> <span class=\"br0\">)</span>\n   \
+      \         L.<span class=\"me0\">Weapons</span><span class=\"br0\">[</span>i<span\
+      \ class=\"br0\">]</span>.<span class=\"me0\">WeaponClass</span> <span class=\"\
+      sy0\">=</span> <span class=\"kw1\">Class</span><span class=\"st0\">'NewWeaponClass'</span>;\n\
+      \ \n      <span class=\"kw2\">return</span> <span class=\"kw6\">true</span>;\n\
+      \   <span class=\"br0\">}</span></pre></div>\n</div>\n<p>And now, finish off\
+      \ CheckReplacement() with the following:</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\">   <span class=\"kw2\">else</span> \n      <span class=\"kw2\">return</span>\
+      \ <span class=\"kw6\">true</span>; \n \n   <span class=\"kw2\">return</span>\
+      \ <span class=\"kw6\">false</span>;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<h2><span class=\"mw-headline\" id=\"Third:_Add_default_properties_to_describe_the_new_Mutator\"\
+      >Third: Add default properties to describe the new Mutator</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:CheckReplacement?section=3\"\
+      \ title=\"Edit section: Third: Add default properties to describe the new Mutator\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>So\
+      \ that the new weapon mutator has a name and description:</p>\n<div dir=\"ltr\"\
+      \ class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">defaultproperties</span> \n<span class=\"\
+      br0\">{</span> \n   FriendlyName<span class=\"sy0\">=</span><span class=\"st0\"\
+      >\"name in mutator list\"</span> \n   Description<span class=\"sy0\">=</span><span\
+      \ class=\"st0\">\"new weapon mutator description\"</span> \n   bAddToServerpackages<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">True</span> <span class=\"co1\"\
+      >// Add this if you use this on a server.</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>-VitalOverdose.-</p>\n<h2><span class=\"mw-headline\" id=\"Discussion\"\
+      >Discussion</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:CheckReplacement?section=4\" title=\"Edit section:\
+      \ Discussion\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p><b>Geist:</b> Yeah, that's better. I took the liberty of adding the extra\
+      \ <b>return false;</b> at the end, and a section that supports WeaponLockers\
+      \ from UT2004 Onslaught mode. Personally, I would have placed <b>return false;</b>\
+      \ lines where needed, then finish up the function with a <b>return true;</b>,\
+      \ as that would make the logic make more sense... but that doesn't seem to be\
+      \ the style here (or at Epic, as seen in the other weapon mutator scripts).</p>\n\
+      <p>Btw, I also realize that comments like \"if you're making a UT2004 mod\"\
+      \ might be redundant, since the top of the page <i>seems</i> to indicate this\
+      \ page is already UT2004-only. So if this page is <i>meant</i> to be UT2004-specific\
+      \ through and through, please remove the extraneous UT2004 comments in the code/text\
+      \ and be more explicit at the top of the page. (how many times can I say \"\
+      UT2004\" in one paragraph?)&#160;:)</p>\n<p>_<b>FatalOverdose</b> - thanks ,\
+      \ will do that.</p>\n<p><b>Sweavo:</b> Shouldn't there be a call to NextMutator.CheckReplacement\
+      \ rather than a simple return...?</p>\n<p><b>Wormbo:</b> CheckReplacement should\
+      \ <i>never</i> call NextMutator.CheckReplacement(). The function is called by\
+      \ IsRelevant, which also handles the <a href=\"/Legacy:Linked_List\" title=\"\
+      Legacy:Linked List\">linked list</a> stuff.</p>\n<p><b>AgentBionicman</b> I\
+      \ don't think projectiles are sent through this function anymore. Anyone else\
+      \ notice this?</p>\n<p><b>Bonehed316:</b> Projectiles arent sent through this\
+      \ function because they have bGameRelevant=True. This function only works on\
+      \ those actors which are&#160;!bGameRelevant. Maybe there should be a small\
+      \ section which explains how/why this function gets called, and where from?</p>\n\
+      <p><b>Sweavo:</b> seconded. This page is hit number one for a search for CheckReplacement,\
+      \ but does not tell us what the <b>out</b> parameter bSuperRelevant does, nor\
+      \ what the return value means.</p>\n<p><b>Neuroflare:</b> None of the CheckReplacement\
+      \ tutorials I have seen here elaborate on changing out ammo, or am I mistaken?</p>\n\
+      <p><b>MythOpus:</b> I don't think you can change firemodes/ammo because they're\
+      \ set to only be able to be access by the class the references them.. in this\
+      \ case Weapon.</p>\n\n<!-- \nNewPP limit report\nCPU time usage: 0.152 seconds\n\
+      Real time usage: 0.471 seconds\nPreprocessor visited node count: 87/1000000\n\
+      Preprocessor generated node count: 180/1000000\nPost‐expand include size: 0/2097152\
+      \ bytes\nTemplate argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\n\
+      Expensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion expansion\
+      \ time report (%,ms,calls,template)\n100.00%    0.000      1 - -total\n-->\n\
+      \n<!-- Saved in parser cache with key wiki:pcache:idhash:896-0!*!0!!en!*!* and\
+      \ timestamp 20221118141024 and revision id 35584\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Mutator"
+  - ns: 100
+    exists: true
+    name: "Legacy:UT2004"
+  - ns: 100
+    exists: true
+    name: "Legacy:Linked List"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "First: Make a subclass of Mutator"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:CheckReplacement"
+    byteoffset: 421
+    anchor: "First:_Make_a_subclass_of_Mutator"
+  - toclevel: 1
+    level: "2"
+    line: "Second: Swap weapon bases/pickups/etc in CheckReplacement()"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:CheckReplacement"
+    byteoffset: 728
+    anchor: "Second:_Swap_weapon_bases.2Fpickups.2Fetc_in_CheckReplacement.28.29"
+  - toclevel: 1
+    level: "2"
+    line: "Third: Add default properties to describe the new Mutator"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:CheckReplacement"
+    byteoffset: 3421
+    anchor: "Third:_Add_default_properties_to_describe_the_new_Mutator"
+  - toclevel: 1
+    level: "2"
+    line: "Discussion"
+    number: "4"
+    index: "4"
+    fromtitle: "Legacy:CheckReplacement"
+    byteoffset: 3768
+    anchor: "Discussion"
+  displaytitle: "Legacy:CheckReplacement"
+  iwlinks: []
+  wikitext:
+    text: "[[Legacy:UT2004|UT2004]], Version Only.\n\nOk so you've got your new weapon\
+      \ and you want to use it in a game.  To do this, we create a new weapon [[Legacy:Mutator|Mutator]]\
+      \ and override the CheckReplacement() function.  This function is called for\
+      \ every Actor entering the game (whether being loaded with the map, or spawned\
+      \ on-the-fly), and you can use it to make substitutions and modifications as\
+      \ they are initialized.\n\n==First: Make a subclass of Mutator ==\n\nThis will\
+      \ allow you to do all the changes before the level starts, and will automatically\
+      \ iterate though all the level actors, allowing to you to look for any instances\
+      \ of the class you wish to replace. \n\n<uscript>\nclass NewWeaponMutator extends\
+      \ Mutator;\n</uscript>\n\n==Second: Swap weapon bases/pickups/etc in CheckReplacement()\
+      \ ==\n\nWe use CheckReplacement(), a probing function, to typecast ''Other''\
+      \ to different subclasses to qualify them and to grab extra info and make substitutions,\
+      \ as needed:\n\n''Note:  The local variables (''i'' and ''L'') are only necessary\
+      \ if your mod is for UT2004 and you want it to work on Onslaught maps.''\n\n\
+      <uscript>\nfunction bool CheckReplacement( Actor Other, out byte bSuperRelevant\
+      \ )\n{\n   local int i;                // for UT2004 Onslaught weapon lockers\n\
+      \   local WeaponLocker L;       // for UT2004 Onslaught weapon lockers\n\n \
+      \  bSuperRelevant = 0;\n</uscript>\n\nInside the function the first check is\
+      \ to see if ''Other'' is the right class (xWeaponBase).  This is to stop the\
+      \ second check going wrong:\n\n<uscript>\n   if (XWeaponBase(Other) != None)\
+      \ \n</uscript>\n\nNow that we know that ''Other'' is a xWeaponBase and its WeaponType\
+      \ is the class we want to replace, we override it with our new WeaponType: \n\
+      \n<uscript>\n   {\n      if (XWeaponBase(Other).WeaponType == Class'WeaponClassWantToReplace')\
+      \ \n         XWeaponbase(Other).WeaponType = Class'NewWeaponClass'; \n     \
+      \ else \n         return true; \n   } \n</uscript>\n\nAs we've only modified\
+      \ weapon bases so far, you need to do the same thing again, checking for the\
+      \ weapon pickup class to grab any stray weapons of that class lying about in\
+      \ the level for whatever reason (e.g. if they are placed on the map itself,\
+      \ or when a player is killed and drops it). Remember the mutator has to work\
+      \ on other people's levels too, so it should be able to cope with any setup\
+      \ they come up with. So we add:\n\n''Note: We use \"~=\" for a case-insensitive\
+      \ string comparison, but rememeber that class names are fully-qualified.  You\
+      \ \"PickupClassWantToReplace\" would be something like \"XWeapons.Minigun\"\
+      .''\n\n<uscript>\n   else if (WeaponPickup(Other) != None) \n   { \n      if\
+      \ (String(Other.Class) ~= \"PickupClassWantToReplace\") \n         ReplaceWith(Other,\
+      \ \"NewPickupClass\");\n      else \n         return true; \n   }\n</uscript>\n\
+      \nThis next section is only for UT2004, and adds support for Onslaught mode's\
+      \ WeaponLockers.  Basically, it searches through each WeaponLocker's inventory\
+      \ (array), weapon by weapon, replacing the old weapon class with the new:\n\n\
+      <uscript>\n   else if ( WeaponLocker(Other) != None )\n   {\n      L = WeaponLocker(Other);\n\
+      \      for (i = 0; i < L.Weapons.Length; i++)\n         if ( string( L.Weapons[i].WeaponClass\
+      \ ) ~= \"WeaponClassWantToReplace\" )\n            L.Weapons[i].WeaponClass\
+      \ = Class'NewWeaponClass';\n\n      return true;\n   }\n</uscript>\n\nAnd now,\
+      \ finish off CheckReplacement() with the following:\n\n<uscript>\n   else \n\
+      \      return true; \n\n   return false;\n}\n</uscript>\n\n==Third: Add default\
+      \ properties to describe the new Mutator==\n\nSo that the new weapon mutator\
+      \ has a name and description: \n\n<uscript>\ndefaultproperties \n{ \n   FriendlyName=\"\
+      name in mutator list\" \n   Description=\"new weapon mutator description\" \n\
+      \   bAddToServerpackages=True // Add this if you use this on a server.\n}\n\
+      </uscript>\n\n-VitalOverdose.-\n\n==Discussion==\n\n'''Geist:''' Yeah, that's\
+      \ better.  I took the liberty of adding the extra '''return false;''' at the\
+      \ end, and a section that supports WeaponLockers from UT2004 Onslaught mode.\
+      \  Personally, I would have placed '''return false;''' lines where needed, then\
+      \ finish up the function with a '''return true;''', as that would make the logic\
+      \ make more sense... but that doesn't seem to be the style here (or at Epic,\
+      \ as seen in the other weapon mutator scripts).\n\nBtw, I also realize that\
+      \ comments like \"if you're making a UT2004 mod\" might be redundant, since\
+      \ the top of the page ''seems'' to indicate this page is already UT2004-only.\
+      \  So if this page is ''meant'' to be UT2004-specific through and through, please\
+      \ remove the extraneous UT2004 comments in the code/text and be more explicit\
+      \ at the top of the page. (how many times can I say \"UT2004\" in one paragraph?)\
+      \ :)\n\n_'''FatalOverdose''' - thanks , will do that.\n\n'''Sweavo:''' Shouldn't\
+      \ there be a call to NextMutator.CheckReplacement rather than a simple return...?\n\
+      \n'''Wormbo:''' CheckReplacement should ''never'' call NextMutator.CheckReplacement().\
+      \ The function is called by IsRelevant, which also handles the [[Legacy:Linked\
+      \ List|linked list]] stuff.\n\n'''AgentBionicman''' I don't think projectiles\
+      \ are sent through this function anymore. Anyone else notice this?\n\n'''Bonehed316:'''\
+      \ Projectiles arent sent through this function because they have bGameRelevant=True.\
+      \  This function only works on those actors which are !bGameRelevant.  Maybe\
+      \ there should be a small section which explains how/why this function gets\
+      \ called, and where from?\n\n'''Sweavo:''' seconded.  This page is hit number\
+      \ one for a search for CheckReplacement, but does not tell us what the '''out'''\
+      \ parameter bSuperRelevant does, nor what the return value means.\n\n'''Neuroflare:'''\
+      \ None of the CheckReplacement tutorials I have seen here elaborate on changing\
+      \ out ammo, or am I mistaken?\n\n'''MythOpus:''' I don't think you can change\
+      \ firemodes/ammo because they're set to only be able to be access by the class\
+      \ the references them.. in this case Weapon."
+  properties: []
+  revId: 35584
+name: "Legacy:CheckReplacement"
+revision:
+  revid: 35584
+  parentid: 2474
+  user: "188.89.245.180"
+  timestamp: 1257274693.000000000
+  comment: "/* Third: Add default properties to describe the new Mutator */"
+timestamp: 1668799755.189877000

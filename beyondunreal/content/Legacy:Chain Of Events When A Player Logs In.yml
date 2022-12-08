@@ -1,0 +1,180 @@
+---
+parse:
+  title: "Legacy:Chain Of Events When A Player Logs In"
+  text:
+    text: "<p><i>rough layout</i></p>\n<h2><span class=\"mw-headline\" id=\"Serverside_UnrealScript_Events\"\
+      >Serverside UnrealScript Events</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Chain_Of_Events_When_A_Player_Logs_In?section=1\"\
+      \ title=\"Edit section: Serverside UnrealScript Events\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<ol>\n<li><a href=\"/Legacy:GameInfo\"\
+      \ title=\"Legacy:GameInfo\">GameInfo</a>.PreLogin() – propagated to <a href=\"\
+      /Legacy:AccessControl\" title=\"Legacy:AccessControl\">AccessControl</a>; may\
+      \ reject player.\n<ol>\n<li>Note: Required packages are downloaded before the\
+      \ Login function is called next. This can take some time—the level could change;\
+      \ another player could have gotten the slot.</li>\n</ol>\n</li>\n<li><a href=\"\
+      /Legacy:Mutator\" title=\"Legacy:Mutator\">Mutator</a>.OverrideDownload() –\
+      \ called on the base mutator for each package the player needs to download,\
+      \ propagates down the mutator <a href=\"/Legacy:Linked_List\" title=\"Legacy:Linked\
+      \ List\">linked list</a> (only available in UT2003, not in the base engine)</li>\n\
+      <li><a href=\"/Legacy:GameInfo\" title=\"Legacy:GameInfo\">GameInfo</a>.Login()\
+      \ – propagated to <a href=\"/Legacy:AccessControl\" title=\"Legacy:AccessControl\"\
+      >AccessControl</a> and <a href=\"/Legacy:Mutator\" title=\"Legacy:Mutator\"\
+      >Mutators</a>; spawns the PlayerPawn/PlayerController or rejects player, sets\
+      \ player name, spectator, admin login, other stuff:\n<ol>\n<li>Color codes are\
+      \ stripped from URI options passed to the server.</li>\n<li><a href=\"/Legacy:Mutator\"\
+      \ title=\"Legacy:Mutator\">Mutator</a>.ModifyLogin is called starting from the\
+      \ BaseMutator.</li>\n<li>Checks if server is at player capacity, in which case\
+      \ non-admin players will get a MaxedOutMessage, but an admin is forced to become\
+      \ a spectator, if the server is not at spectator capacity (?) already.</li>\n\
+      <li>Team number is picked; passing in the preferred team [0, 1], or 255 if no\
+      \ team is specified, or if any team will do in a team game, or perhaps if teams\
+      \ are not relevant to the gametype.</li>\n<li><a href=\"/Legacy:GameInfo\" title=\"\
+      Legacy:GameInfo\">GameInfo</a>.FindPlayerStart is called; attempts to find a\
+      \ start spot for the player—could potentially abort.</li>\n<li>PlayerControllerClass\
+      \ is attempted loaded.</li>\n<li>Spawn player at start spot position and rotation—\
+      could potentially abort if picked start spot could not fit the player (height\
+      \ too low, for instance). UnrealEd 3 does not necessarily catch scenarios like\
+      \ these during a Reachspecs build.</li>\n<li>GameReplicationInfo reference assigned\
+      \ to player.</li>\n<li>SecurityClass attempted spawned for player.</li>\n<li>PlayerName</li>\n\
+      <li>Custom VoicePack</li>\n<li>Player is male or female.</li>\n<li>PlayerID\
+      \ is incremented and assigned to player.</li>\n<li>Admins are assigned administrative\
+      \ privileges.</li>\n<li>bLargeGameVOIP is set to true if the number of players\
+      \ is greater than 20.</li>\n<li>bWelcomePending is set to true.</li>\n<li>Determine\
+      \ whether level was requested to run in test mode.</li>\n<li>If bDelayedStart\
+      \ is true, the PlayerController enters the PlayerWaiting state.</li>\n</ol>\n\
+      </li>\n<li><a href=\"/Legacy:GameInfo\" title=\"Legacy:GameInfo\">GameInfo</a>.PostLogin()\
+      \ – first point at which replicated functions of the new player are safe to\
+      \ call.\n<ol>\n<li><a href=\"/Legacy:Pawn\" title=\"Legacy:Pawn\">Pawn</a>.ClientSetRotation\
+      \ is called on the Pawn.</li>\n<li>VotingHandler is attempted set.</li>\n<li>Bandwidth\
+      \ is capped for the player.</li>\n<li><a href=\"/Legacy:GameInfo\" title=\"\
+      Legacy:GameInfo\">GameInfo</a>.NotifyLogin is called.</li>\n<li>PlayerID hash\
+      \ is logged.</li>\n</ol>\n</li>\n<li><a href=\"/Legacy:GameInfo\" title=\"Legacy:GameInfo\"\
+      >GameInfo</a>.NotifyLogin() – calls ServerRequestBanInfo on all PlayerController\
+      \ actors.</li>\n</ol>\n<h2><span class=\"mw-headline\" id=\"Clientside_Initialization_Overview\"\
+      >Clientside Initialization Overview</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Chain_Of_Events_When_A_Player_Logs_In?section=2\"\
+      \ title=\"Edit section: Clientside Initialization Overview\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<p>TODO: What stuff gets replicated?\
+      \ What happens while the loading screen is visible?</p>\n<h2><span class=\"\
+      mw-headline\" id=\"Related_Topics\">Related Topics</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Chain_Of_Events_When_A_Player_Logs_In?section=3\"\
+      \ title=\"Edit section: Related Topics\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<ul>\n<li><a href=\"/Legacy:Chain_Of_Events_At_Level_Startup\"\
+      \ title=\"Legacy:Chain Of Events At Level Startup\">Chain Of Events At Level\
+      \ Startup</a></li>\n<li><a href=\"/Legacy:Chain_Of_Events_When_Spawning_Actors\"\
+      \ title=\"Legacy:Chain Of Events When Spawning Actors\">Chain Of Events When\
+      \ Spawning Actors</a></li>\n</ul>\n\n<!-- \nNewPP limit report\nCPU time usage:\
+      \ 0.027 seconds\nReal time usage: 0.105 seconds\nPreprocessor visited node count:\
+      \ 12/1000000\nPreprocessor generated node count: 24/1000000\nPost‐expand include\
+      \ size: 37/2097152 bytes\nTemplate argument size: 0/2097152 bytes\nHighest expansion\
+      \ depth: 2/40\nExpensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion\
+      \ expansion time report (%,ms,calls,template)\n100.00%    0.000      1 - -total\n\
+      -->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:911-0!*!0!!*!*!*\
+      \ and timestamp 20221118003130 and revision id 44073\n -->\n"
+  categories:
+  - sortkey: "Chain Of Events When A Player Logs In"
+    name: "Legacy_To_Do"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Chain Of Events When Spawning Actors"
+  - ns: 100
+    exists: true
+    name: "Legacy:AccessControl"
+  - ns: 100
+    exists: true
+    name: "Legacy:Mutator"
+  - ns: 100
+    exists: true
+    name: "Legacy:Linked List"
+  - ns: 100
+    exists: true
+    name: "Legacy:Pawn"
+  - ns: 100
+    exists: true
+    name: "Legacy:GameInfo"
+  - ns: 100
+    exists: true
+    name: "Legacy:Chain Of Events At Level Startup"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Serverside UnrealScript Events"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Chain_Of_Events_When_A_Player_Logs_In"
+    byteoffset: 18
+    anchor: "Serverside_UnrealScript_Events"
+  - toclevel: 1
+    level: "2"
+    line: "Clientside Initialization Overview"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Chain_Of_Events_When_A_Player_Logs_In"
+    byteoffset: 2805
+    anchor: "Clientside_Initialization_Overview"
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:Chain_Of_Events_When_A_Player_Logs_In"
+    byteoffset: 2930
+    anchor: "Related_Topics"
+  displaytitle: "Legacy:Chain Of Events When A Player Logs In"
+  iwlinks: []
+  wikitext:
+    text: "''rough layout''\n\n==Serverside UnrealScript Events==\n# [[Legacy:GameInfo|GameInfo]].PreLogin()\
+      \ &ndash; propagated to [[Legacy:AccessControl|AccessControl]]; may reject player.\n\
+      ## Note: Required packages are downloaded before the Login function is called\
+      \ next.  This can take some time&mdash;the level could change; another player\
+      \ could have gotten the slot.\n# [[Legacy:Mutator|Mutator]].OverrideDownload()\
+      \ &ndash; called on the base mutator for each package the player needs to download,\
+      \ propagates down the mutator [[Legacy:Linked List|linked list]] (only available\
+      \ in UT2003, not in the base engine)\n# [[Legacy:GameInfo|GameInfo]].Login()\
+      \ &ndash; propagated to [[Legacy:AccessControl|AccessControl]] and [[Legacy:Mutator|Mutator]]s;\
+      \ spawns the PlayerPawn/PlayerController or rejects player, sets player name,\
+      \ spectator, admin login, other stuff:\n## Color codes are stripped from URI\
+      \ options passed to the server.\n## [[Legacy:Mutator|Mutator]].ModifyLogin is\
+      \ called starting from the BaseMutator.\n## Checks if server is at player capacity,\
+      \ in which case non-admin players will get a MaxedOutMessage, but an admin is\
+      \ forced to become a spectator, if the server is not at spectator capacity (?)\
+      \ already.\n## Team number is picked; passing in the preferred team [0, 1],\
+      \ or 255 if no team is specified, or if any team will do in a team game, or\
+      \ perhaps if teams are not relevant to the gametype.\n## [[Legacy:GameInfo|GameInfo]].FindPlayerStart\
+      \ is called; attempts to find a start spot for the player&mdash;could potentially\
+      \ abort.\n## PlayerControllerClass is attempted loaded.\n## Spawn player at\
+      \ start spot position and rotation&mdash;could potentially abort if picked start\
+      \ spot could not fit the player (height too low, for instance).  UnrealEd 3\
+      \ does not necessarily catch scenarios like these during a Reachspecs build.\n\
+      ## GameReplicationInfo reference assigned to player.\n## SecurityClass attempted\
+      \ spawned for player.\n## PlayerName\n## Custom VoicePack\n## Player is male\
+      \ or female.\n## PlayerID is incremented and assigned to player.\n## Admins\
+      \ are assigned administrative privileges.\n## bLargeGameVOIP is set to true\
+      \ if the number of players is greater than 20.\n## bWelcomePending is set to\
+      \ true.\n## Determine whether level was requested to run in test mode.\n## If\
+      \ bDelayedStart is true, the PlayerController enters the PlayerWaiting state.\n\
+      # [[Legacy:GameInfo|GameInfo]].PostLogin() &ndash; first point at which replicated\
+      \ functions of the new player are safe to call.\n## [[Legacy:Pawn|Pawn]].ClientSetRotation\
+      \ is called on the Pawn.\n## VotingHandler is attempted set.\n## Bandwidth is\
+      \ capped for the player.\n## [[Legacy:GameInfo|GameInfo]].NotifyLogin is called.\n\
+      ## PlayerID hash is logged.\n# [[Legacy:GameInfo|GameInfo]].NotifyLogin() &ndash;\
+      \ calls ServerRequestBanInfo on all PlayerController actors.\n\n==Clientside\
+      \ Initialization Overview==\n\nTODO: What stuff gets replicated? What happens\
+      \ while the loading screen is visible?\n\n==Related Topics==\n* [[Legacy:Chain\
+      \ Of Events At Level Startup|Chain Of Events At Level Startup]]\n* [[Legacy:Chain\
+      \ Of Events When Spawning Actors|Chain Of Events When Spawning Actors]]\n\n\
+      [[Category:Legacy To Do|{{PAGENAME}}]]"
+  properties: []
+  revId: 44073
+name: "Legacy:Chain Of Events When A Player Logs In"
+revision:
+  revid: 44073
+  parentid: 2504
+  user: "Rejecht"
+  timestamp: 1287189967.000000000
+  comment: "/* Serverside UnrealScript Events: fleshed out */"
+timestamp: 1668787944.935845000

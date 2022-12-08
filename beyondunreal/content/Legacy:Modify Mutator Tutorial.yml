@@ -1,0 +1,554 @@
+---
+parse:
+  title: "Legacy:Modify Mutator Tutorial"
+  text:
+    text: "<p><i>This page is one of a series of <a href=\"/Legacy:UnrealScript_Lessons\"\
+      \ title=\"Legacy:UnrealScript Lessons\">UnrealScript Lessons</a>.</i></p>\n\
+      <h2><span class=\"mw-headline\" id=\"UTute_2:_A_Modify_Mute_.28Cooler.29\">UTute\
+      \ 2: A Modify Mute (Cooler)</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Modify_Mutator_Tutorial?section=1\"\
+      \ title=\"Edit section: UTute 2: A Modify Mute (Cooler)\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<p>Now that you've been warned\
+      \ about OO and have created your own package and simple mutator, let's take\
+      \ a closer look at what a mutator really is and how to use them. For this, we're\
+      \ going to rip open the Cooler mutator from the original XPak. This little mute\
+      \ cools off <a href=\"/Legacy:Adrenaline\" title=\"Legacy:Adrenaline\">adrenaline</a>\
+      \ even if you aren't using it, forcing players to keep on their killing sprees\
+      \ to be able to really pull off those combos.</p>\n<blockquote class=\"legacyquote\"\
+      >\n<p>Quicknote on that last tutorial – you might want to completely delete\
+      \ your MyPackage directory, .u and .int file. Why? Because not everyone can\
+      \ have a package of the same name. In fact, nobody can – one MyPackage would\
+      \ simply overwrite over the other. Now would be a good time to create a new\
+      \ package with your own unique name.</p>\n</blockquote>\n<p>The first question\
+      \ one should be asking is, \"How did Reg know how to make this mute?\" I don't\
+      \ work for Epic, never had any advanced look at the code, no classes, no manuals.\
+      \ Instead, the most common way you will find to learn how to do things in the\
+      \ Unreal engine is to compare it to something similar that is already functioning.\
+      \ In this case, I wanted a mutator that would lower the player's adrenaline\
+      \ about every second. That sounded like our old friend the Regeneration mutator,\
+      \ which raises the player's health about every second. So I hunted around the\
+      \ packages until I found the likely suspect of MutRegen.</p>\n<p>I don't want\
+      \ this to sound to rudimentary. Sure, for a really simple mutator like this,\
+      \ it seems obvious - but later on when you are trying to figure out how the\
+      \ trace function works to precisely land a shot with the InstantFire class,\
+      \ it might not seem so clear. In fact, if you ask questions on the forums and\
+      \ newsgroups, expect to get answers like \"Look in the RocketLauncherPickUp\
+      \ class\".</p>\n<p>Now, here is the cooler class in full:</p>\n<div dir=\"ltr\"\
+      \ class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"co1\">//=============================================================================</span>\n\
+      <span class=\"co1\">// MutCooler - Lowers Adrenaline</span>\n<span class=\"\
+      co1\">//=============================================================================</span>\n\
+      <span class=\"kw1\">class</span> MutCooler <span class=\"kw1\">extends</span>\
+      \ <span class=\"kw9\">Mutator</span>;\n \n<span class=\"co2\">#exec OBJ LOAD\
+      \ File=MutatorArt.utx</span>\n \n<span class=\"kw1\">var</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span> <span class=\"kw5\">int</span> AdrenalineDecrease;\n\
+      \ \n<span class=\"co1\">// Don't call Actor PreBeginPlay() for Mutator</span>\n\
+      <span class=\"kw1\">event</span> <span class=\"kw4\">PreBeginPlay</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \    <span class=\"kw4\">SetTimer</span><span class=\"br0\">(</span><span class=\"\
+      nu0\">1.0</span>,<span class=\"kw6\">true</span><span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">function</span> <span class=\"\
+      kw4\">Timer</span><span class=\"br0\">(</span><span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n    <span class=\"kw1\">local</span> <span class=\"\
+      kw9\">Controller</span> C;\n \n    <span class=\"kw2\">for</span> <span class=\"\
+      br0\">(</span>C <span class=\"sy0\">=</span> <span class=\"kw7\">Level</span>.<span\
+      \ class=\"me0\">ControllerList</span>; C <span class=\"sy0\">!=</span> <span\
+      \ class=\"kw5\">None</span>; C <span class=\"sy0\">=</span> C.<span class=\"\
+      me0\">NextController</span><span class=\"br0\">)</span>\n    <span class=\"\
+      br0\">{</span>\n\t \t <span class=\"kw2\">if</span> <span class=\"br0\">(</span>C.<span\
+      \ class=\"kw9\">Pawn</span> <span class=\"sy0\">!=</span> <span class=\"kw5\"\
+      >None</span> <span class=\"sy0\">&amp;&amp;</span> C.<span class=\"me0\">Adrenaline</span>\
+      \ <span class=\"sy0\">&gt;</span> <span class=\"nu0\">5</span> <span class=\"\
+      br0\">)</span>\n        <span class=\"br0\">{</span>\n            C.<span class=\"\
+      me0\">Adrenaline</span> <span class=\"sy0\">-=</span> AdrenalineDecrease;\n\
+      \        <span class=\"br0\">}</span>\n    <span class=\"br0\">}</span>\n<span\
+      \ class=\"br0\">}</span>\n \n<span class=\"kw1\">defaultproperties</span>\n\
+      <span class=\"br0\">{</span>\n     AdrenalineDecrease<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">2</span>\n     GroupName<span class=\"sy0\">=</span><span class=\"\
+      st0\">\"Cooler\"</span>\n     FriendlyName<span class=\"sy0\">=</span><span\
+      \ class=\"st0\">\"Cooler\"</span>\n     Description<span class=\"sy0\">=</span><span\
+      \ class=\"st0\">\"Cools off adrenaline\"</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>The top part is simply a comment block for describing things to the\
+      \ poor saps who might look at the code. The first real line of code is:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">class</span> MutCooler\
+      \ <span class=\"kw1\">extends</span> <span class=\"kw9\">Mutator</span>;</pre></div>\n\
+      </div>\n<p>Which says that MutCooler is a child of Mutator, and inherits all\
+      \ its properties and methods (see <a href=\"/Legacy:Class_Syntax\" title=\"\
+      Legacy:Class Syntax\">Class syntax</a> for more). Now, in order to make our\
+      \ specific mutator work, we simply extend Mutator's functionality by modifying\
+      \ or adding to those traits.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"co2\">#exec OBJ LOAD File=MutatorArt.utx</span></pre></div>\n\
+      </div>\n<p><a href=\"/Legacy:Exec_Directive\" title=\"Legacy:Exec Directive\"\
+      >Exec directives</a> like this one tell the engine to interact with real files,\
+      \ like models and textures and the like. This one is here pretty much only because\
+      \ it was in MutRegen. They become more important when you start trying to retexture\
+      \ existing models and the like.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">var</span><span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span> <span class=\"kw5\">int</span> AdrenalineDecrease;</pre></div>\n</div>\n\
+      <p>In UnrealScript, you define <a href=\"/Legacy:UnrealScript_Language_Reference/Variables\"\
+      \ title=\"Legacy:UnrealScript Language Reference/Variables\">global Variables</a>\
+      \ before you define any methods or functions. While this is pretty standard\
+      \ for many languages, what may be weird to some is how you automatically define\
+      \ values (or instantiate) these variables</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"co1\">// Don't call Actor PreBeginPlay() for Mutator</span>\n\
+      <span class=\"kw1\">event</span> <span class=\"kw4\">PreBeginPlay</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \    <span class=\"kw4\">SetTimer</span><span class=\"br0\">(</span><span class=\"\
+      nu0\">1.0</span>,<span class=\"kw6\">true</span><span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>Ah, one of my favorite\
+      \ parts of the mutator - because it looks like I was good and commented stuff.\
+      \ In reality, this was just something I copied from MutRegen. This redefines\
+      \ the event (events differ slightly from functions in how the native code sees\
+      \ them, but for the most part you can treat them the same) PreBeginPlay to start\
+      \ a timer. PreBeginPlay is called right after the object is created, but before\
+      \ gameplay begins. It and its similar function PostBeginPlay have a lot of usage\
+      \ when changing existing objects in the game. SetTimer has two variables - the\
+      \ first is the interval time for the timer, or how long to wait. The second\
+      \ is a boolean which sets the timer to repeat or not. Here, we set the timer\
+      \ to repeat about every second.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">function</span> <span class=\"kw4\">Timer</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n \
+      \   <span class=\"kw1\">local</span> <span class=\"kw9\">Controller</span> C;\n\
+      \ \n    <span class=\"kw2\">for</span> <span class=\"br0\">(</span>C <span class=\"\
+      sy0\">=</span> <span class=\"kw7\">Level</span>.<span class=\"me0\">ControllerList</span>;\
+      \ C <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span>; C <span class=\"\
+      sy0\">=</span> C.<span class=\"me0\">NextController</span><span class=\"br0\"\
+      >)</span>\n    <span class=\"br0\">{</span>\n\t \t <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span>C.<span class=\"kw9\">Pawn</span> <span class=\"\
+      sy0\">!=</span> <span class=\"kw5\">None</span> <span class=\"sy0\">&amp;&amp;</span>\
+      \ C.<span class=\"me0\">Adrenaline</span> <span class=\"sy0\">&gt;</span> <span\
+      \ class=\"nu0\">5</span> <span class=\"br0\">)</span>\n        <span class=\"\
+      br0\">{</span>\n            C.<span class=\"me0\">Adrenaline</span> <span class=\"\
+      sy0\">-=</span> AdrenalineDecrease;\n        <span class=\"br0\">}</span>\n\
+      \    <span class=\"br0\">}</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>The function Timer is what is actually called when the timer is triggered.\
+      \ This creates a local variable to hold a <a href=\"/Legacy:Controller\" title=\"\
+      Legacy:Controller\">Controller</a>. Controllers are new to UT2003, but could\
+      \ be easily described as the code which actually controls the pawn (player or\
+      \ bot) in the game. Pawns and Controllers work tightly together, allowing modders\
+      \ to modify distinct parts of them individually. Here, it runs through the current\
+      \ list of controllers (Level.ControllerList) and if that controller has a certain\
+      \ amount of adrenaline, it decreases it.</p>\n<blockquote class=\"legacyquote\"\
+      >\n<p>{{{1}}}</p>\n</blockquote>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">defaultproperties</span>\n<span class=\"br0\">{</span>\n\
+      \     AdrenalineDecrease<span class=\"sy0\">=</span><span class=\"nu0\">2</span>\n\
+      \     GroupName<span class=\"sy0\">=</span><span class=\"st0\">\"Cooler\"</span>\n\
+      \     FriendlyName<span class=\"sy0\">=</span><span class=\"st0\">\"Cooler\"\
+      </span>\n     Description<span class=\"sy0\">=</span><span class=\"st0\">\"\
+      Cools off adrenaline\"</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <p>Finally, the <a href=\"/Legacy:Default_Properties\" title=\"Legacy:Default\
+      \ Properties\">default properties</a> section. This defines some of the basic\
+      \ variables for the mutator. AdrenalineDecrease here is used in the timer to\
+      \ determine the amount of adrenaline to decrease, and if this mutator were configurable\
+      \ - that number could be changed to alter the mutator's effects without having\
+      \ to alter any code. The other three define the mutator for the game. The \"\
+      GroupName\" is the group the mutator belongs to. There can only be one mutator\
+      \ of a group brought into the game at one time. \"FriendlyName\" is the title\
+      \ placed into the mutator list and \"Description\" is what will go into the\
+      \ description block when the mutator is highlighted.</p>\n<p><br /></p>\n<blockquote\
+      \ class=\"legacyquote\">\n<p>Quicknote about structuring the defaultproperties\
+      \ section - notice the lack of semicolons</p>\n</blockquote>\n<p>There's the\
+      \ cooler class. Pretty simplistic, really. Now the only thing left is to open\
+      \ up the int file and add:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      br0\">[</span><span class=\"kw1\">Public</span><span class=\"br0\">]</span>\n\
+      <span class=\"kw8\">Object</span><span class=\"sy0\">=</span><span class=\"\
+      br0\">(</span><span class=\"kw1\">Class</span><span class=\"sy0\">=</span><span\
+      \ class=\"kw1\">Class</span>,MetaClass<span class=\"sy0\">=</span><span class=\"\
+      kw8\">Engine</span>.<span class=\"kw9\">Mutator</span>,<span class=\"kw5\">Name</span><span\
+      \ class=\"sy0\">=</span>XPak.<span class=\"me0\">MutCooler</span>,Description<span\
+      \ class=\"sy0\">=</span><span class=\"st0\">\"Cooler.\"</span><span class=\"\
+      br0\">)</span></pre></div>\n</div>\n<p>So that the game will recognize it. MetaClass\
+      \ here is the kind of object you are describing. In the next tute, you'll see\
+      \ how adding a weapon can be made to show on the Weapons Database dropdown.\
+      \ Name is the full name of the class, or Package.Class and description is simply\
+      \ a text description. Currently, I don't think UT2003 really uses description\
+      \ for mutes, but it's best to put one in.</p>\n<p><i>This tutorial was originally\
+      \ part of <a href=\"/Legacy:RegularX\" title=\"Legacy:RegularX\">RegularX</a>'s\
+      \ <a href=\"/edit/Legacy:UTutes?redlink=1\" class=\"new\" title=\"Legacy:UTutes\
+      \ (page does not exist)\">UTutes</a> series.</i></p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Related_Topics\">Related Topics</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Modify_Mutator_Tutorial?section=2\"\
+      \ title=\"Edit section: Related Topics\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<ul>\n<li><a href=\"/Legacy:Weapon_Mutator_Tutorial\"\
+      \ title=\"Legacy:Weapon Mutator Tutorial\">Weapon Mutator Tutorial</a>: – your\
+      \ recommended next step</li>\n<li><a href=\"/Legacy:UnrealScript_Lessons\" title=\"\
+      Legacy:UnrealScript Lessons\">UnrealScript Lessons</a> – all the UnrealScript\
+      \ tutorials</li>\n<li><a href=\"/Legacy:UnrealScript\" title=\"Legacy:UnrealScript\"\
+      >UnrealScript</a> – all the reference pages</li>\n<li><a href=\"/Legacy:Mutator_Topics\"\
+      \ title=\"Legacy:Mutator Topics\">Mutator Topics</a> – more on mutators</li>\n\
+      <li><a href=\"/Legacy:Making_Mods\" title=\"Legacy:Making Mods\">Making Mods</a>\
+      \ – more on the organizational and social aspects</li>\n</ul>\n<h2><span class=\"\
+      mw-headline\" id=\"Comments\">Comments</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Modify_Mutator_Tutorial?section=3\"\
+      \ title=\"Edit section: Comments\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p><b>RegularX:</b> It should be noted that the cooler\
+      \ class above is from the original xpak, and the code in the XXXPak has been\
+      \ updated (I think).</p>\n<p><b>CorDharel:</b> Question: Can I use the content\
+      \ of this tutorial for my own tutorial? I did one in german, and I think this\
+      \ way is really easy to understand. Would be great if i can.</p>\n<p><b>RegularX:</b>\
+      \ Certainly, just make all the usual acknowledgements/pointers back to the wiki.</p>\n\
+      <p><b>CorDharel:</b> I thank you, I did the acknowledgements and pointers. You\
+      \ can see the result on www.guc.ch.vu (sorry for propaganda), but I can't assure\
+      \ that you will understand it&#160;;)</p>\n<p><b>CH3Z:</b> Again, what if you\
+      \ are trying to mod for UT and don't have UT2003? This note extended from comment\
+      \ on <a href=\"/Legacy:Regen_Mutator\" title=\"Legacy:Regen Mutator\">Regen\
+      \ Mutator</a>.</p>\n<p><b>Heinz57:</b> Hello all. This is my first edit at the\
+      \ Unreal Wiki. Regarding the mutators in XpakII, I had problems getting the\
+      \ SlipSuit.uc class to compile. The culprit seems to be the following code from\
+      \ the Tick function:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\">    <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>OldAmmo <span class=\"sy0\">&gt;</span>\
+      \ RepAmmo<span class=\"br0\">)</span>\n        AmmoCharge <span class=\"sy0\"\
+      >-=</span> <span class=\"nu0\">1.0</span>;\n    OldAmmo <span class=\"sy0\"\
+      >=</span> RepAmmo;</pre></div>\n</div>\n<p>The variable OldAmmo is not declared\
+      \ locally for this method or at the class level. And, I followed the class hierarchy\
+      \ up through TransLauncher, Weapon, Inventory and Actor... no declaration of\
+      \ this variable could be found. Perhaps I have an out of date version of the\
+      \ XpakII classes? If so, could someone please post a link within these tutes\
+      \ to the most up to date packages?</p>\n<p>Thx</p>\n<p><b>RegularX:</b> Heya\
+      \ Heinz. The copy of the Translauncher code I have here declares var int RepAmmo,\
+      \ OldAmmo in the same line. That copy is a few patches old however and so Epic\
+      \ might have pulled a fast one and changed the class. In fact, my non-photographic\
+      \ memory (more like a grease drawing) is thinking that I've seen something about\
+      \ OldAmmo in the logs recently - so I think that's likely. If that's true (I\
+      \ can't confirm it on this computer), try replacing the Tick function with:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">simulated</span>\
+      \ <span class=\"kw1\">function</span> <span class=\"kw4\">Tick</span><span class=\"\
+      br0\">(</span><span class=\"kw5\">float</span> dt<span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n  <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span> <span class=\"kw9\">Bot</span><span class=\"br0\">(</span><span\
+      \ class=\"kw9\">Pawn</span><span class=\"br0\">(</span><span class=\"kw7\">Owner</span><span\
+      \ class=\"br0\">)</span>.<span class=\"kw9\">Controller</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">!=</span> <span class=\"kw5\">none</span>\
+      \ <span class=\"br0\">)</span><span class=\"br0\">{</span>\n\t\t    <span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span>FireMode<span class=\"br0\">[</span><span\
+      \ class=\"nu0\">0</span><span class=\"br0\">]</span>.<span class=\"me0\">AllowFire</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">{</span>\n\t\t    SlipSuitActivate<span class=\"br0\">(</span>FireMode<span\
+      \ class=\"br0\">[</span><span class=\"nu0\">0</span><span class=\"br0\">]</span><span\
+      \ class=\"br0\">)</span>.<span class=\"me0\">DoFireEffect</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n\t\t\t\t\t\t<span class=\"br0\"\
+      >}</span>\n\t\t\t\t<span class=\"br0\">}</span>\n<span class=\"kw6\">Super</span>.<span\
+      \ class=\"kw4\">Tick</span><span class=\"br0\">(</span>dt<span class=\"br0\"\
+      >)</span>;</pre></div>\n</div>\n<p>And see if that compiles. The SlipSuit uses\
+      \ the tick to trick the bots into triggering the Suit whenever they can, and\
+      \ that's probably the only portion of the function which needs to alter from\
+      \ the parent class.</p>\n<p>I'm working on finalizing the next version of the\
+      \ xxxpak, but it might not be out for another \"two weeks\" or so. If this continues\
+      \ to be a problem, email me at inkless@inkless.com.</p>\n<p><b>Heinz57:</b>\
+      \ Thanks for the quick response RegularX. I've replaced the Tick() method code\
+      \ as you've shown (with the addition of a closing brace after the call to Super.Tick()\
+      \ - assuming all other code after was to be ignored), and this, of course, works\
+      \ great. I'm afraid I can't test the change however (because I'm at work, and\
+      \ I have a feeling it would be frowned upon to fire up UT2K3 when I'm supposed\
+      \ to be happily coding&#160;;-)). Is this a fix then, or just a workaround?</p>\n\
+      <p>To confirm your suspicion re: variable declaration in the TransLauncher class,\
+      \ see the following snippet from the v2225 source:</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw1\">var</span> TransBeacon TransBeacon;\n\
+      <span class=\"kw1\">var</span><span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span> <span class=\"kw5\">float</span>     MaxCamDist;\n<span class=\"kw1\"\
+      >var</span><span class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"\
+      kw5\">float</span> AmmoCharge;\n<span class=\"kw1\">var</span> <span class=\"\
+      kw5\">int</span> RepAmmo;\n<span class=\"kw1\">var</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span> <span class=\"kw5\">float</span> AmmoChargeMax;\n\
+      <span class=\"kw1\">var</span><span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span> <span class=\"kw5\">float</span> AmmoChargeRate;\n<span class=\"kw1\"\
+      >var</span> <span class=\"kw1\">globalconfig</span> <span class=\"kw5\">bool</span>\
+      \ bPrevWeaponSwitch;</pre></div>\n</div>\n<p>By the way, this was the only problem\
+      \ stopping me from compiling, so you should be golden, now. Nice work, btw!</p>\n\
+      <p>Cheers.</p>\n<p><b>RegularX:</b> Having the same work issue I can't confirm,\
+      \ but looking at the code it should be a fix, an improvement even, from the\
+      \ earlier SS class (because it won't let this happen again). If it flies, I'll\
+      \ incorporate into the upcoming version.</p>\n<p><b>DarthDevilous:</b> Hi, only\
+      \ my second post here (forgot to put a name <a href=\"/Legacy:Visual_Studio_6\"\
+      \ title=\"Legacy:Visual Studio 6\">here</a>). Anyway, what would happen if AdrenalineDecrease\
+      \ were bigger than 5?</p>\n<p><b>RegularX:</b> ... well, try it and find out&#160;;)\
+      \ Nothing will - in fact in a later version both Heater and Cooler had configs\
+      \ to alter that to anything. So a larger number will just decrease the adrenaline\
+      \ that much faster.</p>\n<p><b>T1:</b> Just making sure, but does this code\
+      \ only work in UT2003? Because when I tried some of the XPak things on UT2004\
+      \ they didn't work (GPFs)... It's been a while, so I don't remember if this\
+      \ mutator was one of the mutators UT2004 broke.</p>\n<p><b>RegularX:</b> I haven't\
+      \ tried these in UT2004 as I had always planned to recode them completely, so\
+      \ there might well be incompatibilities. I would think this one would work.\
+      \ The weapon ones won't. I have new code for UXL which combines heater, cooler\
+      \ and the other adrenaline mutes into one.</p>\n\n<!-- \nNewPP limit report\n\
+      CPU time usage: 0.197 seconds\nReal time usage: 0.200 seconds\nPreprocessor\
+      \ visited node count: 126/1000000\nPreprocessor generated node count: 339/1000000\n\
+      Post‐expand include size: 1193/2097152 bytes\nTemplate argument size: 434/2097152\
+      \ bytes\nHighest expansion depth: 3/40\nExpensive parser function count: 0/100\n\
+      -->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n100.00%\
+      \   78.434      1 - -total\n  7.71%    6.045      3 - Template:Innerbox\n-->\n\
+      \n<!-- Saved in parser cache with key wiki:pcache:idhash:2100-0!*!0!!*!*!* and\
+      \ timestamp 20221118014819 and revision id 5116\n -->\n"
+  categories:
+  - sortkey: "Modify Mutator Tutorial"
+    name: "Legacy_Tutorial"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:UnrealScript Language Reference/Variables"
+  - ns: 100
+    exists: true
+    name: "Legacy:UnrealScript"
+  - ns: 100
+    exists: true
+    name: "Legacy:Mutator Topics"
+  - ns: 100
+    exists: true
+    name: "Legacy:Default Properties"
+  - ns: 100
+    exists: true
+    name: "Legacy:Visual Studio 6"
+  - ns: 100
+    exists: true
+    name: "Legacy:Adrenaline"
+  - ns: 100
+    exists: true
+    name: "Legacy:Making Mods"
+  - ns: 100
+    exists: true
+    name: "Legacy:Weapon Mutator Tutorial"
+  - ns: 100
+    exists: true
+    name: "Legacy:UnrealScript Lessons"
+  - ns: 100
+    exists: true
+    name: "Legacy:Regen Mutator"
+  - ns: 100
+    exists: true
+    name: "Legacy:Class Syntax"
+  - ns: 100
+    exists: true
+    name: "Legacy:RegularX"
+  - ns: 100
+    exists: false
+    name: "Legacy:UTutes"
+  - ns: 100
+    exists: true
+    name: "Legacy:Controller"
+  - ns: 100
+    exists: true
+    name: "Legacy:Exec Directive"
+  templates:
+  - ns: 10
+    exists: true
+    name: "Template:Innerbox"
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "UTute 2: A Modify Mute (Cooler)"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Modify_Mutator_Tutorial"
+    byteoffset: 91
+    anchor: "UTute_2:_A_Modify_Mute_.28Cooler.29"
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Modify_Mutator_Tutorial"
+    byteoffset: 7757
+    anchor: "Related_Topics"
+  - toclevel: 1
+    level: "2"
+    line: "Comments"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:Modify_Mutator_Tutorial"
+    byteoffset: 8199
+    anchor: "Comments"
+  displaytitle: "Legacy:Modify Mutator Tutorial"
+  iwlinks: []
+  wikitext:
+    text: "''This page is one of a series of [[Legacy:UnrealScript Lessons|UnrealScript\
+      \ Lessons]].''\n\n==UTute 2: A Modify Mute (Cooler)==\n\nNow that you've been\
+      \ warned about OO and have created your own package and simple mutator, let's\
+      \ take a closer look at what a mutator really is and how to use them. For this,\
+      \ we're going to rip open the Cooler mutator from the original XPak. This little\
+      \ mute cools off [[Legacy:Adrenaline|adrenaline]] even if you aren't using it,\
+      \ forcing players to keep on their killing sprees to be able to really pull\
+      \ off those combos. \n\n{{innerbox|Quicknote on that last tutorial &ndash; you\
+      \ might want to completely delete your MyPackage directory, .u and .int file.\
+      \ Why? Because not everyone can have a package of the same name. In fact, nobody\
+      \ can &ndash; one MyPackage would simply overwrite over the other. Now would\
+      \ be a good time to create a new package with your own unique name. \n\n}}\n\
+      \nThe first question one should be asking is, \"How did Reg know how to make\
+      \ this mute?\" I don't work for Epic, never had any advanced look at the code,\
+      \ no classes, no manuals. Instead, the most common way you will find to learn\
+      \ how to do things in the Unreal engine is to compare it to something similar\
+      \ that is already functioning. In this case, I wanted a mutator that would lower\
+      \ the player's adrenaline about every second. That sounded like our old friend\
+      \ the Regeneration mutator, which raises the player's health about every second.\
+      \ So I hunted around the packages until I found the likely suspect of MutRegen.\
+      \ \n\nI don't want this to sound to rudimentary. Sure, for a really simple mutator\
+      \ like this, it seems obvious - but later on when you are trying to figure out\
+      \ how the trace function works to precisely land a shot with the InstantFire\
+      \ class, it might not seem so clear. In fact, if you ask questions on the forums\
+      \ and newsgroups, expect to get answers like \"Look in the RocketLauncherPickUp\
+      \ class\". \n\nNow, here is the cooler class in full: \n\n<uscript>\n//=============================================================================\n\
+      // MutCooler - Lowers Adrenaline\n//=============================================================================\n\
+      class MutCooler extends Mutator;\n\n#exec OBJ LOAD File=MutatorArt.utx\n\nvar()\
+      \ int AdrenalineDecrease;\n\n// Don't call Actor PreBeginPlay() for Mutator\n\
+      event PreBeginPlay()\n{\n    SetTimer(1.0,true);\n}\n\nfunction Timer()\n{\n\
+      \    local Controller C;\n\n    for (C = Level.ControllerList; C != None; C\
+      \ = C.NextController)\n    {\n\t \t if (C.Pawn != None && C.Adrenaline > 5 )\n\
+      \        {\n            C.Adrenaline -= AdrenalineDecrease;\n        }\n   \
+      \ }\n}\n\ndefaultproperties\n{\n     AdrenalineDecrease=2\n     GroupName=\"\
+      Cooler\"\n     FriendlyName=\"Cooler\"\n     Description=\"Cools off adrenaline\"\
+      \n}\n</uscript>\n\nThe top part is simply a comment block for describing things\
+      \ to the poor saps who might look at the code. The first real line of code is:\
+      \ \n\n<uscript>class MutCooler extends Mutator;</uscript>\n\nWhich says that\
+      \ MutCooler is a child of Mutator, and inherits all its properties and methods\
+      \ (see [[Legacy:Class Syntax|Class syntax]] for more). Now, in order to make\
+      \ our specific mutator work, we simply extend Mutator's functionality by modifying\
+      \ or adding to those traits. \n\n<uscript>#exec OBJ LOAD File=MutatorArt.utx</uscript>\n\
+      \n[[Legacy:Exec Directive|Exec directive]]s like this one tell the engine to\
+      \ interact with real files, like models and textures and the like. This one\
+      \ is here pretty much only because it was in MutRegen. They become more important\
+      \ when you start trying to retexture existing models and the like. \n\n<uscript>var()\
+      \ int AdrenalineDecrease;</uscript>\n\nIn UnrealScript, you define [[Legacy:UnrealScript_Language_Reference/Variables|global\
+      \ Variables]] before you define any methods or functions. While this is pretty\
+      \ standard for many languages, what may be weird to some is how you automatically\
+      \ define values (or instantiate) these variables\n\n<uscript>\n// Don't call\
+      \ Actor PreBeginPlay() for Mutator\nevent PreBeginPlay()\n{\n    SetTimer(1.0,true);\n\
+      }\n</uscript>\n\nAh, one of my favorite parts of the mutator - because it looks\
+      \ like I was good and commented stuff. In reality, this was just something I\
+      \ copied from MutRegen. This redefines the event (events differ slightly from\
+      \ functions in how the native code sees them, but for the most part you can\
+      \ treat them the same) PreBeginPlay to start a timer. PreBeginPlay is called\
+      \ right after the object is created, but before gameplay begins. It and its\
+      \ similar function PostBeginPlay have a lot of usage when changing existing\
+      \ objects in the game. SetTimer has two variables - the first is the interval\
+      \ time for the timer, or how long to wait. The second is a boolean which sets\
+      \ the timer to repeat or not. Here, we set the timer to repeat about every second.\
+      \ \n\n<uscript>\nfunction Timer()\n{\n    local Controller C;\n\n    for (C\
+      \ = Level.ControllerList; C != None; C = C.NextController)\n    {\n\t \t if\
+      \ (C.Pawn != None && C.Adrenaline > 5 )\n        {\n            C.Adrenaline\
+      \ -= AdrenalineDecrease;\n        }\n    }\n}\n</uscript>\n\nThe function Timer\
+      \ is what is actually called when the timer is triggered. This creates a local\
+      \ variable to hold a [[Legacy:Controller|Controller]]. Controllers are new to\
+      \ UT2003, but could be easily described as the code which actually controls\
+      \ the pawn (player or bot) in the game. Pawns and Controllers work tightly together,\
+      \ allowing modders to modify distinct parts of them individually. Here, it runs\
+      \ through the current list of controllers (Level.ControllerList) and if that\
+      \ controller has a certain amount of adrenaline, it decreases it. \n\n{{innerbox|Quicknote\
+      \ about the \"C.Pawn != None\" test in the innermost if statement. For those\
+      \ familiar with java and similar languages, None in UScript is similar to null.\
+      \ It means that it won't perform the logic if that object isn't there. This\
+      \ is one of the most vital parts of scripting Unreal, because not catching instances\
+      \ where an object doesn't exist can not only break your code, but also slow\
+      \ down the entire game as the game logs the \"Accessed None\" error.\n\n}}\n\
+      \n<uscript>\ndefaultproperties\n{\n     AdrenalineDecrease=2\n     GroupName=\"\
+      Cooler\"\n     FriendlyName=\"Cooler\"\n     Description=\"Cools off adrenaline\"\
+      \n}\n</uscript>\n\nFinally, the [[Legacy:Default Properties|default properties]]\
+      \ section. This defines some of the basic variables for the mutator. AdrenalineDecrease\
+      \ here is used in the timer to determine the amount of adrenaline to decrease,\
+      \ and if this mutator were configurable - that number could be changed to alter\
+      \ the mutator's effects without having to alter any code. The other three define\
+      \ the mutator for the game. The \"GroupName\" is the group the mutator belongs\
+      \ to. There can only be one mutator of a group brought into the game at one\
+      \ time. \"FriendlyName\" is the title placed into the mutator list and \"Description\"\
+      \ is what will go into the description block when the mutator is highlighted.\
+      \ \n \n\n{{innerbox|Quicknote about structuring the defaultproperties section\
+      \ - notice the lack of semicolons \n\n}}\n\nThere's the cooler class. Pretty\
+      \ simplistic, really. Now the only thing left is to open up the int file and\
+      \ add: \n\n<uscript>\n[Public]\nObject=(Class=Class,MetaClass=Engine.Mutator,Name=XPak.MutCooler,Description=\"\
+      Cooler.\")\n</uscript>\n\nSo that the game will recognize it. MetaClass here\
+      \ is the kind of object you are describing. In the next tute, you'll see how\
+      \ adding a weapon can be made to show on the Weapons Database dropdown. Name\
+      \ is the full name of the class, or Package.Class and description is simply\
+      \ a text description. Currently, I don't think UT2003 really uses description\
+      \ for mutes, but it's best to put one in. \n\n''This tutorial was originally\
+      \ part of [[Legacy:RegularX|RegularX]]'s [[Legacy:UTutes|UTutes]] series.''\n\
+      \n==Related Topics ==\n* [[Legacy:Weapon Mutator Tutorial|Weapon Mutator Tutorial]]:\
+      \ &ndash; your recommended next step\n* [[Legacy:UnrealScript Lessons|UnrealScript\
+      \ Lessons]] &ndash; all the UnrealScript tutorials\n* [[Legacy:UnrealScript|UnrealScript]]\
+      \ &ndash; all the reference pages\n* [[Legacy:Mutator Topics|Mutator Topics]]\
+      \ &ndash; more on mutators\n* [[Legacy:Making Mods|Making Mods]] &ndash; more\
+      \ on the organizational and social aspects\n\n==Comments ==\n\n'''RegularX:'''\
+      \ It should be noted that the cooler class above is from the original xpak,\
+      \ and the code in the XXXPak has been updated (I think).\n\n'''CorDharel:'''\
+      \ Question: Can I use the content of this tutorial for my own tutorial? I did\
+      \ one in german, and I think this way is really easy to understand. Would be\
+      \ great if i can.\n\n'''RegularX:''' Certainly, just make all the usual acknowledgements/pointers\
+      \ back to the wiki.\n\n'''CorDharel:''' I thank you, I did the acknowledgements\
+      \ and pointers. You can see the result on www.guc.ch.vu (sorry for propaganda),\
+      \ but I can't assure that you will understand it ;) \n\n'''CH3Z:''' Again, what\
+      \ if you are trying to mod for UT and don't have UT2003? This note extended\
+      \ from comment on [[Legacy:Regen Mutator|Regen Mutator]].\n\n'''Heinz57:'''\
+      \ Hello all. This is my first edit at the Unreal Wiki. Regarding the mutators\
+      \ in XpakII, I had problems getting the SlipSuit.uc class to compile. The culprit\
+      \ seems to be the following code from the Tick function:\n\n<uscript>\n    if\
+      \ (OldAmmo > RepAmmo)\n        AmmoCharge -= 1.0;\n    OldAmmo = RepAmmo;\n\
+      </uscript>\n\nThe variable OldAmmo is not declared locally for this method or\
+      \ at the class level. And, I followed the class hierarchy up through TransLauncher,\
+      \ Weapon, Inventory and Actor...  no declaration of this variable could be found.\
+      \ Perhaps I have an out of date version of the XpakII classes? If so, could\
+      \ someone please post a link within these tutes to the most up to date packages?\n\
+      \nThx\n\n'''RegularX:''' Heya Heinz.  The copy of the Translauncher code I have\
+      \ here declares var int RepAmmo, OldAmmo in the same line.  That copy is a few\
+      \ patches old however and so Epic might have pulled a fast one and changed the\
+      \ class.  In fact, my non-photographic memory (more like a grease drawing) is\
+      \ thinking that I've seen something about OldAmmo in the logs recently - so\
+      \ I think that's likely.  If that's true (I can't confirm it on this computer),\
+      \ try replacing the Tick function with:\n\n<uscript>\nsimulated function Tick(float\
+      \ dt)\n{\n  if ( Bot(Pawn(Owner).Controller) != none ){\n\t\t    if(FireMode[0].AllowFire()){\n\
+      \t\t    SlipSuitActivate(FireMode[0]).DoFireEffect();\n\t\t\t\t\t\t}\n\t\t\t\
+      \t}\nSuper.Tick(dt);\n</uscript>\n\nAnd see if that compiles.  The SlipSuit\
+      \ uses the tick to trick the bots into triggering the Suit whenever they can,\
+      \ and that's probably the only portion of the function which needs to alter\
+      \ from the parent class.\n\nI'm working on finalizing the next version of the\
+      \ xxxpak, but it might not be out for another \"two weeks\" or so.  If this\
+      \ continues to be a problem, email me at inkless@inkless.com.\n\n'''Heinz57:'''\
+      \ Thanks for the quick response RegularX.  I've replaced the Tick() method code\
+      \ as you've shown (with the addition of a closing brace after the call to Super.Tick()\
+      \ - assuming all other code after was to be ignored), and this, of course, works\
+      \ great.  I'm afraid I can't test the change however (because I'm at work, and\
+      \ I have a feeling it would be frowned upon to fire up UT2K3 when I'm supposed\
+      \ to be happily coding ;-)). Is this a fix then, or just a workaround?\n\nTo\
+      \ confirm your suspicion re: variable declaration in the TransLauncher class,\
+      \ see the following snippet from the v2225 source:\n\n<uscript>\nvar TransBeacon\
+      \ TransBeacon;\nvar() float     MaxCamDist;\nvar() float AmmoCharge;\nvar int\
+      \ RepAmmo;\nvar() float AmmoChargeMax;\nvar() float AmmoChargeRate;\nvar globalconfig\
+      \ bool bPrevWeaponSwitch;\n</uscript>\n\nBy the way, this was the only problem\
+      \ stopping me from compiling, so you should be golden, now.  Nice work, btw!\n\
+      \nCheers.\n\n'''RegularX:''' Having the same work issue I can't confirm, but\
+      \ looking at the code it should be a fix, an improvement even, from the earlier\
+      \ SS class (because it won't let this happen again).  If it flies, I'll incorporate\
+      \ into the upcoming version.\n\n'''DarthDevilous:''' Hi, only my second post\
+      \ here (forgot to put a name [[Legacy:Visual Studio 6|here]]). Anyway, what\
+      \ would happen if AdrenalineDecrease were bigger than 5?\n\n'''RegularX:'''\
+      \ ... well, try it and find out ;)  Nothing will - in fact in a later version\
+      \ both Heater and Cooler had configs to alter that to anything.  So a larger\
+      \ number will just decrease the adrenaline that much faster.\n\n'''T1:''' Just\
+      \ making sure, but does this code only work in UT2003? Because when I tried\
+      \ some of the XPak things on UT2004 they didn't work (GPFs)... It's been a while,\
+      \ so I don't remember if this mutator was one of the mutators UT2004 broke.\n\
+      \n'''RegularX:''' I haven't tried these in UT2004 as I had always planned to\
+      \ recode them completely, so there might well be incompatibilities.  I would\
+      \ think this one would work.  The weapon ones won't.  I have new code for UXL\
+      \ which combines heater, cooler and the other adrenaline mutes into one.\n\n\
+      [[Category:Legacy Tutorial|{{PAGENAME}}]]"
+  properties: []
+  revId: 5116
+name: "Legacy:Modify Mutator Tutorial"
+revision:
+  revid: 5116
+  parentid: 5117
+  user: "RegularX"
+  timestamp: 1104277171.000000000
+  comment: "*"
+timestamp: 1668764228.030719000

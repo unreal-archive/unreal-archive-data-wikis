@@ -1,0 +1,1051 @@
+---
+parse:
+  title: "Legacy:Projectile Aiming"
+  text:
+    text: "<p>The following code can be used to accurately determine the direction\
+      \ that a projectile should be fired at in order to collide with the target.</p>\n\
+      <p>This code is capable of accurately targetting moving targets, falling targets,\
+      \ and projectiles uniformly accelerating in any direction. It was originally\
+      \ written for use in Deathball by <a href=\"/Legacy:UsAaR33\" title=\"Legacy:UsAaR33\"\
+      >UsAaR33</a></p>\n<p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\"\
+      >\n<h2>Contents</h2>\n</div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a\
+      \ href=\"#The_Code\"><span class=\"tocnumber\">1</span> <span class=\"toctext\"\
+      >The Code</span></a></li>\n<li class=\"toclevel-1 tocsection-2\"><a href=\"\
+      #How_To_Use_It\"><span class=\"tocnumber\">2</span> <span class=\"toctext\"\
+      >How To Use It</span></a></li>\n<li class=\"toclevel-1 tocsection-3\"><a href=\"\
+      #Notes\"><span class=\"tocnumber\">3</span> <span class=\"toctext\">Notes</span></a>\n\
+      <ul>\n<li class=\"toclevel-2 tocsection-4\"><a href=\"#Speed\"><span class=\"\
+      tocnumber\">3.1</span> <span class=\"toctext\">Speed</span></a></li>\n<li class=\"\
+      toclevel-2 tocsection-5\"><a href=\"#Falling_Targets\"><span class=\"tocnumber\"\
+      >3.2</span> <span class=\"toctext\">Falling Targets</span></a></li>\n<li class=\"\
+      toclevel-2 tocsection-6\"><a href=\"#Out_of_Range_Targets\"><span class=\"tocnumber\"\
+      >3.3</span> <span class=\"toctext\">Out of Range Targets</span></a></li>\n<li\
+      \ class=\"toclevel-2 tocsection-7\"><a href=\"#Projectiles_under_constant_acceleration\"\
+      ><span class=\"tocnumber\">3.4</span> <span class=\"toctext\">Projectiles under\
+      \ constant acceleration</span></a></li>\n<li class=\"toclevel-2 tocsection-8\"\
+      ><a href=\"#That_structure_that_has_nothing_more_than_an_array\"><span class=\"\
+      tocnumber\">3.5</span> <span class=\"toctext\">That structure that has nothing\
+      \ more than an array</span></a></li>\n<li class=\"toclevel-2 tocsection-9\"\
+      ><a href=\"#The_Quartic_Equation_solver\"><span class=\"tocnumber\">3.6</span>\
+      \ <span class=\"toctext\">The Quartic Equation solver</span></a></li>\n</ul>\n\
+      </li>\n<li class=\"toclevel-1 tocsection-10\"><a href=\"#How_does_this_work.3F\"\
+      ><span class=\"tocnumber\">4</span> <span class=\"toctext\">How does this work?</span></a>\n\
+      <ul>\n<li class=\"toclevel-2 tocsection-11\"><a href=\"#Physics\"><span class=\"\
+      tocnumber\">4.1</span> <span class=\"toctext\">Physics</span></a></li>\n</ul>\n\
+      </li>\n</ul>\n</div>\n<p></p>\n<h2><span class=\"mw-headline\" id=\"The_Code\"\
+      >The Code</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Projectile_Aiming?section=1\" title=\"Edit section:\
+      \ The Code\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">struct</span> QuartSolution<span\
+      \ class=\"br0\">{</span>        <span class=\"co1\">//solutions to quart!</span>\n\
+      \  <span class=\"kw1\">var</span> <span class=\"kw5\">float</span> u<span class=\"\
+      br0\">[</span><span class=\"nu0\">4</span><span class=\"br0\">]</span>;\n<span\
+      \ class=\"br0\">}</span>;\n \n<span class=\"co1\">//quadratic solver (using\
+      \ everybody's favorite algebra formula)</span>\n<span class=\"kw1\">static</span>\
+      \ <span class=\"kw1\">function</span> calculateQuadRoots<span class=\"br0\"\
+      >(</span><span class=\"kw5\">float</span> a, <span class=\"kw5\">float</span>\
+      \ b, <span class=\"kw5\">float</span> c, <span class=\"kw1\">out</span> QuartSolution\
+      \ Q<span class=\"br0\">)</span><span class=\"br0\">{</span>\n\t<span class=\"\
+      kw1\">local</span> <span class=\"kw5\">float</span> sqterm;\n\tsqterm <span\
+      \ class=\"sy0\">=</span> b<span class=\"sy0\">*</span>b <span class=\"sy0\"\
+      >-</span> <span class=\"nu0\">4</span><span class=\"sy0\">*</span>a<span class=\"\
+      sy0\">*</span>c;\n\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>sqterm<span\
+      \ class=\"sy0\">&lt;</span><span class=\"nu0\">0</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">{</span> <span class=\"co1\">//imaginary root. return t=1</span>\n\
+      \t\tQ.<span class=\"me0\">u</span><span class=\"br0\">[</span><span class=\"\
+      nu0\">0</span><span class=\"br0\">]</span><span class=\"sy0\">=-</span><span\
+      \ class=\"nu0\">1</span>;\n\t\tQ.<span class=\"me0\">u</span><span class=\"\
+      br0\">[</span><span class=\"nu0\">1</span><span class=\"br0\">]</span><span\
+      \ class=\"sy0\">=-</span><span class=\"nu0\">1</span>;\n\t<span class=\"br0\"\
+      >}</span>\n\t<span class=\"kw2\">else</span><span class=\"br0\">{</span>\n\t\
+      \tsqterm<span class=\"sy0\">=</span><span class=\"kw3\">sqrt</span><span class=\"\
+      br0\">(</span>sqterm<span class=\"br0\">)</span>;\n\t\ta<span class=\"sy0\"\
+      >*=</span><span class=\"nu0\">2</span>;\n\t\tb<span class=\"sy0\">*=-</span><span\
+      \ class=\"nu0\">1</span>;\n\t\tQ.<span class=\"me0\">u</span><span class=\"\
+      br0\">[</span><span class=\"nu0\">0</span><span class=\"br0\">]</span><span\
+      \ class=\"sy0\">=</span><span class=\"br0\">(</span>b<span class=\"sy0\">+</span>sqterm<span\
+      \ class=\"br0\">)</span><span class=\"sy0\">/</span><span class=\"br0\">(</span>a<span\
+      \ class=\"br0\">)</span>;\n\t\tQ.<span class=\"me0\">u</span><span class=\"\
+      br0\">[</span><span class=\"nu0\">1</span><span class=\"br0\">]</span><span\
+      \ class=\"sy0\">=</span><span class=\"br0\">(</span>b<span class=\"sy0\">-</span>sqterm<span\
+      \ class=\"br0\">)</span><span class=\"sy0\">/</span><span class=\"br0\">(</span>a<span\
+      \ class=\"br0\">)</span>;\n\t<span class=\"br0\">}</span>\n<span class=\"br0\"\
+      >}</span>\n \n<span class=\"co1\">//Solve a 4th Degree Polynomial (Quartic)\
+      \ equation for 0s.</span>\n<span class=\"co1\">//taken from a javascript webpage\
+      \ (Explicitly states in source that source may be reused in any way)</span>\n\
+      <span class=\"co1\">//uses the quartic formula! :)</span>\n<span class=\"kw1\"\
+      >static</span> <span class=\"kw1\">function</span> calculateQ<span class=\"\
+      br0\">(</span><span class=\"kw5\">float</span> aq, <span class=\"kw5\">float</span>\
+      \ bq, <span class=\"kw5\">float</span> cq, <span class=\"kw5\">float</span>\
+      \ dq, <span class=\"kw5\">float</span> eqin, <span class=\"kw1\">out</span>\
+      \ QuartSolution Q<span class=\"br0\">)</span><span class=\"br0\">{</span>\n\
+      <span class=\"kw1\">local</span> <span class=\"kw5\">float</span> eq;\n<span\
+      \ class=\"kw1\">local</span> <span class=\"kw5\">float</span> fq;\n<span class=\"\
+      kw1\">local</span> <span class=\"kw5\">float</span> gq;\n<span class=\"co1\"\
+      >//local float hq;</span>\n \n \n<span class=\"co1\">// These are the squares\
+      \ of the local floatiables used to calculate the 4 roots--&gt;</span>\n<span\
+      \ class=\"kw1\">local</span> <span class=\"kw5\">float</span> kq;\n<span class=\"\
+      kw1\">local</span> <span class=\"kw5\">float</span> lq;\n<span class=\"kw1\"\
+      >local</span> <span class=\"kw5\">float</span> mq;\n<span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">float</span> nq;\n<span class=\"kw1\">local</span> <span\
+      \ class=\"kw5\">float</span> mq2;\n \n<span class=\"kw1\">local</span> <span\
+      \ class=\"kw5\">float</span> compsw;\n<span class=\"kw1\">local</span> <span\
+      \ class=\"kw5\">float</span> kqsw;\n<span class=\"kw1\">local</span> <span class=\"\
+      kw5\">float</span> lqsw;\n<span class=\"kw1\">local</span> <span class=\"kw5\"\
+      >float</span> mqsw;\n \n<span class=\"co1\">// Switch used in calculating REAL\
+      \ quartic roots)--&gt;</span>\n<span class=\"kw1\">local</span> <span class=\"\
+      kw5\">float</span> sw;\n \n<span class=\"co1\">// local floatiables for calculating\
+      \ REAL quartic roots)--&gt;</span>\n \n<span class=\"kw1\">local</span> <span\
+      \ class=\"kw5\">float</span> kans;\n<span class=\"kw1\">local</span> <span class=\"\
+      kw5\">float</span> lans;\n<span class=\"kw1\">local</span> <span class=\"kw5\"\
+      >float</span> theta;\n \n \n<span class=\"kw1\">local</span> <span class=\"\
+      kw5\">float</span> x1;\n<span class=\"kw1\">local</span> <span class=\"kw5\"\
+      >float</span> x2;\n<span class=\"kw1\">local</span> <span class=\"kw5\">float</span>\
+      \ x3;\n<span class=\"kw1\">local</span> <span class=\"kw5\">float</span> x4;\n\
+      \ \n<span class=\"kw1\">local</span> <span class=\"kw5\">float</span> x2a, x2b,\
+      \ x2c, x2d;\n<span class=\"co1\">//local float x1b, x1b2, x2b2, x3b, x3b2, x4b,\
+      \ x4b2;</span>\n<span class=\"co1\">//more:</span>\n<span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">float</span> dnm;\n<span class=\"kw1\">local</span> <span\
+      \ class=\"kw5\">float</span> a, b, c, d, f, g, h, k, m, m2,n,n2,r,rc;\n<span\
+      \ class=\"kw1\">local</span> <span class=\"kw5\">float</span> calcy, calcp,\
+      \ calcr, calcq, calcx, calcmod;\n<span class=\"kw1\">local</span> <span class=\"\
+      kw5\">float</span> dnmsw;\n<span class=\"kw1\">local</span> <span class=\"kw5\"\
+      >int</span> i;\n \n<span class=\"co1\">// the 'q' suffix  denotes local floatiables\
+      \ used in the quartic equation</span>\n<span class=\"kw2\">for</span> <span\
+      \ class=\"br0\">(</span>i<span class=\"sy0\">=</span><span class=\"nu0\">0</span>;i<span\
+      \ class=\"sy0\">&lt;</span><span class=\"nu0\">4</span>;i<span class=\"sy0\"\
+      >++</span><span class=\"br0\">)</span> \n\tQ.<span class=\"me0\">u</span><span\
+      \ class=\"br0\">[</span>i<span class=\"br0\">]</span><span class=\"sy0\">=-</span><span\
+      \ class=\"nu0\">1.0</span>; <span class=\"co1\">//set to complex solutions</span>\n\
+      compsw<span class=\"sy0\">=</span><span class=\"nu0\">0</span>;\nkqsw<span class=\"\
+      sy0\">=</span><span class=\"nu0\">0</span>;\nlqsw<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0</span>;\nmqsw<span class=\"sy0\">=</span><span class=\"nu0\"\
+      >0</span>;\ndnmsw<span class=\"sy0\">=</span><span class=\"nu0\">0</span>;\n\
+      sw<span class=\"sy0\">=</span><span class=\"nu0\">0</span>;\n \n \ndnm<span\
+      \ class=\"sy0\">=</span>aq;      <span class=\"co1\">//note: this assumes aq\
+      \ is non-zero.  Of course it should be (eval 0.25g!)</span>\n \n<span class=\"\
+      co1\">//Simplifying by dividing all terms by the aq term called 'dnm' meaning\
+      \ denominator</span>\naq<span class=\"sy0\">=</span>bq<span class=\"sy0\">/</span>dnm;\n\
+      bq<span class=\"sy0\">=</span>cq<span class=\"sy0\">/</span>dnm;\ncq<span class=\"\
+      sy0\">=</span>dq<span class=\"sy0\">/</span>dnm;\ndq<span class=\"sy0\">=</span>eqin<span\
+      \ class=\"sy0\">/</span>dnm;\n<span class=\"co1\">//Which yields an equation\
+      \ of the form X^4 + AX^3 + BX^2 + CX + D = 0</span>\n \neq<span class=\"sy0\"\
+      >=</span> bq<span class=\"sy0\">-</span><span class=\"br0\">(</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">3</span><span class=\"sy0\">*</span>aq<span\
+      \ class=\"sy0\">*</span>aq<span class=\"br0\">)</span><span class=\"sy0\">/</span><span\
+      \ class=\"nu0\">8</span><span class=\"br0\">)</span>;\nfq<span class=\"sy0\"\
+      >=</span> cq<span class=\"sy0\">+</span> <span class=\"br0\">(</span>aq<span\
+      \ class=\"sy0\">*</span>aq<span class=\"sy0\">*</span>aq<span class=\"sy0\"\
+      >/</span><span class=\"nu0\">8</span><span class=\"br0\">)</span> <span class=\"\
+      sy0\">-</span><span class=\"br0\">(</span>aq<span class=\"sy0\">*</span>bq<span\
+      \ class=\"sy0\">/</span><span class=\"nu0\">2</span><span class=\"br0\">)</span>;\n\
+      gq<span class=\"sy0\">=</span> dq<span class=\"sy0\">-</span> <span class=\"\
+      br0\">(</span><span class=\"nu0\">3</span><span class=\"sy0\">*</span>aq<span\
+      \ class=\"sy0\">*</span>aq<span class=\"sy0\">*</span>aq<span class=\"sy0\"\
+      >*</span>aq<span class=\"sy0\">/</span><span class=\"nu0\">256</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">+</span> <span class=\"br0\">(</span>aq<span\
+      \ class=\"sy0\">*</span>aq<span class=\"sy0\">*</span>bq<span class=\"sy0\"\
+      >/</span><span class=\"nu0\">16</span><span class=\"br0\">)</span> <span class=\"\
+      sy0\">-</span> <span class=\"br0\">(</span>aq<span class=\"sy0\">*</span>cq<span\
+      \ class=\"sy0\">/</span><span class=\"nu0\">4</span><span class=\"br0\">)</span>;\n\
+      \ \n<span class=\"co1\">// SOLVING THE RESULTANT CUBIC EQUATION</span>\n<span\
+      \ class=\"co1\">// EVALUATING THE 'f'TERM</span>\n \na<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">1</span>; b<span class=\"sy0\">=</span>eq<span class=\"sy0\"\
+      >/</span><span class=\"nu0\">2</span>; c<span class=\"sy0\">=</span><span class=\"\
+      br0\">(</span><span class=\"br0\">(</span>eq<span class=\"sy0\">*</span>eq<span\
+      \ class=\"br0\">)</span><span class=\"sy0\">-</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">4</span><span class=\"sy0\">*</span>gq<span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">/</span><span class=\"nu0\">16</span>;\
+      \ d<span class=\"sy0\">=</span> <span class=\"br0\">(</span><span class=\"br0\"\
+      >(</span>fq<span class=\"sy0\">*</span>fq<span class=\"br0\">)</span><span class=\"\
+      sy0\">/</span><span class=\"nu0\">64</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">*-</span><span class=\"nu0\">1</span>;\n \nf <span class=\"\
+      sy0\">=</span> <span class=\"br0\">(</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">3</span><span class=\"sy0\">*</span>c<span\
+      \ class=\"br0\">)</span><span class=\"sy0\">/</span>a<span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">-</span> <span class=\"br0\">(</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">(</span>b<span class=\"sy0\">*</span>b<span class=\"\
+      br0\">)</span><span class=\"sy0\">/</span><span class=\"br0\">(</span>a<span\
+      \ class=\"sy0\">*</span>a<span class=\"br0\">)</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span><span class=\"sy0\">/</span><span\
+      \ class=\"nu0\">3</span>;\n<span class=\"co1\">//EVALUATING THE 'g'TERM</span>\n\
+      \ \ng <span class=\"sy0\">=</span> <span class=\"br0\">(</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">2</span><span class=\"sy0\">*</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">(</span>b<span class=\"sy0\">*</span>b<span\
+      \ class=\"sy0\">*</span>b<span class=\"br0\">)</span><span class=\"sy0\">/</span><span\
+      \ class=\"br0\">(</span>a<span class=\"sy0\">*</span>a<span class=\"sy0\">*</span>a<span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span><span class=\"sy0\">-</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">9</span><span class=\"sy0\">*</span>b<span\
+      \ class=\"sy0\">*</span>c<span class=\"sy0\">/</span><span class=\"br0\">(</span>a<span\
+      \ class=\"sy0\">*</span>a<span class=\"br0\">)</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">+</span> <span class=\"br0\">(</span><span class=\"br0\"\
+      >(</span><span class=\"nu0\">27</span><span class=\"sy0\">*</span><span class=\"\
+      br0\">(</span>d<span class=\"sy0\">/</span>a<span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">/</span><span class=\"nu0\">27</span>;\n\
+      \ \n<span class=\"co1\">//EVALUATING THE 'h'TERM</span>\nh <span class=\"sy0\"\
+      >=</span> <span class=\"br0\">(</span><span class=\"br0\">(</span><span class=\"\
+      br0\">(</span>g<span class=\"sy0\">*</span>g<span class=\"br0\">)</span><span\
+      \ class=\"sy0\">/</span><span class=\"nu0\">4</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">+</span> <span class=\"br0\">(</span><span class=\"br0\"\
+      >(</span>f<span class=\"sy0\">*</span>f<span class=\"sy0\">*</span>f<span class=\"\
+      br0\">)</span><span class=\"sy0\">/</span><span class=\"nu0\">27</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>;\n<span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span>h <span class=\"sy0\">&gt;</span> <span class=\"\
+      nu0\">0</span><span class=\"br0\">)</span><span class=\"br0\">{</span>\ncompsw<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">2</span>;\nm <span class=\"sy0\"\
+      >=</span> <span class=\"br0\">(</span><span class=\"sy0\">-</span><span class=\"\
+      br0\">(</span>g<span class=\"sy0\">/</span><span class=\"nu0\">2</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">+</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw3\">sqrt</span><span class=\"br0\">(</span>h<span class=\"br0\"\
+      >)</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n<span class=\"\
+      co1\">// K is used because math.pow cannot compute negative cube roots?</span>\n\
+      k<span class=\"sy0\">=</span><span class=\"nu0\">1</span>;\n<span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span>m <span class=\"sy0\">&lt;</span> <span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span> k<span class=\"sy0\">=-</span><span\
+      \ class=\"nu0\">1</span>;\n  <span class=\"kw2\">else</span> k<span class=\"\
+      sy0\">=</span><span class=\"nu0\">1</span>;\nm2 <span class=\"sy0\">=</span>\
+      \ <span class=\"br0\">(</span><span class=\"br0\">(</span>m<span class=\"sy0\"\
+      >*</span>k<span class=\"br0\">)</span><span class=\"sy0\">**</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">1.0</span><span class=\"sy0\">/</span><span\
+      \ class=\"nu0\">3.0</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n\
+      \ \nm2 <span class=\"sy0\">=</span> m2<span class=\"sy0\">*</span>k;\nk<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">1</span>;\nn <span class=\"sy0\"\
+      >=</span> <span class=\"br0\">(</span><span class=\"sy0\">-</span><span class=\"\
+      br0\">(</span>g<span class=\"sy0\">/</span><span class=\"nu0\">2</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">-</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw3\">sqrt</span><span class=\"br0\">(</span>h<span class=\"br0\"\
+      >)</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>n <span class=\"sy0\">&lt;</span>\
+      \ <span class=\"nu0\">0</span><span class=\"br0\">)</span>\n  k<span class=\"\
+      sy0\">=-</span><span class=\"nu0\">1</span>;\n<span class=\"kw2\">else</span>\n\
+      \  k<span class=\"sy0\">=</span><span class=\"nu0\">1</span>;\n \nn2 <span class=\"\
+      sy0\">=</span> <span class=\"br0\">(</span>n<span class=\"sy0\">*</span>k<span\
+      \ class=\"br0\">)</span><span class=\"sy0\">**</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">1.0</span><span class=\"sy0\">/</span><span class=\"nu0\">3.0</span><span\
+      \ class=\"br0\">)</span>;\nn2 <span class=\"sy0\">*=</span>k;\nk<span class=\"\
+      sy0\">=</span><span class=\"nu0\">1</span>;\nkq<span class=\"sy0\">=</span>\
+      \  <span class=\"br0\">(</span><span class=\"br0\">(</span>m2 <span class=\"\
+      sy0\">+</span> n2<span class=\"br0\">)</span> <span class=\"sy0\">-</span> <span\
+      \ class=\"br0\">(</span>b<span class=\"sy0\">/</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">3</span><span class=\"sy0\">*</span>a<span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>;\nkq<span class=\"sy0\"\
+      >=</span><span class=\"kw3\">sqrt</span><span class=\"br0\">(</span>kq<span\
+      \ class=\"br0\">)</span>;\n<span class=\"co1\">// ((S+U)     - (b/(3*a)))</span>\n\
+      calcmod<span class=\"sy0\">=</span> <span class=\"kw3\">sqrt</span><span class=\"\
+      br0\">(</span><span class=\"br0\">(</span><span class=\"sy0\">-</span><span\
+      \ class=\"nu0\">1</span><span class=\"sy0\">*</span><span class=\"br0\">(</span>m2\
+      \ <span class=\"sy0\">+</span> n2<span class=\"br0\">)</span><span class=\"\
+      sy0\">/</span><span class=\"nu0\">2</span> <span class=\"sy0\">-</span> <span\
+      \ class=\"br0\">(</span>b<span class=\"sy0\">/</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">3</span><span class=\"sy0\">*</span>a<span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span><span class=\"sy0\">*</span><span\
+      \ class=\"br0\">(</span><span class=\"sy0\">-</span><span class=\"nu0\">1</span><span\
+      \ class=\"sy0\">*</span><span class=\"br0\">(</span>m2 <span class=\"sy0\">+</span>\
+      \ n2<span class=\"br0\">)</span><span class=\"sy0\">/</span><span class=\"nu0\"\
+      >2</span> <span class=\"sy0\">-</span> <span class=\"br0\">(</span>b<span class=\"\
+      sy0\">/</span><span class=\"br0\">(</span><span class=\"nu0\">3</span><span\
+      \ class=\"sy0\">*</span>a<span class=\"br0\">)</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">+</span> <span class=\"br0\">(</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">(</span>m2 <span class=\"sy0\">-</span>\
+      \ n2<span class=\"br0\">)</span><span class=\"sy0\">/</span><span class=\"nu0\"\
+      >2</span><span class=\"br0\">)</span><span class=\"sy0\">*</span><span class=\"\
+      kw3\">sqrt</span><span class=\"br0\">(</span><span class=\"nu0\">3</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span><span class=\"sy0\">*</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">(</span><span class=\"br0\">(</span>m2\
+      \ <span class=\"sy0\">-</span> n2<span class=\"br0\">)</span><span class=\"\
+      sy0\">/</span><span class=\"nu0\">2</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">*</span><span class=\"kw3\">sqrt</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">3</span><span class=\"br0\">)</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span>;\ncalcy<span class=\"sy0\">=</span><span class=\"kw3\"\
+      >sqrt</span><span class=\"br0\">(</span><span class=\"br0\">(</span>calcmod<span\
+      \ class=\"sy0\">-</span><span class=\"br0\">(</span><span class=\"sy0\">-</span><span\
+      \ class=\"nu0\">1</span><span class=\"sy0\">*</span><span class=\"br0\">(</span>m2\
+      \ <span class=\"sy0\">+</span> n2<span class=\"br0\">)</span><span class=\"\
+      sy0\">/</span><span class=\"nu0\">2</span> <span class=\"sy0\">-</span> <span\
+      \ class=\"br0\">(</span>b<span class=\"sy0\">/</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">3</span><span class=\"sy0\">*</span>a<span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">/</span><span class=\"nu0\">2</span><span class=\"br0\">)</span>;\n\
+      calcx<span class=\"sy0\">=</span><span class=\"br0\">(</span><span class=\"\
+      br0\">(</span><span class=\"br0\">(</span>m2 <span class=\"sy0\">-</span> n2<span\
+      \ class=\"br0\">)</span><span class=\"sy0\">/</span><span class=\"nu0\">2</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">*</span><span class=\"kw3\">sqrt</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">3</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">/</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">2</span><span class=\"sy0\">*</span>calcy<span class=\"br0\"\
+      >)</span>;\ncalcp<span class=\"sy0\">=</span>calcx<span class=\"sy0\">+</span>calcy;\n\
+      calcq<span class=\"sy0\">=</span>calcx<span class=\"sy0\">-</span>calcy;\ncalcr<span\
+      \ class=\"sy0\">=</span>kq;\n \nnq<span class=\"sy0\">=</span><span class=\"\
+      br0\">(</span>aq<span class=\"sy0\">/</span><span class=\"nu0\">4</span><span\
+      \ class=\"br0\">)</span>;\nx1<span class=\"sy0\">=</span>kq<span class=\"sy0\"\
+      >+</span>calcp<span class=\"sy0\">+</span>calcq<span class=\"sy0\">-</span>nq;\n\
+      x4<span class=\"sy0\">=</span>kq<span class=\"sy0\">-</span>calcp<span class=\"\
+      sy0\">-</span>calcq<span class=\"sy0\">-</span>nq;\n \n \nQ.<span class=\"me0\"\
+      >u</span><span class=\"br0\">[</span><span class=\"nu0\">0</span><span class=\"\
+      br0\">]</span><span class=\"sy0\">=-</span>x1; <span class=\"co1\">//appearently\
+      \ was incorrect by a factor of -1</span>\nQ.<span class=\"me0\">u</span><span\
+      \ class=\"br0\">[</span><span class=\"nu0\">1</span><span class=\"br0\">]</span><span\
+      \ class=\"sy0\">=-</span><span class=\"nu0\">1</span>; <span class=\"co1\">//complex</span>\n\
+      Q.<span class=\"me0\">u</span><span class=\"br0\">[</span><span class=\"nu0\"\
+      >2</span><span class=\"br0\">]</span><span class=\"sy0\">=-</span><span class=\"\
+      nu0\">1</span>; <span class=\"co1\">//complex</span>\nQ.<span class=\"me0\"\
+      >u</span><span class=\"br0\">[</span><span class=\"nu0\">3</span><span class=\"\
+      br0\">]</span><span class=\"sy0\">=-</span>x4;\n<span class=\"br0\">}</span>\n\
+      \ \n \n<span class=\"co1\">// FOR H &lt; 0</span>\n \n<span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span>h<span class=\"sy0\">&lt;=</span><span class=\"\
+      nu0\">0</span><span class=\"br0\">)</span><span class=\"br0\">{</span>\nr <span\
+      \ class=\"sy0\">=</span> <span class=\"kw3\">sqrt</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">(</span>g<span class=\"sy0\">*</span>g<span class=\"\
+      sy0\">/</span><span class=\"nu0\">4</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">-</span>h<span class=\"br0\">)</span>;\nk<span class=\"sy0\"\
+      >=</span><span class=\"nu0\">1</span>;\n \n<span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span>r<span class=\"sy0\">&lt;</span><span class=\"nu0\"\
+      >0</span><span class=\"br0\">)</span>\n  k<span class=\"sy0\">=-</span><span\
+      \ class=\"nu0\">1</span>;\n<span class=\"co1\">// rc is the cube root of 'r'</span>\n\
+      \ \nrc <span class=\"sy0\">=</span> <span class=\"br0\">(</span><span class=\"\
+      br0\">(</span>r<span class=\"sy0\">*</span>k<span class=\"br0\">)</span><span\
+      \ class=\"sy0\">**</span><span class=\"br0\">(</span><span class=\"nu0\">1.0</span><span\
+      \ class=\"sy0\">/</span><span class=\"nu0\">3.0</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">*</span>k;\nk<span class=\"sy0\"\
+      >=</span><span class=\"nu0\">1</span>;\ntheta <span class=\"sy0\">=</span><span\
+      \ class=\"kw3\">acos</span><span class=\"br0\">(</span><span class=\"br0\">(</span><span\
+      \ class=\"sy0\">-</span>g<span class=\"sy0\">/</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">2</span><span class=\"sy0\">*</span>r<span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>;\n \nkq<span class=\"sy0\"\
+      >=</span> <span class=\"br0\">(</span><span class=\"nu0\">2</span><span class=\"\
+      sy0\">*</span><span class=\"br0\">(</span>rc<span class=\"sy0\">*</span><span\
+      \ class=\"kw3\">cos</span><span class=\"br0\">(</span>theta<span class=\"sy0\"\
+      >/</span><span class=\"nu0\">3</span><span class=\"br0\">)</span><span class=\"\
+      br0\">)</span><span class=\"sy0\">-</span><span class=\"br0\">(</span>b<span\
+      \ class=\"sy0\">/</span><span class=\"br0\">(</span><span class=\"nu0\">3</span><span\
+      \ class=\"sy0\">*</span>a<span class=\"br0\">)</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span>;\n \nx2a<span class=\"sy0\">=</span>rc<span class=\"\
+      sy0\">*-</span><span class=\"nu0\">1</span>;\nx2b<span class=\"sy0\">=</span>\
+      \ <span class=\"kw3\">cos</span><span class=\"br0\">(</span>theta<span class=\"\
+      sy0\">/</span><span class=\"nu0\">3.0</span><span class=\"br0\">)</span>;\n\
+      x2c<span class=\"sy0\">=</span> <span class=\"kw3\">sqrt</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">3</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">*</span><span class=\"br0\">(</span><span class=\"kw3\">sin</span><span\
+      \ class=\"br0\">(</span>theta<span class=\"sy0\">/</span><span class=\"nu0\"\
+      >3</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\nx2d<span\
+      \ class=\"sy0\">=</span> <span class=\"br0\">(</span>b<span class=\"sy0\">/</span><span\
+      \ class=\"nu0\">3.0</span><span class=\"sy0\">*</span>a<span class=\"br0\">)</span><span\
+      \ class=\"sy0\">*-</span><span class=\"nu0\">1</span>;\n \nlq<span class=\"\
+      sy0\">=</span><span class=\"br0\">(</span>x2a<span class=\"sy0\">*</span><span\
+      \ class=\"br0\">(</span>x2b <span class=\"sy0\">+</span> x2c<span class=\"br0\"\
+      >)</span><span class=\"br0\">)</span><span class=\"sy0\">-</span><span class=\"\
+      br0\">(</span>b<span class=\"sy0\">/</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">3</span><span class=\"sy0\">*</span>a<span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span>;\n \nmq<span class=\"sy0\">=</span><span class=\"br0\"\
+      >(</span>x2a<span class=\"sy0\">*</span><span class=\"br0\">(</span>x2b <span\
+      \ class=\"sy0\">-</span> x2c<span class=\"br0\">)</span><span class=\"br0\"\
+      >)</span><span class=\"sy0\">-</span><span class=\"br0\">(</span>b<span class=\"\
+      sy0\">/</span><span class=\"br0\">(</span><span class=\"nu0\">3</span><span\
+      \ class=\"sy0\">*</span>a<span class=\"br0\">)</span><span class=\"br0\">)</span>;\n\
+      \ \nnq<span class=\"sy0\">=</span><span class=\"br0\">(</span>aq<span class=\"\
+      sy0\">/</span><span class=\"nu0\">4.0</span><span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span>h<span class=\"sy0\">&lt;=</span><span class=\"nu0\">0</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">{</span>\n \n<span class=\"co1\"\
+      >// psudo-fix 0 bug.. not the best.. but works</span>\n<span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span><span class=\"kw3\">abs</span><span class=\"br0\"\
+      >(</span>kq<span class=\"br0\">)</span><span class=\"sy0\">&lt;</span><span\
+      \ class=\"nu0\">1.0</span><span class=\"sy0\">/</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">10000.0</span><span class=\"br0\">)</span><span class=\"br0\"\
+      >)</span>\n  kq<span class=\"sy0\">=</span><span class=\"nu0\">0</span>;\n<span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"kw3\">abs</span><span\
+      \ class=\"br0\">(</span>lq<span class=\"br0\">)</span><span class=\"sy0\">&lt;</span><span\
+      \ class=\"nu0\">1.0</span><span class=\"sy0\">/</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">10000.0</span><span class=\"br0\">)</span><span class=\"br0\"\
+      >)</span>\n  lq<span class=\"sy0\">=</span><span class=\"nu0\">0</span>;\n<span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"kw3\">abs</span><span\
+      \ class=\"br0\">(</span>mq<span class=\"br0\">)</span><span class=\"sy0\">&lt;-</span><span\
+      \ class=\"nu0\">1.0</span><span class=\"sy0\">/</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">10000.0</span><span class=\"br0\">)</span><span class=\"br0\"\
+      >)</span>\n  mq<span class=\"sy0\">=</span><span class=\"nu0\">0</span>;\n<span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span>kq<span class=\"sy0\"\
+      >&lt;</span><span class=\"nu0\">0</span><span class=\"br0\">)</span> <span class=\"\
+      br0\">{</span><span class=\"kw2\">return</span>;<span class=\"br0\">}</span>\
+      \ <span class=\"kw2\">else</span> <span class=\"br0\">{</span>kq<span class=\"\
+      sy0\">=</span><span class=\"kw3\">sqrt</span><span class=\"br0\">(</span>kq<span\
+      \ class=\"br0\">)</span>;<span class=\"br0\">}</span>\n<span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span>lq<span class=\"sy0\">&lt;</span><span class=\"\
+      nu0\">0</span><span class=\"br0\">)</span> <span class=\"br0\">{</span><span\
+      \ class=\"kw2\">return</span>;<span class=\"br0\">}</span> <span class=\"kw2\"\
+      >else</span> <span class=\"br0\">{</span>lq<span class=\"sy0\">=</span><span\
+      \ class=\"kw3\">sqrt</span><span class=\"br0\">(</span>lq<span class=\"br0\"\
+      >)</span>;<span class=\"br0\">}</span>\n<span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span>mq<span class=\"sy0\">&lt;</span><span class=\"nu0\"\
+      >0</span><span class=\"br0\">)</span> <span class=\"br0\">{</span><span class=\"\
+      kw2\">return</span>;<span class=\"br0\">}</span> <span class=\"kw2\">else</span>\
+      \ <span class=\"br0\">{</span>mq<span class=\"sy0\">=</span><span class=\"kw3\"\
+      >sqrt</span><span class=\"br0\">(</span>mq<span class=\"br0\">)</span>;<span\
+      \ class=\"br0\">}</span>\n \n<span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span>kq<span class=\"sy0\">*</span>lq<span class=\"sy0\">&gt;</span><span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span><span class=\"br0\">{</span>mq2<span\
+      \ class=\"sy0\">=</span><span class=\"br0\">(</span><span class=\"br0\">(</span>fq<span\
+      \ class=\"sy0\">*-</span><span class=\"nu0\">1</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">/</span><span class=\"br0\">(</span><span class=\"nu0\">8</span><span\
+      \ class=\"sy0\">*</span>kq<span class=\"sy0\">*</span>lq<span class=\"br0\"\
+      >)</span><span class=\"br0\">)</span>;kans<span class=\"sy0\">=</span>kq;lans<span\
+      \ class=\"sy0\">=</span>lq;<span class=\"br0\">}</span>\n<span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span>kq<span class=\"sy0\">*</span>mq<span\
+      \ class=\"sy0\">&gt;</span><span class=\"nu0\">0</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">{</span>mq2<span class=\"sy0\">=</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">(</span>fq<span class=\"sy0\">*-</span><span class=\"nu0\">1</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">/</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">8</span><span class=\"sy0\">*</span>kq<span class=\"sy0\">*</span>mq<span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>;kans<span class=\"sy0\"\
+      >=</span>kq;lans<span class=\"sy0\">=</span>mq;<span class=\"br0\">}</span>\n\
+      <span class=\"kw2\">if</span> <span class=\"br0\">(</span>lq<span class=\"sy0\"\
+      >*</span>mq<span class=\"sy0\">&gt;</span><span class=\"nu0\">0</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">{</span>mq2<span class=\"sy0\">=</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">(</span>fq<span class=\"sy0\">*-</span><span\
+      \ class=\"nu0\">1</span><span class=\"br0\">)</span><span class=\"sy0\">/</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">8</span><span class=\"sy0\">*</span>lq<span\
+      \ class=\"sy0\">*</span>mq<span class=\"br0\">)</span><span class=\"br0\">)</span>;kans<span\
+      \ class=\"sy0\">=</span>lq;lans<span class=\"sy0\">=</span>mq;<span class=\"\
+      br0\">}</span>\n \n \n \n \n<span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span>compsw<span class=\"sy0\">==</span><span class=\"nu0\">0</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">{</span>\n  x1<span class=\"sy0\"\
+      >=</span>kans<span class=\"sy0\">+</span>lans<span class=\"sy0\">+</span>mq2<span\
+      \ class=\"sy0\">-</span>nq;\n  Q.<span class=\"me0\">u</span><span class=\"\
+      br0\">[</span><span class=\"nu0\">0</span><span class=\"br0\">]</span><span\
+      \ class=\"sy0\">=</span>x1;\n  x2<span class=\"sy0\">=</span>kans<span class=\"\
+      sy0\">-</span>lans<span class=\"sy0\">-</span>mq2<span class=\"sy0\">-</span>nq;\n\
+      \  Q.<span class=\"me0\">u</span><span class=\"br0\">[</span><span class=\"\
+      nu0\">1</span><span class=\"br0\">]</span><span class=\"sy0\">=</span>x2;\n\
+      \  x3<span class=\"sy0\">=</span><span class=\"br0\">(</span>kans<span class=\"\
+      sy0\">*-</span><span class=\"nu0\">1</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">+</span>lans<span class=\"sy0\">-</span>mq2<span class=\"sy0\"\
+      >-</span>nq;\n  Q.<span class=\"me0\">u</span><span class=\"br0\">[</span><span\
+      \ class=\"nu0\">2</span><span class=\"br0\">]</span><span class=\"sy0\">=</span>x3;\n\
+      \  x4<span class=\"sy0\">=</span><span class=\"br0\">(</span>kans<span class=\"\
+      sy0\">*-</span><span class=\"nu0\">1</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">-</span>lans<span class=\"sy0\">+</span>mq2<span class=\"sy0\"\
+      >-</span>nq;\n  Q.<span class=\"me0\">u</span><span class=\"br0\">[</span><span\
+      \ class=\"nu0\">3</span><span class=\"br0\">]</span><span class=\"sy0\">=</span>x4;\n\
+      <span class=\"br0\">}</span>\n<span class=\"br0\">}</span>\n<span class=\"br0\"\
+      >}</span>\n \n<span class=\"coMULTI\">/*Calculate aiming ideal rotation for\
+      \ firing a projectile at a potentially moving target (assumes pawn physics)\n\
+      \ IN:\n -StartLoc = world location where projectile is starting at\n -EndLoc\
+      \ = world Location we wish to Target (should lie in the targetted actor)\n -ProjSpeed\
+      \ = speed of the projectile being fired\n -Gravity = a vector describing the\
+      \ gravity\n -Target = the actual targetted ACTOR\n -bLeadTarget = Can we track\
+      \ the target?  (the entire point of this function)\n OUT:\n -dest: Location\
+      \ where the projectile will collide with Target\n -returns vector describing\
+      \ direction for projectile to leave at\n*/</span>\n<span class=\"kw1\">static</span>\
+      \ <span class=\"kw1\">function</span> <span class=\"kw5\">vector</span> GetShootVect<span\
+      \ class=\"br0\">(</span><span class=\"kw5\">vector</span> StartLoc, <span class=\"\
+      kw5\">vector</span> EndLoc, <span class=\"kw5\">float</span> ProjSpeed, <span\
+      \ class=\"kw5\">vector</span> Gravity, <span class=\"kw9\">actor</span> Target,\
+      \ <span class=\"kw5\">bool</span> bLeadTarget, <span class=\"kw1\">out</span>\
+      \ <span class=\"kw5\">vector</span> Dest<span class=\"br0\">)</span>\n<span\
+      \ class=\"br0\">{</span>\n  <span class=\"kw1\">local</span> QuartSolution Q;\n\
+      \  <span class=\"kw1\">local</span> <span class=\"kw5\">float</span> best, speed2D,\
+      \ HitTime;\n  <span class=\"kw1\">local</span> <span class=\"kw5\">vector</span>\
+      \ Pr;\n  <span class=\"kw1\">local</span> <span class=\"kw5\">int</span> i;\n\
+      \  <span class=\"kw1\">local</span> <span class=\"kw5\">vector</span> HitNorm,\
+      \ HitLoc;\n\t<span class=\"kw1\">local</span> <span class=\"kw5\">vector</span>\
+      \ D; <span class=\"co1\">//EndLoc-StartLoc</span>\n\t<span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">vector</span> V; <span class=\"co1\">//Target.velocity</span>\n\
+      \ \n\tD <span class=\"sy0\">=</span> EndLoc<span class=\"sy0\">-</span>StartLoc;\n\
+      \tV <span class=\"sy0\">=</span> Target.<span class=\"kw7\">Velocity</span>;\n\
+      \  <span class=\"co1\">//track falling actors</span>\n  <span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span>bLeadTarget <span class=\"sy0\">&amp;&amp;</span>\
+      \ Target.<span class=\"kw7\">Physics</span><span class=\"sy0\">==</span><span\
+      \ class=\"kw7\">Phys_Falling</span><span class=\"br0\">)</span><span class=\"\
+      br0\">{</span>\n\t\t\tcalculateQuadRoots<span class=\"br0\">(</span>V dot V\
+      \ <span class=\"sy0\">-</span> ProjSpeed<span class=\"sy0\">*</span>ProjSpeed,\n\
+      \t\t\t <span class=\"nu0\">2</span><span class=\"sy0\">*</span><span class=\"\
+      br0\">(</span>V dot D<span class=\"br0\">)</span>,D dot D,Q<span class=\"br0\"\
+      >)</span>; <span class=\"co1\">//use quadratic formula</span>\n\t\t\t<span class=\"\
+      kw2\">for</span> <span class=\"br0\">(</span>i<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0</span>;i<span class=\"sy0\">&lt;</span><span class=\"nu0\"\
+      >2</span>;i<span class=\"sy0\">++</span><span class=\"br0\">)</span>\n  \t\t\
+      \t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>best<span class=\"\
+      sy0\">&lt;=</span><span class=\"nu0\">0</span><span class=\"sy0\">||</span><span\
+      \ class=\"br0\">(</span>q.<span class=\"me0\">u</span><span class=\"br0\">[</span>i<span\
+      \ class=\"br0\">]</span><span class=\"sy0\">&gt;</span><span class=\"nu0\">0</span>\
+      \ <span class=\"sy0\">&amp;&amp;</span> q.<span class=\"me0\">u</span><span\
+      \ class=\"br0\">[</span>i<span class=\"br0\">]</span><span class=\"sy0\">&lt;</span>best<span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n\t    \t\tbest<span class=\"\
+      sy0\">=</span>q.<span class=\"me0\">u</span><span class=\"br0\">[</span>i<span\
+      \ class=\"br0\">]</span>;\n\t\t\tPr <span class=\"sy0\">=</span> <span class=\"\
+      kw3\">normal</span><span class=\"br0\">(</span>D<span class=\"sy0\">/</span>best\
+      \ <span class=\"sy0\">+</span> V<span class=\"br0\">)</span><span class=\"sy0\"\
+      >*</span>ProjSpeed;\n\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span>best<span class=\"sy0\">&lt;=</span><span class=\"nu0\">0</span> <span\
+      \ class=\"sy0\">||</span> Target.<span class=\"kw4\">Trace</span><span class=\"\
+      br0\">(</span>HitLoc,HitNorm,EndLoc<span class=\"sy0\">+</span>V<span class=\"\
+      sy0\">*</span>best<span class=\"sy0\">+</span><span class=\"nu0\">0.5</span><span\
+      \ class=\"sy0\">*</span>Gravity<span class=\"sy0\">*</span>best\n\t\t\t <span\
+      \ class=\"sy0\">*</span>best,EndLoc<span class=\"sy0\">+</span><span class=\"\
+      kw3\">vect</span><span class=\"br0\">(</span><span class=\"nu0\">1</span>,<span\
+      \ class=\"nu0\">1</span>,<span class=\"nu0\">0</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">*</span>V<span class=\"sy0\">*</span>best<span class=\"br0\"\
+      >)</span> <span class=\"sy0\">==</span> <span class=\"kw5\">none</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">{</span>\n\t\t\t  <span class=\"\
+      co1\">//will be falling:</span>\n\t\t\t\tDest <span class=\"sy0\">=</span> StartLoc\
+      \ <span class=\"sy0\">+</span> PR<span class=\"sy0\">*</span>best<span class=\"\
+      sy0\">+</span><span class=\"nu0\">0.5</span><span class=\"sy0\">*</span>Gravity<span\
+      \ class=\"sy0\">*</span>best<span class=\"sy0\">*</span>best;\n\t\t\t  <span\
+      \ class=\"kw2\">return</span> <span class=\"kw3\">normal</span><span class=\"\
+      br0\">(</span>PR<span class=\"br0\">)</span><span class=\"sy0\">*</span>ProjSpeed;\n\
+      \t\t\t<span class=\"br0\">}</span>\n\t\t\t<span class=\"kw2\">else</span> <span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span>best<span class=\"sy0\"\
+      >&gt;</span><span class=\"nu0\">0</span><span class=\"br0\">)</span>  <span\
+      \ class=\"co1\">//determine how long actor will be in air</span>\n\t\t\t\tHitTime\
+      \ <span class=\"sy0\">=</span> <span class=\"kw3\">vsize</span><span class=\"\
+      br0\">(</span>HitLoc <span class=\"sy0\">-</span> <span class=\"br0\">(</span>EndLoc<span\
+      \ class=\"sy0\">+</span><span class=\"kw3\">vect</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">1</span>,<span class=\"nu0\">1</span>,<span class=\"nu0\">0</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">*</span>V<span class=\"sy0\">*</span>best<span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span><span class=\"sy0\">/</span><span\
+      \ class=\"kw3\">vsize</span><span class=\"br0\">(</span><span class=\"kw3\"\
+      >vect</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>,<span class=\"\
+      nu0\">0</span>,<span class=\"nu0\">1</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">*</span>V<span class=\"sy0\">*</span>best<span class=\"sy0\"\
+      >+</span><span class=\"nu0\">0.5</span><span class=\"sy0\">*</span>Gravity<span\
+      \ class=\"sy0\">*</span>best<span class=\"br0\">)</span>;\n\t\t\t<span class=\"\
+      kw2\">else</span>\n\t\t\t\tHitTime <span class=\"sy0\">=</span> <span class=\"\
+      nu0\">0</span>; <span class=\"co1\">//assume most time not in air?</span>\n\
+      \  <span class=\"br0\">}</span>\n \n  <span class=\"co1\">//ASSUME GROUND TRACKING</span>\n\
+      \t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>bLeadTarget <span\
+      \ class=\"sy0\">&amp;&amp;</span> Target.<span class=\"kw7\">Physics</span><span\
+      \ class=\"sy0\">==</span><span class=\"kw7\">Phys_Falling</span><span class=\"\
+      br0\">)</span><span class=\"br0\">{</span>   <span class=\"co1\">//trace down\
+      \ from target to get ground normal</span>\n  \tTarget.<span class=\"kw4\">Trace</span><span\
+      \ class=\"br0\">(</span>HitLoc,HitNorm,EndLoc<span class=\"sy0\">+</span><span\
+      \ class=\"kw3\">normal</span><span class=\"br0\">(</span>Gravity<span class=\"\
+      br0\">)</span><span class=\"sy0\">*</span><span class=\"nu0\">5000</span>,EndLoc<span\
+      \ class=\"br0\">)</span>;\n\t\tD.<span class=\"me0\">z</span><span class=\"\
+      sy0\">=</span>HitLoc.<span class=\"me0\">z</span><span class=\"sy0\">-</span>StartLoc.<span\
+      \ class=\"me0\">Z</span>;  <span class=\"co1\">//set destination.z to floor,\
+      \ wipe out velocity.z and re-eval assuming ground</span>\n\t\tV.<span class=\"\
+      me0\">z</span><span class=\"sy0\">=</span><span class=\"nu0\">0</span>;    <span\
+      \ class=\"co1\">//no longer falling - view velcocity in 2D</span>\n\t\t<span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span>HitTime<span class=\"\
+      sy0\">&gt;</span><span class=\"nu0\">0.5</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">{</span>  <span class=\"co1\">//True if likely in air most of\
+      \ time (in which case keep current V.X and V.y)</span>\n\t\t\tV.<span class=\"\
+      me0\">z</span> <span class=\"sy0\">-=</span> HitNorm.<span class=\"me0\">Z</span>\
+      \ <span class=\"sy0\">*</span> <span class=\"br0\">(</span>V dot HitNorm<span\
+      \ class=\"br0\">)</span>;\n\t\t<span class=\"br0\">}</span>\n\t\t<span class=\"\
+      kw2\">else</span><span class=\"br0\">{</span> <span class=\"co1\">//otherwise\
+      \ alter all of velocity vector, but keep current 2D speed</span>\n\t\t\tspeed2D\
+      \ <span class=\"sy0\">=</span> <span class=\"kw3\">vsize</span><span class=\"\
+      br0\">(</span>V<span class=\"br0\">)</span>;\n\t\t\tV<span class=\"sy0\">=</span><span\
+      \ class=\"kw3\">normal</span><span class=\"br0\">(</span>V<span class=\"br0\"\
+      >)</span><span class=\"sy0\">*</span>speed2D; <span class=\"co1\">//assume the\
+      \ same x and y speed if in air most time</span>\n\t\t\tV <span class=\"sy0\"\
+      >-=</span> HitNorm <span class=\"sy0\">*</span> <span class=\"br0\">(</span>V\
+      \ dot HitNorm<span class=\"br0\">)</span>;   <span class=\"co1\">//recalculate\
+      \ players velocity on a slope using hitnormal  (assumes v.x and v.y is \"ground\
+      \ speed\")</span>\n\t\t\tV<span class=\"sy0\">=</span><span class=\"kw3\">normal</span><span\
+      \ class=\"br0\">(</span>V<span class=\"br0\">)</span><span class=\"sy0\">*</span>speed2D;\
+      \ <span class=\"co1\">//assume the same x and y speed if in air most time</span>\n\
+      \t\t<span class=\"br0\">}</span>\n  <span class=\"br0\">}</span>\n\t<span class=\"\
+      co1\">//todo: add traces to check side walls?</span>\n\t<span class=\"co1\"\
+      >//note: walking velocity *should* factor in current slope</span>\n\tbest<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0</span>;\n\t<span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span>bLeadTarget <span class=\"sy0\">&amp;&amp;</span>\
+      \ V<span class=\"sy0\">!=</span><span class=\"kw3\">vect</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">0</span>,<span class=\"nu0\">0</span>,<span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">{</span>\n\t\tcalculateQ<span class=\"br0\">(</span><span class=\"\
+      nu0\">0.25</span><span class=\"sy0\">*</span><span class=\"br0\">(</span>Gravity\
+      \ dot Gravity<span class=\"br0\">)</span>,<span class=\"br0\">(</span><span\
+      \ class=\"sy0\">-</span>Gravity<span class=\"br0\">)</span> dot V,<span class=\"\
+      br0\">(</span><span class=\"sy0\">-</span>Gravity<span class=\"br0\">)</span>\
+      \ dot D <span class=\"sy0\">+</span>\n\t\t  V dot V <span class=\"sy0\">-</span>\
+      \ ProjSpeed<span class=\"sy0\">*</span>ProjSpeed,<span class=\"nu0\">2</span><span\
+      \ class=\"sy0\">*</span><span class=\"br0\">(</span>V dot D<span class=\"br0\"\
+      >)</span>,D dot D,Q<span class=\"br0\">)</span>;\n\t\t<span class=\"kw2\">for</span>\
+      \ <span class=\"br0\">(</span>i<span class=\"sy0\">=</span><span class=\"nu0\"\
+      >0</span>;i<span class=\"sy0\">&lt;</span><span class=\"nu0\">4</span>;i<span\
+      \ class=\"sy0\">++</span><span class=\"br0\">)</span>\n\t  \t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>best<span class=\"sy0\">&lt;=</span><span\
+      \ class=\"nu0\">0</span><span class=\"sy0\">||</span><span class=\"br0\">(</span>q.<span\
+      \ class=\"me0\">u</span><span class=\"br0\">[</span>i<span class=\"br0\">]</span><span\
+      \ class=\"sy0\">&gt;</span><span class=\"nu0\">0</span> <span class=\"sy0\"\
+      >&amp;&amp;</span> q.<span class=\"me0\">u</span><span class=\"br0\">[</span>i<span\
+      \ class=\"br0\">]</span><span class=\"sy0\">&lt;</span>best<span class=\"br0\"\
+      >)</span><span class=\"br0\">)</span>\n\t\t    best<span class=\"sy0\">=</span>q.<span\
+      \ class=\"me0\">u</span><span class=\"br0\">[</span>i<span class=\"br0\">]</span>;\n\
+      \t<span class=\"br0\">}</span>\n\t<span class=\"kw2\">else</span><span class=\"\
+      br0\">{</span> <span class=\"co1\">//don't lead. assume stationary target</span>\n\
+      \t\t\tcalculateQuadRoots<span class=\"br0\">(</span><span class=\"nu0\">0.25</span><span\
+      \ class=\"sy0\">*</span><span class=\"br0\">(</span>Gravity dot Gravity<span\
+      \ class=\"br0\">)</span>,<span class=\"br0\">(</span><span class=\"sy0\">-</span>Gravity<span\
+      \ class=\"br0\">)</span> dot D <span class=\"sy0\">-</span> ProjSpeed<span class=\"\
+      sy0\">*</span>ProjSpeed,D dot D,Q<span class=\"br0\">)</span>;\n\t\t\t<span\
+      \ class=\"kw2\">for</span> <span class=\"br0\">(</span>i<span class=\"sy0\"\
+      >=</span><span class=\"nu0\">0</span>;i<span class=\"sy0\">&lt;</span><span\
+      \ class=\"nu0\">2</span>;i<span class=\"sy0\">++</span><span class=\"br0\">)</span>\n\
+      \t\t  \t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>best<span\
+      \ class=\"sy0\">&lt;=</span><span class=\"nu0\">0</span><span class=\"sy0\"\
+      >||</span><span class=\"br0\">(</span>q.<span class=\"me0\">u</span><span class=\"\
+      br0\">[</span>i<span class=\"br0\">]</span><span class=\"sy0\">&gt;</span><span\
+      \ class=\"nu0\">0</span> <span class=\"sy0\">&amp;&amp;</span> q.<span class=\"\
+      me0\">u</span><span class=\"br0\">[</span>i<span class=\"br0\">]</span><span\
+      \ class=\"sy0\">&lt;</span>best<span class=\"br0\">)</span><span class=\"br0\"\
+      >)</span>\n\t\t\t    best<span class=\"sy0\">=</span>q.<span class=\"me0\">u</span><span\
+      \ class=\"br0\">[</span>i<span class=\"br0\">]</span>;\n      <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>best<span class=\"sy0\">&gt;</span><span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span>\n\t\t\t\tbest<span class=\"\
+      sy0\">=</span><span class=\"kw3\">sqrt</span><span class=\"br0\">(</span>best<span\
+      \ class=\"br0\">)</span>;\n  <span class=\"br0\">}</span>\n \n  <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>best<span class=\"sy0\">&lt;=</span><span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span><span class=\"br0\">{</span>\
+      \   <span class=\"co1\">//projectile is out of range</span>\n\t  <span class=\"\
+      co1\">//Warning: Out of range adjustments assume gravity is parallel to the\
+      \ z axis and pointed downward!!</span>\n\t\tPr.<span class=\"me0\">z</span>\
+      \ <span class=\"sy0\">=</span>ProjSpeed<span class=\"sy0\">/</span><span class=\"\
+      kw3\">sqrt</span><span class=\"br0\">(</span><span class=\"nu0\">2.0</span><span\
+      \ class=\"br0\">)</span>; <span class=\"co1\">//determine z direction of firing</span>\n\
+      \t\tbest <span class=\"sy0\">=</span> <span class=\"sy0\">-</span><span class=\"\
+      nu0\">2</span><span class=\"sy0\">*</span>Pr.<span class=\"me0\">z</span><span\
+      \ class=\"sy0\">/</span>Gravity.<span class=\"me0\">z</span>;\n\t\tbest<span\
+      \ class=\"sy0\">+=</span><span class=\"br0\">(</span><span class=\"kw3\">vsize</span><span\
+      \ class=\"br0\">(</span>D<span class=\"br0\">)</span><span class=\"sy0\">-</span>pr.<span\
+      \ class=\"me0\">Z</span><span class=\"sy0\">*</span>best<span class=\"br0\"\
+      >)</span><span class=\"sy0\">/</span>ProjSpeed; <span class=\"co1\">//note p.z\
+      \ = 2D vsize(p)  (this assumes ball travels in a straight line after bounce)</span>\n\
+      \t\t<span class=\"co1\">//now recalculate PR to handle velocity prediction (so\
+      \ ball at least partially moves in direction of player)</span>\n    Pr <span\
+      \ class=\"sy0\">=</span> D<span class=\"sy0\">/</span>best <span class=\"sy0\"\
+      >+</span> V <span class=\"sy0\">-</span> <span class=\"nu0\">0.5</span><span\
+      \ class=\"sy0\">*</span>Gravity<span class=\"sy0\">*</span>best;\n\t\t<span\
+      \ class=\"co1\">//now force maximum height again:</span>\n\t\tPr.<span class=\"\
+      me0\">z</span><span class=\"sy0\">=</span><span class=\"nu0\">0</span>;\n\t\t\
+      Pr <span class=\"sy0\">=</span> <span class=\"br0\">(</span>ProjSpeed<span class=\"\
+      sy0\">/</span><span class=\"kw3\">sqrt</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">2.0</span><span class=\"br0\">)</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">*</span><span class=\"kw3\">normal</span><span class=\"br0\"\
+      >(</span>Pr<span class=\"br0\">)</span>;\n\t\tPr.<span class=\"me0\">z</span>\
+      \ <span class=\"sy0\">=</span> ProjSpeed<span class=\"sy0\">/</span><span class=\"\
+      kw3\">sqrt</span><span class=\"br0\">(</span><span class=\"nu0\">2.0</span><span\
+      \ class=\"br0\">)</span>; <span class=\"co1\">//maxmimum</span>\n\t\tDest <span\
+      \ class=\"sy0\">=</span> StartLoc <span class=\"sy0\">+</span> PR<span class=\"\
+      sy0\">*</span>best<span class=\"sy0\">+</span><span class=\"nu0\">0.5</span><span\
+      \ class=\"sy0\">*</span>Gravity<span class=\"sy0\">*</span>best<span class=\"\
+      sy0\">*</span>best;\n\t\t<span class=\"kw2\">return</span> Pr;\n  <span class=\"\
+      br0\">}</span>\n \n  Pr <span class=\"sy0\">=</span> <span class=\"kw3\">normal</span><span\
+      \ class=\"br0\">(</span>D<span class=\"sy0\">/</span>best <span class=\"sy0\"\
+      >+</span> V <span class=\"sy0\">-</span> <span class=\"nu0\">0.5</span><span\
+      \ class=\"sy0\">*</span>Gravity<span class=\"sy0\">*</span>best<span class=\"\
+      br0\">)</span><span class=\"sy0\">*</span>ProjSpeed;\n \n\tDest <span class=\"\
+      sy0\">=</span> StartLoc <span class=\"sy0\">+</span> PR<span class=\"sy0\">*</span>best<span\
+      \ class=\"sy0\">+</span><span class=\"nu0\">0.5</span><span class=\"sy0\">*</span>Gravity<span\
+      \ class=\"sy0\">*</span>best<span class=\"sy0\">*</span>best;\n\t<span class=\"\
+      kw2\">return</span> Pr;\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <h2><span class=\"mw-headline\" id=\"How_To_Use_It\">How To Use It</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Projectile_Aiming?section=2\" title=\"Edit section: How\
+      \ To Use It\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>Simply call the function GetShootVec() with the following parameters:</p>\n\
+      <dl>\n<dd>StartLoc is the world location where the projectile is going to be\
+      \ spawned at.</dd>\n<dd>EndLoc is the world Location that is being targetted\
+      \ (it should lie within the targetted actor)</dd>\n<dd>ProjSpeed is speed at\
+      \ which the projectile being fired at</dd>\n<dd>Gravity is a vector describing\
+      \ any uniform acceleration the projectile is under (gravity, \"english\", etc.)</dd>\n\
+      <dd>Target is the actor being targetted. Generally it should be a pawn, but\
+      \ any class will work.</dd>\n<dd>bLeadTarget. If this is true, then \"velocity\
+      \ prediction\" will occur (that is the projectile will be fired ahead of the\
+      \ target and still collide withit, assuming its velocity does not change in\
+      \ a nonpredictable way. If false, the projectile is guarenteed to collide with\
+      \ the targetted location</dd>\n</dl>\n<p>The function will return a vector in\
+      \ the direction the projectile be launched at and with a magnitude equal to\
+      \ the speed of the projectile (as passed in the parameters).</p>\n<p>In addition,\
+      \ a vector <b>dest</b> is returned. This specifies the world location where\
+      \ the projectile will collide with the Target (if the target is moving and bLeadTarget\
+      \ is enabled this vector will differ from endloc).</p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Notes\">Notes</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Projectile_Aiming?section=3\" title=\"Edit section:\
+      \ Notes\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <h3><span class=\"mw-headline\" id=\"Speed\">Speed</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Projectile_Aiming?section=4\"\
+      \ title=\"Edit section: Speed\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>If the target is stationary or bLeadTarget is false,\
+      \ then the quadratic formula can be applied to the 4th degree polynomial that\
+      \ is the core of this algorithm. (the coefficients of t^3 and t^1 become 0).\
+      \ The algorithm takes roughly 0.20 ms to complete (on an AMD Athlon XP 2100+\
+      \ test machine), equivilent to a drop from 80.0 to 78.7 fps if this GetShootVec()\
+      \ is called once per frame.</p>\n<p>If velocity prediction is needed, then the\
+      \ quartic formula (calculateQ) must be applied. This increases the algorithm's\
+      \ time to 0.28 ms (on an AMD Athlon XP 2100+ test machine),, equivilent to a\
+      \ drop from 80.0 to 78.2 fps if this GetShootVec() is called once per frame.</p>\n\
+      <h3><span class=\"mw-headline\" id=\"Falling_Targets\">Falling Targets</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Projectile_Aiming?section=5\" title=\"Edit section: Falling\
+      \ Targets\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>If a target is falling, the algorithm will verify that the target will not\
+      \ land before the projectile reaches it. If it is determined that the target\
+      \ will land, then the target's position will be re-evaluated, assuming any movement\
+      \ made on the ground is modeled under phys_walking. (thus, this algorithm likely\
+      \ will cause the fired projectile to miss a bBounce=true projectile target).</p>\n\
+      <p>Please note that it is assumed that the net acceleration of the target is\
+      \ equal to the gravity vector of the projectile. If this is not the case, the\
+      \ code should not be too hard to modify.</p>\n<h3><span class=\"mw-headline\"\
+      \ id=\"Out_of_Range_Targets\">Out of Range Targets</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Projectile_Aiming?section=6\"\
+      \ title=\"Edit section: Out of Range Targets\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Should a target be out of range, this algorithm will\
+      \ attempt to bring the projectile as close as possible to the target. It does\
+      \ make the \"appoximate\" assumption that the projectile being fired will travel\
+      \ in an \"approximately\" straight line at its specifified speed toward the\
+      \ target.</p>\n<p>Furthermore, the out-of-range routine assumes that the projectile's\
+      \ acceleration direction passed is parallel to the Z axis and pointed downward.\
+      \ It should not be too hard to extend this code to handle different acceleration.</p>\n\
+      <h3><span class=\"mw-headline\" id=\"Projectiles_under_constant_acceleration\"\
+      >Projectiles under constant acceleration</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Projectile_Aiming?section=7\"\
+      \ title=\"Edit section: Projectiles under constant acceleration\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h3>\n<p>If you wish your\
+      \ projectile to undergo other constant acceleration (that is curving), this\
+      \ is entire possible. Simply be sure that the gravity vector reflects this.\
+      \ Please note though that the Out Of Range routine does not properly handle\
+      \ this.</p>\n<h3><span class=\"mw-headline\" id=\"That_structure_that_has_nothing_more_than_an_array\"\
+      >That structure that has nothing more than an array</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Projectile_Aiming?section=8\"\
+      \ title=\"Edit section: That structure that has nothing more than an array\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n<p>I was\
+      \ thinking of eventually adding other variables to that structure, but I'm not\
+      \ sure if that will ever be needed. Feel free to remove the structure altogether\
+      \ and just make the variable the array.</p>\n<h3><span class=\"mw-headline\"\
+      \ id=\"The_Quartic_Equation_solver\">The Quartic Equation solver</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Projectile_Aiming?section=9\" title=\"Edit section: The\
+      \ Quartic Equation solver\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>It is converted javascript code that is available on the internet (used with\
+      \ permission). Note that the code is highly unoptimized. Feel free to fix that.</p>\n\
+      <h2><span class=\"mw-headline\" id=\"How_does_this_work.3F\">How does this work?</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Projectile_Aiming?section=10\" title=\"Edit section: How\
+      \ does this work?\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <h3><span class=\"mw-headline\" id=\"Physics\">Physics</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Projectile_Aiming?section=11\"\
+      \ title=\"Edit section: Physics\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Basically nothing more than simple kinematics.</p>\n\
+      <p>Abbriviation notes:</p>\n<p>D=Displacement</p>\n<p>Vp=launch velocity of\
+      \ Projectile</p>\n<p>Vps = launch speed of projectile</p>\n<p>Va=velocity of\
+      \ target</p>\n<p>t=time</p>\n<p>G=acceleration of projectile</p>\n<p>The displacement\
+      \ of a projectile can be described with the following vector equation:</p>\n\
+      <p>D=Vp*t + 0.5*G*t^2</p>\n<p>The size of V must be the speed of the projectile.</p>\n\
+      <p>From this, two equations (four in scalar form) can be derived:</p>\n<p>vsize(Vp)\
+      \ = Vp</p>\n<p>Vp*t + 0.5*G*t^2 = Va*t + D</p>\n<p>(Note that in the case where\
+      \ the target is also falling (under the same acceleration as the projectile),\
+      \ G becomes 0.)</p>\n<p>After a bunch of math, the following equation pops out:</p>\n\
+      <p>0=0.25*(G dot G)*t^4+((-G) dot Va)*t^3 + ((Va dot Va) - Vps^2 + (-G) dot\
+      \ D) * t^2 + 2*(Va dot D)*t + (D^2)</p>\n<p>This is a 4th degree polynomial,\
+      \ which can be solved with the Quartic equation.</p>\n<p>In the case when Va\
+      \ = 0 (stationary or no leading), the t and t^3 terms become 0, allowing the\
+      \ much nicer quadratic equation to be used. (the result simply needs to be squarerooted).</p>\n\
+      <p>Once the time is found, the launch velocity is easily calculated (by using\
+      \ the above simultaneous equations):</p>\n<pre> Vp= normal(D/lowestpostitivetime\
+      \ + Vp - 0.5*Gravity*lowestpostitivetime )*Vps\n</pre>\n<p>And that's pretty\
+      \ much it. The details of the code should be explained well enough through comments.</p>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.166 seconds\nReal time usage:\
+      \ 0.308 seconds\nPreprocessor visited node count: 52/1000000\nPreprocessor generated\
+      \ node count: 68/1000000\nPost‐expand include size: 0/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:2529-0!*!0!!en!*!* and timestamp 20221117175652 and revision\
+      \ id 6051\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:UsAaR33"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "The Code"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Projectile_Aiming"
+    byteoffset: 359
+    anchor: "The_Code"
+  - toclevel: 1
+    level: "2"
+    line: "How To Use It"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Projectile_Aiming"
+    byteoffset: 8762
+    anchor: "How_To_Use_It"
+  - toclevel: 1
+    level: "2"
+    line: "Notes"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:Projectile_Aiming"
+    byteoffset: 9986
+    anchor: "Notes"
+  - toclevel: 2
+    level: "3"
+    line: "Speed"
+    number: "3.1"
+    index: "4"
+    fromtitle: "Legacy:Projectile_Aiming"
+    byteoffset: 9998
+    anchor: "Speed"
+  - toclevel: 2
+    level: "3"
+    line: "Falling Targets"
+    number: "3.2"
+    index: "5"
+    fromtitle: "Legacy:Projectile_Aiming"
+    byteoffset: 10670
+    anchor: "Falling_Targets"
+  - toclevel: 2
+    level: "3"
+    line: "Out of Range Targets"
+    number: "3.3"
+    index: "6"
+    fromtitle: "Legacy:Projectile_Aiming"
+    byteoffset: 11272
+    anchor: "Out_of_Range_Targets"
+  - toclevel: 2
+    level: "3"
+    line: "Projectiles under constant acceleration"
+    number: "3.4"
+    index: "7"
+    fromtitle: "Legacy:Projectile_Aiming"
+    byteoffset: 11818
+    anchor: "Projectiles_under_constant_acceleration"
+  - toclevel: 2
+    level: "3"
+    line: "That structure that has nothing more than an array"
+    number: "3.5"
+    index: "8"
+    fromtitle: "Legacy:Projectile_Aiming"
+    byteoffset: 12113
+    anchor: "That_structure_that_has_nothing_more_than_an_array"
+  - toclevel: 2
+    level: "3"
+    line: "The Quartic Equation solver"
+    number: "3.6"
+    index: "9"
+    fromtitle: "Legacy:Projectile_Aiming"
+    byteoffset: 12373
+    anchor: "The_Quartic_Equation_solver"
+  - toclevel: 1
+    level: "2"
+    line: "How does this work?"
+    number: "4"
+    index: "10"
+    fromtitle: "Legacy:Projectile_Aiming"
+    byteoffset: 12566
+    anchor: "How_does_this_work.3F"
+  - toclevel: 2
+    level: "3"
+    line: "Physics"
+    number: "4.1"
+    index: "11"
+    fromtitle: "Legacy:Projectile_Aiming"
+    byteoffset: 12592
+    anchor: "Physics"
+  displaytitle: "Legacy:Projectile Aiming"
+  iwlinks: []
+  wikitext:
+    text: "The following code can be used to accurately determine the direction that\
+      \ a projectile should be fired at in order to collide with the target.\n\nThis\
+      \ code is capable of accurately targetting moving targets, falling targets,\
+      \ and projectiles uniformly accelerating in any direction.  It was originally\
+      \ written for use in Deathball by [[Legacy:UsAaR33|UsAaR33]]\n\n==The Code ==\n\
+      \n<uscript>\nstruct QuartSolution{        //solutions to quart!\n  var float\
+      \ u[4];\n};\n\n//quadratic solver (using everybody's favorite algebra formula)\n\
+      static function calculateQuadRoots(float a, float b, float c, out QuartSolution\
+      \ Q){\n\tlocal float sqterm;\n\tsqterm = b*b - 4*a*c;\n\tif (sqterm<0){ //imaginary\
+      \ root. return t=1\n\t\tQ.u[0]=-1;\n\t\tQ.u[1]=-1;\n\t}\n\telse{\n\t\tsqterm=sqrt(sqterm);\n\
+      \t\ta*=2;\n\t\tb*=-1;\n\t\tQ.u[0]=(b+sqterm)/(a);\n\t\tQ.u[1]=(b-sqterm)/(a);\n\
+      \t}\n}\n\n//Solve a 4th Degree Polynomial (Quartic) equation for 0s.\n//taken\
+      \ from a javascript webpage (Explicitly states in source that source may be\
+      \ reused in any way)\n//uses the quartic formula! :)\nstatic function calculateQ(float\
+      \ aq, float bq, float cq, float dq, float eqin, out QuartSolution Q){\nlocal\
+      \ float eq;\nlocal float fq;\nlocal float gq;\n//local float hq;\n\n\n// These\
+      \ are the squares of the local floatiables used to calculate the 4 roots-->\n\
+      local float kq;\nlocal float lq;\nlocal float mq;\nlocal float nq;\nlocal float\
+      \ mq2;\n\nlocal float compsw;\nlocal float kqsw;\nlocal float lqsw;\nlocal float\
+      \ mqsw;\n\n// Switch used in calculating REAL quartic roots)-->\nlocal float\
+      \ sw;\n\n// local floatiables for calculating REAL quartic roots)-->\n\nlocal\
+      \ float kans;\nlocal float lans;\nlocal float theta;\n\n\nlocal float x1;\n\
+      local float x2;\nlocal float x3;\nlocal float x4;\n\nlocal float x2a, x2b, x2c,\
+      \ x2d;\n//local float x1b, x1b2, x2b2, x3b, x3b2, x4b, x4b2;\n//more:\nlocal\
+      \ float dnm;\nlocal float a, b, c, d, f, g, h, k, m, m2,n,n2,r,rc;\nlocal float\
+      \ calcy, calcp, calcr, calcq, calcx, calcmod;\nlocal float dnmsw;\nlocal int\
+      \ i;\n\n// the 'q' suffix  denotes local floatiables used in the quartic equation\n\
+      for (i=0;i<4;i++) \n\tQ.u[i]=-1.0; //set to complex solutions\ncompsw=0;\nkqsw=0;\n\
+      lqsw=0;\nmqsw=0;\ndnmsw=0;\nsw=0;\n\n\ndnm=aq;      //note: this assumes aq\
+      \ is non-zero.  Of course it should be (eval 0.25g!)\n\n//Simplifying by dividing\
+      \ all terms by the aq term called 'dnm' meaning denominator\naq=bq/dnm;\nbq=cq/dnm;\n\
+      cq=dq/dnm;\ndq=eqin/dnm;\n//Which yields an equation of the form X^4 + AX^3\
+      \ + BX^2 + CX + D = 0\n\neq= bq-((3*aq*aq)/8);\nfq= cq+ (aq*aq*aq/8) -(aq*bq/2);\n\
+      gq= dq- (3*aq*aq*aq*aq/256) + (aq*aq*bq/16) - (aq*cq/4);\n\n// SOLVING THE RESULTANT\
+      \ CUBIC EQUATION\n// EVALUATING THE 'f'TERM\n\na=1; b=eq/2; c=((eq*eq)-(4*gq))/16;\
+      \ d= ((fq*fq)/64)*-1;\n\nf = (((3*c)/a) - (((b*b)/(a*a))))/3;\n//EVALUATING\
+      \ THE 'g'TERM\n\ng = ((2*((b*b*b)/(a*a*a))-(9*b*c/(a*a)) + ((27*(d/a)))))/27;\n\
+      \n//EVALUATING THE 'h'TERM\nh = (((g*g)/4) + ((f*f*f)/27));\nif (h > 0){\ncompsw=2;\n\
+      m = (-(g/2)+ (sqrt(h)));\n// K is used because math.pow cannot compute negative\
+      \ cube roots?\nk=1;\nif (m < 0) k=-1;\n  else k=1;\nm2 = ((m*k)**(1.0/3.0));\n\
+      \nm2 = m2*k;\nk=1;\nn = (-(g/2)- (sqrt(h)));\nif (n < 0)\n  k=-1;\nelse\n  k=1;\n\
+      \nn2 = (n*k)**(1.0/3.0);\nn2 *=k;\nk=1;\nkq=  ((m2 + n2) - (b/(3*a)));\nkq=sqrt(kq);\n\
+      // ((S+U)     - (b/(3*a)))\ncalcmod= sqrt((-1*(m2 + n2)/2 - (b/(3*a)))*(-1*(m2\
+      \ + n2)/2 - (b/(3*a))) + (((m2 - n2)/2)*sqrt(3))*(((m2 - n2)/2)*sqrt(3)));\n\
+      calcy=sqrt((calcmod-(-1*(m2 + n2)/2 - (b/(3*a))))/2);\ncalcx=(((m2 - n2)/2)*sqrt(3))/(2*calcy);\n\
+      calcp=calcx+calcy;\ncalcq=calcx-calcy;\ncalcr=kq;\n\nnq=(aq/4);\nx1=kq+calcp+calcq-nq;\n\
+      x4=kq-calcp-calcq-nq;\n\n\nQ.u[0]=-x1; //appearently was incorrect by a factor\
+      \ of -1\nQ.u[1]=-1; //complex\nQ.u[2]=-1; //complex\nQ.u[3]=-x4;\n}\n\n\n//\
+      \ FOR H < 0\n\nif (h<=0){\nr = sqrt((g*g/4)-h);\nk=1;\n\nif (r<0)\n  k=-1;\n\
+      // rc is the cube root of 'r'\n\nrc = ((r*k)**(1.0/3.0))*k;\nk=1;\ntheta =acos((-g/(2*r)));\n\
+      \nkq= (2*(rc*cos(theta/3))-(b/(3*a)));\n\nx2a=rc*-1;\nx2b= cos(theta/3.0);\n\
+      x2c= sqrt(3)*(sin(theta/3));\nx2d= (b/3.0*a)*-1;\n\nlq=(x2a*(x2b + x2c))-(b/(3*a));\n\
+      \nmq=(x2a*(x2b - x2c))-(b/(3*a));\n\nnq=(aq/4.0);\n}\n\nif (h<=0){\n\n// psudo-fix\
+      \ 0 bug.. not the best.. but works\nif (abs(kq)<1.0/(10000.0))\n  kq=0;\nif\
+      \ (abs(lq)<1.0/(10000.0))\n  lq=0;\nif (abs(mq)<-1.0/(10000.0))\n  mq=0;\nif\
+      \ (kq<0) {return;} else {kq=sqrt(kq);}\nif (lq<0) {return;} else {lq=sqrt(lq);}\n\
+      if (mq<0) {return;} else {mq=sqrt(mq);}\n\nif (kq*lq>0){mq2=((fq*-1)/(8*kq*lq));kans=kq;lans=lq;}\n\
+      if (kq*mq>0){mq2=((fq*-1)/(8*kq*mq));kans=kq;lans=mq;}\nif (lq*mq>0){mq2=((fq*-1)/(8*lq*mq));kans=lq;lans=mq;}\n\
+      \n\n\n\nif (compsw==0){\n  x1=kans+lans+mq2-nq;\n  Q.u[0]=x1;\n  x2=kans-lans-mq2-nq;\n\
+      \  Q.u[1]=x2;\n  x3=(kans*-1)+lans-mq2-nq;\n  Q.u[2]=x3;\n  x4=(kans*-1)-lans+mq2-nq;\n\
+      \  Q.u[3]=x4;\n}\n}\n}\n\n/*Calculate aiming ideal rotation for firing a projectile\
+      \ at a potentially moving target (assumes pawn physics)\n IN:\n -StartLoc =\
+      \ world location where projectile is starting at\n -EndLoc = world Location\
+      \ we wish to Target (should lie in the targetted actor)\n -ProjSpeed = speed\
+      \ of the projectile being fired\n -Gravity = a vector describing the gravity\n\
+      \ -Target = the actual targetted ACTOR\n -bLeadTarget = Can we track the target?\
+      \  (the entire point of this function)\n OUT:\n -dest: Location where the projectile\
+      \ will collide with Target\n -returns vector describing direction for projectile\
+      \ to leave at\n*/\nstatic function vector GetShootVect(vector StartLoc, vector\
+      \ EndLoc, float ProjSpeed, vector Gravity, actor Target, bool bLeadTarget, out\
+      \ vector Dest)\n{\n  local QuartSolution Q;\n  local float best, speed2D, HitTime;\n\
+      \  local vector Pr;\n  local int i;\n  local vector HitNorm, HitLoc;\n\tlocal\
+      \ vector D; //EndLoc-StartLoc\n\tlocal vector V; //Target.velocity\n\n\tD =\
+      \ EndLoc-StartLoc;\n\tV = Target.Velocity;\n  //track falling actors\n  if (bLeadTarget\
+      \ && Target.Physics==Phys_Falling){\n\t\t\tcalculateQuadRoots(V dot V - ProjSpeed*ProjSpeed,\n\
+      \t\t\t 2*(V dot D),D dot D,Q); //use quadratic formula\n\t\t\tfor (i=0;i<2;i++)\n\
+      \  \t\t\tif (best<=0||(q.u[i]>0 && q.u[i]<best))\n\t    \t\tbest=q.u[i];\n\t\
+      \t\tPr = normal(D/best + V)*ProjSpeed;\n\t\t\tif (best<=0 || Target.Trace(HitLoc,HitNorm,EndLoc+V*best+0.5*Gravity*best\n\
+      \t\t\t *best,EndLoc+vect(1,1,0)*V*best) == none){\n\t\t\t  //will be falling:\n\
+      \t\t\t\tDest = StartLoc + PR*best+0.5*Gravity*best*best;\n\t\t\t  return normal(PR)*ProjSpeed;\n\
+      \t\t\t}\n\t\t\telse if (best>0)  //determine how long actor will be in air\n\
+      \t\t\t\tHitTime = vsize(HitLoc - (EndLoc+vect(1,1,0)*V*best))/vsize(vect(0,0,1)*V*best+0.5*Gravity*best);\n\
+      \t\t\telse\n\t\t\t\tHitTime = 0; //assume most time not in air?\n  }\n\n  //ASSUME\
+      \ GROUND TRACKING\n\tif (bLeadTarget && Target.Physics==Phys_Falling){   //trace\
+      \ down from target to get ground normal\n  \tTarget.Trace(HitLoc,HitNorm,EndLoc+normal(Gravity)*5000,EndLoc);\n\
+      \t\tD.z=HitLoc.z-StartLoc.Z;  //set destination.z to floor, wipe out velocity.z\
+      \ and re-eval assuming ground\n\t\tV.z=0;    //no longer falling - view velcocity\
+      \ in 2D\n\t\tif (HitTime>0.5){  //True if likely in air most of time (in which\
+      \ case keep current V.X and V.y)\n\t\t\tV.z -= HitNorm.Z * (V dot HitNorm);\n\
+      \t\t}\n\t\telse{ //otherwise alter all of velocity vector, but keep current\
+      \ 2D speed\n\t\t\tspeed2D = vsize(V);\n\t\t\tV=normal(V)*speed2D; //assume the\
+      \ same x and y speed if in air most time\n\t\t\tV -= HitNorm * (V dot HitNorm);\
+      \   //recalculate players velocity on a slope using hitnormal  (assumes v.x\
+      \ and v.y is \"ground speed\")\n\t\t\tV=normal(V)*speed2D; //assume the same\
+      \ x and y speed if in air most time\n\t\t}\n  }\n\t//todo: add traces to check\
+      \ side walls?\n\t//note: walking velocity *should* factor in current slope\n\
+      \tbest=0;\n\tif (bLeadTarget && V!=vect(0,0,0)){\n\t\tcalculateQ(0.25*(Gravity\
+      \ dot Gravity),(-Gravity) dot V,(-Gravity) dot D +\n\t\t  V dot V - ProjSpeed*ProjSpeed,2*(V\
+      \ dot D),D dot D,Q);\n\t\tfor (i=0;i<4;i++)\n\t  \tif (best<=0||(q.u[i]>0 &&\
+      \ q.u[i]<best))\n\t\t    best=q.u[i];\n\t}\n\telse{ //don't lead. assume stationary\
+      \ target\n\t\t\tcalculateQuadRoots(0.25*(Gravity dot Gravity),(-Gravity) dot\
+      \ D - ProjSpeed*ProjSpeed,D dot D,Q);\n\t\t\tfor (i=0;i<2;i++)\n\t\t  \tif (best<=0||(q.u[i]>0\
+      \ && q.u[i]<best))\n\t\t\t    best=q.u[i];\n      if (best>0)\n\t\t\t\tbest=sqrt(best);\n\
+      \  }\n\n  if (best<=0){   //projectile is out of range\n\t  //Warning: Out of\
+      \ range adjustments assume gravity is parallel to the z axis and pointed downward!!\n\
+      \t\tPr.z =ProjSpeed/sqrt(2.0); //determine z direction of firing\n\t\tbest =\
+      \ -2*Pr.z/Gravity.z;\n\t\tbest+=(vsize(D)-pr.Z*best)/ProjSpeed; //note p.z =\
+      \ 2D vsize(p)  (this assumes ball travels in a straight line after bounce)\n\
+      \t\t//now recalculate PR to handle velocity prediction (so ball at least partially\
+      \ moves in direction of player)\n    Pr = D/best + V - 0.5*Gravity*best;\n\t\
+      \t//now force maximum height again:\n\t\tPr.z=0;\n\t\tPr = (ProjSpeed/sqrt(2.0))*normal(Pr);\n\
+      \t\tPr.z = ProjSpeed/sqrt(2.0); //maxmimum\n\t\tDest = StartLoc + PR*best+0.5*Gravity*best*best;\n\
+      \t\treturn Pr;\n  }\n\n  Pr = normal(D/best + V - 0.5*Gravity*best)*ProjSpeed;\n\
+      \n\tDest = StartLoc + PR*best+0.5*Gravity*best*best;\n\treturn Pr;\n}\n</uscript>\n\
+      \n==How To Use It ==\n\nSimply call the function GetShootVec() with the following\
+      \ parameters:\n: StartLoc is the world location where the projectile is going\
+      \ to be spawned at.\n: EndLoc is the world Location that is being targetted\
+      \ (it should lie within the targetted actor)\n: ProjSpeed is speed at which\
+      \ the projectile being fired at\n: Gravity is a vector describing any uniform\
+      \ acceleration the projectile is under (gravity, \"english\", etc.)\n: Target\
+      \ is the actor being targetted.  Generally it should be a pawn, but any class\
+      \ will work.\n: bLeadTarget. If this is true, then \"velocity prediction\" will\
+      \ occur (that is the projectile will be fired ahead of the target and still\
+      \ collide withit, assuming its velocity does not change in a nonpredictable\
+      \ way.  If false, the projectile is guarenteed to collide with the targetted\
+      \ location\n\nThe function will return a vector in the direction the projectile\
+      \ be launched at and with a magnitude equal to the speed of the projectile (as\
+      \ passed in the parameters).\n\nIn addition, a vector '''dest''' is returned.\
+      \  This specifies the world location where the projectile will collide with\
+      \ the Target (if the target is moving and bLeadTarget is enabled this vector\
+      \ will differ from endloc).\n\n==Notes ==\n\n===Speed===\n\nIf the target is\
+      \ stationary or bLeadTarget is false, then the quadratic formula can be applied\
+      \ to the 4th degree polynomial that is the core of this algorithm. (the coefficients\
+      \ of t^3 and t^1 become 0).  The algorithm takes roughly 0.20 ms to complete\
+      \ (on an AMD Athlon XP 2100+ test machine), equivilent to a drop from 80.0 to\
+      \ 78.7 fps if this GetShootVec() is called once per frame.\n\nIf velocity prediction\
+      \ is needed, then the quartic formula (calculateQ) must be applied.  This increases\
+      \ the algorithm's time to 0.28 ms (on an AMD Athlon XP 2100+ test machine),,\
+      \ equivilent to a drop from 80.0 to 78.2 fps if this GetShootVec() is called\
+      \ once per frame.\n\n===Falling Targets===\n\nIf a target is falling, the algorithm\
+      \ will verify that the target will not land before the projectile reaches it.\
+      \  If it is determined that the target will land, then the target's position\
+      \ will be re-evaluated, assuming any movement made on the ground is modeled\
+      \ under phys_walking. (thus, this algorithm likely will cause the fired projectile\
+      \ to miss a bBounce=true projectile target).\n\nPlease note that it is assumed\
+      \ that the net acceleration of the target is equal to the gravity vector of\
+      \ the projectile.  If this is not the case, the code should not be too hard\
+      \ to modify.\n\n===Out of Range Targets===\n\nShould a target be out of range,\
+      \ this algorithm will attempt to bring the projectile as close as possible to\
+      \ the target.  It does make the \"appoximate\" assumption that the projectile\
+      \ being fired will travel in an \"approximately\" straight line at its specifified\
+      \ speed toward the target.  \n\nFurthermore, the out-of-range routine assumes\
+      \ that the projectile's acceleration direction passed is parallel to the Z axis\
+      \ and pointed downward.  It should not be too hard to extend this code to handle\
+      \ different acceleration.\n\n===Projectiles under constant acceleration===\n\
+      \nIf you wish your projectile to undergo other constant acceleration (that is\
+      \ curving), this is entire possible.  Simply be sure that the gravity vector\
+      \ reflects this.  Please note though that the Out Of Range routine does not\
+      \ properly handle this.\n\n===That structure that has nothing more than an array===\n\
+      \nI was thinking of eventually adding other variables to that structure, but\
+      \ I'm not sure if that will ever be needed.  Feel free to remove the structure\
+      \ altogether and just make the variable the array.\n\n===The Quartic Equation\
+      \ solver===\n\nIt is converted javascript code that is available on the internet\
+      \ (used with permission).  Note that the code is highly unoptimized.  Feel free\
+      \ to fix that.\n\n==How does this work? ==\n\n===Physics===\n\nBasically nothing\
+      \ more than simple kinematics.\n\nAbbriviation notes:\n\nD=Displacement\n\n\
+      Vp=launch velocity of Projectile\n\nVps = launch speed of projectile\n\nVa=velocity\
+      \ of target\n\nt=time\n\nG=acceleration of projectile\n\nThe displacement of\
+      \ a projectile can be described with the following vector equation:\n\nD=Vp*t\
+      \ + 0.5*G*t^2\n\nThe size of V must be the speed of the projectile.\n\nFrom\
+      \ this, two equations (four in scalar form) can be derived:\n\nvsize(Vp) = Vp\n\
+      \nVp*t + 0.5*G*t^2 = Va*t + D\n\n(Note that in the case where the target is\
+      \ also falling (under the same acceleration as the projectile), G becomes 0.)\n\
+      \nAfter a bunch of math, the following equation pops out:\n\n0=0.25*(G dot G)*t^4+((-G)\
+      \ dot Va)*t^3 + ((Va dot Va) - Vps^2 + (-G) dot D) * t^2 + 2*(Va dot D)*t +\
+      \ (D^2)\n\nThis is a 4th degree polynomial, which can be solved with the Quartic\
+      \ equation.\n\nIn the case when Va = 0 (stationary or no leading), the t and\
+      \ t^3 terms become 0, allowing the much nicer quadratic equation to be used.\
+      \ (the result simply needs to be squarerooted).\n\nOnce the time is found, the\
+      \ launch velocity is easily calculated (by using the above simultaneous equations):\n\
+      \  Vp= normal(D/lowestpostitivetime + Vp - 0.5*Gravity*lowestpostitivetime )*Vps\n\
+      \nAnd that's pretty much it.  The details of the code should be explained well\
+      \ enough through comments."
+  properties: []
+  revId: 6051
+name: "Legacy:Projectile Aiming"
+revision:
+  revid: 6051
+  parentid: 6052
+  user: "H-67-101-34-158.snfccasy.dynamic.covad.net"
+  timestamp: 1090921079.000000000
+  comment: "*"
+timestamp: 1668764822.777625000

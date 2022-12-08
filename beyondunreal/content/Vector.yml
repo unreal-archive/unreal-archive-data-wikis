@@ -1,0 +1,919 @@
+---
+parse:
+  title: "Vector"
+  text:
+    text: "<p>The type <b>vector</b> is not a built-in type, but a <a href=\"/Struct\"\
+      \ title=\"Struct\" class=\"mw-redirect\">struct</a> defined in the <a href=\"\
+      /Object\" title=\"Object\">Object</a><sup>(<span><a href=\"/UE1:Object_(RTNP)\"\
+      \ title=\"UE1:Object (RTNP)\">RTNP</a></span>, <span><a href=\"/UE1:Object_(U1)\"\
+      \ title=\"UE1:Object (U1)\">U1</a></span>, <span><a href=\"/UE1:Object_(UT)\"\
+      \ title=\"UE1:Object (UT)\">UT</a></span>, <span><a href=\"/UE2:Object_(U2)\"\
+      \ title=\"UE2:Object (U2)\">U2</a></span>, <span><a href=\"/UE2:Object_(U2XMP)\"\
+      \ title=\"UE2:Object (U2XMP)\">U2XMP</a></span>, <span><a href=\"/UE2:Object_(UE2Runtime)\"\
+      \ title=\"UE2:Object (UE2Runtime)\">UE2Runtime</a></span>, <span><a href=\"\
+      /UE2:Object_(UT2003)\" title=\"UE2:Object (UT2003)\">UT2003</a></span>, <span><a\
+      \ href=\"/UE2:Object_(UT2004)\" title=\"UE2:Object (UT2004)\">UT2004</a></span>,\
+      \ <span><a href=\"/UE3:Object_(UDK)\" title=\"UE3:Object (UDK)\">UDK</a></span>,\
+      \ <span><a href=\"/UE3:Object_(UT3)\" title=\"UE3:Object (UT3)\">UT3</a></span>)</sup>\
+      \ class of all Unreal Engine games. Conceptually it corresponds to a three-dimensional\
+      \ <a href=\"http://en.wikipedia.org/wiki/euclidean_vector\" class=\"extiw\"\
+      \ title=\"wp:euclidean vector\">euclidean vector</a> and the Object class defines\
+      \ many functions and operators for working with vector values. The importance\
+      \ of the vector struct is stressed by the fact that it is one of only two struct\
+      \ types whose values can be specified directly using a <a href=\"/Literals#Vectors\"\
+      \ title=\"Literals\">literal</a>.</p>\n<p>Vector components use <a href=\"http://en.wikipedia.org/wiki/single_precision_floating-point_format\"\
+      \ class=\"extiw\" title=\"wp:single precision floating-point format\">single\
+      \ precision floating-point format</a>, which imposes a practical limit to level\
+      \ sizes. The maximum floating point accuracy is about 7 digits in total. Considering\
+      \ you will most likely want at least 2 or 3 digits after the decimal point to\
+      \ get smooth player movement, the play area of a map should not exceed about\
+      \ ±100000 <a href=\"/Unreal_Unit\" title=\"Unreal Unit\">Unreal Units</a> on\
+      \ each coordinate axis. Static environment can exist a bit further away, since\
+      \ it doesn't require smooth location updates.</p>\n<p><b>Important:</b> The\
+      \ vector struct's components are rounded to integers for <a href=\"/Replication\"\
+      \ title=\"Replication\" class=\"mw-redirect\">replication</a>. Additionally,\
+      \ the values may not exceed the range of about ±1000000 or they will overflow.\
+      \ If you need to replicate vectors with fractional precision or larger values,\
+      \ consider scaling the vector value for replication.</p>\n<p><b>Note:</b> <a\
+      \ href=\"/Unreal_Engine_3\" title=\"Unreal Engine 3\">Unreal Engine 3</a> games\
+      \ may also define other vector-like structs, such as <a href=\"/UE3:Object_structs_(UT3)#Vector2D\"\
+      \ title=\"UE3:Object structs (UT3)\">Vector2D</a> or <a href=\"/UE3:Object_structs_(UT3)#Vector4\"\
+      \ title=\"UE3:Object structs (UT3)\">Vector4</a>. In theory, many operations\
+      \ described in this article can also be applied to two- and four-dimensional\
+      \ vectors, but most of them are only defined for three-dimensional vectors (i.e.\
+      \ the <i>Vector</i> struct) in the engine. See the functions and operators defined\
+      \ in Object and other classed of your game to see which operations are available\
+      \ for the data type you want to use.</p>\n<p></p>\n<div id=\"toc\" class=\"\
+      toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n</div>\n<ul>\n<li class=\"\
+      toclevel-1 tocsection-1\"><a href=\"#Vector_operations\"><span class=\"tocnumber\"\
+      >1</span> <span class=\"toctext\">Vector operations</span></a>\n<ul>\n<li class=\"\
+      toclevel-2 tocsection-2\"><a href=\"#Vector_.28in.29equality\"><span class=\"\
+      tocnumber\">1.1</span> <span class=\"toctext\">Vector (in)equality</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-3\"><a href=\"#Addition_and_subtraction\"\
+      ><span class=\"tocnumber\">1.2</span> <span class=\"toctext\">Addition and subtraction</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-4\"><a href=\"#Vector_scaling\"><span class=\"\
+      tocnumber\">1.3</span> <span class=\"toctext\">Vector scaling</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-5\"><a href=\"#Dot_product\"><span class=\"\
+      tocnumber\">1.4</span> <span class=\"toctext\">Dot product</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-6\"><a href=\"#Cross_product\"><span class=\"\
+      tocnumber\">1.5</span> <span class=\"toctext\">Cross product</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-7\"><a href=\"#Component-wise_product\"><span\
+      \ class=\"tocnumber\">1.6</span> <span class=\"toctext\">Component-wise product</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-8\"><a href=\"#Vector_length_and_unit_vector\"\
+      ><span class=\"tocnumber\">1.7</span> <span class=\"toctext\">Vector length\
+      \ and unit vector</span></a>\n<ul>\n<li class=\"toclevel-3 tocsection-9\"><a\
+      \ href=\"#More_vector_length3\"><span class=\"tocnumber\">1.7.1</span> <span\
+      \ class=\"toctext\">More vector length<sup>3</sup></span></a></li>\n</ul>\n\
+      </li>\n<li class=\"toclevel-2 tocsection-10\"><a href=\"#Random_vectors\"><span\
+      \ class=\"tocnumber\">1.8</span> <span class=\"toctext\">Random vectors</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-11\"><a href=\"#Mirroring_vectors\"><span\
+      \ class=\"tocnumber\">1.9</span> <span class=\"toctext\">Mirroring vectors</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-12\"><a href=\"#Coordinate_system_transformation\"\
+      ><span class=\"tocnumber\">1.10</span> <span class=\"toctext\">Coordinate system\
+      \ transformation</span></a></li>\n<li class=\"toclevel-2 tocsection-13\"><a\
+      \ href=\"#Vector_projection3\"><span class=\"tocnumber\">1.11</span> <span class=\"\
+      toctext\">Vector projection<sup>3</sup></span></a></li>\n</ul>\n</li>\n<li class=\"\
+      toclevel-1 tocsection-14\"><a href=\"#See_also\"><span class=\"tocnumber\">2</span>\
+      \ <span class=\"toctext\">See also</span></a></li>\n</ul>\n</div>\n<p></p>\n\
+      <h2><span class=\"mw-headline\" id=\"Vector_operations\">Vector operations</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Vector?section=1\" title=\"Edit section: Vector operations\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>Not\
+      \ all vector-related operations are available in all Unreal Engine generations.\
+      \ These operations are marked as follows:</p>\n<ul>\n<li><sup>3</sup> – The\
+      \ operation is only available in <a href=\"/Unreal_Engine_3\" title=\"Unreal\
+      \ Engine 3\">Unreal Engine 3</a>.</li>\n<li>(no number) – The operation is available\
+      \ in all Unreal Engine generations.</li>\n</ul>\n<p>There may be other vector\
+      \ operations available for your game. Just have a look at your game's Object\
+      \ class functions to find out what other predefined functions you can use.</p>\n\
+      <h3><span class=\"mw-headline\" id=\"Vector_.28in.29equality\">Vector (in)equality</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Vector?section=2\" title=\"Edit section: Vector (in)equality\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n<p>Like\
+      \ all structs, vectors can be compared for equality or inequality with the <code>==</code>\
+      \ and <code>!=</code> operators respectively. Two vectors are (in)equal if their\
+      \ corresponding components are (in)equal.</p>\n<p>There are no other operators\
+      \ to compare vectors, but of course you can compare certain properties of vectors,\
+      \ such as <a href=\"#Vector_length_and_unit_vector\">length</a>. Also you can\
+      \ exploit the definition of the <a href=\"#Dot_product\">dot product</a> to\
+      \ compare vector directions.</p>\n<h3><span class=\"mw-headline\" id=\"Addition_and_subtraction\"\
+      >Addition and subtraction</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Vector?section=3\" title=\"\
+      Edit section: Addition and subtraction\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Adding or subtracting two vectors is done via the\
+      \ <code>+</code> and <code>-</code> operators. Two vectors are added or subtracted\
+      \ by adding or subtracting their corresponding components respectively.</p>\n\
+      <h3><span class=\"mw-headline\" id=\"Vector_scaling\">Vector scaling</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Vector?section=4\" title=\"Edit section: Vector scaling\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h3>\n<p><a href=\"http://en.wikipedia.org/wiki/Euclidean_vector#Scalar_multiplication\"\
+      \ class=\"extiw\" title=\"wp:Euclidean vector\">Vector scaling</a> corresponds\
+      \ to multiplication or division by a scalar (i.e. <a href=\"/Float\" title=\"\
+      Float\" class=\"mw-redirect\">float</a>) value. Multiplying (or dividing) by\
+      \ negative values reverses the vector's direction. Values other than 1 (and\
+      \ -1) change the length of the vector.</p>\n<p>Vectors can be multiplied and\
+      \ divided by scalar (i.e. <a href=\"/Float\" title=\"Float\" class=\"mw-redirect\"\
+      >float</a>) values via the <code>*</code> and <code>/</code> operators. Scalar\
+      \ multiplication is commutative (<code>sVal * vVal == vVal * sVal</code>), but\
+      \ scalar division is only defined as vector divided by scalar. Scalar multiplication\
+      \ and division is defined as component-wise multiplication and division by the\
+      \ scalar value respectively.</p>\n<p>Multiplication by -1 can be expressed with\
+      \ the preoperator <code>-</code> and corresponds to reversing the vectors direction\
+      \ without changing its length.</p>\n<p><b>Note:</b> It is possible to divide\
+      \ vectors by zero. Like for other float values divided by zero, the resulting\
+      \ vector's components will contain an <a href=\"http://en.wikipedia.org/wiki/NaN\"\
+      \ class=\"extiw\" title=\"wp:NaN\">error value</a>. Such an error value will\
+      \ propagate through all vector operations, causing the results to be error values\
+      \ as well. Be very careful about error values ending up in <a href=\"/Actor\"\
+      \ title=\"Actor\">Actor</a> locations, velocities or accelerations, as these\
+      \ may cause the engine to crash in weird ways! Fortunately there are only few\
+      \ other operations (e.g. <code>Sqrt()</code> or <code>Loge()</code>) capable\
+      \ of producing such \"invalid\" float values.</p>\n<h3><span class=\"mw-headline\"\
+      \ id=\"Dot_product\">Dot product</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Vector?section=5\"\
+      \ title=\"Edit section: Dot product\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>The <a href=\"http://en.wikipedia.org/wiki/dot_product\"\
+      \ class=\"extiw\" title=\"wp:dot product\">dot product</a> of two vectors, also\
+      \ called inner product or scalar product, is defined as the sum of the products\
+      \ of corresponding components of the two vectors.<br />\nIn UnrealScript this\
+      \ is done with the operator <code>Dot</code>.</p>\n<p>By definition, the dot\
+      \ product of perpendicular vectors is zero. The dot product is negative if the\
+      \ vectors point in relatively opposite directions (more than 90 degrees) and\
+      \ positive if they point in relatively similar directions. (less than 90 degrees)\
+      \ Applied to unit vectors, the dot product is exactly the cosine of the angle\
+      \ between the two vectors.</p>\n<h3><span class=\"mw-headline\" id=\"Cross_product\"\
+      >Cross product</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Vector?section=6\" title=\"Edit section: Cross product\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n<p>The\
+      \ <a href=\"http://en.wikipedia.org/wiki/cross_product\" class=\"extiw\" title=\"\
+      wp:cross product\">cross product</a> of two 3D vectors, also called the outer\
+      \ product or vector product, is defined as a vector whose length is equal to\
+      \ the area of the parallelogram formed by the two vectors, and that is perpendicular\
+      \ to each of the two vectors. The cross product is not commutative, exchanging\
+      \ the operands inverts the direction of the resulting vector: a×b = -(b×a).</p>\n\
+      <p>UnrealScript provides the operator <code>Cross</code> for calculating the\
+      \ cross product. The directions of the two operands and the result of the cross\
+      \ product can be determined by the <i>right hand rule</i>:</p>\n<ul>\n<li>Hold\
+      \ the thumb, index finger and middle finger of your right hand in such a way\
+      \ that they are perpendicular to each other.</li>\n<li>Now your index and middle\
+      \ finger represent the directions of the first and second operand respectively\
+      \ and the thumb represents the direction of the cross product result.</li>\n\
+      </ul>\n<p>You can easily see that exchanging the first and second parameters\
+      \ makes your thumb point in the opposite direction. The length of the resulting\
+      \ vector is the product of the length of the operand vectors and the sine of\
+      \ the angle they form. Same or opposite direction results means the sine (and\
+      \ thus the resulting vector) is zero.</p>\n<h3><span class=\"mw-headline\" id=\"\
+      Component-wise_product\">Component-wise product</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Vector?section=7\"\
+      \ title=\"Edit section: Component-wise product\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Sometimes you may want to calculate a vector whose\
+      \ components are the products of the corresponding components of two vectors.\
+      \ This can be done with the operator <code>*</code>.</p>\n<h3><span class=\"\
+      mw-headline\" id=\"Vector_length_and_unit_vector\">Vector length and unit vector</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Vector?section=8\" title=\"Edit section: Vector length and unit\
+      \ vector\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>To get the <a href=\"http://en.wikipedia.org/wiki/Euclidean_vector#Length\"\
+      \ class=\"extiw\" title=\"wp:Euclidean vector\">length of a vector</a>, you\
+      \ can use the <code>VSize()</code> function. To <a href=\"http://en.wikipedia.org/wiki/unit_vector\"\
+      \ class=\"extiw\" title=\"wp:unit vector\">normalize</a> a vector's length to\
+      \ 1 without changing its orientation, you can use the <code>Normal()</code>\
+      \ function. The null vector <code>vect(0,0,0)</code> does not have an orientation\
+      \ by definition, so trying to normalize it does not have any effect.</p>\n<h4><span\
+      \ class=\"mw-headline\" id=\"More_vector_length3\">More vector length<sup>3</sup></span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Vector?section=9\" title=\"Edit section: More vector length3\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h4>\n<p>The\
+      \ standard vector length calculation involves taking the square root of the\
+      \ sum of squared vector component values. In <a href=\"/Unreal_Engine_3\" title=\"\
+      Unreal Engine 3\">Unreal Engine 3</a> you can also drop the square root operation\
+      \ and get the squared vector length via the <code>VSizeSq()</code> function.\
+      \ For example if you only want to compare vector lengths, this function is a\
+      \ bit faster. If the engine version you use doesn't provide the squared vector\
+      \ size function, don't bother creating it in UnrealScript just for performance\
+      \ reasons, any UnrealScript implementation would be slower than <code>VSize()</code>\
+      \ itself. If, however, you want to create it because you need the value, you\
+      \ can choose between the expressions <code>Square(VSize(<i>X</i>))</code> and\
+      \ <code><i>X</i> dot <i>X</i></code>, which are equivalent.</p>\n<p>Testing\
+      \ for the zero vector can be done using the <code>IsZero()</code> function.\
+      \ This is a bit more efficient than explicitly comparing a vector value to a\
+      \ zero <a href=\"/Literals#Vectors\" title=\"Literals\">vector literal</a>.\
+      \ (<code><i>X</i> == vect(0,0,0)</code>)</p>\n<p>Unreal Engine 3 also provides\
+      \ means to ignore the Z value of a vector when calculating its length. The related\
+      \ functions are called <code>VSize2D()</code> and <code>VSizeSq2D()</code> and\
+      \ work analogously to their \"3D\" counterparts mentioned above.</p>\n<p>If\
+      \ you only want to limit the length of a vector to a certain maximum value,\
+      \ you can use the <code>ClampLength()</code> function. One possible implementation\
+      \ for earlier engine versions could be:</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">static</span> <span class=\"kw1\">final</span> <span\
+      \ class=\"kw1\">function</span> <span class=\"kw5\">vector</span> ClampLength<span\
+      \ class=\"br0\">(</span><span class=\"kw5\">vector</span> V, <span class=\"\
+      kw5\">float</span> MaxLength<span class=\"br0\">)</span>\n<span class=\"br0\"\
+      >{</span>\n  <span class=\"kw2\">return</span> <span class=\"kw3\">Normal</span><span\
+      \ class=\"br0\">(</span>V<span class=\"br0\">)</span> <span class=\"sy0\">*</span>\
+      \ <span class=\"kw3\">FMin</span><span class=\"br0\">(</span><span class=\"\
+      kw3\">VSize</span><span class=\"br0\">(</span>V<span class=\"br0\">)</span>,\
+      \ MaxLength<span class=\"br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<h3><span class=\"mw-headline\" id=\"Random_vectors\">Random vectors</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Vector?section=10\" title=\"Edit section: Random vectors\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h3>\n<p>To get a vector\
+      \ with a random direction, you can use the <code>VRand()</code> function. It\
+      \ will return a vector of length 1 with a random direction. The end points of\
+      \ vectors returned by this function are approximately uniformly distributed\
+      \ on a <a href=\"http://en.wikipedia.org/wiki/unit_sphere\" class=\"extiw\"\
+      \ title=\"wp:unit sphere\">unit sphere</a>.</p>\n<h3><span class=\"mw-headline\"\
+      \ id=\"Mirroring_vectors\">Mirroring vectors</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Vector?section=11\"\
+      \ title=\"Edit section: Mirroring vectors\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>There's a convenient mirroring function called <code>MirrorVectorByNormal()</code>\
+      \ that takes two parameters. The first parameter is the vector you want to mirror\
+      \ and the second is the <a href=\"http://en.wikipedia.org/wiki/surface_normal\"\
+      \ class=\"extiw\" title=\"wp:surface normal\">surface normal</a> vector of a\
+      \ plane will \"reflect\" your vector. The direction (towards or away from your\
+      \ vector) and length do not matter, as long as the length is not zero.</p>\n\
+      <h3><span class=\"mw-headline\" id=\"Coordinate_system_transformation\">Coordinate\
+      \ system transformation</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Vector?section=12\" title=\"\
+      Edit section: Coordinate system transformation\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Sometimes it is easier to express an offset relative\
+      \ to a rotation, for example to specify the 1st person weapon position. All\
+      \ engine versions provide two special operators for conversion between world\
+      \ coordinates and a local coordinate system expressed by a <a href=\"/Rotator\"\
+      \ title=\"Rotator\">rotator</a>. Assume <i>CamRot</i> is a camera rotation describing\
+      \ a local coordinate system, for example a player view. Then <code>V &lt;&lt;\
+      \ CamRot</code> converts a global offset into a camera-relative local offset,\
+      \ while <code>V &gt;&gt; CamRot</code> converts a camera-relative offset into\
+      \ a global offset.</p>\n<h3><span class=\"mw-headline\" id=\"Vector_projection3\"\
+      >Vector projection<sup>3</sup></span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Vector?section=13\" title=\"\
+      Edit section: Vector projection3\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Another convenient function is called <code>ProjectOnTo()</code>\
+      \ and takes two parameters. The function returns only that part of the first\
+      \ vector that points in the same direction as the second vector.</p>\n<p>Imagine\
+      \ pulling a car with a rope and you don't pull exactly in the direction the\
+      \ car is facing. Not all of your applied force is actually used to move the\
+      \ car, but only the part of your applied force that points in the same direction\
+      \ as the car is facing. That's exactly the part of the vector returned by <code>ProjectOnTo()</code>.</p>\n\
+      <p>In engine versions that don't provide <code>ProjectOnTo()</code>, you can\
+      \ create an equivalent function with the following code:</p>\n<div dir=\"ltr\"\
+      \ class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">static</span> <span class=\"kw1\"\
+      >final</span> <span class=\"kw1\">function</span> <span class=\"kw5\">vector</span>\
+      \ ProjectOnTo<span class=\"br0\">(</span><span class=\"kw5\">vector</span> A,\
+      \ <span class=\"kw5\">vector</span> B<span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n  <span class=\"kw2\">return</span> <span class=\"kw3\">Normal</span><span\
+      \ class=\"br0\">(</span>B<span class=\"br0\">)</span> <span class=\"sy0\">*</span>\
+      \ <span class=\"br0\">(</span>A dot <span class=\"kw3\">Normal</span><span class=\"\
+      br0\">(</span>B<span class=\"br0\">)</span><span class=\"br0\">)</span>;\n<span\
+      \ class=\"br0\">}</span></pre></div>\n</div>\n<h2><span class=\"mw-headline\"\
+      \ id=\"See_also\">See also</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Vector?section=14\" title=\"\
+      Edit section: See also\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <ul>\n<li><a href=\"/Rotator\" title=\"Rotator\">Rotator</a></li>\n<li><a href=\"\
+      /Quaternion\" title=\"Quaternion\">Quaternion</a></li>\n</ul>\n<table class=\"\
+      navbox nowraplinks\" style=\"\">\n<tr class=\"navbox-header\">\n<th colspan=\"\
+      2\" class=\"navbox-header\" style=\"\">\n<div style=\"position:relative; width:100%;\
+      \ white-space:nowrap;\">\n<div class=\"noprint plainlinks\" style=\"background-color:transparent;\
+      \ padding:0; font-weight:normal; font-size:xx-small; white-space:nowrap; position:absolute;left:0.5em;\"\
+      ><a href=\"/Template:Navbox_unrealscript\" title=\"Template:Navbox unrealscript\"\
+      ><span title=\"View this template\">v</span></a>&#160;•&#160;<a href=\"/Template_talk:Navbox_unrealscript\"\
+      \ title=\"Template talk:Navbox unrealscript\"><span title=\"Discussion about\
+      \ this template\">d</span></a>&#160;•&#160;<a rel=\"nofollow\" class=\"external\
+      \ text\" href=\"https://wiki.beyondunreal.com/edit/Template:Navbox_unrealscript\"\
+      ><span title=\"You can edit this template. Please use the preview button before\
+      \ saving.\">e</span></a></div>\n<a href=\"/UnrealScript_reference\" title=\"\
+      UnrealScript reference\">UnrealScript reference</a></div>\n</th>\n</tr>\n<tr\
+      \ class=\"navbox-body odd\">\n<th class=\"navbox-group\" style=\"\">Declarations</th>\n\
+      <td class=\"navbox-body\" style=\"\"><a href=\"/Preprocessor\" title=\"Preprocessor\"\
+      >Preprocessor</a>&#160;• <a href=\"/Classes\" title=\"Classes\">Classes</a>&#160;•\
+      \ <a href=\"/Interfaces\" title=\"Interfaces\">Interfaces</a>&#160;• <a href=\"\
+      /Cpptext\" title=\"Cpptext\">Cpptext</a>&#160;• <a href=\"/Constants\" title=\"\
+      Constants\">Constants</a>&#160;• <a href=\"/Enums\" title=\"Enums\">Enums</a>&#160;•\
+      \ <a href=\"/Structs\" title=\"Structs\">Structs</a>&#160;• <a href=\"/Variables\"\
+      \ title=\"Variables\">Variables</a>&#160;(<a href=\"/Metadata\" title=\"Metadata\"\
+      >Metadata</a>)&#160;• <a href=\"/Replication_block\" title=\"Replication block\"\
+      >Replication block</a>&#160;• <a href=\"/Operators\" title=\"Operators\">Operators</a>&#160;•\
+      \ <a href=\"/Delegates\" title=\"Delegates\">Delegates</a>&#160;• <a href=\"\
+      /Functions\" title=\"Functions\">Functions</a>&#160;• <a href=\"/States\" title=\"\
+      States\">States</a>&#160;• <a href=\"/Defaultproperties\" title=\"Defaultproperties\"\
+      >Defaultproperties</a>&#160;(<a href=\"/Subobjects\" title=\"Subobjects\">Subobjects</a>)</td>\n\
+      </tr>\n<tr class=\"navbox-body even\">\n<th class=\"navbox-group\" style=\"\"\
+      ><a href=\"/Types\" title=\"Types\">Types</a></th>\n<td class=\"navbox-body\"\
+      \ style=\"\"><a href=\"/Bool\" title=\"Bool\" class=\"mw-redirect\">bool</a>&#160;•\
+      \ <a href=\"/Byte\" title=\"Byte\" class=\"mw-redirect\">byte</a>&#160;• <a\
+      \ href=\"/Float\" title=\"Float\" class=\"mw-redirect\">float</a>&#160;• <a\
+      \ href=\"/Int\" title=\"Int\" class=\"mw-redirect\">int</a>&#160;• <a href=\"\
+      /Name\" title=\"Name\" class=\"mw-redirect\">name</a>&#160;• <a href=\"/String\"\
+      \ title=\"String\">string</a>&#160;• <a href=\"/Types#Reference_types\" title=\"\
+      Types\">Object</a>&#160;• <a href=\"/Class_limiter#Class\" title=\"Class limiter\"\
+      \ class=\"mw-redirect\">Class</a>&#160;• <a href=\"/Enums\" title=\"Enums\"\
+      >Enums</a>&#160;• <a href=\"/Structs\" title=\"Structs\">Structs</a>&#160;(<strong\
+      \ class=\"selflink\">Vector</strong>&#160;⋅ <a href=\"/Rotator\" title=\"Rotator\"\
+      >Rotator</a>&#160;⋅ <a href=\"/Quat\" title=\"Quat\" class=\"mw-redirect\">Quat</a>&#160;⋅\
+      \ <a href=\"/Color\" title=\"Color\">Color</a>)&#160;• <a href=\"/Static_arrays\"\
+      \ title=\"Static arrays\">Static arrays</a>&#160;• <a href=\"/Dynamic_arrays\"\
+      \ title=\"Dynamic arrays\">Dynamic arrays</a>&#160;• <a href=\"/Delegates\"\
+      \ title=\"Delegates\">Delegates</a>&#160;• <a href=\"/Typecasting\" title=\"\
+      Typecasting\">Typecasting</a></td>\n</tr>\n<tr class=\"navbox-body odd\">\n\
+      <th class=\"navbox-group\" style=\"\"><a href=\"/Literals\" title=\"Literals\"\
+      >Literals</a></th>\n<td class=\"navbox-body\" style=\"\"><a href=\"/Literals#Boolean_values\"\
+      \ title=\"Literals\">Boolean</a>&#160;• <a href=\"/Literals#Float_numbers\"\
+      \ title=\"Literals\">Float</a>&#160;• <a href=\"/Literals#Integer_numbers\"\
+      \ title=\"Literals\">Integer</a>&#160;• <a href=\"/Literals#Names\" title=\"\
+      Literals\">Names</a>&#160;• <a href=\"/Literals#Objects\" title=\"Literals\"\
+      >Objects</a> (<a href=\"/None\" title=\"None\" class=\"mw-redirect\">None</a>&#160;⋅\
+      \ <a href=\"/Self\" title=\"Self\" class=\"mw-redirect\">Self</a>)&#160;• <a\
+      \ href=\"/Literals#Vectors\" title=\"Literals\">Vectors</a>&#160;• <a href=\"\
+      /Literals#Rotators\" title=\"Literals\">Rotators</a>&#160;• <a href=\"/Literals#Strings\"\
+      \ title=\"Literals\">Strings</a></td>\n</tr>\n<tr class=\"navbox-body even\"\
+      >\n<th class=\"navbox-group\" style=\"\"><a href=\"/Flow_control\" title=\"\
+      Flow control\">Flow</a></th>\n<td class=\"navbox-body\" style=\"\"><a href=\"\
+      /GoTo_statement\" title=\"GoTo statement\">GoTo</a>&#160;• <a href=\"/If_statement\"\
+      \ title=\"If statement\">If</a>&#160;• <a href=\"/Assert_statement\" title=\"\
+      Assert statement\">Assert</a>&#160;• <a href=\"/Return_statement\" title=\"\
+      Return statement\">Return</a>&#160;• <a href=\"/Stop_statement\" title=\"Stop\
+      \ statement\">Stop</a>&#160;• <a href=\"/Switch_statement\" title=\"Switch statement\"\
+      >Switch</a>&#160;• <a href=\"/While_loop\" title=\"While loop\">While</a>&#160;•\
+      \ <a href=\"/Do...Until_loop\" title=\"Do...Until loop\">Do...Until</a>&#160;•\
+      \ <a href=\"/For_loop\" title=\"For loop\">For</a>&#160;• <a href=\"/ForEach_loop\"\
+      \ title=\"ForEach loop\">ForEach</a>&#160;• <a href=\"/Break_statement\" title=\"\
+      Break statement\">Break</a>&#160;• <a href=\"/Continue_statement\" title=\"\
+      Continue statement\">Continue</a></td>\n</tr>\n<tr class=\"navbox-body odd\"\
+      >\n<th class=\"navbox-group\" style=\"\"><a href=\"/Specifiers\" title=\"Specifiers\"\
+      >Specifiers</a></th>\n<td class=\"navbox-body\" style=\"\"><a href=\"/Function_call_specifiers#Super\"\
+      \ title=\"Function call specifiers\">Super</a>&#160;• <a href=\"/Function_call_specifiers#Global\"\
+      \ title=\"Function call specifiers\">Global</a>&#160;• <a href=\"/Functions#Syntax_3\"\
+      \ title=\"Functions\">Static</a>&#160;• <a href=\"/Variables#Accessing_variables\"\
+      \ title=\"Variables\">Default</a>&#160;• <a href=\"/Constants#Usage\" title=\"\
+      Constants\">Const</a></td>\n</tr>\n<tr class=\"navbox-body even\">\n<th class=\"\
+      navbox-group\" style=\"\"><a href=\"/UnrealScript\" title=\"UnrealScript\">UnrealScript</a></th>\n\
+      <td class=\"navbox-body\" style=\"\"><a href=\"/UnrealScript_syntax\" title=\"\
+      UnrealScript syntax\">Syntax</a>&#160;• <a href=\"/UC_File\" title=\"UC File\"\
+      >.UC</a>&#160;• <a href=\"/edit/UCI_File?redlink=1\" class=\"new\" title=\"\
+      UCI File (page does not exist)\">.UCI</a>&#160;• <a href=\"/UPKG_File\" title=\"\
+      UPKG File\">.UPKG</a>&#160;• <a href=\"/Comments\" title=\"Comments\">Comments</a>&#160;•\
+      \ <a href=\"/Compiler_directives\" title=\"Compiler directives\">#directives</a>&#160;•\
+      \ <a href=\"/edit/Native_coding?redlink=1\" class=\"new\" title=\"Native coding\
+      \ (page does not exist)\">Native</a></td>\n</tr>\n</table>\n\n<!-- \nNewPP limit\
+      \ report\nCPU time usage: 0.219 seconds\nReal time usage: 0.230 seconds\nPreprocessor\
+      \ visited node count: 271/1000000\nPreprocessor generated node count: 1199/1000000\n\
+      Post‐expand include size: 11429/2097152 bytes\nTemplate argument size: 4219/2097152\
+      \ bytes\nHighest expansion depth: 5/40\nExpensive parser function count: 1/100\n\
+      -->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n100.00%\
+      \  121.595      1 - -total\n 53.23%   64.719      1 - Template:Classgames\n\
+      \ 22.88%   27.818      1 - Template:Navbox_unrealscript\n 14.92%   18.138  \
+      \    1 - Template:Navbox\n  2.96%    3.605      1 - Template:Tnavbar\n  1.40%\
+      \    1.700      1 - Template:Extension_DPL\n-->\n\n<!-- Saved in parser cache\
+      \ with key wiki:pcache:idhash:24172-0!*!*!*!*!*!* and timestamp 20221117160745\
+      \ and revision id 44372\n -->\n"
+  categories:
+  - sortkey: "Vector"
+    name: "UnrealScript_reference"
+  links:
+  - ns: 0
+    exists: true
+    name: "Functions"
+  - ns: 0
+    exists: false
+    name: "Native coding"
+  - ns: 0
+    exists: true
+    name: "String"
+  - ns: 106
+    exists: true
+    name: "UE3:Object (UDK)"
+  - ns: 0
+    exists: true
+    name: "States"
+  - ns: 11
+    exists: true
+    name: "Template talk:Navbox unrealscript"
+  - ns: 0
+    exists: true
+    name: "Literals"
+  - ns: 0
+    exists: true
+    name: "Comments"
+  - ns: 0
+    exists: true
+    name: "UnrealScript reference"
+  - ns: 0
+    exists: true
+    name: "Preprocessor"
+  - ns: 0
+    exists: true
+    name: "Structs"
+  - ns: 0
+    exists: true
+    name: "Int"
+  - ns: 0
+    exists: true
+    name: "None"
+  - ns: 0
+    exists: true
+    name: "Quaternion"
+  - ns: 0
+    exists: true
+    name: "Class limiter"
+  - ns: 0
+    exists: true
+    name: "Static arrays"
+  - ns: 0
+    exists: true
+    name: "Assert statement"
+  - ns: 102
+    exists: true
+    name: "UE1:Object (U1)"
+  - ns: 0
+    exists: true
+    name: "Unreal Engine 3"
+  - ns: 0
+    exists: true
+    name: "Metadata"
+  - ns: 0
+    exists: true
+    name: "Struct"
+  - ns: 104
+    exists: true
+    name: "UE2:Object (UT2004)"
+  - ns: 0
+    exists: true
+    name: "ForEach loop"
+  - ns: 0
+    exists: true
+    name: "Float"
+  - ns: 0
+    exists: true
+    name: "Return statement"
+  - ns: 0
+    exists: true
+    name: "Break statement"
+  - ns: 0
+    exists: true
+    name: "For loop"
+  - ns: 0
+    exists: true
+    name: "Interfaces"
+  - ns: 0
+    exists: true
+    name: "Rotator"
+  - ns: 0
+    exists: true
+    name: "UC File"
+  - ns: 0
+    exists: true
+    name: "Switch statement"
+  - ns: 0
+    exists: true
+    name: "Actor"
+  - ns: 104
+    exists: true
+    name: "UE2:Object (UE2Runtime)"
+  - ns: 0
+    exists: true
+    name: "Classes"
+  - ns: 0
+    exists: true
+    name: "Defaultproperties"
+  - ns: 102
+    exists: true
+    name: "UE1:Object (UT)"
+  - ns: 0
+    exists: true
+    name: "Replication block"
+  - ns: 0
+    exists: true
+    name: "Types"
+  - ns: 0
+    exists: true
+    name: "UPKG File"
+  - ns: 0
+    exists: true
+    name: "Bool"
+  - ns: 106
+    exists: true
+    name: "UE3:Object (UT3)"
+  - ns: 0
+    exists: true
+    name: "Subobjects"
+  - ns: 0
+    exists: true
+    name: "Replication"
+  - ns: 0
+    exists: false
+    name: "UCI File"
+  - ns: 0
+    exists: true
+    name: "Cpptext"
+  - ns: 0
+    exists: true
+    name: "Delegates"
+  - ns: 0
+    exists: true
+    name: "Flow control"
+  - ns: 0
+    exists: true
+    name: "Stop statement"
+  - ns: 0
+    exists: true
+    name: "Name"
+  - ns: 0
+    exists: true
+    name: "Specifiers"
+  - ns: 0
+    exists: true
+    name: "Operators"
+  - ns: 104
+    exists: true
+    name: "UE2:Object (U2XMP)"
+  - ns: 0
+    exists: true
+    name: "While loop"
+  - ns: 0
+    exists: true
+    name: "UnrealScript syntax"
+  - ns: 0
+    exists: true
+    name: "Color"
+  - ns: 0
+    exists: true
+    name: "Function call specifiers"
+  - ns: 0
+    exists: true
+    name: "Object"
+  - ns: 0
+    exists: true
+    name: "Variables"
+  - ns: 102
+    exists: true
+    name: "UE1:Object (RTNP)"
+  - ns: 0
+    exists: true
+    name: "Byte"
+  - ns: 0
+    exists: true
+    name: "Enums"
+  - ns: 0
+    exists: true
+    name: "Do...Until loop"
+  - ns: 104
+    exists: true
+    name: "UE2:Object (U2)"
+  - ns: 0
+    exists: true
+    name: "Continue statement"
+  - ns: 0
+    exists: true
+    name: "GoTo statement"
+  - ns: 0
+    exists: true
+    name: "Unreal Unit"
+  - ns: 0
+    exists: true
+    name: "If statement"
+  - ns: 0
+    exists: true
+    name: "Self"
+  - ns: 10
+    exists: true
+    name: "Template:Navbox unrealscript"
+  - ns: 0
+    exists: true
+    name: "Dynamic arrays"
+  - ns: 0
+    exists: true
+    name: "Constants"
+  - ns: 0
+    exists: true
+    name: "Compiler directives"
+  - ns: 0
+    exists: true
+    name: "Quat"
+  - ns: 0
+    exists: true
+    name: "Typecasting"
+  - ns: 106
+    exists: true
+    name: "UE3:Object structs (UT3)"
+  - ns: 0
+    exists: true
+    name: "UnrealScript"
+  - ns: 104
+    exists: true
+    name: "UE2:Object (UT2003)"
+  templates:
+  - ns: 10
+    exists: true
+    name: "Template:Navbox"
+  - ns: 10
+    exists: true
+    name: "Template:Tnavbar"
+  - ns: 10
+    exists: true
+    name: "Template:Classgames"
+  - ns: 10
+    exists: true
+    name: "Template:Navbox unrealscript"
+  - ns: 10
+    exists: true
+    name: "Template:Extension DPL"
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Vector operations"
+    number: "1"
+    index: "1"
+    fromtitle: "Vector"
+    byteoffset: 1899
+    anchor: "Vector_operations"
+  - toclevel: 2
+    level: "3"
+    line: "Vector (in)equality"
+    number: "1.1"
+    index: "2"
+    fromtitle: "Vector"
+    byteoffset: 2485
+    anchor: "Vector_.28in.29equality"
+  - toclevel: 2
+    level: "3"
+    line: "Addition and subtraction"
+    number: "1.2"
+    index: "3"
+    fromtitle: "Vector"
+    byteoffset: 2989
+    anchor: "Addition_and_subtraction"
+  - toclevel: 2
+    level: "3"
+    line: "Vector scaling"
+    number: "1.3"
+    index: "4"
+    fromtitle: "Vector"
+    byteoffset: 3222
+    anchor: "Vector_scaling"
+  - toclevel: 2
+    level: "3"
+    line: "Dot product"
+    number: "1.4"
+    index: "5"
+    fromtitle: "Vector"
+    byteoffset: 4663
+    anchor: "Dot_product"
+  - toclevel: 2
+    level: "3"
+    line: "Cross product"
+    number: "1.5"
+    index: "6"
+    fromtitle: "Vector"
+    byteoffset: 5290
+    anchor: "Cross_product"
+  - toclevel: 2
+    level: "3"
+    line: "Component-wise product"
+    number: "1.6"
+    index: "7"
+    fromtitle: "Vector"
+    byteoffset: 6537
+    anchor: "Component-wise_product"
+  - toclevel: 2
+    level: "3"
+    line: "Vector length and unit vector"
+    number: "1.7"
+    index: "8"
+    fromtitle: "Vector"
+    byteoffset: 6745
+    anchor: "Vector_length_and_unit_vector"
+  - toclevel: 3
+    level: "4"
+    line: "More vector length<sup>3</sup>"
+    number: "1.7.1"
+    index: "9"
+    fromtitle: "Vector"
+    byteoffset: 7165
+    anchor: "More_vector_length3"
+  - toclevel: 2
+    level: "3"
+    line: "Random vectors"
+    number: "1.8"
+    index: "10"
+    fromtitle: "Vector"
+    byteoffset: 8801
+    anchor: "Random_vectors"
+  - toclevel: 2
+    level: "3"
+    line: "Mirroring vectors"
+    number: "1.9"
+    index: "11"
+    fromtitle: "Vector"
+    byteoffset: 9101
+    anchor: "Mirroring_vectors"
+  - toclevel: 2
+    level: "3"
+    line: "Coordinate system transformation"
+    number: "1.10"
+    index: "12"
+    fromtitle: "Vector"
+    byteoffset: 9504
+    anchor: "Coordinate_system_transformation"
+  - toclevel: 2
+    level: "3"
+    line: "Vector projection<sup>3</sup>"
+    number: "1.11"
+    index: "13"
+    fromtitle: "Vector"
+    byteoffset: 10099
+    anchor: "Vector_projection3"
+  - toclevel: 1
+    level: "2"
+    line: "See also"
+    number: "2"
+    index: "14"
+    fromtitle: "Vector"
+    byteoffset: 10931
+    anchor: "See_also"
+  displaytitle: "Vector"
+  iwlinks:
+  - prefix: "wp"
+    url: "http://en.wikipedia.org/wiki/unit_sphere"
+    name: "wp:unit sphere"
+  - prefix: "wp"
+    url: "http://en.wikipedia.org/wiki/unit_vector"
+    name: "wp:unit vector"
+  - prefix: "wp"
+    url: "http://en.wikipedia.org/wiki/Euclidean_vector"
+    name: "wp:Euclidean vector"
+  - prefix: "wp"
+    url: "http://en.wikipedia.org/wiki/euclidean_vector"
+    name: "wp:euclidean vector"
+  - prefix: "wp"
+    url: "http://en.wikipedia.org/wiki/single_precision_floating-point_format"
+    name: "wp:single precision floating-point format"
+  - prefix: "wp"
+    url: "http://en.wikipedia.org/wiki/NaN"
+    name: "wp:NaN"
+  - prefix: "wp"
+    url: "http://en.wikipedia.org/wiki/dot_product"
+    name: "wp:dot product"
+  - prefix: "wp"
+    url: "http://en.wikipedia.org/wiki/surface_normal"
+    name: "wp:surface normal"
+  - prefix: "wp"
+    url: "http://en.wikipedia.org/wiki/cross_product"
+    name: "wp:cross product"
+  wikitext:
+    text: "The type '''vector''' is not a built-in type, but a [[struct]] defined\
+      \ in the {{classgames|Object}} class of all Unreal Engine games. Conceptually\
+      \ it corresponds to a three-dimensional [[wp:euclidean vector|euclidean vector]]\
+      \ and the Object class defines many functions and operators for working with\
+      \ vector values. The importance of the vector struct is stressed by the fact\
+      \ that it is one of only two struct types whose values can be specified directly\
+      \ using a [[Literals#Vectors|literal]].\n\nVector components use [[wp:single\
+      \ precision floating-point format|single precision floating-point format]],\
+      \ which imposes a practical limit to level sizes. The maximum floating point\
+      \ accuracy is about 7 digits in total. Considering you will most likely want\
+      \ at least 2 or 3 digits after the decimal point to get smooth player movement,\
+      \ the play area of a map should not exceed about ±100000 [[Unreal Unit]]s on\
+      \ each coordinate axis. Static environment can exist a bit further away, since\
+      \ it doesn't require smooth location updates.\n\n'''Important:''' The vector\
+      \ struct's components are rounded to integers for [[replication]]. Additionally,\
+      \ the values may not exceed the range of about ±1000000 or they will overflow.\
+      \ If you need to replicate vectors with fractional precision or larger values,\
+      \ consider scaling the vector value for replication.\n\n'''Note:''' [[Unreal\
+      \ Engine 3]] games may also define other vector-like structs, such as [[UE3:Object\
+      \ structs (UT3)#Vector2D|Vector2D]] or [[UE3:Object structs (UT3)#Vector4|Vector4]].\
+      \ In theory, many operations described in this article can also be applied to\
+      \ two- and four-dimensional vectors, but most of them are only defined for three-dimensional\
+      \ vectors (i.e. the ''Vector'' struct) in the engine. See the functions and\
+      \ operators defined in Object and other classed of your game to see which operations\
+      \ are available for the data type you want to use.\n\n==Vector operations==\n\
+      Not all vector-related operations are available in all Unreal Engine generations.\
+      \ These operations are marked as follows:\n* <sup>3</sup> &ndash; The operation\
+      \ is only available in [[Unreal Engine 3]].\n* (no number) &ndash; The operation\
+      \ is available in all Unreal Engine generations.\n<!--* (class name) &ndash;\
+      \ The operation is not defined in the Object class, but the specified class.-->\n\
+      There may be other vector operations available for your game. Just have a look\
+      \ at your game's Object class functions to find out what other predefined functions\
+      \ you can use.\n\n===Vector (in)equality===\nLike all structs, vectors can be\
+      \ compared for equality or inequality with the <code>==</code> and <code>!=</code>\
+      \ operators respectively. Two vectors are (in)equal if their corresponding components\
+      \ are (in)equal.\n\nThere are no other operators to compare vectors, but of\
+      \ course you can compare certain properties of vectors, such as [[#Vector length\
+      \ and unit vector|length]]. Also you can exploit the definition of the [[#Dot\
+      \ product|dot product]] to compare vector directions.\n\n===Addition and subtraction===\n\
+      Adding or subtracting two vectors is done via the <code>+</code> and <code>-</code>\
+      \ operators. Two vectors are added or subtracted by adding or subtracting their\
+      \ corresponding components respectively.\n\n===Vector scaling===\n[[wp:Euclidean\
+      \ vector#Scalar_multiplication|Vector scaling]] corresponds to multiplication\
+      \ or division by a scalar (i.e. [[float]]) value. Multiplying (or dividing)\
+      \ by negative values reverses the vector's direction. Values other than 1 (and\
+      \ -1) change the length of the vector.\n\nVectors can be multiplied and divided\
+      \ by scalar (i.e. [[float]]) values via the <code>*</code> and <code>/</code>\
+      \ operators. Scalar multiplication is commutative (<code>sVal * vVal == vVal\
+      \ * sVal</code>), but scalar division is only defined as vector divided by scalar.\
+      \ Scalar multiplication and division is defined as component-wise multiplication\
+      \ and division by the scalar value respectively.\n\nMultiplication by -1 can\
+      \ be expressed with the preoperator <code>-</code> and corresponds to reversing\
+      \ the vectors direction without changing its length.\n\n'''Note:''' It is possible\
+      \ to divide vectors by zero. Like for other float values divided by zero, the\
+      \ resulting vector's components will contain an [[wp:NaN|error value]]. Such\
+      \ an error value will propagate through all vector operations, causing the results\
+      \ to be error values as well. Be very careful about error values ending up in\
+      \ [[Actor]] locations, velocities or accelerations, as these may cause the engine\
+      \ to crash in weird ways! Fortunately there are only few other operations (e.g.\
+      \ <code>Sqrt()</code> or <code>Loge()</code>) capable of producing such \"invalid\"\
+      \ float values.\n\n===Dot product===\nThe [[wp:dot product|dot product]] of\
+      \ two vectors, also called inner product or scalar product, is defined as the\
+      \ sum of the products of corresponding components of the two vectors.<br/>In\
+      \ UnrealScript this is done with the operator <code>Dot</code>.\n\nBy definition,\
+      \ the dot product of perpendicular vectors is zero. The dot product is negative\
+      \ if the vectors point in relatively opposite directions (more than 90 degrees)\
+      \ and positive if they point in relatively similar directions. (less than 90\
+      \ degrees) Applied to unit vectors, the dot product is exactly the cosine of\
+      \ the angle between the two vectors.\n\n===Cross product===\nThe [[wp:cross\
+      \ product|cross product]] of two 3D vectors, also called the outer product or\
+      \ vector product, is defined as a vector whose length is equal to the area of\
+      \ the parallelogram formed by the two vectors, and that is perpendicular to\
+      \ each of the two vectors. The cross product is not commutative, exchanging\
+      \ the operands inverts the direction of the resulting vector: a×b = -(b×a).\n\
+      \nUnrealScript provides the operator <code>Cross</code> for calculating the\
+      \ cross product. The directions of the two operands and the result of the cross\
+      \ product can be determined by the ''right hand rule'':\n* Hold the thumb, index\
+      \ finger and middle finger of your right hand in such a way that they are perpendicular\
+      \ to each other.\n* Now your index and middle finger represent the directions\
+      \ of the first and second operand respectively and the thumb represents the\
+      \ direction of the cross product result.\nYou can easily see that exchanging\
+      \ the first and second parameters makes your thumb point in the opposite direction.\
+      \ The length of the resulting vector is the product of the length of the operand\
+      \ vectors and the sine of the angle they form. Same or opposite direction results\
+      \ means the sine (and thus the resulting vector) is zero.\n\n===Component-wise\
+      \ product===\nSometimes you may want to calculate a vector whose components\
+      \ are the products of the corresponding components of two vectors. This can\
+      \ be done with the operator <code>*</code>.\n\n===Vector length and unit vector===\n\
+      To get the [[wp:Euclidean vector#Length|length of a vector]], you can use the\
+      \ <code>VSize()</code> function. To [[wp:unit vector|normalize]] a vector's\
+      \ length to 1 without changing its orientation, you can use the <code>Normal()</code>\
+      \ function. The null vector <code>vect(0,0,0)</code> does not have an orientation\
+      \ by definition, so trying to normalize it does not have any effect.\n\n====More\
+      \ vector length<sup>3</sup>====\nThe standard vector length calculation involves\
+      \ taking the square root of the sum of squared vector component values. In [[Unreal\
+      \ Engine 3]] you can also drop the square root operation and get the squared\
+      \ vector length via the <code>VSizeSq()</code> function. For example if you\
+      \ only want to compare vector lengths, this function is a bit faster. If the\
+      \ engine version you use doesn't provide the squared vector size function, don't\
+      \ bother creating it in UnrealScript just for performance reasons, any UnrealScript\
+      \ implementation would be slower than <code>VSize()</code> itself. If, however,\
+      \ you want to create it because you need the value, you can choose between the\
+      \ expressions <code>Square(VSize(''X''))</code> and <code>''X'' dot ''X''</code>,\
+      \ which are equivalent.\n\nTesting for the zero vector can be done using the\
+      \ <code>IsZero()</code> function. This is a bit more efficient than explicitly\
+      \ comparing a vector value to a zero [[Literals#Vectors|vector literal]]. (<code>''X''\
+      \ == vect(0,0,0)</code>)\n\nUnreal Engine 3 also provides means to ignore the\
+      \ Z value of a vector when calculating its length. The related functions are\
+      \ called <code>VSize2D()</code> and <code>VSizeSq2D()</code> and work analogously\
+      \ to their \"3D\" counterparts mentioned above.\n\nIf you only want to limit\
+      \ the length of a vector to a certain maximum value, you can use the <code>ClampLength()</code>\
+      \ function. One possible implementation for earlier engine versions could be:\n\
+      <uscript>\nstatic final function vector ClampLength(vector V, float MaxLength)\n\
+      {\n  return Normal(V) * FMin(VSize(V), MaxLength);\n}\n</uscript>\n\n===Random\
+      \ vectors===\nTo get a vector with a random direction, you can use the <code>VRand()</code>\
+      \ function. It will return a vector of length 1 with a random direction. The\
+      \ end points of vectors returned by this function are approximately uniformly\
+      \ distributed on a [[wp:unit sphere|unit sphere]].\n\n===Mirroring vectors===\n\
+      There's a convenient mirroring function called <code>MirrorVectorByNormal()</code>\
+      \ that takes two parameters. The first parameter is the vector you want to mirror\
+      \ and the second is the [[wp:surface normal|surface normal]] vector of a plane\
+      \ will \"reflect\" your vector. The direction (towards or away from your vector)\
+      \ and length do not matter, as long as the length is not zero.\n\n===Coordinate\
+      \ system transformation===\nSometimes it is easier to express an offset relative\
+      \ to a rotation, for example to specify the 1st person weapon position. All\
+      \ engine versions provide two special operators for conversion between world\
+      \ coordinates and a local coordinate system expressed by a [[rotator]]. Assume\
+      \ ''CamRot'' is a camera rotation describing a local coordinate system, for\
+      \ example a player view. Then <code>V << CamRot</code> converts a global offset\
+      \ into a camera-relative local offset, while <code>V >> CamRot</code> converts\
+      \ a camera-relative offset into a global offset.\n\n===Vector projection<sup>3</sup>===\n\
+      Another convenient function is called <code>ProjectOnTo()</code> and takes two\
+      \ parameters. The function returns only that part of the first vector that points\
+      \ in the same direction as the second vector.\n\nImagine pulling a car with\
+      \ a rope and you don't pull exactly in the direction the car is facing. Not\
+      \ all of your applied force is actually used to move the car, but only the part\
+      \ of your applied force that points in the same direction as the car is facing.\
+      \ That's exactly the part of the vector returned by <code>ProjectOnTo()</code>.\n\
+      \nIn engine versions that don't provide <code>ProjectOnTo()</code>, you can\
+      \ create an equivalent function with the following code:\n<uscript>\nstatic\
+      \ final function vector ProjectOnTo(vector A, vector B)\n{\n  return Normal(B)\
+      \ * (A dot Normal(B));\n}\n</uscript>\n\n==See also==\n* [[Rotator]]\n* [[Quaternion]]\n\
+      \n{{navbox unrealscript}}"
+  properties: []
+  revId: 44372
+name: "Vector"
+revision:
+  revid: 44372
+  parentid: 44323
+  user: "113.22.251.171"
+  timestamp: 1303295525.000000000
+  comment: "/* More vector length3 */  Changed \"squard\" to \"squared\"."
+timestamp: 1668754669.814221000

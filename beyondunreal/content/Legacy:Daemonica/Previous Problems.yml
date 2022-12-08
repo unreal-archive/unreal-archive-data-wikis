@@ -1,0 +1,916 @@
+---
+parse:
+  title: "Legacy:Daemonica/Previous Problems"
+  text:
+    text: "<p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n\
+      </div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#Previous_Problems\"\
+      ><span class=\"tocnumber\">1</span> <span class=\"toctext\">Previous Problems</span></a>\n\
+      <ul>\n<li class=\"toclevel-2 tocsection-2\"><a href=\"#Locally_Viewed_Actors\"\
+      ><span class=\"tocnumber\">1.1</span> <span class=\"toctext\">Locally Viewed\
+      \ Actors</span></a>\n<ul>\n<li class=\"toclevel-3 tocsection-3\"><a href=\"\
+      #Why_am_I_working_on_this_problem\"><span class=\"tocnumber\">1.1.1</span> <span\
+      \ class=\"toctext\">Why am I working on this problem</span></a></li>\n</ul>\n\
+      </li>\n<li class=\"toclevel-2 tocsection-4\"><a href=\"#Menu_Music\"><span class=\"\
+      tocnumber\">1.2</span> <span class=\"toctext\">Menu Music</span></a>\n<ul>\n\
+      <li class=\"toclevel-3 tocsection-5\"><a href=\"#Why_am_I_working_on_this_problem_2\"\
+      ><span class=\"tocnumber\">1.2.1</span> <span class=\"toctext\">Why am I working\
+      \ on this problem</span></a></li>\n</ul>\n</li>\n<li class=\"toclevel-2 tocsection-6\"\
+      ><a href=\"#Useable_Actors\"><span class=\"tocnumber\">1.3</span> <span class=\"\
+      toctext\">Useable Actors</span></a>\n<ul>\n<li class=\"toclevel-3 tocsection-7\"\
+      ><a href=\"#Why_am_I_working_on_this_problem_3\"><span class=\"tocnumber\">1.3.1</span>\
+      \ <span class=\"toctext\">Why am I working on this problem</span></a></li>\n\
+      </ul>\n</li>\n</ul>\n</li>\n</ul>\n</div>\n<p></p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Previous_Problems\">Previous Problems</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Daemonica/Previous_Problems?section=1\"\
+      \ title=\"Edit section: Previous Problems\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>I'm considering these problems resolved now&#160;:)</p>\n\
+      <h3><span class=\"mw-headline\" id=\"Locally_Viewed_Actors\">Locally Viewed\
+      \ Actors</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Daemonica/Previous_Problems?section=2\" title=\"\
+      Edit section: Locally Viewed Actors\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>How to work out if an <a href=\"/Legacy:Actor_(UT)\"\
+      \ title=\"Legacy:Actor (UT)\">Actor (UT)</a> is being viewed on the local players\
+      \ view. In other words making an object hidden to some people, but visible to\
+      \ others.</p>\n<h4><span class=\"mw-headline\" id=\"Why_am_I_working_on_this_problem\"\
+      >Why am I working on this problem</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Daemonica/Previous_Problems?section=3\"\
+      \ title=\"Edit section: Why am I working on this problem\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h4>\n<p>Because of <a rel=\"nofollow\"\
+      \ class=\"external text\" href=\"http://undying.sanffo.co.uk\">The Undying Curse</a>\
+      \ where players have access to a spell called Scrye, which allows them to see\
+      \ hidden objects. I only want people who are actually 'Scrying' to be able to\
+      \ see the objects without effecting anyone else's perception of the world around\
+      \ them. My head hurts after this&#160;;)</p>\n<p><b>Foxpaw:</b> I think I may\
+      \ have a solution to this problem, if you are still seeking one.. One way of\
+      \ course would be to have it client-side - you could put it in the objects Tick\
+      \ function to be executed client side - if they are scrying, bHidden is set\
+      \ to false, otherwise it is set to true. Of course, since it's client side it\
+      \ could probrably be hacked.. but if the actor is considered relevant to the\
+      \ network and is being replicated it could likely be hacked in the same way.\
+      \ If you want it to be client-side and only replicate to people who can see\
+      \ it... well, that could be a doozie. But the client-side implementation probrably\
+      \ wouldn't be too difficult. I don't recall the code to determine whether a\
+      \ given pawn/controller is being controlled by a local player or over a network,\
+      \ but I've seen it around.</p>\n<p><b>Daemonica:</b> yeah, that's what I've\
+      \ been thinking, it works almost all the way upto Listen Servers, they end up\
+      \ doing weird things due to replication.</p>\n<p><b>Daemonica:</b> Well, I've\
+      \ moved over to UT2003 now&#160;:) Finally, this lil problem has been put on\
+      \ the backburner for now, hopefully I can figure this out so it works on Listen\
+      \ Servers too!</p>\n<p><b>Daemonica:</b> Back on this problem now and it's getting\
+      \ there. I'm using a simulated Tick function as explained above but it's only\
+      \ working on the Listen Server/Single player side, client's don't seem to get\
+      \ this right. I'm using the following code</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"co1\">//-----------------------------------------------------------</span>\n\
+      <span class=\"co1\">// UCScryeObject - Any object that is viewable only when</span>\n\
+      <span class=\"co1\">// a player is 'scrying'</span>\n<span class=\"co1\">//\
+      \ Copyright (C), Undying Curse</span>\n<span class=\"co1\">//-----------------------------------------------------------</span>\n\
+      <span class=\"kw1\">class</span> UCScryeObject <span class=\"kw1\">extends</span>\
+      \ UCInteractiveItem;\n \n<span class=\"kw1\">simulated</span> <span class=\"\
+      kw1\">function</span> <span class=\"kw4\">Tick</span><span class=\"br0\">(</span><span\
+      \ class=\"kw5\">float</span> DeltaTime<span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n    <span class=\"kw1\">local</span> UCPlayer UCLocalPlayer;\n\
+      \ \n    <span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      kw7\">Level</span>.<span class=\"me0\">NetMode</span> <span class=\"sy0\">!=</span>\
+      \ NM_DedicatedServer<span class=\"br0\">)</span>\n    <span class=\"br0\">{</span>\n\
+      \        UCLocalPlayer <span class=\"sy0\">=</span> UCPlayer<span class=\"br0\"\
+      >(</span><span class=\"kw7\">Level</span>.<span class=\"me0\">GetLocalPlayerController</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n\
+      \        <span class=\"kw2\">if</span> <span class=\"br0\">(</span> UCLocalPlayer\
+      \ <span class=\"sy0\">!=</span> <span class=\"kw5\">none</span> <span class=\"\
+      br0\">)</span>\n        <span class=\"br0\">{</span>\n            <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span> UCLocalPlayer.<span class=\"me0\"\
+      >bScrying</span> <span class=\"br0\">)</span>\n                bHidden<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">false</span>;\n            <span\
+      \ class=\"kw2\">else</span>\n                bHidden<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">true</span>;\n        <span class=\"br0\">}</span>\n    <span\
+      \ class=\"br0\">}</span>\n \n<span class=\"br0\">}</span>\n \n \n<span class=\"\
+      kw1\">defaultproperties</span>\n<span class=\"br0\">{</span>\n    bHidden<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">True</span>\n    bNetTemporary<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">True</span>\n    bTearOff<span class=\"\
+      sy0\">=</span><span class=\"kw6\">True</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>I'm assuming the actor is not being replicated to the clients. Should\
+      \ a bAlwaysRelevent be set to true?</p>\n<p><i>Edit: Full source code now'</i></p>\n\
+      <p><b>EntropicLqd:</b> As far as I can tell it depends on where the Actor is\
+      \ spawned from. If the actor is spawned from a function that is called on both\
+      \ the client and server then bAlwaysRelevant doesn't seem to be required. When\
+      \ an actor is spawned from pure server side code I've always had to set the\
+      \ bAlwaysRelevant flag to True in order to get the Actor to replicate. This\
+      \ approach has always seemed like a <i>hack</i> to me and I've always had the\
+      \ feeling that I'm just missing something that everyone else in the world seems\
+      \ to know about. You'll probably need to ensure that the actor has a SimulatedProxy\
+      \ role.</p>\n<p><b>Wormbo:</b> When the actor is spawned from a function that's\
+      \ executed on server and clients, you get seperate actors and additionally the\
+      \ server-spawned one could get replicated to the client.</p>\n<p><b>Daemonica:</b>\
+      \ What happens if the actor is built into the map, how is that spawned? I need\
+      \ an object that is handles 100% by the client (or listen server) to alter it's\
+      \ bHidden property based on the Local Players (Controller) 'bScrying' property</p>\n\
+      <p><b>Daemonica:</b> Been working with the team and the following code is 80%\
+      \ working. It appears that if the server has bHidden=false then the scrying\
+      \ works, otherwise it's the actor remains invisible to everyone. So I hit on\
+      \ the idea of leaving the objects bHidden=false on the server and let the client\
+      \ play around with that to their hears content. In the meantime, use the listen\
+      \ servers LocalPlayerController to become the owner of the object and use bOwnerNoSee\
+      \ on the Listen Server only. Slight problem is, my attempts to set the owner\
+      \ at PostBeginPlay have failed as Level.GetLocalPlayerController() returns none\
+      \ at this time. The latest code is below, the older code is removed&#160;:D</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"co1\">//-----------------------------------------------------------</span>\n\
+      <span class=\"co1\">// UCScryeObject - Any object that is viewable only when</span>\n\
+      <span class=\"co1\">// a player is 'scrying'</span>\n<span class=\"co1\">//\
+      \ Copyright (C), Undying Curse</span>\n<span class=\"co1\">//-----------------------------------------------------------</span>\n\
+      <span class=\"kw1\">class</span> UCScryeObject <span class=\"kw1\">extends</span>\
+      \ UCInteractiveItem;\n \n<span class=\"kw1\">function</span> <span class=\"\
+      kw4\">PostNetBeginPlay</span><span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n    <span class=\"kw3\">log</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">\"UC-TESTING: Setting Owner for\
+      \ Scrye Object - \"</span><span class=\"sy0\">$</span>Level.<span class=\"me0\"\
+      >NetMode</span><span class=\"br0\">)</span>;\n    <span class=\"kw6\">super</span>.<span\
+      \ class=\"kw4\">PostNetBeginPlay</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n    <span class=\"kw2\">if</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw7\">Level</span>.<span class=\"me0\">NetMode</span> <span class=\"\
+      sy0\">==</span> NM_ListenServer<span class=\"br0\">)</span>\n    <span class=\"\
+      br0\">{</span>\n        <span class=\"kw3\">log</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">\"UC-TESTING: Acknowledged Listen Server, Setting Owner - \"\
+      </span><span class=\"sy0\">$</span>Level.<span class=\"me0\">GetLocalPlayerController</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n\
+      \        <span class=\"kw4\">SetOwner</span><span class=\"br0\">(</span><span\
+      \ class=\"kw7\">Level</span>.<span class=\"me0\">GetLocalPlayerController</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n\
+      \    <span class=\"br0\">}</span>\n    <span class=\"kw3\">log</span><span class=\"\
+      br0\">(</span><span class=\"st0\">\"UC-TESTING: Scrye Object now owned - \"\
+      </span><span class=\"sy0\">$</span>Owner<span class=\"br0\">)</span>;\n \n<span\
+      \ class=\"br0\">}</span>\n \n<span class=\"kw1\">simulated</span> <span class=\"\
+      kw1\">function</span> <span class=\"kw4\">Tick</span><span class=\"br0\">(</span><span\
+      \ class=\"kw5\">float</span> DeltaTime<span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n    <span class=\"kw1\">local</span> UCPlayer UCLocalPlayer;\n\
+      \ \n    <span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      kw7\">Level</span>.<span class=\"me0\">NetMode</span> <span class=\"sy0\">!=</span>\
+      \ NM_DedicatedServer<span class=\"br0\">)</span>\n    <span class=\"br0\">{</span>\n\
+      \        UCLocalPlayer <span class=\"sy0\">=</span> UCPlayer<span class=\"br0\"\
+      >(</span><span class=\"kw7\">Level</span>.<span class=\"me0\">GetLocalPlayerController</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n\
+      \        <span class=\"kw2\">if</span> <span class=\"br0\">(</span> UCLocalPlayer\
+      \ <span class=\"sy0\">!=</span> <span class=\"kw5\">none</span> <span class=\"\
+      br0\">)</span>\n        <span class=\"br0\">{</span>\n            <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw7\">Level</span>.<span class=\"me0\">NetMode</span> <span class=\"\
+      sy0\">==</span> NM_Client<span class=\"br0\">)</span> <span class=\"sy0\">||</span>\
+      \ <span class=\"br0\">(</span><span class=\"kw7\">Level</span>.<span class=\"\
+      me0\">NetMode</span> <span class=\"sy0\">==</span> NM_StandAlone<span class=\"\
+      br0\">)</span> <span class=\"br0\">)</span>\n            <span class=\"br0\"\
+      >{</span>\n                <span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span> UCLocalPlayer.<span class=\"me0\">bScrying</span> <span class=\"br0\"\
+      >)</span>\n                    bHidden<span class=\"sy0\">=</span><span class=\"\
+      kw6\">false</span>;\n                <span class=\"kw2\">else</span>\n     \
+      \               bHidden<span class=\"sy0\">=</span><span class=\"kw6\">true</span>;\n\
+      \            <span class=\"br0\">}</span>\n            <span class=\"kw2\">else</span>\n\
+      \            <span class=\"br0\">{</span>\n                bHidden<span class=\"\
+      sy0\">=</span><span class=\"kw6\">false</span>;\n                <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span> UCLocalPlayer.<span class=\"me0\"\
+      >bScrying</span> <span class=\"br0\">)</span>\n                    bOwnerNoSee<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">false</span>;\n                <span\
+      \ class=\"kw2\">else</span>\n                    bOwnerNoSee<span class=\"sy0\"\
+      >=</span><span class=\"kw6\">true</span>;\n            <span class=\"br0\">}</span>\n\
+      \        <span class=\"br0\">}</span>\n    <span class=\"br0\">}</span>\n \n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">defaultproperties</span>\n\
+      <span class=\"br0\">{</span>\n    <span class=\"kw7\">RemoteRole</span><span\
+      \ class=\"sy0\">=</span><span class=\"kw7\">ROLE_SimulatedProxy</span>\n   \
+      \ bHidden<span class=\"sy0\">=</span><span class=\"kw6\">False</span>\n    bOwnerNoSee<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">True</span>\n<span class=\"br0\"\
+      >}</span></pre></div>\n</div>\n<p><b>Lilguy:</b> You could always put the code\
+      \ that sets the owner in the tick function, and set it once the player controller\
+      \ is not none...Not sureif that will help, but it's an idea...It seems like\
+      \ you'll run into trouble if you change the value of bHidden on the listen server,\
+      \ because the value of the variable will be replicated to all the clients (Unless\
+      \ you set bSkipActorPropertyReplicationto true, but you might not want to do\
+      \ that)</p>\n<p>It seems like an easy solution to all this would be to ensure\
+      \ that the entities are owned by the person who's \"scrying\", and then put\
+      \ something like this in the tick function:</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">simulated</span> <span class=\"kw1\">function</span>\
+      \ <span class=\"kw4\">tick</span><span class=\"br0\">(</span><span class=\"\
+      kw5\">float</span> dt<span class=\"br0\">)</span><span class=\"br0\">{</span>\n\
+      \   UCLocalPlayer <span class=\"sy0\">=</span> UCPlayer<span class=\"br0\">(</span><span\
+      \ class=\"kw7\">Level</span>.<span class=\"me0\">GetLocalPlayerController</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n\
+      \   <span class=\"kw2\">if</span> <span class=\"br0\">(</span> UCLocalPlayer\
+      \ <span class=\"sy0\">!=</span> <span class=\"kw5\">none</span> <span class=\"\
+      br0\">)</span><span class=\"br0\">{</span>\n        bVisible <span class=\"\
+      sy0\">=</span> <span class=\"br0\">(</span><span class=\"kw7\">Owner</span>\
+      \ <span class=\"sy0\">==</span> UCLocalPlayer<span class=\"br0\">)</span>;\n\
+      \      <span class=\"br0\">}</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>That way, even though bVisible would be replicated as true if the\
+      \ listen server player was \"Scrying\", the clients would immediately set the\
+      \ value to false, and they wouldn't be drawn. Hope that helps you...</p>\n<p><b>Daemonica:</b>\
+      \ Problem with making the object owned by the 'scrying' player is any number\
+      \ of players can be 'scrying' at the same time. Setting the visibility using\
+      \ my code above now works fine on the client-side and single player, the Listen\
+      \ server is causing the problem. I tried to set the owner in PreBeginPlay, PostBeginPlay,\
+      \ PostNetBeginPlay and the simulated Tick, but to no avail, the SetOwner(UCLocalPlayer)\
+      \ doesn't seem to do anything&#160;:(</p>\n<p><b>Foxpaw:</b> I wouldn't worry\
+      \ about the owner stuff - the reason your previous code wasn't working is because\
+      \ if an actor has bHidden true and is not owned by the player in question, it\
+      \ is not considered relevant. The reason why it works on a dedicated server\
+      \ but not a listen server is clear. (to me&#160;:D )</p>\n<p>If it's on a dedicated\
+      \ server that whole code bunch gets skipped. bHidden remains false, and the\
+      \ actor remains relevant. If it's a listen server, that bit doesn't get skipped,\
+      \ and if the local player can't see it, it's bHidden true, and thus not replicated.</p>\n\
+      <p>Okay, now the fix. It's easy. There's two main ways to control whether something\
+      \ is drawn or not. bHidden is one way. It is tied into replication, which is\
+      \ usually what you want, but in this case it's not. The other way is to set\
+      \ it's drawtype DT_None. Also, Tick probrably isn't the best place for it, but\
+      \ I can't think of a better one off the top of my head so maybe there's no better\
+      \ choice. So basically:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      co1\">//-----------------------------------------------------------</span>\n\
+      <span class=\"co1\">// UCScryeObject - Any object that is viewable only when</span>\n\
+      <span class=\"co1\">// a player is 'scrying'</span>\n<span class=\"co1\">//\
+      \ Copyright (C), Undying Curse</span>\n<span class=\"co1\">//-----------------------------------------------------------</span>\n\
+      <span class=\"kw1\">class</span> UCScryeObject <span class=\"kw1\">extends</span>\
+      \ UCInteractiveItem;\n \n<span class=\"kw1\">var</span> EDrawType RealDrawType;\n\
+      \ \n<span class=\"kw1\">simulated</span> <span class=\"kw1\">function</span>\
+      \ <span class=\"kw4\">Tick</span><span class=\"br0\">(</span><span class=\"\
+      kw5\">float</span> DeltaTime<span class=\"br0\">)</span>\n<span class=\"br0\"\
+      >{</span>\n  <span class=\"kw1\">local</span> UCPlayer UCLocalPlayer;\n \n \
+      \ <span class=\"kw6\">Super</span>.<span class=\"kw4\">Tick</span><span class=\"\
+      br0\">(</span> Delta <span class=\"br0\">)</span>;\n \n<span class=\"co1\">//\
+      \ If it's a dedicated server, Level.GetLocalPlayerController()</span>\n<span\
+      \ class=\"co1\">// will return None, so the dedicated server check was</span>\n\
+      <span class=\"co1\">// redundant.</span>\n  UCLocalPlayer <span class=\"sy0\"\
+      >=</span> UCPlayer<span class=\"br0\">(</span><span class=\"kw7\">Level</span>.<span\
+      \ class=\"me0\">GetLocalPlayerController</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>;\n  <span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span> UCLocalPlayer <span class=\"sy0\">!=</span>\
+      \ <span class=\"kw5\">none</span> <span class=\"br0\">)</span>\n  <span class=\"\
+      br0\">{</span>\n    <span class=\"kw2\">if</span> <span class=\"br0\">(</span>\
+      \ UCLocalPlayer.<span class=\"me0\">bScrying</span> <span class=\"br0\">)</span>\n\
+      \    <span class=\"br0\">{</span>\n      <span class=\"co1\">// Spare yourself\
+      \ some clock cycles by not setting</span>\n      <span class=\"co1\">// drawtype\
+      \ every tick.</span>\n      <span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span> <span class=\"kw7\">DrawType</span> <span class=\"sy0\">==</span>\
+      \ <span class=\"kw7\">DT_None</span> <span class=\"br0\">)</span>\n        <span\
+      \ class=\"kw4\">SetDrawType</span><span class=\"br0\">(</span> RealDrawType\
+      \ <span class=\"br0\">)</span>;\n    <span class=\"br0\">}</span>\n    <span\
+      \ class=\"kw2\">else</span> <span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span> <span class=\"kw7\">DrawType</span> <span class=\"sy0\">!=</span>\
+      \ <span class=\"kw7\">DT_None</span> <span class=\"br0\">)</span>\n      <span\
+      \ class=\"kw4\">SetDrawType</span><span class=\"br0\">(</span> <span class=\"\
+      kw7\">DT_None</span> <span class=\"br0\">)</span>;\n  <span class=\"br0\">}</span>\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">defaultproperties</span>\n\
+      <span class=\"br0\">{</span>\n    bHidden<span class=\"sy0\">=</span><span class=\"\
+      kw6\">True</span>\n    bNetTemporary<span class=\"sy0\">=</span><span class=\"\
+      kw6\">True</span>\n    bTearOff<span class=\"sy0\">=</span><span class=\"kw6\"\
+      >True</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p><b>Daemonica:</b>\
+      \ Of course, makes perfect sense now, I'll give this a go, but looks good here.\
+      \ I totally forgot about drawtypes&#160;:D</p>\n<p><b>Angel Mapper</b> MadNad\
+      \ did something similar to this with Excessive Overkill's night vision. It drew\
+      \ an exact replica of players and vehicles on the HUD with a custom texture\
+      \ to make them appear brighter. You could ask him for the code, I'm sure he'll\
+      \ let you use it.</p>\n<p><b>Daemonica:</b> We've changed our minds on how this\
+      \ will work. It's going to be an 'Area of effect' now so if one person casts\
+      \ it, everyone will be effected. It's not ideal and could change if we can ever\
+      \ work it out, but for now my head hurts!</p>\n<h3><span class=\"mw-headline\"\
+      \ id=\"Menu_Music\">Menu Music</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Daemonica/Previous_Problems?section=4\"\
+      \ title=\"Edit section: Menu Music\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>How to change the music that plays when the <a href=\"\
+      /Legacy:GUIPage\" title=\"Legacy:GUIPage\">GUIPage</a> Main Menu is shown.</p>\n\
+      <p><b>Tarquin:</b> If you've resolved this, could you write up the results on\
+      \ <a href=\"/Legacy:GUIPage\" title=\"Legacy:GUIPage\">GUIPage</a> please? The\
+      \ same goes for other things: please incorporate results into the main body\
+      \ of the wiki&#160;:)</p>\n<p><b>Daemonica:</b> Good point, these has been added\
+      \ to <a href=\"/Legacy:GUIPage\" title=\"Legacy:GUIPage\">GUIPage</a> hopefully\
+      \ clear enough, any suggestions where the tracing information should go? Probably\
+      \ somewhere near the trace function I suspect?</p>\n<h4><span class=\"mw-headline\"\
+      \ id=\"Why_am_I_working_on_this_problem_2\">Why am I working on this problem</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Daemonica/Previous_Problems?section=5\" title=\"Edit section:\
+      \ Why am I working on this problem\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h4>\n<p>Because of <a rel=\"nofollow\" class=\"external text\"\
+      \ href=\"http://undying.sanffo.co.ul\">The Undying Curse</a> which is now a\
+      \ UT2003 Mod, playing the default KR-UT2003-Menu music just doesn't have the\
+      \ right feel.</p>\n<p><b>Foxpaw:</b> This might be a bit tricky to explain,\
+      \ depending on how well you understand the Unreal Engine, but here's the skinny:</p>\n\
+      <p>There is always at least one, and at most two levels loaded in any given\
+      \ instance of an Unreal Engine game. The first level is generally referred to\
+      \ as the \"Entry\" level. The second level is the one that you generally play\
+      \ in, and is the one that is changed by the <b>servertravel</b> and <b>start</b>\
+      \ console commands.</p>\n<p>The Entry level is loaded when the Engine starts,\
+      \ and cannot change to a different level or be unloaded in any way. (That's\
+      \ not <b>entirely</b> true, but generally speaking..) You can still play in\
+      \ it, it is a level in every respect, but generally for performance reasons\
+      \ (since it's going to be running at the same time as the map you're playing\
+      \ on) it is generally just a subtracted cube without any bells and whistles\
+      \ in it.</p>\n<p>Now, one level or the other is \"screened out\" depending on\
+      \ the context. If the \"active\" level is the entry level, your input will go\
+      \ to your controller in that level, etc. It's almost like having a completely\
+      \ separate instance of the game, but it isn't really.</p>\n<p>Now, how this\
+      \ relates to your question: when you first start UT2003, the \"Entry\" level\
+      \ is loaded. The music you hear during the menu, is actually just the level's\
+      \ music. When the context switches to another level, you no longer hear sounds\
+      \ from the \"entry\" level and start hearing them from the other level.</p>\n\
+      <p>So: to change the menu music you have to change the entry level. The entry\
+      \ level for UT2003 is in your maps directory, and is called Entry.UT2. Make\
+      \ a copy of it, and name it whatever you like, then open it and change the map's\
+      \ music. Then you'll have to make a copy of UT2003.ini, and in it change the\
+      \ reference to Entry.UT2 to your map. (it might just be entry, I don't remember\
+      \ if the UT2 gets appended automatically or not) You will then have to run UT2003\
+      \ with a commandline parameter to read your modified ini instead of the default\
+      \ UT2003.ini. Most mods that do this also include a batch file so that you don't\
+      \ have to manually specify the command line argument.</p>\n<p><b>Daid303:</b>\
+      \ Well, I tried to change the entry level, but I didn't have any luck. It just\
+      \ kept using the default Entry.ut2. So I made this crappy hack:</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">function</span> InitComponent<span\
+      \ class=\"br0\">(</span>GUIController MyController, GUIComponent MyOwner<span\
+      \ class=\"br0\">)</span>\n \n<span class=\"br0\">{</span>\n \n\t<span class=\"\
+      kw6\">Super</span>.<span class=\"me0\">InitComponent</span><span class=\"br0\"\
+      >(</span>MyController, MyOwner<span class=\"br0\">)</span>;\n \n\t<span class=\"\
+      co1\">//Hack</span>\n \n\t<span class=\"kw9\">Controller</span>.<span class=\"\
+      me0\">ViewPortOwner</span>.<span class=\"kw9\">Actor</span>.<span class=\"me0\"\
+      >GetEntryLevel</span><span class=\"br0\">(</span><span class=\"br0\">)</span>.<span\
+      \ class=\"me0\">Song</span> <span class=\"sy0\">=</span> <span class=\"st0\"\
+      >\"UMS_Main_Menu_Music\"</span>;\n \n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>in my mainmenu class.</p>\n<p><b>Foxpaw:</b> Hmm, it works fine on\
+      \ my mod. I use the \"Entry\" level as the workshop where you design your vehicles.\
+      \ That way you can very quickly switch back and forth between the combat simulator\
+      \ and the design level. It seems to have worked fine for me.</p>\n<p><b>Daemonica:</b>\
+      \ I encountered the same problems as Daid303, My own copy of Entry.UT2 (Entry-TUC.UT2)\
+      \ was totally ignored, the hack however worked a treat. The only entry in UT2003.ini\
+      \ that refers to Entry.UT2 is NetBrowseMap=Entry.ut2, but didn't make squat\
+      \ 'o' difference&#160;:( Thanks to you both. I'm happy this solution works</p>\n\
+      <p><b>Foxpaw:</b> Whoops! You're right.&#160;:P UT2003 has a separate entry\
+      \ level for network and local games. (not sure why) LocalMap is the local one.\
+      \ Unfortunately, that contains a call to start up the menu so you can't really\
+      \ replace it as easily. I'd say, continue using the hack method above. Alternatively,\
+      \ write your own GUI from scratch using Interactions like I did.. then you can\
+      \ replace the entry level without worrying.&#160;:D</p>\n<p><b>Daemonica:</b>\
+      \ Can I not and just pretend I did&#160;;), besides the Hack works well, and\
+      \ I _really_ don't have the time to write a GUI from scratch. I'm _reasonably_\
+      \ happy with the current implementation of menus but looking forward to the\
+      \ improvements from UT2004</p>\n<p><b>GRAF1K:</b> Can you say \"UWindows returns\"\
+      \ – or, more to the point – \"YIPEE!\"?&#160;;-):D</p>\n<p><b>Daemonica:</b>\
+      \ YIPEE!&#160;:)</p>\n<p><b>Ian Pilipski:</b> There is a solution, you have\
+      \ to create your own Entry.ut2 map and save it in your mod path maps directory\
+      \ (with the name Entry.ut2). Then add your map path for your mod in your .ini\
+      \ file. I would recommend creating your own copy of the UT2003.ini file to something\
+      \ like MyModUT2003.ini. Then launch ut2003 with this command line switch UT2003.exe\
+      \ -ini=MyModUT2003.ini. The ini entry should look something like this:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"br0\">[</span>Core.<span\
+      \ class=\"me0\">System</span><span class=\"br0\">]</span>\n...\n...\n<span class=\"\
+      me0\">Paths</span><span class=\"sy0\">=</span>..<span class=\"sy0\">/</span>MyMod<span\
+      \ class=\"sy0\">/</span>Maps<span class=\"coMULTI\">/*.ut2\nPaths=../Maps/*.ut2\n\
+      Paths= ...\n...\n...</span></pre></div>\n</div>\n<p>Now when you run your mod,\
+      \ it will use your Entry.ut2 file as the entry level because it finds it first\
+      \ when searching the paths. Using this method can also allow you to do interesting\
+      \ things on the menu screens. If you set the menu backgrounds to none, then\
+      \ you will actually see the Entry.ut2 level in play. You can add some Matinee\
+      \ scene in there and you now have a very interesting menu system. As Foxpaw\
+      \ points out, if this level is always loaded during game play, you should not\
+      \ overload it by making it too complex. That would affect the performance of\
+      \ your mod.</p>\n<h3><span class=\"mw-headline\" id=\"Useable_Actors\">Useable\
+      \ Actors</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Daemonica/Previous_Problems?section=6\" title=\"\
+      Edit section: Useable Actors\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>How do I check to see if an <a href=\"/Legacy:Actor\"\
+      \ title=\"Legacy:Actor\">Actor</a> is useable (i.e. It has a function UsedBy(Pawn\
+      \ User))</p>\n<h4><span class=\"mw-headline\" id=\"Why_am_I_working_on_this_problem_3\"\
+      >Why am I working on this problem</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Daemonica/Previous_Problems?section=7\"\
+      \ title=\"Edit section: Why am I working on this problem\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h4>\n<p>I need a way of highlighting\
+      \ useable actors on the HUD, however there is now bUseable variable, defined\
+      \ in Actor (or something similar). The reason I need to check this is that these\
+      \ usable items include pickups, triggers &amp; decorations!</p>\n<p><b>Foxpaw:</b>\
+      \ I don't believe that there is any way to check if it \"has\" the UsedBy function,\
+      \ because every actor has it. (I think) What you CAN do, however, is have every\
+      \ \"useable\" think spawn an invisible \"tag\" that points to that object. Then,\
+      \ when you want to highlight the actors that are \"useable,\" you can iterate\
+      \ through all of your \"tags\" and you will essentially have a list of all the\
+      \ things that should be highlighted.</p>\n<p><b>Daemonica:</b> Foxpaw comes\
+      \ to the rescue again&#160;:) Thanks. I'm asuming then somewhere in the PostBeginPlay()\
+      \ function I would <u>Spawn</u> this TagActor, then I can do an Other.IsA('TagActor')\
+      \ to varify useable items? Now I'm trying to get trace to actually return the\
+      \ object I'm looking at and not just the world!</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"co1\">// Called from a HUD to determine if\
+      \ the player is looking at a hostile, useable item</span>\n \n<span class=\"\
+      co1\">//etc, so the crosshair colour can be changed :)</span>\n \n<span class=\"\
+      kw1\">function</span> <span class=\"kw5\">string</span> PlayerLookingAt<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n \n<span class=\"br0\"\
+      >{</span>\n    <span class=\"kw1\">local</span> <span class=\"kw5\">vector</span>\
+      \ HitLocation,HitNormal,StartTrace,EndTrace;\n    <span class=\"kw1\">local</span>\
+      \ <span class=\"kw9\">actor</span> Other;\n \n    StartTrace <span class=\"\
+      sy0\">=</span> <span class=\"kw9\">Pawn</span>.<span class=\"kw7\">Location</span>;\n\
+      \    StartTrace.<span class=\"me0\">Z</span> <span class=\"sy0\">+=</span> <span\
+      \ class=\"kw9\">Pawn</span>.<span class=\"me0\">BaseEyeHeight</span>;\n    EndTrace\
+      \ <span class=\"sy0\">=</span> StartTrace <span class=\"sy0\">+</span> <span\
+      \ class=\"kw5\">vector</span><span class=\"br0\">(</span><span class=\"kw9\"\
+      >Pawn</span>.<span class=\"me0\">GetViewRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span> <span class=\"sy0\">*</span>\
+      \ <span class=\"nu0\">1000.0</span>;\n \n    Other<span class=\"sy0\">=</span><span\
+      \ class=\"kw9\">Pawn</span>.<span class=\"kw4\">Trace</span><span class=\"br0\"\
+      >(</span>HitLocation, HitNormal, EndTrace, StartTrace, <span class=\"kw6\">True</span><span\
+      \ class=\"br0\">)</span>;\n    <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span> Other <span class=\"sy0\">!=</span> <span class=\"kw5\">none</span>\
+      \ <span class=\"br0\">)</span>\n    <span class=\"br0\">{</span>\n        <span\
+      \ class=\"co1\">// Assumes that all useable items have spawned a UseableItem\
+      \ actor :)</span>\n        <span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span> Other.<span class=\"kw3\">IsA</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'UseableItem'</span><span class=\"br0\">)</span> <span class=\"\
+      br0\">)</span>\n            <span class=\"kw2\">return</span><span class=\"\
+      br0\">(</span><span class=\"st0\">\"Useable\"</span><span class=\"br0\">)</span>;\n\
+      \        <span class=\"kw2\">else</span>\n            <span class=\"kw2\">return</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">\"Hostile\"</span><span class=\"\
+      br0\">)</span>;\n    <span class=\"br0\">}</span>\n    <span class=\"kw2\">else</span>\n\
+      \        <span class=\"kw2\">return</span> <span class=\"st0\">\"None\"</span>;\n\
+      \ \n<span class=\"br0\">}</span></pre></div>\n</div>\n<p><b>Foxpaw:</b> Well,\
+      \ the implementation would depend on what exactly you had in mind. If you wanted\
+      \ the crosshair to respond to things underneath it, the code would be something\
+      \ like the following:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">simulated</span> <span class=\"kw1\">function</span> <span class=\"kw5\"\
+      >string</span> PlayerLookingAt<span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">vector</span> HitLocation,HitNormal,StartTrace,EndTrace;\n\
+      \  <span class=\"kw1\">local</span> <span class=\"kw9\">actor</span> Other;\n\
+      \ \n  StartTrace <span class=\"sy0\">=</span> <span class=\"kw9\">Pawn</span>.<span\
+      \ class=\"kw7\">Location</span>;\n  StartTrace.<span class=\"me0\">Z</span>\
+      \ <span class=\"sy0\">+=</span> <span class=\"kw9\">Pawn</span>.<span class=\"\
+      me0\">BaseEyeHeight</span>;\n  EndTrace <span class=\"sy0\">=</span> StartTrace\
+      \ <span class=\"sy0\">+</span> <span class=\"kw5\">vector</span><span class=\"\
+      br0\">(</span><span class=\"kw9\">Pawn</span>.<span class=\"me0\">GetViewRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">*</span> <span class=\"nu0\">1000.0</span>;\n \n  Other\
+      \ <span class=\"sy0\">=</span> <span class=\"kw9\">Pawn</span>.<span class=\"\
+      kw4\">Trace</span><span class=\"br0\">(</span>HitLocation, HitNormal, EndTrace,\
+      \ StartTrace, <span class=\"kw6\">True</span><span class=\"br0\">)</span>;\n\
+      \  <span class=\"kw2\">if</span> <span class=\"br0\">(</span> Other <span class=\"\
+      sy0\">!=</span> <span class=\"kw5\">none</span> <span class=\"br0\">)</span>\n\
+      \  <span class=\"br0\">{</span>\n    <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span> IsUseable<span class=\"br0\">(</span> Other <span class=\"br0\"\
+      >)</span> <span class=\"br0\">)</span>\n      <span class=\"kw2\">return</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">\"Useable\"</span><span class=\"\
+      br0\">)</span>;\n    <span class=\"kw2\">else</span>\n      <span class=\"kw2\"\
+      >return</span><span class=\"br0\">(</span><span class=\"st0\">\"Hostile\"</span><span\
+      \ class=\"br0\">)</span>;\n  <span class=\"br0\">}</span>\n  <span class=\"\
+      kw2\">else</span>\n    <span class=\"kw2\">return</span> <span class=\"st0\"\
+      >\"None\"</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">simulated</span>\
+      \ <span class=\"kw1\">function</span> <span class=\"kw5\">bool</span> IsUseable<span\
+      \ class=\"br0\">(</span> <span class=\"kw9\">actor</span> A <span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw1\">local</span>\
+      \ UseableTag <span class=\"kw7\">Tag</span>;\n \n  <span class=\"kw2\">foreach</span>\
+      \ <span class=\"kw3\">AllObjects</span><span class=\"br0\">(</span><span class=\"\
+      kw1\">class</span><span class=\"st0\">'UseableTag'</span>, <span class=\"kw7\"\
+      >Tag</span><span class=\"br0\">)</span>\n    <span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span> <span class=\"kw7\">Tag</span>.<span class=\"kw9\"\
+      >Actor</span> <span class=\"sy0\">==</span> A <span class=\"br0\">)</span>\n\
+      \      <span class=\"kw2\">return</span> <span class=\"kw6\">true</span>;\n\
+      \ \n  <span class=\"kw2\">return</span> <span class=\"kw6\">false</span>;\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>That is of course a <b>logical</b>\
+      \ implementation, certainately not the fastest implementation. To speed it up\
+      \ you could make the UseableTags actors with bHidden true, then use DynamicActors\
+      \ instead of AllObjects. (would be much faster, not sure if you can do that\
+      \ in a HUD though anyway.) Even better, you could keep a list of all the UseableTags\
+      \ in the HUD, and just have every useabletag register itself with the HUD when\
+      \ it is created.</p>\n<p>However, if you're going to do that (I'm kind of on\
+      \ a roll now&#160;:D) you might as well scrap the useabletags and just have\
+      \ the HUD keep a dynamic array pointing to all useable things, and then just\
+      \ iterate through that. Then when an actor wants to register itself as useable,\
+      \ it can find the HUD fairly easily by calling Level.GetLocalPlayerController().myHUD..\
+      \ or something like that anyway. However, this method might not replicate very\
+      \ well because not only can you not replicate a dynamic array, but even if you\
+      \ worked around it you might constantly be adding and removing things as they\
+      \ become relevant or irrelevant.. so maybe just stick with the DynamicActors\
+      \ iterator for that reason.</p>\n<p><b>Daemonica:</b>You really went for it\
+      \ there&#160;:), I seem to have run into a bug at the moment, the trace is only\
+      \ colliding the world and not any actors, at all, ever. I think I've got my\
+      \ head round the implementation, if only there was a nifty bool bIsUsable back\
+      \ in actor this would be soooo much easier&#160;;)</p>\n<p><b>Foxpaw:</b> Hmm,\
+      \ well, my first thought would be that the trace is not set to collide with\
+      \ actors. There's a bool in the trace function, bTraceActors, that sets it to\
+      \ do this. In both the code examples above it's set to true, but I would check\
+      \ to see if you accidentally omitted that in your code because that's what would\
+      \ normally cause that sort of behaviour.</p>\n<p><b>Daemonica:</b> Yup, that's\
+      \ what I thought, but the trace is acurate, it just don't like returning any\
+      \ actors&#160;:( The LookingAt() function now returns the actor the player is\
+      \ looking at (in theory) with the following definition</p>\n<div dir=\"ltr\"\
+      \ class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">function</span> <span class=\"kw9\"\
+      >actor</span> PlayerLookingAt<span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n    <span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">vector</span> HitLocation,HitNormal,StartTrace,EndTrace;\n\
+      \    <span class=\"kw1\">local</span> <span class=\"kw9\">actor</span> Other;\n\
+      \ \n    StartTrace <span class=\"sy0\">=</span> <span class=\"kw9\">Pawn</span>.<span\
+      \ class=\"kw7\">Location</span> <span class=\"sy0\">+</span> <span class=\"\
+      kw9\">Pawn</span>.<span class=\"me0\">EyePosition</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>;\n    EndTrace <span class=\"sy0\">=</span>\
+      \ StartTrace <span class=\"sy0\">+</span> <span class=\"kw5\">vector</span><span\
+      \ class=\"br0\">(</span><span class=\"kw9\">Pawn</span>.<span class=\"me0\"\
+      >GetViewRotation</span><span class=\"br0\">(</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">*</span> <span class=\"nu0\">1000.0</span>;\n\
+      \ \n    Other<span class=\"sy0\">=</span><span class=\"kw9\">Pawn</span>.<span\
+      \ class=\"kw4\">Trace</span><span class=\"br0\">(</span>HitLocation, HitNormal,\
+      \ EndTrace, StartTrace, <span class=\"kw6\">true</span><span class=\"br0\">)</span>;\n\
+      \    <span class=\"kw2\">if</span> <span class=\"br0\">(</span> Other <span\
+      \ class=\"sy0\">!=</span> <span class=\"kw5\">none</span> <span class=\"sy0\"\
+      >&amp;&amp;</span> <span class=\"sy0\">!</span>Other.<span class=\"me0\">bWorldGeometry</span>\
+      \ <span class=\"br0\">)</span>\n       <span class=\"kw2\">return</span> Other;\n\
+      \    <span class=\"kw2\">else</span>\n       <span class=\"kw2\">return</span>\
+      \ <span class=\"kw5\">none</span>;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>This is defined in TUCPlayer (extends PlayerController) so as far\
+      \ as I can see it should work. It hits Static meshes correctly so I know the\
+      \ vectors for the trace are correct, it just needs to hit actors now!</p>\n\
+      <p><b>Daemonica:</b> And a little more work reveals that if the object I'm LookingAt()\
+      \ has bBlockPlayers set to True then the trace works, otherwise it fails, this\
+      \ to me is not usefull as I want know what actor I am looking at, even if this\
+      \ doesn't block the player (as most pickups won't actually block a player).....\
+      \ which can be done by setting bProjTarget = True for those actors&#160;;) Finally\
+      \ it works, but only because I'm working on a TC, I would hate to try and do\
+      \ this for mutators/etc. You would have to use ForEach type things as mentioned\
+      \ above (Eeeky, that's just nasty!)</p>\n\n<!-- \nNewPP limit report\nCPU time\
+      \ usage: 0.219 seconds\nReal time usage: 0.672 seconds\nPreprocessor visited\
+      \ node count: 89/1000000\nPreprocessor generated node count: 212/1000000\nPost‐\
+      expand include size: 0/2097152 bytes\nTemplate argument size: 0/2097152 bytes\n\
+      Highest expansion depth: 2/40\nExpensive parser function count: 0/100\n-->\n\
+      \n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n100.00% \
+      \   0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:1032-0!*!0!!en!*!*\
+      \ and timestamp 20221118194319 and revision id 2758\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Actor"
+  - ns: 100
+    exists: true
+    name: "Legacy:GUIPage"
+  - ns: 100
+    exists: true
+    name: "Legacy:Actor (UT)"
+  templates: []
+  images: []
+  externallinks:
+  - "http://undying.sanffo.co.ul"
+  - "http://undying.sanffo.co.uk"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Previous Problems"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Daemonica/Previous_Problems"
+    byteoffset: 0
+    anchor: "Previous_Problems"
+  - toclevel: 2
+    level: "3"
+    line: "Locally Viewed Actors"
+    number: "1.1"
+    index: "2"
+    fromtitle: "Legacy:Daemonica/Previous_Problems"
+    byteoffset: 72
+    anchor: "Locally_Viewed_Actors"
+  - toclevel: 3
+    level: "4"
+    line: "Why am I working on this problem"
+    number: "1.1.1"
+    index: "3"
+    fromtitle: "Legacy:Daemonica/Previous_Problems"
+    byteoffset: 278
+    anchor: "Why_am_I_working_on_this_problem"
+  - toclevel: 2
+    level: "3"
+    line: "Menu Music"
+    number: "1.2"
+    index: "4"
+    fromtitle: "Legacy:Daemonica/Previous_Problems"
+    byteoffset: 10400
+    anchor: "Menu_Music"
+  - toclevel: 3
+    level: "4"
+    line: "Why am I working on this problem"
+    number: "1.2.1"
+    index: "5"
+    fromtitle: "Legacy:Daemonica/Previous_Problems"
+    byteoffset: 10929
+    anchor: "Why_am_I_working_on_this_problem_2"
+  - toclevel: 2
+    level: "3"
+    line: "Useable Actors"
+    number: "1.3"
+    index: "6"
+    fromtitle: "Legacy:Daemonica/Previous_Problems"
+    byteoffset: 16194
+    anchor: "Useable_Actors"
+  - toclevel: 3
+    level: "4"
+    line: "Why am I working on this problem"
+    number: "1.3.1"
+    index: "7"
+    fromtitle: "Legacy:Daemonica/Previous_Problems"
+    byteoffset: 16322
+    anchor: "Why_am_I_working_on_this_problem_3"
+  displaytitle: "Legacy:Daemonica/Previous Problems"
+  iwlinks: []
+  wikitext:
+    text: "==Previous Problems ==\n\nI'm considering these problems resolved now :)\n\
+      \n===Locally Viewed Actors===\n\nHow to work out if an [[Legacy:Actor (UT)|Actor\
+      \ (UT)]] is being viewed on the local players view. In other words making an\
+      \ object hidden to some people, but visible to others.\n\n====Why am I working\
+      \ on this problem====\n\nBecause of [http://undying.sanffo.co.uk The Undying\
+      \ Curse] where players have access to a spell called Scrye, which allows them\
+      \ to see hidden objects. I only want people who are actually 'Scrying' to be\
+      \ able to see the objects without effecting anyone else's perception of the\
+      \ world around them. My head hurts after this ;)\n\n'''Foxpaw:''' I think I\
+      \ may have a solution to this problem, if you are still seeking one.. One way\
+      \ of course would be to have it client-side - you could put it in the objects\
+      \ Tick function to be executed client side - if they are scrying, bHidden is\
+      \ set to false, otherwise it is set to true. Of course, since it's client side\
+      \ it could probrably be hacked.. but if the actor is considered relevant to\
+      \ the network and is being replicated it could likely be hacked in the same\
+      \ way. If you want it to be client-side and only replicate to people who can\
+      \ see it... well, that could be a doozie. But the client-side implementation\
+      \ probrably wouldn't be too difficult. I don't recall the code to determine\
+      \ whether a given pawn/controller is being controlled by a local player or over\
+      \ a network, but I've seen it around.\n\n'''Daemonica:''' yeah, that's what\
+      \ I've been thinking, it works almost all the way upto Listen Servers, they\
+      \ end up doing weird things due to replication.\n\n'''Daemonica:''' Well, I've\
+      \ moved over to UT2003 now :) Finally, this lil problem has been put on the\
+      \ backburner for now, hopefully I can figure this out so it works on Listen\
+      \ Servers too!\n\n'''Daemonica:''' Back on this problem now and it's getting\
+      \ there. I'm using a simulated Tick function as explained above but it's only\
+      \ working on the Listen Server/Single player side, client's don't seem to get\
+      \ this right. I'm using the following code\n\n<uscript>\n//-----------------------------------------------------------\n\
+      // UCScryeObject - Any object that is viewable only when\n// a player is 'scrying'\n\
+      // Copyright (C), Undying Curse\n//-----------------------------------------------------------\n\
+      class UCScryeObject extends UCInteractiveItem;\n\nsimulated function Tick(float\
+      \ DeltaTime)\n{\n    local UCPlayer UCLocalPlayer;\n\n    if (Level.NetMode\
+      \ != NM_DedicatedServer)\n    {\n        UCLocalPlayer = UCPlayer(Level.GetLocalPlayerController());\n\
+      \        if ( UCLocalPlayer != none )\n        {\n            if ( UCLocalPlayer.bScrying\
+      \ )\n                bHidden=false;\n            else\n                bHidden=true;\n\
+      \        }\n    }\n\n}\n\n\ndefaultproperties\n{\n    bHidden=True\n    bNetTemporary=True\n\
+      \    bTearOff=True\n}\n</uscript>\n\nI'm assuming the actor is not being replicated\
+      \ to the clients. Should a bAlwaysRelevent be set to true?\n\n''Edit: Full source\
+      \ code now'\n\n'''EntropicLqd:''' As far as I can tell it depends on where the\
+      \ Actor is spawned from.  If the actor is spawned from a function that is called\
+      \ on both the client and server then bAlwaysRelevant doesn't seem to be required.\
+      \  When an actor is spawned from pure server side code I've always had to set\
+      \ the bAlwaysRelevant flag to True in order to get the Actor to replicate. \
+      \ This approach has always seemed like a ''hack'' to me and I've always had\
+      \ the feeling that I'm just missing something that everyone else in the world\
+      \ seems to know about.  You'll probably need to ensure that the actor has a\
+      \ SimulatedProxy role.\n\n'''Wormbo:''' When the actor is spawned from a function\
+      \ that's executed on server and clients, you get seperate actors and additionally\
+      \ the server-spawned one could get replicated to the client.\n\n'''Daemonica:'''\
+      \ What happens if the actor is built into the map, how is that spawned? I need\
+      \ an object that is handles 100% by the client (or listen server) to alter it's\
+      \ bHidden property based on the Local Players (Controller) 'bScrying' property\n\
+      \n'''Daemonica:''' Been working with the team and the following code is 80%\
+      \ working. It appears that if the server has bHidden=false then the scrying\
+      \ works, otherwise it's the actor remains invisible to everyone. So I hit on\
+      \ the idea of leaving the objects bHidden=false on the server and let the client\
+      \ play around with that to their hears content. In the meantime, use the listen\
+      \ servers LocalPlayerController to become the owner of the object and use bOwnerNoSee\
+      \ on the Listen Server only. Slight problem is, my attempts to set the owner\
+      \ at PostBeginPlay have failed as Level.GetLocalPlayerController() returns none\
+      \ at this time. The latest code is below, the older code is removed :D\n\n<uscript>\n\
+      //-----------------------------------------------------------\n// UCScryeObject\
+      \ - Any object that is viewable only when\n// a player is 'scrying'\n// Copyright\
+      \ (C), Undying Curse\n//-----------------------------------------------------------\n\
+      class UCScryeObject extends UCInteractiveItem;\n\nfunction PostNetBeginPlay()\n\
+      {\n    log(\"UC-TESTING: Setting Owner for Scrye Object - \"$Level.NetMode);\n\
+      \    super.PostNetBeginPlay();\n    if (Level.NetMode == NM_ListenServer)\n\
+      \    {\n        log(\"UC-TESTING: Acknowledged Listen Server, Setting Owner\
+      \ - \"$Level.GetLocalPlayerController());\n        SetOwner(Level.GetLocalPlayerController());\n\
+      \    }\n    log(\"UC-TESTING: Scrye Object now owned - \"$Owner);\n\n}\n\nsimulated\
+      \ function Tick(float DeltaTime)\n{\n    local UCPlayer UCLocalPlayer;\n\n \
+      \   if (Level.NetMode != NM_DedicatedServer)\n    {\n        UCLocalPlayer =\
+      \ UCPlayer(Level.GetLocalPlayerController());\n        if ( UCLocalPlayer !=\
+      \ none )\n        {\n            if ( (Level.NetMode == NM_Client) || (Level.NetMode\
+      \ == NM_StandAlone) )\n            {\n                if ( UCLocalPlayer.bScrying\
+      \ )\n                    bHidden=false;\n                else\n            \
+      \        bHidden=true;\n            }\n            else\n            {\n   \
+      \             bHidden=false;\n                if ( UCLocalPlayer.bScrying )\n\
+      \                    bOwnerNoSee=false;\n                else\n            \
+      \        bOwnerNoSee=true;\n            }\n        }\n    }\n\n}\n\ndefaultproperties\n\
+      {\n    RemoteRole=ROLE_SimulatedProxy\n    bHidden=False\n    bOwnerNoSee=True\n\
+      }\n</uscript>\n\n'''Lilguy:''' You could always put the code that sets the owner\
+      \ in the tick function, and set it once the player controller is not none...Not\
+      \ sureif that will help, but it's an idea...It seems like you'll run into trouble\
+      \ if you change the value of bHidden on the listen server, because the value\
+      \ of the variable will be replicated to all the clients (Unless you set bSkipActorPropertyReplicationto\
+      \ true, but you might not want to do that)\n\nIt seems like an easy solution\
+      \ to all this would be to ensure that the entities are owned by the person who's\
+      \ \"scrying\", and then put something like this in the tick function:\n\n<uscript>\n\
+      \nsimulated function tick(float dt){\n   UCLocalPlayer = UCPlayer(Level.GetLocalPlayerController());\n\
+      \   if ( UCLocalPlayer != none ){\n        bVisible = (Owner == UCLocalPlayer);\n\
+      \      }\n}\n\n</uscript>\n\nThat way, even though bVisible would be replicated\
+      \ as true if the listen server player was \"Scrying\", the clients would immediately\
+      \ set the value to false, and they wouldn't be drawn. Hope that helps you...\n\
+      \n'''Daemonica:''' Problem with making the object owned by the 'scrying' player\
+      \ is any number of players can be 'scrying' at the same time. Setting the visibility\
+      \ using my code above now works fine on the client-side and single player, the\
+      \ Listen server is causing the problem. I tried to set the owner in PreBeginPlay,\
+      \ PostBeginPlay, PostNetBeginPlay and the simulated Tick, but to no avail, the\
+      \ SetOwner(UCLocalPlayer) doesn't seem to do anything :(\n\n'''Foxpaw:''' I\
+      \ wouldn't worry about the owner stuff - the reason your previous code wasn't\
+      \ working is because if an actor has bHidden true and is not owned by the player\
+      \ in question, it is not considered relevant. The reason why it works on a dedicated\
+      \ server but not a listen server is clear. (to me :D )\n\nIf it's on a dedicated\
+      \ server that whole code bunch gets skipped. bHidden remains false, and the\
+      \ actor remains relevant. If it's a listen server, that bit doesn't get skipped,\
+      \ and if the local player can't see it, it's bHidden true, and thus not replicated.\n\
+      \nOkay, now the fix. It's easy. There's two main ways to control whether something\
+      \ is drawn or not. bHidden is one way. It is tied into replication, which is\
+      \ usually what you want, but in this case it's not. The other way is to set\
+      \ it's drawtype DT_None. Also, Tick probrably isn't the best place for it, but\
+      \ I can't think of a better one off the top of my head so maybe there's no better\
+      \ choice. So basically:\n\n<uscript>\n//-----------------------------------------------------------\n\
+      // UCScryeObject - Any object that is viewable only when\n// a player is 'scrying'\n\
+      // Copyright (C), Undying Curse\n//-----------------------------------------------------------\n\
+      class UCScryeObject extends UCInteractiveItem;\n\nvar EDrawType RealDrawType;\n\
+      \nsimulated function Tick(float DeltaTime)\n{\n  local UCPlayer UCLocalPlayer;\n\
+      \n  Super.Tick( Delta );\n\n// If it's a dedicated server, Level.GetLocalPlayerController()\n\
+      // will return None, so the dedicated server check was\n// redundant.\n  UCLocalPlayer\
+      \ = UCPlayer(Level.GetLocalPlayerController());\n  if ( UCLocalPlayer != none\
+      \ )\n  {\n    if ( UCLocalPlayer.bScrying )\n    {\n      // Spare yourself\
+      \ some clock cycles by not setting\n      // drawtype every tick.\n      if\
+      \ ( DrawType == DT_None )\n        SetDrawType( RealDrawType );\n    }\n   \
+      \ else if ( DrawType != DT_None )\n      SetDrawType( DT_None );\n  }\n}\n\n\
+      defaultproperties\n{\n    bHidden=True\n    bNetTemporary=True\n    bTearOff=True\n\
+      }\n</uscript>\n\n'''Daemonica:''' Of course, makes perfect sense now, I'll give\
+      \ this a go, but looks good here. I totally forgot about drawtypes :D\n\n'''Angel\
+      \ Mapper''' MadNad did something similar to this with Excessive Overkill's night\
+      \ vision.  It drew an exact replica of players and vehicles on the HUD with\
+      \ a custom texture to make them appear brighter.  You could ask him for the\
+      \ code, I'm sure he'll let you use it.\n\n'''Daemonica:''' We've changed our\
+      \ minds on how this will work. It's going to be an 'Area of effect' now so if\
+      \ one person casts it, everyone will be effected. It's not ideal and could change\
+      \ if we can ever work it out, but for now my head hurts!\n\n===Menu Music===\n\
+      \nHow to change the music that plays when the [[Legacy:GUIPage|GUIPage]] Main\
+      \ Menu is shown.\n\n'''Tarquin:''' If you've resolved this, could you write\
+      \ up the results on [[Legacy:GUIPage|GUIPage]] please? The same goes for other\
+      \ things: please incorporate results into the main body of the wiki :)\n\n'''Daemonica:'''\
+      \ Good point, these has been added to [[Legacy:GUIPage|GUIPage]] hopefully clear\
+      \ enough, any suggestions where the tracing information should go? Probably\
+      \ somewhere near the trace function I suspect?\n\n====Why am I working on this\
+      \ problem====\n\nBecause of [http://undying.sanffo.co.ul The Undying Curse]\
+      \ which is now a UT2003 Mod, playing the default KR-UT2003-Menu music just doesn't\
+      \ have the right feel.\n\n'''Foxpaw:''' This might be a bit tricky to explain,\
+      \ depending on how well you understand the Unreal Engine, but here's the skinny:\n\
+      \nThere is always at least one, and at most two levels loaded in any given instance\
+      \ of an Unreal Engine game. The first level is generally referred to as the\
+      \ \"Entry\" level. The second level is the one that you generally play in, and\
+      \ is the one that is changed by the '''servertravel''' and '''start''' console\
+      \ commands.\n\nThe Entry level is loaded when the Engine starts, and cannot\
+      \ change to a different level or be unloaded in any way. (That's not '''entirely'''\
+      \ true, but generally speaking..) You can still play in it, it is a level in\
+      \ every respect, but generally for performance reasons (since it's going to\
+      \ be running at the same time as the map you're playing on) it is generally\
+      \ just a subtracted cube without any bells and whistles in it.\n\nNow, one level\
+      \ or the other is \"screened out\" depending on the context. If the \"active\"\
+      \ level is the entry level, your input will go to your controller in that level,\
+      \ etc. It's almost like having a completely separate instance of the game, but\
+      \ it isn't really.\n\nNow, how this relates to your question: when you first\
+      \ start UT2003, the \"Entry\" level is loaded. The music you hear during the\
+      \ menu, is actually just the level's music. When the context switches to another\
+      \ level, you no longer hear sounds from the \"entry\" level and start hearing\
+      \ them from the other level.\n\nSo: to change the menu music you have to change\
+      \ the entry level. The entry level for UT2003 is in your maps directory, and\
+      \ is called Entry.UT2. Make a copy of it, and name it whatever you like, then\
+      \ open it and change the map's music. Then you'll have to make a copy of UT2003.ini,\
+      \ and in it change the reference to Entry.UT2 to your map. (it might just be\
+      \ entry, I don't remember if the UT2 gets appended automatically or not) You\
+      \ will then have to run UT2003 with a commandline parameter to read your modified\
+      \ ini instead of the default UT2003.ini. Most mods that do this also include\
+      \ a batch file so that you don't have to manually specify the command line argument.\n\
+      \n'''Daid303:''' Well, I tried to change the entry level, but I didn't have\
+      \ any luck. It just kept using the default Entry.ut2. So I made this crappy\
+      \ hack:<USCRIPT>function InitComponent(GUIController MyController, GUIComponent\
+      \ MyOwner)\n\n{\n\n\tSuper.InitComponent(MyController, MyOwner);\n\n\t//Hack\n\
+      \n\tController.ViewPortOwner.Actor.GetEntryLevel().Song = \"UMS_Main_Menu_Music\"\
+      ;\n\n}</USCRIPT>in my mainmenu class.\n\n'''Foxpaw:''' Hmm, it works fine on\
+      \ my mod. I use the \"Entry\" level as the workshop where you design your vehicles.\
+      \ That way you can very quickly switch back and forth between the combat simulator\
+      \ and the design level. It seems to have worked fine for me.\n\n'''Daemonica:'''\
+      \ I encountered the same problems as Daid303, My own copy of Entry.UT2 (Entry-TUC.UT2)\
+      \ was totally ignored, the hack however worked a treat. The only entry in UT2003.ini\
+      \ that refers to Entry.UT2 is NetBrowseMap=Entry.ut2, but didn't make squat\
+      \ 'o' difference :( Thanks to you both. I'm happy this solution works\n\n'''Foxpaw:'''\
+      \ Whoops! You're right. :P UT2003 has a separate entry level for network and\
+      \ local games. (not sure why) LocalMap is the local one. Unfortunately, that\
+      \ contains a call to start up the menu so you can't really replace it as easily.\
+      \ I'd say, continue using the hack method above. Alternatively, write your own\
+      \ GUI from scratch using Interactions like I did.. then you can replace the\
+      \ entry level without worrying. :D\n\n'''Daemonica:''' Can I not and just pretend\
+      \ I did ;), besides the Hack works well, and I _really_ don't have the time\
+      \ to write a GUI from scratch. I'm _reasonably_ happy with the current implementation\
+      \ of menus but looking forward to the improvements from UT2004\n\n'''GRAF1K:'''\
+      \ Can you say \"UWindows returns\" &ndash; or, more to the point &ndash; \"\
+      YIPEE!\"? ;-):D\n\n'''Daemonica:''' YIPEE! :)\n\n'''Ian Pilipski:''' There is\
+      \ a solution, you have to create your own Entry.ut2 map and save it in your\
+      \ mod path maps directory (with the name Entry.ut2).  Then add your map path\
+      \ for your mod in your .ini file.  I would recommend creating your own copy\
+      \ of the UT2003.ini file to something like MyModUT2003.ini.  Then launch ut2003\
+      \ with this command line switch UT2003.exe -ini=MyModUT2003.ini.  The ini entry\
+      \ should look something like this:\n\n<uscript>\n[Core.System]\n...\n...\nPaths=../MyMod/Maps/*.ut2\n\
+      Paths=../Maps/*.ut2\nPaths= ...\n...\n...\n</uscript>\n\nNow when you run your\
+      \ mod, it will use your Entry.ut2 file as the entry level because it finds it\
+      \ first when searching the paths.  Using this method can also allow you to do\
+      \ interesting things on the menu screens.  If you set the menu backgrounds to\
+      \ none, then you will actually see the Entry.ut2 level in play.  You can add\
+      \ some Matinee scene in there and you now have a very interesting menu system.\
+      \  As Foxpaw points out, if this level is always loaded during game play, you\
+      \ should not overload it by making it too complex.  That would affect the performance\
+      \ of your mod.\n\n===Useable Actors===\n\nHow do I check to see if an [[Legacy:Actor|Actor]]\
+      \ is useable (i.e. It has a function UsedBy(Pawn User))\n\n====Why am I working\
+      \ on this problem====\n\nI need a way of highlighting useable actors on the\
+      \ HUD, however there is now bUseable variable, defined in Actor (or something\
+      \ similar). The reason I need to check this is that these usable items include\
+      \ pickups, triggers & decorations!\n\n'''Foxpaw:''' I don't believe that there\
+      \ is any way to check if it \"has\" the UsedBy function, because every actor\
+      \ has it. (I think) What you CAN do, however, is have every \"useable\" think\
+      \ spawn an invisible \"tag\" that points to that object. Then, when you want\
+      \ to highlight the actors that are \"useable,\" you can iterate through all\
+      \ of your \"tags\" and you will essentially have a list of all the things that\
+      \ should be highlighted.\n\n'''Daemonica:''' Foxpaw comes to the rescue again\
+      \ :) Thanks. I'm asuming then somewhere in the PostBeginPlay() function I would\
+      \ <u>Spawn</u> this TagActor, then I can do an Other.IsA('TagActor') to varify\
+      \ useable items? Now I'm trying to get trace to actually return the object I'm\
+      \ looking at and not just the world!\n\n<USCRIPT>// Called from a HUD to determine\
+      \ if the player is looking at a hostile, useable item\n\n//etc, so the crosshair\
+      \ colour can be changed :)\n\nfunction string PlayerLookingAt()\n\n{\n    local\
+      \ vector HitLocation,HitNormal,StartTrace,EndTrace;\n    local actor Other;\n\
+      \n    StartTrace = Pawn.Location;\n    StartTrace.Z += Pawn.BaseEyeHeight;\n\
+      \    EndTrace = StartTrace + vector(Pawn.GetViewRotation()) * 1000.0;\n\n  \
+      \  Other=Pawn.Trace(HitLocation, HitNormal, EndTrace, StartTrace, True);\n \
+      \   if ( Other != none )\n    {\n        // Assumes that all useable items have\
+      \ spawned a UseableItem actor :)\n        if ( Other.IsA('UseableItem') )\n\
+      \            return(\"Useable\");\n        else\n            return(\"Hostile\"\
+      );\n    }\n    else\n        return \"None\";\n\n}\n</USCRIPT>\n\n'''Foxpaw:'''\
+      \ Well, the implementation would depend on what exactly you had in mind. If\
+      \ you wanted the crosshair to respond to things underneath it, the code would\
+      \ be something like the following:\n\n<uscript>\nsimulated function string PlayerLookingAt()\n\
+      {\n  local vector HitLocation,HitNormal,StartTrace,EndTrace;\n  local actor\
+      \ Other;\n\n  StartTrace = Pawn.Location;\n  StartTrace.Z += Pawn.BaseEyeHeight;\n\
+      \  EndTrace = StartTrace + vector(Pawn.GetViewRotation()) * 1000.0;\n\n  Other\
+      \ = Pawn.Trace(HitLocation, HitNormal, EndTrace, StartTrace, True);\n  if (\
+      \ Other != none )\n  {\n    if ( IsUseable( Other ) )\n      return(\"Useable\"\
+      );\n    else\n      return(\"Hostile\");\n  }\n  else\n    return \"None\";\n\
+      }\n\nsimulated function bool IsUseable( actor A )\n{\n  local UseableTag Tag;\n\
+      \n  foreach AllObjects(class'UseableTag', Tag)\n    if ( Tag.Actor == A )\n\
+      \      return true;\n\n  return false;\n}\n</uscript>\n\nThat is of course a\
+      \ '''logical''' implementation, certainately not the fastest implementation.\
+      \ To speed it up you could make the UseableTags actors with bHidden true, then\
+      \ use DynamicActors instead of AllObjects. (would be much faster, not sure if\
+      \ you can do that in a HUD though anyway.) Even better, you could keep a list\
+      \ of all the UseableTags in the HUD, and just have every useabletag register\
+      \ itself with the HUD when it is created.\n\nHowever, if you're going to do\
+      \ that (I'm kind of on a roll now :D) you might as well scrap the useabletags\
+      \ and just have the HUD keep a dynamic array pointing to all useable things,\
+      \ and then just iterate through that. Then when an actor wants to register itself\
+      \ as useable, it can find the HUD fairly easily by calling Level.GetLocalPlayerController().myHUD..\
+      \ or something like that anyway. However, this method might not replicate very\
+      \ well because not only can you not replicate a dynamic array, but even if you\
+      \ worked around it you might constantly be adding and removing things as they\
+      \ become relevant or irrelevant.. so maybe just stick with the DynamicActors\
+      \ iterator for that reason.\n\n'''Daemonica:'''You really went for it there\
+      \ :), I seem to have run into a bug at the moment, the trace is only colliding\
+      \ the world and not any actors, at all, ever. I think I've got my head round\
+      \ the implementation, if only there was a nifty bool bIsUsable back in actor\
+      \ this would be soooo much easier ;)\n\n'''Foxpaw:''' Hmm, well, my first thought\
+      \ would be that the trace is not set to collide with actors. There's a bool\
+      \ in the trace function, bTraceActors, that sets it to do this. In both the\
+      \ code examples above it's set to true, but I would check to see if you accidentally\
+      \ omitted that in your code because that's what would normally cause that sort\
+      \ of behaviour.\n\n'''Daemonica:''' Yup, that's what I thought, but the trace\
+      \ is acurate, it just don't like returning any actors :( The LookingAt() function\
+      \ now returns the actor the player is looking at (in theory) with the following\
+      \ definition\n\n<uscript>\nfunction actor PlayerLookingAt()\n{\n    local vector\
+      \ HitLocation,HitNormal,StartTrace,EndTrace;\n    local actor Other;\n\n   \
+      \ StartTrace = Pawn.Location + Pawn.EyePosition();\n    EndTrace = StartTrace\
+      \ + vector(Pawn.GetViewRotation()) * 1000.0;\n\n    Other=Pawn.Trace(HitLocation,\
+      \ HitNormal, EndTrace, StartTrace, true);\n    if ( Other != none && !Other.bWorldGeometry\
+      \ )\n       return Other;\n    else\n       return none;\n}\n</uscript>\n\n\
+      This is defined in TUCPlayer (extends PlayerController) so as far as I can see\
+      \ it should work. It hits Static meshes correctly so I know the vectors for\
+      \ the trace are correct, it just needs to hit actors now!\n\n'''Daemonica:'''\
+      \ And a little more work reveals that if the object I'm LookingAt() has bBlockPlayers\
+      \ set to True then the trace works, otherwise it fails, this to me is not usefull\
+      \ as I want know what actor I am looking at, even if this doesn't block the\
+      \ player (as most pickups won't actually block a player)..... which can be done\
+      \ by setting bProjTarget = True for those actors ;) Finally it works, but only\
+      \ because I'm working on a TC, I would hate to try and do this for mutators/etc.\
+      \ You would have to use ForEach type things as mentioned above (Eeeky, that's\
+      \ just nasty!)"
+  properties: []
+  revId: 2758
+name: "Legacy:Daemonica/Previous Problems"
+revision:
+  revid: 2758
+  parentid: 2759
+  user: "Daemonica"
+  timestamp: 1095729433.000000000
+  comment: "Resolving the 'Scrye' issue"
+timestamp: 1668800380.784476000

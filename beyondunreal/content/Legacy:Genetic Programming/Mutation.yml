@@ -1,0 +1,274 @@
+---
+parse:
+  title: "Legacy:Genetic Programming/Mutation"
+  text:
+    text: "<p>... continuing on from <a href=\"/Legacy:Genetic_Programming/Genes\"\
+      \ title=\"Legacy:Genetic Programming/Genes\">Genetic Programming/Genes</a></p>\n\
+      <p>The mutation genetic operation is used fairly sparingly in the breeding process\
+      \ and works by chosing a node at random then replacing the tree below it by\
+      \ new randomly generated code. It's pretty straightforeward:</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">function</span> gene mutate<span class=\"\
+      br0\">(</span> gene g1<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \ <span class=\"co1\">// chose a node at random and replace with new random\
+      \ subtree</span>\n \n <span class=\"kw1\">local</span> <span class=\"kw5\">int</span>\
+      \ numnodes, nodenum,i;\n <span class=\"kw1\">local</span> gpnode root1,target;\n\
+      \ <span class=\"kw1\">local</span> gene result;\n <span class=\"kw1\">Local</span>\
+      \ <span class=\"kw5\">string</span> s1;\n \n \n initfitstats<span class=\"br0\"\
+      >(</span>result<span class=\"br0\">)</span>;\n \n <span class=\"co1\">// grow\
+      \ tree from gene</span>\n root1<span class=\"sy0\">=</span><span class=\"kw4\"\
+      >spawn</span><span class=\"br0\">(</span><span class=\"kw1\">class</span><span\
+      \ class=\"st0\">'gpnode'</span><span class=\"br0\">)</span>;\n root1.<span class=\"\
+      me0\">ReadFromString</span><span class=\"br0\">(</span>g1.<span class=\"me0\"\
+      >code</span><span class=\"br0\">)</span>;\n \n <span class=\"co1\">// find out\
+      \ how many nodes are in the tree we're mutating</span>\n root1.<span class=\"\
+      me0\">countnodes</span><span class=\"br0\">(</span>numnodes<span class=\"br0\"\
+      >)</span>;\n \n <span class=\"co1\">// pick one at random</span>\n nodenum<span\
+      \ class=\"sy0\">=</span><span class=\"kw3\">rand</span><span class=\"br0\">(</span>numnodes<span\
+      \ class=\"sy0\">-</span><span class=\"nu0\">1</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">+</span><span class=\"nu0\">2</span>;\n \n <span class=\"co1\"\
+      >// get reference to target node</span>\n target<span class=\"sy0\">=</span>root1.<span\
+      \ class=\"me0\">findnode</span><span class=\"br0\">(</span>nodenum<span class=\"\
+      br0\">)</span>;\n \n <span class=\"co1\">// clear subtree below target node</span>\n\
+      \ target.<span class=\"me0\">prune</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n \n <span class=\"co1\">// grow new subtree</span>\n target.<span\
+      \ class=\"me0\">RandomGrow</span><span class=\"br0\">(</span>target.<span class=\"\
+      me0\">depth</span>,maxdepth<span class=\"br0\">)</span>;\n \n <span class=\"\
+      co1\">// write out new tree</span>\n root1.<span class=\"me0\">WriteToString</span><span\
+      \ class=\"br0\">(</span>result.<span class=\"me0\">code</span><span class=\"\
+      br0\">)</span>;\n \n <span class=\"co1\">// clean up</span>\n root1.<span class=\"\
+      me0\">prune</span><span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \ root1.<span class=\"kw4\">Destroy</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n \n <span class=\"kw2\">return</span><span class=\"\
+      br0\">(</span>result<span class=\"br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>So, having coded up routines to mangle GP trees in various ways there's\
+      \ a need for something to actually organise the planned orgy of interbreeding.\
+      \ Sorting the array in order of performance sounds like a good idea to start\
+      \ with so why not break out a good old bubblesort, I know there are quicker\
+      \ ways but this only gets done fairly rarely and our array isn't that huge so\
+      \ what the heck:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">function</span> sortgenes<span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">int</span> i,j;\n \n  <span class=\"kw2\">for</span><span\
+      \ class=\"br0\">(</span>i<span class=\"sy0\">=</span><span class=\"nu0\">0</span>;i<span\
+      \ class=\"sy0\">&lt;</span><span class=\"nu0\">599</span>;i<span class=\"sy0\"\
+      >++</span><span class=\"br0\">)</span>\n    <span class=\"kw2\">for</span><span\
+      \ class=\"br0\">(</span>j<span class=\"sy0\">=</span><span class=\"nu0\">0</span>;j<span\
+      \ class=\"sy0\">&lt;</span><span class=\"br0\">(</span><span class=\"nu0\">599</span><span\
+      \ class=\"sy0\">-</span>i<span class=\"br0\">)</span>;J<span class=\"sy0\">++</span><span\
+      \ class=\"br0\">)</span>\n        <span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span><span class=\"kw3\">eval</span><span class=\"br0\">(</span>pool<span\
+      \ class=\"br0\">[</span>i<span class=\"sy0\">+</span><span class=\"nu0\">1</span><span\
+      \ class=\"br0\">]</span><span class=\"br0\">)</span> <span class=\"sy0\">&gt;</span>\
+      \ <span class=\"kw3\">eval</span><span class=\"br0\">(</span>pool<span class=\"\
+      br0\">[</span>i<span class=\"br0\">]</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span> swap<span class=\"br0\">(</span>i,i<span class=\"sy0\"\
+      >+</span><span class=\"nu0\">1</span><span class=\"br0\">)</span>;\n \n<span\
+      \ class=\"br0\">}</span>\n \n<span class=\"kw1\">function</span> <span class=\"\
+      kw5\">float</span> <span class=\"kw3\">eval</span><span class=\"br0\">(</span>\
+      \ gene g1<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n<span class=\"\
+      co1\">// evaluate fitness of gene</span>\n<span class=\"co1\">// submitted.</span>\n\
+      <span class=\"co1\">// define in subclass</span>\n \n<span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">float</span> result;\n<span class=\"kw1\">local</span>\
+      \  <span class=\"kw5\">float</span> playedVhumans, playedVbots;\n \nplayedVhumans\
+      \ <span class=\"sy0\">=</span> g1.<span class=\"me0\">stats</span>.<span class=\"\
+      me0\">GameswonVhumans</span> <span class=\"sy0\">+</span> g1.<span class=\"\
+      me0\">stats</span>.<span class=\"me0\">GameslostVhumans</span>;\nplayedvbots\
+      \ <span class=\"sy0\">=</span> g1.<span class=\"me0\">stats</span>.<span class=\"\
+      me0\">gameswonVbots</span> <span class=\"sy0\">+</span> g1.<span class=\"me0\"\
+      >stats</span>.<span class=\"me0\">gameslostVbots</span>;\n \n<span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span> playedVhumans <span class=\"sy0\"\
+      >==</span><span class=\"nu0\">0</span> <span class=\"br0\">)</span> playedVHumans<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">1</span>;   <span class=\"co1\"\
+      >// to avoid divide by zeros</span>\n<span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span> playedVbots <span class=\"sy0\">==</span><span class=\"nu0\"\
+      >0</span><span class=\"br0\">)</span> playedVbots<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">1</span>;\n \nresult <span class=\"sy0\">=</span> <span class=\"\
+      br0\">(</span>g1.<span class=\"me0\">stats</span>.<span class=\"me0\">gameswonVbots</span>\
+      \ <span class=\"sy0\">/</span> playedvbots<span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">+</span> <span class=\"nu0\">2</span> <span class=\"sy0\">*</span>\
+      \ <span class=\"br0\">(</span>g1.<span class=\"me0\">stats</span>.<span class=\"\
+      me0\">gameswonVhumans</span> <span class=\"sy0\">/</span> playedVhumans<span\
+      \ class=\"br0\">)</span> ;\n \n<span class=\"kw2\">return</span><span class=\"\
+      br0\">(</span>result<span class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n\
+      \ \n \n<span class=\"kw1\">function</span> swap<span class=\"br0\">(</span>\
+      \ <span class=\"kw5\">int</span> idx1, <span class=\"kw5\">int</span> idx2<span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n <span class=\"co1\"\
+      >// swap over two genes in pool</span>\n <span class=\"co1\">// define in subclass</span>\n\
+      \ <span class=\"kw1\">local</span> gene temp;\n \n temp<span class=\"sy0\">=</span>pool<span\
+      \ class=\"br0\">[</span>idx1<span class=\"br0\">]</span>;\n pool<span class=\"\
+      br0\">[</span>idx1<span class=\"br0\">]</span><span class=\"sy0\">=</span>pool<span\
+      \ class=\"br0\">[</span>idx2<span class=\"br0\">]</span>;\n pool<span class=\"\
+      br0\">[</span>idx2<span class=\"br0\">]</span><span class=\"sy0\">=</span>temp;\n\
+      \ pool<span class=\"br0\">[</span>idx1<span class=\"br0\">]</span>.<span class=\"\
+      me0\">PoolIdx</span><span class=\"sy0\">=</span>idx1;\n pool<span class=\"br0\"\
+      >[</span>idx2<span class=\"br0\">]</span>.<span class=\"me0\">PoolIdx</span><span\
+      \ class=\"sy0\">=</span>idx2;\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <p>That takes care if the sorting, now to code up the routine that makes actual\
+      \ *evolution* happen, so far all we've been doing is randomising everything,\
+      \ now we select our stud stock and breed the next generation of AI... it's a\
+      \ nested loop fest, it's:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">function</span> breednewpool<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw1\">local</span>\
+      \ gene breeders<span class=\"br0\">[</span><span class=\"nu0\">16</span><span\
+      \ class=\"br0\">]</span>;\n  <span class=\"kw1\">local</span> <span class=\"\
+      kw5\">int</span> i,j;\n  <span class=\"co1\">// take the top performers and\
+      \ breed a new generation from them</span>\n  <span class=\"co1\">// first sort\
+      \ them in order of performance</span>\n  sortgenes<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n  <span class=\"co1\">// keep top fifteen performers</span>\n\
+      \  <span class=\"kw2\">for</span><span class=\"br0\">(</span>i<span class=\"\
+      sy0\">=</span><span class=\"nu0\">0</span>;i<span class=\"sy0\">&lt;</span><span\
+      \ class=\"nu0\">16</span>;i<span class=\"sy0\">++</span><span class=\"br0\"\
+      >)</span> breeders<span class=\"br0\">[</span>i<span class=\"br0\">]</span><span\
+      \ class=\"sy0\">=</span>pool<span class=\"br0\">[</span>i<span class=\"br0\"\
+      >]</span>;\n \n  <span class=\"co1\">// breed (crossover) the top sixteen against\
+      \ each other in all perms... twice</span>\n  <span class=\"kw2\">for</span><span\
+      \ class=\"br0\">(</span>i<span class=\"sy0\">=</span><span class=\"nu0\">0</span>;i<span\
+      \ class=\"sy0\">&lt;</span><span class=\"nu0\">16</span>;i<span class=\"sy0\"\
+      >++</span><span class=\"br0\">)</span>\n    <span class=\"kw2\">for</span><span\
+      \ class=\"br0\">(</span>j<span class=\"sy0\">=</span><span class=\"nu0\">0</span>;j<span\
+      \ class=\"sy0\">&lt;</span><span class=\"nu0\">16</span>;j<span class=\"sy0\"\
+      >+=</span><span class=\"nu0\">2</span><span class=\"br0\">)</span>\n       \
+      \ crossover<span class=\"br0\">(</span>breeders<span class=\"br0\">[</span>i<span\
+      \ class=\"br0\">]</span>,breeders<span class=\"br0\">[</span>j<span class=\"\
+      br0\">]</span>,pool<span class=\"br0\">[</span><span class=\"nu0\">16</span><span\
+      \ class=\"sy0\">+</span>j<span class=\"sy0\">+</span>i<span class=\"sy0\">*</span><span\
+      \ class=\"nu0\">16</span><span class=\"br0\">]</span>,pool<span class=\"br0\"\
+      >[</span>j<span class=\"sy0\">+</span><span class=\"nu0\">17</span><span class=\"\
+      sy0\">+</span>i<span class=\"sy0\">*</span><span class=\"nu0\">16</span><span\
+      \ class=\"br0\">]</span><span class=\"br0\">)</span>;\n  <span class=\"kw2\"\
+      >for</span><span class=\"br0\">(</span>i<span class=\"sy0\">=</span><span class=\"\
+      nu0\">0</span>;i<span class=\"sy0\">&lt;</span><span class=\"nu0\">15</span>;i<span\
+      \ class=\"sy0\">++</span><span class=\"br0\">)</span>\n    <span class=\"kw2\"\
+      >for</span><span class=\"br0\">(</span>j<span class=\"sy0\">=</span><span class=\"\
+      nu0\">0</span>;j<span class=\"sy0\">&lt;</span><span class=\"nu0\">15</span>;j<span\
+      \ class=\"sy0\">+=</span><span class=\"nu0\">2</span><span class=\"br0\">)</span>\n\
+      \        crossover<span class=\"br0\">(</span>breeders<span class=\"br0\">[</span>i<span\
+      \ class=\"br0\">]</span>,breeders<span class=\"br0\">[</span>j<span class=\"\
+      br0\">]</span>,pool<span class=\"br0\">[</span><span class=\"nu0\">272</span><span\
+      \ class=\"sy0\">+</span>j<span class=\"sy0\">+</span>i<span class=\"sy0\">*</span><span\
+      \ class=\"nu0\">16</span><span class=\"br0\">]</span>,pool<span class=\"br0\"\
+      >[</span><span class=\"nu0\">273</span><span class=\"sy0\">+</span>j<span class=\"\
+      sy0\">+</span>i<span class=\"sy0\">*</span><span class=\"nu0\">16</span><span\
+      \ class=\"br0\">]</span><span class=\"br0\">)</span>;\n \n \n  <span class=\"\
+      co1\">// throw in a few mutations  each too</span>\n  <span class=\"kw2\">for</span><span\
+      \ class=\"br0\">(</span>i<span class=\"sy0\">=</span><span class=\"nu0\">1</span>;i<span\
+      \ class=\"sy0\">&lt;</span><span class=\"nu0\">16</span>;i<span class=\"sy0\"\
+      >++</span><span class=\"br0\">)</span>\n    <span class=\"br0\">{</span>\n \
+      \    pool<span class=\"br0\">[</span><span class=\"nu0\">512</span><span class=\"\
+      sy0\">+</span>i<span class=\"br0\">]</span><span class=\"sy0\">=</span>mutate<span\
+      \ class=\"br0\">(</span>breeders<span class=\"br0\">[</span>i<span class=\"\
+      br0\">]</span><span class=\"br0\">)</span>;\n     pool<span class=\"br0\">[</span><span\
+      \ class=\"nu0\">528</span><span class=\"sy0\">+</span>i<span class=\"br0\">]</span><span\
+      \ class=\"sy0\">=</span>mutate<span class=\"br0\">(</span>breeders<span class=\"\
+      br0\">[</span>i<span class=\"br0\">]</span><span class=\"br0\">)</span>;\n \
+      \    pool<span class=\"br0\">[</span><span class=\"nu0\">544</span><span class=\"\
+      sy0\">+</span>i<span class=\"br0\">]</span><span class=\"sy0\">=</span>mutate<span\
+      \ class=\"br0\">(</span>breeders<span class=\"br0\">[</span>i<span class=\"\
+      br0\">]</span><span class=\"br0\">)</span>;\n     pool<span class=\"br0\">[</span><span\
+      \ class=\"nu0\">560</span><span class=\"sy0\">+</span>i<span class=\"br0\">]</span><span\
+      \ class=\"sy0\">=</span>mutate<span class=\"br0\">(</span>breeders<span class=\"\
+      br0\">[</span>i<span class=\"br0\">]</span><span class=\"br0\">)</span>;\n \
+      \   <span class=\"br0\">}</span>\n<span class=\"co1\">//  that makes 576 by\
+      \ my reckoning... blank the code of the lowest performers so they</span>\n<span\
+      \ class=\"co1\">// get new random code next time</span>\n    <span class=\"\
+      kw2\">for</span><span class=\"br0\">(</span>i<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">576</span>;i<span class=\"sy0\">&lt;</span><span class=\"nu0\"\
+      >600</span>;i<span class=\"sy0\">++</span><span class=\"br0\">)</span>\n   \
+      \   <span class=\"br0\">{</span>\n        pool<span class=\"br0\">[</span>i<span\
+      \ class=\"br0\">]</span>.<span class=\"me0\">code</span><span class=\"sy0\"\
+      >=</span><span class=\"st0\">\"\"</span>;\n        initfitstats<span class=\"\
+      br0\">(</span>pool<span class=\"br0\">[</span>i<span class=\"br0\">]</span><span\
+      \ class=\"br0\">)</span>;\n      <span class=\"br0\">}</span>\n \n    generations\
+      \ <span class=\"sy0\">++</span>;\n    <span class=\"kw3\">saveconfig</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>... to be continued ...</p>\n<p><b>Foxpaw:</b> I didn't see the crossover\
+      \ function listed, I'm curious as to how it works on that tree. Have you written\
+      \ it yet?</p>\n<p><b>Zedsquared:</b> Yep, it's back a page on <a href=\"/Legacy:Genetic_Programming/Genes\"\
+      \ title=\"Legacy:Genetic Programming/Genes\">Genetic Programming/Genes</a> I\
+      \ hope to be getting back in the saddle with this stuff soon, watch this space&#160;:)</p>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.102 seconds\nReal time usage:\
+      \ 0.412 seconds\nPreprocessor visited node count: 10/1000000\nPreprocessor generated\
+      \ node count: 64/1000000\nPost‐expand include size: 0/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:1365-0!*!0!*!*!*!* and timestamp 20221118161253 and revision\
+      \ id 3464\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Genetic Programming/Genes"
+  templates: []
+  images: []
+  externallinks: []
+  sections: []
+  displaytitle: "Legacy:Genetic Programming/Mutation"
+  iwlinks: []
+  wikitext:
+    text: "... continuing on from [[Legacy:Genetic Programming/Genes|Genetic Programming/Genes]]\n\
+      \nThe mutation genetic operation is used fairly sparingly in the breeding process\
+      \ and works by chosing a node at random then replacing the tree below it by\
+      \ new randomly generated code. It's pretty straightforeward:\n\n<uscript>\n\n\
+      function gene mutate( gene g1)\n{\n // chose a node at random and replace with\
+      \ new random subtree\n\n local int numnodes, nodenum,i;\n local gpnode root1,target;\n\
+      \ local gene result;\n Local string s1;\n\n\n initfitstats(result);\n\n // grow\
+      \ tree from gene\n root1=spawn(class'gpnode');\n root1.ReadFromString(g1.code);\n\
+      \n // find out how many nodes are in the tree we're mutating\n root1.countnodes(numnodes);\n\
+      \n // pick one at random\n nodenum=rand(numnodes-1)+2;\n \n // get reference\
+      \ to target node\n target=root1.findnode(nodenum);\n\n // clear subtree below\
+      \ target node\n target.prune();\n\n // grow new subtree\n target.RandomGrow(target.depth,maxdepth);\n\
+      \n // write out new tree\n root1.WriteToString(result.code);\n\n // clean up\n\
+      \ root1.prune();\n root1.Destroy();\n\n return(result);\n}\n\n</uscript>\n\n\
+      So, having coded up routines to mangle GP trees in various ways there's a need\
+      \ for something to actually organise the planned orgy of interbreeding. Sorting\
+      \ the array in order of performance sounds like a good idea to start with so\
+      \ why not break out a good old bubblesort, I know there are quicker ways but\
+      \ this only gets done fairly rarely and our array isn't that huge so what the\
+      \ heck:\n\n<uscript>\n\nfunction sortgenes()\n{\n  local int i,j;\n\n  for(i=0;i<599;i++)\n\
+      \    for(j=0;j<(599-i);J++)\n        if(eval(pool[i+1]) > eval(pool[i])) swap(i,i+1);\n\
+      \n}\n\nfunction float eval( gene g1)\n{\n// evaluate fitness of gene\n// submitted.\n\
+      // define in subclass\n\nlocal float result;\nlocal  float playedVhumans, playedVbots;\n\
+      \nplayedVhumans = g1.stats.GameswonVhumans + g1.stats.GameslostVhumans;\nplayedvbots\
+      \ = g1.stats.gameswonVbots + g1.stats.gameslostVbots;\n\nif( playedVhumans ==0\
+      \ ) playedVHumans=1;   // to avoid divide by zeros\nif( playedVbots ==0) playedVbots=1;\n\
+      \nresult = (g1.stats.gameswonVbots / playedvbots) + 2 * (g1.stats.gameswonVhumans\
+      \ / playedVhumans) ;\n\nreturn(result);\n}\n\n\nfunction swap( int idx1, int\
+      \ idx2)\n{\n // swap over two genes in pool\n // define in subclass\n local\
+      \ gene temp;\n\n temp=pool[idx1];\n pool[idx1]=pool[idx2];\n pool[idx2]=temp;\n\
+      \ pool[idx1].PoolIdx=idx1;\n pool[idx2].PoolIdx=idx2;\n}\n\n</uscript>\n\nThat\
+      \ takes care if the sorting, now to code up the routine that makes actual *evolution*\
+      \ happen, so far  all we've been doing is randomising everything, now we select\
+      \ our stud stock and breed the next generation of AI... it's a nested loop fest,\
+      \ it's:\n\n<uscript>\nfunction breednewpool()\n{\n  local gene breeders[16];\n\
+      \  local int i,j;\n  // take the top performers and breed a new generation from\
+      \ them\n  // first sort them in order of performance\n  sortgenes();\n  // keep\
+      \ top fifteen performers\n  for(i=0;i<16;i++) breeders[i]=pool[i];\n\n  // breed\
+      \ (crossover) the top sixteen against each other in all perms... twice\n  for(i=0;i<16;i++)\n\
+      \    for(j=0;j<16;j+=2)\n        crossover(breeders[i],breeders[j],pool[16+j+i*16],pool[j+17+i*16]);\n\
+      \  for(i=0;i<15;i++)\n    for(j=0;j<15;j+=2)\n        crossover(breeders[i],breeders[j],pool[272+j+i*16],pool[273+j+i*16]);\n\
+      \n\n  // throw in a few mutations  each too\n  for(i=1;i<16;i++)\n    {\n  \
+      \   pool[512+i]=mutate(breeders[i]);\n     pool[528+i]=mutate(breeders[i]);\n\
+      \     pool[544+i]=mutate(breeders[i]);\n     pool[560+i]=mutate(breeders[i]);\n\
+      \    }\n//  that makes 576 by my reckoning... blank the code of the lowest performers\
+      \ so they\n// get new random code next time\n    for(i=576;i<600;i++)\n    \
+      \  {\n        pool[i].code=\"\";\n        initfitstats(pool[i]);\n      }\n\n\
+      \    generations ++;\n    saveconfig();\n}\n \n\n</uscript>\n\n... to be continued\
+      \ ...\n\n'''Foxpaw:''' I didn't see the crossover function listed, I'm curious\
+      \ as to how it works on that tree. Have you written it yet?\n\n'''Zedsquared:'''\
+      \ Yep, it's back a page on [[Legacy:Genetic Programming/Genes|Genetic Programming/Genes]]\
+      \ I hope to be getting back in the saddle with this stuff soon, watch this space\
+      \ :)"
+  properties: []
+  revId: 3464
+name: "Legacy:Genetic Programming/Mutation"
+revision:
+  revid: 3464
+  parentid: 3465
+  user: "Zedsquared"
+  timestamp: 1056031348.000000000
+  comment: "*"
+timestamp: 1668787822.176616000

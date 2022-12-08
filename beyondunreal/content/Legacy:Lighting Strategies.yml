@@ -1,0 +1,655 @@
+---
+parse:
+  title: "Legacy:Lighting Strategies"
+  text:
+    text: "<p>So you want to be hailed for great <a href=\"/Legacy:Lighting\" title=\"\
+      Legacy:Lighting\">lighting</a> in your map? You have to understand how real\
+      \ light works and what tools are available in Unreal to emulate it.</p>\n<p><i>This\
+      \ page describes techniques for UnrealEngine 1 games. UnrealEngine 2 and above\
+      \ may provide better solutions for some problems described here.</i></p>\n<p></p>\n\
+      <div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n</div>\n\
+      <ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#Understanding_How_Light_Works\"\
+      ><span class=\"tocnumber\">1</span> <span class=\"toctext\">Understanding How\
+      \ Light Works</span></a></li>\n<li class=\"toclevel-1 tocsection-2\"><a href=\"\
+      #The_Primary_Light_Types\"><span class=\"tocnumber\">2</span> <span class=\"\
+      toctext\">The Primary Light Types</span></a></li>\n<li class=\"toclevel-1 tocsection-3\"\
+      ><a href=\"#Faking_realistic_light\"><span class=\"tocnumber\">3</span> <span\
+      \ class=\"toctext\">Faking realistic light</span></a>\n<ul>\n<li class=\"toclevel-2\
+      \ tocsection-4\"><a href=\"#Things_to_Note\"><span class=\"tocnumber\">3.1</span>\
+      \ <span class=\"toctext\">Things to Note</span></a></li>\n<li class=\"toclevel-2\
+      \ tocsection-5\"><a href=\"#Fully_lit_lights_on_Gradient_Shadowed_Textures\"\
+      ><span class=\"tocnumber\">3.2</span> <span class=\"toctext\">Fully lit lights\
+      \ on Gradient Shadowed Textures</span></a></li>\n<li class=\"toclevel-2 tocsection-6\"\
+      ><a href=\"#Lights_in_a_Dirty_World\"><span class=\"tocnumber\">3.3</span> <span\
+      \ class=\"toctext\">Lights in a Dirty World</span></a></li>\n<li class=\"toclevel-2\
+      \ tocsection-7\"><a href=\"#Sky_Light\"><span class=\"tocnumber\">3.4</span>\
+      \ <span class=\"toctext\">Sky Light</span></a></li>\n<li class=\"toclevel-2\
+      \ tocsection-8\"><a href=\"#Wall_Lights\"><span class=\"tocnumber\">3.5</span>\
+      \ <span class=\"toctext\">Wall Lights</span></a></li>\n<li class=\"toclevel-2\
+      \ tocsection-9\"><a href=\"#Spotlights\"><span class=\"tocnumber\">3.6</span>\
+      \ <span class=\"toctext\">Spotlights</span></a></li>\n<li class=\"toclevel-2\
+      \ tocsection-10\"><a href=\"#Hard_shadows\"><span class=\"tocnumber\">3.7</span>\
+      \ <span class=\"toctext\">Hard shadows</span></a></li>\n<li class=\"toclevel-2\
+      \ tocsection-11\"><a href=\"#Cylindrical_lighting\"><span class=\"tocnumber\"\
+      >3.8</span> <span class=\"toctext\">Cylindrical lighting</span></a></li>\n</ul>\n\
+      </li>\n<li class=\"toclevel-1 tocsection-12\"><a href=\"#Conclusion\"><span\
+      \ class=\"tocnumber\">4</span> <span class=\"toctext\">Conclusion</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-13\"><a href=\"#Related_Topics\"><span class=\"\
+      tocnumber\">5</span> <span class=\"toctext\">Related Topics</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-14\"><a href=\"#Comments\"><span class=\"\
+      tocnumber\">6</span> <span class=\"toctext\">Comments</span></a></li>\n</ul>\n\
+      </div>\n<p></p>\n<h2><span class=\"mw-headline\" id=\"Understanding_How_Light_Works\"\
+      >Understanding How Light Works</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Lighting_Strategies?section=1\"\
+      \ title=\"Edit section: Understanding How Light Works\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<p>Since Unreal lights do not\
+      \ follow real light physics, its lighting can easily look fake. However, there\
+      \ are a variety of Unreal lights that can make lighting look real. It is first\
+      \ helpful to understand how real light works.</p>\n<ul>\n<li>parallel light\
+      \ rays, such as <a href=\"/Legacy:Sunlight\" title=\"Legacy:Sunlight\">sunlight</a>,\
+      \ create hard edged shadows</li>\n<li>refracted light rays due to overcast skies\
+      \ or <a href=\"/Legacy:Fog\" title=\"Legacy:Fog\">fog</a> create soft edged\
+      \ shadows</li>\n<li>light fades exponentially in air (it gets darker as it distance\
+      \ from the source increases)</li>\n<li>light generally scatters in all directions</li>\n\
+      <li>light bounces off surfaces</li>\n<li>light is absorbed by surfaces</li>\n\
+      <li>light carries a surface's color</li>\n<li>light sources have a distinct\
+      \ color temperature</li>\n<li>light sources have a small but bright <i>hotspot</i></li>\n\
+      </ul>\n<h2><span class=\"mw-headline\" id=\"The_Primary_Light_Types\">The Primary\
+      \ Light Types</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Lighting_Strategies?section=2\" title=\"Edit\
+      \ section: The Primary Light Types\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>As you master lighting with Unreal, you will find\
+      \ the majority of your light combinations will be only two. All lights will\
+      \ be affected by the minor tools:</p>\n<ul>\n<li>radius</li>\n<li><a href=\"\
+      /Legacy:Colors\" title=\"Legacy:Colors\">colors</a></li>\n<li>brightness</li>\n\
+      </ul>\n<div class=\"floatleft\"><a href=\"/File:Legacy_light.steady.gif\" class=\"\
+      image\" title=\"Light Type: Steady, Light Type: None\"><img alt=\"Light Type:\
+      \ Steady, Light Type: None\" src=\"/w/images/Legacy_light.steady.gif\" width=\"\
+      355\" height=\"355\" /></a></div>\n<p>The steady light with no effect has a\
+      \ quick falloff to the unbra shadow. Since only a small portion of the radius\
+      \ is lit (what we call a hotspot) and a large portion is in shadow, it is a\
+      \ good type to use for 'atmosphere' or 'mood' because it will highlight a specific\
+      \ area while coloring everything around it with just enough light to make it\
+      \ visible, yet dark enough to be threatening.</p>\n<table>\n<tr>\n<td></td>\n\
+      </tr>\n</table>\n<div class=\"floatleft\"><a href=\"/File:Legacy_light.nonincidence.gif\"\
+      \ class=\"image\" title=\"Light Type: Steady, Light Effect: Non-Incidence\"\
+      ><img alt=\"Light Type: Steady, Light Effect: Non-Incidence\" src=\"/w/images/Legacy_light.nonincidence.gif\"\
+      \ width=\"355\" height=\"355\" /></a></div>\n<p>The opposite of the steady/none\
+      \ light is the steady, non-incidence light. It emphasizes the hotspot by spreading\
+      \ it out over a wide area then quickly falling off into the shadow umbra. It\
+      \ is a good choice to light a large area smoothly without making things to light\
+      \ or dark.</p>\n<div class=\"floatleft\"><a href=\"/File:Legacy_light.cylinder.gif\"\
+      \ class=\"image\" title=\"Light Steady Light Effect: Cylinder\"><img alt=\"\
+      Light Steady Light Effect: Cylinder\" src=\"/w/images/Legacy_light.cylinder.gif\"\
+      \ width=\"355\" height=\"355\" /></a></div>\n<p>The cylinder is worth mentioning\
+      \ because it is primarily used when even floor lighting is desired, especially\
+      \ on <a href=\"/Legacy:Terrain\" title=\"Legacy:Terrain\">terrain</a> in <a\
+      \ href=\"/Legacy:UT\" title=\"Legacy:UT\" class=\"mw-redirect\">UT</a>. However,\
+      \ UT2003 uses a better method with the <a href=\"/Legacy:Sunlight\" title=\"\
+      Legacy:Sunlight\">Sunlight</a> actor.</p>\n<h2><span class=\"mw-headline\" id=\"\
+      Faking_realistic_light\">Faking realistic light</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Lighting_Strategies?section=3\"\
+      \ title=\"Edit section: Faking realistic light\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>By considering real light characterstics, the following\
+      \ technique demonstrates how to closely mimic real lighting in Unreal.</p>\n\
+      <table>\n<tr>\n<td></td>\n</tr>\n</table>\n<div class=\"floatleft\"><a href=\"\
+      /File:Legacy_real.light1.jpeg\" class=\"image\" title=\"This light is used as\
+      \ the hotspot.  It is not showing the torch graphic because its texture been\
+      \ changed to a corona to imitate a flare. * Radius: 8 (very small) * Brightness:\
+      \ 255 (100%) * Light Effect: Steady.  This light type fades to shadow starting\
+      \ almost at the center of the light source, which is why we cranked the brightness.\
+      \  The small radius allows us to emphasize the hotspot.\"><img alt=\"This light\
+      \ is used as the hotspot.  It is not showing the torch graphic because its texture\
+      \ been changed to a corona to imitate a flare. * Radius: 8 (very small) * Brightness:\
+      \ 255 (100%) * Light Effect: Steady.  This light type fades to shadow starting\
+      \ almost at the center of the light source, which is why we cranked the brightness.\
+      \  The small radius allows us to emphasize the hotspot.\" src=\"/w/images/Legacy_real.light1.jpeg\"\
+      \ width=\"330\" height=\"294\" /></a></div>\n<table>\n<tr>\n<td></td>\n</tr>\n\
+      </table>\n<div class=\"floatleft\"><a href=\"/File:Legacy_real.light2.jpeg\"\
+      \ class=\"image\" title=\"This is our falloff light that scatters around.  \
+      \ * Radius: 12 (small) * Brightness: 96 (40%) * Light Effect: Non-incidence.\
+      \  This light type fades light very slowly then quickly fades to shadow at the\
+      \ edge of the light radius.  It is a good type to use when you want to light\
+      \ up an area smoothly but not overexpose surfaces.\"><img alt=\"This is our\
+      \ falloff light that scatters around.   * Radius: 12 (small) * Brightness: 96\
+      \ (40%) * Light Effect: Non-incidence.  This light type fades light very slowly\
+      \ then quickly fades to shadow at the edge of the light radius.  It is a good\
+      \ type to use when you want to light up an area smoothly but not overexpose\
+      \ surfaces.\" src=\"/w/images/Legacy_real.light2.jpeg\" width=\"329\" height=\"\
+      294\" /></a></div>\n<table>\n<tr>\n<td></td>\n</tr>\n</table>\n<div class=\"\
+      floatleft\"><a href=\"/File:Legacy_real.light3.jpeg\" class=\"image\" title=\"\
+      This is our bounce light near the closest surface that reflects the light back\
+      \ onto the scene.  If this were a different colored wall, the dominate hue of\
+      \ that exture could be used on this light.   * Radius: 24 (medium small) * Brightness:\
+      \ 72 (33%) * Light Effect: Non-incidence.  Same reasons.\"><img alt=\"This is\
+      \ our bounce light near the closest surface that reflects the light back onto\
+      \ the scene.  If this were a different colored wall, the dominate hue of that\
+      \ exture could be used on this light.   * Radius: 24 (medium small) * Brightness:\
+      \ 72 (33%) * Light Effect: Non-incidence.  Same reasons.\" src=\"/w/images/Legacy_real.light3.jpeg\"\
+      \ width=\"330\" height=\"294\" /></a></div>\n<table>\n<tr>\n<td></td>\n</tr>\n\
+      </table>\n<h4><span class=\"mw-headline\" id=\"Things_to_Note\">Things to Note</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Lighting_Strategies?section=4\" title=\"Edit section:\
+      \ Things to Note\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h4>\n\
+      <ul>\n<li>It takes a minimum of 2 lights (hotspot and falloff) to look good</li>\n\
+      <li>Bounced light isnt necessary, but adds to the realism effect</li>\n<li>One\
+      \ bounce light may be used if multiple lights in an concentrated area are used.</li>\n\
+      </ul>\n<h3><span class=\"mw-headline\" id=\"Fully_lit_lights_on_Gradient_Shadowed_Textures\"\
+      >Fully lit lights on Gradient Shadowed Textures</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Lighting_Strategies?section=5\"\
+      \ title=\"Edit section: Fully lit lights on Gradient Shadowed Textures\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h3>\n<p>If you want a magnitude\
+      \ of light fixtures flush with a gradiantly shadowed surface surface, there\
+      \ is a few problems that need to be solved:</p>\n<ul>\n<li>Adding each light\
+      \ fixture into the surface as a solid creates BSP cuts</li>\n<li>Adding each\
+      \ light fixture 1 pixel from the surface as a nonsolid is tedious.</li>\n<li>Each\
+      \ light fixture must have its own light actor and there is a limit (around 1000)\
+      \ that Unreal is limited to.</li>\n<li>Each light actor will light in a spherical\
+      \ or cylindrical radius, limiting your light fixture shapes and/or lighting\
+      \ undesired areas.</li>\n</ul>\n<p>All of these issues can be solved.</p>\n\
+      <table>\n<tr>\n<td></td>\n</tr>\n</table>\n<div class=\"floatleft\"><a href=\"\
+      /File:Legacy_unlit.light.mask.on.surface1.jpeg\" class=\"image\"><img alt=\"\
+      Legacy unlit.light.mask.on.surface1.jpeg\" src=\"/w/images/Legacy_unlit.light.mask.on.surface1.jpeg\"\
+      \ width=\"334\" height=\"203\" /></a></div>\n<p><br />\nThe surface fades from\
+      \ light to shadow nicely, but the rectangular light fixtures in shadow are darkening\
+      \ too. If we were to add a light for each fixture, we would run out of lights\
+      \ to use very quickly.</p>\n<p><br /></p>\n<table>\n<tr>\n<td></td>\n</tr>\n\
+      </table>\n<div class=\"floatleft\"><a href=\"/File:Legacy_unlit.light.mask.on.surface2.jpeg\"\
+      \ class=\"image\"><img alt=\"Legacy unlit.light.mask.on.surface2.jpeg\" src=\"\
+      /w/images/Legacy_unlit.light.mask.on.surface2.jpeg\" width=\"334\" height=\"\
+      203\" /></a></div>\n<p><br /></p>\n<ul>\n<li>Add a <a href=\"/Legacy:Nonsolid\"\
+      \ title=\"Legacy:Nonsolid\">nonsolid</a> sheet 1 <a href=\"/Legacy:Grid\" title=\"\
+      Legacy:Grid\">grid</a> unit away from the (blue) trim brush</li>\n<li>Make the\
+      \ sheet the same height or width as the the trim</li>\n</ul>\n<p>(Remember that\
+      \ newer engine versions provide nifty features like <a href=\"/Legacy:Shader\"\
+      \ title=\"Legacy:Shader\">Shaders</a> with self-illumination texture and mask\
+      \ that work a lot better than additional sheets in cases like this.)</p>\n<p><br\
+      \ /></p>\n<table>\n<tr>\n<td></td>\n</tr>\n</table>\n<div class=\"floatleft\"\
+      ><a href=\"/File:Legacy_unlit.light.mask.on.surface3.jpeg\" class=\"image\"\
+      ><img alt=\"Legacy unlit.light.mask.on.surface3.jpeg\" src=\"/w/images/Legacy_unlit.light.mask.on.surface3.jpeg\"\
+      \ width=\"225\" height=\"332\" /></a></div>\n<p><br /></p>\n<ol>\n<li>The trim\
+      \ brush uses a texture that has the light fixture drawn in so it will appear\
+      \ flush (top arrow).</li>\n<li>The sheet brush uses a texture that only has\
+      \ the light fixture and the rest is masked (bottom arrow). This will allow the\
+      \ underlying texture to show through.</li>\n</ol>\n<p><br /></p>\n<table>\n\
+      <tr>\n<td></td>\n</tr>\n</table>\n<div class=\"floatleft\"><a href=\"/File:Legacy_unlit.light.mask.on.surface4.jpeg\"\
+      \ class=\"image\"><img alt=\"Legacy unlit.light.mask.on.surface4.jpeg\" src=\"\
+      /w/images/Legacy_unlit.light.mask.on.surface4.jpeg\" width=\"334\" height=\"\
+      203\" /></a></div>\n<p><br /></p>\n<ul>\n<li>The sheet surface is set to both\
+      \ to mask and unlit. This allows the lighting on the sheet to be full bright\
+      \ (keeping the lights bright) and the trim behind the mask to show the gradient\
+      \ of light to shadow.</li>\n<li>Only one light was used instead of one for each\
+      \ light fixture.</li>\n</ul>\n<p><br /></p>\n<table>\n<tr>\n<td></td>\n</tr>\n\
+      </table>\n<h3><span class=\"mw-headline\" id=\"Lights_in_a_Dirty_World\">Lights\
+      \ in a Dirty World</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Lighting_Strategies?section=6\" title=\"Edit\
+      \ section: Lights in a Dirty World\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>When light is in an area of where minute particles\
+      \ are floating the air, we can see the light hitting those particles, resulting\
+      \ in a light beam. 3D engines dont account for air particles (yet), so they\
+      \ fake it. In Unreal, they are called <a href=\"/Legacy:Lightbox\" title=\"\
+      Legacy:Lightbox\">lightboxes</a>.</p>\n<p>Most mappers mix lightboxes with lights\
+      \ without beams. By mixing the two types, it suggests that particles reside\
+      \ in a confined space. In reality, you would have all light sources in a given\
+      \ area show a beam at differnet intensities because of the particles floating\
+      \ in that area.</p>\n<p>Rather than make multiple itensity levels for various\
+      \ light sources, you can encompass all light sources with <a href=\"/Legacy:Fog\"\
+      \ title=\"Legacy:Fog\">fog</a>, placing light boxes inside the area and let\
+      \ the fog's density level suggest the particle boundary.</p>\n<h3><span class=\"\
+      mw-headline\" id=\"Sky_Light\">Sky Light</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Lighting_Strategies?section=7\"\
+      \ title=\"Edit section: Sky Light\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>This is the easiest method for creating nice shadows.\
+      \ Creating a skybox and sticking a grated (or glass criss-crossed with some\
+      \ sort of grating) window works with just about any (indoor) theme. Once you've\
+      \ constructed the beams and grate architecture, stick a light behind them on\
+      \ the skybox surface. Change its brightness, radius and light type and the beams\
+      \ will cast shadows onto your walls and floor.</p>\n<h3><span class=\"mw-headline\"\
+      \ id=\"Wall_Lights\">Wall Lights</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Lighting_Strategies?section=8\"\
+      \ title=\"Edit section: Wall Lights\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>About the only thing I can think of for creating shadows\
+      \ in this sense is to make a corridor with pillars or supports running down\
+      \ it. Put lights in between each pillar with high brightness and low radii.\
+      \ Rebuild, and watch as each light spills out from the pillar and there is a\
+      \ shadowy area between the lights.</p>\n<h3><span class=\"mw-headline\" id=\"\
+      Spotlights\">Spotlights</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Lighting_Strategies?section=9\"\
+      \ title=\"Edit section: Spotlights\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<h3><span class=\"mw-headline\" id=\"Hard_shadows\">Hard\
+      \ shadows</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Lighting_Strategies?section=10\" title=\"Edit\
+      \ section: Hard shadows\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <h3><span class=\"mw-headline\" id=\"Cylindrical_lighting\">Cylindrical lighting</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Lighting_Strategies?section=11\" title=\"Edit section:\
+      \ Cylindrical lighting\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <ul>\n<li>When it can be useful</li>\n</ul>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Conclusion\">Conclusion</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Lighting_Strategies?section=12\"\
+      \ title=\"Edit section: Conclusion\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>To create shadows just about anywhere, just use high\
+      \ brightness, low radius lights. They'll light a small area, making a sharp\
+      \ contrast between that light and the darker areas around it. Just make sure\
+      \ that you allow enough light for gameplay purposes instead of focusing on atmosphere\
+      \ alone. Darkness may be cool in single-player maps, but in multiplayer maps,\
+      \ it's best to give the players some light.</p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Related_Topics\">Related Topics</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Lighting_Strategies?section=13\"\
+      \ title=\"Edit section: Related Topics\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<ul>\n<li><a href=\"/Legacy:Lighting\" title=\"Legacy:Lighting\"\
+      >Lighting</a> is the hub for all things light related</li>\n<li>You may find\
+      \ <a href=\"/Legacy:Lighting_Basics\" title=\"Legacy:Lighting Basics\">Lighting\
+      \ Basics</a> helpful</li>\n<li>Learn how to avoid <a href=\"/Legacy:Lightmap_Errors\"\
+      \ title=\"Legacy:Lightmap Errors\">lightmap errors</a></li>\n</ul>\n<h2><span\
+      \ class=\"mw-headline\" id=\"Comments\">Comments</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Lighting_Strategies?section=14\"\
+      \ title=\"Edit section: Comments\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p><b>Sobiwan:</b> I'm opening another can of worms.\
+      \ &#160;:)</p>\n<p><b>Tarquin:</b> Seems like a good idea&#160;:)</p>\n<p><b>Sobiwan:</b>\
+      \ I read somewhere that you weren't good at lighting. If that's true, we're\
+      \ gunna change all that! &#160;:)</p>\n<p><b>Tarquin:</b> My problem is that\
+      \ the hotspot light never looks quite right - it always lights up things around\
+      \ the light fitting or even behind it, that shouldn't be. Nice terminology,\
+      \ by the way – \"hotspot\", etc. Makes it easier to absorb. Plus I find lighting\
+      \ so tedious and slow – make tiny change, rebuild lighting... it still sucks,\
+      \ make tiny change, rebuild....etc</p>\n<p><b>Sobiwan:</b> Have you tried <a\
+      \ href=\"/Legacy:Special_Lit\" title=\"Legacy:Special Lit\">special lit</a>\
+      \ to control where light goes?</p>\n<p><b>Sobiwan:</b> merged \"Shadows\" here.</p>\n\
+      <p><b>Ironblayde:</b> Gah! There's a maximum on the number of light actors you\
+      \ can use? Can anyone confirm what this is, exactly, and whether there are any\
+      \ sneaky workaround aside from the one mentioned above? I'm going to be <i>way</i>\
+      \ over 1,000 at the rate I'm going on my map (UT, UnrealEd 2).&#160;:shocked:\
+      \ I know I've seen some maps over 1,000 before. CTF-LocustWind has 1,384, for\
+      \ example. Can anyone shed some light on this problem? (groan!)</p>\n<p>More:\
+      \ This morning I decided to try an experiment, so I opened LocustWind and added\
+      \ 1,500 more lights to it. It took a long time to build, but build it did, and\
+      \ when I loaded it up in UT, sure enough, there were all kinds of colored spots\
+      \ that weren't there before, and dozens of coronas floating in midair. The final\
+      \ count was nearly 3,000 lights. What does this mean for the supposed light\
+      \ limit mentioned in this document? What's supposed to happen when you reach\
+      \ that maximum? Will UnrealEd pop up some kind of error message or something?\
+      \ It certainly seems to me that if a limit does exist, it's considerably higher\
+      \ than the estimate given on this page.</p>\n<p><b>SuicideMissions{CLR}:</b>\
+      \ It seems like that number (1000) is wrong. After all *any* actor can emit\
+      \ light by setting its properties under Lighting and LightColor. The only way\
+      \ that there could be a limit on lights is if there was a limit on instances\
+      \ of Actor. What *is* limited though, is the amount of resolution available\
+      \ for making light/shadow shapes on surfaces.</p>\n<p>Sigh. Lighting is soooooooooo\
+      \ tedioius and really does not look very good. *IF ONLY EPIC WOULD MAKE A LIGHT\
+      \ PAINTER TOOL!!!* Imagine being able to paint light directly on your 3D suraces!\
+      \ They already made a terrain painting tool. Technically, I think a light painting\
+      \ tool would be easier to program than a terrain painter. Basically, it would\
+      \ just modify the lightmap in real time and you could select from a round brush,\
+      \ square brush, and maybe a couple more complex brushes (like a \"rough\" brush\
+      \ for painting surfaces that are rough). This would be so much less tedious\
+      \ than using light actors, and the results would be far closer to what the artist\
+      \ imagines.... just like Fine Painters!</p>\n<p><b>MythOpus:</b> The problem\
+      \ (if you did not use any light actors at all in your map) is that no actors\
+      \ in the level would be lit. They would all be dark black unless the particular\
+      \ actor was set to unlit. Using this light painting tool with lights would cause\
+      \ yet another problem. They would light both bsp and actors, but that lighting\
+      \ might collide with the light you've created with the painting tool. I guess\
+      \ it would be great if you could edit the light more efficiently though. For\
+      \ example, telling exactly where the light beams can/can not go and how far\
+      \ the light can go before it gives absolutely no light off (i.e. stop a light\
+      \ beam in it's tracks in one area and not in another&#160;:D) I think the lighting\
+      \ system is a lot worse now compared to that of Unreal Tournaments lighting\
+      \ system though. With UT, I found there was a lot less light bleeding.</p>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.139 seconds\nReal time usage:\
+      \ 0.387 seconds\nPreprocessor visited node count: 58/1000000\nPreprocessor generated\
+      \ node count: 84/1000000\nPost‐expand include size: 57/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:1723-0!*!0!!en!5!* and timestamp 20221117192150 and revision\
+      \ id 4244\n -->\n"
+  categories:
+  - sortkey: "Lighting Strategies"
+    name: "Legacy_Tutorial"
+  - sortkey: "Lighting Strategies"
+    name: "Legacy_Mapping"
+  - sortkey: "Lighting Strategies"
+    name: "Legacy_To_Do"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Sunlight"
+  - ns: 100
+    exists: true
+    name: "Legacy:Special Lit"
+  - ns: 100
+    exists: true
+    name: "Legacy:Grid"
+  - ns: 100
+    exists: true
+    name: "Legacy:Shader"
+  - ns: 100
+    exists: true
+    name: "Legacy:Fog"
+  - ns: 100
+    exists: true
+    name: "Legacy:Lightmap Errors"
+  - ns: 100
+    exists: true
+    name: "Legacy:Nonsolid"
+  - ns: 100
+    exists: true
+    name: "Legacy:UT"
+  - ns: 100
+    exists: true
+    name: "Legacy:Colors"
+  - ns: 100
+    exists: true
+    name: "Legacy:Lighting"
+  - ns: 100
+    exists: true
+    name: "Legacy:Lightbox"
+  - ns: 100
+    exists: true
+    name: "Legacy:Lighting Basics"
+  - ns: 100
+    exists: true
+    name: "Legacy:Corona"
+  - ns: 100
+    exists: true
+    name: "Legacy:Terrain"
+  templates: []
+  images:
+  - "Legacy_light.steady.gif"
+  - "Legacy_light.nonincidence.gif"
+  - "Legacy_unlit.light.mask.on.surface2.jpeg"
+  - "Legacy_real.light1.jpeg"
+  - "Legacy_real.light3.jpeg"
+  - "Legacy_light.cylinder.gif"
+  - "Legacy_unlit.light.mask.on.surface4.jpeg"
+  - "Legacy_unlit.light.mask.on.surface1.jpeg"
+  - "Legacy_real.light2.jpeg"
+  - "Legacy_unlit.light.mask.on.surface3.jpeg"
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Understanding How Light Works"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Lighting_Strategies"
+    byteoffset: 327
+    anchor: "Understanding_How_Light_Works"
+  - toclevel: 1
+    level: "2"
+    line: "The Primary Light Types"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Lighting_Strategies"
+    byteoffset: 1108
+    anchor: "The_Primary_Light_Types"
+  - toclevel: 1
+    level: "2"
+    line: "Faking realistic light"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:Lighting_Strategies"
+    byteoffset: 2518
+    anchor: "Faking_realistic_light"
+  - toclevel: 2
+    level: "4"
+    line: "Things to Note"
+    number: "3.1"
+    index: "4"
+    fromtitle: "Legacy:Lighting_Strategies"
+    byteoffset: 3869
+    anchor: "Things_to_Note"
+  - toclevel: 2
+    level: "3"
+    line: "Fully lit lights on Gradient Shadowed Textures"
+    number: "3.2"
+    index: "5"
+    fromtitle: "Legacy:Lighting_Strategies"
+    byteoffset: 4110
+    anchor: "Fully_lit_lights_on_Gradient_Shadowed_Textures"
+  - toclevel: 2
+    level: "3"
+    line: "Lights in a Dirty World"
+    number: "3.3"
+    index: "6"
+    fromtitle: "Legacy:Lighting_Strategies"
+    byteoffset: 6130
+    anchor: "Lights_in_a_Dirty_World"
+  - toclevel: 2
+    level: "3"
+    line: "Sky Light"
+    number: "3.4"
+    index: "7"
+    fromtitle: "Legacy:Lighting_Strategies"
+    byteoffset: 6952
+    anchor: "Sky_Light"
+  - toclevel: 2
+    level: "3"
+    line: "Wall Lights"
+    number: "3.5"
+    index: "8"
+    fromtitle: "Legacy:Lighting_Strategies"
+    byteoffset: 7378
+    anchor: "Wall_Lights"
+  - toclevel: 2
+    level: "3"
+    line: "Spotlights"
+    number: "3.6"
+    index: "9"
+    fromtitle: "Legacy:Lighting_Strategies"
+    byteoffset: 7713
+    anchor: "Spotlights"
+  - toclevel: 2
+    level: "3"
+    line: "Hard shadows"
+    number: "3.7"
+    index: "10"
+    fromtitle: "Legacy:Lighting_Strategies"
+    byteoffset: 7731
+    anchor: "Hard_shadows"
+  - toclevel: 2
+    level: "3"
+    line: "Cylindrical lighting"
+    number: "3.8"
+    index: "11"
+    fromtitle: "Legacy:Lighting_Strategies"
+    byteoffset: 7751
+    anchor: "Cylindrical_lighting"
+  - toclevel: 1
+    level: "2"
+    line: "Conclusion"
+    number: "4"
+    index: "12"
+    fromtitle: "Legacy:Lighting_Strategies"
+    byteoffset: 7803
+    anchor: "Conclusion"
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "5"
+    index: "13"
+    fromtitle: "Legacy:Lighting_Strategies"
+    byteoffset: 8227
+    anchor: "Related_Topics"
+  - toclevel: 1
+    level: "2"
+    line: "Comments"
+    number: "6"
+    index: "14"
+    fromtitle: "Legacy:Lighting_Strategies"
+    byteoffset: 8448
+    anchor: "Comments"
+  displaytitle: "Legacy:Lighting Strategies"
+  iwlinks: []
+  wikitext:
+    text: "So you want to be hailed for great [[Legacy:Lighting|lighting]] in your\
+      \ map?  You have to understand how real light works and what tools are available\
+      \ in Unreal to emulate it.\n\n''This page describes techniques for UnrealEngine\
+      \ 1 games. UnrealEngine 2 and above may provide better solutions for some problems\
+      \ described here.''\n\n==Understanding How Light Works==\n\nSince Unreal lights\
+      \ do not follow real light physics, its lighting can easily look fake.  However,\
+      \ there are a variety of Unreal lights that can make lighting look real.  It\
+      \ is first helpful to understand how real light works.\n\n* parallel light rays,\
+      \ such as [[Legacy:Sunlight|sunlight]], create hard edged shadows\n* refracted\
+      \ light rays due to overcast skies or [[Legacy:Fog|fog]] create soft edged shadows\n\
+      * light fades exponentially in air (it gets darker as it distance from the source\
+      \ increases)\n* light generally scatters in all directions\n* light bounces\
+      \ off surfaces\n* light is absorbed by surfaces\n* light carries a surface's\
+      \ color \n* light sources have a distinct color temperature\n* light sources\
+      \ have a small but bright ''hotspot'' \n\n==The Primary Light Types ==\n\nAs\
+      \ you master lighting with Unreal, you will find the majority of your light\
+      \ combinations will be only two.  All lights will be affected by the minor tools:\n\
+      * radius\n* [[Legacy:Colors|colors]] \n* brightness \n\n[[Image:Legacy_light.steady.gif|left|Light\
+      \ Type: Steady, Light Type: None]]\n\nThe steady light with no effect has a\
+      \ quick falloff to the unbra shadow.  Since only a small portion of the radius\
+      \ is lit (what we call a hotspot) and a large portion is in shadow, it is a\
+      \ good type to use for 'atmosphere' or 'mood' because it will highlight a specific\
+      \ area while coloring everything around it with just enough light to make it\
+      \ visible, yet dark enough to be threatening.\n\n{|\n\n|}\n\n[[Image:Legacy_light.nonincidence.gif|left|Light\
+      \ Type: Steady, Light Effect: Non-Incidence]]\n\nThe opposite of the steady/none\
+      \ light is the steady, non-incidence light.  It emphasizes the hotspot by spreading\
+      \ it out over a wide area then quickly falling off into the shadow umbra.  It\
+      \ is a good choice to light a large area smoothly without making things to light\
+      \ or dark.\n\n[[Image:Legacy_light.cylinder.gif|left|Light Steady Light Effect:\
+      \ Cylinder]]\n\nThe cylinder is worth mentioning because it is primarily used\
+      \ when even floor lighting is desired, especially on [[Legacy:Terrain|terrain]]\
+      \ in [[Legacy:UT|UT]].  However, UT2003 uses a better method with the [[Legacy:Sunlight|Sunlight]]\
+      \ actor.\n\n==Faking realistic light==\n\nBy considering real light characterstics,\
+      \ the following technique demonstrates how to closely mimic real lighting in\
+      \ Unreal.  \n\n{|\n\n|}\n\n[[Image:Legacy_real.light1.jpeg|left|\nThis light\
+      \ is used as the hotspot.  It is not showing the torch graphic because its texture\
+      \ been changed to a [[Legacy:Corona|corona]] to imitate a flare.\n* Radius:\
+      \ 8 (very small)\n* Brightness: 255 (100%)\n* Light Effect: Steady.  This light\
+      \ type fades to shadow starting almost at the center of the light source, which\
+      \ is why we cranked the brightness.  The small radius allows us to emphasize\
+      \ the hotspot.\n]]\n\n{|\n\n|}\n\n[[Image:Legacy_real.light2.jpeg|left|\nThis\
+      \ is our ''falloff'' light that scatters around.  \n* Radius: 12 (small)\n*\
+      \ Brightness: 96 (40%)\n* Light Effect: Non-incidence.  This light type fades\
+      \ light very slowly then quickly fades to shadow at the edge of the light radius.\
+      \  It is a good type to use when you want to light up an area smoothly but not\
+      \ overexpose surfaces.\n]]\n\n{|\n\n|}\n\n[[Image:Legacy_real.light3.jpeg|left|\n\
+      This is our ''bounce'' light near the closest surface that reflects the light\
+      \ back onto the scene.  If this were a different colored wall, the dominate\
+      \ hue of that exture could be used on this light.  \n* Radius: 24 (medium small)\n\
+      * Brightness: 72 (33%)\n* Light Effect: Non-incidence.  Same reasons. \n]]\n\
+      \n{|\n\n|}\n\n====Things to Note====\n* It takes a minimum of 2 lights (hotspot\
+      \ and falloff) to look good\n* Bounced light isnt necessary, but adds to the\
+      \ realism effect\n* One bounce light may be used if multiple lights in an concentrated\
+      \ area are used.  \n\n===Fully lit lights on Gradient Shadowed Textures===\n\
+      \nIf you want a magnitude of light fixtures flush with a gradiantly shadowed\
+      \ surface surface, there is a few problems that need to be solved:\n* Adding\
+      \ each light fixture into the surface as a solid creates BSP cuts\n* Adding\
+      \ each light fixture 1 pixel from the surface as a nonsolid is tedious.  \n\
+      * Each light fixture must have its own light actor and there is a limit (around\
+      \ 1000) that Unreal is limited to.\n* Each light actor will light in a spherical\
+      \ or cylindrical radius, limiting your light fixture shapes and/or lighting\
+      \ undesired areas.\n\nAll of these issues can be solved.\n\n{|\n\n|}\n\n[[Image:Legacy_unlit.light.mask.on.surface1.jpeg|left|]]\n\
+      \n\nThe surface fades from light to shadow nicely, but the rectangular light\
+      \ fixtures in shadow are darkening too. If we were to add a light for each fixture,\
+      \ we would run out of lights to use very quickly.\n\n\n{|\n\n|}\n\n[[Image:Legacy_unlit.light.mask.on.surface2.jpeg|left|]]\n\
+      \n\n* Add a [[Legacy:Nonsolid|nonsolid]] sheet 1 [[Legacy:Grid|grid]] unit away\
+      \ from the (blue) trim brush\n* Make the sheet the same height or width as the\
+      \ the trim\n\n(Remember that newer engine versions provide nifty features like\
+      \ [[Legacy:Shader|Shader]]s with self-illumination texture and mask that work\
+      \ a lot better than additional sheets in cases like this.)\n\n\n{|\n\n|}\n\n\
+      [[Image:Legacy_unlit.light.mask.on.surface3.jpeg|left|]]\n\n\n# The trim brush\
+      \ uses a texture that has the light fixture drawn in so it will appear flush\
+      \ (top arrow).\n# The sheet brush uses a texture that only has the light fixture\
+      \ and the rest is masked (bottom arrow). This will allow the underlying texture\
+      \ to show through.\n\n\n{|\n\n|}\n\n[[Image:Legacy_unlit.light.mask.on.surface4.jpeg|left|]]\n\
+      \n\n* The sheet surface is set to both to mask and unlit.  This allows the lighting\
+      \ on the sheet to be full bright (keeping the lights bright) and the trim behind\
+      \ the mask to show the gradient of light to shadow.\n* Only one light was used\
+      \ instead of one for each light fixture.\n\n\n{|\n\n|}\n\n===Lights in a Dirty\
+      \ World===\n\nWhen light is in an area of where minute particles are floating\
+      \ the air, we can see the light hitting those particles, resulting in a light\
+      \ beam.  3D engines dont account for air particles (yet), so they fake it. \
+      \ In Unreal, they are called [[Legacy:Lightbox|lightbox]]es.  \n\nMost mappers\
+      \ mix lightboxes with lights without beams.  By mixing the two types, it suggests\
+      \ that particles reside in a confined space. In reality, you would have all\
+      \ light sources in a given area show a beam at differnet intensities because\
+      \ of the particles floating in that area.  \n\nRather than make multiple itensity\
+      \ levels for various light sources, you can encompass all light sources with\
+      \ [[Legacy:Fog|fog]], placing light boxes inside the area and let the fog's\
+      \ density level suggest the particle boundary.\n\n===Sky Light===\n\nThis is\
+      \ the easiest method for creating nice shadows.  Creating a skybox and sticking\
+      \ a grated (or glass criss-crossed with some sort of grating) window works with\
+      \ just about any (indoor) theme.  Once you've constructed the beams and grate\
+      \ architecture, stick a light behind them on the skybox surface.  Change its\
+      \ brightness, radius and light type and the beams will cast shadows onto your\
+      \ walls and floor.\n\n===Wall Lights===\n\nAbout the only thing I can think\
+      \ of for creating shadows in this sense is to make a corridor with pillars or\
+      \ supports running down it.  Put lights in between each pillar with high brightness\
+      \ and low radii.  Rebuild, and watch as each light spills out from the pillar\
+      \ and there is a shadowy area between the lights.\n\n===Spotlights===\n\n===Hard\
+      \ shadows===\n\n===Cylindrical lighting===\n* When it can be useful\n\n==Conclusion==\n\
+      \nTo create shadows just about anywhere, just use high brightness, low radius\
+      \ lights.  They'll light a small area, making a sharp contrast between that\
+      \ light and the darker areas around it.  Just make sure that you allow enough\
+      \ light for gameplay purposes instead of focusing on atmosphere alone.  Darkness\
+      \ may be cool in single-player maps, but in multiplayer maps, it's best to give\
+      \ the players some light.\n\n==Related Topics==\n* [[Legacy:Lighting|Lighting]]\
+      \ is the hub for all things light related\n* You may find [[Legacy:Lighting\
+      \ Basics|Lighting Basics]] helpful\n* Learn how to avoid [[Legacy:Lightmap Errors|lightmap\
+      \ errors]]\n\n==Comments==\n\n'''Sobiwan:''' I'm opening another can of worms.\
+      \  :)\n\n'''Tarquin:''' Seems like a good idea :)\n\n'''Sobiwan:''' I read somewhere\
+      \ that you weren't good at lighting.  If that's true, we're gunna change all\
+      \ that!  :)\n\n'''Tarquin:''' My problem is that the hotspot light never looks\
+      \ quite right - it always lights up things around the light fitting or even\
+      \ behind it, that shouldn't be. Nice terminology, by the way &ndash; \"hotspot\"\
+      , etc. Makes it easier to absorb. Plus I find lighting so tedious and slow &ndash;\
+      \ make tiny change, rebuild lighting... it still sucks, make tiny change, rebuild....etc\n\
+      \n'''Sobiwan:''' Have you tried [[Legacy:Special Lit|special lit]] to control\
+      \ where light goes?\n\n'''Sobiwan:''' merged \"Shadows\" here.\n\n'''Ironblayde:'''\
+      \ Gah! There's a maximum on the number of light actors you can use? Can anyone\
+      \ confirm what this is, exactly, and whether there are any sneaky workaround\
+      \ aside from the one mentioned above? I'm going to be ''way'' over 1,000 at\
+      \ the rate I'm going on my map (UT, UnrealEd 2). :shocked: I know I've seen\
+      \ some maps over 1,000 before. CTF-LocustWind has 1,384, for example. Can anyone\
+      \ shed some light on this problem? (groan!)\n\nMore: This morning I decided\
+      \ to try an experiment, so I opened LocustWind and added 1,500 more lights to\
+      \ it. It took a long time to build, but build it did, and when I loaded it up\
+      \ in UT, sure enough, there were all kinds of colored spots that weren't there\
+      \ before, and dozens of coronas floating in midair. The final count was nearly\
+      \ 3,000 lights. What does this mean for the supposed light limit mentioned in\
+      \ this document? What's supposed to happen when you reach that maximum? Will\
+      \ UnrealEd pop up some kind of error message or something? It certainly seems\
+      \ to me that if a limit does exist, it's considerably higher than the estimate\
+      \ given on this page.\n\n'''SuicideMissions{CLR}:''' It seems like that number\
+      \ (1000) is wrong. After all *any* actor can emit light by setting its properties\
+      \ under Lighting and LightColor. The only way that there could be a limit on\
+      \ lights is if there was a limit on instances of Actor. What *is* limited though,\
+      \ is the amount of resolution available for making light/shadow shapes on surfaces.\n\
+      \nSigh. Lighting is soooooooooo tedioius and really does not look very good.\
+      \ *IF ONLY EPIC WOULD MAKE A LIGHT PAINTER TOOL!!!* Imagine being able to paint\
+      \ light directly on your 3D suraces! They already made a terrain painting tool.\
+      \ Technically, I think a light painting tool would be easier to program than\
+      \ a terrain painter. Basically, it would just modify the lightmap in real time\
+      \ and you could select from a round brush, square brush, and maybe a couple\
+      \ more complex brushes (like a \"rough\" brush for painting surfaces that are\
+      \ rough). This would be so much less tedious than using light actors, and the\
+      \ results would be far closer to what the artist imagines.... just like Fine\
+      \ Painters!\n\n'''MythOpus:''' The problem (if you did not use any light actors\
+      \ at all in your map) is that no actors in the level would be lit.  They would\
+      \ all be dark black unless the particular actor was set to unlit.  Using this\
+      \ light painting tool with lights would cause yet another problem.  They would\
+      \ light both bsp and actors, but that lighting might collide with the light\
+      \ you've created with the painting tool.  I guess it would be great if you could\
+      \ edit the light more efficiently though.  For example, telling exactly where\
+      \ the light beams can/can not go and how far the light can go before it gives\
+      \ absolutely no light off (i.e. stop a light beam in it's tracks in one area\
+      \ and not in another :D)  I think the lighting system is a lot worse now compared\
+      \ to that of Unreal Tournaments lighting system though.  With UT, I found there\
+      \ was a lot less light bleeding.\n\n[[Category:Legacy Mapping|{{PAGENAME}}]]\n\
+      [[Category:Legacy Tutorial|{{PAGENAME}}]]\n[[Category:Legacy To Do|{{PAGENAME}}]]"
+  properties: []
+  revId: 4244
+name: "Legacy:Lighting Strategies"
+revision:
+  revid: 4244
+  parentid: 4245
+  user: "Wormbo"
+  timestamp: 1168252283.000000000
+  comment: "*"
+timestamp: 1668764560.921329000

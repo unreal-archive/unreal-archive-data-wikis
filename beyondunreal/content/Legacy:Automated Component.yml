@@ -1,0 +1,492 @@
+---
+parse:
+  title: "Legacy:Automated Component"
+  text:
+    text: "<p>The new internal management system for <a href=\"/Legacy:GUIMultiComponent\"\
+      \ title=\"Legacy:GUIMultiComponent\">GUIMultiComponents</a> enables you to automatically\
+      \ create variables of the desired type, without casting. It also handles initialization,\
+      \ tab order, and render weight for each automated component. It involves two\
+      \ new specifiers: one for classes - <i>instanced</i>, and one for properties\
+      \ - <i>automated</i>.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">var</span> automated GUIButton FantasticButton;\n \n<span class=\"kw1\"\
+      >defaultproperties</span>\n<span class=\"br0\">{</span>\n    <span class=\"\
+      kw2\">Begin</span> <span class=\"kw8\">Object</span> <span class=\"kw1\">Class</span><span\
+      \ class=\"sy0\">=</span>GUIButton <span class=\"kw5\">Name</span><span class=\"\
+      sy0\">=</span>FantaticButtonTemplate\n        OnClick<span class=\"sy0\">=</span>InternalOnClick\n\
+      \        WinWidth<span class=\"sy0\">=</span><span class=\"nu0\">0.06</span>\n\
+      \        WinHeight<span class=\"sy0\">=</span><span class=\"nu0\">0.04</span>\n\
+      \        bBoundToParent<span class=\"sy0\">=</span><span class=\"kw6\">True</span>\n\
+      \        bScaleToParent<span class=\"sy0\">=</span><span class=\"kw6\">True</span>\n\
+      \    End <span class=\"kw8\">Object</span>\n \n    FantasticButton <span class=\"\
+      sy0\">=</span> FantasticButtonTemplate\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p><b>Instanced</b> is a class modifier that was added in UT2004. It\
+      \ indicates that all objects of this class should be instanced. For an explanation\
+      \ of what that means, exactly, see <a href=\"/Legacy:Subobject\" title=\"Legacy:Subobject\"\
+      >Subobject</a>.</p>\n<p><b>Automated</b> is a variable modifier that was added\
+      \ in UT2004. This modifier is currently used only in the GUI, and indicates\
+      \ that the object assigned to this variable should be automatically added to\
+      \ the Controls array when the class is initialized. This auto-assignment is\
+      \ handled by the native function GUIMultiComponent.InitializeControls, which\
+      \ is called from GUIMultiComponent.InitComponent(). InitializeControls() iterates\
+      \ through all properties of the class, and builds a list of object properties\
+      \ (or arrays of object properties) marked automated. Any objects assigned to\
+      \ an automated object variable are added to the GUIMultiComponent's Controls\
+      \ array.</p>\n<p>GUIMultiComponent defines two arrays of GUIComponents - Controls\
+      \ and Components.</p>\n<p>The Controls array contains all GUIComponents defined\
+      \ and initialized in that menu (note: I use \"menu\", but this applies to any\
+      \ subclass of <a href=\"/Legacy:GUIMultiComponent\" title=\"Legacy:GUIMultiComponent\"\
+      >GUIMultiComponent</a>, not just <a href=\"/Legacy:GUIPage\" title=\"Legacy:GUIPage\"\
+      >GUIPage</a>). When using automated controls, the controls array will be sorted\
+      \ natively by <b>RenderWeight</b>, a property of <a href=\"/Legacy:GUIComponent\"\
+      \ title=\"Legacy:GUIComponent\">GUIComponent</a>. Any components added to a\
+      \ menu after the menu has already been initialized (via AddComponent() or AppendComponent())\
+      \ will be inserted into the menu's Controls array according to RenderWeight.\
+      \ The menu is drawn first, followed by Controls[0], then Controls[1], etc. until\
+      \ controls have been drawn.</p>\n<p>The Components array contains all controls\
+      \ on the page that are have bTabStop set to True. Generally, Components are\
+      \ controls on the page that can accept input, such as buttons, edit boxes, and\
+      \ tabs. The components array is sorted by <b>TabOrder</b>, a property of <a\
+      \ href=\"/Legacy:GUIComponent\" title=\"Legacy:GUIComponent\">GUIComponent</a>.\
+      \ The Components array will always be automatically managed, regardless of whether\
+      \ you are using automated components or not. <a href=\"/Legacy:GUIMultiComponent\"\
+      \ title=\"Legacy:GUIMultiComponent\">GUIMultiComponent</a> provides methods\
+      \ for manipulating both the Controls and the Components array.</p>\n<p>You cannot\
+      \ use automated components if you have any controls defined in defaultproperties.\
+      \ InitializeControls() checks if there are any existing members defined for\
+      \ the Controls array in the class's default properties, and if so, simply returns.\
+      \ If you wish to use automated components in a subclass of another menu which\
+      \ defines its Controls in defaultproperties (UT2003-Style), set bAlwaysAutomate\
+      \ to true in your subclass's defaultproperties. When InitializeControls() is\
+      \ called, if bAlwaysAutomate is true, it will first empty the Controls array,\
+      \ then proceed to rebuild it using only automated components. Of course, you\
+      \ could assign Controls in defaultproperties, then set bAlwaysAutomate=True,\
+      \ but there wouldn't really be much point to that...&#160;:)</p>\n<p>UT2004's\
+      \ GUI uses automated components exclusively, and I'd highly recommend doing\
+      \ the same - it makes managing controls MUCH easier.</p>\n<p></p>\n<div id=\"\
+      toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n</div>\n<ul>\n\
+      <li class=\"toclevel-1 tocsection-1\"><a href=\"#AutoPositioning\"><span class=\"\
+      tocnumber\">1</span> <span class=\"toctext\">AutoPositioning</span></a>\n<ul>\n\
+      <li class=\"toclevel-2 tocsection-2\"><a href=\"#Multiple_instancing\"><span\
+      \ class=\"tocnumber\">1.1</span> <span class=\"toctext\">Multiple instancing</span></a></li>\n\
+      </ul>\n</li>\n<li class=\"toclevel-1 tocsection-3\"><a href=\"#Overriding_automated_subobject_definitions\"\
+      ><span class=\"tocnumber\">2</span> <span class=\"toctext\">Overriding automated\
+      \ subobject definitions</span></a></li>\n<li class=\"toclevel-1 tocsection-4\"\
+      ><a href=\"#Advanced_use_of_Ingame_Gui_Designer\"><span class=\"tocnumber\"\
+      >3</span> <span class=\"toctext\">Advanced use of Ingame Gui Designer</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-5\"><a href=\"#The_finer_art_of_.27default_vs._instanced.27\"\
+      ><span class=\"tocnumber\">4</span> <span class=\"toctext\">The finer art of\
+      \ 'default vs. instanced'</span></a></li>\n</ul>\n</div>\n<p></p>\n<h3><span\
+      \ class=\"mw-headline\" id=\"AutoPositioning\">AutoPositioning</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Automated_Component?section=1\"\
+      \ title=\"Edit section: AutoPositioning\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      co1\">// Auto-positioning - accounts for bBoundToParent &amp; bScaleToParent</span>\n\
+      <span class=\"kw1\">native</span> <span class=\"kw1\">final</span> <span class=\"\
+      kw1\">function</span> AutoPosition<span class=\"br0\">(</span>\n\t\tarray<span\
+      \ class=\"sy0\">&lt;</span>GUIComponent<span class=\"sy0\">&gt;</span> Components,\n\
+      \t\t<span class=\"kw5\">float</span> LeftBound, <span class=\"kw5\">float</span>\
+      \ UpperBound, <span class=\"kw5\">float</span> RightBound, <span class=\"kw5\"\
+      >float</span> LowerBound,\n\t\t<span class=\"kw5\">float</span> LeftPad, <span\
+      \ class=\"kw5\">float</span> UpperPad, <span class=\"kw5\">float</span> RightPad,\
+      \ <span class=\"kw5\">float</span> LowerPad,\n\t\t<span class=\"kw1\">optional</span>\
+      \ <span class=\"kw5\">int</span> NumberOfColumns, <span class=\"kw1\">optional</span>\
+      \ <span class=\"kw5\">float</span> ColumnPadding\n\t\t<span class=\"br0\">)</span>;</pre></div>\n\
+      </div>\n<p>GUIComponent.AutoPosition() is a native function that will automatically\
+      \ position an array of GUIComponents within the bounds passed to the function.\
+      \ It takes eleven parameters. The first parameter is an array of GUIComponents\
+      \ that will be positioned. The next four parameters define the bounds of the\
+      \ area that you wish the components to be positions within, and the next four\
+      \ parameters specify the amount of padding to add to each side. These parameters\
+      \ must be actual screen values, not scaled values (For example, pass in the\
+      \ value of ActualTop(), not WinTop). The final two parameters are optional,\
+      \ and allows you to break the components into columns.</p>\n<p>AutoPosition()\
+      \ first applies the padding values, then divides the length of the passed-in\
+      \ array by the difference between the lower bound and the upper bound to find\
+      \ the component offset. It adjusts each of the array member's WinWidth, WinLeft\
+      \ values based on the values passed into the function, and adjust each array\
+      \ member's WinTop value based on component offset. It does NOT modify the WinHeight\
+      \ value of the components. If the total number of components multiplied by the\
+      \ offset value would be greater than the bounded area, AutoPosition() writes\
+      \ an error to the log, and returns. AutoPosition() accounts for the bBoundToParent\
+      \ and bScaleToParent values, and internally adjusts the ratios of the components\
+      \ accordingly.</p>\n<p>A closely related function is AutoPositionOn(). This\
+      \ function is simply a wrapper for AutoPosition(), by allowing you to specify\
+      \ a component (such as a background image) that you would like to use for positioning,\
+      \ with parameters for padding percentages.</p>\n<p><a href=\"/edit/Legacy:GUISectionBackground?redlink=1\"\
+      \ class=\"new\" title=\"Legacy:GUISectionBackground (page does not exist)\"\
+      >GUISectionBackground</a> was sort of the evolution of AutoPosition &amp; AutoPositionOn().\
+      \ GUISectionBackground is essentially a background image that auto-positions\
+      \ other components. <a href=\"/edit/Legacy:GUISectionBackground?redlink=1\"\
+      \ class=\"new\" title=\"Legacy:GUISectionBackground (page does not exist)\"\
+      >GUISectionBackground</a> has modifiable background &amp; header images, and\
+      \ you feed it components to be managed using its ManageComponent() function.</p>\n\
+      <h4><span class=\"mw-headline\" id=\"Multiple_instancing\">Multiple instancing</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Automated_Component?section=2\" title=\"Edit section:\
+      \ Multiple instancing\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h4>\n\
+      <p>One of the largest benefits of using AutoPosition() to position your components\
+      \ is that you can very easily take advantage of multiple instancing. Multiple\
+      \ instancing is where you have one templated subobject definition, but assign\
+      \ multiple variables to it.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\">\t<span class=\"\
+      kw2\">Begin</span> <span class=\"kw8\">Object</span> <span class=\"kw1\">class</span><span\
+      \ class=\"sy0\">=</span>GUIImage <span class=\"kw5\">Name</span><span class=\"\
+      sy0\">=</span>HUDPreviewImage\n \t\tImageStyle<span class=\"sy0\">=</span>ISTY_Scaled\n\
+      \ \t\tImageColor<span class=\"sy0\">=</span><span class=\"br0\">(</span>R<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">255</span>,G<span class=\"sy0\"\
+      >=</span><span class=\"nu0\">255</span>,B<span class=\"sy0\">=</span><span class=\"\
+      nu0\">255</span>,A<span class=\"sy0\">=</span><span class=\"nu0\">255</span><span\
+      \ class=\"br0\">)</span>\n \t\tWinHeight<span class=\"sy0\">=</span><span class=\"\
+      nu0\">0.5</span>\n\t\tRenderWeight<span class=\"sy0\">=</span><span class=\"\
+      nu0\">0.51</span>\n\tEnd <span class=\"kw8\">Object</span>\n\ti_HUDTop<span\
+      \ class=\"sy0\">=</span>HUDPreviewImage\n\ti_HUDTopRight<span class=\"sy0\"\
+      >=</span>HUDPreviewImage\n\ti_HUDTopLeft<span class=\"sy0\">=</span>HUDPreviewImage\n\
+      \ti_HUDMiddleRight<span class=\"sy0\">=</span>HUDPreviewImage\n\ti_HUDMiddleLeft<span\
+      \ class=\"sy0\">=</span>HUDPreviewImage\n\ti_HUDMiddleRight<span class=\"sy0\"\
+      >=</span>HUDPreviewImage\n\ti_HUDBottomLeft<span class=\"sy0\">=</span>HUDPreviewImage\n\
+      \ti_HUDBottomRight<span class=\"sy0\">=</span>HUDPreviewImage\n\ti_HUDBottom<span\
+      \ class=\"sy0\">=</span>HUDPreviewImage</pre></div>\n</div>\n<p>You can then\
+      \ pass these components to AutoPosition() as an array, and they will be automatically\
+      \ positioned for you. If you need to make changes to the original template image,\
+      \ you'd only need to make this change in one place. Likewise, if you wanted\
+      \ to add additional components, or remove components, you'd need only to add/remove\
+      \ the assignments in default properties. No more resizing dozens of components\
+      \ in design mode every time you change one option!&#160;:)</p>\n<h3><span class=\"\
+      mw-headline\" id=\"Overriding_automated_subobject_definitions\">Overriding automated\
+      \ subobject definitions</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Automated_Component?section=3\"\
+      \ title=\"Edit section: Overriding automated subobject definitions\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h3>\n<hr />\n<p><b>Mychaeel:</b>\
+      \ That's a very neat set of new features you're describing here. &#160;:-) It's\
+      \ just a bit of a pity that it's specific to the GUI classes and not made so\
+      \ generic that all classes could benefit from it – by allowing the \"automated\"\
+      \ keyword in any class, introducing an \"InitObject\" event in <a href=\"/Legacy:Object\"\
+      \ title=\"Legacy:Object\">Object</a> and defining a native \"InitObjects\" function\
+      \ in Object instead of InitComponents in <a href=\"/Legacy:GUIMultiComponent\"\
+      \ title=\"Legacy:GUIMultiComponent\">GUIMultiComponent</a>.</p>\n<h3><span class=\"\
+      mw-headline\" id=\"Advanced_use_of_Ingame_Gui_Designer\">Advanced use of Ingame\
+      \ Gui Designer</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Automated_Component?section=4\" title=\"Edit\
+      \ section: Advanced use of Ingame Gui Designer\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Before reading this, you will want to read the mention\
+      \ of the Gui Designer in <a href=\"/Legacy:GUIController\" title=\"Legacy:GUIController\"\
+      >GUIController</a> which allows you to move GUI components around in the menus\
+      \ ingame and play with their properties.</p>\n<p>There have been a few additions\
+      \ to the in-game menu authoring system. The most noticable is that when you\
+      \ select a component a properties window (a la UnrealEd) will appear where you\
+      \ can edit the selected component. Obviously you need to be running in windowed\
+      \ mode for this to happen.</p>\n<p>[[Image:Legacy_gui_editor_screen1.jpeg|]]</p>\n\
+      <p>When you declare a variable as automated it will show up in the last category\
+      \ on this menu. If you expand the automated variable you will have two options\
+      \ as usual with adding new elements in the editor. You can select a previously\
+      \ created button or you can go down one and click New. Here it will give you\
+      \ a list of classes that you can put into your automated variable. For example,\
+      \ if you declare an automated GUIButton then the list of possible classes that\
+      \ variable can be include GUIButton, GUIComboButton, GUIEditBox. Once created\
+      \ you can set all of it's attributes of size and appearance. If you then hit\
+      \ CTRL+X while you have the top level menu selected it will export the Object\
+      \ definitions for <b>ALL</b> your automated variables. You could then just copy\
+      \ and paste it into the default properties. (It turns out to not be that easy)</p>\n\
+      <p>Here's where I'm a little confused about what they intended. The controls\
+      \ do not actaully instantiate on the menu and you can't visually manipulate\
+      \ them unless you add them to the Controls array in the editor window. I thought\
+      \ one of the advantages of an automated variable is that when you create it\
+      \ it is automatically added to the Controls array at run-time so you don't have\
+      \ to mess with filling in the array yourself.</p>\n<p>Anyway, I'll just explain\
+      \ how I did it and let someone else correct me. So after filling in the automated\
+      \ variables with the types of controls each of them is assigned an automatically\
+      \ generated name. I then add them to the Controls array so I can visually manipulate\
+      \ them on the screen so I go to Menu-&gt;Controls in the editor window and select\
+      \ <b>Add</b>. In the drop-down box select the automatically generated name that\
+      \ was given to the control you want to instantiate. Note you can also select\
+      \ from the other controls that are declared in other objects. After that click\
+      \ the <i>Init</i> button. Now the control should appear on the screen and you\
+      \ can edit it. One thing to note is that the control specified by the automated\
+      \ variable is _not_ a template. If you change the instantiated control then\
+      \ it changes the automated variable declaration too. Therefore you couldn't\
+      \ have two different buttons that used the same class, you'd have to make a\
+      \ seperate class for each.</p>\n<p>So once you've got everything set up you\
+      \ can select the top level menu and hit CTRL+X (I've had to hit it a couple\
+      \ of times before for it to actually copy sometimes, dunno) and it will export\
+      \ the menu to the clipboard.</p>\n<p>Ok, a couple of things that confuse me\
+      \ about the exportet text. It starts with an Object declaration of the Menu\
+      \ itself, this isn't what we want I don't think so I just delete that. Ok, now\
+      \ notice that it does assign the object you've created to the automated variable,\
+      \ <b>BUT</b> on mine at least it doesn't corrently identify the package (ie.\
+      \ Package.GUIButton1 instead of VTactics.TestMenu.GUIButton1). So I have to\
+      \ change that for each control. Also, I delete the ToolTip entry. Now since\
+      \ we instantiated the controls in the Control array you'll also notice the entries\
+      \ in that array (ie. Controls(0)=GUIButton'VTactics.TestMenu.GUIButton1'). I\
+      \ also delete these entries since being automated they are added at run-time.</p>\n\
+      <p>I checked with with someone \"in the know\" and he said that everything I\
+      \ wrote above is pretty much accurate. He said that because of it's unpolished\
+      \ state the built-in GUI Designer still isn't quite ready for full fledged menu\
+      \ creation but more for just tweaking. He also said that he was planning on\
+      \ fixing a few of the above problems with the exported menu definitions so that\
+      \ there wouldn't be a need for as much clean-up afterwards. He said he knows\
+      \ the whole process is pretty rough still but that's why he made the GUIDesigner.dll\
+      \ self contained so it could be easily upgraded later.</p>\n<p><b>RegularX:</b>\
+      \ Great info. I might have to post a bounty for decent tutorials on starting\
+      \ from scratch with some of this stuff. It looks immensely powerful drifting\
+      \ through the UScript code, but unfortunately it also looks just plain immense.\
+      \ For stuff I'm trying to get down for the next MSUC deadline, I might have\
+      \ to stick to 2k3 GUI, just because it's what I'm familiar with...</p>\n<p>TODO&#160;:</p>\n\
+      <h3><span class=\"mw-headline\" id=\"The_finer_art_of_.27default_vs._instanced.27\"\
+      >The finer art of 'default vs. instanced'</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Automated_Component?section=5\"\
+      \ title=\"Edit section: The finer art of 'default vs. instanced'\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h3>\n\n<!-- \nNewPP limit\
+      \ report\nCPU time usage: 0.112 seconds\nReal time usage: 0.114 seconds\nPreprocessor\
+      \ visited node count: 46/1000000\nPreprocessor generated node count: 84/1000000\n\
+      Post‐expand include size: 0/2097152 bytes\nTemplate argument size: 0/2097152\
+      \ bytes\nHighest expansion depth: 2/40\nExpensive parser function count: 0/100\n\
+      -->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n100.00%\
+      \    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:430-0!*!0!!en!*!*\
+      \ and timestamp 20221118092114 and revision id 1443\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Object"
+  - ns: 100
+    exists: true
+    name: "Legacy:GUIController"
+  - ns: 100
+    exists: true
+    name: "Legacy:GUIMultiComponent"
+  - ns: 100
+    exists: true
+    name: "Legacy:GUIPage"
+  - ns: 100
+    exists: true
+    name: "Legacy:Subobject"
+  - ns: 100
+    exists: false
+    name: "Legacy:GUISectionBackground"
+  - ns: 100
+    exists: true
+    name: "Legacy:GUIComponent"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "3"
+    line: "AutoPositioning"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Automated_Component"
+    byteoffset: 3808
+    anchor: "AutoPositioning"
+  - toclevel: 2
+    level: "4"
+    line: "Multiple instancing"
+    number: "1.1"
+    index: "2"
+    fromtitle: "Legacy:Automated_Component"
+    byteoffset: 6232
+    anchor: "Multiple_instancing"
+  - toclevel: 1
+    level: "3"
+    line: "Overriding automated subobject definitions"
+    number: "2"
+    index: "3"
+    fromtitle: "Legacy:Automated_Component"
+    byteoffset: 7458
+    anchor: "Overriding_automated_subobject_definitions"
+  - toclevel: 1
+    level: "3"
+    line: "Advanced use of Ingame Gui Designer"
+    number: "3"
+    index: "4"
+    fromtitle: "Legacy:Automated_Component"
+    byteoffset: 7979
+    anchor: "Advanced_use_of_Ingame_Gui_Designer"
+  - toclevel: 1
+    level: "3"
+    line: "The finer art of 'default vs. instanced'"
+    number: "4"
+    index: "5"
+    fromtitle: "Legacy:Automated_Component"
+    byteoffset: 12741
+    anchor: "The_finer_art_of_.27default_vs._instanced.27"
+  displaytitle: "Legacy:Automated Component"
+  iwlinks: []
+  wikitext:
+    text: "The new internal management system for [[Legacy:GUIMultiComponent|GUIMultiComponent]]s\
+      \ enables you to automatically create variables of the desired type, without\
+      \ casting.  It also handles initialization, tab order, and render weight for\
+      \ each automated component.  It involves two new specifiers: one for classes\
+      \ - ''instanced'', and one for properties - ''automated''.\n\n<uscript>\nvar\
+      \ automated GUIButton FantasticButton;\n\ndefaultproperties\n{\n    Begin Object\
+      \ Class=GUIButton Name=FantaticButtonTemplate\n        OnClick=InternalOnClick\n\
+      \        WinWidth=0.06\n        WinHeight=0.04\n        bBoundToParent=True\n\
+      \        bScaleToParent=True\n    End Object\n\n    FantasticButton = FantasticButtonTemplate\n\
+      }\n</uscript>\n\n'''Instanced''' is a class modifier that was added in UT2004.\
+      \  It indicates that all objects of this class should be instanced.  For an\
+      \ explanation of what that means, exactly, see [[Legacy:Subobject|Subobject]].\
+      \ \n\n'''Automated''' is a variable modifier that was added in UT2004.  This\
+      \ modifier is currently used only in the GUI, and indicates that the object\
+      \ assigned to this variable should be automatically added to the Controls array\
+      \ when the class is initialized.  This auto-assignment is handled by the native\
+      \ function GUIMultiComponent.InitializeControls, which is called from GUIMultiComponent.InitComponent().\
+      \  InitializeControls() iterates through all properties of the class, and builds\
+      \ a list of object properties (or arrays of object properties) marked automated.\
+      \  Any objects assigned to an automated object variable are added to the GUIMultiComponent's\
+      \ Controls array.\n\nGUIMultiComponent defines two arrays of GUIComponents -\
+      \ Controls and Components.  \n\nThe Controls array contains all GUIComponents\
+      \ defined and initialized in that menu (note: I use \"menu\", but this applies\
+      \ to any subclass of [[Legacy:GUIMultiComponent|GUIMultiComponent]], not just\
+      \ [[Legacy:GUIPage|GUIPage]]).  When using automated controls, the controls\
+      \ array will be sorted natively by '''RenderWeight''', a property of [[Legacy:GUIComponent|GUIComponent]].\
+      \  Any components added to a menu after the menu has already been initialized\
+      \ (via AddComponent() or AppendComponent()) will be inserted into the menu's\
+      \ Controls array according to RenderWeight.  The menu is drawn first, followed\
+      \ by Controls[0], then Controls[1], etc. until controls have been drawn.\n\n\
+      The Components array contains all controls on the page that are have bTabStop\
+      \ set to True.  Generally, Components are controls on the page that can accept\
+      \ input, such as buttons, edit boxes, and tabs.  The components array is sorted\
+      \ by '''TabOrder''', a property of [[Legacy:GUIComponent|GUIComponent]].  The\
+      \ Components array will always be automatically managed, regardless of whether\
+      \ you are using automated components or not.  [[Legacy:GUIMultiComponent|GUIMultiComponent]]\
+      \ provides methods for manipulating both the Controls and the Components array.\n\
+      \nYou cannot use automated components if you have any controls defined in defaultproperties.\
+      \  InitializeControls() checks if there are any existing members defined for\
+      \ the Controls array in the class's default properties, and if so, simply returns.\
+      \  If you wish to use automated components in a subclass of another menu which\
+      \ defines its Controls in defaultproperties (UT2003-Style), set bAlwaysAutomate\
+      \ to true in your subclass's defaultproperties.  When InitializeControls() is\
+      \ called, if bAlwaysAutomate is true, it will first empty the Controls array,\
+      \ then proceed to rebuild it using only automated components.  Of course, you\
+      \ could assign Controls in defaultproperties, then set bAlwaysAutomate=True,\
+      \ but there wouldn't really be much point to that... :)\n\nUT2004's GUI uses\
+      \ automated components exclusively, and I'd highly recommend doing the same\
+      \ - it makes managing controls MUCH easier.\n\n===AutoPositioning===\n\n<uscript>\n\
+      // Auto-positioning - accounts for bBoundToParent & bScaleToParent\nnative final\
+      \ function AutoPosition(\n\t\tarray<GUIComponent> Components,\n\t\tfloat LeftBound,\
+      \ float UpperBound, float RightBound, float LowerBound,\n\t\tfloat LeftPad,\
+      \ float UpperPad, float RightPad, float LowerPad,\n\t\toptional int NumberOfColumns,\
+      \ optional float ColumnPadding\n\t\t);\n</uscript>\n\nGUIComponent.AutoPosition()\
+      \ is a native function that will automatically position an array of GUIComponents\
+      \ within the bounds passed to the function.  It takes eleven parameters.  The\
+      \ first parameter is an array of GUIComponents that will be positioned.  The\
+      \ next four parameters define the bounds of the area that you wish the components\
+      \ to be positions within, and the next four parameters specify the amount of\
+      \ padding to add to each side.  These parameters must be actual screen values,\
+      \ not scaled values (For example, pass in the value of ActualTop(), not WinTop).\
+      \  The final two parameters are optional, and allows you to break the components\
+      \ into columns.\n\nAutoPosition() first applies the padding values, then divides\
+      \ the length of the passed-in array by the difference between the lower bound\
+      \ and the upper bound to find the component offset.  It adjusts each of the\
+      \ array member's WinWidth, WinLeft values based on the values passed into the\
+      \ function, and adjust each array member's WinTop value based on component offset.\
+      \  It does NOT modify the WinHeight value of the components.  If the total number\
+      \ of components multiplied by the offset value would be greater than the bounded\
+      \ area, AutoPosition() writes an error to the log, and returns.  AutoPosition()\
+      \ accounts for the bBoundToParent and bScaleToParent values, and internally\
+      \ adjusts the ratios of the components accordingly.\n\nA closely related function\
+      \ is AutoPositionOn().  This function is simply a wrapper for AutoPosition(),\
+      \ by allowing you to specify a component (such as a background image) that you\
+      \ would like to use for positioning, with parameters for padding percentages.\n\
+      \n[[Legacy:GUISectionBackground|GUISectionBackground]] was sort of the evolution\
+      \ of AutoPosition & AutoPositionOn().  GUISectionBackground is essentially a\
+      \ background image that auto-positions other components.  [[Legacy:GUISectionBackground|GUISectionBackground]]\
+      \ has modifiable background & header images, and you feed it components to be\
+      \ managed using its ManageComponent() function.\n\n====Multiple instancing====\n\
+      \nOne of the largest benefits of using AutoPosition() to position your components\
+      \ is that you can very easily take advantage of multiple instancing.  Multiple\
+      \ instancing is where you have one templated subobject definition, but assign\
+      \ multiple variables to it.\n\n<uscript>\n\tBegin Object class=GUIImage Name=HUDPreviewImage\n\
+      \ \t\tImageStyle=ISTY_Scaled\n \t\tImageColor=(R=255,G=255,B=255,A=255)\n \t\
+      \tWinHeight=0.5\n\t\tRenderWeight=0.51\n\tEnd Object\n\ti_HUDTop=HUDPreviewImage\n\
+      \ti_HUDTopRight=HUDPreviewImage\n\ti_HUDTopLeft=HUDPreviewImage\n\ti_HUDMiddleRight=HUDPreviewImage\n\
+      \ti_HUDMiddleLeft=HUDPreviewImage\n\ti_HUDMiddleRight=HUDPreviewImage\n\ti_HUDBottomLeft=HUDPreviewImage\n\
+      \ti_HUDBottomRight=HUDPreviewImage\n\ti_HUDBottom=HUDPreviewImage\n</uscript>\n\
+      \nYou can then pass these components to AutoPosition() as an array, and they\
+      \ will be automatically positioned for you.  If you need to make changes to\
+      \ the original template image, you'd only need to make this change in one place.\
+      \  Likewise, if you wanted to add additional components, or remove components,\
+      \ you'd need only to add/remove the assignments in default properties.  No more\
+      \ resizing dozens of components in design mode every time you change one option!\
+      \ :)\n\n===Overriding automated subobject definitions===\n\n----\n\n'''Mychaeel:'''\
+      \ That's a very neat set of new features you're describing here.  :-)  It's\
+      \ just a bit of a pity that it's specific to the GUI classes and not made so\
+      \ generic that all classes could benefit from it &ndash; by allowing the \"\
+      automated\" keyword in any class, introducing an \"InitObject\" event in [[Legacy:Object|Object]]\
+      \ and defining a native \"InitObjects\" function in Object instead of InitComponents\
+      \ in [[Legacy:GUIMultiComponent|GUIMultiComponent]].\n\n===Advanced use of Ingame\
+      \ Gui Designer===\n\nBefore reading this, you will want to read the mention\
+      \ of the Gui Designer in [[Legacy:GUIController|GUIController]] which allows\
+      \ you to move GUI components around in the menus ingame and play with their\
+      \ properties.\n\nThere have been a few additions to the in-game menu authoring\
+      \ system. The most noticable is that when you select a component a properties\
+      \ window (a la UnrealEd) will appear where you can edit the selected component.\
+      \ Obviously you need to be running in windowed mode for this to happen.\n\n\
+      [[Image:Legacy_gui_editor_screen1.jpeg|]]\n\nWhen you declare a variable as\
+      \ automated it will show up in the last category on this menu. If you expand\
+      \ the automated variable you will have two options as usual with adding new\
+      \ elements in the editor. You can select a previously created button or you\
+      \ can go down one and click New. Here it will give you a list of classes that\
+      \ you can put into your automated variable. For example, if you declare an automated\
+      \ GUIButton then the list of possible classes that variable can be include GUIButton,\
+      \ GUIComboButton, GUIEditBox. Once created you can set all of it's attributes\
+      \ of size and appearance. If you then hit CTRL+X while you have the top level\
+      \ menu selected it will export the Object definitions for '''ALL''' your automated\
+      \ variables. You could then just copy and paste it into the default properties.\
+      \ (It turns out to not be that easy)\n\nHere's where I'm a little confused about\
+      \ what they intended. The controls do not actaully instantiate on the menu and\
+      \ you can't visually manipulate them unless you add them to the Controls array\
+      \ in the editor window. I thought one of the advantages of an automated variable\
+      \ is that when you create it it is automatically added to the Controls array\
+      \ at run-time so you don't have to mess with filling in the array yourself.\
+      \ \n\nAnyway, I'll just explain how I did it and let someone else correct me.\
+      \ So after filling in the automated variables with the types of controls each\
+      \ of them is assigned an automatically generated name. I then add them to the\
+      \ Controls array so I can visually manipulate them on the screen so I go to\
+      \ Menu->Controls in the editor window and select '''Add'''. In the drop-down\
+      \ box select the automatically generated name that was given to the control\
+      \ you want to instantiate. Note you can also select from the other controls\
+      \ that are declared in other objects. After that click the ''Init'' button.\
+      \ Now the control should appear on the screen and you can edit it. One thing\
+      \ to note is that the control specified by the automated variable is _not_ a\
+      \ template. If you change the instantiated control then it changes the automated\
+      \ variable declaration too. Therefore you couldn't have two different buttons\
+      \ that used the same class, you'd have to make a seperate class for each.\n\n\
+      So once you've got everything set up you can select the top level menu and hit\
+      \ CTRL+X (I've had to hit it a couple of times before for it to actually copy\
+      \ sometimes, dunno) and it will export the menu to the clipboard.\n\nOk, a couple\
+      \ of things that confuse me about the exportet text. It starts with an Object\
+      \ declaration of the Menu itself, this isn't what we want I don't think so I\
+      \ just delete that. Ok, now notice that it does assign the object you've created\
+      \ to the automated variable, '''BUT''' on mine at least it doesn't corrently\
+      \ identify the package (ie. Package.GUIButton1 instead of VTactics.TestMenu.GUIButton1).\
+      \ So I have to change that for each control. Also, I delete the ToolTip entry.\
+      \ Now since we instantiated the controls in the Control array you'll also notice\
+      \ the entries in that array (ie. Controls(0)=GUIButton'VTactics.TestMenu.GUIButton1').\
+      \ I also delete these entries since being automated they are added at run-time.\n\
+      \nI checked with with someone \"in the know\" and he said that everything I\
+      \ wrote above is pretty much accurate. He said that because of it's unpolished\
+      \ state the built-in GUI Designer still isn't quite ready for full fledged menu\
+      \ creation but more for just tweaking. He also said that he was planning on\
+      \ fixing a few of the above problems with the exported menu definitions so that\
+      \ there wouldn't be a need for as much clean-up afterwards. He said he knows\
+      \ the whole process is pretty rough still but that's why he made the GUIDesigner.dll\
+      \ self contained so it could be easily upgraded later.\n\n'''RegularX:''' Great\
+      \ info.  I might have to post a bounty for decent tutorials on starting from\
+      \ scratch with some of this stuff.  It looks immensely powerful drifting through\
+      \ the UScript code, but unfortunately it also looks just plain immense. For\
+      \ stuff I'm trying to get down for the next MSUC deadline, I might have to stick\
+      \ to 2k3 GUI, just because it's what I'm familiar with...\n\nTODO :\n\n===The\
+      \ finer art of 'default vs. instanced'==="
+  properties: []
+  revId: 1443
+name: "Legacy:Automated Component"
+revision:
+  revid: 1443
+  parentid: 1445
+  user: "219-88-205-170.adsl.ihug.co.nz"
+  timestamp: 1096452915.000000000
+  comment: "one more time now"
+timestamp: 1668763274.813847000

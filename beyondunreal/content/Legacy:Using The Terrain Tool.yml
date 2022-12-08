@@ -1,0 +1,749 @@
+---
+parse:
+  title: "Legacy:Using The Terrain Tool"
+  text:
+    text: "<p><b>Tahngarth:</b> Here i will try to post a fairly comprehensive guide\
+      \ to the terrain tool, geared mostly to beginning mappers, but certainly useful\
+      \ to anyone. I will walk through creating a sample peice of terrain and describe\
+      \ how the tools are used to accomplish the task.</p>\n<p></p>\n<div id=\"toc\"\
+      \ class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n</div>\n<ul>\n<li\
+      \ class=\"toclevel-1 tocsection-1\"><a href=\"#Terrain_Building_Features_in_UED_3.0\"\
+      ><span class=\"tocnumber\">1</span> <span class=\"toctext\">Terrain Building\
+      \ Features in UED 3.0</span></a>\n<ul>\n<li class=\"toclevel-2 tocsection-2\"\
+      ><a href=\"#Creating_Terrain_and_the_TerrainInfo_Actor\"><span class=\"tocnumber\"\
+      >1.1</span> <span class=\"toctext\">Creating Terrain and the TerrainInfo Actor</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-3\"><a href=\"#The_Terrain_Generator\"><span\
+      \ class=\"tocnumber\">1.2</span> <span class=\"toctext\">The Terrain Generator</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-4\"><a href=\"#More_on_Layers\"><span class=\"\
+      tocnumber\">1.3</span> <span class=\"toctext\">More on Layers</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-5\"><a href=\"#The_Paint_Tool\"><span class=\"\
+      tocnumber\">1.4</span> <span class=\"toctext\">The Paint Tool</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-6\"><a href=\"#Layering\"><span class=\"tocnumber\"\
+      >1.5</span> <span class=\"toctext\">Layering</span></a></li>\n<li class=\"toclevel-2\
+      \ tocsection-7\"><a href=\"#Vertex_Edit_Tool\"><span class=\"tocnumber\">1.6</span>\
+      \ <span class=\"toctext\">Vertex Edit Tool</span></a></li>\n<li class=\"toclevel-2\
+      \ tocsection-8\"><a href=\"#Visibility_Tool\"><span class=\"tocnumber\">1.7</span>\
+      \ <span class=\"toctext\">Visibility Tool</span></a></li>\n<li class=\"toclevel-2\
+      \ tocsection-9\"><a href=\"#Pitfalls_of_Terrain_Creation_in_Unreal_2.27s_UnrealEd\"\
+      ><span class=\"tocnumber\">1.8</span> <span class=\"toctext\">Pitfalls of Terrain\
+      \ Creation in Unreal 2's UnrealEd</span></a></li>\n</ul>\n</li>\n<li class=\"\
+      toclevel-1 tocsection-10\"><a href=\"#Discussion\"><span class=\"tocnumber\"\
+      >2</span> <span class=\"toctext\">Discussion</span></a></li>\n</ul>\n</div>\n\
+      <p></p>\n<h2><span class=\"mw-headline\" id=\"Terrain_Building_Features_in_UED_3.0\"\
+      >Terrain Building Features in UED 3.0</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Using_The_Terrain_Tool?section=1\"\
+      \ title=\"Edit section: Terrain Building Features in UED 3.0\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>A lot of people\
+      \ probably look at a stock map in <a href=\"/Legacy:UT2003\" title=\"Legacy:UT2003\"\
+      \ class=\"mw-redirect\">UT2003</a> such as DM-Antalus or DOM-SepukkuGorge and\
+      \ wonder, \"how the heck do you make that terrain like that?\" Well, hopefully\
+      \ by the bottom of this page, the how-to part will be less alien to you. In\
+      \ the top left <a href=\"/Legacy:Toolbox\" title=\"Legacy:Toolbox\">toolbox</a>\
+      \ of UED which contains the tools such as actor scaling, actor rotation, and\
+      \ face drag, you will see a shiny (if you're excited about this) button with\
+      \ a mountain on it. this is the <b>Terrain Tool.</b> Say good bye to the BSP\
+      \ Terrain button. Most of your work will be done in the perspective view, so\
+      \ you may want to make it larger when working with terrain.</p>\n<p>The terrain\
+      \ tool is actually a collection of several more tools. When clicked, the terrain\
+      \ button opens a window containing all the functions you need to take an initially\
+      \ flat parcel of land, and 'paint' mountains or valleys on it, flatten them,\
+      \ create bumpy ground, paint textures on the surface, carve out holes to allow\
+      \ for tunnels and whatnot to connect to it, and scale and rotate those textures.\
+      \ The tool generates a heightmap as you edit, eliminating the need to import\
+      \ a texture into UnrealEd to add terrain to your level.</p>\n<h3><span class=\"\
+      mw-headline\" id=\"Creating_Terrain_and_the_TerrainInfo_Actor\">Creating Terrain\
+      \ and the TerrainInfo Actor</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Using_The_Terrain_Tool?section=2\"\
+      \ title=\"Edit section: Creating Terrain and the TerrainInfo Actor\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h3>\n<p>Some Terms:</p>\n\
+      <dl>\n<dt>heightmap&#160;</dt>\n<dd>a greyscale texture used by Unrealed to\
+      \ generate terrain - black is low elevation, white is high elevation. it should\
+      \ be 64x64 pixels.</dd>\n<dt><a href=\"/Legacy:TerrainInfo\" title=\"Legacy:TerrainInfo\"\
+      >TerrainInfo</a>&#160;</dt>\n<dd>this is the actor that makes the terrain exist.\
+      \ The terrain is projected using this actor as the 3D origin. also contains\
+      \ the associated variables. must be within a <a href=\"/Legacy:Zone\" title=\"\
+      Legacy:Zone\">zone</a> that allows terrain to function (bTerrainZone=True)</dd>\n\
+      </dl>\n<p>Unrealed creates your terrain by generating a static mesh based on\
+      \ a heightmap texture, centered around a <a href=\"/Legacy:TerrainInfo\" title=\"\
+      Legacy:TerrainInfo\">TerrainInfo</a> actor. The TerrainInfo actor will be the\
+      \ XYZ origin of your terrain (i.e. the center) so keep that in mind when you\
+      \ place the terrain. You need to have empty space to put the terrain in, and\
+      \ then create the actor. That said, lets try it:</p>\n<ol>\n<li>Use the CubeBuilder\
+      \ to build a cube with dimensions 4096x4096x4096. Center it over the origin\
+      \ and subtract. Pick a light colored texture for it, this will make the terrain\
+      \ editing easier.</li>\n</ol>\n<ol>\n<li><a href=\"/Legacy:Add_An_Actor\" title=\"\
+      Legacy:Add An Actor\">Add an Actor</a> &gt;&gt; <a href=\"/Legacy:Info\" title=\"\
+      Legacy:Info\">Info</a> &gt;&gt; <a href=\"/Legacy:ZoneInfo\" title=\"Legacy:ZoneInfo\"\
+      >ZoneInfo</a> and position it within your new space.</li>\n<li><a href=\"/Legacy:Set_The_Following_Properties\"\
+      \ title=\"Legacy:Set The Following Properties\">Set the following properties</a>\
+      \ for the ZoneInfo:\n<ul>\n<li>ZoneInfo -&gt; bTerrainZone = True (otherwise\
+      \ your terrain won't show up)</li>\n<li>ZoneLight -&gt; AmbientLight – You may\
+      \ also want to temporairly set this to to 180 or so, so that you can see your\
+      \ terrain when you work on it. Set it back to 0 when you want to put more elaborate\
+      \ lighting on it.</li>\n</ul>\n</li>\n</ol>\n<ol>\n<li>Now click the Terrain\
+      \ Tool button in the top <a href=\"/Legacy:Toolbox\" title=\"Legacy:Toolbox\"\
+      >toolbox</a>. it looks like this: [[Image:Legacy_TerrainIcon.gif|]] . This opens\
+      \ the <a href=\"/edit/Legacy:Terrain_Editing?redlink=1\" class=\"new\" title=\"\
+      Legacy:Terrain Editing (page does not exist)\">Terrain Editing</a> window. Youll\
+      \ want to position this window so the perspective view and XY view are reasonably\
+      \ visible.</li>\n</ol>\n<ol>\n<li>The bottom half of the window has three tabs:</li>\n\
+      </ol>\n<ul>\n<li>Terrains – shows a list of all of the TerrainInfo actors in\
+      \ the level, and on the right side shows the heightmap and other information\
+      \ for the currently selected TerrainInfo; and allows you to add new TerrainInfos.</li>\n\
+      <li>Layers – shows the list of layers for the current Terrain selected on the\
+      \ Terrains tab. Layers contain the information about all the textures that are\
+      \ being used in the terrain. the list is hierarchal, with the base layer being\
+      \ shown first. the other layers are \"painted\" on top of each other in the\
+      \ order listed.</li>\n<li>Decorations- Allows you to add features to your terrain.\
+      \ <font color=\"red\">Note:</font> any decor you add here won't have any collsion\
+      \ (i.e. you can walk through them.) Only use this for things such as grass and\
+      \ such that shouldnt impede movement.</li>\n</ul>\n<p><br /></p>\n<ol>\n<li>Click\
+      \ the New button on the Terrains tab to create a new TerrainInfo. This will\
+      \ open up the New Terrain window, where you set the following properties: (IMPORTANT-you\
+      \ only have one chance to alter the options here, and the <a href=\"/Legacy:UnrealEd_Goblin\"\
+      \ title=\"Legacy:UnrealEd Goblin\">UnrealEd Goblin</a> can become upset when\
+      \ you delete TerrainInfo actors, beacuse the heightmap remains in the terrain\
+      \ editor(and your level) list even after deleting the actor, and there's no\
+      \ delete button in the Terrain Editing window. having UED collect its garbage\
+      \ should fix that(i think), but Let's keep the UED goblin happy.&#160;:) )</li>\n\
+      </ol>\n<p><br /></p>\n<table>\n<tr>\n<td><i><b>Property</b></i></td>\n<td><i><b>Usage</b></i></td>\n\
+      </tr>\n<tr>\n<td></td>\n<td></td>\n</tr>\n<tr>\n<td>Package</td>\n<td>Specify\
+      \ the name of the package to put the terrain information in. For this guide\
+      \ (but also good in practice), put this in <a href=\"/Legacy:MyLevel\" title=\"\
+      Legacy:MyLevel\">MyLevel</a>.</td>\n</tr>\n<tr>\n<td>Group</td>\n<td>You can\
+      \ specify a group within the package. Not required, for this you can leave it\
+      \ blank.</td>\n</tr>\n<tr>\n<td>Name</td>\n<td>Name your Terrain. Giving it\
+      \ a descriptive name will help you identify which is which if you have more\
+      \ than one terrain, but for this guide, call it MyTerrain.</td>\n</tr>\n<tr>\n\
+      <td>Xsize and Ysize</td>\n<td>Control the dimensions of the terrain. It is important\
+      \ to note that these are really scale values. That is, the heightmap texture\
+      \ is 64x64 pixels, and the actual dimensions of the terrain will be (64 x Xsize)\
+      \ by (64 x Ysize). The default values of 256 x 256 will cause our terrain to\
+      \ extend <b>way</b> beyond the dimensions of the cube you created. since our\
+      \ room is 4096 x 4096, set these values to 64 (64x64=4096).</td>\n</tr>\n<tr>\n\
+      <td>Height</td>\n<td>Self explanitory. Your hills and valleys cant stretch outside\
+      \ of this height. You dont need to change this unless you need it to be bigger\
+      \ (unlikely).</td>\n</tr>\n</table>\n<pre>When you're satisfied with the values,\
+      \ click OK.\n</pre>\n<ol>\n<li>Now position the HeightInfo actor that appears\
+      \ in the level, and position it in the center of your cube.<br />\n<br />\n\
+      Great! Now we have some nice, completely invisible terrain. Before you can work\
+      \ on your terrain (or use the terrain generator) you need to define at least\
+      \ a base layer. Open up the texture browser and find the texture you want the\
+      \ majority of the terrain to look like. For our example, open the ArboreaTerrain\
+      \ package, and find and select Sand01AR. This is a plain dirt texture that makes\
+      \ a good base.</li>\n<li>In the Terrain Editing window, click on the Layers\
+      \ tab, then click the New... button. This opens a window similar to the New\
+      \ Terrain button. Use Mylevel for the Package, and call the layer Dirt_Base\
+      \ or something similar so you know what it is. The other properties work as\
+      \ follows:</li>\n</ol>\n<p><br /></p>\n<table>\n<tr>\n<td><i><b>Property</b></i></td>\n\
+      <td><i><b>Usage</b></i></td>\n</tr>\n<tr>\n<td></td>\n</tr>\n<tr>\n<td>AlphaHeight\
+      \ and AlphaWidth</td>\n<td>These directly affect the size of the texture on\
+      \ the landscape. You want these values to match the dimensions of the heightmap,\
+      \ which is 64x64 here. Set these accordingly.</td>\n</tr>\n<tr>\n<td>AlphaFill</td>\n\
+      <td>Sets the tint and opacity (alpha channel in image editing terms) of the\
+      \ layer. This property has four values: A (alpha) and the RGB color channels.\
+      \ The base layer should be completely opaque, so set A=0 and R G and B = 255;\
+      \ the color box should show white.</td>\n</tr>\n<tr>\n<td>ColorFill</td>\n<td>Color\
+      \ to use for drawing. White (R=255,G=255,B=255) means draw everything in its\
+      \ default colors. If any color component is lower than 255 the specific color\
+      \ component of the Texture or Font will be drawn darker. (or more translucent,\
+      \ see <a href=\"/Legacy:Color_Blending\" title=\"Legacy:Color Blending\">color\
+      \ blending</a>)</td>\n</tr>\n<tr>\n<td>UScale and VScale</td>\n<td>The initial\
+      \ scaling factors of the texture. Leave these at 1, it is easier to adjust the\
+      \ scaling with the Texture Scale terrain tool.</td>\n</tr>\n</table>\n<p><br\
+      \ /></p>\n<ol>\n<li>Hit OK and create the layer. At this point, you should set\
+      \ Realtime Preview on by clicking the little joystick in the perspective view.\
+      \ Base layer defined, rebuilding the map should cause your terrain's surface\
+      \ to appear. Do a full rebuild of the map.</li>\n</ol>\n<p>Ta-Da! You now have\
+      \ a brand new, tottaly flat and barren parcel of dirt! Now, we will discuss\
+      \ how to turn this featureless plane into something more interesting first by\
+      \ using the terrain generator, and then by manually editing the surface with\
+      \ the terain editor's tools.</p>\n<h3><span class=\"mw-headline\" id=\"The_Terrain_Generator\"\
+      >The Terrain Generator</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Using_The_Terrain_Tool?section=3\" title=\"\
+      Edit section: The Terrain Generator\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Can't think of how you want your terrain to look?\
+      \ Want UnrealEd to give you something more interesting to start with? Use the\
+      \ terrain generator.</p>\n<p>To use the terrain generator, click the Terrain\
+      \ Tool, and in the terrain editing box, select your terraininfo. Then look at\
+      \ the top of the terrain editing window, and you will see two tabs. The terrain\
+      \ generator is on the tab labled Misc. Just supply some parameters, and click\
+      \ Build. Instant mountains. The settings are as follows:</p>\n<table>\n<tr>\n\
+      <td><i><b>Setting</b></i></td>\n<td><i><b>Function</b></i></td>\n</tr>\n<tr>\n\
+      <td></td>\n</tr>\n<tr>\n<td>Steps</td>\n<td>Controls how many passes the generator\
+      \ makes over the terrain. more steps mean more hills.</td>\n</tr>\n<tr>\n<td>Strength</td>\n\
+      <td>Controls the magnitude of the hills being generated. Max value 255. High\
+      \ values mean steep, craggy peaks that leave almost no place to walk, and low\
+      \ values mean gentle rolling hills that are pretty flat overall.</td>\n</tr>\n\
+      <tr>\n<td>Use entire Heightmap?</td>\n<td>Tick this to have the generated surface\
+      \ use all of the terrain space. Unticked, only uses what is currently selected\
+      \ with the Select tool in the terrain editor.</td>\n</tr>\n</table>\n<h3><span\
+      \ class=\"mw-headline\" id=\"More_on_Layers\">More on Layers</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Using_The_Terrain_Tool?section=4\"\
+      \ title=\"Edit section: More on Layers\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>In order to vary the look of your terrain, you must\
+      \ add additional layers. Select any additonal textures you want, and when creating\
+      \ the layers, set the color settings to the exact opposite of the base layer,\
+      \ otherwise the base layer will show over all of the others rendering other\
+      \ layers invisible. Say you made some craggy peaks in the terrain you created\
+      \ above, and you want them to have a rocky surface different from the dirt texture\
+      \ used for the base layer. All you have to do is make a layer with the rocky\
+      \ texture, and then use the terrain tools to apply it to the surface. Let's\
+      \ look at these tools now.</p>\n<h3><span class=\"mw-headline\" id=\"The_Paint_Tool\"\
+      >The Paint Tool</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Using_The_Terrain_Tool?section=5\" title=\"\
+      Edit section: The Paint Tool\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>This tool allows you to \"paint\" mountains and valleys\
+      \ on your terrain. This and all of the tools in the terrain editor have two\
+      \ functions, controlled by the left mouse button and the right. For the paint\
+      \ tool, using cntrl-left mouse button combination (hereafter LMB) raises the\
+      \ terrain height where you click in drag in the [3-D view], and using the cntrl-right\
+      \ mouse button combination (RMB) lowers it. If you find that a huge pillar skyrockets\
+      \ out of the ground where you click, just drag the Strength slider to the left\
+      \ to reduce the magnitude of the change.</p>\n<p><b>Roland:</b> But don't select\
+      \ a layer with a texture...if you do this, you paint the texture, not the height\
+      \ of the terrain...</p>\n<h3><span class=\"mw-headline\" id=\"Layering\">Layering</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Using_The_Terrain_Tool?section=6\" title=\"Edit section:\
+      \ Layering\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>To change the textures of terrain instead of having the same boring texture\
+      \ that doesn't look realistic for mountains or the like, open the terrain tool,\
+      \ click on the <a href=\"/Legacy:TerrainInfo\" title=\"Legacy:TerrainInfo\"\
+      >TerrainInfo</a> you want to edit, and then click on the 'Layers'</p>\n<p>tab.\
+      \ Before you do anything else, open up the Texture Browser and select a texture\
+      \ to be used as a new texture for (4 example) your new mountain you want to\
+      \ look realistic. Once done that, go back to the 'Terrain Editing Tool' and\
+      \ in the 'Layer' tab, click on the button called ' New '. A new window will\
+      \ open.</p>\n<p>You'll see Package, Group, Name, Alpha Height, Alpha Width,\
+      \ Alpha fill, Color Fill, UScale and VScale. For Package, type in MyLevel. (which\
+      \ you should always type in if your doing Terrain or importing of textures or\
+      \ w/e) For 'Group', you can either leave it blank, or type in something like\
+      \ TerrainLayers. For Name, Type whatever you want, for example, Terrain1. If\
+      \ you are a beginner, I would leave the Alpha height and Width , and Alpha Fill\
+      \ alone. For color fill, I believe this is the color that will 'Fade' in to\
+      \ the other layers when you paint the texture on. This must be a different color\
+      \ for each layer. ( Ex- A layer's color fill cannot be the same as another layers\
+      \ color fill. Ie. Red-Red is wrong and Red-Blue will work great&#160;;) )</p>\n\
+      <p>U and VScale are how big the texture will be. I works exactly like the surface\
+      \ properties under the tab Pan/Rot/Scale.</p>\n<p>Finally, when you are satisfied\
+      \ with your new layer's settings, click 'Ok .' Now, there should be a new 'Layer'\
+      \ called Terrain1 (or w/e you called it under 'Name' ) Now click on the layer\
+      \ and then click on the 'Painting' tool under the 'Terrain Editing Tools' Menu.\
+      \ Now, on your terrain in your level. Use the paint controls ( CTR+LMB to erase\
+      \ the texture and CTR-RMB to add the texture, I believe ) on the area you want\
+      \ to change the texture to. depending on the 'Strength' you set, the texture\
+      \ will 'fade' in covering the older texture.</p>\n<div class=\"center\">\n<div\
+      \ class=\"floatnone\"><a href=\"/File:Legacy_myth_terrain_layer1.jpeg\" class=\"\
+      image\" title=\"Before Layering.\"><img alt=\"Before Layering.\" src=\"/w/images/Legacy_myth_terrain_layer1.jpeg\"\
+      \ width=\"384\" height=\"384\" /></a></div>\n</div>\n<div class=\"center\">\n\
+      <div class=\"floatnone\"><a href=\"/File:Legacy_myth_terrain_layer2.jpeg\" class=\"\
+      image\" title=\"After Layering (Three layers&#160;: Grass, Mountain Side, Rocky\
+      \ Top.)\"><img alt=\"After Layering (Three layers&#160;: Grass, Mountain Side,\
+      \ Rocky Top.)\" src=\"/w/images/Legacy_myth_terrain_layer2.jpeg\" width=\"384\"\
+      \ height=\"384\" /></a></div>\n</div>\n<h3><span class=\"mw-headline\" id=\"\
+      Vertex_Edit_Tool\">Vertex Edit Tool</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Using_The_Terrain_Tool?section=7\"\
+      \ title=\"Edit section: Vertex Edit Tool\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<h3><span class=\"mw-headline\" id=\"Visibility_Tool\"\
+      >Visibility Tool</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Using_The_Terrain_Tool?section=8\" title=\"\
+      Edit section: Visibility Tool\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>At first look at this tool, I thought, \"this is a\
+      \ useless tool, a tool that nobody will ever use.\" I've just found out what\
+      \ people use it for. However, I will just explain this tool and leave the implementation\
+      \ up to you, for now at least. What this tool does is change the area that you\
+      \ have used it on, from a solid surface, to a non-solid/invisible surface. CTRL-RMB\
+      \ makes it Invisible/Non-Solid and CTRL-LMB makes it Visible/Solid.</p>\n<h3><span\
+      \ class=\"mw-headline\" id=\"Pitfalls_of_Terrain_Creation_in_Unreal_2.27s_UnrealEd\"\
+      >Pitfalls of Terrain Creation in Unreal 2's UnrealEd</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Using_The_Terrain_Tool?section=9\"\
+      \ title=\"Edit section: Pitfalls of Terrain Creation in Unreal 2's UnrealEd\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n<p>For\
+      \ some reason, the creation of terrain has been made somewhat tricky, because\
+      \ the Terrain Editing palette is missing the ability to create TerrainInfo Actors\
+      \ by itself, and of course, a blank heightmap. My guess is that Legend fell\
+      \ behind on their updates! The UT2003 editor seems to be in better shape. Honestly&#160;:rolleyes:</p>\n\
+      <p>This means that you have to manually create the TerrainInfo actor, and then\
+      \ set the heightmap in the TerrainInfo's properties (e.g. MyLevel.heightmaps.map1).\
+      \ The heightmap texture has to already exist, or you'll crash UnrealEd. Then\
+      \ you can make use of the Terrain Editing tools in the palette, as above.</p>\n\
+      <h2><span class=\"mw-headline\" id=\"Discussion\">Discussion</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Using_The_Terrain_Tool?section=10\"\
+      \ title=\"Edit section: Discussion\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p><b>Birelli:</b> When I do this exact procedure with\
+      \ a 4096*4096 terrain block as it says in the tutorial, it comes out fine. However,\
+      \ if I try to make a terrain block that is 49152*49152 I get a GPF. Is there\
+      \ some sort of maximum terrain block size? Can someone else try to make a terrain\
+      \ block this big (x and y size 768 (768 * 64 = 49152))? I can't think of why\
+      \ there would be some limitation on the size of terrain, but it's always possible.\
+      \ Situations like this make you wish that UED would handle GPF's gracefully,\
+      \ ending the editor seems about the worst possible choice for handling this&#160;:(.</p>\n\
+      <p><b>Tahngarth:</b> don't <b><i>most</i></b> programs terminate after a GPF?\
+      \ A crash generally does end a program after all.</p>\n<p><b>Highlander:</b>\
+      \ i have not used terrain quite that large, however with a 512x512 pixel terrain\
+      \ map i get a GPF if i smooth over the edge of the map, so id say there is some\
+      \ limit to how big the terrain can be. (keep in mind you can scale the terrain\
+      \ so that each pixel in the terrain map is worth more than 64 units)</p>\n<p><b>AlphaOne:</b>\
+      \ I tried some other tools over the edge of the map (moving away from the center)\
+      \ and it always crashed on me. The size of the terrain was double the default\
+      \ one. Also, I tried to decorate my map with trees. The static meshes displayed\
+      \ strangely: I could only see the leaves. The wooden parts were completely transparent.\
+      \ That happened with a couple different tree meshes.???!?!?!?!? Why?</p>\n<p><b>G-LiTe:</b>\
+      \ AlphaOne: Some static meshes only have leaves while others are a complete\
+      \ tree, they probably had a reason to do that. Look in the static mesh browser\
+      \ to see which you can use. Also, you're probably better of placing the trees\
+      \ seperately as terrain decolayers are non-solid, which means you'd walk right\
+      \ through the tree. (unless that's what you want or it's just background)</p>\n\
+      <p><b>AlphaOne:</b> I can see the whole tree. I want to use this methods just\
+      \ cause it's easier, and it has a good way of hiding trees from far away.</p>\n\
+      <dl>\n<dd><b>Mychaeel:</b> You can use the static mesh's CullDistance property\
+      \ (in the <i>Display</i> section of the property sheet) to the same effect.</dd>\n\
+      </dl>\n<p><b>Tahngarth:</b> the decorations tab is really meant for small things\
+      \ like grass and such. In fact I think only flat things will work properly with\
+      \ it.</p>\n<hr />\n<p><b>ZxAnPhOrIaN:</b> We need screens in here!!</p>\n<hr\
+      \ />\n<p><b>Bot 40:</b>Is there any way to rotate a terrain brush? Also, I can't\
+      \ find an external paint prog that can read 16 bit grayscale .bmp files so I\
+      \ can't rotate the heightmap outside UED and re-import.</p>\n<p><b>Aphex:</b>\
+      \ Sure is bot, try here: <a rel=\"nofollow\" class=\"external free\" href=\"\
+      http://homepage.ntlworld.com/martingbell/ut2003/\">http://homepage.ntlworld.com/martingbell/ut2003/</a></p>\n\
+      <p><b>ZxAnPhOrIaN:</b> I have a tutorial on the <a href=\"/Legacy:Manipulating_Terrain\"\
+      \ title=\"Legacy:Manipulating Terrain\">Manipulating Terrain</a> Page. Have\
+      \ a look!</p>\n<p><b>MythOpus:</b> I added info on how to 'paint' different\
+      \ textures on the same TerrainInfo. (layering)</p>\n<hr />\n<p><b>Original9:</b>\
+      \ Shadows become more unsharp when the heightmap gets smaller. Shadows are also\
+      \ affected by how big the scale of the terrian is. For example: Lets say that\
+      \ the heightmap is 128x128 and has a scale of 196x196x32. If the object is smaller\
+      \ the in the quad of the the terrian the shadow will not appear. Taller objects,\
+      \ however, will make a blurred shadow.</p>\n<hr />\n<p><b>MinisterFish:</b>\
+      \ For some reason, the terrain editor seems broke in UED 3.0 for Unreal 2. I\
+      \ was trying different ways in getting it to work but never can get it set up.\
+      \ This tutorial can get confusing too, compared to some like the one on leveldesigner.com.\
+      \ This page may need to be fused with some other terrain pages.</p>\n<p><b>Tarquin:</b>\
+      \ Much of this is getting refactored into:</p>\n<ul>\n<li><a href=\"/Legacy:Terrain_Mode\"\
+      \ title=\"Legacy:Terrain Mode\">Terrain Mode</a> – overview</li>\n<li><a href=\"\
+      /Legacy:Terrain_Texture_Layer\" title=\"Legacy:Terrain Texture Layer\">Terrain\
+      \ Texture Layer</a> – adding and editing texture layers</li>\n<li><a href=\"\
+      /Legacy:Terrain_Decoration_Layer\" title=\"Legacy:Terrain Decoration Layer\"\
+      >Terrain Decoration Layer</a> – adding and editing deco layers (in progress!)</li>\n\
+      </ul>\n<hr />\n<p><b>Kerlin:</b> Ugh. Maybe <a href=\"/Legacy:Creating_A_Terrain\"\
+      \ title=\"Legacy:Creating A Terrain\">Creating A Terrain</a> should be pulled\
+      \ into this page. The more I look, the more I find stuff that needs reorg.&#160;;)\
+      \ Like I said, if I'm jackin stuff up, let me know...otherwise I'm gonna try\
+      \ to help out however I can.</p>\n<p><b>Tarquin:</b> Ah. This page is old and\
+      \ I think was up for deletion. I <i>was</i> cleaning up the terain area but\
+      \ I didn't make it all the way through</p>\n<p><b>Kerlin:</b> Then I guess this\
+      \ is a \"Delete Me page\"? Are you sure, though? Seems like some good info here.\
+      \ Just want to make sure we don't get rid of it unless it exists elsewhere.</p>\n\
+      <p><b>Tarquin:</b> It's not yet \"Delete me\". <a href=\"/Legacy:Terrain\" title=\"\
+      Legacy:Terrain\">Terrain</a> is the starting point. there's a few tutorial pages\
+      \ and I've not yet worked out what this page does. I'll give it some thought.</p>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.124 seconds\nReal time usage:\
+      \ 0.253 seconds\nPreprocessor visited node count: 43/1000000\nPreprocessor generated\
+      \ node count: 58/1000000\nPost‐expand include size: 22/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:3391-0!*!0!!en!5!* and timestamp 20221118020305 and revision\
+      \ id 8745\n -->\n"
+  categories:
+  - sortkey: "Using The Terrain Tool"
+    name: "Legacy_Mapping"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Info"
+  - ns: 100
+    exists: true
+    name: "Legacy:Terrain Decoration Layer"
+  - ns: 100
+    exists: true
+    name: "Legacy:Terrain Texture Layer"
+  - ns: 100
+    exists: true
+    name: "Legacy:Manipulating Terrain"
+  - ns: 100
+    exists: true
+    name: "Legacy:UT2003"
+  - ns: 100
+    exists: true
+    name: "Legacy:TerrainInfo"
+  - ns: 100
+    exists: true
+    name: "Legacy:MyLevel"
+  - ns: 100
+    exists: true
+    name: "Legacy:Creating A Terrain"
+  - ns: 100
+    exists: true
+    name: "Legacy:Color Blending"
+  - ns: 100
+    exists: true
+    name: "Legacy:Set The Following Properties"
+  - ns: 100
+    exists: true
+    name: "Legacy:Zone"
+  - ns: 100
+    exists: true
+    name: "Legacy:Toolbox"
+  - ns: 100
+    exists: true
+    name: "Legacy:Terrain Mode"
+  - ns: 100
+    exists: true
+    name: "Legacy:Add An Actor"
+  - ns: 100
+    exists: false
+    name: "Legacy:Terrain Editing"
+  - ns: 100
+    exists: true
+    name: "Legacy:Terrain"
+  - ns: 100
+    exists: true
+    name: "Legacy:ZoneInfo"
+  - ns: 100
+    exists: true
+    name: "Legacy:UnrealEd Goblin"
+  templates: []
+  images:
+  - "Legacy_myth_terrain_layer1.jpeg"
+  - "Legacy_myth_terrain_layer2.jpeg"
+  externallinks:
+  - "http://homepage.ntlworld.com/martingbell/ut2003/"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Terrain Building Features in UED 3.0"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Using_The_Terrain_Tool"
+    byteoffset: 275
+    anchor: "Terrain_Building_Features_in_UED_3.0"
+  - toclevel: 2
+    level: "3"
+    line: "Creating Terrain and the TerrainInfo Actor"
+    number: "1.1"
+    index: "2"
+    fromtitle: "Legacy:Using_The_Terrain_Tool"
+    byteoffset: 1514
+    anchor: "Creating_Terrain_and_the_TerrainInfo_Actor"
+  - toclevel: 2
+    level: "3"
+    line: "The Terrain Generator"
+    number: "1.2"
+    index: "3"
+    fromtitle: "Legacy:Using_The_Terrain_Tool"
+    byteoffset: 8272
+    anchor: "The_Terrain_Generator"
+  - toclevel: 2
+    level: "3"
+    line: "More on Layers"
+    number: "1.3"
+    index: "4"
+    fromtitle: "Legacy:Using_The_Terrain_Tool"
+    byteoffset: 9354
+    anchor: "More_on_Layers"
+  - toclevel: 2
+    level: "3"
+    line: "The Paint Tool"
+    number: "1.4"
+    index: "5"
+    fromtitle: "Legacy:Using_The_Terrain_Tool"
+    byteoffset: 9992
+    anchor: "The_Paint_Tool"
+  - toclevel: 2
+    level: "3"
+    line: "Layering"
+    number: "1.5"
+    index: "6"
+    fromtitle: "Legacy:Using_The_Terrain_Tool"
+    byteoffset: 10710
+    anchor: "Layering"
+  - toclevel: 2
+    level: "3"
+    line: "Vertex Edit Tool"
+    number: "1.6"
+    index: "7"
+    fromtitle: "Legacy:Using_The_Terrain_Tool"
+    byteoffset: 12896
+    anchor: "Vertex_Edit_Tool"
+  - toclevel: 2
+    level: "3"
+    line: "Visibility Tool"
+    number: "1.7"
+    index: "8"
+    fromtitle: "Legacy:Using_The_Terrain_Tool"
+    byteoffset: 12921
+    anchor: "Visibility_Tool"
+  - toclevel: 2
+    level: "3"
+    line: "Pitfalls of Terrain Creation in Unreal 2's UnrealEd"
+    number: "1.8"
+    index: "9"
+    fromtitle: "Legacy:Using_The_Terrain_Tool"
+    byteoffset: 13389
+    anchor: "Pitfalls_of_Terrain_Creation_in_Unreal_2.27s_UnrealEd"
+  - toclevel: 1
+    level: "2"
+    line: "Discussion"
+    number: "2"
+    index: "10"
+    fromtitle: "Legacy:Using_The_Terrain_Tool"
+    byteoffset: 14082
+    anchor: "Discussion"
+  displaytitle: "Legacy:Using The Terrain Tool"
+  iwlinks: []
+  wikitext:
+    text: "'''Tahngarth:''' Here i will try to post a fairly comprehensive guide to\
+      \ the terrain tool, geared mostly to beginning mappers, but certainly useful\
+      \ to anyone. I will walk through creating a sample peice of terrain and describe\
+      \ how the tools are used to accomplish the task.\n\n==Terrain Building Features\
+      \ in UED 3.0 ==\n\nA lot of people probably look at a stock map in [[Legacy:UT2003|UT2003]]\
+      \ such as DM-Antalus or DOM-SepukkuGorge and wonder, \"how the heck do you make\
+      \ that terrain like that?\" Well, hopefully by the bottom of this page, the\
+      \ how-to part will be less alien to you. In the top left [[Legacy:Toolbox|toolbox]]\
+      \ of UED which contains the tools such as actor scaling, actor rotation, and\
+      \ face drag, you will see a shiny (if you're excited about this) button with\
+      \ a mountain on it. this is the '''Terrain Tool.''' Say good bye to the BSP\
+      \ Terrain button. Most of your work will be done in the perspective view, so\
+      \ you may want to make it larger when working with terrain.\n\nThe terrain tool\
+      \ is actually a collection of several more tools. When clicked, the terrain\
+      \ button opens a window containing all the functions you need to take an initially\
+      \ flat parcel of land, and 'paint' mountains or valleys on it, flatten them,\
+      \ create bumpy ground, paint textures on the surface, carve out holes to allow\
+      \ for tunnels and whatnot to connect to it, and scale and rotate those textures.\
+      \ The tool generates a heightmap as you edit, eliminating the need to import\
+      \ a texture into UnrealEd to add terrain to your level.\n\n===Creating Terrain\
+      \ and the TerrainInfo Actor ===\n\nSome Terms: \n; heightmap : a greyscale texture\
+      \ used by Unrealed to generate terrain - black is low elevation, white is high\
+      \ elevation. it should be 64x64 pixels.\n; [[Legacy:TerrainInfo|TerrainInfo]]\
+      \ : this is the actor that makes the terrain exist. The terrain is projected\
+      \ using this actor as the 3D origin. also contains the associated variables.\
+      \ must be within a [[Legacy:Zone|zone]] that allows terrain to function (bTerrainZone=True)\n\
+      \nUnrealed creates your terrain by generating a static mesh based on a heightmap\
+      \ texture, centered around a [[Legacy:TerrainInfo|TerrainInfo]] actor. The TerrainInfo\
+      \ actor will be the XYZ origin of your terrain (i.e. the center) so keep that\
+      \ in mind when you place the terrain. You need to have empty space to put the\
+      \ terrain in, and then create the actor. That said, lets try it:\n\n#Use the\
+      \ CubeBuilder to build a cube with dimensions 4096x4096x4096. Center it over\
+      \ the origin and subtract. Pick a light colored texture for it, this will make\
+      \ the terrain editing easier. \n\n# [[Legacy:Add An Actor|Add an Actor]] >>\
+      \ [[Legacy:Info|Info]] >> [[Legacy:ZoneInfo|ZoneInfo]] and position it within\
+      \ your new space.\n# [[Legacy:Set The Following Properties|Set the following\
+      \ properties]] for the ZoneInfo:\n#* ZoneInfo -> bTerrainZone = True (otherwise\
+      \ your terrain won't show up)\n#* ZoneLight  -> AmbientLight &ndash; You may\
+      \ also want to temporairly set this to to 180 or so, so that you can see your\
+      \ terrain when you work on it. Set it back to 0 when you want to put more elaborate\
+      \ lighting on it.\n\n#Now click the Terrain Tool button in the top [[Legacy:Toolbox|toolbox]].\
+      \ it looks like this: [[Image:Legacy_TerrainIcon.gif|]] . This opens the [[Legacy:Terrain\
+      \ Editing|Terrain Editing]] window. Youll want to position this window so the\
+      \ perspective view and XY view are reasonably visible.\n\n#The bottom half of\
+      \ the window has three tabs:\n\n*Terrains &ndash; shows a list of all of the\
+      \ TerrainInfo actors in the level, and on the right side shows the heightmap\
+      \ and other information for the currently selected TerrainInfo; and allows you\
+      \ to add new TerrainInfos.\n*Layers &ndash; shows the list of layers for the\
+      \ current Terrain selected on the Terrains tab. Layers contain the information\
+      \ about all the textures that are being used in the terrain. the list is hierarchal,\
+      \ with the base layer being shown first. the other layers are \"painted\" on\
+      \ top of each other in the order listed.\n*Decorations- Allows you to add features\
+      \ to your terrain. <font color=red>Note: </font>any decor you add here won't\
+      \ have any collsion (i.e. you can walk through them.) Only use this for things\
+      \ such as grass and such that shouldnt impede movement.\n\n\n#Click the New\
+      \ button on the Terrains tab to create a new TerrainInfo. This will open up\
+      \ the New Terrain window, where you set the following properties: (IMPORTANT-you\
+      \ only have one chance to alter the options here, and the [[Legacy:UnrealEd\
+      \ Goblin|UnrealEd Goblin]] can become upset when you delete TerrainInfo actors,\
+      \ beacuse the heightmap remains in the terrain editor(and your level) list even\
+      \ after deleting the actor, and there's no delete button in the Terrain Editing\
+      \ window. having UED collect its garbage should fix that(i think), but Let's\
+      \ keep the UED goblin happy. :) )\n\n\n{|\n\n|-\n|'''''Property'''''\n|'''''Usage'''''\n\
+      |-\n|\n|\n|-\n|Package\n|Specify the name of the package to put the terrain\
+      \ information in. For this guide (but also good in practice), put this in [[Legacy:MyLevel|MyLevel]].\n\
+      |-\n|Group\n|You can specify a group within the package. Not required, for this\
+      \ you can leave it blank.\n|-\n|Name\n|Name your Terrain. Giving it a descriptive\
+      \ name will help you identify which is which if you have more than one terrain,\
+      \ but for this guide, call it MyTerrain.\n|-\n|Xsize and Ysize\n|Control the\
+      \ dimensions of the terrain. It is important to note that these are really scale\
+      \ values. That is, the heightmap texture is 64x64 pixels, and the actual dimensions\
+      \ of the terrain will be (64 x Xsize) by (64 x Ysize). The default values of\
+      \ 256 x 256 will cause our terrain to extend '''way''' beyond the dimensions\
+      \ of the cube you created. since our room is 4096 x 4096, set these values to\
+      \ 64 (64x64=4096).\n|-\n|Height\n|Self explanitory. Your hills and valleys cant\
+      \ stretch outside of this height. You dont need to change this unless you need\
+      \ it to be bigger (unlikely). \n|}\n\n When you're satisfied with the values,\
+      \ click OK.\n\n#Now position the HeightInfo actor that appears in the level,\
+      \ and position it in the center of your cube. <br /><br />Great! Now we have\
+      \ some nice, completely invisible terrain. Before you can work on your terrain\
+      \ (or use the terrain generator) you need to define at least a base layer. Open\
+      \ up the texture browser and find the texture you want the majority of the terrain\
+      \ to look like. For our example, open the ArboreaTerrain package, and find and\
+      \ select Sand01AR. This is a plain dirt texture that makes a good base.\n#In\
+      \ the Terrain Editing window, click on the Layers tab, then click the New...\
+      \ button. This opens a window similar to the New Terrain button. Use Mylevel\
+      \ for the Package, and call the layer Dirt_Base or something similar so you\
+      \ know what it is. The other properties work as follows: \n\n\n{|\n\n|-\n|'''''Property'''''\n\
+      |'''''Usage'''''\n|-\n|\n|-\n|AlphaHeight and AlphaWidth\n|These directly affect\
+      \ the size of the texture on the landscape. You want these values to match the\
+      \ dimensions of the heightmap, which is 64x64 here. Set these accordingly. \n\
+      |-\n|AlphaFill\n|Sets the tint and opacity (alpha channel in image editing terms)\
+      \ of the layer. This property has four values: A (alpha) and the RGB color channels.\
+      \ The base layer should be completely opaque, so set A=0 and R G and B = 255;\
+      \ the color box should show white.\n|-\n|ColorFill\n|Color to use for drawing.\
+      \ White (R=255,G=255,B=255) means draw everything in its default colors. If\
+      \ any color component is lower than 255 the specific color component of the\
+      \ Texture or Font will be drawn darker. (or more translucent, see [[Legacy:Color\
+      \ Blending|color blending]])\n|-\n|UScale and VScale\n|The initial scaling factors\
+      \ of the texture. Leave these at 1, it is easier to adjust the scaling with\
+      \ the Texture Scale terrain tool.\n|}\n\n\n\n# Hit OK and create the layer.\
+      \ At this point, you should set Realtime Preview on by clicking the little joystick\
+      \ in the perspective view. Base layer defined, rebuilding the map should cause\
+      \ your terrain's surface to appear. Do a full rebuild of the map.\n\nTa-Da!\
+      \ You now have a brand new, tottaly flat and barren parcel of dirt! Now, we\
+      \ will discuss how to turn this featureless plane into something more interesting\
+      \ first by using the terrain generator, and then by manually editing the surface\
+      \ with the terain editor's tools.\n\n===The Terrain Generator ===\n\nCan't think\
+      \ of how you want your terrain to look? Want UnrealEd to give you something\
+      \ more interesting to start with? Use the terrain generator.\n\nTo use the terrain\
+      \ generator, click the Terrain Tool, and in the terrain editing box, select\
+      \ your terraininfo. Then look at the top of the terrain editing window, and\
+      \ you will see two tabs. The terrain generator is on the tab labled Misc. Just\
+      \ supply some parameters, and click Build. Instant mountains. The settings are\
+      \ as follows:\n\n{|\n\n|-\n|'''''Setting'''''\n|'''''Function''''' \n|-\n|\n\
+      |-\n|Steps\n|Controls how many passes the generator makes over the terrain.\
+      \ more steps mean more hills.\n|-\n|Strength\n|Controls the magnitude of the\
+      \ hills being generated. Max value 255. High values mean steep, craggy peaks\
+      \ that leave almost no place to walk, and low values mean gentle rolling hills\
+      \ that are pretty flat overall.\n|-\n|Use entire Heightmap?\n|Tick this to have\
+      \ the generated surface use all of the terrain space. Unticked, only uses what\
+      \ is currently selected with the Select tool in the terrain editor.\n|}\n\n\
+      ===More on Layers ===\n\nIn order to vary the look of your terrain, you must\
+      \ add additional layers. Select any additonal textures you want, and when creating\
+      \ the layers, set the color settings to the exact opposite of the base layer,\
+      \ otherwise the base layer will show over all of the others rendering other\
+      \ layers invisible. Say you made some craggy peaks in the terrain you created\
+      \ above, and you want them to have a rocky surface different from the dirt texture\
+      \ used for the base layer. All you have to do is make a layer with the rocky\
+      \ texture, and then use the terrain tools to apply it to the surface. Let's\
+      \ look at these tools now.\n\n===The Paint Tool ===\n\nThis tool allows you\
+      \ to \"paint\" mountains and valleys on your terrain. This and all of the tools\
+      \ in the terrain editor have two functions, controlled by the left mouse button\
+      \ and the right. For the paint tool, using cntrl-left mouse button combination\
+      \ (hereafter LMB) raises the terrain height where you click in drag in the [3-D\
+      \ view], and using the cntrl-right mouse button combination (RMB) lowers it.\
+      \ If you find that a huge pillar skyrockets out of the ground where you click,\
+      \ just drag the Strength slider to the left to reduce the magnitude of the change.\
+      \  \n\n'''Roland:''' But don't select a layer with a texture...if you do this,\
+      \ you paint the texture, not the height of the terrain...\n\n===Layering ===\n\
+      \nTo change the textures of terrain instead of having the same boring texture\
+      \ that doesn't look realistic for mountains or the like,  open the terrain tool,\
+      \ click on the [[Legacy:TerrainInfo|TerrainInfo]] you want to edit, and then\
+      \ click on the 'Layers'\n\ntab.  Before you do anything else, open up the Texture\
+      \ Browser and select a texture to be used as a new texture for (4 example) your\
+      \ new mountain you want to look realistic.  Once done that, go back to the 'Terrain\
+      \ Editing Tool' and in the 'Layer' tab, click on the button called ' New '.\
+      \  A new window will open.  \n\nYou'll see Package, Group, Name, Alpha Height,\
+      \ Alpha Width,  Alpha fill, Color Fill,  UScale and VScale.  For Package, type\
+      \ in MyLevel. (which you should always type in if your doing Terrain or importing\
+      \ of textures or w/e) For 'Group', you can either leave it blank, or type in\
+      \ something like TerrainLayers.  For Name, Type whatever you want, for example,\
+      \ Terrain1.  If you are a beginner, I would leave the Alpha height and Width\
+      \ , and Alpha Fill alone.  For color fill, I believe this is the color that\
+      \ will 'Fade' in to the other layers when you paint the texture on.  This must\
+      \ be a different color for each layer. ( Ex- A layer's color fill cannot be\
+      \ the same as another layers color fill. Ie. Red-Red is wrong and Red-Blue will\
+      \ work great ;) )\n\nU and VScale are how big the texture will be.  I works\
+      \ exactly like the surface properties under the tab Pan/Rot/Scale.\n\nFinally,\
+      \ when you are satisfied with your new layer's settings, click 'Ok .'  Now,\
+      \ there should be a new 'Layer' called Terrain1 (or w/e you called it under\
+      \ 'Name' ) Now click on the layer and then click on the 'Painting' tool under\
+      \ the 'Terrain Editing Tools' Menu.  Now, on your terrain in your level.  Use\
+      \ the paint controls ( CTR+LMB to erase the texture and CTR-RMB to add the texture,\
+      \ I believe ) on the area you want to change the texture to.  depending on the\
+      \ 'Strength' you set, the texture will 'fade' in covering the older texture.\n\
+      \n[[Image:Legacy_myth_terrain_layer1.jpeg|center|Before Layering.]]\n\n[[Image:Legacy_myth_terrain_layer2.jpeg|center|After\
+      \ Layering (Three layers : Grass, Mountain Side, Rocky Top.)]]\n\n===Vertex\
+      \ Edit Tool ===\n\n===Visibility Tool ===\n\nAt first look at this tool, I thought,\
+      \ \"this is a useless tool, a tool that nobody will ever use.\"  I've just found\
+      \ out what people use it for.  However, I will just explain this tool and leave\
+      \ the implementation up to you, for now at least.  What this tool does is change\
+      \ the area that you have used it on, from a solid surface, to a non-solid/invisible\
+      \ surface.  CTRL-RMB makes it Invisible/Non-Solid and CTRL-LMB makes it Visible/Solid.\
+      \   \n\n===Pitfalls of Terrain Creation in Unreal 2's UnrealEd ===\n\nFor some\
+      \ reason, the creation of terrain has been made somewhat tricky, because the\
+      \ Terrain Editing palette is missing the ability to create TerrainInfo Actors\
+      \ by itself, and of course, a blank heightmap. My guess is that Legend fell\
+      \ behind on their updates! The UT2003 editor seems to be in better shape. Honestly\
+      \ :rolleyes:\n\nThis means that you have to manually create the TerrainInfo\
+      \ actor, and then set the heightmap in the TerrainInfo's properties (e.g. MyLevel.heightmaps.map1).\
+      \ The heightmap texture has to already exist, or you'll crash UnrealEd. Then\
+      \ you can make use of the Terrain Editing tools in the palette, as above.\n\n\
+      ==Discussion ==\n\n'''Birelli:''' When I do this exact procedure with a 4096*4096\
+      \ terrain block as it says in the tutorial, it comes out fine. However, if I\
+      \ try to make a terrain block that is 49152*49152 I get a GPF. Is there some\
+      \ sort of maximum terrain block size? Can someone else try to make a terrain\
+      \ block this big (x and y size 768 (768 * 64 = 49152))? I can't think of why\
+      \ there would be some limitation on the size of terrain, but it's always possible.\
+      \ Situations like this make you wish that UED would handle GPF's gracefully,\
+      \ ending the editor seems about the worst possible choice for handling this\
+      \ :(.\n\n'''Tahngarth:''' don't '''<i>most</i>''' programs terminate after a\
+      \ GPF? A crash generally does end a program after all.\n\n'''Highlander:'''\
+      \ i have not used terrain quite that large, however with a 512x512 pixel terrain\
+      \ map i get a GPF if i smooth over the edge of the map, so id say there is some\
+      \ limit to how big the terrain can be. (keep in mind you can scale the terrain\
+      \ so that each pixel in the terrain map is worth more than 64 units)\n\n'''AlphaOne:'''\
+      \ I tried some other tools over the edge of the map (moving away from the center)\
+      \ and it always crashed on me. The size of the terrain was double the default\
+      \ one. Also, I tried to decorate my map with trees. The static meshes displayed\
+      \ strangely: I could only see the leaves. The wooden parts were completely transparent.\
+      \ That happened with a couple different tree meshes.???!?!?!?!? Why?\n\n'''G-LiTe:'''\
+      \ AlphaOne: Some static meshes only have leaves while others are a complete\
+      \ tree, they probably had a reason to do that. Look in the static mesh browser\
+      \ to see which you can use. Also, you're probably better of placing the trees\
+      \ seperately as terrain decolayers are non-solid, which means you'd walk right\
+      \ through the tree. (unless that's what you want or it's just background)\n\n\
+      '''AlphaOne:''' I can see the whole tree. I want to use this methods just cause\
+      \ it's easier, and it has a good way of hiding trees from far away.\n\n:'''Mychaeel:'''\
+      \ You can use the static mesh's CullDistance property (in the ''Display'' section\
+      \ of the property sheet) to the same effect. \n\n'''Tahngarth:''' the decorations\
+      \ tab is really meant for small things like grass and such. In fact I think\
+      \ only flat things will work properly with it.\n\n----\n\n'''ZxAnPhOrIaN:'''\
+      \ We need screens in here!!\n\n----\n\n'''Bot 40:'''Is there any way to rotate\
+      \ a terrain brush? Also, I can't find an external paint prog that can read 16\
+      \ bit grayscale .bmp files so I can't rotate the heightmap outside UED and re-import.\n\
+      \n'''Aphex:''' Sure is bot, try here: http://homepage.ntlworld.com/martingbell/ut2003/\n\
+      \n'''ZxAnPhOrIaN:''' I have a tutorial on the [[Legacy:Manipulating Terrain|Manipulating\
+      \ Terrain]] Page. Have a look!\n\n'''MythOpus:''' I added info on how to  'paint'\
+      \ different textures on the same TerrainInfo. (layering)\n\n----\n\n'''Original9:'''\
+      \ Shadows become more unsharp when the heightmap gets smaller. Shadows are also\
+      \ affected by how big the scale of the terrian is. For example: Lets say that\
+      \ the heightmap is 128x128 and has a scale of 196x196x32. If the object is smaller\
+      \ the in the quad of the the terrian the shadow will not appear. Taller objects,\
+      \ however, will make a blurred shadow.\n\n----\n\n'''MinisterFish:''' For some\
+      \ reason, the terrain editor seems broke in UED 3.0 for Unreal 2. I was trying\
+      \ different ways in getting it to work but never can get it set up. This tutorial\
+      \ can get confusing too, compared to some like the one on leveldesigner.com.\
+      \ This page may need to be fused with some other terrain pages.\n\n'''Tarquin:'''\
+      \ Much of this is getting refactored into:\n* [[Legacy:Terrain Mode|Terrain\
+      \ Mode]] &ndash; overview\n* [[Legacy:Terrain Texture Layer|Terrain Texture\
+      \ Layer]] &ndash; adding and editing texture layers\n* [[Legacy:Terrain Decoration\
+      \ Layer|Terrain Decoration Layer]] &ndash; adding and editing deco layers (in\
+      \ progress!)\n\n----\n\n'''Kerlin:''' Ugh. Maybe [[Legacy:Creating A Terrain|Creating\
+      \ A Terrain]] should be pulled into this page. The more I look, the more I find\
+      \ stuff that needs reorg. ;) Like I said, if I'm jackin stuff up, let me know...otherwise\
+      \ I'm gonna try to help out however I can.\n\n'''Tarquin:''' Ah. This page is\
+      \ old and I think was up for deletion. I ''was'' cleaning up the terain area\
+      \ but I didn't make it all the way through\n\n'''Kerlin:''' Then I guess this\
+      \ is a \"Delete Me page\"? Are you sure, though? Seems like some good info here.\
+      \ Just want to make sure we don't get rid of it unless it exists elsewhere.\n\
+      \n'''Tarquin:''' It's not yet \"Delete me\". [[Legacy:Terrain|Terrain]] is the\
+      \ starting point. there's a few tutorial pages and I've not yet worked out what\
+      \ this page does. I'll give it some thought. \n\n[[Category:Legacy Mapping|{{PAGENAME}}]]"
+  properties: []
+  revId: 8745
+name: "Legacy:Using The Terrain Tool"
+revision:
+  revid: 8745
+  parentid: 8747
+  user: "Wormbo"
+  timestamp: 1144396287.000000000
+  comment: "reverted"
+timestamp: 1668762552.442136000

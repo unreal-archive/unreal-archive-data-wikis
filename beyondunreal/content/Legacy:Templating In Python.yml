@@ -1,0 +1,315 @@
+---
+parse:
+  title: "Legacy:Templating In Python"
+  text:
+    text: "<p>This was a quick, quick hack, because I got tired of having to do math\
+      \ when I move things in my mutator config or add elements. Just save the program\
+      \ text at the end to template.py, or whatever else you'd rather call it. It's\
+      \ a simple preprocessor which will generate new files from template files given\
+      \ on the command line. Any file specified will have its extension stripped to\
+      \ produce the name for the new file. Directories specified will be searched\
+      \ recursively for .template files, which will be processed into new files without\
+      \ the .template extension. Basically, it makes a clean environment for each\
+      \ file, in which commands embedded in the file can be executed. Anything between\
+      \ two lines starting with \"!!exec\" will be executed, but will produce no output\
+      \ in the processed file. Anything between a pair of \"!!\" on a line will be\
+      \ evaluated as an expression in Python, and will have its value converted to\
+      \ a string and inserted in place of the expression. The exec block feature is\
+      \ mostly for setting up constants. Also, you can change the formatting used\
+      \ for expression which yield floating-point values by setting \"floatformat\"\
+      \ to a Python format string in an exec block. Here's a quick sample, from some\
+      \ of the code I'm actually using this with (cut down a little bit):</p>\n<p>This\
+      \ is part of RadarConfig.uc.template:</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"sy0\">!!</span><span class=\"kw1\">exec</span> set up constants\
+      \ <span class=\"kw2\">for</span> <span class=\"kw8\">GUI</span> layout\ngridw<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">21.0</span>\ngridh<span class=\"\
+      sy0\">=</span><span class=\"nu0\">19.0</span>\nllbll<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">1.0</span>\nnmlblw<span class=\"sy0\">=</span><span class=\"\
+      nu0\">4.0</span>\nelh<span class=\"sy0\">=</span><span class=\"nu0\">2.0</span>\n\
+      row1t<span class=\"sy0\">=</span><span class=\"nu0\">1.0</span>\nrow2t<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">4.0</span>\nfloatformat<span class=\"\
+      sy0\">=</span><span class=\"st0\">\"%0.8f\"</span>\n<span class=\"sy0\">!!</span><span\
+      \ class=\"kw1\">exec</span>\n<span class=\"kw1\">defaultproperties</span>\n\
+      <span class=\"br0\">{</span>\n\t<span class=\"kw2\">Begin</span> <span class=\"\
+      kw8\">Object</span> <span class=\"kw1\">Class</span><span class=\"sy0\">=</span>GUIButton\
+      \ <span class=\"kw5\">name</span><span class=\"sy0\">=</span>DialogBackground\n\
+      \t\tWinWidth<span class=\"sy0\">=</span><span class=\"nu0\">1.0</span>\n\t\t\
+      WinHeight<span class=\"sy0\">=</span><span class=\"nu0\">1.0</span>\n\t\tWinTop<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0</span>\n\t\tWinLeft<span class=\"\
+      sy0\">=</span><span class=\"nu0\">0</span>\n\t\tbAcceptsInput<span class=\"\
+      sy0\">=</span><span class=\"kw6\">false</span>\n\t\tbNeverFocus<span class=\"\
+      sy0\">=</span><span class=\"kw6\">true</span>\n\t\tStyleName<span class=\"sy0\"\
+      >=</span><span class=\"st0\">\"ComboListBox\"</span>\n\t\tbBoundToParent<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">True</span>\n\t\tbScaleToParent<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">True</span>\n\tEnd <span class=\"\
+      kw8\">Object</span>\n\tControls<span class=\"br0\">(</span><span class=\"nu0\"\
+      >0</span><span class=\"br0\">)</span><span class=\"sy0\">=</span>GUIButton<span\
+      \ class=\"st0\">'TacticalDisplay.RadarConfig.DialogBackground'</span>\n\t<span\
+      \ class=\"kw2\">Begin</span> <span class=\"kw8\">Object</span> <span class=\"\
+      kw1\">Class</span><span class=\"sy0\">=</span>GUILabel <span class=\"kw5\">name</span><span\
+      \ class=\"sy0\">=</span>DialogText\n\t\tCaption<span class=\"sy0\">=</span><span\
+      \ class=\"st0\">\"Tactical Display Configuration\"</span>\n\t\tTextAlign<span\
+      \ class=\"sy0\">=</span>TXTA_Center\n\t\tWinWidth<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">1.0</span>\n\t\tWinHeight<span class=\"sy0\">=!!</span>elh<span\
+      \ class=\"sy0\">/</span>gridh<span class=\"sy0\">!!</span>\n\t\tWinLeft<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0.0</span>\n\t\tWinTop<span class=\"\
+      sy0\">=!!</span>row1t<span class=\"sy0\">/</span>gridh<span class=\"sy0\">!!</span>\n\
+      \t\tbBoundToParent<span class=\"sy0\">=</span><span class=\"kw6\">True</span>\n\
+      \t\tbScaleToParent<span class=\"sy0\">=</span><span class=\"kw6\">True</span>\n\
+      \tEnd <span class=\"kw8\">Object</span>\n\tControls<span class=\"br0\">(</span><span\
+      \ class=\"nu0\">1</span><span class=\"br0\">)</span><span class=\"sy0\">=</span>GUILabel<span\
+      \ class=\"st0\">'TacticalDisplay.RadarConfig.DialogText'</span>\n\t<span class=\"\
+      kw2\">Begin</span> <span class=\"kw8\">Object</span> <span class=\"kw1\">Class</span><span\
+      \ class=\"sy0\">=</span>GUILabel <span class=\"kw5\">name</span><span class=\"\
+      sy0\">=</span>DetectRangeText\n\t\tCaption<span class=\"sy0\">=</span><span\
+      \ class=\"st0\">\"Maximum Range\"</span>\n\t\tWinWidth<span class=\"sy0\">=!!</span>nmlblw<span\
+      \ class=\"sy0\">/</span>gridw<span class=\"sy0\">!!</span>\n\t\tWinHeight<span\
+      \ class=\"sy0\">=!!</span>elh<span class=\"sy0\">/</span>gridh<span class=\"\
+      sy0\">!!</span>\n\t\tWinLeft<span class=\"sy0\">=!!</span>llbll<span class=\"\
+      sy0\">/</span>gridw<span class=\"sy0\">!!</span>\n\t\tWinTop<span class=\"sy0\"\
+      >=!!</span>row2t<span class=\"sy0\">/</span>gridh<span class=\"sy0\">!!</span>\n\
+      \t\tbBoundToParent<span class=\"sy0\">=</span><span class=\"kw6\">True</span>\n\
+      \t\tbScaleToParent<span class=\"sy0\">=</span><span class=\"kw6\">True</span>\n\
+      \tEnd <span class=\"kw8\">Object</span>\n\tControls<span class=\"br0\">(</span><span\
+      \ class=\"nu0\">2</span><span class=\"br0\">)</span><span class=\"sy0\">=</span>GUILabel<span\
+      \ class=\"st0\">'TacticalDisplay.RadarConfig.DetectRangeText'</span></pre></div>\n\
+      </div>\n<p>Running template.py on it generates this:</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw1\">defaultproperties</span>\n<span class=\"\
+      br0\">{</span>\n\t<span class=\"kw2\">Begin</span> <span class=\"kw8\">Object</span>\
+      \ <span class=\"kw1\">Class</span><span class=\"sy0\">=</span>GUIButton <span\
+      \ class=\"kw5\">name</span><span class=\"sy0\">=</span>DialogBackground\n\t\t\
+      WinWidth<span class=\"sy0\">=</span><span class=\"nu0\">1.0</span>\n\t\tWinHeight<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">1.0</span>\n\t\tWinTop<span class=\"\
+      sy0\">=</span><span class=\"nu0\">0</span>\n\t\tWinLeft<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0</span>\n\t\tbAcceptsInput<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">false</span>\n\t\tbNeverFocus<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">true</span>\n\t\tStyleName<span class=\"sy0\">=</span><span\
+      \ class=\"st0\">\"ComboListBox\"</span>\n\t\tbBoundToParent<span class=\"sy0\"\
+      >=</span><span class=\"kw6\">True</span>\n\t\tbScaleToParent<span class=\"sy0\"\
+      >=</span><span class=\"kw6\">True</span>\n\tEnd <span class=\"kw8\">Object</span>\n\
+      \tControls<span class=\"br0\">(</span><span class=\"nu0\">0</span><span class=\"\
+      br0\">)</span><span class=\"sy0\">=</span>GUIButton<span class=\"st0\">'TacticalDisplay.RadarConfig.DialogBackground'</span>\n\
+      \t<span class=\"kw2\">Begin</span> <span class=\"kw8\">Object</span> <span class=\"\
+      kw1\">Class</span><span class=\"sy0\">=</span>GUILabel <span class=\"kw5\">name</span><span\
+      \ class=\"sy0\">=</span>DialogText\n\t\tCaption<span class=\"sy0\">=</span><span\
+      \ class=\"st0\">\"Tactical Display Configuration\"</span>\n\t\tTextAlign<span\
+      \ class=\"sy0\">=</span>TXTA_Center\n\t\tWinWidth<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">1.0</span>\n\t\tWinHeight<span class=\"sy0\">=</span><span class=\"\
+      nu0\">0.10526316</span>\n\t\tWinLeft<span class=\"sy0\">=</span><span class=\"\
+      nu0\">0.0</span>\n\t\tWinTop<span class=\"sy0\">=</span><span class=\"nu0\"\
+      >0.05263158</span>\n\t\tbBoundToParent<span class=\"sy0\">=</span><span class=\"\
+      kw6\">True</span>\n\t\tbScaleToParent<span class=\"sy0\">=</span><span class=\"\
+      kw6\">True</span>\n\tEnd <span class=\"kw8\">Object</span>\n\tControls<span\
+      \ class=\"br0\">(</span><span class=\"nu0\">1</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">=</span>GUILabel<span class=\"st0\">'TacticalDisplay.RadarConfig.DialogText'</span>\n\
+      \t<span class=\"kw2\">Begin</span> <span class=\"kw8\">Object</span> <span class=\"\
+      kw1\">Class</span><span class=\"sy0\">=</span>GUILabel <span class=\"kw5\">name</span><span\
+      \ class=\"sy0\">=</span>DetectRangeText\n\t\tCaption<span class=\"sy0\">=</span><span\
+      \ class=\"st0\">\"Maximum Range\"</span>\n\t\tWinWidth<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0.19047619</span>\n\t\tWinHeight<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0.10526316</span>\n\t\tWinLeft<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0.04761905</span>\n\t\tWinTop<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0.21052632</span>\n\t\tbBoundToParent<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">True</span>\n\t\tbScaleToParent<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">True</span>\n\tEnd <span class=\"kw8\">Object</span>\n\tControls<span\
+      \ class=\"br0\">(</span><span class=\"nu0\">2</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">=</span>GUILabel<span class=\"st0\">'TacticalDisplay.RadarConfig.DetectRangeText'</span></pre></div>\n\
+      </div>\n<p>I've deleted the rest of the controls (there are 26 in this dialog),\
+      \ and the constants that are associated with them, but you get the idea. to\
+      \ add a new control at the bottom of the dialog, for example, I can make some\
+      \ new constants to define its location, and change gridh, then rerun template.py.</p>\n\
+      <p>And finally, here's the Python script:</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"co2\">#!/usr/bin/python</span>\n \n<span class=\"kw1\">import</span>\
+      \ os, sys, re, types\n \nevalre <span class=\"sy0\">=</span> re.<span class=\"\
+      me0\">compile</span><span class=\"br0\">(</span><span class=\"st0\">'!!(.*?)!!'</span><span\
+      \ class=\"br0\">)</span>\n \ndef visitor <span class=\"br0\">(</span>arg, dirname,\
+      \ names<span class=\"br0\">)</span>:\n\t<span class=\"kw2\">for</span> filename\
+      \ in names:\n\t\t<span class=\"kw2\">if</span> filename.<span class=\"me0\"\
+      >endswith</span><span class=\"br0\">(</span><span class=\"st0\">\".template\"\
+      </span><span class=\"br0\">)</span>:\n\t\t\tprocessfile<span class=\"br0\">(</span>os.<span\
+      \ class=\"me0\">path</span>.<span class=\"me0\">join</span><span class=\"br0\"\
+      >(</span>dirname,filename<span class=\"br0\">)</span><span class=\"br0\">)</span>\n\
+      \ \ndef processfile<span class=\"br0\">(</span>filename<span class=\"br0\">)</span>:\n\
+      \tenvlocals<span class=\"sy0\">=</span><span class=\"br0\">{</span><span class=\"\
+      br0\">}</span>\n\tenvglobals<span class=\"sy0\">=</span><span class=\"br0\"\
+      >{</span><span class=\"br0\">}</span>\n\texecstring<span class=\"sy0\">=</span><span\
+      \ class=\"st0\">\"\"</span>\n\tinexec<span class=\"sy0\">=</span><span class=\"\
+      kw6\">False</span>\n\tinfile<span class=\"sy0\">=</span>file<span class=\"br0\"\
+      >(</span>filename,<span class=\"st0\">\"r\"</span><span class=\"br0\">)</span>\n\
+      \toutfile<span class=\"sy0\">=</span>file<span class=\"br0\">(</span>os.<span\
+      \ class=\"me0\">path</span>.<span class=\"me0\">splitext</span><span class=\"\
+      br0\">(</span>filename<span class=\"br0\">)</span><span class=\"br0\">[</span><span\
+      \ class=\"nu0\">0</span><span class=\"br0\">]</span>,<span class=\"st0\">\"\
+      w\"</span><span class=\"br0\">)</span>\n\t<span class=\"kw2\">for</span> line\
+      \ in infile:\n\t\t<span class=\"kw2\">if</span> line.<span class=\"me0\">startswith</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">\"!!exec\"</span><span class=\"\
+      br0\">)</span>:\n\t\t\t<span class=\"kw2\">if</span> inexec:\n\t\t\t\t<span\
+      \ class=\"kw1\">exec</span><span class=\"br0\">(</span>execstring,envglobals,envlocals<span\
+      \ class=\"br0\">)</span>\n\t\t\t\texecstring<span class=\"sy0\">=</span><span\
+      \ class=\"st0\">\"\"</span>\n\t\t\t\tinexec<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">False</span>\n\t\t\t<span class=\"kw2\">else</span>:\n\t\t\t\
+      \tinexec<span class=\"sy0\">=</span><span class=\"kw6\">True</span>\n \n\t\t\
+      \t<span class=\"kw2\">continue</span>\n\t\t<span class=\"kw2\">if</span> inexec:\n\
+      \t\t\texecstring <span class=\"sy0\">+=</span> line\n\t\t\t<span class=\"kw2\"\
+      >continue</span>\n\t\tindex <span class=\"sy0\">=</span> <span class=\"nu0\"\
+      >0</span>\n\t\tnewline <span class=\"sy0\">=</span> <span class=\"st0\">\"\"\
+      </span>\n\t\tmatch <span class=\"sy0\">=</span> evalre.<span class=\"me0\">search</span><span\
+      \ class=\"br0\">(</span>line,index<span class=\"br0\">)</span>\n\t\t<span class=\"\
+      kw2\">while</span> match:\n\t\t\tval <span class=\"sy0\">=</span> <span class=\"\
+      kw3\">eval</span><span class=\"br0\">(</span>match.<span class=\"me0\">group</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">1</span><span class=\"br0\">)</span>,envglobals,envlocals<span\
+      \ class=\"br0\">)</span>\n\t\t\t<span class=\"kw2\">if</span> type<span class=\"\
+      br0\">(</span>val<span class=\"br0\">)</span> <span class=\"sy0\">==</span>\
+      \ <span class=\"kw5\">float</span> and <span class=\"st0\">\"floatformat\"</span>\
+      \ in envlocals:\n\t\t\t\tval <span class=\"sy0\">=</span> envlocals<span class=\"\
+      br0\">[</span><span class=\"st0\">\"floatformat\"</span><span class=\"br0\"\
+      >]</span> <span class=\"sy0\">%</span> val\n\t\t\t<span class=\"kw2\">else</span>:\n\
+      \t\t\t\tval <span class=\"sy0\">=</span> str<span class=\"br0\">(</span>val<span\
+      \ class=\"br0\">)</span>\n\t\t\tnewline <span class=\"sy0\">+=</span> line<span\
+      \ class=\"br0\">[</span>index:match.<span class=\"me0\">start</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">]</span>\n\t\t\
+      \tnewline <span class=\"sy0\">+=</span> val\n\t\t\tindex <span class=\"sy0\"\
+      >=</span> match.<span class=\"me0\">end</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n\t\t\tmatch <span class=\"sy0\">=</span> evalre.<span\
+      \ class=\"me0\">search</span><span class=\"br0\">(</span>line,index<span class=\"\
+      br0\">)</span>\n\t\tnewline <span class=\"sy0\">+=</span> line<span class=\"\
+      br0\">[</span>index:<span class=\"br0\">]</span>\n\t\toutfile.<span class=\"\
+      me0\">write</span><span class=\"br0\">(</span>newline<span class=\"br0\">)</span>\n\
+      \t\tinfile.<span class=\"me0\">close</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n\t\toutfile.<span class=\"me0\">close</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n \n<span class=\"kw2\"\
+      >for</span> filename in sys.<span class=\"me0\">argv</span><span class=\"br0\"\
+      >[</span><span class=\"nu0\">1</span>:<span class=\"br0\">]</span>:\n\t<span\
+      \ class=\"kw2\">if</span> os.<span class=\"me0\">path</span>.<span class=\"\
+      me0\">exists</span><span class=\"br0\">(</span>filename<span class=\"br0\">)</span>:\n\
+      \t\t<span class=\"kw2\">if</span> os.<span class=\"me0\">path</span>.<span class=\"\
+      me0\">isdir</span><span class=\"br0\">(</span>filename<span class=\"br0\">)</span>:\n\
+      \t\t\tos.<span class=\"me0\">path</span>.<span class=\"me0\">walk</span><span\
+      \ class=\"br0\">(</span>filename,visitor,<span class=\"kw5\">None</span><span\
+      \ class=\"br0\">)</span>\n\t\telif os.<span class=\"me0\">path</span>.<span\
+      \ class=\"me0\">isfile</span><span class=\"br0\">(</span>filename<span class=\"\
+      br0\">)</span>:\n\t\t\tprocessfile<span class=\"br0\">(</span>filename<span\
+      \ class=\"br0\">)</span></pre></div>\n</div>\n<p>In case your browse messes\
+      \ up the whitespace, you can also get the <a rel=\"nofollow\" class=\"external\
+      \ text\" href=\"http://chshrcat.homelinux.net/template.py\">script in a file</a>.</p>\n\
+      <h2><span class=\"mw-headline\" id=\"Related_Topics\">Related Topics</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Templating_In_Python?section=1\" title=\"Edit section:\
+      \ Related Topics\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <ul>\n<li><a href=\"/Legacy:Open_Source\" title=\"Legacy:Open Source\">Open\
+      \ Source</a></li>\n<li><a href=\"/Legacy:Python\" title=\"Legacy:Python\">Python</a></li>\n\
+      </ul>\n\n<!-- \nNewPP limit report\nCPU time usage: 0.099 seconds\nReal time\
+      \ usage: 0.101 seconds\nPreprocessor visited node count: 30/1000000\nPreprocessor\
+      \ generated node count: 68/1000000\nPost‐expand include size: 0/2097152 bytes\n\
+      Template argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive\
+      \ parser function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report\
+      \ (%,ms,calls,template)\n100.00%    0.000      1 - -total\n-->\n\n<!-- Saved\
+      \ in parser cache with key wiki:pcache:idhash:3172-0!*!0!*!*!*!* and timestamp\
+      \ 20221118025144 and revision id 40306\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Python"
+  - ns: 100
+    exists: true
+    name: "Legacy:Open Source"
+  templates: []
+  images: []
+  externallinks:
+  - "http://chshrcat.homelinux.net/template.py"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Templating_In_Python"
+    byteoffset: 5154
+    anchor: "Related_Topics"
+  displaytitle: "Legacy:Templating In Python"
+  iwlinks: []
+  wikitext:
+    text: "This was a quick, quick hack, because I got tired of having to do math\
+      \ when I move things in my mutator config or add elements.  Just save the program\
+      \ text at the end to template.py, or whatever else you'd rather call it.  It's\
+      \ a simple preprocessor which will generate new files from template files given\
+      \ on the command line.  Any file specified will have its extension stripped\
+      \ to produce the name for the new file.  Directories specified will be searched\
+      \ recursively for .template files, which will be processed into new files without\
+      \ the .template extension.  Basically, it makes a clean environment for each\
+      \ file, in which commands embedded in the file can be executed.  Anything between\
+      \ two lines starting with \"!!exec\" will be executed, but will produce no output\
+      \ in the processed file.  Anything between a pair of \"!!\" on a line will be\
+      \ evaluated as an expression in Python, and will have its value converted to\
+      \ a string and inserted in place of the expression.  The exec block feature\
+      \ is mostly for setting up constants.  Also, you can change the formatting used\
+      \ for expression which yield floating-point values by setting \"floatformat\"\
+      \ to a Python format string in an exec block.  Here's a quick sample, from some\
+      \ of the code I'm actually using this with (cut down a little bit):\n\nThis\
+      \ is part of RadarConfig.uc.template:\n\n<uscript>\n!!exec set up constants\
+      \ for GUI layout\ngridw=21.0\ngridh=19.0\nllbll=1.0\nnmlblw=4.0\nelh=2.0\nrow1t=1.0\n\
+      row2t=4.0\nfloatformat=\"%0.8f\"\n!!exec\ndefaultproperties\n{\n\tBegin Object\
+      \ Class=GUIButton name=DialogBackground\n\t\tWinWidth=1.0\n\t\tWinHeight=1.0\n\
+      \t\tWinTop=0\n\t\tWinLeft=0\n\t\tbAcceptsInput=false\n\t\tbNeverFocus=true\n\
+      \t\tStyleName=\"ComboListBox\"\n\t\tbBoundToParent=True\n\t\tbScaleToParent=True\n\
+      \tEnd Object\n\tControls(0)=GUIButton'TacticalDisplay.RadarConfig.DialogBackground'\n\
+      \tBegin Object Class=GUILabel name=DialogText\n\t\tCaption=\"Tactical Display\
+      \ Configuration\"\n\t\tTextAlign=TXTA_Center\n\t\tWinWidth=1.0\n\t\tWinHeight=!!elh/gridh!!\n\
+      \t\tWinLeft=0.0\n\t\tWinTop=!!row1t/gridh!!\n\t\tbBoundToParent=True\n\t\tbScaleToParent=True\n\
+      \tEnd Object\n\tControls(1)=GUILabel'TacticalDisplay.RadarConfig.DialogText'\n\
+      \tBegin Object Class=GUILabel name=DetectRangeText\n\t\tCaption=\"Maximum Range\"\
+      \n\t\tWinWidth=!!nmlblw/gridw!!\n\t\tWinHeight=!!elh/gridh!!\n\t\tWinLeft=!!llbll/gridw!!\n\
+      \t\tWinTop=!!row2t/gridh!!\n\t\tbBoundToParent=True\n\t\tbScaleToParent=True\n\
+      \tEnd Object\n\tControls(2)=GUILabel'TacticalDisplay.RadarConfig.DetectRangeText'\n\
+      </uscript>\n\nRunning template.py on it generates this:\n\n<uscript>\ndefaultproperties\n\
+      {\n\tBegin Object Class=GUIButton name=DialogBackground\n\t\tWinWidth=1.0\n\t\
+      \tWinHeight=1.0\n\t\tWinTop=0\n\t\tWinLeft=0\n\t\tbAcceptsInput=false\n\t\t\
+      bNeverFocus=true\n\t\tStyleName=\"ComboListBox\"\n\t\tbBoundToParent=True\n\t\
+      \tbScaleToParent=True\n\tEnd Object\n\tControls(0)=GUIButton'TacticalDisplay.RadarConfig.DialogBackground'\n\
+      \tBegin Object Class=GUILabel name=DialogText\n\t\tCaption=\"Tactical Display\
+      \ Configuration\"\n\t\tTextAlign=TXTA_Center\n\t\tWinWidth=1.0\n\t\tWinHeight=0.10526316\n\
+      \t\tWinLeft=0.0\n\t\tWinTop=0.05263158\n\t\tbBoundToParent=True\n\t\tbScaleToParent=True\n\
+      \tEnd Object\n\tControls(1)=GUILabel'TacticalDisplay.RadarConfig.DialogText'\n\
+      \tBegin Object Class=GUILabel name=DetectRangeText\n\t\tCaption=\"Maximum Range\"\
+      \n\t\tWinWidth=0.19047619\n\t\tWinHeight=0.10526316\n\t\tWinLeft=0.04761905\n\
+      \t\tWinTop=0.21052632\n\t\tbBoundToParent=True\n\t\tbScaleToParent=True\n\t\
+      End Object\n\tControls(2)=GUILabel'TacticalDisplay.RadarConfig.DetectRangeText'\n\
+      </uscript>\n\nI've deleted the rest of the controls (there are 26 in this dialog),\
+      \ and the constants that are associated with them, but you get the idea.  to\
+      \ add a new control at the bottom of the dialog, for example, I can make some\
+      \ new constants to define its location, and change gridh, then rerun template.py.\n\
+      \nAnd finally, here's the Python script:\n\n<uscript>\n#!/usr/bin/python\n\n\
+      import os, sys, re, types\n\nevalre = re.compile('!!(.*?)!!')\n\ndef visitor\
+      \ (arg, dirname, names):\n\tfor filename in names:\n\t\tif filename.endswith(\"\
+      .template\"):\n\t\t\tprocessfile(os.path.join(dirname,filename))\n\ndef processfile(filename):\n\
+      \tenvlocals={}\n\tenvglobals={}\n\texecstring=\"\"\n\tinexec=False\n\tinfile=file(filename,\"\
+      r\")\n\toutfile=file(os.path.splitext(filename)[0],\"w\")\n\tfor line in infile:\n\
+      \t\tif line.startswith(\"!!exec\"):\n\t\t\tif inexec:\n\t\t\t\texec(execstring,envglobals,envlocals)\n\
+      \t\t\t\texecstring=\"\"\n\t\t\t\tinexec=False\n\t\t\telse:\n\t\t\t\tinexec=True\n\
+      \t\t\t\t\n\t\t\tcontinue\n\t\tif inexec:\n\t\t\texecstring += line\n\t\t\tcontinue\n\
+      \t\tindex = 0\n\t\tnewline = \"\"\n\t\tmatch = evalre.search(line,index)\n\t\
+      \twhile match:\n\t\t\tval = eval(match.group(1),envglobals,envlocals)\n\t\t\t\
+      if type(val) == float and \"floatformat\" in envlocals:\n\t\t\t\tval = envlocals[\"\
+      floatformat\"] % val\n\t\t\telse:\n\t\t\t\tval = str(val)\n\t\t\tnewline +=\
+      \ line[index:match.start()]\n\t\t\tnewline += val\n\t\t\tindex = match.end()\n\
+      \t\t\tmatch = evalre.search(line,index)\n\t\tnewline += line[index:]\n\t\toutfile.write(newline)\n\
+      \t\tinfile.close()\n\t\toutfile.close()\n\nfor filename in sys.argv[1:]:\n\t\
+      if os.path.exists(filename):\n\t\tif os.path.isdir(filename):\n\t\t\tos.path.walk(filename,visitor,None)\n\
+      \t\telif os.path.isfile(filename):\n\t\t\tprocessfile(filename)\n</uscript>\n\
+      \nIn case your browse messes up the whitespace, you can also get the [http://chshrcat.homelinux.net/template.py\
+      \ script in a file].\n\n==Related Topics==\n* [[Legacy:Open Source|Open Source]]\n\
+      * [[Legacy:Python|Python]]"
+  properties: []
+  revId: 40306
+name: "Legacy:Templating In Python"
+revision:
+  revid: 40306
+  parentid: 8274
+  user: "164.67.235.176"
+  timestamp: 1259826575.000000000
+  comment: ""
+timestamp: 1668764910.968113000

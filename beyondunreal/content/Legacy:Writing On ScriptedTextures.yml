@@ -1,0 +1,512 @@
+---
+parse:
+  title: "Legacy:Writing On ScriptedTextures"
+  text:
+    text: "<p><b>Please note for what ever reason Epic did not support this feature\
+      \ on the OpenGL render. So any one that runs with the OpenGL render (Mac/Linux)\
+      \ will not see them.</b> Since the lion share of UT2003 players use the D3D\
+      \ render I felt it was ok to use this just this one time in our mod, ChaosUT2.</p>\n\
+      <p>This tutorial will show you how to use use <a href=\"/Legacy:ScriptedTexture\"\
+      \ title=\"Legacy:ScriptedTexture\">ScriptedTextures</a> to draw the names of\
+      \ players on objects. You can then use this method to expand on it to add in\
+      \ other features. Note this is the same method that UnrealSpeed used to draw\
+      \ the player's name on the license plate of the cars. With the Tombstones in\
+      \ Chaos we has certain rules for when we would spawn them, had animations on\
+      \ them so they \"rise up\" from the ground/floor, had 5/6 custom \"rise\" sounds,\
+      \ different skins and have 5/6 different meshes of each Tombstone. Since this\
+      \ is a tutorial, we will simplify it to drawing the name of the dead player\
+      \ on the Tombstone with a \"R.I.P\" text as a header.</p>\n<p>See <a href=\"\
+      /Legacy:ScriptedTexture\" title=\"Legacy:ScriptedTexture\">ScriptedTexture</a>\
+      \ for technical documentation of the class and its functions.</p>\n<p>There\
+      \ are two parts are required for scripted textures to work:</p>\n<ul>\n<li>Custom\
+      \ scripted texture</li>\n<li>Code that draws on the scripted texture</li>\n\
+      </ul>\n<p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n\
+      </div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#Custom_Scripted_Texture\"\
+      ><span class=\"tocnumber\">1</span> <span class=\"toctext\">Custom Scripted\
+      \ Texture</span></a></li>\n<li class=\"toclevel-1 tocsection-2\"><a href=\"\
+      #Code\"><span class=\"tocnumber\">2</span> <span class=\"toctext\">Code</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-3\"><a href=\"#Discussion\"><span class=\"\
+      tocnumber\">3</span> <span class=\"toctext\">Discussion</span></a></li>\n<li\
+      \ class=\"toclevel-1 tocsection-4\"><a href=\"#Related_Topics\"><span class=\"\
+      tocnumber\">4</span> <span class=\"toctext\">Related Topics</span></a></li>\n\
+      </ul>\n</div>\n<p></p>\n<h2><span class=\"mw-headline\" id=\"Custom_Scripted_Texture\"\
+      >Custom Scripted Texture</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Writing_On_ScriptedTextures?section=1\"\
+      \ title=\"Edit section: Custom Scripted Texture\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>What you will want to do is make a new texture. Give\
+      \ your texture a name and select ScriptedTexture as its Material Class:</p>\n\
+      <div class=\"center\">\n<div class=\"floatnone\"><a href=\"/File:Legacy_scriptedTex1.jpeg\"\
+      \ class=\"image\"><img alt=\"Legacy scriptedTex1.jpeg\" src=\"/w/images/Legacy_scriptedTex1.jpeg\"\
+      \ width=\"594\" height=\"449\" /></a></div>\n</div>\n<p>Next make sure you give\
+      \ your images a size by setting up the Uclamp and Vclamp.</p>\n<div class=\"\
+      center\">\n<div class=\"floatnone\"><a href=\"/File:Legacy_scriptedTex2.jpeg\"\
+      \ class=\"image\"><img alt=\"Legacy scriptedTex2.jpeg\" src=\"/w/images/Legacy_scriptedTex2.jpeg\"\
+      \ width=\"633\" height=\"571\" /></a></div>\n</div>\n<p>Finally you want to\
+      \ ensure that you place the Scripted Texture on the object in the proper place:</p>\n\
+      <div class=\"center\">\n<div class=\"floatnone\"><a href=\"/File:Legacy_scriptedTex3.jpeg\"\
+      \ class=\"image\"><img alt=\"Legacy scriptedTex3.jpeg\" src=\"/w/images/Legacy_scriptedTex3.jpeg\"\
+      \ width=\"866\" height=\"417\" /></a></div>\n</div>\n<p>Again your object will\
+      \ need to support this by having a section ready for this texture.</p>\n<p>Make\
+      \ sure to save your texture file. That is it for your Custom Scripted Texture.</p>\n\
+      <h2><span class=\"mw-headline\" id=\"Code\">Code</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Writing_On_ScriptedTextures?section=2\"\
+      \ title=\"Edit section: Code\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>What the code will do is spawn the object you want\
+      \ to draw the text on then draw the text. Simple you say? Well yes but there\
+      \ is one gotcha. Normally textures are global. So if you spawn three of your\
+      \ objects, then all of them would have the SAME text written on them! Why? The\
+      \ engine sees its as only one texture and not one for each object. What you\
+      \ can do is use the object pool. This way you can spawn a separate texture for\
+      \ each object. Let me again show the key parts and then the complete code. First\
+      \ lets look at the PostNetBeginPlay:</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">simulated</span> <span class=\"kw1\">function</span>\
+      \ <span class=\"kw4\">PostNetBeginPlay</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n    <span class=\"kw6\"\
+      >Super</span>.<span class=\"kw4\">PostNetBeginPlay</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>;   \n    TombStoneName <span class=\"\
+      sy0\">=</span> <span class=\"kw5\">ScriptedTexture</span><span class=\"br0\"\
+      >(</span><span class=\"kw7\">Level</span>.<span class=\"kw8\">ObjectPool</span>.<span\
+      \ class=\"me0\">AllocateObject</span><span class=\"br0\">(</span><span class=\"\
+      kw1\">class</span><span class=\"st0\">'ScriptedTexture'</span><span class=\"\
+      br0\">)</span><span class=\"br0\">)</span>;   <span class=\"co1\">// this spawns\
+      \ a unquie Scripted texture for us to use</span>\n    TombStoneName.<span class=\"\
+      me0\">SetSize</span><span class=\"br0\">(</span><span class=\"nu0\">256</span>,<span\
+      \ class=\"nu0\">128</span><span class=\"br0\">)</span>;                    \
+      \                                                                  <span class=\"\
+      co1\">// Size will default it to 0,0....so...better give it some size or eles\
+      \ you wont see it :)</span>\n    TombStoneName.<span class=\"me0\">FallBackMaterial</span>\
+      \ <span class=\"sy0\">=</span> TombStoneNameBack;                          \
+      \                        <span class=\"co1\">// Set the background material</span>\n\
+      \    TombStoneName.<span class=\"me0\">Client</span> <span class=\"sy0\">=</span>\
+      \ <span class=\"kw6\">Self</span>;                                         \
+      \                                                    <span class=\"co1\">//\
+      \ This is the ref we need to draw on</span>\n    <span class=\"kw7\">skins</span><span\
+      \ class=\"br0\">[</span><span class=\"nu0\">1</span><span class=\"br0\">]</span>\
+      \ <span class=\"sy0\">=</span> TombStoneName;                              \
+      \                                                                  <span class=\"\
+      co1\">// Set the \"name area</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>The key for us is to ensure we use the objectpool to get a unique\
+      \ scripted texture to use. Next we need to modify the RenderTexture function\
+      \ (that all actors have) to setup then drawn the players name:</p>\n<p><br /></p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">simulated</span>\
+      \ <span class=\"kw1\">event</span> <span class=\"kw4\">RenderTexture</span><span\
+      \ class=\"br0\">(</span><span class=\"kw5\">ScriptedTexture</span> Tex<span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n    <span class=\"kw1\"\
+      >local</span> <span class=\"kw5\">int</span> SizeX,  SizeY;\n \n    <span class=\"\
+      co1\">// Err for now go with a name in black letters</span>\n    NameColor.<span\
+      \ class=\"me0\">R</span><span class=\"sy0\">=</span><span class=\"nu0\">0</span>;\n\
+      \    NameColor.<span class=\"me0\">G</span><span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0</span>;\n    NameColor.<span class=\"me0\">B</span><span class=\"\
+      sy0\">=</span><span class=\"nu0\">0</span>;\n    NameColor.<span class=\"me0\"\
+      >A</span><span class=\"sy0\">=</span><span class=\"nu0\">255</span>;\n \n  \
+      \  <span class=\"co1\">// Set this to whitew/ no alpha for now...</span>\n \
+      \   BackColor.<span class=\"me0\">R</span><span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">255</span>;\n    BackColor.<span class=\"me0\">G</span><span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">255</span>;\n    BackColor.<span\
+      \ class=\"me0\">B</span><span class=\"sy0\">=</span><span class=\"nu0\">255</span>;\n\
+      \    BackColor.<span class=\"me0\">A</span><span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0</span>;\n \n    Tex.<span class=\"me0\">TextSize</span><span\
+      \ class=\"br0\">(</span>DeadPlayersName,NameFont,SizeX,SizeY<span class=\"br0\"\
+      >)</span>;     <span class=\"co1\">//Returns the Size needed for this string\
+      \ to ensure it will fit on the space provided</span>\n \n    Tex.<span class=\"\
+      me0\">DrawTile</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>,<span\
+      \ class=\"nu0\">0</span>,Tex.<span class=\"me0\">USize</span>,Tex.<span class=\"\
+      kw3\">VSize</span>,<span class=\"nu0\">0</span>,<span class=\"nu0\">0</span>,Tex.<span\
+      \ class=\"me0\">USize</span>,Tex.<span class=\"kw3\">VSize</span>,TombStoneNameBack,BackColor<span\
+      \ class=\"br0\">)</span>;   <span class=\"co1\">// Draws the tile background\
+      \    </span>\n    Tex.<span class=\"me0\">TextSize</span><span class=\"br0\"\
+      >(</span><span class=\"st0\">\"R.I.P.\"</span>,NameFont,SizeX,SizeY<span class=\"\
+      br0\">)</span>;                                                            \
+      \                    <span class=\"co1\">// Drews the header \"R.I.P.\"</span>\n\
+      \    Tex.<span class=\"me0\">DrawText</span><span class=\"br0\">(</span> <span\
+      \ class=\"br0\">(</span>Tex.<span class=\"me0\">USize</span> <span class=\"\
+      sy0\">-</span> SizeX<span class=\"br0\">)</span> <span class=\"sy0\">*</span>\
+      \ <span class=\"nu0\">0.5</span>, <span class=\"nu0\">32</span>, <span class=\"\
+      st0\">\"R.I.P\"</span>, NameFont, NameColor<span class=\"br0\">)</span>;\n \n\
+      \    Tex.<span class=\"me0\">TextSize</span><span class=\"br0\">(</span>DeadPlayersName,NameFont,SizeX,SizeY<span\
+      \ class=\"br0\">)</span>;                                                  \
+      \              <span class=\"co1\">// get the size of the players name    </span>\n\
+      \    Tex.<span class=\"me0\">DrawText</span><span class=\"br0\">(</span> <span\
+      \ class=\"br0\">(</span>Tex.<span class=\"me0\">USize</span> <span class=\"\
+      sy0\">-</span> SizeX<span class=\"br0\">)</span> <span class=\"sy0\">*</span>\
+      \ <span class=\"nu0\">0.5</span>, <span class=\"nu0\">74</span>, DeadPlayersName,\
+      \ NameFont, NameColor<span class=\"br0\">)</span>;                   <span class=\"\
+      co1\">// draws the name of the player that died</span>\n<span class=\"br0\"\
+      >}</span></pre></div>\n</div>\n<p>Most of the above is cut and dry. We set up\
+      \ the colors, check to make sure the text will fit in the area we want to draw\
+      \ it, then draw the text. The last item that we need to do is free up our scripted\
+      \ texture when this object is destroyed:</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">simulated</span> <span class=\"kw1\">event</span>\
+      \ <span class=\"kw4\">Destroyed</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n       <span class=\"kw7\">Level</span>.<span\
+      \ class=\"kw8\">ObjectPool</span>.<span class=\"me0\">FreeObject</span><span\
+      \ class=\"br0\">(</span>TombStoneName<span class=\"br0\">)</span>;\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p>Finally here is the whole code:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"co1\">//=============================================================================</span>\n\
+      <span class=\"co1\">// TombStone</span>\n<span class=\"co1\">// $Id: Tombstone.uc,v\
+      \ 1.19 2003/06/29 23:11:17 jb Exp $</span>\n<span class=\"co1\">// Special Thanks\
+      \ to Kaoh Scarabea for his help and post about this</span>\n<span class=\"co1\"\
+      >//=============================================================================</span>\n\
+      <span class=\"kw1\">class</span> Tombstone <span class=\"kw1\">extends</span>\
+      \ Decoration;\n \n<span class=\"co1\">// texture stuff</span>\n<span class=\"\
+      kw1\">var</span> <span class=\"kw5\">Material</span>   TombStoneNameBack;  \
+      \        <span class=\"co1\">// background on the tombstone</span>\n<span class=\"\
+      kw1\">var</span> <span class=\"kw5\">ScriptedTexture</span>  TombStoneName;\
+      \       <span class=\"co1\">// Texture that we write the name  on, this is the\
+      \ key elemet</span>\n \n<span class=\"co1\">//Font/Color/stuff</span>\n<span\
+      \ class=\"kw1\">var</span> Font NameFont;\n<span class=\"kw1\">var</span> font\
+      \ SmallNameFont;                           <span class=\"co1\">// Used when\
+      \ the name is to big too fit</span>\n<span class=\"kw1\">var</span> <span class=\"\
+      kw5\">color</span> NameColor;                                <span class=\"\
+      co1\">// Colors</span>\n<span class=\"kw1\">var</span> <span class=\"kw5\">Color</span>\
+      \ BackColor;\n<span class=\"kw1\">var</span> <span class=\"kw5\">string</span>\
+      \ DeadPlayersName;                    <span class=\"co1\">// The players name\
+      \ that just got fragged</span>\n \n \n<span class=\"kw1\">replication</span>\n\
+      <span class=\"br0\">{</span>\n   <span class=\"kw1\">reliable</span> <span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span><span class=\"kw7\">Role</span> <span\
+      \ class=\"sy0\">==</span> <span class=\"kw7\">ROLE_Authority</span><span class=\"\
+      br0\">)</span>\n      DeadPlayersName;   <span class=\"co1\">// well other people\
+      \ need to see this :)</span>\n<span class=\"br0\">}</span>\n \n<span class=\"\
+      kw1\">simulated</span> <span class=\"kw1\">function</span> <span class=\"kw4\"\
+      >PostNetBeginPlay</span><span class=\"br0\">(</span><span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n    <span class=\"kw6\">Super</span>.<span class=\"\
+      kw4\">PostNetBeginPlay</span><span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>;   \n    TombStoneName <span class=\"sy0\">=</span> <span class=\"\
+      kw5\">ScriptedTexture</span><span class=\"br0\">(</span><span class=\"kw7\"\
+      >Level</span>.<span class=\"kw8\">ObjectPool</span>.<span class=\"me0\">AllocateObject</span><span\
+      \ class=\"br0\">(</span><span class=\"kw1\">class</span><span class=\"st0\"\
+      >'ScriptedTexture'</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\
+      \   <span class=\"co1\">// this spawns a unquie Scripted texture for us to use</span>\n\
+      \    TombStoneName.<span class=\"me0\">SetSize</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">256</span>,<span class=\"nu0\">128</span><span class=\"br0\"\
+      >)</span>;                                                                 \
+      \                     <span class=\"co1\">// Size will default it to 0,0....so...better\
+      \ give it some size or eles you wont see it :)</span>\n    TombStoneName.<span\
+      \ class=\"me0\">FallBackMaterial</span> <span class=\"sy0\">=</span> TombStoneNameBack;\
+      \                                                  <span class=\"co1\">// Set\
+      \ the background material</span>\n    TombStoneName.<span class=\"me0\">Client</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"kw6\">Self</span>;            \
+      \                                                                          \
+      \       <span class=\"co1\">// This is the ref we need to draw on</span>\n \
+      \   <span class=\"kw7\">skins</span><span class=\"br0\">[</span><span class=\"\
+      nu0\">1</span><span class=\"br0\">]</span> <span class=\"sy0\">=</span> TombStoneName;\
+      \                                                                          \
+      \                      <span class=\"co1\">// Set the \"name\" area</span>\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">simulated</span> <span\
+      \ class=\"kw1\">event</span> <span class=\"kw4\">RenderTexture</span><span class=\"\
+      br0\">(</span><span class=\"kw5\">ScriptedTexture</span> Tex<span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n    <span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">int</span> SizeX,  SizeY;\n \n    <span class=\"co1\"\
+      >// Err for now go with a name in black letters</span>\n    NameColor.<span\
+      \ class=\"me0\">R</span><span class=\"sy0\">=</span><span class=\"nu0\">0</span>;\n\
+      \    NameColor.<span class=\"me0\">G</span><span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0</span>;\n    NameColor.<span class=\"me0\">B</span><span class=\"\
+      sy0\">=</span><span class=\"nu0\">0</span>;\n    NameColor.<span class=\"me0\"\
+      >A</span><span class=\"sy0\">=</span><span class=\"nu0\">255</span>;\n \n  \
+      \  <span class=\"co1\">// Set this to whitew/ no alpha for now...</span>\n \
+      \   BackColor.<span class=\"me0\">R</span><span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">255</span>;\n    BackColor.<span class=\"me0\">G</span><span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">255</span>;\n    BackColor.<span\
+      \ class=\"me0\">B</span><span class=\"sy0\">=</span><span class=\"nu0\">255</span>;\n\
+      \    BackColor.<span class=\"me0\">A</span><span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0</span>;\n \n    Tex.<span class=\"me0\">TextSize</span><span\
+      \ class=\"br0\">(</span>DeadPlayersName,NameFont,SizeX,SizeY<span class=\"br0\"\
+      >)</span>;     <span class=\"co1\">//Returns the Size needed for this string\
+      \ to ensure it will fit on the space provided</span>\n \n    Tex.<span class=\"\
+      me0\">DrawTile</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>,<span\
+      \ class=\"nu0\">0</span>,Tex.<span class=\"me0\">USize</span>,Tex.<span class=\"\
+      kw3\">VSize</span>,<span class=\"nu0\">0</span>,<span class=\"nu0\">0</span>,Tex.<span\
+      \ class=\"me0\">USize</span>,Tex.<span class=\"kw3\">VSize</span>,TombStoneNameBack,BackColor<span\
+      \ class=\"br0\">)</span>;   <span class=\"co1\">// Draws the tile background\
+      \    </span>\n    Tex.<span class=\"me0\">TextSize</span><span class=\"br0\"\
+      >(</span><span class=\"st0\">\"R.I.P.\"</span>,NameFont,SizeX,SizeY<span class=\"\
+      br0\">)</span>;                                                            \
+      \                    <span class=\"co1\">// Drews the header \"R.I.P.\"</span>\n\
+      \    Tex.<span class=\"me0\">DrawText</span><span class=\"br0\">(</span> <span\
+      \ class=\"br0\">(</span>Tex.<span class=\"me0\">USize</span> <span class=\"\
+      sy0\">-</span> SizeX<span class=\"br0\">)</span> <span class=\"sy0\">*</span>\
+      \ <span class=\"nu0\">0.5</span>, <span class=\"nu0\">32</span>, <span class=\"\
+      st0\">\"R.I.P\"</span>, NameFont, NameColor<span class=\"br0\">)</span>;\n \n\
+      \    Tex.<span class=\"me0\">TextSize</span><span class=\"br0\">(</span>DeadPlayersName,NameFont,SizeX,SizeY<span\
+      \ class=\"br0\">)</span>;                                                  \
+      \              <span class=\"co1\">// get the size of the players name    </span>\n\
+      \    Tex.<span class=\"me0\">DrawText</span><span class=\"br0\">(</span> <span\
+      \ class=\"br0\">(</span>Tex.<span class=\"me0\">USize</span> <span class=\"\
+      sy0\">-</span> SizeX<span class=\"br0\">)</span> <span class=\"sy0\">*</span>\
+      \ <span class=\"nu0\">0.5</span>, <span class=\"nu0\">74</span>, DeadPlayersName,\
+      \ NameFont, NameColor<span class=\"br0\">)</span>;                   <span class=\"\
+      co1\">// draws the name of the player that died</span>\n<span class=\"br0\"\
+      >}</span>\n \n \n<span class=\"kw1\">simulated</span> <span class=\"kw1\">event</span>\
+      \ <span class=\"kw4\">Destroyed</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n       <span class=\"kw7\">Level</span>.<span\
+      \ class=\"kw8\">ObjectPool</span>.<span class=\"me0\">FreeObject</span><span\
+      \ class=\"br0\">(</span>TombStoneName<span class=\"br0\">)</span>;\n<span class=\"\
+      br0\">}</span>\n \n \n<span class=\"kw1\">defaultproperties</span>\n<span class=\"\
+      br0\">{</span>\n \n     <span class=\"kw7\">skins</span><span class=\"br0\"\
+      >[</span><span class=\"nu0\">0</span><span class=\"br0\">]</span><span class=\"\
+      sy0\">=</span><span class=\"kw5\">Texture</span><span class=\"st0\">'ChaosTex_003.Tombstones.Chaos_tombbase'</span>\n\
+      \     TombStoneNameBack<span class=\"sy0\">=</span><span class=\"kw5\">Texture</span><span\
+      \ class=\"st0\">'ChaosTex_003.Tombstones.Chaos_tombsign'</span>\n     TombStoneName<span\
+      \ class=\"sy0\">=</span><span class=\"kw5\">ScriptedTexture</span><span class=\"\
+      st0\">'ChaosTex_003.Tombstones.Name'</span>\n     <span class=\"kw5\">Mesh</span><span\
+      \ class=\"sy0\">=</span><span class=\"kw5\">SkeletalMesh</span><span class=\"\
+      st0\">'Chaos_Extras1.Chaos_tombstone1'</span>\n     NameFont<span class=\"sy0\"\
+      >=</span>Font<span class=\"st0\">'UT2003Fonts.FontMedium'</span>\n     SmallNameFont<span\
+      \ class=\"sy0\">=</span>Font<span class=\"st0\">'UT2003Fonts.FontSmall'</span>\
+      \     \n     <span class=\"kw7\">Drawscale</span><span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">1.0</span>\n     <span class=\"kw7\">CollisionHeight</span><span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">1.2</span>\n     <span class=\"\
+      kw7\">CollisionRadius</span><span class=\"sy0\">=</span><span class=\"nu0\"\
+      >15</span>\n     bCollideWorld<span class=\"sy0\">=</span><span class=\"kw6\"\
+      >True</span>\n     bCollideActors<span class=\"sy0\">=</span><span class=\"\
+      kw6\">False</span>\n     <span class=\"kw7\">Physics</span><span class=\"sy0\"\
+      >=</span><span class=\"kw7\">PHYS_Falling</span>\n     bUseCylinderCollision<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">true</span>\n     bStatic<span class=\"\
+      sy0\">=</span><span class=\"kw6\">False</span>\n     bNoDelete<span class=\"\
+      sy0\">=</span><span class=\"kw6\">False</span>\n     bAcceptsProjectors<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">True</span>\n     bUseDynamicLights<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">false</span>\n     AmbientGlow<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">50</span>\n     <span class=\"kw7\"\
+      >Lifespan</span><span class=\"sy0\">=</span><span class=\"nu0\">45</span>  \
+      \ \n     <span class=\"co1\">// Network stuff</span>\n     bGameRelevant<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">true</span>\n     bNetTemporary<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">True</span>\n     <span class=\"\
+      kw7\">RemoteRole</span><span class=\"sy0\">=</span><span class=\"kw7\">ROLE_SimulatedProxy</span>\n\
+      \ \n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>Some other notes I\
+      \ did not mention: We are spawning the Tombstone from someplace else. When we\
+      \ spawn it we set the DeadPlayersName var then make sure that gets replicated.\
+      \ Also you could choose another parent than Decoration but for our use it seemed\
+      \ to fit what the Tombstones are (they are just for decorations). You also can\
+      \ see TombStoneName in the DefaultProperties is where we call out our CustomScriptedTexture\
+      \ that we made in the first steps.</p>\n<p>That's the basics behind how to get\
+      \ them in and working. This above example is also network compliant. I am sure\
+      \ I may have skipped something important or made some errors so please let me\
+      \ know. Again this is only going to work for those D3D windows users which is\
+      \ not everyone.</p>\n<h2><span class=\"mw-headline\" id=\"Discussion\">Discussion</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Writing_On_ScriptedTextures?section=3\" title=\"Edit section:\
+      \ Discussion\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p><b>UArchitect:</b> hmm, what about if i wanted to draw several textures on\
+      \ my scripted texture, in different positions/sizes?&#160;:o i cant seem to\
+      \ find any other really good resources or tutorials on making scriptedtextures,\
+      \ other than making text/messages this helped a bit though&#160;:P</p>\n<p><b>Mychaeel:</b>\
+      \ Use the DrawTile function declared in <a href=\"/Legacy:ScriptedTexture\"\
+      \ title=\"Legacy:ScriptedTexture\">ScriptedTexture</a> to draw textures on your\
+      \ scripted texture.</p>\n<h2><span class=\"mw-headline\" id=\"Related_Topics\"\
+      >Related Topics</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Writing_On_ScriptedTextures?section=4\" title=\"\
+      Edit section: Related Topics\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<ul>\n<li><a href=\"/Legacy:ScriptedTexture\" title=\"\
+      Legacy:ScriptedTexture\">ScriptedTexture</a> class</li>\n</ul>\n<hr />\n<p><a\
+      \ href=\"/Category:Legacy_Tutorial\" title=\"Category:Legacy Tutorial\">Category:Legacy\
+      \ Tutorial</a></p>\n<p><a href=\"/Category:Legacy_To_Do\" title=\"Category:Legacy\
+      \ To Do\">Category:Legacy To Do</a> - Lots of duplication between this and <a\
+      \ href=\"/Legacy:ScriptedTexture\" title=\"Legacy:ScriptedTexture\">ScriptedTexture</a></p>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.216 seconds\nReal time usage:\
+      \ 0.553 seconds\nPreprocessor visited node count: 53/1000000\nPreprocessor generated\
+      \ node count: 116/1000000\nPost‐expand include size: 54/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:3781-0!*!0!!en!5!* and timestamp 20221118161236 and revision\
+      \ id 9577\n -->\n"
+  categories:
+  - sortkey: "Writing On ScriptedTextures"
+    name: "Legacy_To_Do"
+  - sortkey: "Writing On ScriptedTextures"
+    name: "Legacy_Tutorial"
+  links:
+  - ns: 14
+    exists: true
+    name: "Category:Legacy Tutorial"
+  - ns: 100
+    exists: true
+    name: "Legacy:ScriptedTexture"
+  - ns: 14
+    exists: true
+    name: "Category:Legacy To Do"
+  templates: []
+  images:
+  - "Legacy_scriptedTex1.jpeg"
+  - "Legacy_scriptedTex2.jpeg"
+  - "Legacy_scriptedTex3.jpeg"
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Custom Scripted Texture"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Writing_On_ScriptedTextures"
+    byteoffset: 1226
+    anchor: "Custom_Scripted_Texture"
+  - toclevel: 1
+    level: "2"
+    line: "Code"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Writing_On_ScriptedTextures"
+    byteoffset: 1864
+    anchor: "Code"
+  - toclevel: 1
+    level: "2"
+    line: "Discussion"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:Writing_On_ScriptedTextures"
+    byteoffset: 9758
+    anchor: "Discussion"
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "4"
+    index: "4"
+    fromtitle: "Legacy:Writing_On_ScriptedTextures"
+    byteoffset: 10197
+    anchor: "Related_Topics"
+  displaytitle: "Legacy:Writing On ScriptedTextures"
+  iwlinks: []
+  wikitext:
+    text: "'''Please note for what ever reason Epic did not support this feature on\
+      \ the OpenGL render. So any one that runs with the OpenGL render (Mac/Linux)\
+      \ will not see them.''' Since the lion share of UT2003 players use the D3D render\
+      \ I felt it was ok to use this just this one time in our mod, ChaosUT2. \n\n\
+      This tutorial will show you how to use use [[Legacy:ScriptedTexture|ScriptedTexture]]s\
+      \ to draw the names of players on objects. You can then use this method to expand\
+      \ on it to add in other features. Note this is the same method that UnrealSpeed\
+      \ used to draw the player's name on the license plate of the cars. With the\
+      \ Tombstones in Chaos we has certain rules for when we would spawn them, had\
+      \ animations on them so they \"rise up\" from the ground/floor, had 5/6 custom\
+      \ \"rise\" sounds, different skins and have 5/6 different meshes of each Tombstone.\
+      \ Since this is a tutorial, we will simplify it to drawing the name of the dead\
+      \ player on the Tombstone with a \"R.I.P\" text as a header.\n\nSee [[Legacy:ScriptedTexture|ScriptedTexture]]\
+      \ for technical documentation of the class and its functions.\n\nThere are two\
+      \ parts are required for scripted textures to work:\n* Custom scripted texture\n\
+      * Code that draws on the scripted texture\n\n==Custom Scripted Texture ==\n\n\
+      What you will want to do is make a new texture. Give your texture a name and\
+      \ select ScriptedTexture as its Material Class:\n\n[[Image:Legacy_scriptedTex1.jpeg|center|]]\n\
+      \nNext make sure you give your images a size by setting up the Uclamp and Vclamp.\n\
+      \n[[Image:Legacy_scriptedTex2.jpeg|center|]]\n\nFinally you want to ensure that\
+      \ you place the Scripted Texture on the object in the proper place:\n\n[[Image:Legacy_scriptedTex3.jpeg|center|]]\n\
+      \nAgain your object will need to support this by having a section ready for\
+      \ this texture.\n\nMake sure to save your texture file. That is it for your\
+      \ Custom Scripted Texture.\n\n==Code ==\n\nWhat the code will do is spawn the\
+      \ object you want to draw the text on then draw the text. Simple you say? Well\
+      \ yes but there is one gotcha. Normally textures are global. So if you spawn\
+      \ three of your objects, then all of them would have the SAME text written on\
+      \ them! Why? The engine sees its as only one texture and not one for each object.\
+      \ What you can do is use the object pool. This way you can spawn a separate\
+      \ texture for each object. Let me again show the key parts and then the complete\
+      \ code. First lets look at  the PostNetBeginPlay:\n\n<uscript>\n\nsimulated\
+      \ function PostNetBeginPlay()\n{\n    Super.PostNetBeginPlay();   \n    TombStoneName\
+      \ = ScriptedTexture(Level.ObjectPool.AllocateObject(class'ScriptedTexture'));\
+      \   // this spawns a unquie Scripted texture for us to use\n    TombStoneName.SetSize(256,128);\
+      \                                                                          \
+      \            // Size will default it to 0,0....so...better give it some size\
+      \ or eles you wont see it :)\n    TombStoneName.FallBackMaterial = TombStoneNameBack;\
+      \                                                  // Set the background material\n\
+      \    TombStoneName.Client = Self;                                          \
+      \                                                   // This is the ref we need\
+      \ to draw on\n    skins[1] = TombStoneName;                                \
+      \                                                                // Set the\
+      \ \"name area\n}\n</uscript>\n\nThe key for us is to ensure we use the objectpool\
+      \ to get a unique scripted texture to use. Next we need to modify the RenderTexture\
+      \ function (that all actors have) to setup then drawn the players name:\n \n\
+      \n<uscript>\nsimulated event RenderTexture(ScriptedTexture Tex)\n{\n    local\
+      \ int SizeX,  SizeY;\n\n    // Err for now go with a name in black letters\n\
+      \    NameColor.R=0;\n    NameColor.G=0;\n    NameColor.B=0;\n    NameColor.A=255;\n\
+      \n    // Set this to whitew/ no alpha for now...\n    BackColor.R=255;\n   \
+      \ BackColor.G=255;\n    BackColor.B=255;\n    BackColor.A=0;\n   \n    Tex.TextSize(DeadPlayersName,NameFont,SizeX,SizeY);\
+      \     //Returns the Size needed for this string to ensure it will fit on the\
+      \ space provided\n \n    Tex.DrawTile(0,0,Tex.USize,Tex.VSize,0,0,Tex.USize,Tex.VSize,TombStoneNameBack,BackColor);\
+      \   // Draws the tile background    \n    Tex.TextSize(\"R.I.P.\",NameFont,SizeX,SizeY);\
+      \                                                                          \
+      \      // Drews the header \"R.I.P.\"\n    Tex.DrawText( (Tex.USize - SizeX)\
+      \ * 0.5, 32, \"R.I.P\", NameFont, NameColor);\n    \n    Tex.TextSize(DeadPlayersName,NameFont,SizeX,SizeY);\
+      \                                                                // get the\
+      \ size of the players name    \n    Tex.DrawText( (Tex.USize - SizeX) * 0.5,\
+      \ 74, DeadPlayersName, NameFont, NameColor);                   // draws the\
+      \ name of the player that died\n}\n</uscript>\n\nMost of the above is cut and\
+      \ dry. We set up the colors, check to make sure the text will fit in the area\
+      \ we want to draw it, then draw the text. The last item that we need to do is\
+      \ free up our scripted texture when this object is destroyed:\n\n<uscript>\n\
+      simulated event Destroyed()\n{\n       Level.ObjectPool.FreeObject(TombStoneName);\n\
+      }\n</uscript>\n\nFinally here is the whole code:\n\n<uscript>\n//=============================================================================\n\
+      // TombStone\n// $Id: Tombstone.uc,v 1.19 2003/06/29 23:11:17 jb Exp $\n// Special\
+      \ Thanks to Kaoh Scarabea for his help and post about this\n//=============================================================================\n\
+      class Tombstone extends Decoration;\n\n// texture stuff\nvar Material   TombStoneNameBack;\
+      \          // background on the tombstone\nvar ScriptedTexture  TombStoneName;\
+      \       // Texture that we write the name  on, this is the key elemet\n\n//Font/Color/stuff\n\
+      var Font NameFont;\nvar font SmallNameFont;                           // Used\
+      \ when the name is to big too fit\nvar color NameColor;                    \
+      \            // Colors\nvar Color BackColor;\nvar string DeadPlayersName;  \
+      \                  // The players name that just got fragged\n\n\nreplication\n\
+      {\n   reliable if(Role == ROLE_Authority)\n      DeadPlayersName;   // well\
+      \ other people need to see this :)\n}\n\nsimulated function PostNetBeginPlay()\n\
+      {\n    Super.PostNetBeginPlay();   \n    TombStoneName = ScriptedTexture(Level.ObjectPool.AllocateObject(class'ScriptedTexture'));\
+      \   // this spawns a unquie Scripted texture for us to use\n    TombStoneName.SetSize(256,128);\
+      \                                                                          \
+      \            // Size will default it to 0,0....so...better give it some size\
+      \ or eles you wont see it :)\n    TombStoneName.FallBackMaterial = TombStoneNameBack;\
+      \                                                  // Set the background material\n\
+      \    TombStoneName.Client = Self;                                          \
+      \                                                   // This is the ref we need\
+      \ to draw on\n    skins[1] = TombStoneName;                                \
+      \                                                                // Set the\
+      \ \"name\" area\n}\n\nsimulated event RenderTexture(ScriptedTexture Tex)\n{\n\
+      \    local int SizeX,  SizeY;\n\n    // Err for now go with a name in black\
+      \ letters\n    NameColor.R=0;\n    NameColor.G=0;\n    NameColor.B=0;\n    NameColor.A=255;\n\
+      \n    // Set this to whitew/ no alpha for now...\n    BackColor.R=255;\n   \
+      \ BackColor.G=255;\n    BackColor.B=255;\n    BackColor.A=0;\n   \n    Tex.TextSize(DeadPlayersName,NameFont,SizeX,SizeY);\
+      \     //Returns the Size needed for this string to ensure it will fit on the\
+      \ space provided\n\n    Tex.DrawTile(0,0,Tex.USize,Tex.VSize,0,0,Tex.USize,Tex.VSize,TombStoneNameBack,BackColor);\
+      \   // Draws the tile background    \n    Tex.TextSize(\"R.I.P.\",NameFont,SizeX,SizeY);\
+      \                                                                          \
+      \      // Drews the header \"R.I.P.\"\n    Tex.DrawText( (Tex.USize - SizeX)\
+      \ * 0.5, 32, \"R.I.P\", NameFont, NameColor);\n    \n    Tex.TextSize(DeadPlayersName,NameFont,SizeX,SizeY);\
+      \                                                                // get the\
+      \ size of the players name    \n    Tex.DrawText( (Tex.USize - SizeX) * 0.5,\
+      \ 74, DeadPlayersName, NameFont, NameColor);                   // draws the\
+      \ name of the player that died\n}\n\n\nsimulated event Destroyed()\n{\n    \
+      \   Level.ObjectPool.FreeObject(TombStoneName);\n}\n\n\ndefaultproperties\n\
+      {\n\n     skins[0]=Texture'ChaosTex_003.Tombstones.Chaos_tombbase'\n     TombStoneNameBack=Texture'ChaosTex_003.Tombstones.Chaos_tombsign'\n\
+      \     TombStoneName=ScriptedTexture'ChaosTex_003.Tombstones.Name'\n     Mesh=SkeletalMesh'Chaos_Extras1.Chaos_tombstone1'\n\
+      \     NameFont=Font'UT2003Fonts.FontMedium'\n     SmallNameFont=Font'UT2003Fonts.FontSmall'\
+      \     \n     Drawscale=1.0\n     CollisionHeight=1.2\n     CollisionRadius=15\n\
+      \     bCollideWorld=True\n     bCollideActors=False\n     Physics=PHYS_Falling\n\
+      \     bUseCylinderCollision=true\n     bStatic=False\n     bNoDelete=False\n\
+      \     bAcceptsProjectors=True\n     bUseDynamicLights=false\n     AmbientGlow=50\n\
+      \     Lifespan=45   \n     // Network stuff\n     bGameRelevant=true\n     bNetTemporary=True\n\
+      \     RemoteRole=ROLE_SimulatedProxy\n\n}\n</uscript>\n\nSome other notes I\
+      \ did not mention: We are spawning the Tombstone from someplace else. When we\
+      \ spawn it we set the DeadPlayersName var then make sure that gets replicated.\
+      \ Also you could choose another parent than Decoration but for our use it seemed\
+      \ to fit what the Tombstones are (they are just for decorations). You also can\
+      \ see TombStoneName in the DefaultProperties is where we call out our CustomScriptedTexture\
+      \ that we made in the first steps.\n\nThat's the basics behind how to get them\
+      \ in and working. This above example is also network compliant. I am sure I\
+      \ may have skipped something important or made some errors so please let me\
+      \ know. Again this is only going to work for those D3D windows users which is\
+      \ not everyone. \n\n==Discussion==\n\n'''UArchitect:''' hmm, what about if i\
+      \ wanted to draw several textures on my scripted texture, in different positions/sizes?\
+      \ :o i cant seem to find any other really good resources or tutorials on making\
+      \ scriptedtextures, other than making text/messages this helped a bit though\
+      \ :P\n\n'''Mychaeel:''' Use the DrawTile function declared in [[Legacy:ScriptedTexture|ScriptedTexture]]\
+      \ to draw textures on your scripted texture.\n\n==Related Topics==\n* [[Legacy:ScriptedTexture|ScriptedTexture]]\
+      \ class\n\n----\n\n[[:Category:Legacy Tutorial]]\n\n[[:Category:Legacy To Do]]\
+      \ - Lots of duplication between this and [[Legacy:ScriptedTexture|ScriptedTexture]]\n\
+      [[Category:Legacy Tutorial|{{PAGENAME}}]]\n[[Category:Legacy To Do|{{PAGENAME}}]]"
+  properties: []
+  revId: 9577
+name: "Legacy:Writing On ScriptedTextures"
+revision:
+  revid: 9577
+  parentid: 9579
+  user: "Off-Kilter"
+  timestamp: 1120321115.000000000
+  comment: "Spelling, grammar police."
+timestamp: 1668787806.187751000

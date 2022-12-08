@@ -1,0 +1,212 @@
+---
+parse:
+  title: "Legacy:DynaMusic"
+  text:
+    text: "<h2><span class=\"mw-headline\" id=\"DynaMusic_optional_music_for_mappers_.21\"\
+      >DynaMusic optional music for mappers&#160;!</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:DynaMusic?section=1\"\
+      \ title=\"Edit section: DynaMusic optional music for mappers\_!\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>Usage:</p>\n<ol>\n\
+      <li>Follow the directions for <a href=\"/Legacy:Embedding_Code\" title=\"Legacy:Embedding\
+      \ Code\">Embedding Code</a></li>\n<li>Place dynamusic actor on your map</li>\n\
+      <li>Right click on it to bring up properties</li>\n<li>Select the DynaMusic/LoadSong\
+      \ property and type in the song \"PackageName.SongName\" you want to be optional</li>\n\
+      <li>Right click on empty part of map to bring up the level properties</li>\n\
+      <li>Change audio/song to one of the standard UT music packages ( this package\
+      \ won't be optional )</li>\n</ol>\n<hr />\n<p>The way it works:</p>\n<ol>\n\
+      <li>When the player connects DynaMusic attempts to load music package</li>\n\
+      <li>If it's successful it overides the maps default music (as defined in Level\
+      \ properties), with the optional music</li>\n</ol>\n<hr />\n<div dir=\"ltr\"\
+      \ class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"co1\">//=============================================================================</span>\n\
+      <span class=\"co1\">// DynaMusic.       By Dirk Fist  with all do credit to\
+      \ the people of the Wiki </span>\n<span class=\"co1\">//=============================================================================</span>\n\
+      <span class=\"kw1\">class</span> DynaMusic <span class=\"kw1\">expands</span>\
+      \ <span class=\"kw9\">Actor</span>;\n \n<span class=\"kw1\">var</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"kw5\">string</span>\
+      \ LoadSong;\n<span class=\"kw1\">var</span> music song;\n<span class=\"kw1\"\
+      >var</span> PlayerPawn MusicPlayer;\n<span class=\"kw1\">var</span> <span class=\"\
+      kw5\">bool</span> bMusicStarted;\n<span class=\"kw1\">var</span> <span class=\"\
+      kw5\">int</span> started;\n \n<span class=\"kw1\">replication</span>\n<span\
+      \ class=\"br0\">{</span>   <span class=\"co1\">// Variables which will cause\
+      \ replication to all (relevant) clients</span>\n    <span class=\"kw1\">reliable</span>\
+      \ <span class=\"kw2\">if</span> <span class=\"br0\">(</span> <span class=\"\
+      kw7\">Role</span> <span class=\"sy0\">==</span> <span class=\"kw7\">ROLE_Authority</span>\
+      \ <span class=\"br0\">)</span>\n        started,LoadSong;\n<span class=\"br0\"\
+      >}</span>\n \n<span class=\"kw1\">function</span> <span class=\"kw4\">PreBeginPlay</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>           <span class=\"\
+      co1\">// executed on server</span>\n<span class=\"br0\">{</span>\n    started\
+      \ <span class=\"sy0\">+=</span><span class=\"nu0\">1</span>;               \
+      \   <span class=\"co1\">// force replication</span>\n    <span class=\"kw6\"\
+      >Super</span>.<span class=\"kw4\">PreBeginPlay</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\"\
+      >auto</span> <span class=\"kw1\">simulated</span> <span class=\"kw1\">state</span>\
+      \ startup\n<span class=\"br0\">{</span>\n<span class=\"kw2\">Begin</span>:\n\
+      \    <span class=\"kw3\">log</span><span class=\"br0\">(</span><span class=\"\
+      st0\">\"Started\"</span>,<span class=\"st0\">'Dynamusic'</span><span class=\"\
+      br0\">)</span>;\n    song <span class=\"sy0\">=</span> music<span class=\"br0\"\
+      >(</span><span class=\"kw3\">DynamicLoadObject</span><span class=\"br0\">(</span>\
+      \ LoadSong, <span class=\"kw1\">class</span><span class=\"st0\">'Music'</span>,<span\
+      \ class=\"kw6\">True</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n\
+      \    <span class=\"kw2\">if</span> <span class=\"br0\">(</span>song<span class=\"\
+      sy0\">!=</span><span class=\"kw5\">None</span><span class=\"br0\">)</span>\n\
+      \    <span class=\"br0\">{</span>   <span class=\"co1\">// we got a song lets\
+      \ find player</span>\n        <span class=\"kw3\">log</span><span class=\"br0\"\
+      >(</span><span class=\"kw5\">string</span><span class=\"br0\">(</span>song.<span\
+      \ class=\"kw1\">Class</span><span class=\"br0\">)</span>,<span class=\"st0\"\
+      >'Dynamusic'</span><span class=\"br0\">)</span>;\n \n        <span class=\"\
+      kw2\">foreach</span> <span class=\"kw2\">AllActors</span><span class=\"br0\"\
+      >(</span><span class=\"kw1\">class</span> <span class=\"st0\">'PlayerPawn'</span>,\
+      \ MusicPlayer<span class=\"br0\">)</span>\n            <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span>Viewport<span class=\"br0\">(</span>MusicPlayer.<span\
+      \ class=\"kw8\">Player</span><span class=\"br0\">)</span> <span class=\"sy0\"\
+      >!=</span> <span class=\"kw5\">None</span><span class=\"br0\">)</span>  <span\
+      \ class=\"kw2\">break</span>; \n        <span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span>MusicPlayer <span class=\"sy0\">!=</span> <span class=\"\
+      kw5\">None</span><span class=\"br0\">)</span>\n        <span class=\"br0\">{</span>\
+      \   <span class=\"co1\">// We got player lets play </span>\n            MusicPlayer.<span\
+      \ class=\"me0\">ClientSetMusic</span><span class=\"br0\">(</span> song, <span\
+      \ class=\"kw7\">Level</span>.<span class=\"me0\">SongSection</span>, <span class=\"\
+      kw7\">Level</span>.<span class=\"me0\">CdTrack</span>, <span class=\"kw7\">MTRAN_Fade</span>\
+      \ <span class=\"br0\">)</span>;    \n            <span class=\"kw3\">log</span><span\
+      \ class=\"br0\">(</span>MusicPlayer.<span class=\"me0\">PlayerReplicationInfo</span>.<span\
+      \ class=\"me0\">PlayerName</span>,<span class=\"st0\">'Dynamusic'</span><span\
+      \ class=\"br0\">)</span>;        \n    <span class=\"br0\">}</span>   <span\
+      \ class=\"br0\">}</span>\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\"\
+      >defaultproperties</span>\n<span class=\"br0\">{</span>\n    bAlwaysRelevant<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">True</span>\n    <span class=\"\
+      kw7\">RemoteRole</span><span class=\"sy0\">=</span><span class=\"kw7\">ROLE_SimulatedProxy</span>\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<hr />\n<p><b>Dirk Fist:</b>\
+      \ My First Wiki Project&#160;:)</p>\n<p><b>Dirk Fist:</b> Can I upload a .u\
+      \ or .unr file&#160;?</p>\n<p><b>Dirk Fist:</b> Found some info on making the\
+      \ packages optional <a rel=\"nofollow\" class=\"external free\" href=\"http://unreal.epicgames.com/UTMagic.html#PackageFlags\"\
+      >http://unreal.epicgames.com/UTMagic.html#PackageFlags</a></p>\n<p><b>Dirk Fist:</b>\
+      \ If any one knows another way I'd be glad to hear it? Since I don't want to\
+      \ cause version conflicts for maps that use non-optional umx(ogg?) version of\
+      \ the file, Since this is a mapping component and many mappers will probably\
+      \ borrow music from other maps.</p>\n<p><b>Wormbo:</b> UT200x's OGG files aren't\
+      \ Unreal packages and won't be sent from the server. (They are already optional.)\
+      \ In UT non-optional music packages are sent by the server because the map's\
+      \ dependancy on the music package automatically makes it a ServerPackage. BTW:\
+      \ It's better to put the music loading code in PostBeginPlay() and skip the\
+      \ state code alltogether. Make the whole thing a non-replicated bStatic and/or\
+      \ bNoDelete actor and you won't need to replicate anything because the property\
+      \ LoadSong is already set by the mapper and the actor exists on all clients\
+      \ already.</p>\n<p><b>Dirk Fist:</b> Thanks for the suggestions. I tried alot\
+      \ of stuff before getting it to work. I had alot of trouble with the actor not\
+      \ existing until the first replication event. Also for some reason if LoadSong\
+      \ is different from class default then it needs to be replicated to work with\
+      \ pure6E. And although the definition for DynamicLoadObject may not be latent\
+      \ it seems to behave that way for music file's that are very large (Check past\
+      \ revisions of <a href=\"/Legacy:Dirk_Fist\" title=\"Legacy:Dirk Fist\">Dirk\
+      \ Fist</a> )</p>\n<p><b>Dirk Fist:</b> Did'nt mean to sound so defensive. Could\
+      \ someone explain the proper use of bStatic, bNoDelete, and Non-replicated actors\
+      \ link it from <a href=\"/Legacy:Chain_Of_Events_When_Spawning_Actors\" title=\"\
+      Legacy:Chain Of Events When Spawning Actors\">Chain of Events When Spawning\
+      \ Actors</a>, <a href=\"/Legacy:Netcode_Idioms\" title=\"Legacy:Netcode Idioms\"\
+      >Netcode Idioms</a>, and <a href=\"/Legacy:Replication\" title=\"Legacy:Replication\"\
+      >Replication</a>.</p>\n\n<!-- \nNewPP limit report\nCPU time usage: 0.040 seconds\n\
+      Real time usage: 0.087 seconds\nPreprocessor visited node count: 6/1000000\n\
+      Preprocessor generated node count: 36/1000000\nPost‐expand include size: 9/2097152\
+      \ bytes\nTemplate argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\n\
+      Expensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion expansion\
+      \ time report (%,ms,calls,template)\n100.00%    0.000      1 - -total\n-->\n\
+      \n<!-- Saved in parser cache with key wiki:pcache:idhash:1049-0!*!0!*!*!*!*\
+      \ and timestamp 20221117205510 and revision id 2796\n -->\n"
+  categories:
+  - sortkey: "DynaMusic"
+    name: "Legacy_Custom_Class_(UT)"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Netcode Idioms"
+  - ns: 100
+    exists: true
+    name: "Legacy:Dirk Fist"
+  - ns: 100
+    exists: true
+    name: "Legacy:Embedding Code"
+  - ns: 100
+    exists: true
+    name: "Legacy:Chain Of Events When Spawning Actors"
+  - ns: 100
+    exists: true
+    name: "Legacy:Replication"
+  templates: []
+  images: []
+  externallinks:
+  - "http://unreal.epicgames.com/UTMagic.html#PackageFlags"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "DynaMusic optional music for mappers !"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:DynaMusic"
+    byteoffset: 0
+    anchor: "DynaMusic_optional_music_for_mappers_.21"
+  displaytitle: "Legacy:DynaMusic"
+  iwlinks: []
+  wikitext:
+    text: "==DynaMusic optional music for mappers !==\n\nUsage: \n# Follow the directions\
+      \ for [[Legacy:Embedding Code|Embedding Code]] \n# Place dynamusic actor on\
+      \ your map \n# Right click on it to bring up properties\n# Select the DynaMusic/LoadSong\
+      \ property and type in the song \"PackageName.SongName\" you want to be optional\
+      \ \n# Right click on empty part of map to bring up the level properties \n#\
+      \ Change audio/song to one of the standard UT music packages ( this package\
+      \ won't be optional )\n\n----\n\nThe way it works: \n# When the player connects\
+      \ DynaMusic attempts to load music package \n# If it's successful it overides\
+      \ the maps default music (as defined in Level properties), with the optional\
+      \ music\n\n----\n\n<uscript>\n//=============================================================================\n\
+      // DynaMusic.       By Dirk Fist  with all do credit to the people of the Wiki\
+      \ \n//=============================================================================\n\
+      class DynaMusic expands Actor;\n\nvar() string LoadSong;\nvar music song;\n\
+      var PlayerPawn MusicPlayer;\nvar bool bMusicStarted;\nvar int started;\n\nreplication\n\
+      {   // Variables which will cause replication to all (relevant) clients\n  \
+      \  reliable if ( Role == ROLE_Authority )\n        started,LoadSong;\n}\n\n\
+      function PreBeginPlay()           // executed on server\n{\n    started +=1;\
+      \                  // force replication\n    Super.PreBeginPlay();\n}\n\nauto\
+      \ simulated state startup\n{\nBegin:\n    log(\"Started\",'Dynamusic');\n  \
+      \  song = music(DynamicLoadObject( LoadSong, class'Music',True));\n    if (song!=None)\n\
+      \    {   // we got a song lets find player\n        log(string(song.Class),'Dynamusic');\n\
+      \n        foreach AllActors(class 'PlayerPawn', MusicPlayer)\n            if\
+      \ (Viewport(MusicPlayer.Player) != None)  break; \n        if (MusicPlayer !=\
+      \ None)\n        {   // We got player lets play \n            MusicPlayer.ClientSetMusic(\
+      \ song, Level.SongSection, Level.CdTrack, MTRAN_Fade );    \n            log(MusicPlayer.PlayerReplicationInfo.PlayerName,'Dynamusic');\
+      \        \n    }   }\n}\n\ndefaultproperties\n{\n    bAlwaysRelevant=True\n\
+      \    RemoteRole=ROLE_SimulatedProxy\n}\n</uscript>\n\n----\n\n'''Dirk Fist:'''\
+      \ My First Wiki Project :)\n\n'''Dirk Fist:''' Can I upload a .u or .unr file\
+      \ ?\n\n'''Dirk Fist:''' Found some info on making the packages optional http://unreal.epicgames.com/UTMagic.html#PackageFlags\n\
+      \n'''Dirk Fist:''' If any one knows another way I'd be glad to hear it? Since\
+      \ I don't want to cause version conflicts for maps that use non-optional umx(ogg?)\
+      \ version of the file, Since this is a mapping component and many mappers will\
+      \ probably borrow music from other maps.\n\n'''Wormbo:''' UT200x's OGG files\
+      \ aren't Unreal packages and won't be sent from the server. (They are already\
+      \ optional.) In UT non-optional music packages are sent by the server because\
+      \ the map's dependancy on the music package automatically makes it a ServerPackage.\
+      \ BTW: It's better to put the music loading code in PostBeginPlay() and skip\
+      \ the state code alltogether. Make the whole thing a non-replicated bStatic\
+      \ and/or bNoDelete actor and you won't need to replicate anything because the\
+      \ property LoadSong is already set by the mapper and the actor exists on all\
+      \ clients already.\n\n'''Dirk Fist:''' Thanks for the suggestions. I tried alot\
+      \ of stuff before getting it to work.  I had alot of trouble with the actor\
+      \ not existing until the first replication event. Also for some reason if LoadSong\
+      \ is different from class default then it needs to be replicated to work with\
+      \ pure6E. And although the definition for DynamicLoadObject may not be latent\
+      \ it seems to behave that way for music file's that are very large (Check past\
+      \ revisions of [[Legacy:Dirk Fist|Dirk Fist]] ) \n\n'''Dirk Fist:''' Did'nt\
+      \ mean to sound so defensive. Could someone explain the proper use of bStatic,\
+      \ bNoDelete, and Non-replicated actors link it from [[Legacy:Chain Of Events\
+      \ When Spawning Actors|Chain of Events When Spawning Actors]], [[Legacy:Netcode\
+      \ Idioms|Netcode Idioms]], and [[Legacy:Replication|Replication]]. \n\n[[Category:Legacy\
+      \ Custom Class (UT)|{{PAGENAME}}]]"
+  properties: []
+  revId: 2796
+name: "Legacy:DynaMusic"
+revision:
+  revid: 2796
+  parentid: 2797
+  user: "Sweavo"
+  timestamp: 1195471881.000000000
+  comment: "*"
+timestamp: 1668774876.937217000

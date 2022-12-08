@@ -1,0 +1,313 @@
+---
+parse:
+  title: "Legacy:TABname Completion"
+  text:
+    text: "<p><b>TABname Completion</b> mimics that uncommonly-known mIRC command\
+      \ that fills in a person's name, depending on what text they enter (when you\
+      \ press the TAB key).</p>\n<p>This code is/will be in a version of <a href=\"\
+      /Legacy:Esc\" title=\"Legacy:Esc\">Esc</a> sometime soon – I have placed this\
+      \ in my UTConsole class, in the 'Typing' state, under the 'KeyEvent' function.\
+      \ When entering part of any Player's name (case-sensitive), it will complete\
+      \ the Player's name.</p>\n<h2><span class=\"mw-headline\" id=\"To_Do\">To Do</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:TABname_Completion?section=1\" title=\"Edit section: To\
+      \ Do\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <ul>\n<li>Thanks to <b>Mychaeel's</b> code, it now cycles through similar names.\
+      \ And it works perfectly - no-one prove me wrong.</li>\n</ul>\n<h2><span class=\"\
+      mw-headline\" id=\"Implementation\">Implementation</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:TABname_Completion?section=2\"\
+      \ title=\"Edit section: Implementation\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>The following implementation in UnrealScript has been\
+      \ created by <a href=\"/Legacy:DJPaul\" title=\"Legacy:DJPaul\">DJPaul</a> and\
+      \ Mychaeel for the <a href=\"/Legacy:Esc\" title=\"Legacy:Esc\">Esc</a> mod.\
+      \ Feel free to use and modify.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">state</span> Typing\n<span class=\"br0\">{</span>\n   \
+      \ <span class=\"co1\">//Process 'String' from right-to-left, looking for the\
+      \ first 'LookFor'.</span>\n    <span class=\"kw1\">function</span> <span class=\"\
+      kw5\">int</span> FindRightMost<span class=\"br0\">(</span><span class=\"kw5\"\
+      >string</span> <span class=\"kw5\">String</span>, <span class=\"kw5\">string</span>\
+      \ LookFor<span class=\"br0\">)</span>\n    <span class=\"br0\">{</span>\n  \
+      \      <span class=\"kw1\">local</span> <span class=\"kw5\">int</span> i;\n\
+      \ \n        <span class=\"kw2\">for</span> <span class=\"br0\">(</span>i<span\
+      \ class=\"sy0\">=</span><span class=\"kw3\">len</span><span class=\"br0\">(</span><span\
+      \ class=\"kw5\">String</span><span class=\"br0\">)</span><span class=\"sy0\"\
+      >-</span><span class=\"nu0\">1</span>; i<span class=\"sy0\">&gt;=</span><span\
+      \ class=\"nu0\">0</span>; i<span class=\"sy0\">--</span><span class=\"br0\"\
+      >)</span>\n        <span class=\"br0\">{</span>\n            <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span> <span class=\"kw3\">mid</span><span\
+      \ class=\"br0\">(</span><span class=\"kw5\">String</span>, i, <span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span> <span class=\"sy0\">==</span> LookFor\
+      \ <span class=\"br0\">)</span>\n            <span class=\"br0\">{</span>\n \
+      \               <span class=\"kw2\">return</span> i<span class=\"sy0\">+</span><span\
+      \ class=\"nu0\">1</span>;\n            <span class=\"br0\">}</span>\n      \
+      \  <span class=\"br0\">}</span>\n \n        <span class=\"co1\">//Rogue-value.</span>\n\
+      \        <span class=\"kw2\">return</span> <span class=\"nu0\">667</span>;\n\
+      \    <span class=\"br0\">}</span>\n \n    <span class=\"kw1\">event</span> <span\
+      \ class=\"kw5\">bool</span> KeyEvent<span class=\"br0\">(</span> EInputKey Key,\
+      \ EInputAction Action, <span class=\"kw5\">FLOAT</span> Delta <span class=\"\
+      br0\">)</span>\n    <span class=\"br0\">{</span>\n        <span class=\"kw1\"\
+      >local</span> <span class=\"kw5\">string</span> TextNameCompletedFirst, TextNameCompletedSuccessor;\n\
+      \        <span class=\"kw1\">local</span> <span class=\"kw5\">string</span>\
+      \ ThisPlayerName; <span class=\"co1\">//To cut down on long statements below.</span>\n\
+      \        <span class=\"kw1\">local</span> <span class=\"kw5\">int</span> RightSpace,\
+      \ i;\n \n \n        <span class=\"kw2\">if</span> <span class=\"br0\">(</span>Action<span\
+      \ class=\"sy0\">!=</span>IST_Press<span class=\"br0\">)</span>\n           \
+      \ <span class=\"kw2\">return</span> <span class=\"kw6\">false</span>;\n \n \
+      \       <span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      br0\">(</span>Key <span class=\"sy0\">==</span> IK_Tab<span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span>Viewport.<span\
+      \ class=\"kw9\">Actor</span> <span class=\"sy0\">!=</span> <span class=\"kw5\"\
+      >none</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\n     \
+      \   <span class=\"br0\">{</span>\n            <span class=\"co1\">// String\
+      \ comparisons (equality, alphabetical order) shall be case-insensitive.</span>\n\
+      \            <span class=\"co1\">// Use ~= for equality and Caps() for alphabetical\
+      \ order in UnrealScript.</span>\n \n            RightSpace <span class=\"sy0\"\
+      >=</span> FindRightMost<span class=\"br0\">(</span>TypedStr, <span class=\"\
+      st0\">\" \"</span><span class=\"br0\">)</span>;\n            <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>RightSpace <span class=\"sy0\">==</span>\
+      \ <span class=\"nu0\">667</span><span class=\"br0\">)</span>\n             \
+      \   <span class=\"kw2\">return</span> <span class=\"kw6\">false</span>;\n \n\
+      \            <span class=\"kw2\">if</span> <span class=\"br0\">(</span>TextNamePrefix\
+      \ <span class=\"sy0\">==</span> <span class=\"st0\">\"\"</span><span class=\"\
+      br0\">)</span>\n            <span class=\"br0\">{</span>\n                TextNamePrefix\
+      \ <span class=\"sy0\">=</span> <span class=\"kw3\">Right</span><span class=\"\
+      br0\">(</span>TypedStr, <span class=\"kw3\">len</span><span class=\"br0\">(</span>TypedStr<span\
+      \ class=\"br0\">)</span><span class=\"sy0\">-</span>RightSpace<span class=\"\
+      br0\">)</span>;\n                TextNameCompletedPrev <span class=\"sy0\">=</span>\
+      \ <span class=\"st0\">\"\"</span>;\n            <span class=\"br0\">}</span>\n\
+      \ \n            <span class=\"kw2\">if</span> <span class=\"br0\">(</span>Viewport.<span\
+      \ class=\"kw9\">Actor</span>.<span class=\"me0\">GameReplicationInfo</span>\
+      \ <span class=\"sy0\">!=</span> <span class=\"kw5\">none</span><span class=\"\
+      br0\">)</span>\n            <span class=\"br0\">{</span>\n                <span\
+      \ class=\"kw2\">for</span> <span class=\"br0\">(</span>i<span class=\"sy0\"\
+      >=</span><span class=\"nu0\">0</span>; i<span class=\"sy0\">&lt;</span><span\
+      \ class=\"nu0\">32</span>; i<span class=\"sy0\">++</span><span class=\"br0\"\
+      >)</span>\n                <span class=\"br0\">{</span>\n                  \
+      \  <span class=\"kw2\">if</span> <span class=\"br0\">(</span>Viewport.<span\
+      \ class=\"kw9\">Actor</span>.<span class=\"me0\">GameReplicationInfo</span>.<span\
+      \ class=\"me0\">PRIArray</span><span class=\"br0\">[</span>i<span class=\"br0\"\
+      >]</span> <span class=\"sy0\">!=</span> <span class=\"kw5\">none</span><span\
+      \ class=\"br0\">)</span>\n                    <span class=\"br0\">{</span>\n\
+      \                        ThisPlayerName <span class=\"sy0\">=</span> Viewport.<span\
+      \ class=\"kw9\">Actor</span>.<span class=\"me0\">GameReplicationInfo</span>.<span\
+      \ class=\"me0\">PRIArray</span><span class=\"br0\">[</span>i<span class=\"br0\"\
+      >]</span>.<span class=\"me0\">PlayerName</span>;\n \n                      \
+      \  <span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      kw3\">left</span><span class=\"br0\">(</span>ThisPlayerName, <span class=\"\
+      kw3\">len</span><span class=\"br0\">(</span>TextNamePrefix<span class=\"br0\"\
+      >)</span><span class=\"br0\">)</span> <span class=\"sy0\">==</span> TextNamePrefix<span\
+      \ class=\"br0\">)</span>\n                        <span class=\"br0\">{</span>\n\
+      \                            <span class=\"co1\">// Save the first matching\
+      \ player name in alphabetical order in case we don't</span>\n              \
+      \              <span class=\"co1\">// find an alphabetical successor of TextNameCompletedPrev.</span>\n\
+      \                            <span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span><span class=\"br0\">(</span>TextNameCompletedFirst <span class=\"sy0\"\
+      >==</span> <span class=\"st0\">\"\"</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">||</span> <span class=\"br0\">(</span>ThisPlayerName <span class=\"\
+      sy0\">&lt;</span> TextNameCompletedFirst<span class=\"br0\">)</span><span class=\"\
+      br0\">)</span>\n                                TextNameCompletedFirst <span\
+      \ class=\"sy0\">=</span> ThisPlayerName;\n \n                            <span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span>TextNameCompletedPrev\
+      \ <span class=\"sy0\">!=</span> <span class=\"st0\">\"\"</span><span class=\"\
+      br0\">)</span>\n                            <span class=\"br0\">{</span>\n \
+      \                               <span class=\"co1\">// Save the player name\
+      \ we're looking at if it is one of TextNameCompletedPrev's</span>\n        \
+      \                        <span class=\"co1\">// alphabetical successors (and\
+      \ a better match than the last one we found).</span>\n                     \
+      \           <span class=\"kw2\">if</span> <span class=\"br0\">(</span>ThisPlayerName\
+      \ <span class=\"sy0\">&gt;</span> TextNameCompletedPrev<span class=\"br0\">)</span>\n\
+      \                                    <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span><span class=\"br0\">(</span>TextNameCompletedSuccessor <span class=\"\
+      sy0\">==</span> <span class=\"st0\">\"\"</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">||</span> <span class=\"br0\">(</span>ThisPlayerName <span\
+      \ class=\"sy0\">&lt;</span> TextNameCompletedSuccessor<span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span>\n                                        TextNameCompletedSuccessor\
+      \ <span class=\"sy0\">=</span> ThisPlayerName;\n                           \
+      \ <span class=\"br0\">}</span>\n                        <span class=\"br0\"\
+      >}</span>\n                    <span class=\"br0\">}</span>\n              \
+      \  <span class=\"br0\">}</span>\n \n                <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span>TextNameCompletedSuccessor <span class=\"sy0\"\
+      >==</span> <span class=\"st0\">\"\"</span><span class=\"br0\">)</span>     \
+      \                <span class=\"co1\">// no alphabetical successor found?</span>\n\
+      \                    TextNameCompletedSuccessor <span class=\"sy0\">=</span>\
+      \ TextNameCompletedFirst;  <span class=\"co1\">// start over from first</span>\n\
+      \ \n                TextNameCompletedPrev <span class=\"sy0\">=</span> TextNameCompletedSuccessor;\
+      \     <span class=\"co1\">// save for next iteration</span>\n \n           \
+      \     <span class=\"co1\">// TextNameCompletedSuccessor now contains the next\
+      \ matching name. Replace the</span>\n                <span class=\"co1\">//\
+      \ partially entered name by the content of TextNameCompletedSuccessor.</span>\n\
+      \                TypedStr <span class=\"sy0\">=</span> <span class=\"kw3\">left</span><span\
+      \ class=\"br0\">(</span>TypedStr, <span class=\"br0\">(</span>RightSpace<span\
+      \ class=\"sy0\">-</span><span class=\"nu0\">1</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">$</span> <span class=\"st0\">\"\
+      \ \"</span> <span class=\"sy0\">$</span> TextNameCompletedSuccessor;\n     \
+      \           <span class=\"kw2\">return</span> <span class=\"kw6\">true</span>;\n\
+      \            <span class=\"br0\">}</span>\n            <span class=\"kw2\">else</span>\n\
+      \            <span class=\"br0\">{</span>\n                <span class=\"kw2\"\
+      >return</span> <span class=\"kw6\">false</span>;\n            <span class=\"\
+      br0\">}</span>\n        <span class=\"br0\">}</span>\n        <span class=\"\
+      kw2\">else</span>\n        <span class=\"br0\">{</span>\n            TextNamePrefix\
+      \ <span class=\"sy0\">=</span> <span class=\"st0\">\"\"</span>; <span class=\"\
+      co1\">//Make code reevaluate the entered prefix.</span>\n \n            <span\
+      \ class=\"kw2\">return</span> <span class=\"kw6\">Super</span>.<span class=\"\
+      me0\">KeyEvent</span><span class=\"br0\">(</span>Key, Action, Delta<span class=\"\
+      br0\">)</span>;\n        <span class=\"br0\">}</span>\n    <span class=\"br0\"\
+      >}</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n<hr />\n<p><b>Mychaeel:</b>\
+      \ Wouldn't you like case-insensitivity for that? (That's why I mentioned <code>a\
+      \ ~= b</code> and <code>Caps(a) &lt; Caps(b)</code> in that comment – it would\
+      \ be handy.)</p>\n<p><b>DJPaul:</b> Good point - will make it so that it converts\
+      \ them both to uppercase first, just as easy as using <code>a ~# b</code>. I'll\
+      \ upload the tested code this evening.</p>\n<p><b>Mychaeel:</b> <code>~=</code>\
+      \ strikes me as more elegant (and more concise), that's all. After all its express\
+      \ purpose is to compare strings without case sensitivity.</p>\n<p><b>xX)(Xx:</b>\
+      \ Clearer instructions for where to place the code would be nice&#160;;) or\
+      \ if anyone has the time, a proper .u file, as this is something which a lot\
+      \ of the UT community will want</p>\n<p><b>DJPaul:</b> This went into Esc, a\
+      \ UT1998 mod. IIRC, I put it into our custom Console class. As to where you\
+      \ want it to go, if it's in a dialogue box, you're going to want to do put it\
+      \ in the equivalent of a onKeyEvent method. If you want it from the \"T\"alk\
+      \ line, you're going to have to replace the class that is done in; I don't know\
+      \ if this is still in Console, I never looked.</p>\n<p><b>El Muerte:</b> it's\
+      \ <a href=\"/Legacy:ExtendedConsole\" title=\"Legacy:ExtendedConsole\">ExtendedConsole</a>\
+      \ for UT200x. Btw, UT1998 mod? I hope you mean UT'99&#160;;) My UTelAdSE and\
+      \ UnGateway mods also have tab completion to complete commands, but it works\
+      \ more like the Bash shell (prints a list of available options).</p>\n<p><b>xX)(Xx:</b>\
+      \ Will this work server side? Or will the latest anti-cheats scream <b>HACK!</b>&#160;?&#160;;)</p>\n\
+      <p><b>EricBlade:</b> I had to change all occurences of \"Viewport\" to \"ViewportOwner\"\
+      , and add \"local string TextNamePrefix, TextNameCompletedPrev;\" to the KeyEvent\
+      \ function</p>\n<hr />\n<p>----</p>\n<p>Category ... erm. Useful Function? Function?\
+      \ Snippet? something, anyway</p>\n\n<!-- \nNewPP limit report\nCPU time usage:\
+      \ 0.073 seconds\nReal time usage: 0.155 seconds\nPreprocessor visited node count:\
+      \ 10/1000000\nPreprocessor generated node count: 32/1000000\nPost‐expand include\
+      \ size: 0/2097152 bytes\nTemplate argument size: 0/2097152 bytes\nHighest expansion\
+      \ depth: 2/40\nExpensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion\
+      \ expansion time report (%,ms,calls,template)\n100.00%    0.000      1 - -total\n\
+      -->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:3079-0!*!0!!*!*!*\
+      \ and timestamp 20221118025103 and revision id 8087\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:DJPaul"
+  - ns: 100
+    exists: true
+    name: "Legacy:ExtendedConsole"
+  - ns: 100
+    exists: true
+    name: "Legacy:Esc"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "To Do"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:TABname_Completion"
+    byteoffset: 433
+    anchor: "To_Do"
+  - toclevel: 1
+    level: "2"
+    line: "Implementation"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:TABname_Completion"
+    byteoffset: 565
+    anchor: "Implementation"
+  displaytitle: "Legacy:TABname Completion"
+  iwlinks: []
+  wikitext:
+    text: "'''TABname Completion''' mimics that uncommonly-known mIRC command that\
+      \ fills in a person's name, depending on what text they enter (when you press\
+      \ the TAB key).\n\nThis code is/will be in a version of [[Legacy:Esc|Esc]] sometime\
+      \ soon &ndash; I have placed this in my UTConsole class, in the 'Typing' state,\
+      \ under the 'KeyEvent' function.  When entering part of any Player's name (case-sensitive),\
+      \ it will complete the Player's name.\n\n==To Do ==\n*Thanks to '''Mychaeel's'''\
+      \ code, it now cycles through similar names.  And it works perfectly - no-one\
+      \ prove me wrong.\n\n==Implementation ==\n\nThe following implementation in\
+      \ UnrealScript has been created by [[Legacy:DJPaul|DJPaul]] and Mychaeel for\
+      \ the [[Legacy:Esc|Esc]] mod.  Feel free to use and modify.\n\n<uscript>\nstate\
+      \ Typing\n{\n    //Process 'String' from right-to-left, looking for the first\
+      \ 'LookFor'.\n    function int FindRightMost(string String, string LookFor)\n\
+      \    {\n        local int i;\n\n        for (i=len(String)-1; i>=0; i--)\n \
+      \       {\n            if ( mid(String, i, 1) == LookFor )\n            {\n\
+      \                return i+1;\n            }\n        }\n\n        //Rogue-value.\n\
+      \        return 667;\n    }\n\n    event bool KeyEvent( EInputKey Key, EInputAction\
+      \ Action, FLOAT Delta )\n    {\n        local string TextNameCompletedFirst,\
+      \ TextNameCompletedSuccessor;\n        local string ThisPlayerName; //To cut\
+      \ down on long statements below.\n        local int RightSpace, i;\n\n\n   \
+      \     if (Action!=IST_Press)\n            return false;\n\n        if ((Key\
+      \ == IK_Tab) && (Viewport.Actor != none))\n        {\n            // String\
+      \ comparisons (equality, alphabetical order) shall be case-insensitive.\n  \
+      \          // Use ~= for equality and Caps() for alphabetical order in UnrealScript.\n\
+      \n            RightSpace = FindRightMost(TypedStr, \" \");\n            if (RightSpace\
+      \ == 667)\n                return false;\n\n            if (TextNamePrefix ==\
+      \ \"\")\n            {\n                TextNamePrefix = Right(TypedStr, len(TypedStr)-RightSpace);\n\
+      \                TextNameCompletedPrev = \"\";\n            }\n\n          \
+      \  if (Viewport.Actor.GameReplicationInfo != none)\n            {\n        \
+      \        for (i=0; i<32; i++)\n                {\n                    if (Viewport.Actor.GameReplicationInfo.PRIArray[i]\
+      \ != none)\n                    {\n                        ThisPlayerName =\
+      \ Viewport.Actor.GameReplicationInfo.PRIArray[i].PlayerName;\n\n           \
+      \             if (left(ThisPlayerName, len(TextNamePrefix)) == TextNamePrefix)\n\
+      \                        {\n                            // Save the first matching\
+      \ player name in alphabetical order in case we don't\n                     \
+      \       // find an alphabetical successor of TextNameCompletedPrev.\n      \
+      \                      if ((TextNameCompletedFirst == \"\") || (ThisPlayerName\
+      \ < TextNameCompletedFirst))\n                                TextNameCompletedFirst\
+      \ = ThisPlayerName;\n\n                            if (TextNameCompletedPrev\
+      \ != \"\")\n                            {\n                                //\
+      \ Save the player name we're looking at if it is one of TextNameCompletedPrev's\n\
+      \                                // alphabetical successors (and a better match\
+      \ than the last one we found).\n                                if (ThisPlayerName\
+      \ > TextNameCompletedPrev)\n                                    if ((TextNameCompletedSuccessor\
+      \ == \"\") || (ThisPlayerName < TextNameCompletedSuccessor))\n             \
+      \                           TextNameCompletedSuccessor = ThisPlayerName;\n \
+      \                           }\n                        }\n                 \
+      \   }\n                }\n\n                if (TextNameCompletedSuccessor ==\
+      \ \"\")                     // no alphabetical successor found?\n          \
+      \          TextNameCompletedSuccessor = TextNameCompletedFirst;  // start over\
+      \ from first\n\n                TextNameCompletedPrev = TextNameCompletedSuccessor;\
+      \     // save for next iteration\n\n                // TextNameCompletedSuccessor\
+      \ now contains the next matching name. Replace the\n                // partially\
+      \ entered name by the content of TextNameCompletedSuccessor.\n             \
+      \   TypedStr = left(TypedStr, (RightSpace-1)) $ \" \" $ TextNameCompletedSuccessor;\n\
+      \                return true;\n            }\n            else\n           \
+      \ {\n                return false;\n            }\n        }\n        else\n\
+      \        {\n            TextNamePrefix = \"\"; //Make code reevaluate the entered\
+      \ prefix.\n\n            return Super.KeyEvent(Key, Action, Delta);\n      \
+      \  }\n    }\n}\n</uscript>\n\n----\n\n'''Mychaeel:'''  Wouldn't you like case-insensitivity\
+      \ for that?  (That's why I mentioned <code>a ~= b</code> and <code>Caps(a) <\
+      \ Caps(b)</code> in that comment &ndash; it would be handy.)\n\n'''DJPaul:'''\
+      \ Good point - will make it so that it converts them both to uppercase first,\
+      \ just as easy as using <code>a ~# b</code>.  I'll upload the tested code this\
+      \ evening.\n\n'''Mychaeel:'''  <code>~=</code> strikes me as more elegant (and\
+      \ more concise), that's all.  After all its express purpose is to compare strings\
+      \ without case sensitivity.\n\n'''xX)(Xx:''' Clearer instructions for where\
+      \ to place the code would be nice ;) or if anyone has the time, a proper .u\
+      \ file, as this is something which a lot of the UT community will want\n\n'''DJPaul:'''\
+      \  This went into Esc, a UT1998 mod.  IIRC, I put it into our custom Console\
+      \ class.  As to where you want it to go, if it's in a dialogue box, you're going\
+      \ to want to do put it in the equivalent of a onKeyEvent method.  If you want\
+      \ it from the \"T\"alk line, you're going to have to replace the class that\
+      \ is done in; I don't know if this is still in Console, I never looked.\n\n\
+      '''El Muerte:''' it's [[Legacy:ExtendedConsole|ExtendedConsole]] for UT200x.\
+      \ Btw, UT1998 mod? I hope you mean UT'99 ;) My UTelAdSE and UnGateway mods also\
+      \ have tab completion to complete commands, but it works more like the Bash\
+      \ shell (prints a list of available options).\n\n'''xX)(Xx:''' Will this work\
+      \ server side? Or will the latest anti-cheats scream '''HACK!''' ? ;)\n\n'''EricBlade:'''\
+      \ I had to change all occurences of \"Viewport\" to \"ViewportOwner\", and add\
+      \ \"local string TextNamePrefix, TextNameCompletedPrev;\" to the KeyEvent function\n\
+      \n---- ----\n\nCategory ... erm. Useful Function? Function? Snippet? something,\
+      \ anyway"
+  properties: []
+  revId: 8087
+name: "Legacy:TABname Completion"
+revision:
+  revid: 8087
+  parentid: 8089
+  user: "EricBlade"
+  timestamp: 1144493179.000000000
+  comment: "fixes"
+timestamp: 1668764861.695387000

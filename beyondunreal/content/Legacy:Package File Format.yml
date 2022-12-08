@@ -1,0 +1,766 @@
+---
+parse:
+  title: "Legacy:Package File Format"
+  text:
+    text: "<p>The <a href=\"/Legacy:Unreal_Engine\" title=\"Legacy:Unreal Engine\"\
+      >Unreal Engine</a> uses a single <a href=\"/Legacy:File_Format\" title=\"Legacy:File\
+      \ Format\">file format</a> to store all its game-content. You may have seen\
+      \ many different filetypes, like .utx (textures), .unr (maps), .umx (sound)\
+      \ and .u (code), but from a technical standpoint there is no difference between\
+      \ those files; the different file endings are only used to help organize the\
+      \ packages in the directory structure. The following article will describe the\
+      \ basic structure of his fileformat. It omits many details (such as tons of\
+      \ constants, for example), but there’s a good reference available on the net\
+      \ by Antonio Cordero Balcazar (see links).</p>\n<blockquote class=\"legacyquote\"\
+      >\n<p><b>Assumptions</b>:</p>\n<p>This is a rather technical article. It requires\
+      \ you to have a basic understanding of object oriented programming as well as\
+      \ the will to use an hex-editor, if needed. This is NOT intended to be a full\
+      \ documention of the fileformat, but only a brief introduction.</p>\n</blockquote>\n\
+      <p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n\
+      </div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#The_Structure_of_the_File\"\
+      ><span class=\"tocnumber\">1</span> <span class=\"toctext\">The Structure of\
+      \ the File</span></a>\n<ul>\n<li class=\"toclevel-2 tocsection-2\"><a href=\"\
+      #Overview\"><span class=\"tocnumber\">1.1</span> <span class=\"toctext\">Overview</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-3\"><a href=\"#Header\"><span class=\"tocnumber\"\
+      >1.2</span> <span class=\"toctext\">Header</span></a></li>\n<li class=\"toclevel-2\
+      \ tocsection-4\"><a href=\"#Index_Tables\"><span class=\"tocnumber\">1.3</span>\
+      \ <span class=\"toctext\">Index Tables</span></a>\n<ul>\n<li class=\"toclevel-3\
+      \ tocsection-5\"><a href=\"#Name-Table\"><span class=\"tocnumber\">1.3.1</span>\
+      \ <span class=\"toctext\">Name-Table</span></a></li>\n<li class=\"toclevel-3\
+      \ tocsection-6\"><a href=\"#Export-Table\"><span class=\"tocnumber\">1.3.2</span>\
+      \ <span class=\"toctext\">Export-Table</span></a></li>\n<li class=\"toclevel-3\
+      \ tocsection-7\"><a href=\"#Import-Table\"><span class=\"tocnumber\">1.3.3</span>\
+      \ <span class=\"toctext\">Import-Table</span></a></li>\n</ul>\n</li>\n<li class=\"\
+      toclevel-2 tocsection-8\"><a href=\"#Body.2FObject\"><span class=\"tocnumber\"\
+      >1.4</span> <span class=\"toctext\">Body/Object</span></a>\n<ul>\n<li class=\"\
+      toclevel-3 tocsection-9\"><a href=\"#Object_Properties\"><span class=\"tocnumber\"\
+      >1.4.1</span> <span class=\"toctext\">Object Properties</span></a></li>\n<li\
+      \ class=\"toclevel-3 tocsection-10\"><a href=\"#Sample_Objects_.28Texture_Class.29\"\
+      ><span class=\"tocnumber\">1.4.2</span> <span class=\"toctext\">Sample Objects\
+      \ (Texture Class)</span></a></li>\n</ul>\n</li>\n</ul>\n</li>\n<li class=\"\
+      toclevel-1 tocsection-11\"><a href=\"#Appendix\"><span class=\"tocnumber\">2</span>\
+      \ <span class=\"toctext\">Appendix</span></a>\n<ul>\n<li class=\"toclevel-2\
+      \ tocsection-12\"><a href=\"#A._Links\"><span class=\"tocnumber\">2.1</span>\
+      \ <span class=\"toctext\">A. Links</span></a></li>\n<li class=\"toclevel-2 tocsection-13\"\
+      ><a href=\"#B._Notes\"><span class=\"tocnumber\">2.2</span> <span class=\"toctext\"\
+      >B. Notes</span></a></li>\n</ul>\n</li>\n<li class=\"toclevel-1 tocsection-14\"\
+      ><a href=\"#Comments.2FDiscussion\"><span class=\"tocnumber\">3</span> <span\
+      \ class=\"toctext\">Comments/Discussion</span></a></li>\n</ul>\n</div>\n<p></p>\n\
+      <h2><span class=\"mw-headline\" id=\"The_Structure_of_the_File\">The Structure\
+      \ of the File</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Package_File_Format?section=1\" title=\"Edit\
+      \ section: The Structure of the File\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<h3><span class=\"mw-headline\" id=\"Overview\">Overview</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Package_File_Format?section=2\" title=\"Edit section:\
+      \ Overview\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>Every <a href=\"/Legacy:Package\" title=\"Legacy:Package\">package</a> file\
+      \ can be roughly split into three logical parts. The header, the three index\
+      \ tables (name-table, import-table and export-table) and the data itself. But\
+      \ only the header has a fixed position (at offset 0), all other parts can be\
+      \ found anywhere within the file without irritating the engine.</p>\n<p>Most\
+      \ of the time, although, the layout looks like the following:</p>\n<ul>\n<li>Header</li>\n\
+      <li>Name-Table</li>\n<li>Import-Table</li>\n<li>Data</li>\n<li>Export-Table</li>\n\
+      </ul>\n<p>It may be useful to read a bit about the concept of serialization,\
+      \ which allows you to (rather) easily store the state of objects within a file.\
+      \ A brief introduction can be found on the Wiki: <a href=\"/edit/Legacy:Package_File_Format/Serialization?redlink=1\"\
+      \ class=\"new\" title=\"Legacy:Package File Format/Serialization (page does\
+      \ not exist)\">Package File Format/Serialization</a></p>\n<h3><span class=\"\
+      mw-headline\" id=\"Header\">Header</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Package_File_Format?section=3\"\
+      \ title=\"Edit section: Header\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>This global header can be found at the beginning of\
+      \ the file (offset 0). It is the starting point for every operation.</p>\n<table\
+      \ class=\"wikitable\">\n<tr>\n<td style=\"text-align: center\"><b>offset</b></td>\n\
+      <td style=\"text-align: center\"><b>Type</b></td>\n<td style=\"text-align: center\"\
+      ><b>Property</b></td>\n<td style=\"text-align: center\"><b>Description</b></td>\n\
+      </tr>\n<tr>\n<td style=\"text-align: left\">0</td>\n<td style=\"text-align:\
+      \ left\">DWORD</td>\n<td style=\"text-align: left\">Signature</td>\n<td style=\"\
+      text-align: left\">Always: “0x9E2A83C1”; use this to verify that you indeed\
+      \ try to read an Unreal-Package</td>\n</tr>\n<tr>\n<td style=\"text-align: left\"\
+      >4</td>\n<td style=\"text-align: left\">WORD</td>\n<td style=\"text-align: left\"\
+      >PackageVersion</td>\n<td style=\"text-align: left\">Version of the file-format;\
+      \ Unreal1 uses mostly 61-63, UT 67-69; However note that quite a few packages\
+      \ are in use with UT that have Unreal1 versions. see the appendix for more details</td>\n\
+      </tr>\n<tr>\n<td style=\"text-align: left\">6</td>\n<td style=\"text-align:\
+      \ left\">WORD</td>\n<td style=\"text-align: left\">LicenseMode</td>\n<td style=\"\
+      text-align: left\">This is the license number. Different for each game.</td>\n\
+      </tr>\n<tr>\n<td style=\"text-align: left\">8</td>\n<td style=\"text-align:\
+      \ left\">DWORD</td>\n<td style=\"text-align: left\">Package Flags</td>\n<td\
+      \ style=\"text-align: left\">Global package flags, i.e. if a package may be\
+      \ downloaded from a game server etc; described in the appendix</td>\n</tr>\n\
+      <tr>\n<td style=\"text-align: left\">12</td>\n<td style=\"text-align: left\"\
+      >DWORD</td>\n<td style=\"text-align: left\">Name Count</td>\n<td style=\"text-align:\
+      \ left\">No. Of entries in name-table</td>\n</tr>\n<tr>\n<td style=\"text-align:\
+      \ left\">16</td>\n<td style=\"text-align: left\">DWORD</td>\n<td style=\"text-align:\
+      \ left\">Name Offset</td>\n<td style=\"text-align: left\">Offset of name-table\
+      \ within the file</td>\n</tr>\n<tr>\n<td style=\"text-align: left\">20</td>\n\
+      <td style=\"text-align: left\">DWORD</td>\n<td style=\"text-align: left\">Export\
+      \ Count</td>\n<td style=\"text-align: left\">No. Of entries in export-table</td>\n\
+      </tr>\n<tr>\n<td style=\"text-align: left\">24</td>\n<td style=\"text-align:\
+      \ left\">DWORD</td>\n<td style=\"text-align: left\">Export Offset</td>\n<td\
+      \ style=\"text-align: left\">Offset of export-table within the file</td>\n</tr>\n\
+      <tr>\n<td style=\"text-align: left\">28</td>\n<td style=\"text-align: left\"\
+      >DWORD</td>\n<td style=\"text-align: left\">Import Count</td>\n<td style=\"\
+      text-align: left\">No. Of entries in import-table</td>\n</tr>\n<tr>\n<td style=\"\
+      text-align: left\">32</td>\n<td style=\"text-align: left\">DWORD</td>\n<td style=\"\
+      text-align: left\">Import Offset</td>\n<td style=\"text-align: left\">Offset\
+      \ of import-table within the file</td>\n</tr>\n<tr>\n<td colspan=\"4\" style=\"\
+      text-align: left\">After the ImportOffset, the header differs between the versions.\
+      \ The only interesting fact, though, is that for fileformat versions =&gt; 68,\
+      \ a GUID has been introduced. It can be found right after the ImportOffset:</td>\n\
+      </tr>\n<tr>\n<td style=\"text-align: left\">36</td>\n<td style=\"text-align:\
+      \ left\">16 BYTE</td>\n<td style=\"text-align: left\">GUID</td>\n<td style=\"\
+      text-align: left\">Unique identifier; used for package downloading from servers</td>\n\
+      </tr>\n<tr>\n<td colspan=\"4\" style=\"text-align: left\">older package versions\
+      \ have a list of GUIDs (pointed to by the same form of count/offset pair as\
+      \ above) in a seperate section rather than just space for one, tests reveal\
+      \ that ut uses the last one in the list when there is more than one but such\
+      \ packages do not seem to be seen in the wild.</td>\n</tr>\n</table>\n<h3><span\
+      \ class=\"mw-headline\" id=\"Index_Tables\">Index Tables</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Package_File_Format?section=4\"\
+      \ title=\"Edit section: Index Tables\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>The Unreal-Engine introduces two new variable-types.\
+      \ The first one is a rather simple string type, called NAME from now on. The\
+      \ second one is a bit more tricky, these CompactIndices, or INDEX later on,\
+      \ compresses ordinary DWORDs downto one to five BYTEs. Both types, as well as\
+      \ the ObjectReference, are described in the following paper: <a href=\"/Legacy:Package_File_Format/Data_Details\"\
+      \ title=\"Legacy:Package File Format/Data Details\">Package File Format/Data\
+      \ Details</a></p>\n<h4><span class=\"mw-headline\" id=\"Name-Table\">Name-Table</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Package_File_Format?section=5\" title=\"Edit section:\
+      \ Name-Table\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h4>\n\
+      <p>The first and most simple one of the three tables is the name-table. The\
+      \ name-table can be considered an index of all unique names used for objects\
+      \ and references within the file. Later on, you’ll often find indexes into this\
+      \ table instead of a string containing the object-name.</p>\n<table class=\"\
+      wikitable\">\n<tr>\n<td style=\"text-align: center\"><b>Type</b></td>\n<td style=\"\
+      text-align: center\"><b>Property</b></td>\n<td style=\"text-align: center\"\
+      ><b>Description</b></td>\n</tr>\n<tr>\n<td style=\"text-align: left\">NAME</td>\n\
+      <td style=\"text-align: left\">Object Name</td>\n<td style=\"text-align: left\"\
+      ></td>\n</tr>\n<tr>\n<td style=\"text-align: left\">DWORD</td>\n<td style=\"\
+      text-align: left\">Object Flags</td>\n<td style=\"text-align: left\">Flags for\
+      \ the object; described in the appendix</td>\n</tr>\n</table>\n<h4><span class=\"\
+      mw-headline\" id=\"Export-Table\">Export-Table</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Package_File_Format?section=6\"\
+      \ title=\"Edit section: Export-Table\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h4>\n<p>The export-table is an index for all objects within\
+      \ the package. Every object in the body of the file has a corresponding entry\
+      \ in this table, with information like offset within the file etc.</p>\n<table\
+      \ class=\"wikitable\">\n<tr>\n<td style=\"text-align: center\"><b>Type</b></td>\n\
+      <td style=\"text-align: center\"><b>Property</b></td>\n<td style=\"text-align:\
+      \ center\"><b>Description</b></td>\n</tr>\n<tr>\n<td style=\"text-align: left\"\
+      >INDEX</td>\n<td style=\"text-align: left\">Class</td>\n<td style=\"text-align:\
+      \ left\">Class of the object, i.e. ‘Texture’ or ‘Palette’ etc; stored as a ObjectReference</td>\n\
+      </tr>\n<tr>\n<td style=\"text-align: left\">INDEX</td>\n<td style=\"text-align:\
+      \ left\">Super</td>\n<td style=\"text-align: left\">Object Parent; again a ObjectReference</td>\n\
+      </tr>\n<tr>\n<td style=\"text-align: left\">DWORD</td>\n<td style=\"text-align:\
+      \ left\">Group</td>\n<td style=\"text-align: left\">Internal package/group of\
+      \ the object, i.e. ‘Floor’ for floor-textures; ObjectReference</td>\n</tr>\n\
+      <tr>\n<td style=\"text-align: left\">INDEX</td>\n<td style=\"text-align: left\"\
+      >Object Name</td>\n<td style=\"text-align: left\">The name of the object; an\
+      \ index into the name-table</td>\n</tr>\n<tr>\n<td style=\"text-align: left\"\
+      >DWORD</td>\n<td style=\"text-align: left\">Object Flags</td>\n<td style=\"\
+      text-align: left\">Flags for the object; described in the appendix</td>\n</tr>\n\
+      <tr>\n<td style=\"text-align: left\">INDEX</td>\n<td style=\"text-align: left\"\
+      >Serial Size</td>\n<td style=\"text-align: left\">Total size of the object</td>\n\
+      </tr>\n<tr>\n<td style=\"text-align: left\">INDEX</td>\n<td style=\"text-align:\
+      \ left\">Serial Offset</td>\n<td style=\"text-align: left\">Offset of the object;\
+      \ this field only exists if the SerialSize is larger 0</td>\n</tr>\n</table>\n\
+      <h4><span class=\"mw-headline\" id=\"Import-Table\">Import-Table</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Package_File_Format?section=7\" title=\"Edit section:\
+      \ Import-Table\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h4>\n\
+      <p>The third table holds references to objects in external packages. For example,\
+      \ a texture might have a DetailTexture (which makes for the nice structure if\
+      \ have a very close look at a texture). Now, these DetailTextures are all stored\
+      \ in a single package (as they are used by many different textures in different\
+      \ package files). The property of the texture object only needs to store an\
+      \ index into the import-table then as the entry in the import-table already\
+      \ points to the DetailTexture in the other package.</p>\n<table class=\"wikitable\"\
+      >\n<tr>\n<td style=\"text-align: center\"><b>Type</b></td>\n<td style=\"text-align:\
+      \ center\"><b>Property</b></td>\n<td style=\"text-align: center\"><b>Description</b></td>\n\
+      </tr>\n<tr>\n<td style=\"text-align: left\">INDEX</td>\n<td style=\"text-align:\
+      \ left\">Class Package</td>\n<td style=\"text-align: left\">Package file in\
+      \ which the class of the object is defined; an index into the name-table</td>\n\
+      </tr>\n<tr>\n<td style=\"text-align: left\">INDEX</td>\n<td style=\"text-align:\
+      \ left\">Class Name</td>\n<td style=\"text-align: left\">Class of the object,\
+      \ i.e. ‘Texture’, ‘Palette’, ‘Package’, etc; an index into the name-table</td>\n\
+      </tr>\n<tr>\n<td style=\"text-align: left\">DWORD</td>\n<td style=\"text-align:\
+      \ left\">Package</td>\n<td style=\"text-align: left\">Reference where the object\
+      \ resides; ObjectReference</td>\n</tr>\n<tr>\n<td style=\"text-align: left\"\
+      >INDEX</td>\n<td style=\"text-align: left\">Object Name</td>\n<td style=\"text-align:\
+      \ left\">The name of the object; an index into the name-table</td>\n</tr>\n\
+      </table>\n<h3><span class=\"mw-headline\" id=\"Body.2FObject\">Body/Object</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Package_File_Format?section=8\" title=\"Edit section:\
+      \ Body/Object\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>Each object consists of a list of properties at the beginning and the actual\
+      \ object itself.</p>\n<h4><span class=\"mw-headline\" id=\"Object_Properties\"\
+      >Object Properties</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Package_File_Format?section=9\" title=\"Edit\
+      \ section: Object Properties\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h4>\n<p>When jumping to the offset of an object, you'll first\
+      \ be confronted with the object properties before the actual object starts.\
+      \ The format is rather straightforward. The first byte is an INDEX-type reference\
+      \ into the Name-Table, giving you the property's name. The second byte does\
+      \ the magic of telling you what kind of data follows; for example 0x02 flags\
+      \ a DWORD sized integer type. Then comes the actual property-data. The procedure\
+      \ repeats itself until the reference into the Name-Table returns 'None' (case\
+      \ insensitive) as the name.</p>\n<p>That said, there are some bit-tricks to\
+      \ deal with arrays, booleans and such. For more info on these, as well as a\
+      \ full list of info-bytes, read Antonio's package docs.</p>\n<h4><span class=\"\
+      mw-headline\" id=\"Sample_Objects_.28Texture_Class.29\">Sample Objects (Texture\
+      \ Class)</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Package_File_Format?section=10\" title=\"Edit\
+      \ section: Sample Objects (Texture Class)\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h4>\n<p>After the properties are finished the object starts.\
+      \ It basically consists of a predefined set of properties. As an example, the\
+      \ texture class (for good old UT) will be explained below. The texture class\
+      \ is a native one, which means that it doesn't have a generic header in addition\
+      \ to its own data. The layout looks like this:</p>\n<table class=\"wikitable\"\
+      >\n<tr>\n<td style=\"text-align: center\"><b>Type</b></td>\n<td style=\"text-align:\
+      \ center\"><b>Property</b></td>\n<td style=\"text-align: center\"><b>Description</b></td>\n\
+      </tr>\n<tr>\n<td style=\"text-align: left\">BYTE</td>\n<td style=\"text-align:\
+      \ left\">MipMapCount</td>\n<td style=\"text-align: left\">Count of MipMaps in\
+      \ object</td>\n</tr>\n</table>\n<p>The next set of variables repeats itself\
+      \ for each MipMap.</p>\n<table class=\"wikitable\">\n<tr>\n<td style=\"text-align:\
+      \ center\"><b>Type</b></td>\n<td style=\"text-align: center\"><b>Property</b></td>\n\
+      <td style=\"text-align: center\"><b>Description</b></td>\n</tr>\n<tr>\n<td style=\"\
+      text-align: left\">DWORD</td>\n<td style=\"text-align: left\">WidthOffset</td>\n\
+      <td style=\"text-align: left\">Offset in file; should be the same as SerialOffset\
+      \ in the Export-Table. Only if PkgVer &gt;= 63</td>\n</tr>\n<tr>\n<td style=\"\
+      text-align: left\">INDEX</td>\n<td style=\"text-align: left\">MipMapSize</td>\n\
+      <td style=\"text-align: left\">Size of the image data (in bytes)</td>\n</tr>\n\
+      <tr>\n<td style=\"text-align: left\">n BYTEs</td>\n<td style=\"text-align: left\"\
+      >MipMapData</td>\n<td style=\"text-align: left\">Image data; one byte per pixel;\
+      \ n = MipMapSize</td>\n</tr>\n<tr>\n<td style=\"text-align: left\">DWORD</td>\n\
+      <td style=\"text-align: left\">Width</td>\n<td style=\"text-align: left\">Texture-width</td>\n\
+      </tr>\n<tr>\n<td style=\"text-align: left\">DWORD</td>\n<td style=\"text-align:\
+      \ left\">Height</td>\n<td style=\"text-align: left\">Texture-height</td>\n</tr>\n\
+      <tr>\n<td style=\"text-align: left\">BYTE</td>\n<td style=\"text-align: left\"\
+      >BitsWidth</td>\n<td style=\"text-align: left\">Number of bits of Width (e.g.\
+      \ 10 for 1024 pixels)</td>\n</tr>\n<tr>\n<td style=\"text-align: left\">BYTE</td>\n\
+      <td style=\"text-align: left\">BitsHeight</td>\n<td style=\"text-align: left\"\
+      >Number of bits of Height (e.g. 10 for 1024 pixels)</td>\n</tr>\n</table>\n\
+      <h2><span class=\"mw-headline\" id=\"Appendix\">Appendix</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Package_File_Format?section=11\"\
+      \ title=\"Edit section: Appendix\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<h3><span class=\"mw-headline\" id=\"A._Links\">A. Links</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Package_File_Format?section=12\" title=\"Edit section:\
+      \ A. Links\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <ul>\n<li><b><a rel=\"nofollow\" class=\"external free\" href=\"http://www.acordero.org/\"\
+      >http://www.acordero.org/</a>:</b> _The_ ressource regarding package files.\
+      \ A very detailed reference of the package format, the UT-Package-Tool and a\
+      \ Delphi-unit can be found there.</li>\n<li><b><a rel=\"nofollow\" class=\"\
+      external free\" href=\"http://ut-files.com/index.php?dir=Utilities/&amp;file=utcms_source.zip\"\
+      >http://ut-files.com/index.php?dir=Utilities/&amp;file=utcms_source.zip</a>:</b>\
+      \ A C++ class for reading packages. Totally free for use. <b>[Link updated with\
+      \ new location]</b></li>\n</ul>\n<h3><span class=\"mw-headline\" id=\"B._Notes\"\
+      >B. Notes</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Package_File_Format?section=13\" title=\"Edit\
+      \ section: B. Notes\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>The last part about the object properties and the texture class was written\
+      \ in a hurry. I'm sorry it took so long for me to finish that piece.</p>\n<p>The\
+      \ fileformat itself, btw, has not changed between the versions of UT (except\
+      \ the odd new property and such). Many of the objects however have changed a\
+      \ lot or were replaced by enhanced types (such as my beloved texture class...).</p>\n\
+      <h2><span class=\"mw-headline\" id=\"Comments.2FDiscussion\">Comments/Discussion</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Package_File_Format?section=14\" title=\"Edit section:\
+      \ Comments/Discussion\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p><b>Jesco:</b> I will continue after here tomorrow. Now it's time for some\
+      \ sleep&#160;:)</p>\n<p><b>Mychaeel:</b> Good start. &#160;:-) Have a look at\
+      \ <a href=\"/Legacy:UMOD/File_Format\" title=\"Legacy:UMOD/File Format\">UMOD/File\
+      \ Format</a> too if you haven't already. A common thing like the compact index\
+      \ format could move to a shared page, for instance.</p>\n<p><b>Jesco:</b> Ah,\
+      \ I haven't noticed that, yet. Saves me the hassle to explain the compact index&#160;;)\
+      \ Where should the page for the compact index be put to? I suggest making it\
+      \ either a subpage of <a href=\"/Legacy:UMOD/File_Format\" title=\"Legacy:UMOD/File\
+      \ Format\">UMOD/File Format</a> or <strong class=\"selflink\">Package File Format</strong>.</p>\n\
+      <p><b>Mychaeel:</b> Putting it on a subpage of <strong class=\"selflink\">Package\
+      \ File Format</strong> sounds more obvious to me.</p>\n<p><b>Tarquin:</b> Other\
+      \ pages to grab material from / link to / etc:</p>\n<ul>\n<li><a href=\"/Legacy:Package\"\
+      \ title=\"Legacy:Package\">Package</a></li>\n<li><a href=\"/Legacy:Package\"\
+      \ title=\"Legacy:Package\">Package</a> redirects to the above.</li>\n<li><a\
+      \ href=\"/Legacy:UT_Package_Tool\" title=\"Legacy:UT Package Tool\" class=\"\
+      mw-redirect\">UT Package Tool</a> (just a link to a site)</li>\n</ul>\n<p><b>Jesco:</b>\
+      \ Ok, I'll work on it later today when I come back from university. Maybe I\
+      \ should also mail Antonio and ask im if I could post a copy of his reference\
+      \ docs for all those thousands of different objects that I don't have a clue\
+      \ of&#160;;)</p>\n<p><b>Jesco:</b> I haven't forgot about this article, it just\
+      \ went down my priority list, unfortunately.</p>\n<p><b>Diki:</b> Hey Jesco,\
+      \ I dont suppose you seriously havent forgotten about this article. Im trying\
+      \ to find more info about this topic!</p>\n<p><b>RmzVoid:</b> Where I can get\
+      \ codes of Object Properties types?</p>\n<p><b>Diablo:</b> @ anyone who wants\
+      \ to dig deeper inside unreal file format structures: take a look at this project:</p>\n\
+      <p><a rel=\"nofollow\" class=\"external free\" href=\"http://sourceforge.net/projects/ushock/\"\
+      >http://sourceforge.net/projects/ushock/</a></p>\n<p><b>@3DBuzz:</b> Can someone\
+      \ Please upload the \"UTCMS_source.zip file\" to another server? The current\
+      \ link is dead yet interest in reading the packages is still there.</p>\n<p><b>Tarquin:</b>\
+      \ Alternatively, someone could paste the code into a subpage here.</p>\n<p><b>Plugwash:</b>\
+      \ I wan't to make a tool that makes some changes to some of the tables without\
+      \ changing the bulk of the file. Is there any reason not to put the tables at\
+      \ the end of the file after everything else (yes i realise leaving the old tables\
+      \ in means a bit of bloat but it shouldn't be too significant)?</p>\n<p><b>Xian:</b>\
+      \ Well as far as I can remember, the order is: 1. Headers, 2. Linkers, 3. NameTable\
+      \ (+index where it begins to be used), 4. Compiled Code, 5. Decompiled Code\
+      \ (aka Core.TextBuffer). Although a completely rewritten file parser would be\
+      \ able to read it with the NT at the end, I don't see the point. The code uses\
+      \ pointers to each NT element. It is way more logical to say \"Name &lt;Pawn&gt;\
+      \ has pointer 4F6G\" and later make a reference to it in the Compiled Code,\
+      \ rather than for the code to memorize all used pointers and then parse the\
+      \ end of the file. I'd say the logic here is the same as compiling from end\
+      \ to beginning (if we'd compile from beginning to end, stuff like x = x + 2\
+      \ or x += 2 wouldn't work, without pre-parsing, I guess). You might be able\
+      \ to add new elements to the table on the condition you change the index they\
+      \ get used at, you include serialization (to not get a serialization error)\
+      \ and modify the NT size and namespace used by linkers (also used by serialization\
+      \ I think). Excuse my raw descriptions, but it should be pretty accurate&#160;:)</p>\n\
+      <p><b>Wormbo:</b> The locations of the name, import and export tables are specified\
+      \ in the file header, and the locations of other objects in the file are are\
+      \ specified in the export table. <i>Where</i> those tables or objects actually\
+      \ are in the file or in what order they appear is irrelevant, as long as everything\
+      \ is in the location mentioned by the header or export table.</p>\n<p><b>Xian:</b>\
+      \ True. The linker descriptions specify each linker size and its offset (i.e.\
+      \ names, exports and imports), setting classes within the package as exports\
+      \ and used classes of other packages as imports. I do like the way the current\
+      \ order of file contents is done, since it's pretty logical (unlike a random\
+      \ placement), and I guess you could shift them back and forth, but it would\
+      \ be readable only by your tool, so I don't see much of a point.</p>\n<p>Side\
+      \ note: thinking of inserting names, I am curious how the Engine would react\
+      \ to finding a name that is never used (although in theory it should be ignored).\
+      \ There is one way to convert a string to a name, but the rule is that the name\
+      \ should exist in the nametable.</p>\n<p>Anyway, back on topic, what changes\
+      \ did you have in mind, Plugwash&#160;?</p>\n<p><b>Plugwash</b> If i understand\
+      \ the formats intentions correctly i don't belive it will matter where the table\
+      \ is in the file, but obviously opinion is split here so trial and error is\
+      \ going to be the only way to find out&#160;;). I wan't a string replacer mainly\
+      \ for use in dealing with conflicting packages (two packages with the same name\
+      \ but different contents), to some extent its possible to change strings in\
+      \ place by hand (i've done it before see the workaround i posted for the credits\
+      \ version mismatch issue on the UT troubleshooting page) but this limits you\
+      \ to replacing them with another string of the same length. On the other hand\
+      \ i really really don't wan't to go to the trouble of writing a full package\
+      \ deserialiser and reserialiser.</p>\n<p><b>Plugwash</b> Yep UT doesn't seem\
+      \ to care if the names section is at the end, i'm just trying to clarify the\
+      \ situation with regards guids now&#160;;).</p>\n<p><b>BigBadaBoom:</b> Can\
+      \ anyone direct me to a documentation of the ArrayProperty? I've figured out\
+      \ most stuff I need myself but arrays are still a total puzzle to me.&#160;:(</p>\n\
+      <p><b>Dimension4:</b> Export table structure is invalid.</p>\n<p><b>Dimension4:</b>\
+      \ Making a Reserializer is quite hard cuz you have to change many offsets:</p>\n\
+      <p>ImportTable offset</p>\n<p>ExportTable offset</p>\n<p>All offsets in ExportTable</p>\n\
+      <p>You got the picture&#160;:eek:</p>\n\n<!-- \nNewPP limit report\nCPU time\
+      \ usage: 0.079 seconds\nReal time usage: 0.112 seconds\nPreprocessor visited\
+      \ node count: 66/1000000\nPreprocessor generated node count: 113/1000000\nPost‐\
+      expand include size: 666/2097152 bytes\nTemplate argument size: 285/2097152\
+      \ bytes\nHighest expansion depth: 3/40\nExpensive parser function count: 0/100\n\
+      -->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n100.00%\
+      \    5.118      1 - -total\n100.00%    5.118      1 - Template:Innerbox\n-->\n\
+      \n<!-- Saved in parser cache with key wiki:pcache:idhash:2432-0!*!0!!en!*!*\
+      \ and timestamp 20221118045707 and revision id 46338\n -->\n"
+  categories:
+  - sortkey: ""
+    name: "File_formats"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Package"
+  - ns: 100
+    exists: true
+    name: "Legacy:Package File Format/Data Details"
+  - ns: 100
+    exists: true
+    name: "Legacy:File Format"
+  - ns: 100
+    exists: true
+    name: "Legacy:Unreal Engine"
+  - ns: 100
+    exists: true
+    name: "Legacy:UMOD/File Format"
+  - ns: 100
+    exists: false
+    name: "Legacy:Package File Format/Serialization"
+  - ns: 100
+    exists: true
+    name: "Legacy:UT Package Tool"
+  templates:
+  - ns: 10
+    exists: true
+    name: "Template:Innerbox"
+  images: []
+  externallinks:
+  - "http://ut-files.com/index.php?dir=Utilities/&file=utcms_source.zip"
+  - "http://www.acordero.org/"
+  - "http://sourceforge.net/projects/ushock/"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "The Structure of the File"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Package_File_Format"
+    byteoffset: 962
+    anchor: "The_Structure_of_the_File"
+  - toclevel: 2
+    level: "3"
+    line: "Overview"
+    number: "1.1"
+    index: "2"
+    fromtitle: "Legacy:Package_File_Format"
+    byteoffset: 994
+    anchor: "Overview"
+  - toclevel: 2
+    level: "3"
+    line: "Header"
+    number: "1.2"
+    index: "3"
+    fromtitle: "Legacy:Package_File_Format"
+    byteoffset: 1735
+    anchor: "Header"
+  - toclevel: 2
+    level: "3"
+    line: "Index Tables"
+    number: "1.3"
+    index: "4"
+    fromtitle: "Legacy:Package_File_Format"
+    byteoffset: 4872
+    anchor: "Index_Tables"
+  - toclevel: 3
+    level: "4"
+    line: "Name-Table"
+    number: "1.3.1"
+    index: "5"
+    fromtitle: "Legacy:Package_File_Format"
+    byteoffset: 5308
+    anchor: "Name-Table"
+  - toclevel: 3
+    level: "4"
+    line: "Export-Table"
+    number: "1.3.2"
+    index: "6"
+    fromtitle: "Legacy:Package_File_Format"
+    byteoffset: 6035
+    anchor: "Export-Table"
+  - toclevel: 3
+    level: "4"
+    line: "Import-Table"
+    number: "1.3.3"
+    index: "7"
+    fromtitle: "Legacy:Package_File_Format"
+    byteoffset: 7553
+    anchor: "Import-Table"
+  - toclevel: 2
+    level: "3"
+    line: "Body/Object"
+    number: "1.4"
+    index: "8"
+    fromtitle: "Legacy:Package_File_Format"
+    byteoffset: 8958
+    anchor: "Body.2FObject"
+  - toclevel: 3
+    level: "4"
+    line: "Object Properties"
+    number: "1.4.1"
+    index: "9"
+    fromtitle: "Legacy:Package_File_Format"
+    byteoffset: 9071
+    anchor: "Object_Properties"
+  - toclevel: 3
+    level: "4"
+    line: "Sample Objects (Texture Class)"
+    number: "1.4.2"
+    index: "10"
+    fromtitle: "Legacy:Package_File_Format"
+    byteoffset: 9807
+    anchor: "Sample_Objects_.28Texture_Class.29"
+  - toclevel: 1
+    level: "2"
+    line: "Appendix"
+    number: "2"
+    index: "11"
+    fromtitle: "Legacy:Package_File_Format"
+    byteoffset: 11728
+    anchor: "Appendix"
+  - toclevel: 2
+    level: "3"
+    line: "A. Links"
+    number: "2.1"
+    index: "12"
+    fromtitle: "Legacy:Package_File_Format"
+    byteoffset: 11743
+    anchor: "A._Links"
+  - toclevel: 2
+    level: "3"
+    line: "B. Notes"
+    number: "2.2"
+    index: "13"
+    fromtitle: "Legacy:Package_File_Format"
+    byteoffset: 12113
+    anchor: "B._Notes"
+  - toclevel: 1
+    level: "2"
+    line: "Comments/Discussion"
+    number: "3"
+    index: "14"
+    fromtitle: "Legacy:Package_File_Format"
+    byteoffset: 12507
+    anchor: "Comments.2FDiscussion"
+  displaytitle: "Legacy:Package File Format"
+  iwlinks: []
+  wikitext:
+    text: "[[Category:File formats]]\nThe [[Legacy:Unreal Engine|Unreal Engine]] uses\
+      \ a single [[Legacy:File Format|file format]] to store all its game-content.\
+      \ You may have seen many different filetypes, like .utx (textures), .unr (maps),\
+      \ .umx (sound) and .u (code), but from a technical standpoint there is no difference\
+      \ between those files; the different file endings are only used to help organize\
+      \ the packages in the directory structure. The following article will describe\
+      \ the basic structure of his fileformat. It omits many details (such as tons\
+      \ of constants, for example), but there’s a good reference available on the\
+      \ net by Antonio Cordero Balcazar (see links).\n\n{{innerbox| '''Assumptions''':\n\
+      \n This is a rather technical article. It requires you to have a basic understanding\
+      \ of object oriented programming as well as the will to use an hex-editor, if\
+      \ needed. This is NOT intended to be a full documention of the fileformat, but\
+      \ only a brief introduction.\n\n}}\n\n==The Structure of the File ==\n\n===Overview\
+      \ ===\n\nEvery [[Legacy:Package|package]] file can be roughly split into three\
+      \ logical parts. The header, the three index tables (name-table, import-table\
+      \ and export-table) and the data itself. But only the header has a fixed position\
+      \ (at offset 0), all other parts can be found anywhere within the file without\
+      \ irritating the engine.\n\nMost of the time, although, the layout looks like\
+      \ the following:\n* Header\n* Name-Table\n* Import-Table\n* Data\n* Export-Table\n\
+      \nIt may be useful to read a bit about the concept of serialization, which allows\
+      \ you to (rather) easily store the state of objects within a file. A brief introduction\
+      \ can be found on the Wiki: [[Legacy:Package File Format/Serialization|Package\
+      \ File Format/Serialization]]\n\n===Header ===\n\nThis global header can be\
+      \ found at the beginning of the file (offset 0). It is the starting point for\
+      \ every operation.\n\n{| class=\"wikitable\"\n\n|-\n| style=\"text-align: center\"\
+      \ |'''offset'''\n| style=\"text-align: center\" |'''Type'''\n| style=\"text-align:\
+      \ center\" |'''Property'''\n| style=\"text-align: center\" |'''Description'''\
+      \  \n|-\n| style=\"text-align: left\" |0\n| style=\"text-align: left\" |DWORD\n\
+      | style=\"text-align: left\" |Signature\n| style=\"text-align: left\" |Always:\
+      \ “0x9E2A83C1”; use this to verify that you indeed try to read an Unreal-Package\
+      \ \n|-\n| style=\"text-align: left\" |4\n| style=\"text-align: left\" |WORD\n\
+      | style=\"text-align: left\" |PackageVersion\n| style=\"text-align: left\" |Version\
+      \ of the file-format; Unreal1 uses mostly 61-63, UT 67-69; However note that\
+      \ quite a few packages are in use with UT that have Unreal1 versions. see the\
+      \ appendix for more details \n|-\n| style=\"text-align: left\" |6\n| style=\"\
+      text-align: left\" |WORD\n| style=\"text-align: left\" |LicenseMode\n| style=\"\
+      text-align: left\" |This is the license number. Different for each game.\n|-\n\
+      | style=\"text-align: left\" |8\n| style=\"text-align: left\" |DWORD\n| style=\"\
+      text-align: left\" |Package Flags\n| style=\"text-align: left\" |Global package\
+      \ flags, i.e. if a package may be downloaded from a game server etc; described\
+      \ in the appendix \n|-\n| style=\"text-align: left\" |12\n| style=\"text-align:\
+      \ left\" |DWORD\n| style=\"text-align: left\" |Name Count\n| style=\"text-align:\
+      \ left\" |No. Of entries in name-table \n|-\n| style=\"text-align: left\" |16\n\
+      | style=\"text-align: left\" |DWORD\n| style=\"text-align: left\" |Name Offset\n\
+      | style=\"text-align: left\" |Offset of name-table within the file \n|-\n| style=\"\
+      text-align: left\" |20\n| style=\"text-align: left\" |DWORD\n| style=\"text-align:\
+      \ left\" |Export Count\n| style=\"text-align: left\" |No. Of entries in export-table\
+      \ \n|-\n| style=\"text-align: left\" |24\n| style=\"text-align: left\" |DWORD\n\
+      | style=\"text-align: left\" |Export Offset\n| style=\"text-align: left\" |Offset\
+      \ of export-table within the file \n|-\n| style=\"text-align: left\" |28\n|\
+      \ style=\"text-align: left\" |DWORD\n| style=\"text-align: left\" |Import Count\n\
+      | style=\"text-align: left\" |No. Of entries in import-table \n|-\n| style=\"\
+      text-align: left\" |32\n| style=\"text-align: left\" |DWORD\n| style=\"text-align:\
+      \ left\" |Import Offset\n| style=\"text-align: left\" |Offset of import-table\
+      \ within the file \n|-\n| colspan=\"4\" style=\"text-align: left\" |After the\
+      \ ImportOffset, the header differs between the versions. The only interesting\
+      \ fact, though, is that for fileformat versions => 68, a GUID has been introduced.\
+      \ It can be found right after the ImportOffset: \n|-\n| style=\"text-align:\
+      \ left\" |36\n| style=\"text-align: left\" |16 BYTE\n| style=\"text-align: left\"\
+      \ |GUID\n| style=\"text-align: left\" |Unique identifier; used for package downloading\
+      \ from servers \n|-\n| colspan=\"4\" style=\"text-align: left\" |older package\
+      \ versions have a list of GUIDs (pointed to by the same form of count/offset\
+      \ pair as above) in a seperate section rather than just space for one, tests\
+      \ reveal that ut uses the last one in the list when there is more than one but\
+      \ such packages do not seem to be seen in the wild.\n|}\n\n===Index Tables ===\n\
+      \nThe Unreal-Engine introduces two new variable-types. The first one is a rather\
+      \ simple string type, called NAME from now on. The second one is a bit more\
+      \ tricky, these CompactIndices, or INDEX later on, compresses ordinary DWORDs\
+      \ downto one to five BYTEs. Both types, as well as the ObjectReference, are\
+      \ described in the following paper: [[Legacy:Package File Format/Data Details|Package\
+      \ File Format/Data Details]]\n\n====Name-Table ====\n\nThe first and most simple\
+      \ one of the three tables is the name-table. The name-table can be considered\
+      \ an index of all unique names used for objects and references within the file.\
+      \ Later on, you’ll often find indexes into this table instead of a string containing\
+      \ the object-name.\n\n{| class=\"wikitable\"\n\n|-\n| style=\"text-align: center\"\
+      \ |'''Type'''\n| style=\"text-align: center\" |'''Property'''\n| style=\"text-align:\
+      \ center\" |'''Description'''  \n|-\n| style=\"text-align: left\" |NAME\n| style=\"\
+      text-align: left\" |Object Name\n| style=\"text-align: left\" |\n|-\n| style=\"\
+      text-align: left\" |DWORD\n| style=\"text-align: left\" |Object Flags\n| style=\"\
+      text-align: left\" |Flags for the object; described in the appendix \n|}\n\n\
+      ====Export-Table ====\n\nThe export-table is an index for all objects within\
+      \ the package. Every object in the body of the file has a corresponding entry\
+      \ in this table, with information like offset within the file etc.\n\n{| class=\"\
+      wikitable\"\n\n|-\n| style=\"text-align: center\" |'''Type'''\n| style=\"text-align:\
+      \ center\" |'''Property'''\n| style=\"text-align: center\" |'''Description'''\
+      \  \n|-\n| style=\"text-align: left\" |INDEX\n| style=\"text-align: left\" |Class\n\
+      | style=\"text-align: left\" |Class of the object, i.e. ‘Texture’ or ‘Palette’\
+      \ etc; stored as a ObjectReference \n|-\n| style=\"text-align: left\" |INDEX\n\
+      | style=\"text-align: left\" |Super\n| style=\"text-align: left\" |Object Parent;\
+      \ again a ObjectReference \n|-\n| style=\"text-align: left\" |DWORD\n| style=\"\
+      text-align: left\" |Group\n| style=\"text-align: left\" |Internal package/group\
+      \ of the object, i.e. ‘Floor’ for floor-textures; ObjectReference \n|-\n| style=\"\
+      text-align: left\" |INDEX\n| style=\"text-align: left\" |Object Name\n| style=\"\
+      text-align: left\" |The name of the object; an index into the name-table \n\
+      |-\n| style=\"text-align: left\" |DWORD\n| style=\"text-align: left\" |Object\
+      \ Flags\n| style=\"text-align: left\" |Flags for the object; described in the\
+      \ appendix \n|-\n| style=\"text-align: left\" |INDEX\n| style=\"text-align:\
+      \ left\" |Serial Size\n| style=\"text-align: left\" |Total size of the object\
+      \ \n|-\n| style=\"text-align: left\" |INDEX\n| style=\"text-align: left\" |Serial\
+      \ Offset\n| style=\"text-align: left\" |Offset of the object; this field only\
+      \ exists if the SerialSize is larger 0 \n|}\n\n====Import-Table ====\n\nThe\
+      \ third table holds references to objects in external packages. For example,\
+      \ a texture might have a DetailTexture (which makes for the nice structure if\
+      \ have a very close look at a texture). Now, these DetailTextures are all stored\
+      \ in a single package (as they are used by many different textures in different\
+      \ package files). The property of the texture object only needs to store an\
+      \ index into the import-table then as the entry in the import-table already\
+      \ points to the DetailTexture in the other package.\n\n{| class=\"wikitable\"\
+      \n\n|-\n| style=\"text-align: center\" |'''Type'''\n| style=\"text-align: center\"\
+      \ |'''Property'''\n| style=\"text-align: center\" |'''Description'''  \n|-\n\
+      | style=\"text-align: left\" |INDEX\n| style=\"text-align: left\" |Class Package\n\
+      | style=\"text-align: left\" |Package file in which the class of the object\
+      \ is defined; an index into the name-table \n|-\n| style=\"text-align: left\"\
+      \ |INDEX\n| style=\"text-align: left\" |Class Name\n| style=\"text-align: left\"\
+      \ |Class of the object, i.e. ‘Texture’, ‘Palette’, ‘Package’, etc; an index\
+      \ into the name-table \n|-\n| style=\"text-align: left\" |DWORD\n| style=\"\
+      text-align: left\" |Package\n| style=\"text-align: left\" |Reference where the\
+      \ object resides; ObjectReference \n|-\n| style=\"text-align: left\" |INDEX\n\
+      | style=\"text-align: left\" |Object Name\n| style=\"text-align: left\" |The\
+      \ name of the object; an index into the name-table \n|}\n\n===Body/Object ===\n\
+      \nEach object consists of a list of properties at the beginning and the actual\
+      \ object itself.\n\n====Object Properties ====\n\nWhen jumping to the offset\
+      \ of an object, you'll first be confronted with the object properties before\
+      \ the actual object starts. The format is rather straightforward. The first\
+      \ byte is an INDEX-type reference into the Name-Table, giving you the property's\
+      \ name. The second byte does the magic of telling you what kind of data follows;\
+      \ for example 0x02 flags a DWORD sized integer type. Then comes the actual property-data.\
+      \ The procedure repeats itself until the reference into the Name-Table returns\
+      \ 'None' (case insensitive) as the name.\n\nThat said, there are some bit-tricks\
+      \ to deal with arrays, booleans and such. For more info on these, as well as\
+      \ a full list of info-bytes, read Antonio's package docs.\n\n====Sample Objects\
+      \ (Texture Class) ====\n\nAfter the properties are finished the object starts.\
+      \ It basically consists of a predefined set of properties. As an example, the\
+      \ texture class (for good old UT) will be explained below. The texture class\
+      \ is a native one, which means that it doesn't have a generic header in addition\
+      \ to its own data. The layout looks like this:\n\n{| class=\"wikitable\"\n\n\
+      |-\n| style=\"text-align: center\" |'''Type'''\n| style=\"text-align: center\"\
+      \ |'''Property'''\n| style=\"text-align: center\" |'''Description'''  \n|-\n\
+      | style=\"text-align: left\" |BYTE\n| style=\"text-align: left\" |MipMapCount\n\
+      | style=\"text-align: left\" |Count of MipMaps in object \n|}\n\nThe next set\
+      \ of variables repeats itself for each MipMap.\n\n{| class=\"wikitable\"\n\n\
+      |-\n| style=\"text-align: center\" |'''Type'''\n| style=\"text-align: center\"\
+      \ |'''Property'''\n| style=\"text-align: center\" |'''Description'''  \n|-\n\
+      | style=\"text-align: left\" |DWORD\n| style=\"text-align: left\" |WidthOffset\n\
+      | style=\"text-align: left\" |Offset in file; should be the same as SerialOffset\
+      \ in the Export-Table. Only if PkgVer >= 63 \n|-\n| style=\"text-align: left\"\
+      \ |INDEX\n| style=\"text-align: left\" |MipMapSize\n| style=\"text-align: left\"\
+      \ |Size of the image data (in bytes) \n|-\n| style=\"text-align: left\" |n BYTEs\n\
+      | style=\"text-align: left\" |MipMapData\n| style=\"text-align: left\" |Image\
+      \ data; one byte per pixel; n = MipMapSize \n|-\n| style=\"text-align: left\"\
+      \ |DWORD\n| style=\"text-align: left\" |Width\n| style=\"text-align: left\"\
+      \ |Texture-width \n|-\n| style=\"text-align: left\" |DWORD\n| style=\"text-align:\
+      \ left\" |Height\n| style=\"text-align: left\" |Texture-height \n|-\n| style=\"\
+      text-align: left\" |BYTE\n| style=\"text-align: left\" |BitsWidth\n| style=\"\
+      text-align: left\" |Number of bits of Width (e.g. 10 for 1024 pixels) \n|-\n\
+      | style=\"text-align: left\" |BYTE\n| style=\"text-align: left\" |BitsHeight\n\
+      | style=\"text-align: left\" |Number of bits of Height (e.g. 10 for 1024 pixels)\
+      \ \n|}\n\n==Appendix ==\n\n===A. Links ===\n* '''http://www.acordero.org/:'''\
+      \ _The_ ressource regarding package files. A very detailed reference of the\
+      \ package format, the UT-Package-Tool and a Delphi-unit can be found there.\n\
+      * '''http://ut-files.com/index.php?dir=Utilities/&file=utcms_source.zip:'''\
+      \ A C++ class for reading packages. Totally free for use. '''[Link updated with\
+      \ new location]'''\n\n===B. Notes ===\n\nThe last part about the object properties\
+      \ and the texture class was written in a hurry. I'm sorry it took so long for\
+      \ me to finish that piece.\n\nThe fileformat itself, btw, has not changed between\
+      \ the versions of UT (except the odd new property and such). Many of the objects\
+      \ however have changed a lot or were replaced by enhanced types (such as my\
+      \ beloved texture class...).\n\n==Comments/Discussion ==\n\n'''Jesco:''' I will\
+      \ continue after here tomorrow. Now it's time for some sleep :)\n\n'''Mychaeel:'''\
+      \ Good start.  :-)  Have a look at [[Legacy:UMOD/File Format|UMOD/File Format]]\
+      \ too if you haven't already.  A common thing like the compact index format\
+      \ could move to a shared page, for instance.\n\n'''Jesco:''' Ah, I haven't noticed\
+      \ that, yet. Saves me the hassle to explain the compact index ;) Where should\
+      \ the page for the compact index be put to? I suggest making it either a subpage\
+      \ of [[Legacy:UMOD/File Format|UMOD/File Format]] or [[Legacy:Package File Format|Package\
+      \ File Format]].\n\n'''Mychaeel:''' Putting it on a subpage of [[Legacy:Package\
+      \ File Format|Package File Format]] sounds more obvious to me.\n\n'''Tarquin:'''\
+      \ Other pages to grab material from / link to / etc:\n* [[Legacy:Package|Package]]\
+      \ \n* [[Legacy:Package|Package]] redirects to the above.\n* [[Legacy:UT Package\
+      \ Tool|UT Package Tool]] (just a link to a site)\n\n'''Jesco:''' Ok, I'll work\
+      \ on it later today when I come back from university. Maybe I should also mail\
+      \ Antonio and ask im if I could post a copy of his reference docs for all those\
+      \ thousands of different objects that I don't have a clue of ;)\n\n'''Jesco:'''\
+      \ I haven't forgot about this article, it just went down my priority list, unfortunately.\n\
+      \n'''Diki:''' Hey Jesco, I dont suppose you seriously havent forgotten about\
+      \ this article. Im trying to find more info about this topic!\n\n'''RmzVoid:'''\
+      \ Where I can get codes of Object Properties types?\n\n'''Diablo:''' @ anyone\
+      \ who wants to dig deeper inside unreal file format structures: take a look\
+      \ at this project:\n\nhttp://sourceforge.net/projects/ushock/\n\n'''@3DBuzz:'''\
+      \ Can someone Please upload the \"UTCMS_source.zip file\" to another server?\
+      \ The current link is dead yet interest in reading the packages is still there.\n\
+      \n'''Tarquin:''' Alternatively, someone could paste the code into a subpage\
+      \ here.\n\n'''Plugwash:''' I wan't to make a tool that makes some changes to\
+      \ some of the tables without changing the bulk of the file. Is there any reason\
+      \ not to put the tables at the end of the file after everything else (yes i\
+      \ realise leaving the old tables in means a bit of bloat but it shouldn't be\
+      \ too significant)? \n\n'''Xian:''' Well as far as I can remember, the order\
+      \ is: 1. Headers, 2. Linkers, 3. NameTable (+index where it begins to be used),\
+      \ 4. Compiled Code, 5. Decompiled Code (aka Core.TextBuffer). Although a completely\
+      \ rewritten file parser would be able to read it with the NT at the end, I don't\
+      \ see the point. The code uses pointers to each NT element. It is way more logical\
+      \ to say \"Name <Pawn> has pointer 4F6G\" and later make a reference to it in\
+      \ the Compiled Code, rather than for the code to memorize all used pointers\
+      \ and then parse the end of the file. I'd say the logic here is the same as\
+      \ compiling from end to beginning (if we'd compile from beginning to end, stuff\
+      \ like x = x + 2 or x += 2 wouldn't work, without pre-parsing, I guess). You\
+      \ might be able to add new elements to the table on the condition you change\
+      \ the index they get used at, you include serialization (to not get a serialization\
+      \ error) and modify the NT size and namespace used by linkers (also used by\
+      \ serialization I think). Excuse my raw descriptions, but it should be pretty\
+      \ accurate :)\n\n'''Wormbo:''' The locations of the name, import and export\
+      \ tables are specified in the file header, and the locations of other objects\
+      \ in the file are are specified in the export table. ''Where'' those tables\
+      \ or objects actually are in the file or in what order they appear is irrelevant,\
+      \ as long as everything is in the location mentioned by the header or export\
+      \ table.\n\n'''Xian:''' True. The linker descriptions specify each linker size\
+      \ and its offset (i.e. names, exports and imports), setting classes within the\
+      \ package as exports and used classes of other packages as imports. I do like\
+      \ the way the current order of file contents is done, since it's pretty logical\
+      \ (unlike a random placement), and I guess you could shift them back and forth,\
+      \ but it would be readable only by your tool, so I don't see much of a point.\
+      \ \n\nSide note: thinking of inserting names, I am curious how the Engine would\
+      \ react to finding a name that is never used (although in theory it should be\
+      \ ignored). There is one way to convert a string to a name, but the rule is\
+      \ that the name should exist in the nametable. \n\nAnyway, back on topic, what\
+      \ changes did you have in mind, Plugwash ?\n\n'''Plugwash''' If i understand\
+      \ the formats intentions correctly i don't belive it will matter where the table\
+      \ is in the file, but obviously opinion is split here so trial and error is\
+      \ going to be the only way to find out ;). I wan't a string replacer mainly\
+      \ for use in dealing with conflicting packages (two packages with the same name\
+      \ but different contents), to some extent its possible to change strings in\
+      \ place by hand (i've done it before see the workaround i posted for the credits\
+      \ version mismatch issue on the UT troubleshooting page) but this limits you\
+      \ to replacing them with another string of the same length. On the other hand\
+      \ i really really don't wan't to go to the trouble of writing a full package\
+      \ deserialiser and reserialiser. \n\n'''Plugwash''' Yep UT doesn't seem to care\
+      \ if the names section is at the end, i'm just trying to clarify the situation\
+      \ with regards guids now ;).\n\n'''BigBadaBoom:''' Can anyone direct me to a\
+      \ documentation of the ArrayProperty? I've figured out most stuff I need myself\
+      \ but arrays are still a total puzzle to me. :(\n\n'''Dimension4:''' Export\
+      \ table structure is invalid.\n\n'''Dimension4:''' Making a Reserializer is\
+      \ quite hard cuz you have to change many offsets:\n\nImportTable offset\n\n\
+      ExportTable offset\n\nAll offsets in ExportTable\n\nYou got the picture :eek:"
+  properties: []
+  revId: 46338
+name: "Legacy:Package File Format"
+revision:
+  revid: 46338
+  parentid: 34140
+  user: "SeriousBarbie"
+  timestamp: 1465695232.000000000
+  comment: "+[[Category:File formats]] - what about moving discussion to the discussion\
+    \ page?"
+timestamp: 1668762126.391269000

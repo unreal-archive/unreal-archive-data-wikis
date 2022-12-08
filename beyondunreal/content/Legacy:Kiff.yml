@@ -1,0 +1,406 @@
+---
+parse:
+  title: "Legacy:Kiff"
+  text:
+    text: "<p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n\
+      </div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#Under_Construction...\"\
+      ><span class=\"tocnumber\">1</span> <span class=\"toctext\">Under Construction...</span></a>\n\
+      <ul>\n<li class=\"toclevel-2 tocsection-2\"><a href=\"#Replication_Example:_The_ESTransport.27s_compartment.\"\
+      ><span class=\"tocnumber\">1.1</span> <span class=\"toctext\">Replication Example:\
+      \ The ESTransport's compartment.</span></a></li>\n</ul>\n</li>\n<li class=\"\
+      toclevel-1 tocsection-3\"><a href=\"#Animating_the_compartment\"><span class=\"\
+      tocnumber\">2</span> <span class=\"toctext\">Animating the compartment</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-4\"><a href=\"#Triggering_the_animation\"\
+      ><span class=\"tocnumber\">3</span> <span class=\"toctext\">Triggering the animation</span></a></li>\n\
+      </ul>\n</div>\n<p></p>\n<h2><span class=\"mw-headline\" id=\"Under_Construction...\"\
+      >Under Construction...</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Kiff?section=1\" title=\"Edit section: Under\
+      \ Construction...\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <h3><span class=\"mw-headline\" id=\"Replication_Example:_The_ESTransport.27s_compartment.\"\
+      >Replication Example: The ESTransport's compartment.</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Kiff?section=2\"\
+      \ title=\"Edit section: Replication Example: The ESTransport's compartment.\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n<p>I'm\
+      \ still pretty new to unreal coding (and modding), but I think I finally understand\
+      \ replication well enough to accomplish what I needed to do here and pass on\
+      \ what I've learned. That said, I'm still learning so please give feedback.</p>\n\
+      <p>I have a custom transport vehicle (thanks to showNOmercy for the model) that\
+      \ has an \"animated\" storage compartment. The compartment is a box that can\
+      \ be lowered and then open its door. Currently the animation is done purely\
+      \ in code. This isn't the best way, but I opted to take this aproach since I\
+      \ simply wanted to know how to do this and I also didn't want to bug the modeler\
+      \ with creating the animations. What does this have to do with replication?\
+      \ Keep reading...</p>\n<h2><span class=\"mw-headline\" id=\"Animating_the_compartment\"\
+      >Animating the compartment</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Kiff?section=3\" title=\"\
+      Edit section: Animating the compartment\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>The compartment's animation sequence is broken into\
+      \ six (0 - 5) parts or \"states\" in code (not unreal script states).</p>\n\
+      <ul>\n<li>0: Fully closed state: The box is in its up position and the door\
+      \ is closed</li>\n<li>1: Lowering: The box is going from its up position to\
+      \ its low position. The door is still closed.</li>\n<li>2: Low position, opening\
+      \ the door.</li>\n<li>3: Low position, door is fully opened. This is a stopping\
+      \ point for the animation.</li>\n<li>4: Low position, closing the door</li>\n\
+      <li>5: Raising: The door has been closed and now the box is returning to its\
+      \ up position.</li>\n</ul>\n<p>If this sounds complicated it's really not. Don't\
+      \ worry too much about all of the states. Just keep in mind that the box can\
+      \ be open, closed or in a transition from one to the other.</p>\n<p>Here is\
+      \ an ingame <a rel=\"nofollow\" class=\"external text\" href=\"http://s63.photobucket.com/albums/h131/kiff–\
+      /?action=view&amp;current=EsTRanspo-1.flv\">video</a></p>\n<p>A struct is used\
+      \ to represent the current state and for replicating it when it has changed</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">struct</span> BoxState\n\
+      <span class=\"br0\">{</span>\n\t<span class=\"kw1\">var</span> <span class=\"\
+      kw5\">float</span> \tDoorRotation;\n\t<span class=\"kw1\">var</span> <span class=\"\
+      kw5\">float</span> \tBoxHeight;\n\t<span class=\"kw1\">var</span> <span class=\"\
+      kw5\">int</span>\t\tMode;\n<span class=\"br0\">}</span>;</pre></div>\n</div>\n\
+      <p>Keep in mind that we want the client and server to animate their own copies\
+      \ of the compartment. The struct \"CurrentBoxState\" could just be set as reliable,\
+      \ but then the server would be doing all of the animating and would spam all\
+      \ of the small incremental position updates over the network.</p>\n<h2><span\
+      \ class=\"mw-headline\" id=\"Triggering_the_animation\">Triggering the animation</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Kiff?section=4\" title=\"Edit section: Triggering the\
+      \ animation\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>The driver opens or closes the compartment by right-clicking. If the door\
+      \ is currently open, then clicking again will start closing it. Also, if the\
+      \ door is in motion, clicking will cause it to reverse and \"go back\".</p>\n\
+      <p>The driver's right-click causes \"VehicleFire\" to get called <u>on the server</u>\
+      \ with bWasAltFire set to true. Now the code will check the current state and\
+      \ change it accordingly:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">function</span> VehicleFire<span class=\"br0\">(</span><span class=\"\
+      kw5\">bool</span> bWasAltFire<span class=\"br0\">)</span>\n<span class=\"br0\"\
+      >{</span>\n\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span\
+      \ class=\"sy0\">!</span>bWasAltFire<span class=\"br0\">)</span>\n\t\t<span class=\"\
+      kw2\">return</span>;\n \n\t<span class=\"co1\">// to initiate opening the box,\
+      \ we must be \"parked\"</span>\n\t<span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span><span class=\"nu0\">0</span> <span class=\"sy0\">==</span> CurrentBoxState.<span\
+      \ class=\"me0\">Mode</span><span class=\"br0\">)</span>\n\t\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span><span class=\"kw3\">VSize</span><span\
+      \ class=\"br0\">(</span><span class=\"kw7\">Velocity</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">&gt;</span> <span class=\"nu0\">1.5</span><span\
+      \ class=\"br0\">)</span>\n\t\t<span class=\"br0\">{</span>\t \n\t\t\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span><span class=\"kw9\">PlayerController</span><span\
+      \ class=\"br0\">(</span><span class=\"kw9\">Controller</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span><span\
+      \ class=\"br0\">)</span>\n\t\t\t\t<span class=\"kw9\">PlayerController</span><span\
+      \ class=\"br0\">(</span><span class=\"kw9\">Controller</span><span class=\"\
+      br0\">)</span>.<span class=\"me0\">ClientPlaySound</span><span class=\"br0\"\
+      >(</span>CantOpenDoorSound<span class=\"br0\">)</span>;\n \n\t\t\t<span class=\"\
+      kw2\">return</span>;\n\t\t<span class=\"br0\">}</span>\n \n\t<span class=\"\
+      kw2\">switch</span><span class=\"br0\">(</span>CurrentBoxState.<span class=\"\
+      me0\">Mode</span><span class=\"br0\">)</span>\n\t<span class=\"br0\">{</span>\n\
+      \t\t<span class=\"kw2\">case</span> <span class=\"nu0\">0</span>:\tCurrentBoxState.<span\
+      \ class=\"me0\">Mode</span> <span class=\"sy0\">=</span> <span class=\"nu0\"\
+      >1</span>;\n\t\t\t\t<span class=\"kw4\">PlaySound</span><span class=\"br0\"\
+      >(</span>LowerBoxSound,,<span class=\"nu0\">2.5</span><span class=\"sy0\">*</span><span\
+      \ class=\"kw7\">TransientSoundVolume</span><span class=\"br0\">)</span>;\n\t\
+      \t\t\t<span class=\"kw3\">Enable</span><span class=\"br0\">(</span><span class=\"\
+      st0\">'Tick'</span><span class=\"br0\">)</span>;\n\t\t\t\t<span class=\"kw2\"\
+      >break</span>;\n \n\t\t<span class=\"kw2\">case</span> <span class=\"nu0\">1</span>:\t\
+      CurrentBoxState.<span class=\"me0\">Mode</span> <span class=\"sy0\">=</span>\
+      \ <span class=\"nu0\">5</span>;\n\t\t\t\t<span class=\"kw2\">break</span>;\n\
+      \ \n\t\t<span class=\"kw2\">case</span> <span class=\"nu0\">2</span>:\tCurrentBoxState.<span\
+      \ class=\"me0\">Mode</span> <span class=\"sy0\">=</span> <span class=\"nu0\"\
+      >4</span>;\n\t\t\t\t<span class=\"kw2\">break</span>;\n \n\t\t<span class=\"\
+      kw2\">case</span> <span class=\"nu0\">3</span>:\tCurrentBoxState.<span class=\"\
+      me0\">Mode</span> <span class=\"sy0\">=</span> <span class=\"nu0\">4</span>;\n\
+      \t\t\t\t<span class=\"kw4\">PlaySound</span><span class=\"br0\">(</span>OpenDoorSound,,<span\
+      \ class=\"nu0\">3</span><span class=\"sy0\">*</span><span class=\"kw7\">TransientSoundVolume</span>,,,<span\
+      \ class=\"nu0\">0.5</span><span class=\"br0\">)</span>;\n\t\t\t\t<span class=\"\
+      kw3\">Enable</span><span class=\"br0\">(</span><span class=\"st0\">'Tick'</span><span\
+      \ class=\"br0\">)</span>;\n\t\t\t\t<span class=\"kw2\">break</span>;\n \n\t\t\
+      <span class=\"kw2\">case</span> <span class=\"nu0\">4</span>:\tCurrentBoxState.<span\
+      \ class=\"me0\">Mode</span> <span class=\"sy0\">=</span> <span class=\"nu0\"\
+      >2</span>;\n\t\t\t\t<span class=\"kw2\">break</span>;\n \n\t\t<span class=\"\
+      kw2\">case</span> <span class=\"nu0\">5</span>:\tCurrentBoxState.<span class=\"\
+      me0\">Mode</span> <span class=\"sy0\">=</span> <span class=\"nu0\">1</span>;\n\
+      \t\t\t\t<span class=\"kw2\">break</span>;\n \n\t<span class=\"br0\">}</span>\n\
+      \ \n\tNewBoxState <span class=\"sy0\">=</span> CurrentBoxState;\n\tNewBoxState.<span\
+      \ class=\"me0\">Mode</span>  <span class=\"sy0\">=</span> CurrentBoxState.<span\
+      \ class=\"me0\">Mode</span>; <span class=\"co1\">// struct replication quirk</span>\n\
+      \tBoxUpdateTime <span class=\"sy0\">=</span> <span class=\"kw7\">Level</span>.<span\
+      \ class=\"me0\">TimeSeconds</span>;\n\tNetUpdateTime <span class=\"sy0\">=</span>\
+      \ <span class=\"kw7\">Level</span>.<span class=\"me0\">TimeSeconds</span> <span\
+      \ class=\"sy0\">-</span> <span class=\"nu0\">1</span>;\n \n<span class=\"br0\"\
+      >}</span></pre></div>\n</div>\n<p>The last four lines are where replication\
+      \ comes into play. When the state changes on the server, it \"tells\" the clients\
+      \ by changing the replicated variables NewBoxState and BoxUpdateTime. BoxUpdateTime\
+      \ is used as a counter of sorts to inform the client when it happened and gives\
+      \ the client a way to know that it's a new event. The very last line is a commonly\
+      \ used method to tell the server to start replicating as soon as possible, but\
+      \ note that NetUpdateTime is not a variable defined in my code.</p>\n<p><b>Kiff:</b>\
+      \ I think that \"BoxUpdateTime\" might need to be added to the struct to make\
+      \ sure it arrives at the same time.</p>\n<p><b>Kiff:</b> Now that I think about\
+      \ it, I don't even think the update time is needed. It was needed for an older\
+      \ method I was using, but I'm pretty sure that now just the state (.Mode) can\
+      \ just be checked for a change.</p>\n<p>Here is the replication block:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">replication</span>\n\
+      <span class=\"br0\">{</span>\n    <span class=\"kw1\">reliable</span> <span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"kw7\">Role</span>\
+      \ <span class=\"sy0\">==</span> <span class=\"kw7\">ROLE_Authority</span><span\
+      \ class=\"br0\">)</span>\n        BoxUpdateTime, NewBoxState;\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p>When a client receives new values for\
+      \ replicated variables (and bNetNotify=True) the PostNetReceive event is fired.</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">simulated</span>\
+      \ <span class=\"kw1\">event</span> <span class=\"kw4\">PostNetReceive</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \t<span class=\"kw2\">if</span><span class=\"br0\">(</span>BoxUpdateTime <span\
+      \ class=\"sy0\">&gt;</span> LastBoxUpdateTime<span class=\"br0\">)</span>\n\t\
+      <span class=\"br0\">{</span>\n\t\tLastBoxUpdateTime <span class=\"sy0\">=</span>\
+      \ BoxUpdateTime;\n\t\tCurrentBoxState <span class=\"sy0\">=</span>  NewBoxState;\n\
+      \t\t<span class=\"kw3\">Enable</span><span class=\"br0\">(</span><span class=\"\
+      st0\">'Tick'</span><span class=\"br0\">)</span>;\n\t<span class=\"br0\">}</span>\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>If the variable BoxUpdateTime\
+      \ is newer (greater) than the last one we saved (with LastBoxUpdateTime), we\
+      \ then know the NewBoxState struct has fresh data. Now we can update our local\
+      \ CurrentBoxState with the newly replicated NewBoxState and then start the animation.</p>\n\
+      <p>Now we're able to use PostNetReceive as a remote function call. Unlike replicated\
+      \ functions that only reach a single (owner) client, this will reach all clients.\
+      \ Any number of function calls can be carried out this way as long as we have\
+      \ unique replicated variables to inspect for each one.</p>\n<p>To wrap things\
+      \ up, here's the function that does the \"animation\". It takes a time delta\
+      \ as an arguement when called from the Tick event.</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw1\">simulated</span> <span class=\"kw1\"\
+      >function</span> UpdateBoxPosition<span class=\"br0\">(</span><span class=\"\
+      kw5\">float</span> DT<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \t<span class=\"kw1\">local</span> <span class=\"kw5\">vector</span> disp;\n\
+      \t<span class=\"kw1\">local</span> <span class=\"kw5\">rotator</span> doorRot;\n\
+      \ \n\t<span class=\"kw2\">switch</span><span class=\"br0\">(</span>CurrentBoxState.<span\
+      \ class=\"me0\">Mode</span><span class=\"br0\">)</span>\n\t<span class=\"br0\"\
+      >{</span>\n\t\t<span class=\"kw2\">case</span> <span class=\"nu0\">0</span>:\t\
+      <span class=\"kw3\">Disable</span><span class=\"br0\">(</span><span class=\"\
+      st0\">'Tick'</span><span class=\"br0\">)</span>; <span class=\"co1\">// nothing\
+      \ moves in this state</span>\n\t\t\t\t<span class=\"kw2\">break</span>;\n \n\
+      \t\t<span class=\"kw2\">case</span> <span class=\"nu0\">1</span>:\tCurrentBoxState.<span\
+      \ class=\"me0\">BoxHeight</span> <span class=\"sy0\">-=</span> BoxMoveRate <span\
+      \ class=\"sy0\">*</span> DT;\n\t\t\t\t<span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span>CurrentBoxState.<span class=\"me0\">BoxHeight</span> <span class=\"\
+      sy0\">&lt;</span> LoweredBoxHeight<span class=\"br0\">)</span>\n\t\t\t\t<span\
+      \ class=\"br0\">{</span>\n\t\t\t\t\tCurrentBoxState.<span class=\"me0\">BoxHeight</span>\
+      \ <span class=\"sy0\">=</span> LoweredBoxHeight;\n\t\t\t\t\tCurrentBoxState.<span\
+      \ class=\"me0\">Mode</span> <span class=\"sy0\">=</span> <span class=\"nu0\"\
+      >2</span>;\n\t\t\t\t\t<span class=\"kw4\">PlaySound</span><span class=\"br0\"\
+      >(</span>OpenDoorSound,,<span class=\"nu0\">3</span><span class=\"sy0\">*</span><span\
+      \ class=\"kw7\">TransientSoundVolume</span>,,,<span class=\"nu0\">0.5</span><span\
+      \ class=\"br0\">)</span>;\n\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t<span\
+      \ class=\"kw2\">break</span>;\n \n\t\t<span class=\"kw2\">case</span> <span\
+      \ class=\"nu0\">2</span>:\tCurrentBoxState.<span class=\"me0\">DoorRotation</span>\
+      \ <span class=\"sy0\">-=</span> DoorRotRate <span class=\"sy0\">*</span> DT;\n\
+      \t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>CurrentBoxState.<span\
+      \ class=\"me0\">DoorRotation</span> <span class=\"sy0\">&lt;=</span> LoweredDoorRot<span\
+      \ class=\"br0\">)</span>\n\t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\tCurrentBoxState.<span\
+      \ class=\"me0\">DoorRotation</span> <span class=\"sy0\">=</span> LoweredDoorRot;\n\
+      \t\t\t\t\tCurrentBoxState.<span class=\"me0\">Mode</span> <span class=\"sy0\"\
+      >=</span> <span class=\"nu0\">3</span>;\n\t\t\t\t<span class=\"br0\">}</span>\n\
+      \t\t\t\t<span class=\"kw2\">break</span>;\n \n\t\t<span class=\"kw2\">case</span>\
+      \ <span class=\"nu0\">3</span>:\t<span class=\"kw3\">Disable</span><span class=\"\
+      br0\">(</span><span class=\"st0\">'Tick'</span><span class=\"br0\">)</span>;\
+      \ <span class=\"co1\">// this is a \"stopped\" state </span>\n\t\t\t\t<span\
+      \ class=\"kw2\">break</span>;\n \n\t\t<span class=\"kw2\">case</span> <span\
+      \ class=\"nu0\">4</span>:\tCurrentBoxState.<span class=\"me0\">DoorRotation</span>\
+      \ <span class=\"sy0\">+=</span> DoorRotRate <span class=\"sy0\">*</span> DT;\n\
+      \t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>CurrentBoxState.<span\
+      \ class=\"me0\">DoorRotation</span> <span class=\"sy0\">&gt;=</span> <span class=\"\
+      nu0\">0</span><span class=\"br0\">)</span>\n\t\t\t\t<span class=\"br0\">{</span>\n\
+      \t\t\t\t\tCurrentBoxState.<span class=\"me0\">DoorRotation</span> <span class=\"\
+      sy0\">=</span> <span class=\"nu0\">0</span>;\n\t\t\t\t\tCurrentBoxState.<span\
+      \ class=\"me0\">Mode</span> <span class=\"sy0\">=</span> <span class=\"nu0\"\
+      >5</span>;\n\t\t\t\t\t<span class=\"kw4\">PlaySound</span><span class=\"br0\"\
+      >(</span>LowerBoxSound,,<span class=\"nu0\">2.5</span><span class=\"sy0\">*</span><span\
+      \ class=\"kw7\">TransientSoundVolume</span><span class=\"br0\">)</span>;\n\t\
+      \t\t\t<span class=\"br0\">}</span>\n\t\t\t\t<span class=\"kw2\">break</span>;\n\
+      \ \n\t\t<span class=\"kw2\">case</span> <span class=\"nu0\">5</span>:\tCurrentBoxState.<span\
+      \ class=\"me0\">BoxHeight</span> <span class=\"sy0\">+=</span> BoxMoveRate <span\
+      \ class=\"sy0\">*</span> DT;\n\t\t\t\t<span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span>CurrentBoxState.<span class=\"me0\">BoxHeight</span> <span class=\"\
+      sy0\">&gt;=</span> <span class=\"nu0\">0.0</span><span class=\"br0\">)</span>\n\
+      \t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\tCurrentBoxState.<span class=\"\
+      me0\">BoxHeight</span> <span class=\"sy0\">=</span> <span class=\"nu0\">0.0</span>;\n\
+      \t\t\t\t\tCurrentBoxState.<span class=\"me0\">Mode</span> <span class=\"sy0\"\
+      >=</span> <span class=\"nu0\">0</span>;\n\t\t\t\t<span class=\"br0\">}</span>\n\
+      \t<span class=\"br0\">}</span>\n \n\t<span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span><span class=\"nu0\">0</span> <span class=\"sy0\">==</span> CurrentBoxState.<span\
+      \ class=\"me0\">Mode</span><span class=\"br0\">)</span>\n\t\t<span class=\"\
+      kw4\">SetPhysics</span><span class=\"br0\">(</span><span class=\"kw7\">PHYS_Karma</span><span\
+      \ class=\"br0\">)</span>; <span class=\"co1\">// we can resume normal driving\
+      \ now</span>\n\t<span class=\"kw2\">else</span>\n\t    <span class=\"kw4\">SetPhysics</span><span\
+      \ class=\"br0\">(</span><span class=\"kw7\">PHYS_None</span><span class=\"br0\"\
+      >)</span>; <span class=\"co1\">// temporary hack to \"park\" the vehicle</span>\n\
+      \ \n\tdisp.<span class=\"me0\">Z</span> <span class=\"sy0\">=</span> CurrentBoxState.<span\
+      \ class=\"me0\">BoxHeight</span>;\n\tSetBoneLocation<span class=\"br0\">(</span><span\
+      \ class=\"st0\">'LiftForks'</span>, disp,<span class=\"nu0\">1.0</span><span\
+      \ class=\"br0\">)</span>;\n\tSetBoneLocation<span class=\"br0\">(</span><span\
+      \ class=\"st0\">'StorageBox'</span>, disp,<span class=\"nu0\">1.0</span><span\
+      \ class=\"br0\">)</span>;\n\tSetBoneLocation<span class=\"br0\">(</span><span\
+      \ class=\"st0\">'StorageBox_Door'</span>, disp,<span class=\"nu0\">1.0</span><span\
+      \ class=\"br0\">)</span>;\n\tdoorRot.<span class=\"me0\">Pitch</span> <span\
+      \ class=\"sy0\">=</span> CurrentBoxState.<span class=\"me0\">DoorRotation</span>;\n\
+      \tSetBoneRotation<span class=\"br0\">(</span><span class=\"st0\">'StorageBox_Door'</span>,\
+      \ doorRot,<span class=\"nu0\">0</span>, <span class=\"nu0\">1.0</span><span\
+      \ class=\"br0\">)</span>;\n \n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.138 seconds\nReal time usage:\
+      \ 0.322 seconds\nPreprocessor visited node count: 36/1000000\nPreprocessor generated\
+      \ node count: 128/1000000\nPost‐expand include size: 4/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:1640-0!*!*!!en!*!* and timestamp 20221118013603 and revision\
+      \ id 4066\n -->\n"
+  categories:
+  - sortkey: "Kiff"
+    name: "Legacy_Personal_Page"
+  links: []
+  templates: []
+  images: []
+  externallinks:
+  - "http://s63.photobucket.com/albums/h131/kiff%E2%80%93/?action=view&current=EsTRanspo-1.flv"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Under Construction..."
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Kiff"
+    byteoffset: 0
+    anchor: "Under_Construction..."
+  - toclevel: 2
+    level: "3"
+    line: "Replication Example: The ESTransport's compartment."
+    number: "1.1"
+    index: "2"
+    fromtitle: "Legacy:Kiff"
+    byteoffset: 27
+    anchor: "Replication_Example:_The_ESTransport.27s_compartment."
+  - toclevel: 1
+    level: "2"
+    line: "Animating the compartment"
+    number: "2"
+    index: "3"
+    fromtitle: "Legacy:Kiff"
+    byteoffset: 797
+    anchor: "Animating_the_compartment"
+  - toclevel: 1
+    level: "2"
+    line: "Triggering the animation"
+    number: "3"
+    index: "4"
+    fromtitle: "Legacy:Kiff"
+    byteoffset: 2165
+    anchor: "Triggering_the_animation"
+  displaytitle: "Legacy:Kiff"
+  iwlinks: []
+  wikitext:
+    text: "==Under Construction...==\n\n===Replication Example: The ESTransport's\
+      \ compartment. ===\n\nI'm still pretty new to unreal coding (and modding), but\
+      \ I think I finally understand replication well enough to accomplish what I\
+      \ needed to do here and pass on what I've learned.  That said, I'm still learning\
+      \ so please give feedback.\n\nI have a custom transport vehicle (thanks to showNOmercy\
+      \ for the model) that has an \"animated\" storage compartment.  The compartment\
+      \ is a box that can be lowered and then open its door.  Currently the animation\
+      \ is done purely in code.  This isn't the best way, but I opted to take this\
+      \ aproach since I simply wanted to know how to do this and I also didn't want\
+      \ to bug the modeler with creating the animations.  What does this have to do\
+      \ with replication? Keep reading...\n\n==Animating the compartment==\n\nThe\
+      \ compartment's animation sequence is broken into six (0 - 5) parts or \"states\"\
+      \ in code (not unreal script states). \n\n* 0: Fully closed state: The box is\
+      \ in its up position and the door is closed\n* 1: Lowering: The box is going\
+      \ from its up position to its low position. The door is still closed.\n* 2:\
+      \ Low position, opening the door.\n* 3: Low position, door is fully opened.\
+      \ This is a stopping point for the animation.\n* 4: Low position, closing the\
+      \ door\n* 5: Raising: The door has been closed and now the box is returning\
+      \ to its up position.\n\nIf this sounds complicated it's really not.  Don't\
+      \ worry too much about all of the states.  Just keep in mind that the box can\
+      \ be open, closed or in a transition from one to the other.\n\nHere is an ingame\
+      \ [http://s63.photobucket.com/albums/h131/kiff&ndash;/?action=view&current=EsTRanspo-1.flv\
+      \ video]\n\nA struct is used to represent the current state and for replicating\
+      \ it when it has changed\n\n<uscript>\nstruct BoxState\n{\n\tvar float \tDoorRotation;\n\
+      \tvar float \tBoxHeight;\n\tvar int\t\tMode;\n};</uscript>\n\nKeep in mind that\
+      \ we want the client and server to animate their own copies of the compartment.\
+      \ The struct \"CurrentBoxState\" could just be set as reliable, but then the\
+      \ server would be doing all of the animating and would spam all of the small\
+      \ incremental position updates over the network.\n\n==Triggering the animation==\n\
+      \nThe driver opens or closes the compartment by right-clicking. If the door\
+      \ is currently open, then clicking again will start closing it.  Also, if the\
+      \ door is in motion, clicking will cause it to reverse and \"go back\".\n\n\
+      The driver's right-click causes \"VehicleFire\" to get called <u>on the server</u>\
+      \ with bWasAltFire set to true.  Now the code will check the current state and\
+      \ change it accordingly:\n\n<uscript>\nfunction VehicleFire(bool bWasAltFire)\n\
+      {\n\tif (!bWasAltFire)\n\t\treturn;\n\n\t// to initiate opening the box, we\
+      \ must be \"parked\"\n\tif (0 == CurrentBoxState.Mode)\n\t\tif (VSize(Velocity)\
+      \ > 1.5)\n\t\t{\t \n\t\t\tif (PlayerController(Controller) != None)\n\t\t\t\t\
+      PlayerController(Controller).ClientPlaySound(CantOpenDoorSound);\n\n\t\t\treturn;\n\
+      \t\t}\n\t\t\n\tswitch(CurrentBoxState.Mode)\n\t{\n\t\tcase 0:\tCurrentBoxState.Mode\
+      \ = 1;\n\t\t\t\tPlaySound(LowerBoxSound,,2.5*TransientSoundVolume);\n\t\t\t\t\
+      Enable('Tick');\n\t\t\t\tbreak;\n\n\t\tcase 1:\tCurrentBoxState.Mode = 5;\n\t\
+      \t\t\tbreak;\n\n\t\tcase 2:\tCurrentBoxState.Mode = 4;\n\t\t\t\tbreak;\n\n\t\
+      \tcase 3:\tCurrentBoxState.Mode = 4;\n\t\t\t\tPlaySound(OpenDoorSound,,3*TransientSoundVolume,,,0.5);\n\
+      \t\t\t\tEnable('Tick');\n\t\t\t\tbreak;\n\n\t\tcase 4:\tCurrentBoxState.Mode\
+      \ = 2;\n\t\t\t\tbreak;\n\n\t\tcase 5:\tCurrentBoxState.Mode = 1;\n\t\t\t\tbreak;\n\
+      \n\t}\n\n\tNewBoxState = CurrentBoxState;\n\tNewBoxState.Mode  = CurrentBoxState.Mode;\
+      \ // struct replication quirk\n\tBoxUpdateTime = Level.TimeSeconds;\n\tNetUpdateTime\
+      \ = Level.TimeSeconds - 1;\n\t\n}\n</uscript>\n\nThe last four lines are where\
+      \ replication comes into play.  When the state changes on the server, it \"\
+      tells\" the clients by changing the replicated variables NewBoxState and BoxUpdateTime.\
+      \  BoxUpdateTime is used as a counter of sorts to inform the client when it\
+      \ happened and gives the client a way to know that it's a new event. The very\
+      \ last line is a commonly used method to tell the server to start replicating\
+      \ as soon as possible, but note that NetUpdateTime is not a variable defined\
+      \ in my code.\n\n'''Kiff:''' I think that \"BoxUpdateTime\" might need to be\
+      \ added to the struct to make sure it arrives at the same time.\n\n'''Kiff:'''\
+      \ Now that I think about it, I don't even think the update time is needed. It\
+      \ was needed for an older method I was using, but I'm pretty sure that now just\
+      \ the state (.Mode) can just be checked for a change. \n\nHere is the replication\
+      \ block:\n\n<uscript>\nreplication\n{\n    reliable if (Role == ROLE_Authority)\n\
+      \        BoxUpdateTime, NewBoxState;\n}</uscript>\n\nWhen a client receives\
+      \ new values for replicated variables (and bNetNotify=True) the PostNetReceive\
+      \ event is fired.\n\n<uscript>\nsimulated event PostNetReceive()\n{\n\tif(BoxUpdateTime\
+      \ > LastBoxUpdateTime)\n\t{\n\t\tLastBoxUpdateTime = BoxUpdateTime;\n\t\tCurrentBoxState\
+      \ =  NewBoxState;\n\t\tEnable('Tick');\n\t}\n}\n</uscript>\n\nIf the variable\
+      \ BoxUpdateTime is newer (greater) than the last one we saved (with LastBoxUpdateTime),\
+      \  we then know the NewBoxState struct has fresh data.  Now we can update our\
+      \ local CurrentBoxState with the newly replicated NewBoxState and then start\
+      \ the animation.\n\nNow we're able to use PostNetReceive as a remote function\
+      \ call.  Unlike replicated functions that only reach a single (owner) client,\
+      \ this will reach all clients.  Any number of function calls can be carried\
+      \ out this way as long as we have unique replicated variables to inspect for\
+      \ each one.\n\nTo wrap things up, here's the function that does the \"animation\"\
+      .  It takes a time delta as an arguement when called from the Tick event. \n\
+      \n<uscript>\nsimulated function UpdateBoxPosition(float DT)\n{\n\tlocal vector\
+      \ disp;\n\tlocal rotator doorRot;\n\n\tswitch(CurrentBoxState.Mode)\n\t{\n\t\
+      \tcase 0:\tDisable('Tick'); // nothing moves in this state\n\t\t\t\tbreak;\n\
+      \n\t\tcase 1:\tCurrentBoxState.BoxHeight -= BoxMoveRate * DT;\n\t\t\t\tif (CurrentBoxState.BoxHeight\
+      \ < LoweredBoxHeight)\n\t\t\t\t{\n\t\t\t\t\tCurrentBoxState.BoxHeight = LoweredBoxHeight;\n\
+      \t\t\t\t\tCurrentBoxState.Mode = 2;\n\t\t\t\t\tPlaySound(OpenDoorSound,,3*TransientSoundVolume,,,0.5);\n\
+      \t\t\t\t}\n\t\t\t\tbreak;\n\n\t\tcase 2:\tCurrentBoxState.DoorRotation -= DoorRotRate\
+      \ * DT;\n\t\t\t\tif (CurrentBoxState.DoorRotation <= LoweredDoorRot)\n\t\t\t\
+      \t{\n\t\t\t\t\tCurrentBoxState.DoorRotation = LoweredDoorRot;\n\t\t\t\t\tCurrentBoxState.Mode\
+      \ = 3;\n\t\t\t\t}\n\t\t\t\tbreak;\n\n\t\tcase 3:\tDisable('Tick'); // this is\
+      \ a \"stopped\" state \n\t\t\t\tbreak;\n\n\t\tcase 4:\tCurrentBoxState.DoorRotation\
+      \ += DoorRotRate * DT;\n\t\t\t\tif (CurrentBoxState.DoorRotation >= 0)\n\t\t\
+      \t\t{\n\t\t\t\t\tCurrentBoxState.DoorRotation = 0;\n\t\t\t\t\tCurrentBoxState.Mode\
+      \ = 5;\n\t\t\t\t\tPlaySound(LowerBoxSound,,2.5*TransientSoundVolume);\n\t\t\t\
+      \t}\n\t\t\t\tbreak;\n\n\t\tcase 5:\tCurrentBoxState.BoxHeight += BoxMoveRate\
+      \ * DT;\n\t\t\t\tif (CurrentBoxState.BoxHeight >= 0.0)\n\t\t\t\t{\n\t\t\t\t\t\
+      CurrentBoxState.BoxHeight = 0.0;\n\t\t\t\t\tCurrentBoxState.Mode = 0;\n\t\t\t\
+      \t}\n\t}\n\n\tif (0 == CurrentBoxState.Mode)\n\t\tSetPhysics(PHYS_Karma); //\
+      \ we can resume normal driving now\n\telse\n\t    SetPhysics(PHYS_None); //\
+      \ temporary hack to \"park\" the vehicle\n\n\tdisp.Z = CurrentBoxState.BoxHeight;\n\
+      \tSetBoneLocation('LiftForks', disp,1.0);\n\tSetBoneLocation('StorageBox', disp,1.0);\n\
+      \tSetBoneLocation('StorageBox_Door', disp,1.0);\n\tdoorRot.Pitch = CurrentBoxState.DoorRotation;\n\
+      \tSetBoneRotation('StorageBox_Door', doorRot,0, 1.0);\n\n}\n</uscript>\n[[Category:Legacy\
+      \ Personal Page|{{PAGENAME}}]]"
+  properties: []
+  revId: 4066
+name: "Legacy:Kiff"
+revision:
+  revid: 4066
+  parentid: 0
+  user: "Kiff"
+  timestamp: 1191701202.000000000
+  comment: "*"
+timestamp: 1668787429.760466000

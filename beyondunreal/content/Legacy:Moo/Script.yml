@@ -1,0 +1,1741 @@
+---
+parse:
+  title: "Legacy:Moo/Script"
+  text:
+    text: "<pre>\n#!/usr/bin/perl\n###############################################################################\n\
+      # UseMOO\n#\n# $Id: moo.cgi,v 1.32 2005/07/05 09:23:47 tarquin Exp $\n#\n# a\
+      \ sort of perl disaster by Tarquin\n# based on UseModWiki (C) 2000-2001 Clifford\
+      \ A. Adams\n#    &lt;caadams@frontiernet.net&gt; or &lt;usemod@usemod.com&gt;\n\
+      # ...which was based on\n#    the GPLed AtisWiki 0.3  (C) 1998 Markus Denker\n\
+      #    &lt;marcus@ira.uka.de&gt;\n#    the LGPLed CVWiki CVS-patches (C) 1997\
+      \ Peter Merel\n#    and The Original WikiWikiWeb  (C) Ward Cunningham\n#   \
+      \     &lt;ward@c2.com&gt; (code reused with permission)\n#\n# This program is\
+      \ free software; you can redistribute it and/or modify\n# it under the terms\
+      \ of the GNU General Public License as published by\n# the Free Software Foundation;\
+      \ either version 2 of the License, or\n# (at your option) any later version.\n\
+      #\n# This program is distributed in the hope that it will be useful,\n# but\
+      \ WITHOUT ANY WARRANTY; without even the implied warranty of\n# MERCHANTABILITY\
+      \ or FITNESS FOR A PARTICULAR PURPOSE.  See the\n# GNU General Public License\
+      \ for more details.\n#\n# You should have received a copy of the GNU General\
+      \ Public License\n# along with this program; if not, write to the\n#    Free\
+      \ Software Foundation, Inc.\n#    59 Temple Place, Suite 330\n#    Boston, MA\
+      \ 02111-1307 USA\n\nuse CGI;\nuse CGI::Carp qw(fatalsToBrowser);\nuse strict\
+      \ 'refs';\nuse strict 'vars';\n\n###############################################################################\n\
+      #   POD: Intro\n=head1 MooWiki=\n\nUseMoo is a free wiki engine based on UseModWiki\
+      \ by Clifford A. Adams (in turn\nbased on AtisWiki, and so on back to Ward's\
+      \ Wiki). \n\nThe core idea is that the code from UseModWiki is refactored to\
+      \ OO code, \nhence the name 'Moo' substituted for 'Mod'. \n\nI plan to bundle\
+      \ it with Mychaeel's Wookee wiki-to-html parser, \nwhich would make the name\
+      \ of the complete thing UseMooWookee. \nHowever, I'm not too fussed about names\
+      \ at this stage.\n\nThe goals for this script are:\n* modularity\n* extensibility\n\
+      * reduce spaghetti code\n* reduce tag soup\n* compatibility with UseModWiki\n\
+      \n=head2 Modularity=\nThis script should be able to run just like UseModWiki\
+      \ with one set of modules, \nand with some other modules use an SQL or XML database\
+      \ with\na modern XHTML-compatible parser.\n\n=head2 Extensibility=\nIt should\
+      \ be easy to add extra functionality to the script, without delving \ntoo far\
+      \ into the existing script.\nAt the same time, the core script is self-contained,\
+      \ just as UseMod is. \nThis file alone will run a wiki.\n\n=head2 Despaghettification=\n\
+      UseMod's code can be confusing to work with. A script of this complexity\nis\
+      \ always going to involve the chain of execution being hard to follow, but it\n\
+      is my hope that OO makes this less of an issue. \n\n=head2 Better and smarter\
+      \ HTML and XHTML=\nClean HTML is produced from Wiki source by the Wookee parser.\n\
+      The OO approach makes it easier to wrap each part of the complete HTML page\n\
+      in DIVs for easy formatting and layout with CSS.\nOther features such as Accesskeys\
+      \ and LINK elements based on site-wide options \nand wiki page content are in\
+      \ the pipeline.\n\n=cut=\n\n###############################################################################\n\
+      #   POD: Class hierarchy\n=head1 Class hierarchy=\n\nMoo uses several disjoint\
+      \ class hierarchies. The most important of these is \nthe Page hierarchy. Others\
+      \ behave like modules that add functionality.\n\nThis list should also be available\
+      \ via the URL ?action=classreport (it partially is so far).\n\n+ Database -\
+      \ abstract base class. implements database access\n++ DatabaseMono - stupidly\
+      \ simple example\n++ DatabaseFlat - all pages in a single flat file\n++ DatabaseCliff\
+      \ - reworking of UseModWiki's DB system\n\n+ Cache - cache system\n\n+ Parser\
+      \ - wiki parser\n++ ParserCliff - the UseModWiki parser\n++ ParserWookee\n\n\
+      + Generator - classes that add generated content to wiki pages\n++ GeneratorRecentChanges\n\
+      ++ GeneratorCategory\n\n+ SaveAction - things that happen when a page is saved\n\
+      ++ SaveActionSpellcheck\n++ SaveActionSpamcheck\n++ SaveActionThankyou\n\n+\
+      \ Page - displays an HTML page\n++ WikiPage - displays a wiki page from the\
+      \ database\n+++ WikiPageHistory - displays the history list for a wiki page\n\
+      +++ RevisionPage - displays a particular revision of a page\n+++ WikiEdit -\
+      \ edits a wiki page\n++++ WikiEditConflict\n++++ WikiEditPreview\n+++ WikiPageSave\n\
+      +++ MagicPage\n++++ RCPage\n++ WikiAdmin - parent of admin pages\n++ WikiVersion\
+      \ - shows script version number\n++ PageClassReport - outputs the list of all\
+      \ loaded classes\n\n\n=cut=\n\n###############################################################################\n\
+      #   POD: Bundled plug-in modules\n=head1 Bundled plug-in modules=\n\nMoo has\
+      \ a plug-in system. It will load any perl modules in the same directory\nas\
+      \ itself whose names begin with 'moo-'. This allows the system's modularity\
+      \ \nto work at a different level to classes. You can choose whether to enable\
+      \ or \nnot a set of features simply by whether a file is in your cgi directory\
+      \ or not.\n\nThe modules bundled with Moo are:\n\n=head2 moo-debug.pm=\nGeneral\
+      \ debugging and testing tools. ModuleTestPage just tests that the module\nhas\
+      \ loaded. PageClassReport outputs the list of all loaded classes.\n\n=head2\
+      \ moo-generators.pm=\nGenerator classes that aren't core features.\n\n=head2\
+      \ moo-usemod.pm=\nSet of classes for backwards-compatibility with UseModWiki.\n\
+      This will include the UseMod database system, the UseMod parser, and support\n\
+      for the action=rc type URLs.\n\n=cut=\n\n###############################################################################\n\
+      #\n#   class Database \n#\n#   This is an abstract class. It serves only to\
+      \ set out the methods.\n#   Subclasses must implement these in some appropriate\
+      \ manner.\n#\n#   Any instance of a Database must be owned by another object.\n\
+      #   This will almost certainly be some sort of Page object.\n#   A reference\
+      \ to the owner is set as SELF-&gt;{owner} on creation, provided the\n#   constructor\
+      \ has been called correctly... like this:\n#     Database-&gt;new($someobject)\n\
+      #\n#   Several things can go wrong when working with the database, and the DB\n\
+      #   class needs to report these back to the Page instance so the user is alerted.\n\
+      \n{\n  package Database;\n  \n  ###########################################################\n\
+      \  #  Class properties\n  \n  our $initialized;\n    # true if the DB system\
+      \ has been initialized\n  \n  sub isInitialized { \n    # accessor function\
+      \ for the $initialized property\n    shift;\n    $initialized = shift if @_;\n\
+      \    return $initialized;\n    };\n\n  ###########################################################\n\
+      \  #  Database Constructor and initializer\n  #\n  #   It is only necessary\
+      \ to initialize the DB system once;\n  #   but we might need more than one DB\
+      \ instance (eg diff pages)\n  #\n  #   The new() method creates and returns\
+      \ a new DB instance and \n  #   takes responsibility for initializing the DB\
+      \ system if necessary\n  #\n  #   It returns a reference to the Database object\
+      \ if all goes well.\n  #   Otherwise, returns a string containing the error\
+      \ message.\n  #   Test the return of this with ref().\n  #   (Note – new() this\
+      \ tolerates a return of 1 from initDatabase() \n  #   as a success. This is\
+      \ a pre-emptive bug tolerance,\n  #   since it's possible to forget the return\
+      \ statement and finish with\n  #   setting isInitialized to 1)\n  #\n  #   The\
+      \ new() method should not be overridden in child classes. \n  #   Use the initDatabase()\
+      \ to do things specific to the database implementation.\n  \n  sub new {\n \
+      \   my $class = shift;\n    my $owner = shift;\n    \n    my $result = $class-&gt;initDatabase()\n\
+      \      unless $class-&gt;isInitialized;\n    \n    # if $result is non-empty,\
+      \ an error has occured\n    # (unless $result is 1, in which case a programmer\
+      \ is probably being lazy)\n    return $result\n      if $result and $result\
+      \ != 1;\n      \n    my $newDB = { owner =&gt; $owner };\n    return bless $newDB,\
+      \ $class;\n  }\n  \n  sub initDatabase {\n    # unlike UseMod...\n    # returns\
+      \ nothing if successful (but sets isInitialized to a TRUE value)\n    # returns\
+      \ an explanation if something goes wrong\n    \n    my $class = shift;\n   \
+      \ # Things the initializer should do:\n    # check the datadir specified in\
+      \ config exists. \n    # If it is not found, try to create it.\n    \n    $class-&gt;isInitialized(1);\n\
+      \    return;\n  }\n  \n  ###########################################################\n\
+      \  #  Access\n  \n  sub loadWikiFromDB {} \n    # loads the content of the wiki\
+      \ page into its owner\n    \n  sub saveWikiToDB {}  \n    # saves the content\
+      \ of the wiki page from its owner\n    \n  sub fetchRClist { 'This Database\
+      \ system does not appear to support a Recent Changes list.' }\n    # returns\
+      \ list of RC lines\n    \n  sub fetchHistory { 'This Database system does not\
+      \ appear to support page histories.' }\n    # returns list of history lines\n\
+      \  \n}\n\n###############################################################################\n\
+      #\n#   class DatabaseMono \n#\n#   DatabaseMono is a primitive database system\
+      \ that only loads one\n#   page, no matter what title it is given.\n#   This\
+      \ is just to see how it interacts with the rest of the script\n#   Move this\
+      \ to moo.debug.pm eventually.\n\n{\n  package DatabaseMono;\n  \n  our @ISA\
+      \ = qw(Database);\n  \n  # for testing only\n  our $filename = 'db.txt';\n \
+      \ \n  ###########################################################\n  #   DatabaseMono::initDatabase\n\
+      \  #\n  \n  sub initDatabase {\n    my $self = shift;\n    \n    my $datadir\
+      \ = Page-&gt;getConfiguration('DataDir');\n    \n    unless ( -d $datadir ||\
+      \ CreateDir($datadir) ) {\n      return qq[Can't create directory $datadir];\
+      \ \n      # return an error message\n    }\n    $self-&gt;isInitialized(1);\n\
+      \    return;\n  }\n  \n  #--------------------------------------\n  # these\
+      \ are not proper OO methods\n  # from UseMod\n  # consider moving these up to\
+      \ the base Database class to be inherited\n  sub CreateDir {\n    my $newdir\
+      \ = shift;\n    mkdir($newdir, 0775)  if (!(-d $newdir)); # returns true if\
+      \ succeeds.\n  }\n  sub ReadFile {\n    my $fileName = shift;\n    my $data;\n\
+      \    local $/ = undef;   # Read complete files\n\n    if (open(IN, '&lt;' .\
+      \ Page-&gt;getConfiguration('DataDir') . \"/$fileName\")) {\n      $data=&lt;IN&gt;;\n\
+      \      close IN;\n      return (1, $data);\n    }\n    return (0, \"\");\n \
+      \   # should be a more elegant way of doing this\n    # return undef perhaps\
+      \ if data not found?\n  }\n  sub WriteStringToFile {\n    my ($file, $string)\
+      \ = @_;\n\n    open (OUT, '&gt;' . Page-&gt;getConfiguration('DataDir') . \"\
+      /$file\") or \n      die(Ts('cant write %s', $file) . \": $!\");\n    print\
+      \ OUT  $string;\n    close(OUT);\n  }\n  #--------------------------------------\n\
+      \  # public methods\n  \n  ###########################################################\n\
+      \  #\n  # DatabaseMono::loadWikiFromDB\n  #\n  # Consider interface:\n  #  \
+      \ - for serious errors, stash an error message in $page-&gt;{error}\n  #   -\
+      \ for no such page error, place '' in $page-&gt;{wiki}\n  \n  sub loadWikiFromDB\
+      \ {\n    my $self      = shift;\n    my $page      = $self-&gt;{owner};\n  \
+      \  my $revision  = $page-&gt;{revision} || 0;\n    \n      #   could have a\
+      \ GiveMeDatabase method in Page that \n      #   calls new, hands over the owner\
+      \ object ref\n      #   and sorts all this out – then any child of Page that\n\
+      \      #   requires DB access just needs to say $self-&gt;GiveMeDatabase()\n\
+      \      \n    my ($status, $data ) = ReadFile($filename);\n\n    $page-&gt;{wiki}\
+      \ = $data;\n      #join '',\n      #$data || 'no data!'; #,\n      #\"&lt;BR&gt;\\\
+      n\",     \n      #'The name of this page is: ',\n      #$page-&gt;{title},\n\
+      \      #\"&lt;BR&gt;\\n\",     \n      #'The revision of this page is: ',\n\
+      \      #$revision\n      #;\n      \n      # page not found scenarios are handled\
+      \ by Page children: just stash '' if there is no data \n      # NotFoundPg =&gt;\
+      \ 'PageDoesNotExist',\n      # NewPageEdit =&gt; 'BlankEdit',\n      \n    return\
+      \ 1; # load successful        \n  }\n  sub saveWikiToDB {\n    my $self = shift;\n\
+      \    my $data = shift;\n    my $page = $self-&gt;{owner};\n    \n    $data =\
+      \ $page-&gt;wiki;\n    \n    #$self-&gt;initDatabase() or return 0;# unless\
+      \ $databaseIntialized;\n    \n    WriteStringToFile( $filename, $data);\n  \
+      \  \n  }\n  \n}\n\n###############################################################################\n\
+      #   POD: Generators\n=head1 Generators=\n\nGenerators are classes that create\
+      \ content to display in wiki pages based on something other than wiki source.\n\
+      A good example is the Category listing that Unreal Wiki uses.\nAnother example,\
+      \ though perhaps not an obvious one, is the Recent Changes page.\n\n=cut=\n\n\
+      ###############################################################################\n\
+      #\n#   class Generator \n#\n#   Base class to hold registry\n\n{\n  package\
+      \ Generator;\n\n  our @registered;\n  sub registeredChildClasses { @registered\
+      \ }\n\n  ###########################################################\n  #  \
+      \ Registration\n  #\n  #   Child classes call this method on themselves\n  #\
+      \   and are registered into an array\n  \n  sub register {\n\n    my $class\
+      \ = shift;  $class = (ref $class or $class);\n    \n    push @registered, $class\n\
+      \      if $class-&gt;isa(Generator)\n      and not grep /^\\Q$class\\E$/, @registered;\n\
+      \  }\n}\n\n###############################################################################\n\
+      #\n#   class GeneratorRecentChanges \n#\n#   Lists Recent Changes to the wiki\n\
+      #   It's up to the Database object to actually maintain and produce a list of\
+      \ recent changes\n#   This class requests it and formats it nicely\n\n{\n  package\
+      \ GeneratorRecentChanges;\n  \n  ###########################################################\n\
+      \  #   Registration\n  #\n  our @ISA = Generator;\n  GeneratorRecentChanges-&gt;register();\n\
+      \  \n  sub propPlacement { 'foot' }\n  \n  sub generateText {\n    my $self\
+      \ = shift;\n    my $page = shift;\n    \n    return join '',\n      '&lt;div\
+      \ class=\"rc\"&gt;',\n      $page-&gt;DBref-&gt;fetchRClist,\n      '&lt;/div&gt;';\n\
+      \  }\n}\n\n###############################################################################\n\
+      #\n#   class Page\n#\n#   The base class for pages. This is where most of the\
+      \ work happens.\n#   This should:\n#     open an HTML scaffold file\n#     hold\
+      \ a default HTML page scaffold\n#     determine what sort of page has been requested\n\
+      {\n  package Page;\n  \n  ###########################################################\n\
+      \  #  Static\n  \n  our @registered;\n  sub registeredChildClasses { @registered\
+      \ }\n  \n  ###########################################################\n  #\
+      \   Registration\n  #\n  #   Child classes call this method on themselves\n\
+      \  #   and are registered into an array\n  \n  sub register {\n\n    my $class\
+      \ = shift;  $class = (ref $class or $class);\n    \n    push @registered, $class\n\
+      \      if $class-&gt;isa(Page)\n      and not grep /^\\Q$class\\E$/, @registered;\n\
+      \  }\n  \n  ###########################################################\n  #\
+      \  Class properties: inheritable defaults\n  \n  sub propConditions  { 0 } \
+      \ # conditions a class must satisfy to handle a browse request. Returns false\
+      \ by default\n  sub pageAccess      { 'user' } # user status required to view\
+      \ this class's page\n  sub bodyCSSclass    { '' }     # the CSS class added\
+      \ to the BODY HTML tag for this class's page\n  sub titlePrefix     { '' } \
+      \    # prefix added to the displayed page name\n  sub propPageTitle   {    }\
+      \     # title if none supplied dynamically\n  sub thisPageTools   { '' }\n \
+      \ #sub usesGenerators  { 0  }     # no good.\n  \n  ###########################################################\n\
+      \  #  Class properties: CGI\n  sub getScriptName { $ENV{SCRIPT_NAME} } # Name\
+      \ used in links (absolute) – Mychaeel\n\n###############################################################################\n\
+      #   POD: Configuration\n=head1 Configuration=\n\nConfiguration options for Moo\
+      \ are set in a Big Fat Hash within the Page class.\nThey are accessed with the\
+      \ getConfiguration() method, which takes the name of the key.\nIf you don't\
+      \ yet have access to a Page object, then the dirty way to do it is\n$Page::configuration{propertyname},\
+      \ but this should only be an issue at the very start of\nthe UseMooWiki package,\
+      \ where a Page has not yet been created.\n\nConfiguration defaults are overridden\
+      \ in a seperate file that is executed when the Moo script loads.\nA configuration\
+      \ file sample follows:\n----\n# do not touch this line:\n%configuration = (\
+      \ (%configuration),  \n\nConfigName =&gt; Number,\nConfigName =&gt; 'String',\n\
+      ConfigName =&gt; [ list, list, list ],\nand so on\ndo not forget the comma at\
+      \ the end of each line!\n----\n\n=cut=\n\n  ###########################################################\n\
+      \  #  Configuration\n  #\n  # Default settings are overriden by the config file\n\
+      \  \n  our %configuration = (\n    ConfigFile  =&gt; 'configlist.pl',\n    DataDir\
+      \     =&gt; 'data',\n    \n    # site configuration\n    SiteName    =&gt; 'Moo\
+      \ Wiki',\n    HttpCharset =&gt; '',\n    FreeLinks   =&gt; 1,\n    FreeUpper\
+      \   =&gt; 1, # put [[Legacy:Free Links|free links]] into [[Legacy:Title Case|Title\
+      \ Case]]\n    \n    # CGI\n    RunCGI      =&gt; 1,\n    \n    # special pages\
+      \ names\n    # these should be in the form the database uses, not the URL or\
+      \ the display\n    HomePage      =&gt; 'WelcomePage',\n    RecentChanges =&gt;\
+      \ 'RecentChanges',\n    AccessDenied  =&gt; 'AccessDenied',\n    NoSpam    \
+      \    =&gt; 'NoSpam',\n    SampleLink    =&gt; 'TheWeatherInLondon',\n    Search\
+      \        =&gt; 'SearchResults', \n    NotFoundPg    =&gt; 'PageDoesNotExist',\
+      \ \n    NewPageEdit   =&gt; 'BlankEdit',\n    \n    # ugly. remove!\n    BuiltInGenerators\
+      \ =&gt; { \n      RecentChanges =&gt; 'RecentChanges',\n      \n      },\n \
+      \   \n    # LINK elements in HTML HEAD\n    HtmlLinks =&gt; { },\n    \n   \
+      \ # appearance\n    DefaultStyleSheet =&gt; '', # http://localhost/wiki-ext/moo/moodev.css',\
+      \ # for use with built-in template\n    # replace this with built-in stylesheet\
+      \ and override it if this value is not ''\n    \n    PageTemplates =&gt; { },\n\
+      \    \n    # user groups\n    UserGroups =&gt; ['user', 'editor', 'admin'],\
+      \ \n      # place these in increasing order of authority\n      \n    # code\
+      \ modules\n    Hello =&gt; 'HelloSub',\n    \n    # debug\n    DebugMode =&gt;\
+      \ 1,\n    \n    );\n    \n  ###################\n  # read in configuration file\n\
+      \  if ( $configuration{ConfigFile} ) { \n    do \"$configuration{ConfigFile}\"\
+      ;\n    \n    # this does not yet report errors!\n  }\n\n  sub getConfiguration\
+      \ {\n    # consider changing this to accept a list of keynames and \n    # return\
+      \ a list of values\n    \n    my $class     = shift; $class = (ref $class or\
+      \ $class);\n    my $wantedkey = shift;\n    \n    return $configuration{$wantedkey};\n\
+      \  }\n\n###############################################################################\n\
+      #   POD: Built-in template\n\n=head1 Built-in template=\nThe Moo script contains\
+      \ its own template for HTML pages. \nThis should be sufficient for most uses:\
+      \ with a little CSS styling you can \nmake your wiki pages distinctive if you\
+      \ so wish.\nYou can however supply your own: see configuration.\n\n=cut=\n\n\
+      \  ###################\n  # Built-in template\n  our $builtInTemplate = &lt;&lt;\"\
+      EOT\";\n&lt;!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"\
+      \  \"http://www.w3.org/TR/html4/loose.dtd\"&gt;\n&lt;html&gt;&lt;head&gt;&lt;title&gt;%windowtitle%&lt;/title&gt;\n\
+      %styles%\n%link%\n&lt;/head&gt;\n&lt;body class=\"%bodyclass%\"&gt;\n&lt;h1&gt;%title%&lt;/h1&gt;\n\
+      &lt;div class=\"wiki\"&gt;\n%wiki%\n&lt;/div&gt;\n&lt;div class=\"footer\"&gt;\n\
+      %footer%\n&lt;/div&gt;\n&lt;/body&gt;\n&lt;/html&gt;    \nEOT\n\n  sub getTemplate\
+      \ {\n    # do some config checking:\n      # has the user requested a template?\n\
+      \      # does the config request a template?\n      # do they exist?\n    \n\
+      \    return $builtInTemplate;\n    # consider embedding the template in this\
+      \ sub instead.\n  }\n  \n  ###################\n  # Built-in CSS\n  \n  # what\
+      \ would be terribly cunning might be to hide the two here-docs\n  # behind a\
+      \ quick check of the relevant %configuration keys\n  # so they're not even loaded\
+      \ if not required\n  our $builtInStyles = &lt;&lt;\"EOT\";\n/* main structure\
+      \ */\ndiv {\n  border:solid 2px;\n  margin:1em;\n  padding:0.5em;\n  \n}\n.footer\
+      \ {\n  border-color:red;\n}\n.edit {\n  border-color:green;\n}\n.preview {\n\
+      \  border-color:yellow;\n}\n.savemessage {\n  border-color:#fb0;\n}\n.debug\
+      \ {\n  border-color:red;\n  border-style:dashed;\n  \n}\n.debug h1 {\n  margin:0em;\n\
+      \  padding:0em;\n  font-size:1.5em;\n}\n.debug h2 {\n  margin:0em;\n  padding:0em;\n\
+      \  font-size:1.2em;\n}\n\n/* forms */\n.editbutton {\n  width: 5em; \n  height:\
+      \ 2em;\n}\nEOT\n\n  sub getStyles {\n    # return either a LINK to a stylesheet\
+      \ or a STYLE block of the built-in stylesheet\n    # do some config checking:\n\
+      \    #&lt;link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"\
+      \"&gt;    \n    \n    return qq[&lt;style type=\"text/css\"&gt;$builtInStyles&lt;/style&gt;];\n\
+      \  }\n  \n  ###################\n  # testing plugin modules\n  \n  sub DummyHello\
+      \ {\n    #if (Page-&gt;can('HelloSub')) {}\n      \n    &amp;{ Page-&gt;can($configuration{'Hello'})\
+      \ or 'HelloSub'}(@_)  \n      \n    #if (Page-&gt;can($configuration{'Hello'}))\
+      \ {\n    #  &amp;{$configuration{'Hello'}}(@_);\n    #}\n  }\n  sub HelloSub\
+      \ {\n    # a fallback default module\n    print \"Hello!!!!!\\n\";\n  }\n  #DummyHello();\n\
+      \  \n  # end test\n  ###################\n    \n  ###########################################################\n\
+      \  #   Instance properties\n  #\n  #   Accessors to these are generated with\
+      \ a closure.\n  #   Use any of the following:\n  #   - $object-&gt;name('value');\
+      \  # assign and return\n  #   - $object-&gt;name = 'value'; # lvalue assignment\
+      \ \n  #   - $object-&gt;name;           # plain return\n  #\n  #   These COULD\
+      \ BE capable of consulting the holder if no value is found\n  #   However, this\
+      \ code is commented out because I think this could \n  #   lead to problems\
+      \ with embeddings that rely on a property NOT being there \n  #   to test something.\n\
+      \  #   Consider as an alternative to both this \"consulting the holder\" method\n\
+      \  #   and repetitive stuffing of an embedded instance with copies of vars:\n\
+      \  #   an \"embedding creator\" method, which takes a list of properties to\
+      \ \n  #   bestow upon the new object.\n  \n  # closure templates\n  for my $field\
+      \ (qw[now cgiref DBref browserequest DBid \n      error holder embed \n    \
+      \  title wiki text revision generators]) {\n    no strict 'refs'; # allow symbol\
+      \ table manipulation\n    *$field = sub : lvalue {\n      my $self = shift;\n\
+      \      \n      # with input, set the property\n      $self-&gt;{$field} = shift\
+      \ if @_;\n      \n      # if property empty, try holder\n      #if( !$self-&gt;{$field}\
+      \ and $self-&gt;{holder} ) {\n      #  return $self-&gt;{holder}-&gt;$field;\n\
+      \      #}\n      \n      $self-&gt;{$field};\n    }\n  }\n  \n###############################################################################\n\
+      #   POD: Instance data\n  \n=head1 Instance data=\n\nUseMoo stores data that\
+      \ relates to the current page as instance data.\nThis avoids globals, lengthy\
+      \ parameter lists passed to subroutines, \nand means that it's safe to create\
+      \ further instances as embedded pages, \nfor example.\n\nHere is the list of\
+      \ data stored, in approximate order of storage:\nnow   =&gt;  the time of the\
+      \ request\ncgiref=&gt;  reference to a CGI object for HTML tag creation etc\n\
+      DBref =&gt;  reference to a Database object\nbrowserequest \n      =&gt;  a\
+      \ reference to the hash of the browse request variables \n          (instead\
+      \ of UseMod's &amp;GetParam)\nDBid  =&gt;  name of page as the database will\
+      \ need to see it\n\nembed =&gt;  embedded page (subject to refactoring)\nholder\n\
+      \      =&gt;  for an embedded page, a reference to the page it is embedded within\n\
+      \      \ntitle =&gt;  name of page as the user should see it in the browser\n\
+      revision\n      =&gt;  the requested revision number of a page\nwiki  =&gt;\
+      \  wiki source text\ntext  =&gt;  HTML text to be output to the browser\nerror\
+      \ =&gt;  holds error text passed around at various times. If true at page display\
+      \ time, requests debug mode.\n\n=cut  =\n\n  ###########################################################\n\
+      \  #  Instance properties: building up text\n  # \n  # Text eventually output\
+      \ to the browser is stored as an instance variable\n  # This makes it easily\
+      \ accessible\n  # and specialized modules can access what earlier modules have\
+      \ stored (if needed)\n  \n  sub getText {\n    my $self = shift;\n    return\
+      \ unless ref $self; # this is only for instances, not classes\n    \n    return\
+      \ $self-&gt;{text};\n  }\n  \n  sub appendText {\n    my $self = shift;\n  \
+      \  my $text = shift;\n    return unless ref $self; # this is only for instances,\
+      \ not classes\n    \n    $self-&gt;{text} .= $text;\n  }\n  sub prependText\
+      \ {\n    my $self = shift;\n    my $text = shift;\n    return unless ref $self;\
+      \ # this is only for instances, not classes\n    \n    $self-&gt;{text} = $text\
+      \ . $self-&gt;{text};\n  }\n  \n  ###########################################################\n\
+      \  #  User access levels\n  \n  sub compareUserGroups {\n    my ($self, $actualAbility,\
+      \ $requiredAbility) = @_;\n    return 1 if ( $actualAbility eq $requiredAbility\
+      \ );\n\n    # failsafe: what to do if the values received don't figure in the\
+      \ array?\n    # not ideal but:\n    # if actualAbility is bad, suppose user\
+      \ is LOW\n      # $actualAbility = $groups[0];\n    # if requiredAbility is\
+      \ bad, suppose actual ability is HIGH \n\n    foreach ( @{$self-&gt;getConfiguration('UserGroups')}\
+      \ ) {\n      # walk through the UserGroups array \n      # and compare current\
+      \ user and requirement to each entry\n      return 1 if ( $_ eq $requiredAbility);\n\
+      \        # we got to required ability first: user is overqualified\n      return\
+      \ 0 if ( $_ eq $actualAbility);\n        # we got to actual ability first: user\
+      \ is not up to it\n    }\n  }\n  \n###############################################################################\n\
+      #   POD: Page Constructors\n=head1 Page Constructors=\n\nThe constructor for\
+      \ Page objects isn't actually a constructor, it's a blesser, because it's given\n\
+      a reference to bless (and return the blessed instance), rather than creating\
+      \ one from nothing.\n\nThe reason for this is that the soon-to-be instance sometimes\
+      \ needs to begin loading itself with data to \nfind out what it will be. For\
+      \ example, this allows the wiki content to be loaded from the database and then\
+      \ examined \nto influence the choice of class to bless as. It could be done\
+      \ without stashing the loaded data inside \nthe hash reference, but then we'd\
+      \ have two copies of the data floating around, and this seems messy.\n\n(Other\
+      \ constructors, such as for the Database, are passed the reference of the Page\n\
+      object that is to be their owner, but more on this elsewhere.)\n\nThe creation\
+      \ of a Page object begins in the UseMooWiki package, which creates a hash reference,\
+      \ puts\nsome values in it such as the time of the request, and passes it to\
+      \ Page::chooseClass.\n\n=head2 Page::chooseClass =\nPage::chooseClass is the\
+      \ principal constructor method. It does the following:\n\n# tests each registered\
+      \ class against the browse parameters, trying to find a class whose conditions\
+      \ are satisfied\n## if a suitable class is found, it tests the user access level\
+      \ required.\n### if the user fails, the instance is blessed as WikiPage instead\
+      \ and goes to the 'AccessDenied' page\n### if the user succeeds, the instance\
+      \ is passed to the blessPage method of the suitable class.\n(The blessPage method\
+      \ will bless the instance and return it,\nbut may make its own decisions about\
+      \ what class to bless as!)\n## if chooseClass has not found a suitable class,\
+      \ it blesses the reference as PageError\n# the blessed reference is returned\n\
+      \nUseMooWiki how has an instance of some class (WikiPage, for example).\nIt\
+      \ calls makePage on this instance, which and the prints the instance's text\
+      \ property.\nThat's it!\n\n=head2 Page::blessPage =\nThis does pretty much nothing.\
+      \ It just blesses the reference.\nThe real work happens in WikiPage::blessPage,\
+      \ but Page::blessPage exists\nso it can be inherited if need be.\n\n=cut=\n\
+      \  #####################################\n  #\n  #   Page::chooseClass\n  #\n\
+      \  #   Called by UseMooWiki. Begins the process of deciding which class\n  #\
+      \   to bless the passed reference as.\n  #   Considers all the registered children\
+      \ of Page, evaluating and \n  #   testing the string propConditions for each\
+      \ one.\n  #   This is done in *reverse* order of registration: this gives later\
+      \ classes\n  #   the chance to specialize the conditions (eg RevisionPage specializes\
+      \ WikiPage).\n  #   Classes also have the chance to 'intercept' and completely\
+      \ replace handling\n  #   of a certain condition: see moo-delay.pm's WikiPageDelayed\
+      \ for an example.\n  \n  sub chooseClass {\n    my $class             = shift;\
+      \ $class = (ref $class or $class);\n    if ($class ne __PACKAGE__) { die 'Illegal\
+      \ subclass calling constructor'; }\n    my $instance          = shift; # a ref\
+      \ we will be blessing\n    my $browseParameters  = shift; # ref to hash\n  \
+      \  \n    # consider putting initDatabase here and making a PageError -\n   \
+      \ # but we lose the feature of some actions not requiring the DB (eg version)\n\
+      \    \n    ##############################\n    # Cancel\n    # catch Cancel\
+      \ button presses and clean up the parameters\n    # this could be moved to a\
+      \ class that then calls Page::chooseClass \n    # a second time with new params\n\
+      \    \n    if( $browseParameters-&gt;{Cancel} ) {\n      my %acceptableParameters\
+      \ = map { $_, '' } qw( title );\n        # may be a problem with id vs title\
+      \ params\n      foreach (keys %$browseParameters) {\n        delete $browseParameters-&gt;{$_}\n\
+      \          unless $acceptableParameters{$_};\n      }\n    }\n    \n    # dummy\
+      \ variables for testing\n    my $userStatus = 'user';\n    \n    ##############################\n\
+      \    # Class testing\n    #\n    # Consider each child class in the registered\
+      \ list\n    \n    TESTCLASSES: foreach my $consideredclass ( reverse registeredChildClasses()\
+      \ ) {\n      if( eval $consideredclass-&gt;propConditions ) { \n        # grab\
+      \ its condition statement\n        if ( $class-&gt;compareUserGroups( $userStatus,\
+      \ $consideredclass-&gt;pageAccess )) {\n          blessPage $consideredclass\
+      \ $instance, $browseParameters;\n\n          #$childclass-&gt;childcreatePage(\
+      \ $instance, $browseParameters );\n        }\n        else {\n          $$browseParameters{keywords}\
+      \ = $class-&gt;getConfiguration('AccessDenied'); \n          blessPage WikiPage\
+      \ $instance, $browseParameters;\n        }\n        last TESTCLASSES; # don't\
+      \ test anything else now we've found something\n      }\n    }\n    if (ref\
+      \ $instance eq 'HASH') {\n      # $instance is still unblessed?\n      # if\
+      \ we get here then we've not properly handled the cases\n      # PageError will\
+      \ tell us what went wrong\n      blessPage PageError $instance, \n        q[No\
+      \ page type matched the parameters passed by the browser.];\n    }\n    \n \
+      \   \n  }\n  #####################################  \n  # Page::blessPage\n\
+      \  # \n  # This is the generic blessing method for Page child classes.\n  #\
+      \ This is never called directly, but some classes that do nothing\n  # special\
+      \ here may inherit it.\n  \n  sub blessPage {\n    my $class   = shift; $class\
+      \ = (ref $class or $class);\n    my $instance = shift; # a ref to bless\n\n\
+      \    bless $instance, $class;\n  }\n  \n  ###########################################################\n\
+      \  #   Making output text\n  #   These methods produce HTML text for output\n\
+      \  #\n  #   makePage \n  #     The main method. \n  #     Calls makePageContent\
+      \ and wrapPageContent to make all the html.\n  #     Then adds HTTP headers\
+      \ to the front of the html text\n  #\n  #     makePageContent\n  #       creates\
+      \ the dynamically-generated content and stores it\n  #\n  #     wrapPageContent\n\
+      \  #       wraps the stored text in a template, including \n  #       link footer\
+      \ and debug footer\n  \n  # consider more levels of OO here:\n  #  Page\n  #\
+      \   +- HtmlPage\n  #       +- TemplatedPage\n  \n  sub makePage {\n    my $self\
+      \ = shift; # should verify $self is an instance if we're really being clean\n\
+      \    \n    $self-&gt;makePageContent(); # create the dynamic stuff\n    $self-&gt;wrapPageContent();\
+      \ # wrap it up in template and header and footer etc\n    \n    # make HTTP\
+      \ header using the CGI object header method\n    my @headerProperties = ( -Content_length\
+      \ =&gt; length $self-&gt;text );\n    if (  1  ) { # if charset set \n     \
+      \ push @headerProperties, -type =&gt; 'text/html charset=$HttpCharset';\n  \
+      \  }\n    if (  0  ) { # if cookie need to be set\n      push @headerProperties,\
+      \ -cookie =&gt; 'cookie!!!';\n    }\n    $self-&gt;prependText( $self-&gt;cgiref-&gt;header(\
+      \ @headerProperties ));\n    return;\n  }\n\n  sub makePageContent {\n    my\
+      \ $self = shift;\n    \n    $self-&gt;appendText(\"Default Page object\\n\"\
+      ); # we should never actually be here\n    return;\n  }\n  \n  sub makePageFooter\
+      \ {\n    # The generic footer: a bar of site-wide links and a note about the\
+      \ engine.\n    \n    my $self = shift;\n\n    my $text ;\n    \n    my $urlroot\
+      \ = $self-&gt;getScriptName;\n    \n    $text .= $self-&gt;cgiref-&gt;p(\n \
+      \     join ' | ',\n      \n      # this soup will be simplified with standard\
+      \ footer links system\n      $self-&gt;cgiref-&gt;a({-href=&gt;$urlroot .'?'\
+      \ . $self-&gt;getConfiguration('RecentChanges')},'Recent Changes'),\n      $self-&gt;cgiref-&gt;a({-href=&gt;$urlroot\
+      \ .'?' . $self-&gt;getConfiguration('HomePage')},'Home Page'),\n      ( ( $self-&gt;getConfiguration('DebugMode')\
+      \ or $self-&gt;error ) \n        and $self-&gt;cgiref-&gt;a({-href=&gt;$urlroot\
+      \ .'?action=classreport'},'Class Listing' ) )\n      \n      );\n    \n    $text\
+      \ .= $self-&gt;cgiref-&gt;p(\n      q[Footer Text: this site runs Moo! (And\
+      \ it's great!)&lt;/p&gt;]);\n    \n    $self-&gt;appendText($text);\n    return;\
+      \   \n  }\n  sub makePageDebugListing {\n    my $self = shift;\n    \n    #\
+      \ some local copies of references to simplify the arrow soup\n    my $tagmaker\
+      \ = $self-&gt;cgiref; # CGI object\n    my $browserequest = $self-&gt;browserequest;\
+      \ # the hash of browser request params\n    \n    my $text = join '',\n    \
+      \  $tagmaker-&gt;h1('Debug information'),\n      $tagmaker-&gt;p(\"Class is\
+      \ $self\"),\n\n      $tagmaker-&gt;h2('Browser parameters'),\n      $tagmaker-&gt;ul(\n\
+      \         $tagmaker-&gt;li([ map {\"$_ =&gt; $browserequest-&gt;{$_}\"} keys\
+      \ %$browserequest ])\n         ), # making an anonymous list makes li() distribute\
+      \ over it\n\n      $tagmaker-&gt;h2('Instance data'),\n      # note that we\
+      \ cheat and access instance properties directly\n      $tagmaker-&gt;ul(\n \
+      \        $tagmaker-&gt;li([ map( {\n            my $output = \"$_ =&gt; $self-&gt;{$_}\"\
+      ;\n            ref($self-&gt;{$_}) eq 'HASH' and\n              $output .= \"\
+      ; hash:  \" . join ',',  %{$self-&gt;{$_}};\n            $output;\n        \
+      \   } grep !/text|wiki/, keys %$self )])\n         ), # we don't want to print\
+      \ $self-&gt;{text} or {wiki}\n      ;\n         \n      if( $self-&gt;generators\
+      \ ) {\n        $text .= join '',\n          $tagmaker-&gt;h2('Generator parameters'),\n\
+      \          $tagmaker-&gt;ul(\n            map { qq[&lt;LI&gt; @{$_} &lt;/LI&gt;]\
+      \ } @{$self-&gt;generators}\n        );\n      }\n    $self-&gt;appendText(qq[&lt;DIV\
+      \ class=\"debug\"&gt;$text&lt;/DIV&gt;]);\n    \n  }\n  sub wrapPageContent\
+      \ {\n    my $self = shift;\n    \n    # gets a template, splits and wraps the\
+      \ text generated so far inside it.\n    # a default template exists in this\
+      \ script\n    \n    # at this point, $self-&gt;{text} should contain:\n    #\
+      \ * the rendered wiki text when we get here\n    # * any 'magic' content\n \
+      \   \n    my $template  = $self-&gt;getTemplate;\n    my $pagetitle = ($self-&gt;titlePrefix\
+      \ . $self-&gt;title or $self-&gt;propPageTitle);\n    \n    # consider doing\
+      \ all these on $splittext[0]\n    for ($template) {\n      s[%styles%][$self-&gt;getStyles]e;\n\
+      \      s[%link%][]; # for now\n      s[%windowtitle%]{join '' ,\n        $self-&gt;getConfiguration('SiteName')\
+      \ , ' - ' , \n        $pagetitle}e; \n      s[%title%]{$pagetitle};\n      \
+      \  #$self-&gt;titlePrefix . $self-&gt;title or $self-&gt;propPageTitle}e; #\
+      \ check precedence here!\n      s[%bodyclass%]{\n        $self-&gt;bodyCSSclass}e;#\
+      \ not yet fully implemented\n    }\n    my @splittext = split m[%wiki%|%footer%],\
+      \ $template;\n    \n    $self-&gt;prependText( $splittext[0] );\n    $self-&gt;appendText(\
+      \ $splittext[1] );\n    $self-&gt;makePageFooter();\n    $self-&gt;makePageDebugListing()\n\
+      \       if $self-&gt;getConfiguration('DebugMode') or $self-&gt;error;\n   \
+      \    # debug mode can be requested site-wide (by the developer)\n       # or\
+      \ by the script if something goes wrong.\n    $self-&gt;appendText( $splittext[2]\
+      \ );\n\n  }\n}\n\n###############################################################################\n\
+      #\n#   class WikiPage\n#\n#   Base class for wiki pages. \n#   should:\n#  \
+      \   load and parse wiki text\n#     determine if extra elements are needed:\
+      \ preview, diff, etc\n\n{\n  package WikiPage;\n  \n  ###########################################################\n\
+      \  #  Static\n  \n  our @ISA = Page;\n  our @registered;\n  \n  WikiPage-&gt;register();\n\
+      \  \n  ###########################################################\n  #   WikiPage\
+      \ Class conditions\n  #\n  \n  sub propConditions { q[\n    !%$browseParameters\
+      \ \n    or $browseParameters-&gt;{keywords}\n    or $browseParameters-&gt;{action}\
+      \ eq 'browse'\n    ] }\n    # wiki.cgi - no parameters at all\n    # wiki.cgi?pagename\
+      \ (works out as {keywords}=pagename)\n    # wiki.cgi?action=browse\n    \n \
+      \ ###########################################################\n  #  WikiPage\
+      \ Class defaults\n  #\n  sub thisPageTools   { 'Edit this page', 'View other\
+      \ revisions' }\n=pod  =\nhow does this work?\neg:\nOldRevision page needs to\
+      \ change 'Edit this page' and \nadd 'view current revision', but keep the last\
+      \ one\n\npossibly use a pseudohash, so there is name access and also an order\
+      \ built-in?\n\n=cut=\n\n  sub displayTitleFromURL {\n    my $class = shift;\n\
+      \    my $title = shift;\n    \n    $title =~ s/_/ /g;\n    \n    return $title;\n\
+      \    \n  }\n  \n  \n  ###########################################################\n\
+      \  #  Class constructor\n  #\n  #  WikiPage::blessPage\n  \n  sub blessPage\
+      \ {\n    my $class   = shift; $class = (ref $class or $class);\n    my $instance\
+      \ = shift; # a ref we will be blessing\n    my $browseParameters = shift; #\
+      \ ref to hash\n    \n    bless $instance, $class;\n    \n    ##################\n\
+      \    # get the page id and title\n    \n    $instance-&gt;{DBid} = $browseParameters-&gt;{keywords}\
+      \ \n      || $browseParameters-&gt;{id}\n      || $class-&gt;getConfiguration('HomePage');\n\
+      \    \n    $instance-&gt;{title} = $class-&gt;displayTitleFromURL($instance-&gt;{DBid});\
+      \ # but translated to human\n      \n    #unless  ( $instance-&gt;{DBid} ) {\n\
+      \    #  # no page specified? we want the HomePage\n    #  $instance-&gt;{title}\
+      \ = $class-&gt;getConfiguration('HomePage');\n    #  $instance-&gt;{DBid} =\
+      \ $instance-&gt;{title}; # but translated to DB\n    #}\n    \n    ##################\n\
+      \    # Database object creation\n    # Attempt to create a DB object (the Database-&gt;new\
+      \ method will initialize the DB if needed)\n    # Then load text from the database,\
+      \ handle errors and mishaps\n    # UNLESS the instance already holds some wiki\
+      \ text\n    # (it will have been placed there by something embedding this instance\
+      \ eg Preview)\n    \n    unless ( $instance-&gt;{wiki} ) {\n      # pass the\
+      \ page object to the Database constructor\n      # 'new' is a REALLY BAD NAME\
+      \ to use!\n      # the constructor will return an object or an error string\n\
+      \      my $database = DatabaseMono-&gt;new($instance);\n      \n      # new()\
+      \ has failed to create a DB object?\n      ref $database or do {\n        my\
+      \ $errormessage = $database\n          || q[No details supplied.];\n       \
+      \ blessPage PageError $instance, qq[Database initialization error: $errormessage];\n\
+      \        return;  \n      }; \n      \n      $instance-&gt;{DBref} = $database;\
+      \ # only put it in here once we know it's ok\n      $database-&gt;loadWikiFromDB();\n\
+      \      \n      # loadWikiFromDB() has stored an error message?\n      $instance-&gt;error\
+      \ and do {\n        blessPage PageError $instance, \n          q[Error loading\
+      \ the page from the database.];\n        return;  \n      };\n      \n     \
+      \ # the wiki text stored by loadWikiFromDB() is blank?\n      $instance-&gt;wiki\
+      \ =~ /^\\s*$/ and do {\n        $instance-&gt;DBid( Page-&gt;getConfiguration('NotFoundPg'));\n\
+      \        $database-&gt;loadWikiFromDB();\n      };\n    }\n    \n    \n    ##################\n\
+      \    # Generator request handling\n    # handle MAGIC\n    #\n    \n    if ($class\
+      \ eq __PACKAGE__ or 1 ) { \n      \n      # only calls in WikiPage use Generators\n\
+      \      # consider the cleaner way of having WikiPage abstract \n      # and\
+      \ creating a WikiPageDisplay class\n      \n      # set up the array ref unless\
+      \ already there\n      $instance-&gt;generators = []\n        unless $instance-&gt;generators;\n\
+      \      \n        # each entry in this array is itself an array, holding:\n \
+      \         # [0] - the name of the module\n          # [1] - the parameter line\n\
+      \      \n      # make a list of lowercased module names, with link to the real\
+      \ name\n      my %registeredGenerators = map { lc $_, $_ } Generator-&gt;registeredChildClasses;\n\
+      \      \n      my @magicrequestlines = $instance-&gt;wiki =~ m[^\\#MAGIC\\s+(.*)\\\
+      s+\\n]mg;\n      \n      MAGICLINES: foreach my $line ( @magicrequestlines )\
+      \ {\n        # separate module from params\n        my ($modulename, $parameters)\
+      \ = split /\\s+/, $line, 2;\n        \n        # discard a line that does not\
+      \ correspond to a Generator module in this script\n        # and get the REAL\
+      \ module name from the hash (wiki text might have wrong case)\n        $modulename\
+      \ = $registeredGenerators{lc qq[Generator$modulename]} or \n          next MAGICLINES;\n\
+      \        \n        # checking output\n        $instance-&gt;wiki .= qq[REAL\
+      \ GENERATOR:'$modulename'];\n        \n        push @{$instance-&gt;generators},\
+      \ [$modulename, $parameters];\n        \n        #$modulename = qq[Generator$modulename];\n\
+      \        #$magicrequests{lc qq[Generator$key]} = $value;\n        \n       \
+      \ \n      }\n      \n      # %magicrequests = { lowercased module name from\
+      \ wiki, rest of magic line }\n      # %registeredGenerators = { lowercased registered\
+      \ class, real name of class }\n      \n      \n      #foreach my $request (keys\
+      \ %magicrequests) {\n      #  \n      #  $registeredGenerators{$request} and\
+      \ do {\n      #    $instance-&gt;wiki .= qq[REAL GENERATOR:'$request'];\n  \
+      \    #    \n      #  }\n      #  \n      #  \n      #}\n      #\n      #${$instance-&gt;generators}{foo}\
+      \ = 'bnar' ;\n      \n      \n      #push @{$instance-&gt;generators}, 'foo';\n\
+      \      \n      # REPORT \n      \n      \n    }\n    # strip initial #MAGIC\
+      \ lines, whatever the situation\n    $instance-&gt;wiki =~ s/\\A(\\#MAGIC.*\\\
+      n)+//m;\n    \n    \n    # parse beginning of wiki text for ^#COMMAND eg #MAGIC\
+      \ or #REDIRECT\n    # if  #REDIRECT:\n      # change $instance = { title }\n\
+      \      # and store instance = { oldtitle }\n    # if #MAGIC:\n      # neuter\
+      \ the MAGIC parameters for security aspects\n      # stash the MAGIC parameters\
+      \ in %$browseParameters \n      \n    # look at the registered Generator Modules\
+      \ \n    \n  }\n    \n  #####################################  \n  # WikiPage\
+      \ content making  \n  \n  sub setupGenerators {\n    my $self = shift;\n   \
+      \ \n    # This method draws up a list of any requested Generated Content Modules.\n\
+      \    # These can be requested:\n    # - by the name of the page itself, eg 'RecentChanges'\n\
+      \    # - by the wiki content, eg '#MAGIC (modulename)' at the head of markup\n\
+      \    \n=pod    =\n    my $id = $self-&gt;DBid;\n    \n    # Check the configuration\
+      \ property BuiltInGenerators\n    foreach my $foo ( values %{Page-&gt;getConfiguration('BuiltInGenerators')}\
+      \ ) {\n      #$id eq $foo and push \n      \n    }\n    \n=cut=\n\n    #return\
+      \ 'foo';\n  }\n  \n  \n  sub makePageContent {\n    my $self = shift;\n    \n\
+      \    my $text;\n    \n    $self-&gt;runGenerators\n      if $self-&gt;generators;\n\
+      \      \n    $text .= $self-&gt;wiki;\n    \n      \n    $self-&gt;appendText($text);\n\
+      \    \n    \n    return;\n  }\n  \n  sub runGenerators {\n    my $self = shift;\n\
+      \    \n    for my $generator (@{$self-&gt;generators}) {\n      $self-&gt;wiki\
+      \ .= $generator-&gt;[0]-&gt;generateText($self);\n      \n    }\n    \n  }\n\
+      \  \n  \n  sub makePageFooter {\n    my $self = shift;\n    my $text ;\n   \
+      \ \n    # stash some things locally to avoid many lookups\n    my $tagmaker\
+      \ = $self-&gt;cgiref; # copy of ref to CGI object\n    my $id = $self-&gt;DBid;\
+      \ # remember to mangle spaces etc\n    my $urlroot = $self-&gt;getScriptName;\n\
+      \    \n    $text = $tagmaker-&gt;p(\n      join ' | ',\n      $tagmaker-&gt;a({-href=&gt;$urlroot\
+      \ . \"?action=edit&amp;id=$id\"},'Edit this page'),\n      $tagmaker-&gt;a({-href=&gt;$urlroot\
+      \ . \"?action=history&amp;id=$id\"},'View other revisions'),\n      );\n   \
+      \ $self-&gt;appendText($text);\n    $self-&gt;SUPER::makePageFooter;\n    return;\
+      \   \n  }\n}\n\n###############################################################################\n\
+      #\n#   class RevisionPage\n#\n#   Display an old revision of a page\n#   how\
+      \ this class works really depends on the DB implementation\n#\n#   This should\n\
+      #   * alter the \"edit\" link\n#   * prefix the text with a notice giving the\
+      \ revision number\n\n{\n  package RevisionPage;\n  \n  our @ISA = WikiPage;\n\
+      \  RevisionPage-&gt;register();\n  \n  ###########################################################\n\
+      \  #  Class conditions\n  \n  sub propConditions { q[$browseParameters-&gt;{revision}\
+      \ ] }\n  \n  ###########################################################\n \
+      \ #   RevisionPage::blessPage\n  #\n  #   Check requested revision is a valid\
+      \ number\n  \n  sub blessPage {\n    my $class   = shift; $class = (ref $class\
+      \ or $class);\n    my $instance = shift; # a ref we will be blessing\n    my\
+      \ $browseParameters = shift; # ref to hash\n    \n    $instance-&gt;{revision}\
+      \ = $browseParameters-&gt;{revision} ;\n    \n    unless ( $instance-&gt;{revision}\
+      \ =~ m/^\\d+$/ ) {\n        blessPage PageError $instance, \n          qq['$instance-&gt;{revision}'\
+      \ is not a valid revision number.];\n        return;  \n    }\n    \n    $class-&gt;SUPER::blessPage($instance,\
+      \ $browseParameters); # will bless\n    \n    # now check with the dabase that\
+      \ the number exists\n    \n  }\n  \n  ###########################################################\n\
+      \  #  RevisionPage::Content\n  #\n  sub makePageContent {\n    my $self = shift;\n\
+      \    \n    my $revision = $self-&gt;browserequest-&gt;{revision};\n    my $text\
+      \ = join '',\n      '&lt;p&gt;&lt;em&gt;',\n      \"Showing revision $revision\"\
+      ,\n      '&lt;/em&gt;&lt;/p&gt;';\n      \n    $self-&gt;appendText($text);\n\
+      \    \n    $self-&gt;SUPER::makePageContent;\n      \n  }\n}\n\n###############################################################################\n\
+      #\n#   class WikiPageHistory\n#\n#   Display the page history: the list of revisions\n\
+      #   how this class works really depends on the DB implementation\n#\n#   This\
+      \ should\n\n{\n  package WikiPageHistory;\n  \n  our @ISA = Page;\n  WikiPageHistory-&gt;register();\n\
+      \  \n  ###########################################################\n  #  Class\
+      \ conditions\n  \n  sub propConditions { q[$browseParameters-&gt;{action} eq\
+      \ 'history' ] }\n  \n  ###########################################################\n\
+      \  #  Class defaults\n  \n  sub titlePrefix {q[History of ]}\n  \n \n  #####################################\
+      \  \n  # WikiPageHistory::blessPage\n  sub blessPage {\n    my $class   = shift;\
+      \ $class = (ref $class or $class);\n    my $instance = shift; # a ref we will\
+      \ be blessing\n    my $browseParameters = shift;\n  \n    unless ( $$browseParameters{id}\
+      \ ) {\n      # no id given! Error!\n      blessPage PageError $instance,\n \
+      \       q[No id parameter given. Don't know which page's history to display.];\n\
+      \      return;\n    }\n    \n    $instance-&gt;{title} = ( $$browseParameters{id}\
+      \ ); # move up!\n      \n    bless $instance, $class;\n    return;\n    }\n\
+      \    \n  ###########################################################\n  #  Content\n\
+      \  #  WikiPageHistory::makePageContent\n  sub makePageContent {\n    my $self\
+      \ = shift;\n    \n    my $revision = $self-&gt;browserequest-&gt;{revision};\n\
+      \    my $text = join '',\n      '&lt;p&gt;&lt;em&gt;',\n      \"History\",\n\
+      \      '&lt;/em&gt;&lt;/p&gt;';\n      \n    $self-&gt;appendText($text);\n\
+      \    \n  }\n}\n\n\n###############################################################################\n\
+      #\n#   class RecentChangesPage\n#\n# consider keeping this \n# as it's a lot\
+      \ easier than going through config in setupGenerators\n\n{\n  package RecentChangesPage;\n\
+      \  \n  our @ISA = WikiPage;\n  RecentChangesPage-&gt;register();\n  \n  ###########################################################\n\
+      \  #  Class conditions\n  #\n  # wiki pages have wiki.cgi?pagename or wiki.cgi/pagename\n\
+      \  # this works out as {keywords}=pagename or $ENV{PATH_INFO}\n  \n  #sub propConditions\
+      \ { q[$browseParameters-&gt;{keywords} eq 'RecentChangesPage'] }\n  \n  sub\
+      \ propConditions { q[$browseParameters-&gt;{keywords} eq $class-&gt;getConfiguration('RecentChanges')]\
+      \ }\n  \n  #####################################  \n  # RecentChangesPage::blessPage\n\
+      \  sub blessPage {\n    my $class   = shift; $class = (ref $class or $class);\n\
+      \    my $instance = shift; # a ref we will be blessing\n    my $browseParameters\
+      \ = shift;\n    \n    bless $instance, $class;\n    \n    $instance-&gt;generators\
+      \ = []\n      unless $instance-&gt;generators;\n    \n    push @{$instance-&gt;generators},\
+      \ ['GeneratorRecentChanges', ''];\n    \n    $instance-&gt;SUPER::blessPage($instance,$browseParameters);\n\
+      \    \n  }\n  \n  ###########################################################\n\
+      \  #  RecentChangesPage::Content#\n=pod  =\n  sub makePageContent {\n    \n\
+      \    my $self = shift;\n    my $text = join '',\n      '&lt;div class=\"rc\"\
+      &gt;',\n      $self-&gt;DBref-&gt;fetchRClist,\n      '&lt;/div&gt;';\n    \n\
+      \    $self-&gt;SUPER::makePageContent;\n    \n    $self-&gt;appendText($text);\n\
+      \    return;\n  }\n=cut  =\n}\n\n###############################################################################\n\
+      #\n#   class WikiAdmin\n#\n#   just some generic admin page to figure out how\
+      \ to handle user permissions\n\n\n{\n  package WikiAdmin;\n  \n  our @ISA =\
+      \ Page;\n  WikiAdmin-&gt;register();\n  \n  ###########################################################\n\
+      \  #  Class conditions\n  sub propConditions { q[$$browseParameters{action}\
+      \ eq 'admin'] }\n  sub pageAccess { 'admin' }\n  \n  #####################################\
+      \  \n  # WikiAdmin::blessPage\n  sub blessPage {\n    my $class   = shift; $class\
+      \ = (ref $class or $class);\n    my $instance = shift; # a ref we will be blessing\n\
+      \    $instance-&gt;{title} = 'An admin page';\n    \n    bless $instance, $class;\n\
+      \    }\n  \n    \n  ###########################################################\n\
+      \  #  Content\n  sub makePageContent {\n    \n    my $self = shift;\n    \n\
+      \    $self-&gt;appendText(\"An admin page\");\n  }\n  \n}\n\n###############################################################################\n\
+      #\n#   class WikiPageSave\n#\n\n{\n  package WikiPageSave;\n  \n  our @ISA =\
+      \ Page; # is not WikiPage because it doesn't handle reading the DB\n  WikiPageSave-&gt;register();\n\
+      \  \n  ###########################################################\n  #  Class\
+      \ conditions\n  sub propConditions { q[$$browseParameters{Save} eq 'Save'] }\n\
+      \  \n  #####################################  \n  # WikiPageSave::blessPage\n\
+      \  sub blessPage {\n    my $class   = shift; $class = (ref $class or $class);\n\
+      \    my $instance = shift; # a ref we will be blessing\n    my $browseParameters\
+      \ = shift;\n    \n    # disallow creation of the sample link\n    if ( $browseParameters-&gt;{title}\
+      \ eq $class-&gt;getConfiguration('SampleLink') ) {\n      blessPage PageError\
+      \ $instance,\n        q[That was just a link to show you how it's done. You\
+      \ can't create this page!];\n        # even smarter would be auto-wipe it after\
+      \ x days\n      return;\n    }\n    \n    $instance-&gt;{wiki} = ( $browseParameters-&gt;{text}\
+      \ ); \n    \n    # disallow spam text\n    if ( $instance-&gt;{wiki} =~ m/spam/\
+      \ ) {\n      blessPage PageError $instance,\n        q[Some of the text you\
+      \ entered contained phrases that matched our Spam Blacklist.];\n      return;\n\
+      \    }\n   \n    # disallow blank page\n    if ( $instance-&gt;{wiki} =~ m/^\\\
+      s*$/ ) {\n      blessPage PageError $instance,\n        q(Please don't save\
+      \ a blank page. To delete a page, mark it with \"[[Legacy:DeletedPage|DeletedPage]]\"\
+      );\n      return;\n    }\n    \n    # also disallow saving of NewPageEdit text\
+      \ unchanged\n    \n    $instance-&gt;{title} = ( $browseParameters-&gt;{title}\
+      \ ); \n    \n    bless $instance, $class;\n  }\n=pod=\npage save is a little\
+      \ problematic.\n\nembedding approach: \n* makePageContent creates an embedding.\
+      \ \n* This allows a \"save message\" which could later on become a spellchecker.\n\
+      * unfortunately, we don't get the WikiPage footer \n  (unless we hack around\
+      \ and have this makepageFooter() call WikiPage-&gt;makepageFooter(),\n  which\
+      \ is hard-coding a class...\n  though we *COULD* call \n  $myembedding-&gt;makepageFooter()\n\
+      \  which is a nice way round it... nice we have access to a WikiPage class via\
+      \ the embedding\n  that means we have to stash the embedding in instance data...\n\
+      \  $instance-&gt;{embedded} = $myembedding;\n  so we can grab it later\n\nrecasting\
+      \ approach\n* blessPage blesses as a WikiPage\n* no further class content\n\
+      * unfortunately, we don't get the save message\n\n  #sub makePage {\n    # override\
+      \ Page\n    \n    #doPost in some way\n    \n    #check for edit conflict\n\
+      \    #or should that be done at the new() stage?\n    \n    # reset title of\
+      \ $self\n    # call make header\n      \n    # now display the result\n    my\
+      \ %EmbeddedPageVariables = ... \n      # recreate page variables\n    \n   \
+      \   # create a new page object\n      # note: can join the new() tree at WikiPage!\n\
+      \    \n    $embeddedPage-&gt;makePage();\n    my $embeddedText $embeddedPage-&gt;getText;\n\
+      \    $self-&gt;appendText($embeddedText);\n=cut    =\n    \n  #}\n  ###########################################################\n\
+      \  #  Content\n  #  WikiPageSave::makePageContent\n  sub makePageContent {\n\
+      \    \n    my $self = shift;\n    my $text;\n    \n    $self-&gt;DBref( DatabaseMono-&gt;new($self)\
+      \ ); # create a DB instance and store ref\n    $self-&gt;DBref-&gt;saveWikiToDB();\
+      \ # save wiki text\n    \n    \n    # save message\n    $text = q[&lt;DIV class=\"\
+      savemessage\"&gt;Your text has been saved and the result of your edit is shown\
+      \ below. Thanks for editing!&lt;/DIV&gt;];\n      # consider making this text\
+      \ a config property, \n      # or better, stored in a wiki page\n      # this\
+      \ could later do things like spellchecking\n      \n      # add a \"clear message\"\
+      \ link.\n      \n    # embed an instance of WikiPage to make the preview\n \
+      \   \n    # fake some browser parameters\n    my %embeddedParameters;\n    $embeddedParameters{keywords}\
+      \ = $self-&gt;title;\n    \n    # create the instance here\n    #my $displayInstance\
+      \ = {};\n    \n    # for later footer... stash the embedded instance WITHIN\
+      \ our main instance\n    $self-&gt;{embed} = {}; # for OO niceness, should obtain\
+      \ an lvalue with a method\n    my $displayInstance = $self-&gt;{embed};\n  \
+      \  \n    # give the embedding some of the references and data we have\n    $displayInstance-&gt;{holder}\
+      \  = $self;\n    $displayInstance-&gt;{cgiref}  = $self-&gt;cgiref;\n    $displayInstance-&gt;{DBref}\
+      \   = $self-&gt;DBref;\n    $displayInstance-&gt;{wiki}    = $self-&gt;wiki;\
+      \ # give it the save text\n    \n    blessPage WikiPage $displayInstance, \\\
+      %embeddedParameters; # bless it\n    $displayInstance-&gt;makePageContent; #\
+      \ have it work its stuff\n    \n    # now retrieve the text and put it into\
+      \ the \"real\" page\n    $text .= $displayInstance-&gt;text;\n    $self-&gt;appendText($text);\n\
+      \    \n    return;\n    \n  }\n  sub makePageFooter {\n    my $self = shift;\n\
+      \    \n    # some convoluted stuff to get the makePageFooter() of the embedded\
+      \ display instance\n    # blank the text, get the embedding to make a footer\
+      \ and then grab it back.\n    # this could be made a lot cleaner if makePageFooter()\
+      \ could detect context\n    # and return text if defined wantarray, and embed\
+      \ text if not.\n    \n    $self-&gt;embed-&gt;text('');\n    $self-&gt;embed-&gt;makePageFooter();\n\
+      \    \n    my $text = $self-&gt;embed-&gt;text;\n    $self-&gt;appendText($text);\n\
+      \    \n    return;   \n    \n    \n  }\n}\n\n###############################################################################\n\
+      #\n#   class WikiEdit\n#\n#   Displays a page for editing by the user.\n#  \
+      \ An instance of this class checks wiki text stored in itself before \n#   accessing\
+      \ the database: text may have been placed there already \n#   (eg WikiEditPreview)\n\
+      \n{\n  package WikiEdit;\n  \n  our @ISA = Page; # might need to be child of\
+      \ WikiPage\n  WikiEdit-&gt;register();\n  \n  ###########################################################\n\
+      \  #  Class conditions\n  sub propConditions { q[$$browseParameters{action}\
+      \ eq 'edit'] }\n  \n  ###########################################################\n\
+      \  #  Class defaults\n  sub titlePrefix {q[Editing ]}\n  \n  #####################################\
+      \  \n  # WikiEdit::blessPage\n  sub blessPage {\n    # this is an inheritable\
+      \ constructor\n    my $class   = shift; $class = (ref $class or $class);\n \
+      \   my $instance = shift; # a ref we will be blessing\n    my $browseParameters\
+      \ = shift;\n  \n    bless $instance, $class;\n    \n    $instance-&gt;{title}\
+      \ = $browseParameters-&gt;{id}; \n    \n    unless ( $instance-&gt;{title} )\
+      \ {\n      # no page title given! Error!\n      blessPage PageError $instance,\n\
+      \        q[No 'id' parameter given. Don't know which page to edit.];\n     \
+      \ return;\n    }\n    \n    ##################\n    # initialize DB, load text\
+      \ from it, handle errors and mishaps\n    # UNLESS the instance already holds\
+      \ some wiki text\n    # (it will have been placed there by something embedding\
+      \ this instance)\n    \n    unless ( $instance-&gt;wiki ) {\n      my $database\
+      \ = $instance-&gt;{DBref} = DatabaseMono-&gt;new($instance);\n      \n     \
+      \ # new() has failed to create a DB object?\n      ref $database or do {\n \
+      \       blessPage PageError $instance, \n          q[Unable to load the page\
+      \ database or create one.];\n        return;  \n        }; \n      \n      $database-&gt;loadWikiFromDB();\n\
+      \      \n      # loadWikiFromDB() has stored an error message?\n      $instance-&gt;error\
+      \ and do {\n        blessPage PageError $instance, \n          q[Error loading\
+      \ the page from the database.];\n        return;  \n      };\n      \n     \
+      \ # the wiki text stored by loadWikiFromDB() is blank?\n      $instance-&gt;wiki\
+      \ =~ /^\\s*$/ and do {\n        $instance-&gt;title( Page-&gt;getConfiguration('NewPageEdit'));\n\
+      \          # TODO: correct value must be restored for save!\n        $database-&gt;loadWikiFromDB();\n\
+      \      };\n    }\n  }\n    \n  ###########################################################\n\
+      \  #   Content\n  #   WikiEdit::makePageContent\n  #\n  #   wiki content is\
+      \ already placed in the instance property\n  \n  sub makePageContent {\n   \
+      \ \n    my $self = shift;\n    \n    # this needs major work inserting variables\
+      \ and making better use of CGI methods\n    my $editbox = &lt;&lt; \"EOT\";\n\
+      &lt;div class=\"edit\"&gt;\n&lt;form method=\"post\" action=\"@{[$self-&gt;getScriptName]}\"\
+      \ \n  enctype=\"application/x-www-form-urlencoded\"&gt;\n&lt;input type=\"hidden\"\
+      \ name=\"title\" value=\"@{[$self-&gt;title]}\"&gt;\n&lt;input type=\"hidden\"\
+      \ name=\"oldtime\" value=\"\"&gt;\n&lt;input type=\"hidden\" name=\"oldconflict\"\
+      \ value=\"0\"&gt;\n&lt;textarea name=\"text\" \nrows=\"15\" cols=\"65\" style=\"\
+      width: 100%;\" accesskey=\"E\"\ntabindex=\"1\"  wrap=\"virtual\"&gt;\n@{[$self-&gt;wiki]}\n\
+      &lt;/textarea&gt;\n\n&lt;p&gt;\n&lt;b&gt;Summary:&lt;/b&gt;\n  &lt;input type=\"\
+      text\" name=\"summary\" value=\"*\" size=\"60\" maxlength=\"200\" tabindex=\"\
+      2\"&gt;&lt;br /&gt;\n  &lt;input type=\"checkbox\" name=\"recent_edit\" value=\"\
+      on\"&gt;\nThis change is a minor edit. (Select this only for small changes like\
+      \ spelling or layout fixes.)\n&lt;/p&gt;\n\n&lt;p&gt;\n&lt;input type=\"submit\"\
+      \ name=\"Save\" value=\"Save\" class=\"editbutton\" /&gt;\n&lt;input type=\"\
+      submit\" name=\"Cancel\" value=\"Cancel\" class=\"editbutton\" /&gt;\n&lt;input\
+      \ type=\"submit\" name=\"Preview\" value=\"Preview\" class=\"editbutton\" /&gt;\n\
+      \n&lt;input type=\"hidden\" name=\".cgifields\" value=\"recent_edit\"&gt;&lt;/form&gt;\n\
+      &lt;/p&gt;\n\n&lt;/div&gt;\nEOT\n    #$editbox .= $UseMooWiki::q-&gt;submit(-name=&gt;'Preview',\
+      \ -value=&gt;'Preview', -class=&gt;\"editbutton\"), \"\\n\";\n    \n    $self-&gt;appendText($editbox);\n\
+      \    return;\n    \n  }\n}\n\n###############################################################################\n\
+      #\n#   class WikiEditPreview\n#\n#   Displays the Preview of a page.\n#   Uses\
+      \ the makePageContent() method of its parent, WikiEdit to make the edit\n# \
+      \  box, and then creates an embedded instance to display the preview \n#   (the\
+      \ instance is force-fed the wikisource and then fooled into thinking \n#   it\
+      \ is a real page).\n#\n#   BEWARE:\n#   Due to weirdness, Preview uses 'title'\
+      \ and Edit uses 'id'.\n#   This is a UseModWiki legacy glitch. According to\
+      \ Cliff it's a quirk :)\n\n{\n  package WikiEditPreview;\n  \n  our @ISA = WikiEdit;\n\
+      \  WikiEditPreview-&gt;register();\n  \n  ###########################################################\n\
+      \  #  Class conditions\n  sub propConditions { q[$$browseParameters{Preview}\
+      \ eq 'Preview'] }\n  \n  ###########################################################\n\
+      \  #  Class defaults\n  sub titlePrefix {q[Previewing ]}\n  \n  #####################################\
+      \  \n  #   WikiEditPreview::blessPage\n  #\n  #   Loads up the instance with\
+      \ the title and the wiki text\n  #   for makePageContent to find.\n  \n  sub\
+      \ blessPage {\n    my $class   = shift; $class = (ref $class or $class);\n \
+      \   my $instance = shift; # a ref we will be blessing\n    my $browseParameters\
+      \ = shift;\n    \n    bless $instance, $class;\n    \n    $instance-&gt;{wiki}\
+      \  = ( $browseParameters-&gt;{text} ); \n    $instance-&gt;{title} = ( $browseParameters-&gt;{title}\
+      \ );\n    \n    unless ( $instance-&gt;{title} ) {\n      # no page title given!\
+      \ Error!\n      # not even sure it's POSSIBLE to get here, since these are POST\
+      \ params.\n      blessPage PageError $instance,\n        q[No 'title' parameter\
+      \ given. Don't know which page to preview.];\n      return;\n    }\n  }\n  \n\
+      \  \n  ###########################################################\n  #  Content\n\
+      \  #  WikiEditPreview::makePageContent\n  sub makePageContent {\n    \n    my\
+      \ $self = shift;\n    \n    # edit box and buttons\n    $self-&gt;SUPER::makePageContent();\n\
+      \    \n    # embed an instance of WikiPage to make the preview\n    my %embeddedParameters;\n\
+      \    $embeddedParameters{keywords} = $self-&gt;title;\n    # $embeddedParameters{embed}\
+      \ = 1;\n      # this is probably not needed. \n      # Setting $previewInstance-&gt;{wiki}\
+      \ should suffice to indicate\n      # that beatify is given an embedded instance\n\
+      \    \n    my $previewInstance = {};\n    \n    # give the embedding some of\
+      \ the references and data we have\n    $previewInstance-&gt;{holder}  = $self;\n\
+      \    $previewInstance-&gt;{cgiref}  = $self-&gt;cgiref;\n    $previewInstance-&gt;{wiki}\
+      \    = $self-&gt;wiki;\n    \n    blessPage WikiPage $previewInstance, \\%embeddedParameters;\n\
+      \    \n    # Preview does not need a database, but some previed pages might.\n\
+      \    # consider making it the responsibility of page objects to check\n    #\
+      \ consider making the DBref accessor create a DB if none exists\n    $previewInstance-&gt;{DBref}\
+      \   = DatabaseMono-&gt;new($previewInstance);\n    \n    $previewInstance-&gt;makePageContent;\n\
+      \    \n    my $previewText = $previewInstance-&gt;getText;\n    \n    $self-&gt;appendText('&lt;div\
+      \ class=\"preview\"&gt;');\n    $self-&gt;appendText($previewText);\n    $self-&gt;appendText('&lt;/div&gt;');\n\
+      \    \n  }\n}\n\n###############################################################################\n\
+      #\n#   class WikiVersion\n#   Displays the version of the script\n\n{\n  package\
+      \ WikiVersion;\n  \n  our @ISA = Page;\n  WikiVersion-&gt;register();\n\n  ###########################################################\n\
+      \  #  Class conditions\n  sub propConditions { q[$$browseParameters{action}\
+      \ eq 'version'] }\n  sub propPageTitle  { q[Version information] }\n  \n  ###########################################################\n\
+      \  #  Content\n  sub makePageContent {\n    \n    my $self = shift;\n    \n\
+      \    $self-&gt;appendText(q[&lt;p&gt;UseMOO version number&lt;/p&gt;]);\n  \
+      \  return;\n  }\n}\n\n###############################################################################\n\
+      #\n#   class PageError (non-registering)\n#\n#   The special error-reporting\
+      \ page. \n#   This displays an error message and forces debug output.\n\n{\n\
+      \  package PageError;\n  \n  our @ISA = Page;\n  \n  ###########################################################\n\
+      \  #  Class conditions\n  sub pageAccess    { 'user' } # shouldn't be called,\
+      \ but anyway...\n  sub propPageTitle { q[Error page] }\n  \n  #####################################\
+      \  \n  # PageError::blessPage\n  sub blessPage {\n    my $class     = shift;\
+      \ $class = (ref $class or $class);\n    my $instance  = shift; # a ref we will\
+      \ be blessing\n    my $message   = shift; # error message passed to us\n   \
+      \ \n    $instance-&gt;{error} = $message ||\n      q[Sorry, the lazy programmer\
+      \ hasn't even provided a decent error message to report!];\n      \n    $instance-&gt;{title}\
+      \ = ''; # forces use of propPageTitle later.\n   \n    bless $instance, $class;\n\
+      \    }\n    \n  ###########################################################\n\
+      \  #  Content\n  sub makePageContent {\n    my $self = shift;\n\n    my $text\
+      \ = join '',\n      $self-&gt;cgiref-&gt;p(\n        q[Something's gone wrong\
+      \ with MooWiki.],\n        q[There should be an explanation below followed by\
+      \ the browser parameters for debugging.],\n        ),\n      $self-&gt;cgiref-&gt;p(\n\
+      \        $self-&gt;cgiref-&gt;b(\n          $self-&gt;error\n          )\n \
+      \       );\n    $self-&gt;appendText($text);\n  }\n  \n}\n\n###############################################################################\n\
+      #\n#   package UseMooWiki\n#\n#   The 'main' package. This:\n#\n#   reads in\
+      \ additional modules\n#   initializes CGI\n#   puts some values (such as the\
+      \ request time) into a hash reference to be blessed\n#   sends it through the\
+      \ \"Blessing Chain\"\n#   Calls MakePage() on the resulting object\n#   prints\
+      \ to the browser the text property of the object\n\n{\n  package UseMooWiki\
+      \ ;\n  use CGI;\n\n  use vars qw( $q $MaxPost $ThisPage );\n  \n  #############################################################################\n\
+      \  #\n  #   Load plug-ins \n  #\n  #   Plug-ins for Moo are modules named moo-*.pm\n\
+      \  #   These should contain classes that should register themselves appropriately\n\
+      \  #\n  #   Consider letting module filenames optionally say what type of classes\n\
+      \  #   they contain, eg moo-db-*.pm.\n  #   Moo could then decide whether to\
+      \ load them or not later on.\n  #   Consider allowing config to specify an order\
+      \ for certain modules... but YAGNI\n  \n  my @modulefiles = &lt;moo-*.pm&gt;;\n\
+      \  foreach (@modulefiles) {\n    require $_;\n  }\n  \n  #############################################################################\n\
+      \  #\n  #   Log\n  \n  # open LOG, \"&gt;&gt; moologfile.txt\"  or die \"can't\
+      \ open logfile:  $!\";\n\n  #############################################################################\n\
+      \  #\n  #   Handle CGI request\n  \n  do {\n    # handle cache at this level,\
+      \ probably\n    \n    ##################################### \n    # Initialize\
+      \ CGI and get variables\n    \n    $q = new CGI;\n    my %PageVariables = $q-&gt;Vars;\n\
+      \    \n    if( $ENV{PATH_INFO} &amp;&amp; $ENV{PATH_INFO} ne '/' ) {\n     \
+      \ $PageVariables{keywords} = substr($ENV{PATH_INFO}, 1);\n      # stuff the\
+      \ path into the variables hash\n      # but if the path is just '/' \n     \
+      \ #   DON'T bring the has into existence just for an empty string!\n      #\
+      \   this would muck up the !%$browseParameters condition in WikiPage\n    }\n\
+      \n###############################################################################\n\
+      #   POD: Script URLs    \n=head1 Script URLs=\n\nOrder of precedence for URL\
+      \ is as follows. \nThe following go to the HomePage:\nwiki.cgi \nwiki.cgi/ \n\
+      wiki.cgi/?(anything) – because why put the / in unless you mean it?\n\nThe following\
+      \ go to the page named Foo\nwiki.cgi/Foo?Bar – again, why say /Foo if you don't\
+      \ mean it?\nwiki.cgi/Foo?(any actions)\nwiki.cgi?Foo\n=cut=\n#\n###############################################################################\n\
+      \n    # Equivalent (mostly) to UseMod's InitRequest\n    # create a hash reference\
+      \ that will become the page object\n    my $requestedPage = {\n      now   \
+      \        =&gt; time,\n      cgiref        =&gt; $q,\n      browserequest =&gt;\
+      \ { $q-&gt;Vars }, \n        # consider accessing %PageVariables via this instead\
+      \ \n        # but remember the tweaking it undergoes for /\n      };\n     \
+      \ \n    Page-&gt;chooseClass($requestedPage, \\%PageVariables); # bless the\
+      \ reference\n    $requestedPage-&gt;makePage(); # make Page content\n\n    print\
+      \ $requestedPage-&gt;text;\n\n } if ($Page::configuration{RunCGI} &amp;&amp;\
+      \ ($_ ne 'nocgi')); \n   # see http://www.usemod.com/cgi-bin/wiki.pl?PersistentCGI\n\
+      \   # load the wiki without running it. This is useful for PersistentCGI environments\
+      \ like mod_perl.\n}\n# End of script. Bye!\n</pre>\n<!-- \nNewPP limit report\n\
+      CPU time usage: 0.080 seconds\nReal time usage: 0.256 seconds\nPreprocessor\
+      \ visited node count: 4/1000000\nPreprocessor generated node count: 24/1000000\n\
+      Post‐expand include size: 0/2097152 bytes\nTemplate argument size: 0/2097152\
+      \ bytes\nHighest expansion depth: 2/40\nExpensive parser function count: 0/100\n\
+      -->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n100.00%\
+      \    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:2218-0!*!*!*!*!*!*\
+      \ and timestamp 20221120202829 and revision id 5369\n -->\n"
+  categories: []
+  links: []
+  templates: []
+  images: []
+  externallinks: []
+  sections: []
+  displaytitle: "Legacy:Moo/Script"
+  iwlinks: []
+  wikitext:
+    text: "<pre>\n#!/usr/bin/perl\n###############################################################################\n\
+      # UseMOO\n#\n# $Id: moo.cgi,v 1.32 2005/07/05 09:23:47 tarquin Exp $\n#\n# a\
+      \ sort of perl disaster by Tarquin\n# based on UseModWiki (C) 2000-2001 Clifford\
+      \ A. Adams\n#    <caadams@frontiernet.net> or <usemod@usemod.com>\n# ...which\
+      \ was based on\n#    the GPLed AtisWiki 0.3  (C) 1998 Markus Denker\n#    <marcus@ira.uka.de>\n\
+      #    the LGPLed CVWiki CVS-patches (C) 1997 Peter Merel\n#    and The Original\
+      \ WikiWikiWeb  (C) Ward Cunningham\n#        <ward@c2.com> (code reused with\
+      \ permission)\n#\n# This program is free software; you can redistribute it and/or\
+      \ modify\n# it under the terms of the GNU General Public License as published\
+      \ by\n# the Free Software Foundation; either version 2 of the License, or\n\
+      # (at your option) any later version.\n#\n# This program is distributed in the\
+      \ hope that it will be useful,\n# but WITHOUT ANY WARRANTY; without even the\
+      \ implied warranty of\n# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\
+      \  See the\n# GNU General Public License for more details.\n#\n# You should\
+      \ have received a copy of the GNU General Public License\n# along with this\
+      \ program; if not, write to the\n#    Free Software Foundation, Inc.\n#    59\
+      \ Temple Place, Suite 330\n#    Boston, MA 02111-1307 USA\n\nuse CGI;\nuse CGI::Carp\
+      \ qw(fatalsToBrowser);\nuse strict 'refs';\nuse strict 'vars';\n\n###############################################################################\n\
+      #   POD: Intro\n=head1 MooWiki=\n\nUseMoo is a free wiki engine based on UseModWiki\
+      \ by Clifford A. Adams (in turn\nbased on AtisWiki, and so on back to Ward's\
+      \ Wiki). \n\nThe core idea is that the code from UseModWiki is refactored to\
+      \ OO code, \nhence the name 'Moo' substituted for 'Mod'. \n\nI plan to bundle\
+      \ it with Mychaeel's Wookee wiki-to-html parser, \nwhich would make the name\
+      \ of the complete thing UseMooWookee. \nHowever, I'm not too fussed about names\
+      \ at this stage.\n\nThe goals for this script are:\n* modularity\n* extensibility\n\
+      * reduce spaghetti code\n* reduce tag soup\n* compatibility with UseModWiki\n\
+      \n=head2 Modularity=\nThis script should be able to run just like UseModWiki\
+      \ with one set of modules, \nand with some other modules use an SQL or XML database\
+      \ with\na modern XHTML-compatible parser.\n\n=head2 Extensibility=\nIt should\
+      \ be easy to add extra functionality to the script, without delving \ntoo far\
+      \ into the existing script.\nAt the same time, the core script is self-contained,\
+      \ just as UseMod is. \nThis file alone will run a wiki.\n\n=head2 Despaghettification=\n\
+      UseMod's code can be confusing to work with. A script of this complexity\nis\
+      \ always going to involve the chain of execution being hard to follow, but it\n\
+      is my hope that OO makes this less of an issue. \n\n=head2 Better and smarter\
+      \ HTML and XHTML=\nClean HTML is produced from Wiki source by the Wookee parser.\n\
+      The OO approach makes it easier to wrap each part of the complete HTML page\n\
+      in DIVs for easy formatting and layout with CSS.\nOther features such as Accesskeys\
+      \ and LINK elements based on site-wide options \nand wiki page content are in\
+      \ the pipeline.\n\n=cut=\n\n###############################################################################\n\
+      #   POD: Class hierarchy\n=head1 Class hierarchy=\n\nMoo uses several disjoint\
+      \ class hierarchies. The most important of these is \nthe Page hierarchy. Others\
+      \ behave like modules that add functionality.\n\nThis list should also be available\
+      \ via the URL ?action=classreport (it partially is so far).\n\n+ Database -\
+      \ abstract base class. implements database access\n++ DatabaseMono - stupidly\
+      \ simple example\n++ DatabaseFlat - all pages in a single flat file\n++ DatabaseCliff\
+      \ - reworking of UseModWiki's DB system\n\n+ Cache - cache system\n\n+ Parser\
+      \ - wiki parser\n++ ParserCliff - the UseModWiki parser\n++ ParserWookee\n\n\
+      + Generator - classes that add generated content to wiki pages\n++ GeneratorRecentChanges\n\
+      ++ GeneratorCategory\n\n+ SaveAction - things that happen when a page is saved\n\
+      ++ SaveActionSpellcheck\n++ SaveActionSpamcheck\n++ SaveActionThankyou\n\n+\
+      \ Page - displays an HTML page\n++ WikiPage - displays a wiki page from the\
+      \ database\n+++ WikiPageHistory - displays the history list for a wiki page\n\
+      +++ RevisionPage - displays a particular revision of a page\n+++ WikiEdit -\
+      \ edits a wiki page\n++++ WikiEditConflict\n++++ WikiEditPreview\n+++ WikiPageSave\n\
+      +++ MagicPage\n++++ RCPage\n++ WikiAdmin - parent of admin pages\n++ WikiVersion\
+      \ - shows script version number\n++ PageClassReport - outputs the list of all\
+      \ loaded classes\n\n\n=cut=\n\n###############################################################################\n\
+      #   POD: Bundled plug-in modules\n=head1 Bundled plug-in modules=\n\nMoo has\
+      \ a plug-in system. It will load any perl modules in the same directory\nas\
+      \ itself whose names begin with 'moo-'. This allows the system's modularity\
+      \ \nto work at a different level to classes. You can choose whether to enable\
+      \ or \nnot a set of features simply by whether a file is in your cgi directory\
+      \ or not.\n\nThe modules bundled with Moo are:\n\n=head2 moo-debug.pm=\nGeneral\
+      \ debugging and testing tools. ModuleTestPage just tests that the module\nhas\
+      \ loaded. PageClassReport outputs the list of all loaded classes.\n\n=head2\
+      \ moo-generators.pm=\nGenerator classes that aren't core features.\n\n=head2\
+      \ moo-usemod.pm=\nSet of classes for backwards-compatibility with UseModWiki.\n\
+      This will include the UseMod database system, the UseMod parser, and support\n\
+      for the action=rc type URLs.\n\n=cut=\n\n###############################################################################\n\
+      #\n#   class Database \n#\n#   This is an abstract class. It serves only to\
+      \ set out the methods.\n#   Subclasses must implement these in some appropriate\
+      \ manner.\n#\n#   Any instance of a Database must be owned by another object.\n\
+      #   This will almost certainly be some sort of Page object.\n#   A reference\
+      \ to the owner is set as SELF->{owner} on creation, provided the\n#   constructor\
+      \ has been called correctly... like this:\n#     Database->new($someobject)\n\
+      #\n#   Several things can go wrong when working with the database, and the DB\n\
+      #   class needs to report these back to the Page instance so the user is alerted.\n\
+      \n{\n  package Database;\n  \n  ###########################################################\n\
+      \  #  Class properties\n  \n  our $initialized;\n    # true if the DB system\
+      \ has been initialized\n  \n  sub isInitialized { \n    # accessor function\
+      \ for the $initialized property\n    shift;\n    $initialized = shift if @_;\n\
+      \    return $initialized;\n    };\n\n  ###########################################################\n\
+      \  #  Database Constructor and initializer\n  #\n  #   It is only necessary\
+      \ to initialize the DB system once;\n  #   but we might need more than one DB\
+      \ instance (eg diff pages)\n  #\n  #   The new() method creates and returns\
+      \ a new DB instance and \n  #   takes responsibility for initializing the DB\
+      \ system if necessary\n  #\n  #   It returns a reference to the Database object\
+      \ if all goes well.\n  #   Otherwise, returns a string containing the error\
+      \ message.\n  #   Test the return of this with ref().\n  #   (Note &ndash; new()\
+      \ this tolerates a return of 1 from initDatabase() \n  #   as a success. This\
+      \ is a pre-emptive bug tolerance,\n  #   since it's possible to forget the return\
+      \ statement and finish with\n  #   setting isInitialized to 1)\n  #\n  #   The\
+      \ new() method should not be overridden in child classes. \n  #   Use the initDatabase()\
+      \ to do things specific to the database implementation.\n  \n  sub new {\n \
+      \   my $class = shift;\n    my $owner = shift;\n    \n    my $result = $class->initDatabase()\n\
+      \      unless $class->isInitialized;\n    \n    # if $result is non-empty, an\
+      \ error has occured\n    # (unless $result is 1, in which case a programmer\
+      \ is probably being lazy)\n    return $result\n      if $result and $result\
+      \ != 1;\n      \n    my $newDB = { owner => $owner };\n    return bless $newDB,\
+      \ $class;\n  }\n  \n  sub initDatabase {\n    # unlike UseMod...\n    # returns\
+      \ nothing if successful (but sets isInitialized to a TRUE value)\n    # returns\
+      \ an explanation if something goes wrong\n    \n    my $class = shift;\n   \
+      \ # Things the initializer should do:\n    # check the datadir specified in\
+      \ config exists. \n    # If it is not found, try to create it.\n    \n    $class->isInitialized(1);\n\
+      \    return;\n  }\n  \n  ###########################################################\n\
+      \  #  Access\n  \n  sub loadWikiFromDB {} \n    # loads the content of the wiki\
+      \ page into its owner\n    \n  sub saveWikiToDB {}  \n    # saves the content\
+      \ of the wiki page from its owner\n    \n  sub fetchRClist { 'This Database\
+      \ system does not appear to support a Recent Changes list.' }\n    # returns\
+      \ list of RC lines\n    \n  sub fetchHistory { 'This Database system does not\
+      \ appear to support page histories.' }\n    # returns list of history lines\n\
+      \  \n}\n\n###############################################################################\n\
+      #\n#   class DatabaseMono \n#\n#   DatabaseMono is a primitive database system\
+      \ that only loads one\n#   page, no matter what title it is given.\n#   This\
+      \ is just to see how it interacts with the rest of the script\n#   Move this\
+      \ to moo.debug.pm eventually.\n\n{\n  package DatabaseMono;\n  \n  our @ISA\
+      \ = qw(Database);\n  \n  # for testing only\n  our $filename = 'db.txt';\n \
+      \ \n  ###########################################################\n  #   DatabaseMono::initDatabase\n\
+      \  #\n  \n  sub initDatabase {\n    my $self = shift;\n    \n    my $datadir\
+      \ = Page->getConfiguration('DataDir');\n    \n    unless ( -d $datadir || CreateDir($datadir)\
+      \ ) {\n      return qq[Can't create directory $datadir]; \n      # return an\
+      \ error message\n    }\n    $self->isInitialized(1);\n    return;\n  }\n  \n\
+      \  #--------------------------------------\n  # these are not proper OO methods\n\
+      \  # from UseMod\n  # consider moving these up to the base Database class to\
+      \ be inherited\n  sub CreateDir {\n    my $newdir = shift;\n    mkdir($newdir,\
+      \ 0775)  if (!(-d $newdir)); # returns true if succeeds.\n  }\n  sub ReadFile\
+      \ {\n    my $fileName = shift;\n    my $data;\n    local $/ = undef;   # Read\
+      \ complete files\n\n    if (open(IN, '<' . Page->getConfiguration('DataDir')\
+      \ . \"/$fileName\")) {\n      $data=<IN>;\n      close IN;\n      return (1,\
+      \ $data);\n    }\n    return (0, \"\");\n    # should be a more elegant way\
+      \ of doing this\n    # return undef perhaps if data not found?\n  }\n  sub WriteStringToFile\
+      \ {\n    my ($file, $string) = @_;\n\n    open (OUT, '>' . Page->getConfiguration('DataDir')\
+      \ . \"/$file\") or \n      die(Ts('cant write %s', $file) . \": $!\");\n   \
+      \ print OUT  $string;\n    close(OUT);\n  }\n  #--------------------------------------\n\
+      \  # public methods\n  \n  ###########################################################\n\
+      \  #\n  # DatabaseMono::loadWikiFromDB\n  #\n  # Consider interface:\n  #  \
+      \ - for serious errors, stash an error message in $page->{error}\n  #   - for\
+      \ no such page error, place '' in $page->{wiki}\n  \n  sub loadWikiFromDB {\n\
+      \    my $self      = shift;\n    my $page      = $self->{owner};\n    my $revision\
+      \  = $page->{revision} || 0;\n    \n      #   could have a GiveMeDatabase method\
+      \ in Page that \n      #   calls new, hands over the owner object ref\n    \
+      \  #   and sorts all this out &ndash; then any child of Page that\n      # \
+      \  requires DB access just needs to say $self->GiveMeDatabase()\n      \n  \
+      \  my ($status, $data ) = ReadFile($filename);\n\n    $page->{wiki} = $data;\n\
+      \      #join '',\n      #$data || 'no data!'; #,\n      #\"<BR>\\n\",     \n\
+      \      #'The name of this page is: ',\n      #$page->{title},\n      #\"<BR>\\\
+      n\",     \n      #'The revision of this page is: ',\n      #$revision\n    \
+      \  #;\n      \n      # page not found scenarios are handled by Page children:\
+      \ just stash '' if there is no data \n      # NotFoundPg => 'PageDoesNotExist',\n\
+      \      # NewPageEdit => 'BlankEdit',\n      \n    return 1; # load successful\
+      \        \n  }\n  sub saveWikiToDB {\n    my $self = shift;\n    my $data =\
+      \ shift;\n    my $page = $self->{owner};\n    \n    $data = $page->wiki;\n \
+      \   \n    #$self->initDatabase() or return 0;# unless $databaseIntialized;\n\
+      \    \n    WriteStringToFile( $filename, $data);\n    \n  }\n  \n}\n\n###############################################################################\n\
+      #   POD: Generators\n=head1 Generators=\n\nGenerators are classes that create\
+      \ content to display in wiki pages based on something other than wiki source.\n\
+      A good example is the Category listing that Unreal Wiki uses.\nAnother example,\
+      \ though perhaps not an obvious one, is the Recent Changes page.\n\n=cut=\n\n\
+      ###############################################################################\n\
+      #\n#   class Generator \n#\n#   Base class to hold registry\n\n{\n  package\
+      \ Generator;\n\n  our @registered;\n  sub registeredChildClasses { @registered\
+      \ }\n\n  ###########################################################\n  #  \
+      \ Registration\n  #\n  #   Child classes call this method on themselves\n  #\
+      \   and are registered into an array\n  \n  sub register {\n\n    my $class\
+      \ = shift;  $class = (ref $class or $class);\n    \n    push @registered, $class\n\
+      \      if $class->isa(Generator)\n      and not grep /^\\Q$class\\E$/, @registered;\n\
+      \  }\n}\n\n###############################################################################\n\
+      #\n#   class GeneratorRecentChanges \n#\n#   Lists Recent Changes to the wiki\n\
+      #   It's up to the Database object to actually maintain and produce a list of\
+      \ recent changes\n#   This class requests it and formats it nicely\n\n{\n  package\
+      \ GeneratorRecentChanges;\n  \n  ###########################################################\n\
+      \  #   Registration\n  #\n  our @ISA = Generator;\n  GeneratorRecentChanges->register();\n\
+      \  \n  sub propPlacement { 'foot' }\n  \n  sub generateText {\n    my $self\
+      \ = shift;\n    my $page = shift;\n    \n    return join '',\n      '<div class=\"\
+      rc\">',\n      $page->DBref->fetchRClist,\n      '</div>';\n  }\n}\n\n###############################################################################\n\
+      #\n#   class Page\n#\n#   The base class for pages. This is where most of the\
+      \ work happens.\n#   This should:\n#     open an HTML scaffold file\n#     hold\
+      \ a default HTML page scaffold\n#     determine what sort of page has been requested\n\
+      {\n  package Page;\n  \n  ###########################################################\n\
+      \  #  Static\n  \n  our @registered;\n  sub registeredChildClasses { @registered\
+      \ }\n  \n  ###########################################################\n  #\
+      \   Registration\n  #\n  #   Child classes call this method on themselves\n\
+      \  #   and are registered into an array\n  \n  sub register {\n\n    my $class\
+      \ = shift;  $class = (ref $class or $class);\n    \n    push @registered, $class\n\
+      \      if $class->isa(Page)\n      and not grep /^\\Q$class\\E$/, @registered;\n\
+      \  }\n  \n  ###########################################################\n  #\
+      \  Class properties: inheritable defaults\n  \n  sub propConditions  { 0 } \
+      \ # conditions a class must satisfy to handle a browse request. Returns false\
+      \ by default\n  sub pageAccess      { 'user' } # user status required to view\
+      \ this class's page\n  sub bodyCSSclass    { '' }     # the CSS class added\
+      \ to the BODY HTML tag for this class's page\n  sub titlePrefix     { '' } \
+      \    # prefix added to the displayed page name\n  sub propPageTitle   {    }\
+      \     # title if none supplied dynamically\n  sub thisPageTools   { '' }\n \
+      \ #sub usesGenerators  { 0  }     # no good.\n  \n  ###########################################################\n\
+      \  #  Class properties: CGI\n  sub getScriptName { $ENV{SCRIPT_NAME} } # Name\
+      \ used in links (absolute) &ndash; Mychaeel\n\n###############################################################################\n\
+      #   POD: Configuration\n=head1 Configuration=\n\nConfiguration options for Moo\
+      \ are set in a Big Fat Hash within the Page class.\nThey are accessed with the\
+      \ getConfiguration() method, which takes the name of the key.\nIf you don't\
+      \ yet have access to a Page object, then the dirty way to do it is\n$Page::configuration{propertyname},\
+      \ but this should only be an issue at the very start of\nthe UseMooWiki package,\
+      \ where a Page has not yet been created.\n\nConfiguration defaults are overridden\
+      \ in a seperate file that is executed when the Moo script loads.\nA configuration\
+      \ file sample follows:\n----\n# do not touch this line:\n%configuration = (\
+      \ (%configuration),  \n\nConfigName => Number,\nConfigName => 'String',\nConfigName\
+      \ => [ list, list, list ],\nand so on\ndo not forget the comma at the end of\
+      \ each line!\n----\n\n=cut=\n\n  ###########################################################\n\
+      \  #  Configuration\n  #\n  # Default settings are overriden by the config file\n\
+      \  \n  our %configuration = (\n    ConfigFile  => 'configlist.pl',\n    DataDir\
+      \     => 'data',\n    \n    # site configuration\n    SiteName    => 'Moo Wiki',\n\
+      \    HttpCharset => '',\n    FreeLinks   => 1,\n    FreeUpper   => 1, # put\
+      \ [[Legacy:Free Links|free links]] into [[Legacy:Title Case|Title Case]]\n \
+      \   \n    # CGI\n    RunCGI      => 1,\n    \n    # special pages names\n  \
+      \  # these should be in the form the database uses, not the URL or the display\n\
+      \    HomePage      => 'WelcomePage',\n    RecentChanges => 'RecentChanges',\n\
+      \    AccessDenied  => 'AccessDenied',\n    NoSpam        => 'NoSpam',\n    SampleLink\
+      \    => 'TheWeatherInLondon',\n    Search        => 'SearchResults', \n    NotFoundPg\
+      \    => 'PageDoesNotExist', \n    NewPageEdit   => 'BlankEdit',\n    \n    #\
+      \ ugly. remove!\n    BuiltInGenerators => { \n      RecentChanges => 'RecentChanges',\n\
+      \      \n      },\n    \n    # LINK elements in HTML HEAD\n    HtmlLinks =>\
+      \ { },\n    \n    # appearance\n    DefaultStyleSheet => '', # http://localhost/wiki-ext/moo/moodev.css',\
+      \ # for use with built-in template\n    # replace this with built-in stylesheet\
+      \ and override it if this value is not ''\n    \n    PageTemplates => { },\n\
+      \    \n    # user groups\n    UserGroups => ['user', 'editor', 'admin'], \n\
+      \      # place these in increasing order of authority\n      \n    # code modules\n\
+      \    Hello => 'HelloSub',\n    \n    # debug\n    DebugMode => 1,\n    \n  \
+      \  );\n    \n  ###################\n  # read in configuration file\n  if ( $configuration{ConfigFile}\
+      \ ) { \n    do \"$configuration{ConfigFile}\";\n    \n    # this does not yet\
+      \ report errors!\n  }\n\n  sub getConfiguration {\n    # consider changing this\
+      \ to accept a list of keynames and \n    # return a list of values\n    \n \
+      \   my $class     = shift; $class = (ref $class or $class);\n    my $wantedkey\
+      \ = shift;\n    \n    return $configuration{$wantedkey};\n  }\n\n###############################################################################\n\
+      #   POD: Built-in template\n\n=head1 Built-in template=\nThe Moo script contains\
+      \ its own template for HTML pages. \nThis should be sufficient for most uses:\
+      \ with a little CSS styling you can \nmake your wiki pages distinctive if you\
+      \ so wish.\nYou can however supply your own: see configuration.\n\n=cut=\n\n\
+      \  ###################\n  # Built-in template\n  our $builtInTemplate = <<\"\
+      EOT\";\n<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"  \"\
+      http://www.w3.org/TR/html4/loose.dtd\">\n<html><head><title>%windowtitle%</title>\n\
+      %styles%\n%link%\n</head>\n<body class=\"%bodyclass%\">\n<h1>%title%</h1>\n\
+      <div class=\"wiki\">\n%wiki%\n</div>\n<div class=\"footer\">\n%footer%\n</div>\n\
+      </body>\n</html>    \nEOT\n\n  sub getTemplate {\n    # do some config checking:\n\
+      \      # has the user requested a template?\n      # does the config request\
+      \ a template?\n      # do they exist?\n    \n    return $builtInTemplate;\n\
+      \    # consider embedding the template in this sub instead.\n  }\n  \n  ###################\n\
+      \  # Built-in CSS\n  \n  # what would be terribly cunning might be to hide the\
+      \ two here-docs\n  # behind a quick check of the relevant %configuration keys\n\
+      \  # so they're not even loaded if not required\n  our $builtInStyles = <<\"\
+      EOT\";\n/* main structure */\ndiv {\n  border:solid 2px;\n  margin:1em;\n  padding:0.5em;\n\
+      \  \n}\n.footer {\n  border-color:red;\n}\n.edit {\n  border-color:green;\n\
+      }\n.preview {\n  border-color:yellow;\n}\n.savemessage {\n  border-color:#fb0;\n\
+      }\n.debug {\n  border-color:red;\n  border-style:dashed;\n  \n}\n.debug h1 {\n\
+      \  margin:0em;\n  padding:0em;\n  font-size:1.5em;\n}\n.debug h2 {\n  margin:0em;\n\
+      \  padding:0em;\n  font-size:1.2em;\n}\n\n/* forms */\n.editbutton {\n  width:\
+      \ 5em; \n  height: 2em;\n}\nEOT\n\n  sub getStyles {\n    # return either a\
+      \ LINK to a stylesheet or a STYLE block of the built-in stylesheet\n    # do\
+      \ some config checking:\n    #<link rel=\"stylesheet\" type=\"text/css\" media=\"\
+      screen\" href=\"\">    \n    \n    return qq[<style type=\"text/css\">$builtInStyles</style>];\n\
+      \  }\n  \n  ###################\n  # testing plugin modules\n  \n  sub DummyHello\
+      \ {\n    #if (Page->can('HelloSub')) {}\n      \n    &{ Page->can($configuration{'Hello'})\
+      \ or 'HelloSub'}(@_)  \n      \n    #if (Page->can($configuration{'Hello'}))\
+      \ {\n    #  &{$configuration{'Hello'}}(@_);\n    #}\n  }\n  sub HelloSub {\n\
+      \    # a fallback default module\n    print \"Hello!!!!!\\n\";\n  }\n  #DummyHello();\n\
+      \  \n  # end test\n  ###################\n    \n  ###########################################################\n\
+      \  #   Instance properties\n  #\n  #   Accessors to these are generated with\
+      \ a closure.\n  #   Use any of the following:\n  #   - $object->name('value');\
+      \  # assign and return\n  #   - $object->name = 'value'; # lvalue assignment\
+      \ \n  #   - $object->name;           # plain return\n  #\n  #   These COULD\
+      \ BE capable of consulting the holder if no value is found\n  #   However, this\
+      \ code is commented out because I think this could \n  #   lead to problems\
+      \ with embeddings that rely on a property NOT being there \n  #   to test something.\n\
+      \  #   Consider as an alternative to both this \"consulting the holder\" method\n\
+      \  #   and repetitive stuffing of an embedded instance with copies of vars:\n\
+      \  #   an \"embedding creator\" method, which takes a list of properties to\
+      \ \n  #   bestow upon the new object.\n  \n  # closure templates\n  for my $field\
+      \ (qw[now cgiref DBref browserequest DBid \n      error holder embed \n    \
+      \  title wiki text revision generators]) {\n    no strict 'refs'; # allow symbol\
+      \ table manipulation\n    *$field = sub : lvalue {\n      my $self = shift;\n\
+      \      \n      # with input, set the property\n      $self->{$field} = shift\
+      \ if @_;\n      \n      # if property empty, try holder\n      #if( !$self->{$field}\
+      \ and $self->{holder} ) {\n      #  return $self->{holder}->$field;\n      #}\n\
+      \      \n      $self->{$field};\n    }\n  }\n  \n###############################################################################\n\
+      #   POD: Instance data\n  \n=head1 Instance data=\n\nUseMoo stores data that\
+      \ relates to the current page as instance data.\nThis avoids globals, lengthy\
+      \ parameter lists passed to subroutines, \nand means that it's safe to create\
+      \ further instances as embedded pages, \nfor example.\n\nHere is the list of\
+      \ data stored, in approximate order of storage:\nnow   =>  the time of the request\n\
+      cgiref=>  reference to a CGI object for HTML tag creation etc\nDBref =>  reference\
+      \ to a Database object\nbrowserequest \n      =>  a reference to the hash of\
+      \ the browse request variables \n          (instead of UseMod's &GetParam)\n\
+      DBid  =>  name of page as the database will need to see it\n\nembed =>  embedded\
+      \ page (subject to refactoring)\nholder\n      =>  for an embedded page, a reference\
+      \ to the page it is embedded within\n      \ntitle =>  name of page as the user\
+      \ should see it in the browser\nrevision\n      =>  the requested revision number\
+      \ of a page\nwiki  =>  wiki source text\ntext  =>  HTML text to be output to\
+      \ the browser\nerror =>  holds error text passed around at various times. If\
+      \ true at page display time, requests debug mode.\n\n=cut  =\n\n  ###########################################################\n\
+      \  #  Instance properties: building up text\n  # \n  # Text eventually output\
+      \ to the browser is stored as an instance variable\n  # This makes it easily\
+      \ accessible\n  # and specialized modules can access what earlier modules have\
+      \ stored (if needed)\n  \n  sub getText {\n    my $self = shift;\n    return\
+      \ unless ref $self; # this is only for instances, not classes\n    \n    return\
+      \ $self->{text};\n  }\n  \n  sub appendText {\n    my $self = shift;\n    my\
+      \ $text = shift;\n    return unless ref $self; # this is only for instances,\
+      \ not classes\n    \n    $self->{text} .= $text;\n  }\n  sub prependText {\n\
+      \    my $self = shift;\n    my $text = shift;\n    return unless ref $self;\
+      \ # this is only for instances, not classes\n    \n    $self->{text} = $text\
+      \ . $self->{text};\n  }\n  \n  ###########################################################\n\
+      \  #  User access levels\n  \n  sub compareUserGroups {\n    my ($self, $actualAbility,\
+      \ $requiredAbility) = @_;\n    return 1 if ( $actualAbility eq $requiredAbility\
+      \ );\n\n    # failsafe: what to do if the values received don't figure in the\
+      \ array?\n    # not ideal but:\n    # if actualAbility is bad, suppose user\
+      \ is LOW\n      # $actualAbility = $groups[0];\n    # if requiredAbility is\
+      \ bad, suppose actual ability is HIGH \n\n    foreach ( @{$self->getConfiguration('UserGroups')}\
+      \ ) {\n      # walk through the UserGroups array \n      # and compare current\
+      \ user and requirement to each entry\n      return 1 if ( $_ eq $requiredAbility);\n\
+      \        # we got to required ability first: user is overqualified\n      return\
+      \ 0 if ( $_ eq $actualAbility);\n        # we got to actual ability first: user\
+      \ is not up to it\n    }\n  }\n  \n###############################################################################\n\
+      #   POD: Page Constructors\n=head1 Page Constructors=\n\nThe constructor for\
+      \ Page objects isn't actually a constructor, it's a blesser, because it's given\n\
+      a reference to bless (and return the blessed instance), rather than creating\
+      \ one from nothing.\n\nThe reason for this is that the soon-to-be instance sometimes\
+      \ needs to begin loading itself with data to \nfind out what it will be. For\
+      \ example, this allows the wiki content to be loaded from the database and then\
+      \ examined \nto influence the choice of class to bless as. It could be done\
+      \ without stashing the loaded data inside \nthe hash reference, but then we'd\
+      \ have two copies of the data floating around, and this seems messy.\n\n(Other\
+      \ constructors, such as for the Database, are passed the reference of the Page\n\
+      object that is to be their owner, but more on this elsewhere.)\n\nThe creation\
+      \ of a Page object begins in the UseMooWiki package, which creates a hash reference,\
+      \ puts\nsome values in it such as the time of the request, and passes it to\
+      \ Page::chooseClass.\n\n=head2 Page::chooseClass =\nPage::chooseClass is the\
+      \ principal constructor method. It does the following:\n\n# tests each registered\
+      \ class against the browse parameters, trying to find a class whose conditions\
+      \ are satisfied\n## if a suitable class is found, it tests the user access level\
+      \ required.\n### if the user fails, the instance is blessed as WikiPage instead\
+      \ and goes to the 'AccessDenied' page\n### if the user succeeds, the instance\
+      \ is passed to the blessPage method of the suitable class.\n(The blessPage method\
+      \ will bless the instance and return it,\nbut may make its own decisions about\
+      \ what class to bless as!)\n## if chooseClass has not found a suitable class,\
+      \ it blesses the reference as PageError\n# the blessed reference is returned\n\
+      \nUseMooWiki how has an instance of some class (WikiPage, for example).\nIt\
+      \ calls makePage on this instance, which and the prints the instance's text\
+      \ property.\nThat's it!\n\n=head2 Page::blessPage =\nThis does pretty much nothing.\
+      \ It just blesses the reference.\nThe real work happens in WikiPage::blessPage,\
+      \ but Page::blessPage exists\nso it can be inherited if need be.\n\n=cut=\n\
+      \  #####################################\n  #\n  #   Page::chooseClass\n  #\n\
+      \  #   Called by UseMooWiki. Begins the process of deciding which class\n  #\
+      \   to bless the passed reference as.\n  #   Considers all the registered children\
+      \ of Page, evaluating and \n  #   testing the string propConditions for each\
+      \ one.\n  #   This is done in *reverse* order of registration: this gives later\
+      \ classes\n  #   the chance to specialize the conditions (eg RevisionPage specializes\
+      \ WikiPage).\n  #   Classes also have the chance to 'intercept' and completely\
+      \ replace handling\n  #   of a certain condition: see moo-delay.pm's WikiPageDelayed\
+      \ for an example.\n  \n  sub chooseClass {\n    my $class             = shift;\
+      \ $class = (ref $class or $class);\n    if ($class ne __PACKAGE__) { die 'Illegal\
+      \ subclass calling constructor'; }\n    my $instance          = shift; # a ref\
+      \ we will be blessing\n    my $browseParameters  = shift; # ref to hash\n  \
+      \  \n    # consider putting initDatabase here and making a PageError -\n   \
+      \ # but we lose the feature of some actions not requiring the DB (eg version)\n\
+      \    \n    ##############################\n    # Cancel\n    # catch Cancel\
+      \ button presses and clean up the parameters\n    # this could be moved to a\
+      \ class that then calls Page::chooseClass \n    # a second time with new params\n\
+      \    \n    if( $browseParameters->{Cancel} ) {\n      my %acceptableParameters\
+      \ = map { $_, '' } qw( title );\n        # may be a problem with id vs title\
+      \ params\n      foreach (keys %$browseParameters) {\n        delete $browseParameters->{$_}\n\
+      \          unless $acceptableParameters{$_};\n      }\n    }\n    \n    # dummy\
+      \ variables for testing\n    my $userStatus = 'user';\n    \n    ##############################\n\
+      \    # Class testing\n    #\n    # Consider each child class in the registered\
+      \ list\n    \n    TESTCLASSES: foreach my $consideredclass ( reverse registeredChildClasses()\
+      \ ) {\n      if( eval $consideredclass->propConditions ) { \n        # grab\
+      \ its condition statement\n        if ( $class->compareUserGroups( $userStatus,\
+      \ $consideredclass->pageAccess )) {\n          blessPage $consideredclass $instance,\
+      \ $browseParameters;\n\n          #$childclass->childcreatePage( $instance,\
+      \ $browseParameters );\n        }\n        else {\n          $$browseParameters{keywords}\
+      \ = $class->getConfiguration('AccessDenied'); \n          blessPage WikiPage\
+      \ $instance, $browseParameters;\n        }\n        last TESTCLASSES; # don't\
+      \ test anything else now we've found something\n      }\n    }\n    if (ref\
+      \ $instance eq 'HASH') {\n      # $instance is still unblessed?\n      # if\
+      \ we get here then we've not properly handled the cases\n      # PageError will\
+      \ tell us what went wrong\n      blessPage PageError $instance, \n        q[No\
+      \ page type matched the parameters passed by the browser.];\n    }\n    \n \
+      \   \n  }\n  #####################################  \n  # Page::blessPage\n\
+      \  # \n  # This is the generic blessing method for Page child classes.\n  #\
+      \ This is never called directly, but some classes that do nothing\n  # special\
+      \ here may inherit it.\n  \n  sub blessPage {\n    my $class   = shift; $class\
+      \ = (ref $class or $class);\n    my $instance = shift; # a ref to bless\n\n\
+      \    bless $instance, $class;\n  }\n  \n  ###########################################################\n\
+      \  #   Making output text\n  #   These methods produce HTML text for output\n\
+      \  #\n  #   makePage \n  #     The main method. \n  #     Calls makePageContent\
+      \ and wrapPageContent to make all the html.\n  #     Then adds HTTP headers\
+      \ to the front of the html text\n  #\n  #     makePageContent\n  #       creates\
+      \ the dynamically-generated content and stores it\n  #\n  #     wrapPageContent\n\
+      \  #       wraps the stored text in a template, including \n  #       link footer\
+      \ and debug footer\n  \n  # consider more levels of OO here:\n  #  Page\n  #\
+      \   +- HtmlPage\n  #       +- TemplatedPage\n  \n  sub makePage {\n    my $self\
+      \ = shift; # should verify $self is an instance if we're really being clean\n\
+      \    \n    $self->makePageContent(); # create the dynamic stuff\n    $self->wrapPageContent();\
+      \ # wrap it up in template and header and footer etc\n    \n    # make HTTP\
+      \ header using the CGI object header method\n    my @headerProperties = ( -Content_length\
+      \ => length $self->text );\n    if (  1  ) { # if charset set \n      push @headerProperties,\
+      \ -type => 'text/html charset=$HttpCharset';\n    }\n    if (  0  ) { # if cookie\
+      \ need to be set\n      push @headerProperties, -cookie => 'cookie!!!';\n  \
+      \  }\n    $self->prependText( $self->cgiref->header( @headerProperties ));\n\
+      \    return;\n  }\n\n  sub makePageContent {\n    my $self = shift;\n    \n\
+      \    $self->appendText(\"Default Page object\\n\"); # we should never actually\
+      \ be here\n    return;\n  }\n  \n  sub makePageFooter {\n    # The generic footer:\
+      \ a bar of site-wide links and a note about the engine.\n    \n    my $self\
+      \ = shift;\n\n    my $text ;\n    \n    my $urlroot = $self->getScriptName;\n\
+      \    \n    $text .= $self->cgiref->p(\n      join ' | ',\n      \n      # this\
+      \ soup will be simplified with standard footer links system\n      $self->cgiref->a({-href=>$urlroot\
+      \ .'?' . $self->getConfiguration('RecentChanges')},'Recent Changes'),\n    \
+      \  $self->cgiref->a({-href=>$urlroot .'?' . $self->getConfiguration('HomePage')},'Home\
+      \ Page'),\n      ( ( $self->getConfiguration('DebugMode') or $self->error )\
+      \ \n        and $self->cgiref->a({-href=>$urlroot .'?action=classreport'},'Class\
+      \ Listing' ) )\n      \n      );\n    \n    $text .= $self->cgiref->p(\n   \
+      \   q[Footer Text: this site runs Moo! (And it's great!)</p>]);\n    \n    $self->appendText($text);\n\
+      \    return;   \n  }\n  sub makePageDebugListing {\n    my $self = shift;\n\
+      \    \n    # some local copies of references to simplify the arrow soup\n  \
+      \  my $tagmaker = $self->cgiref; # CGI object\n    my $browserequest = $self->browserequest;\
+      \ # the hash of browser request params\n    \n    my $text = join '',\n    \
+      \  $tagmaker->h1('Debug information'),\n      $tagmaker->p(\"Class is $self\"\
+      ),\n\n      $tagmaker->h2('Browser parameters'),\n      $tagmaker->ul(\n   \
+      \      $tagmaker->li([ map {\"$_ => $browserequest->{$_}\"} keys %$browserequest\
+      \ ])\n         ), # making an anonymous list makes li() distribute over it\n\
+      \n      $tagmaker->h2('Instance data'),\n      # note that we cheat and access\
+      \ instance properties directly\n      $tagmaker->ul(\n         $tagmaker->li([\
+      \ map( {\n            my $output = \"$_ => $self->{$_}\";\n            ref($self->{$_})\
+      \ eq 'HASH' and\n              $output .= \"; hash:  \" . join ',',  %{$self->{$_}};\n\
+      \            $output;\n           } grep !/text|wiki/, keys %$self )])\n   \
+      \      ), # we don't want to print $self->{text} or {wiki}\n      ;\n      \
+      \   \n      if( $self->generators ) {\n        $text .= join '',\n         \
+      \ $tagmaker->h2('Generator parameters'),\n          $tagmaker->ul(\n       \
+      \     map { qq[<LI> @{$_} </LI>] } @{$self->generators}\n        );\n      }\n\
+      \    $self->appendText(qq[<DIV class=\"debug\">$text</DIV>]);\n    \n  }\n \
+      \ sub wrapPageContent {\n    my $self = shift;\n    \n    # gets a template,\
+      \ splits and wraps the text generated so far inside it.\n    # a default template\
+      \ exists in this script\n    \n    # at this point, $self->{text} should contain:\n\
+      \    # * the rendered wiki text when we get here\n    # * any 'magic' content\n\
+      \    \n    my $template  = $self->getTemplate;\n    my $pagetitle = ($self->titlePrefix\
+      \ . $self->title or $self->propPageTitle);\n    \n    # consider doing all these\
+      \ on $splittext[0]\n    for ($template) {\n      s[%styles%][$self->getStyles]e;\n\
+      \      s[%link%][]; # for now\n      s[%windowtitle%]{join '' ,\n        $self->getConfiguration('SiteName')\
+      \ , ' - ' , \n        $pagetitle}e; \n      s[%title%]{$pagetitle};\n      \
+      \  #$self->titlePrefix . $self->title or $self->propPageTitle}e; # check precedence\
+      \ here!\n      s[%bodyclass%]{\n        $self->bodyCSSclass}e;# not yet fully\
+      \ implemented\n    }\n    my @splittext = split m[%wiki%|%footer%], $template;\n\
+      \    \n    $self->prependText( $splittext[0] );\n    $self->appendText( $splittext[1]\
+      \ );\n    $self->makePageFooter();\n    $self->makePageDebugListing()\n    \
+      \   if $self->getConfiguration('DebugMode') or $self->error;\n       # debug\
+      \ mode can be requested site-wide (by the developer)\n       # or by the script\
+      \ if something goes wrong.\n    $self->appendText( $splittext[2] );\n\n  }\n\
+      }\n\n###############################################################################\n\
+      #\n#   class WikiPage\n#\n#   Base class for wiki pages. \n#   should:\n#  \
+      \   load and parse wiki text\n#     determine if extra elements are needed:\
+      \ preview, diff, etc\n\n{\n  package WikiPage;\n  \n  ###########################################################\n\
+      \  #  Static\n  \n  our @ISA = Page;\n  our @registered;\n  \n  WikiPage->register();\n\
+      \  \n  ###########################################################\n  #   WikiPage\
+      \ Class conditions\n  #\n  \n  sub propConditions { q[\n    !%$browseParameters\
+      \ \n    or $browseParameters->{keywords}\n    or $browseParameters->{action}\
+      \ eq 'browse'\n    ] }\n    # wiki.cgi - no parameters at all\n    # wiki.cgi?pagename\
+      \ (works out as {keywords}=pagename)\n    # wiki.cgi?action=browse\n    \n \
+      \ ###########################################################\n  #  WikiPage\
+      \ Class defaults\n  #\n  sub thisPageTools   { 'Edit this page', 'View other\
+      \ revisions' }\n=pod  =\nhow does this work?\neg:\nOldRevision page needs to\
+      \ change 'Edit this page' and \nadd 'view current revision', but keep the last\
+      \ one\n\npossibly use a pseudohash, so there is name access and also an order\
+      \ built-in?\n\n=cut=\n\n  sub displayTitleFromURL {\n    my $class = shift;\n\
+      \    my $title = shift;\n    \n    $title =~ s/_/ /g;\n    \n    return $title;\n\
+      \    \n  }\n  \n  \n  ###########################################################\n\
+      \  #  Class constructor\n  #\n  #  WikiPage::blessPage\n  \n  sub blessPage\
+      \ {\n    my $class   = shift; $class = (ref $class or $class);\n    my $instance\
+      \ = shift; # a ref we will be blessing\n    my $browseParameters = shift; #\
+      \ ref to hash\n    \n    bless $instance, $class;\n    \n    ##################\n\
+      \    # get the page id and title\n    \n    $instance->{DBid} = $browseParameters->{keywords}\
+      \ \n      || $browseParameters->{id}\n      || $class->getConfiguration('HomePage');\n\
+      \    \n    $instance->{title} = $class->displayTitleFromURL($instance->{DBid});\
+      \ # but translated to human\n      \n    #unless  ( $instance->{DBid} ) {\n\
+      \    #  # no page specified? we want the HomePage\n    #  $instance->{title}\
+      \ = $class->getConfiguration('HomePage');\n    #  $instance->{DBid} = $instance->{title};\
+      \ # but translated to DB\n    #}\n    \n    ##################\n    # Database\
+      \ object creation\n    # Attempt to create a DB object (the Database->new method\
+      \ will initialize the DB if needed)\n    # Then load text from the database,\
+      \ handle errors and mishaps\n    # UNLESS the instance already holds some wiki\
+      \ text\n    # (it will have been placed there by something embedding this instance\
+      \ eg Preview)\n    \n    unless ( $instance->{wiki} ) {\n      # pass the page\
+      \ object to the Database constructor\n      # 'new' is a REALLY BAD NAME to\
+      \ use!\n      # the constructor will return an object or an error string\n \
+      \     my $database = DatabaseMono->new($instance);\n      \n      # new() has\
+      \ failed to create a DB object?\n      ref $database or do {\n        my $errormessage\
+      \ = $database\n          || q[No details supplied.];\n        blessPage PageError\
+      \ $instance, qq[Database initialization error: $errormessage];\n        return;\
+      \  \n      }; \n      \n      $instance->{DBref} = $database; # only put it\
+      \ in here once we know it's ok\n      $database->loadWikiFromDB();\n      \n\
+      \      # loadWikiFromDB() has stored an error message?\n      $instance->error\
+      \ and do {\n        blessPage PageError $instance, \n          q[Error loading\
+      \ the page from the database.];\n        return;  \n      };\n      \n     \
+      \ # the wiki text stored by loadWikiFromDB() is blank?\n      $instance->wiki\
+      \ =~ /^\\s*$/ and do {\n        $instance->DBid( Page->getConfiguration('NotFoundPg'));\n\
+      \        $database->loadWikiFromDB();\n      };\n    }\n    \n    \n    ##################\n\
+      \    # Generator request handling\n    # handle MAGIC\n    #\n    \n    if ($class\
+      \ eq __PACKAGE__ or 1 ) { \n      \n      # only calls in WikiPage use Generators\n\
+      \      # consider the cleaner way of having WikiPage abstract \n      # and\
+      \ creating a WikiPageDisplay class\n      \n      # set up the array ref unless\
+      \ already there\n      $instance->generators = []\n        unless $instance->generators;\n\
+      \      \n        # each entry in this array is itself an array, holding:\n \
+      \         # [0] - the name of the module\n          # [1] - the parameter line\n\
+      \      \n      # make a list of lowercased module names, with link to the real\
+      \ name\n      my %registeredGenerators = map { lc $_, $_ } Generator->registeredChildClasses;\n\
+      \      \n      my @magicrequestlines = $instance->wiki =~ m[^\\#MAGIC\\s+(.*)\\\
+      s+\\n]mg;\n      \n      MAGICLINES: foreach my $line ( @magicrequestlines )\
+      \ {\n        # separate module from params\n        my ($modulename, $parameters)\
+      \ = split /\\s+/, $line, 2;\n        \n        # discard a line that does not\
+      \ correspond to a Generator module in this script\n        # and get the REAL\
+      \ module name from the hash (wiki text might have wrong case)\n        $modulename\
+      \ = $registeredGenerators{lc qq[Generator$modulename]} or \n          next MAGICLINES;\n\
+      \        \n        # checking output\n        $instance->wiki .= qq[REAL GENERATOR:'$modulename'];\n\
+      \        \n        push @{$instance->generators}, [$modulename, $parameters];\n\
+      \        \n        #$modulename = qq[Generator$modulename];\n        #$magicrequests{lc\
+      \ qq[Generator$key]} = $value;\n        \n        \n      }\n      \n      #\
+      \ %magicrequests = { lowercased module name from wiki, rest of magic line }\n\
+      \      # %registeredGenerators = { lowercased registered class, real name of\
+      \ class }\n      \n      \n      #foreach my $request (keys %magicrequests)\
+      \ {\n      #  \n      #  $registeredGenerators{$request} and do {\n      # \
+      \   $instance->wiki .= qq[REAL GENERATOR:'$request'];\n      #    \n      #\
+      \  }\n      #  \n      #  \n      #}\n      #\n      #${$instance->generators}{foo}\
+      \ = 'bnar' ;\n      \n      \n      #push @{$instance->generators}, 'foo';\n\
+      \      \n      # REPORT \n      \n      \n    }\n    # strip initial #MAGIC\
+      \ lines, whatever the situation\n    $instance->wiki =~ s/\\A(\\#MAGIC.*\\n)+//m;\n\
+      \    \n    \n    # parse beginning of wiki text for ^#COMMAND eg #MAGIC or #REDIRECT\n\
+      \    # if  #REDIRECT:\n      # change $instance = { title }\n      # and store\
+      \ instance = { oldtitle }\n    # if #MAGIC:\n      # neuter the MAGIC parameters\
+      \ for security aspects\n      # stash the MAGIC parameters in %$browseParameters\
+      \ \n      \n    # look at the registered Generator Modules \n    \n  }\n   \
+      \ \n  #####################################  \n  # WikiPage content making \
+      \ \n  \n  sub setupGenerators {\n    my $self = shift;\n    \n    # This method\
+      \ draws up a list of any requested Generated Content Modules.\n    # These can\
+      \ be requested:\n    # - by the name of the page itself, eg 'RecentChanges'\n\
+      \    # - by the wiki content, eg '#MAGIC (modulename)' at the head of markup\n\
+      \    \n=pod    =\n    my $id = $self->DBid;\n    \n    # Check the configuration\
+      \ property BuiltInGenerators\n    foreach my $foo ( values %{Page->getConfiguration('BuiltInGenerators')}\
+      \ ) {\n      #$id eq $foo and push \n      \n    }\n    \n=cut=\n\n    #return\
+      \ 'foo';\n  }\n  \n  \n  sub makePageContent {\n    my $self = shift;\n    \n\
+      \    my $text;\n    \n    $self->runGenerators\n      if $self->generators;\n\
+      \      \n    $text .= $self->wiki;\n    \n      \n    $self->appendText($text);\n\
+      \    \n    \n    return;\n  }\n  \n  sub runGenerators {\n    my $self = shift;\n\
+      \    \n    for my $generator (@{$self->generators}) {\n      $self->wiki .=\
+      \ $generator->[0]->generateText($self);\n      \n    }\n    \n  }\n  \n  \n\
+      \  sub makePageFooter {\n    my $self = shift;\n    my $text ;\n    \n    #\
+      \ stash some things locally to avoid many lookups\n    my $tagmaker = $self->cgiref;\
+      \ # copy of ref to CGI object\n    my $id = $self->DBid; # remember to mangle\
+      \ spaces etc\n    my $urlroot = $self->getScriptName;\n    \n    $text = $tagmaker->p(\n\
+      \      join ' | ',\n      $tagmaker->a({-href=>$urlroot . \"?action=edit&id=$id\"\
+      },'Edit this page'),\n      $tagmaker->a({-href=>$urlroot . \"?action=history&id=$id\"\
+      },'View other revisions'),\n      );\n    $self->appendText($text);\n    $self->SUPER::makePageFooter;\n\
+      \    return;   \n  }\n}\n\n###############################################################################\n\
+      #\n#   class RevisionPage\n#\n#   Display an old revision of a page\n#   how\
+      \ this class works really depends on the DB implementation\n#\n#   This should\n\
+      #   * alter the \"edit\" link\n#   * prefix the text with a notice giving the\
+      \ revision number\n\n{\n  package RevisionPage;\n  \n  our @ISA = WikiPage;\n\
+      \  RevisionPage->register();\n  \n  ###########################################################\n\
+      \  #  Class conditions\n  \n  sub propConditions { q[$browseParameters->{revision}\
+      \ ] }\n  \n  ###########################################################\n \
+      \ #   RevisionPage::blessPage\n  #\n  #   Check requested revision is a valid\
+      \ number\n  \n  sub blessPage {\n    my $class   = shift; $class = (ref $class\
+      \ or $class);\n    my $instance = shift; # a ref we will be blessing\n    my\
+      \ $browseParameters = shift; # ref to hash\n    \n    $instance->{revision}\
+      \ = $browseParameters->{revision} ;\n    \n    unless ( $instance->{revision}\
+      \ =~ m/^\\d+$/ ) {\n        blessPage PageError $instance, \n          qq['$instance->{revision}'\
+      \ is not a valid revision number.];\n        return;  \n    }\n    \n    $class->SUPER::blessPage($instance,\
+      \ $browseParameters); # will bless\n    \n    # now check with the dabase that\
+      \ the number exists\n    \n  }\n  \n  ###########################################################\n\
+      \  #  RevisionPage::Content\n  #\n  sub makePageContent {\n    my $self = shift;\n\
+      \    \n    my $revision = $self->browserequest->{revision};\n    my $text =\
+      \ join '',\n      '<p><em>',\n      \"Showing revision $revision\",\n      '</em></p>';\n\
+      \      \n    $self->appendText($text);\n    \n    $self->SUPER::makePageContent;\n\
+      \      \n  }\n}\n\n###############################################################################\n\
+      #\n#   class WikiPageHistory\n#\n#   Display the page history: the list of revisions\n\
+      #   how this class works really depends on the DB implementation\n#\n#   This\
+      \ should\n\n{\n  package WikiPageHistory;\n  \n  our @ISA = Page;\n  WikiPageHistory->register();\n\
+      \  \n  ###########################################################\n  #  Class\
+      \ conditions\n  \n  sub propConditions { q[$browseParameters->{action} eq 'history'\
+      \ ] }\n  \n  ###########################################################\n \
+      \ #  Class defaults\n  \n  sub titlePrefix {q[History of ]}\n  \n \n  #####################################\
+      \  \n  # WikiPageHistory::blessPage\n  sub blessPage {\n    my $class   = shift;\
+      \ $class = (ref $class or $class);\n    my $instance = shift; # a ref we will\
+      \ be blessing\n    my $browseParameters = shift;\n  \n    unless ( $$browseParameters{id}\
+      \ ) {\n      # no id given! Error!\n      blessPage PageError $instance,\n \
+      \       q[No id parameter given. Don't know which page's history to display.];\n\
+      \      return;\n    }\n    \n    $instance->{title} = ( $$browseParameters{id}\
+      \ ); # move up!\n      \n    bless $instance, $class;\n    return;\n    }\n\
+      \    \n  ###########################################################\n  #  Content\n\
+      \  #  WikiPageHistory::makePageContent\n  sub makePageContent {\n    my $self\
+      \ = shift;\n    \n    my $revision = $self->browserequest->{revision};\n   \
+      \ my $text = join '',\n      '<p><em>',\n      \"History\",\n      '</em></p>';\n\
+      \      \n    $self->appendText($text);\n    \n  }\n}\n\n\n###############################################################################\n\
+      #\n#   class RecentChangesPage\n#\n# consider keeping this \n# as it's a lot\
+      \ easier than going through config in setupGenerators\n\n{\n  package RecentChangesPage;\n\
+      \  \n  our @ISA = WikiPage;\n  RecentChangesPage->register();\n  \n  ###########################################################\n\
+      \  #  Class conditions\n  #\n  # wiki pages have wiki.cgi?pagename or wiki.cgi/pagename\n\
+      \  # this works out as {keywords}=pagename or $ENV{PATH_INFO}\n  \n  #sub propConditions\
+      \ { q[$browseParameters->{keywords} eq 'RecentChangesPage'] }\n  \n  sub propConditions\
+      \ { q[$browseParameters->{keywords} eq $class->getConfiguration('RecentChanges')]\
+      \ }\n  \n  #####################################  \n  # RecentChangesPage::blessPage\n\
+      \  sub blessPage {\n    my $class   = shift; $class = (ref $class or $class);\n\
+      \    my $instance = shift; # a ref we will be blessing\n    my $browseParameters\
+      \ = shift;\n    \n    bless $instance, $class;\n    \n    $instance->generators\
+      \ = []\n      unless $instance->generators;\n    \n    push @{$instance->generators},\
+      \ ['GeneratorRecentChanges', ''];\n    \n    $instance->SUPER::blessPage($instance,$browseParameters);\n\
+      \    \n  }\n  \n  ###########################################################\n\
+      \  #  RecentChangesPage::Content#\n=pod  =\n  sub makePageContent {\n    \n\
+      \    my $self = shift;\n    my $text = join '',\n      '<div class=\"rc\">',\n\
+      \      $self->DBref->fetchRClist,\n      '</div>';\n    \n    $self->SUPER::makePageContent;\n\
+      \    \n    $self->appendText($text);\n    return;\n  }\n=cut  =\n}\n\n###############################################################################\n\
+      #\n#   class WikiAdmin\n#\n#   just some generic admin page to figure out how\
+      \ to handle user permissions\n\n\n{\n  package WikiAdmin;\n  \n  our @ISA =\
+      \ Page;\n  WikiAdmin->register();\n  \n  ###########################################################\n\
+      \  #  Class conditions\n  sub propConditions { q[$$browseParameters{action}\
+      \ eq 'admin'] }\n  sub pageAccess { 'admin' }\n  \n  #####################################\
+      \  \n  # WikiAdmin::blessPage\n  sub blessPage {\n    my $class   = shift; $class\
+      \ = (ref $class or $class);\n    my $instance = shift; # a ref we will be blessing\n\
+      \    $instance->{title} = 'An admin page';\n    \n    bless $instance, $class;\n\
+      \    }\n  \n    \n  ###########################################################\n\
+      \  #  Content\n  sub makePageContent {\n    \n    my $self = shift;\n    \n\
+      \    $self->appendText(\"An admin page\");\n  }\n  \n}\n\n###############################################################################\n\
+      #\n#   class WikiPageSave\n#\n\n{\n  package WikiPageSave;\n  \n  our @ISA =\
+      \ Page; # is not WikiPage because it doesn't handle reading the DB\n  WikiPageSave->register();\n\
+      \  \n  ###########################################################\n  #  Class\
+      \ conditions\n  sub propConditions { q[$$browseParameters{Save} eq 'Save'] }\n\
+      \  \n  #####################################  \n  # WikiPageSave::blessPage\n\
+      \  sub blessPage {\n    my $class   = shift; $class = (ref $class or $class);\n\
+      \    my $instance = shift; # a ref we will be blessing\n    my $browseParameters\
+      \ = shift;\n    \n    # disallow creation of the sample link\n    if ( $browseParameters->{title}\
+      \ eq $class->getConfiguration('SampleLink') ) {\n      blessPage PageError $instance,\n\
+      \        q[That was just a link to show you how it's done. You can't create\
+      \ this page!];\n        # even smarter would be auto-wipe it after x days\n\
+      \      return;\n    }\n    \n    $instance->{wiki} = ( $browseParameters->{text}\
+      \ ); \n    \n    # disallow spam text\n    if ( $instance->{wiki} =~ m/spam/\
+      \ ) {\n      blessPage PageError $instance,\n        q[Some of the text you\
+      \ entered contained phrases that matched our Spam Blacklist.];\n      return;\n\
+      \    }\n   \n    # disallow blank page\n    if ( $instance->{wiki} =~ m/^\\\
+      s*$/ ) {\n      blessPage PageError $instance,\n        q(Please don't save\
+      \ a blank page. To delete a page, mark it with \"[[Legacy:DeletedPage|DeletedPage]]\"\
+      );\n      return;\n    }\n    \n    # also disallow saving of NewPageEdit text\
+      \ unchanged\n    \n    $instance->{title} = ( $browseParameters->{title} );\
+      \ \n    \n    bless $instance, $class;\n  }\n=pod=\npage save is a little problematic.\n\
+      \nembedding approach: \n* makePageContent creates an embedding. \n* This allows\
+      \ a \"save message\" which could later on become a spellchecker.\n* unfortunately,\
+      \ we don't get the WikiPage footer \n  (unless we hack around and have this\
+      \ makepageFooter() call WikiPage->makepageFooter(),\n  which is hard-coding\
+      \ a class...\n  though we *COULD* call \n  $myembedding->makepageFooter()\n\
+      \  which is a nice way round it... nice we have access to a WikiPage class via\
+      \ the embedding\n  that means we have to stash the embedding in instance data...\n\
+      \  $instance->{embedded} = $myembedding;\n  so we can grab it later\n\nrecasting\
+      \ approach\n* blessPage blesses as a WikiPage\n* no further class content\n\
+      * unfortunately, we don't get the save message\n\n  #sub makePage {\n    # override\
+      \ Page\n    \n    #doPost in some way\n    \n    #check for edit conflict\n\
+      \    #or should that be done at the new() stage?\n    \n    # reset title of\
+      \ $self\n    # call make header\n      \n    # now display the result\n    my\
+      \ %EmbeddedPageVariables = ... \n      # recreate page variables\n    \n   \
+      \   # create a new page object\n      # note: can join the new() tree at WikiPage!\n\
+      \    \n    $embeddedPage->makePage();\n    my $embeddedText $embeddedPage->getText;\n\
+      \    $self->appendText($embeddedText);\n=cut    =\n    \n  #}\n  ###########################################################\n\
+      \  #  Content\n  #  WikiPageSave::makePageContent\n  sub makePageContent {\n\
+      \    \n    my $self = shift;\n    my $text;\n    \n    $self->DBref( DatabaseMono->new($self)\
+      \ ); # create a DB instance and store ref\n    $self->DBref->saveWikiToDB();\
+      \ # save wiki text\n    \n    \n    # save message\n    $text = q[<DIV class=\"\
+      savemessage\">Your text has been saved and the result of your edit is shown\
+      \ below. Thanks for editing!</DIV>];\n      # consider making this text a config\
+      \ property, \n      # or better, stored in a wiki page\n      # this could later\
+      \ do things like spellchecking\n      \n      # add a \"clear message\" link.\n\
+      \      \n    # embed an instance of WikiPage to make the preview\n    \n   \
+      \ # fake some browser parameters\n    my %embeddedParameters;\n    $embeddedParameters{keywords}\
+      \ = $self->title;\n    \n    # create the instance here\n    #my $displayInstance\
+      \ = {};\n    \n    # for later footer... stash the embedded instance WITHIN\
+      \ our main instance\n    $self->{embed} = {}; # for OO niceness, should obtain\
+      \ an lvalue with a method\n    my $displayInstance = $self->{embed};\n    \n\
+      \    # give the embedding some of the references and data we have\n    $displayInstance->{holder}\
+      \  = $self;\n    $displayInstance->{cgiref}  = $self->cgiref;\n    $displayInstance->{DBref}\
+      \   = $self->DBref;\n    $displayInstance->{wiki}    = $self->wiki; # give it\
+      \ the save text\n    \n    blessPage WikiPage $displayInstance, \\%embeddedParameters;\
+      \ # bless it\n    $displayInstance->makePageContent; # have it work its stuff\n\
+      \    \n    # now retrieve the text and put it into the \"real\" page\n    $text\
+      \ .= $displayInstance->text;\n    $self->appendText($text);\n    \n    return;\n\
+      \    \n  }\n  sub makePageFooter {\n    my $self = shift;\n    \n    # some\
+      \ convoluted stuff to get the makePageFooter() of the embedded display instance\n\
+      \    # blank the text, get the embedding to make a footer and then grab it back.\n\
+      \    # this could be made a lot cleaner if makePageFooter() could detect context\n\
+      \    # and return text if defined wantarray, and embed text if not.\n    \n\
+      \    $self->embed->text('');\n    $self->embed->makePageFooter();\n    \n  \
+      \  my $text = $self->embed->text;\n    $self->appendText($text);\n    \n   \
+      \ return;   \n    \n    \n  }\n}\n\n###############################################################################\n\
+      #\n#   class WikiEdit\n#\n#   Displays a page for editing by the user.\n#  \
+      \ An instance of this class checks wiki text stored in itself before \n#   accessing\
+      \ the database: text may have been placed there already \n#   (eg WikiEditPreview)\n\
+      \n{\n  package WikiEdit;\n  \n  our @ISA = Page; # might need to be child of\
+      \ WikiPage\n  WikiEdit->register();\n  \n  ###########################################################\n\
+      \  #  Class conditions\n  sub propConditions { q[$$browseParameters{action}\
+      \ eq 'edit'] }\n  \n  ###########################################################\n\
+      \  #  Class defaults\n  sub titlePrefix {q[Editing ]}\n  \n  #####################################\
+      \  \n  # WikiEdit::blessPage\n  sub blessPage {\n    # this is an inheritable\
+      \ constructor\n    my $class   = shift; $class = (ref $class or $class);\n \
+      \   my $instance = shift; # a ref we will be blessing\n    my $browseParameters\
+      \ = shift;\n  \n    bless $instance, $class;\n    \n    $instance->{title} =\
+      \ $browseParameters->{id}; \n    \n    unless ( $instance->{title} ) {\n   \
+      \   # no page title given! Error!\n      blessPage PageError $instance,\n  \
+      \      q[No 'id' parameter given. Don't know which page to edit.];\n      return;\n\
+      \    }\n    \n    ##################\n    # initialize DB, load text from it,\
+      \ handle errors and mishaps\n    # UNLESS the instance already holds some wiki\
+      \ text\n    # (it will have been placed there by something embedding this instance)\n\
+      \    \n    unless ( $instance->wiki ) {\n      my $database = $instance->{DBref}\
+      \ = DatabaseMono->new($instance);\n      \n      # new() has failed to create\
+      \ a DB object?\n      ref $database or do {\n        blessPage PageError $instance,\
+      \ \n          q[Unable to load the page database or create one.];\n        return;\
+      \  \n        }; \n      \n      $database->loadWikiFromDB();\n      \n     \
+      \ # loadWikiFromDB() has stored an error message?\n      $instance->error and\
+      \ do {\n        blessPage PageError $instance, \n          q[Error loading the\
+      \ page from the database.];\n        return;  \n      };\n      \n      # the\
+      \ wiki text stored by loadWikiFromDB() is blank?\n      $instance->wiki =~ /^\\\
+      s*$/ and do {\n        $instance->title( Page->getConfiguration('NewPageEdit'));\n\
+      \          # TODO: correct value must be restored for save!\n        $database->loadWikiFromDB();\n\
+      \      };\n    }\n  }\n    \n  ###########################################################\n\
+      \  #   Content\n  #   WikiEdit::makePageContent\n  #\n  #   wiki content is\
+      \ already placed in the instance property\n  \n  sub makePageContent {\n   \
+      \ \n    my $self = shift;\n    \n    # this needs major work inserting variables\
+      \ and making better use of CGI methods\n    my $editbox = << \"EOT\";\n<div\
+      \ class=\"edit\">\n<form method=\"post\" action=\"@{[$self->getScriptName]}\"\
+      \ \n  enctype=\"application/x-www-form-urlencoded\">\n<input type=\"hidden\"\
+      \ name=\"title\" value=\"@{[$self->title]}\">\n<input type=\"hidden\" name=\"\
+      oldtime\" value=\"\">\n<input type=\"hidden\" name=\"oldconflict\" value=\"\
+      0\">\n<textarea name=\"text\" \nrows=\"15\" cols=\"65\" style=\"width: 100%;\"\
+      \ accesskey=\"E\"\ntabindex=\"1\"  wrap=\"virtual\">\n@{[$self->wiki]}\n</textarea>\n\
+      \n<p>\n<b>Summary:</b>\n  <input type=\"text\" name=\"summary\" value=\"*\"\
+      \ size=\"60\" maxlength=\"200\" tabindex=\"2\"><br />\n  <input type=\"checkbox\"\
+      \ name=\"recent_edit\" value=\"on\">\nThis change is a minor edit. (Select this\
+      \ only for small changes like spelling or layout fixes.)\n</p>\n\n<p>\n<input\
+      \ type=\"submit\" name=\"Save\" value=\"Save\" class=\"editbutton\" />\n<input\
+      \ type=\"submit\" name=\"Cancel\" value=\"Cancel\" class=\"editbutton\" />\n\
+      <input type=\"submit\" name=\"Preview\" value=\"Preview\" class=\"editbutton\"\
+      \ />\n\n<input type=\"hidden\" name=\".cgifields\" value=\"recent_edit\"></form>\n\
+      </p>\n\n</div>\nEOT\n    #$editbox .= $UseMooWiki::q->submit(-name=>'Preview',\
+      \ -value=>'Preview', -class=>\"editbutton\"), \"\\n\";\n    \n    $self->appendText($editbox);\n\
+      \    return;\n    \n  }\n}\n\n###############################################################################\n\
+      #\n#   class WikiEditPreview\n#\n#   Displays the Preview of a page.\n#   Uses\
+      \ the makePageContent() method of its parent, WikiEdit to make the edit\n# \
+      \  box, and then creates an embedded instance to display the preview \n#   (the\
+      \ instance is force-fed the wikisource and then fooled into thinking \n#   it\
+      \ is a real page).\n#\n#   BEWARE:\n#   Due to weirdness, Preview uses 'title'\
+      \ and Edit uses 'id'.\n#   This is a UseModWiki legacy glitch. According to\
+      \ Cliff it's a quirk :)\n\n{\n  package WikiEditPreview;\n  \n  our @ISA = WikiEdit;\n\
+      \  WikiEditPreview->register();\n  \n  ###########################################################\n\
+      \  #  Class conditions\n  sub propConditions { q[$$browseParameters{Preview}\
+      \ eq 'Preview'] }\n  \n  ###########################################################\n\
+      \  #  Class defaults\n  sub titlePrefix {q[Previewing ]}\n  \n  #####################################\
+      \  \n  #   WikiEditPreview::blessPage\n  #\n  #   Loads up the instance with\
+      \ the title and the wiki text\n  #   for makePageContent to find.\n  \n  sub\
+      \ blessPage {\n    my $class   = shift; $class = (ref $class or $class);\n \
+      \   my $instance = shift; # a ref we will be blessing\n    my $browseParameters\
+      \ = shift;\n    \n    bless $instance, $class;\n    \n    $instance->{wiki}\
+      \  = ( $browseParameters->{text} ); \n    $instance->{title} = ( $browseParameters->{title}\
+      \ );\n    \n    unless ( $instance->{title} ) {\n      # no page title given!\
+      \ Error!\n      # not even sure it's POSSIBLE to get here, since these are POST\
+      \ params.\n      blessPage PageError $instance,\n        q[No 'title' parameter\
+      \ given. Don't know which page to preview.];\n      return;\n    }\n  }\n  \n\
+      \  \n  ###########################################################\n  #  Content\n\
+      \  #  WikiEditPreview::makePageContent\n  sub makePageContent {\n    \n    my\
+      \ $self = shift;\n    \n    # edit box and buttons\n    $self->SUPER::makePageContent();\n\
+      \    \n    # embed an instance of WikiPage to make the preview\n    my %embeddedParameters;\n\
+      \    $embeddedParameters{keywords} = $self->title;\n    # $embeddedParameters{embed}\
+      \ = 1;\n      # this is probably not needed. \n      # Setting $previewInstance->{wiki}\
+      \ should suffice to indicate\n      # that beatify is given an embedded instance\n\
+      \    \n    my $previewInstance = {};\n    \n    # give the embedding some of\
+      \ the references and data we have\n    $previewInstance->{holder}  = $self;\n\
+      \    $previewInstance->{cgiref}  = $self->cgiref;\n    $previewInstance->{wiki}\
+      \    = $self->wiki;\n    \n    blessPage WikiPage $previewInstance, \\%embeddedParameters;\n\
+      \    \n    # Preview does not need a database, but some previed pages might.\n\
+      \    # consider making it the responsibility of page objects to check\n    #\
+      \ consider making the DBref accessor create a DB if none exists\n    $previewInstance->{DBref}\
+      \   = DatabaseMono->new($previewInstance);\n    \n    $previewInstance->makePageContent;\n\
+      \    \n    my $previewText = $previewInstance->getText;\n    \n    $self->appendText('<div\
+      \ class=\"preview\">');\n    $self->appendText($previewText);\n    $self->appendText('</div>');\n\
+      \    \n  }\n}\n\n###############################################################################\n\
+      #\n#   class WikiVersion\n#   Displays the version of the script\n\n{\n  package\
+      \ WikiVersion;\n  \n  our @ISA = Page;\n  WikiVersion->register();\n\n  ###########################################################\n\
+      \  #  Class conditions\n  sub propConditions { q[$$browseParameters{action}\
+      \ eq 'version'] }\n  sub propPageTitle  { q[Version information] }\n  \n  ###########################################################\n\
+      \  #  Content\n  sub makePageContent {\n    \n    my $self = shift;\n    \n\
+      \    $self->appendText(q[<p>UseMOO version number</p>]);\n    return;\n  }\n\
+      }\n\n###############################################################################\n\
+      #\n#   class PageError (non-registering)\n#\n#   The special error-reporting\
+      \ page. \n#   This displays an error message and forces debug output.\n\n{\n\
+      \  package PageError;\n  \n  our @ISA = Page;\n  \n  ###########################################################\n\
+      \  #  Class conditions\n  sub pageAccess    { 'user' } # shouldn't be called,\
+      \ but anyway...\n  sub propPageTitle { q[Error page] }\n  \n  #####################################\
+      \  \n  # PageError::blessPage\n  sub blessPage {\n    my $class     = shift;\
+      \ $class = (ref $class or $class);\n    my $instance  = shift; # a ref we will\
+      \ be blessing\n    my $message   = shift; # error message passed to us\n   \
+      \ \n    $instance->{error} = $message ||\n      q[Sorry, the lazy programmer\
+      \ hasn't even provided a decent error message to report!];\n      \n    $instance->{title}\
+      \ = ''; # forces use of propPageTitle later.\n   \n    bless $instance, $class;\n\
+      \    }\n    \n  ###########################################################\n\
+      \  #  Content\n  sub makePageContent {\n    my $self = shift;\n\n    my $text\
+      \ = join '',\n      $self->cgiref->p(\n        q[Something's gone wrong with\
+      \ MooWiki.],\n        q[There should be an explanation below followed by the\
+      \ browser parameters for debugging.],\n        ),\n      $self->cgiref->p(\n\
+      \        $self->cgiref->b(\n          $self->error\n          )\n        );\n\
+      \    $self->appendText($text);\n  }\n  \n}\n\n###############################################################################\n\
+      #\n#   package UseMooWiki\n#\n#   The 'main' package. This:\n#\n#   reads in\
+      \ additional modules\n#   initializes CGI\n#   puts some values (such as the\
+      \ request time) into a hash reference to be blessed\n#   sends it through the\
+      \ \"Blessing Chain\"\n#   Calls MakePage() on the resulting object\n#   prints\
+      \ to the browser the text property of the object\n\n{\n  package UseMooWiki\
+      \ ;\n  use CGI;\n\n  use vars qw( $q $MaxPost $ThisPage );\n  \n  #############################################################################\n\
+      \  #\n  #   Load plug-ins \n  #\n  #   Plug-ins for Moo are modules named moo-*.pm\n\
+      \  #   These should contain classes that should register themselves appropriately\n\
+      \  #\n  #   Consider letting module filenames optionally say what type of classes\n\
+      \  #   they contain, eg moo-db-*.pm.\n  #   Moo could then decide whether to\
+      \ load them or not later on.\n  #   Consider allowing config to specify an order\
+      \ for certain modules... but YAGNI\n  \n  my @modulefiles = <moo-*.pm>;\n  foreach\
+      \ (@modulefiles) {\n    require $_;\n  }\n  \n  #############################################################################\n\
+      \  #\n  #   Log\n  \n  # open LOG, \">> moologfile.txt\"  or die \"can't open\
+      \ logfile:  $!\";\n\n  #############################################################################\n\
+      \  #\n  #   Handle CGI request\n  \n  do {\n    # handle cache at this level,\
+      \ probably\n    \n    ##################################### \n    # Initialize\
+      \ CGI and get variables\n    \n    $q = new CGI;\n    my %PageVariables = $q->Vars;\n\
+      \    \n    if( $ENV{PATH_INFO} && $ENV{PATH_INFO} ne '/' ) {\n      $PageVariables{keywords}\
+      \ = substr($ENV{PATH_INFO}, 1);\n      # stuff the path into the variables hash\n\
+      \      # but if the path is just '/' \n      #   DON'T bring the has into existence\
+      \ just for an empty string!\n      #   this would muck up the !%$browseParameters\
+      \ condition in WikiPage\n    }\n\n###############################################################################\n\
+      #   POD: Script URLs    \n=head1 Script URLs=\n\nOrder of precedence for URL\
+      \ is as follows. \nThe following go to the HomePage:\nwiki.cgi \nwiki.cgi/ \n\
+      wiki.cgi/?(anything) &ndash; because why put the / in unless you mean it?\n\n\
+      The following go to the page named Foo\nwiki.cgi/Foo?Bar &ndash; again, why\
+      \ say /Foo if you don't mean it?\nwiki.cgi/Foo?(any actions)\nwiki.cgi?Foo\n\
+      =cut=\n#\n###############################################################################\n\
+      \n    # Equivalent (mostly) to UseMod's InitRequest\n    # create a hash reference\
+      \ that will become the page object\n    my $requestedPage = {\n      now   \
+      \        => time,\n      cgiref        => $q,\n      browserequest => { $q->Vars\
+      \ }, \n        # consider accessing %PageVariables via this instead \n     \
+      \   # but remember the tweaking it undergoes for /\n      };\n      \n    Page->chooseClass($requestedPage,\
+      \ \\%PageVariables); # bless the reference\n    $requestedPage->makePage();\
+      \ # make Page content\n\n    print $requestedPage->text;\n\n } if ($Page::configuration{RunCGI}\
+      \ && ($_ ne 'nocgi')); \n   # see http://www.usemod.com/cgi-bin/wiki.pl?PersistentCGI\n\
+      \   # load the wiki without running it. This is useful for PersistentCGI environments\
+      \ like mod_perl.\n}\n# End of script. Bye!\n</pre>"
+  properties: []
+  revId: 5369
+name: "Legacy:Moo/Script"
+revision:
+  revid: 5369
+  parentid: 5370
+  user: "71-17-22-38.regn.hsdb.sasknet.sk.ca"
+  timestamp: 1180678345.000000000
+  comment: "zee revert... pweese lock?"
+timestamp: 1668975850.788045000

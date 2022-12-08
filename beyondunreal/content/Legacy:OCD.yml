@@ -1,0 +1,339 @@
+---
+parse:
+  title: "Legacy:OCD"
+  text:
+    text: "<p>Every Actor in UT has a precise Location, which is in fact a point with\
+      \ 3D cartesian coordinates (X, Y and Z). Optionally, it can also have a Rotation\
+      \ (a rotator with short integer values of Pitch, Yaw and Roll) which can later\
+      \ be used in tracing, FOV checks or other vectorial based procedures. Collision\
+      \ is mainly detected using 4 collision flags: bCollideActors (it's a constant,\
+      \ which can be either changed in defaultproperties blocks or using the SetCollision()\
+      \ function), bCollideWorld, bBlockActors and bBlockPlayers.</p>\n<p>An Actor\
+      \ that is supposed to collide with the rest of the world geometry (returned\
+      \ as 'Level', as a variable pointer, and 'LevelInfo' as the Class in tracing\
+      \ or other Collision procedures) or other Actors has a CollisionHeight and a\
+      \ CollisionRadius. These define a cylinder box that represents the \"body\"\
+      \ of the actor. Unfortunately the bounding box is not as flexible as we'd like\
+      \ it to be. While it would be easier to define a size using X, Y and Z values,\
+      \ it is reduced to Radius, which surround the Actor itself, and a Height (which\
+      \ represents the Z value). While this offers limitations on one side, another\
+      \ HUGE limitation is the fact that the bounding cylinder is always fixed. This\
+      \ means that rotating the Actor by say, 90º clockwise, will not change the bounding\
+      \ box itself (the Z axis will not become the X or Y axis), it will just rotate\
+      \ the Mesh.</p>\n<p>To check whether two objects are colliding in UT, the engine\
+      \ first checks the Collision constants. If enough of them are set to True, it\
+      \ then checks the Z positions of each Actor, taking into account the CollisionHeight:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\">bActorsCollide <span class=\"sy0\">=</span>\
+      \ Actor1.<span class=\"kw7\">Location</span>.<span class=\"me0\">Z</span> <span\
+      \ class=\"sy0\">-</span> Actor2.<span class=\"kw7\">Location</span>.<span class=\"\
+      me0\">Z</span> <span class=\"sy0\">&lt;</span> Actor1.<span class=\"kw7\">CollisionHeight</span>\
+      \ <span class=\"sy0\">+</span> Actor2.<span class=\"kw7\">CollisionHeight</span></pre></div>\n\
+      </div>\n<p>Then it checks the distance between the two Actors:</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\">bActorsCollide <span class=\"sy0\">&amp;=</span> <span\
+      \ class=\"br0\">(</span>Actor1.<span class=\"kw7\">Location</span>.<span class=\"\
+      me0\">X</span> <span class=\"sy0\">-</span> Actor2.<span class=\"kw7\">Location</span>.<span\
+      \ class=\"me0\">X</span><span class=\"br0\">)</span> <span class=\"sy0\">*</span>\
+      \  <span class=\"br0\">(</span>Actor1.<span class=\"kw7\">Location</span>.<span\
+      \ class=\"me0\">X</span> <span class=\"sy0\">-</span> Actor2.<span class=\"\
+      kw7\">Location</span>.<span class=\"me0\">X</span><span class=\"br0\">)</span>\
+      \ \n   <span class=\"sy0\">+</span>  <span class=\"br0\">(</span>Actor1.<span\
+      \ class=\"kw7\">Location</span>.<span class=\"me0\">Y</span> <span class=\"\
+      sy0\">-</span> Actor2.<span class=\"kw7\">Location</span>.<span class=\"me0\"\
+      >Y</span><span class=\"br0\">)</span> <span class=\"sy0\">*</span> <span class=\"\
+      br0\">(</span>Actor1.<span class=\"kw7\">Location</span>.<span class=\"me0\"\
+      >Y</span> <span class=\"sy0\">-</span> Actor2.<span class=\"kw7\">Location</span>.<span\
+      \ class=\"me0\">Y</span><span class=\"br0\">)</span> \n   <span class=\"sy0\"\
+      >&lt;</span> <span class=\"br0\">(</span>Actor1.<span class=\"kw7\">CollisionRadius</span>\
+      \ <span class=\"sy0\">+</span> Actor2.<span class=\"kw7\">CollisionRadius</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">*</span> <span class=\"br0\">(</span>Actor1.<span\
+      \ class=\"kw7\">CollisionRadius</span> <span class=\"sy0\">+</span> Actor2.<span\
+      \ class=\"kw7\">CollisionRadius</span><span class=\"br0\">)</span></pre></div>\n\
+      </div>\n<p>Done.</p>\n<p>Now it wouldn't be really practical to check every\
+      \ possible pair of Objects in a Level, so there's a simple optimisation in UT:\
+      \ the engine only checks the Collision of Objects that are on the same side\
+      \ of a BSP tree plane. Of course this system is very basic, and has very frustrating\
+      \ limitations.</p>\n<p>Another avantage of using Colliding Actors is for iteration.\
+      \ Although at a first glance the AllActors iterator will iterate only the specified\
+      \ Class, it will, unfortunately, check ALL the Actors stored in that Level.\
+      \ When an Actor with bCollideWorld or bCollideWhenPlacing (bCollideWhenPlacing\
+      \ must be True and it must be created server-side, or for short, the NetMode\
+      \ must not be NM_Client) is Spawned, it will add it in the CollidingActors list.\
+      \ To access it, we can use the VisibleCollidingActors iterator, which is a lot\
+      \ faster than the normal AllActors iterator.</p>\n<p>Apart from the usual uses,\
+      \ Collision is also used by Tracing (Trace(), FastTrace(), LineOfSightTo() etc.).</p>\n\
+      <p>Coming soon: explanation on Object Collision Detection in U2 and UT2 – Why\
+      \ future is always brighter (for programmers)</p>\n<hr />\n<p>A plane in 3DSpace\
+      \ is described mathematically by a Cartesian Equation, which comes in the following\
+      \ form:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div\
+      \ class=\"uscript source-uscript\">\n<pre class=\"de1\">A<span class=\"sy0\"\
+      >*</span>x <span class=\"sy0\">+</span> B<span class=\"sy0\">*</span>y <span\
+      \ class=\"sy0\">+</span>C<span class=\"sy0\">*</span>z <span class=\"sy0\">+</span>\
+      \ D <span class=\"sy0\">=</span> <span class=\"nu0\">0</span></pre></div>\n\
+      </div>\n<p>So you can store all the info you need about a plane in an array\
+      \ of four numbers, the constants A, B, C, D.</p>\n<p>To know whether a point\
+      \ (which coordinates are X, Y, Z) is behind the plane, before the plane or on\
+      \ the plane, you just have to compute its coordinates through the cartesian\
+      \ equation of the plane:</p>\n<ul>\n<li>if A*X + B*Y + C*Z + D &lt; 0 =&gt;\
+      \ the point is behind the plane</li>\n<li>if A*X + B*Y + C*Z + D &gt; 0 =&gt;\
+      \ the point is before the plane</li>\n<li>if A*X + B*Y + C*Z + D 0 0 =&gt; the\
+      \ point is part of the plane</li>\n</ul>\n<p>Now let's say you have a Mesh.\
+      \ You can put this Mesh inside a simple Convex Bounding Box (CBB), which is\
+      \ the smallest convex (meaning whose angles between planes are never superior\
+      \ to 180 degrees) box in which the Mesh can fit. It is made of a certain number\
+      \ of polys that all are part of a different plane. So you can store the info\
+      \ on the CBBox in an array of arrays of four numbers.</p>\n<p>Now to test whether\
+      \ a point is inside, outside, or touching the Mesh, you just have to compute\
+      \ the point's coordinates through every plane's cartesian equation:</p>\n<dl>\n\
+      <dd><b>if the point is behind or on every plane, it is inside the mesh, otherwise\
+      \ it is outside.</b></dd>\n</dl>\n<p>hmm... if the point is outside the Mesh\
+      \ (box for example), then it is anyway behind some planes and on some planes.\
+      \ (but it may not work on more complex Meshes)</p>\n<p>You can quicken the computation\
+      \ by making several layers of CBBs, from a simple 6-Polys CBB to a more complex\
+      \ one but closer to the Mesh 144-Polys CBB, just like russian dolls. This is\
+      \ useful if it is unlikely that Objects ever collide, but in FPS games like\
+      \ UT, objects DO collide a lot&#160;:D</p>\n<p>So a simpler, yet more useful\
+      \ optimization is to use an ellipsoid (a deformed sphere) as a Bounding Box.\
+      \ This way you can have one simple calculus to compute each time you want to\
+      \ know if two objects are colliding. If the result is positive, then you use\
+      \ the more complex but more accurate CBBs. Simply put, it lets you know whether\
+      \ 2 objects are:</p>\n<ul>\n<li>certainly colliding</li>\n<li>perhaps colliding</li>\n\
+      <li>not colliding at all</li>\n</ul>\n<p>Only in the second case do you have\
+      \ to do the heavy calculation.</p>\n<p>How do we determine the collision of\
+      \ two Meshes and not just a point with a Mesh? We just process the formulas\
+      \ with every point of the potentially-colliding Mesh. <i>Ewww, that's a lot\
+      \ of computing</i>, you say. And you're right. That's an awful lot, and that's\
+      \ why Object Collision Detection is the most CPU-consuming task in most 3D games.\
+      \ UT uses one more optimization: it doesn't do checks for Objects which are\
+      \ not in the same leaf of the BSP Tree (which is a complicated way to say that\
+      \ UT doesn't bother computing all this awful formulas for Objects that are not\
+      \ in the same room).</p>\n<h3><span class=\"mw-headline\" id=\"Not-So-Convex_meshes\"\
+      >Not-So-Convex meshes</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:OCD?section=1\" title=\"Edit section: Not-So-Convex\
+      \ meshes\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>We just have to divide them into convex parts, just like a BSP tree does\
+      \ for a Map. This can even save the CPU some calculus, as an Object's part cannot\
+      \ collide with another Object's part if they're not on the same side of a plane.\
+      \ This can in fact be a dramatic boost in the OCD process, since it works for\
+      \ <i>both potentially-colliding objects</i>. And that's what's coming with U2\
+      \ and UT2003&#160;:)</p>\n<h2><span class=\"mw-headline\" id=\"Related_Topics\"\
+      >Related Topics</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:OCD?section=2\" title=\"Edit section: Related\
+      \ Topics\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <ul>\n<li><a href=\"/Legacy:Collision\" title=\"Legacy:Collision\">Collision</a></li>\n\
+      <li><a href=\"/Legacy:Actor/Collision\" title=\"Legacy:Actor/Collision\">Actor/Collision</a></li>\n\
+      </ul>\n<h2><span class=\"mw-headline\" id=\"Discussion\">Discussion</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:OCD?section=3\" title=\"Edit section: Discussion\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h2>\n<p><b>Unknown:</b>\
+      \ This page should maybe merge with <a href=\"/edit/Legacy:Collision_Detection?redlink=1\"\
+      \ class=\"new\" title=\"Legacy:Collision Detection (page does not exist)\">Collision\
+      \ Detection</a>.</p>\n<p><b>SuperApe:</b> So, OCD is Object Collision Detection?\
+      \ This page can most likely be reworked into <a href=\"/Legacy:Collision\" title=\"\
+      Legacy:Collision\">Collision</a>, <a href=\"/Legacy:Actor/Collision\" title=\"\
+      Legacy:Actor/Collision\">Actor/Collision</a> or something.</p>\n<p><b>CH3Z:</b>\
+      \ Its all good information although some of it is already on other pages. Like\
+      \ the first bit about the constants (which aren't really constants, but simple\
+      \ boolean flags and there at least 5 of them) are already on <a href=\"/Legacy:Actor_(UT)/Collision\"\
+      \ title=\"Legacy:Actor (UT)/Collision\">Actor_(UT)/Collision</a>. Parts of it\
+      \ could be worked into other pages as well. If this page is not refactored into\
+      \ appropriate pages, it should at least be gone over and probably named something\
+      \ else if nothing more than undoing the acronym to \"Object Collision Detection\"\
+      .</p>\n<p><b>CH3Z:</b>Come to think of it, the topic of collision seems to be\
+      \ scattered about and none of the page titles really elude to what kind of information\
+      \ specific to the topic will be found there. It would be nice if someone who\
+      \ has a good overview of what collision data is here could devise an organizational\
+      \ plan to tie the whole topic up in a more comprehensive way. ie maybe if we\
+      \ renamed the sub-pages of Actor to for example /Collision_Topics, /Lighting_Topics\
+      \ etc. and then alot of the scattered pages relating to the topic could be made\
+      \ into sub-pages of that _Topics page? Or maybe some thing like Category Collision\
+      \ would be better. But there are other topics here that seem to need to be tied\
+      \ together somehow as well. I wonder if a new tag like Collision Topics instead\
+      \ of more category tags would be better. Then category tags could be exclusive\
+      \ to the category of page ie tutorial, class, engine version, etc. and the Topic\
+      \ tags would be the equivelant of the Category tags for more UnrealEngine aspect\
+      \ related subdivision of this information like collision, lighting, AI etc.</p>\n\
+      <p><b>Xian:</b> Considering around 90% of the text is related to how Actor Collision\
+      \ works, maybe it should be moved to it and create a new subcategory there called\
+      \ \"Collision Procedures\" or something... From what I saw, UT2004 has some\
+      \ new stuff added to this, so I am not sure how we should organize this chapter.</p>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.084 seconds\nReal time usage:\
+      \ 0.085 seconds\nPreprocessor visited node count: 39/1000000\nPreprocessor generated\
+      \ node count: 84/1000000\nPost‐expand include size: 3/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:2315-0!*!0!!*!*!* and timestamp 20221118015139 and revision\
+      \ id 5582\n -->\n"
+  categories:
+  - sortkey: "OCD"
+    name: "Legacy_To_Do"
+  links:
+  - ns: 100
+    exists: false
+    name: "Legacy:Collision Detection"
+  - ns: 100
+    exists: true
+    name: "Legacy:Actor/Collision"
+  - ns: 100
+    exists: true
+    name: "Legacy:Actor (UT)/Collision"
+  - ns: 100
+    exists: true
+    name: "Legacy:Collision"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "3"
+    line: "Not-So-Convex meshes"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:OCD"
+    byteoffset: 6037
+    anchor: "Not-So-Convex_meshes"
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:OCD"
+    byteoffset: 6462
+    anchor: "Related_Topics"
+  - toclevel: 1
+    level: "2"
+    line: "Discussion"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:OCD"
+    byteoffset: 6560
+    anchor: "Discussion"
+  displaytitle: "Legacy:OCD"
+  iwlinks: []
+  wikitext:
+    text: "Every Actor in UT has a precise Location, which is in fact a point with\
+      \ 3D cartesian coordinates (X, Y and Z). Optionally, it can also have a Rotation\
+      \ (a rotator with short integer values of Pitch, Yaw and Roll) which can later\
+      \ be used in tracing, FOV checks or other vectorial based procedures. Collision\
+      \ is mainly detected using 4 collision flags: bCollideActors (it's a constant,\
+      \ which can be either changed in defaultproperties blocks or using the SetCollision()\
+      \ function), bCollideWorld, bBlockActors and bBlockPlayers. \n\nAn Actor that\
+      \ is supposed to collide with the rest of the world geometry (returned as 'Level',\
+      \ as a variable pointer, and 'LevelInfo' as the Class in tracing or other Collision\
+      \ procedures) or other Actors has a CollisionHeight and a CollisionRadius. These\
+      \ define a cylinder box that represents the \"body\" of the actor. Unfortunately\
+      \ the bounding box is not as flexible as we'd like it to be. While it would\
+      \ be easier to define a size using X, Y and Z values, it is reduced to Radius,\
+      \ which surround the Actor itself, and a Height (which represents the Z value).\
+      \ While this offers limitations on one side, another HUGE limitation is the\
+      \ fact that the bounding cylinder is always fixed. This means that rotating\
+      \ the Actor by say, 90º clockwise, will not change the bounding box itself (the\
+      \ Z axis will not become the X or Y axis), it will just rotate the Mesh.\n\n\
+      To check whether two objects are colliding in UT, the engine first checks the\
+      \ Collision constants. If  enough of them are set to True, it then checks the\
+      \ Z positions of each Actor, taking into account the CollisionHeight:\n\n<uscript>\n\
+      bActorsCollide = Actor1.Location.Z - Actor2.Location.Z < Actor1.CollisionHeight\
+      \ + Actor2.CollisionHeight\n</uscript>\n\nThen it checks the distance between\
+      \ the two Actors:\n\n<uscript>\nbActorsCollide &= (Actor1.Location.X - Actor2.Location.X)\
+      \ *  (Actor1.Location.X - Actor2.Location.X) \n   +  (Actor1.Location.Y - Actor2.Location.Y)\
+      \ * (Actor1.Location.Y - Actor2.Location.Y) \n   < (Actor1.CollisionRadius +\
+      \ Actor2.CollisionRadius) * (Actor1.CollisionRadius + Actor2.CollisionRadius)\n\
+      </uscript>\n\nDone.\n\nNow it wouldn't be really practical to check every possible\
+      \ pair of Objects in a Level, so there's a simple optimisation in UT: the engine\
+      \ only checks the Collision of Objects that are on the same side of a BSP tree\
+      \ plane. Of course this system is very basic, and has very frustrating limitations.\n\
+      \nAnother avantage of using Colliding Actors is for iteration. Although at a\
+      \ first glance the AllActors iterator will iterate only the specified Class,\
+      \ it will, unfortunately, check ALL the Actors stored in that Level. When an\
+      \ Actor with bCollideWorld or bCollideWhenPlacing (bCollideWhenPlacing must\
+      \ be True and it must be created server-side, or for short, the NetMode must\
+      \ not be NM_Client) is Spawned, it will add it in the CollidingActors list.\
+      \ To access it, we can use the VisibleCollidingActors iterator, which is a lot\
+      \ faster than the normal AllActors iterator.\n\nApart from the usual uses, Collision\
+      \ is also used by Tracing (Trace(), FastTrace(), LineOfSightTo() etc.).\n\n\
+      Coming soon: explanation on Object Collision Detection in U2 and UT2 &ndash;\
+      \ Why future is always brighter (for programmers)\n\n----\n\nA plane in 3DSpace\
+      \ is described mathematically by a Cartesian Equation, which comes in the following\
+      \ form:\n\n<uscript>A*x + B*y +C*z + D = 0</uscript>\n\nSo you can store all\
+      \ the info you need about a plane in an array of four numbers, the constants\
+      \ A, B, C, D.\n\nTo know whether a point (which coordinates are X, Y, Z) is\
+      \ behind the plane, before the plane or on the plane, you just have to compute\
+      \ its coordinates through the cartesian equation of the plane:\n\n* if A*X +\
+      \ B*Y + C*Z + D < 0 => the point is behind the plane\n* if A*X + B*Y + C*Z +\
+      \ D > 0 => the point is before the plane\n* if A*X + B*Y + C*Z + D 0 0 => the\
+      \ point is part of the plane\n\nNow let's say you have a Mesh. You can put this\
+      \ Mesh inside a simple Convex Bounding Box (CBB), which is the smallest convex\
+      \ (meaning whose angles between planes are never superior to 180 degrees) box\
+      \ in which the Mesh can fit. It is made of a certain number of polys that all\
+      \ are part of a different plane. So you can store the info on the CBBox in an\
+      \ array of arrays of four numbers.\n\nNow to test whether a point is inside,\
+      \ outside, or touching the Mesh, you just have to compute the point's coordinates\
+      \ through every plane's cartesian equation:\n:'''if the point is behind or on\
+      \ every plane, it is inside the mesh, otherwise it is outside.''' \n\nhmm...\
+      \ if the point is outside the Mesh (box for example), then it is anyway behind\
+      \ some planes and on some planes.  (but it may not work on more complex Meshes)\n\
+      \nYou can quicken the computation by making several layers of CBBs, from a simple\
+      \ 6-Polys CBB to a more complex one but closer to the Mesh 144-Polys CBB, just\
+      \ like russian dolls. This is useful if it is unlikely that Objects ever collide,\
+      \ but in FPS games like UT, objects DO collide a lot :D\n\nSo a simpler, yet\
+      \ more useful optimization is to use an ellipsoid (a deformed sphere) as a Bounding\
+      \ Box. This way you can have one simple calculus to compute each time you want\
+      \ to know if two objects are colliding. If the result is positive, then you\
+      \ use the more complex but more accurate CBBs. Simply put, it lets you know\
+      \ whether 2 objects are:\n*certainly colliding\n*perhaps colliding\n*not colliding\
+      \ at all\n\nOnly in the second case do you have to do the heavy calculation.\n\
+      \nHow do we determine the collision of two Meshes and not just a point with\
+      \ a Mesh? We just process the formulas with every point of the potentially-colliding\
+      \ Mesh. ''Ewww, that's a lot of computing'', you say. And you're right. That's\
+      \ an awful lot, and that's why Object Collision Detection is the most CPU-consuming\
+      \ task in most 3D games. UT uses one more optimization: it doesn't do checks\
+      \ for Objects which are not in the same leaf of the BSP Tree (which is a complicated\
+      \ way to say that UT doesn't bother computing all this awful formulas for Objects\
+      \ that are not in the same room).\n\n===Not-So-Convex meshes ===\n\nWe just\
+      \ have to divide them into convex parts, just like a BSP tree does for a Map.\
+      \ This can even save the CPU some calculus, as an Object's part cannot collide\
+      \ with another Object's part if they're not on the same side of a plane. This\
+      \ can in fact be a dramatic boost in the OCD process, since it works for ''both\
+      \ potentially-colliding objects''. And that's what's coming with U2 and UT2003\
+      \ :)\n\n==Related Topics==\n* [[Legacy:Collision|Collision]]\n* [[Legacy:Actor/Collision|Actor/Collision]]\n\
+      \n==Discussion==\n\n'''Unknown:''' This page should maybe merge with [[Legacy:Collision\
+      \ Detection|Collision Detection]].\n\n'''SuperApe:''' So, OCD is Object Collision\
+      \ Detection?  This page can most likely be reworked into [[Legacy:Collision|Collision]],\
+      \ [[Legacy:Actor/Collision|Actor/Collision]] or something.\n\n'''CH3Z:''' Its\
+      \ all good information although some of it is already on other pages. Like the\
+      \ first bit about the constants (which aren't really constants, but simple boolean\
+      \ flags and there at least 5 of them) are already on [[Legacy:Actor_(UT)/Collision|Actor_(UT)/Collision]].\
+      \  Parts of it could be worked into other pages as well. If this page is not\
+      \ refactored into appropriate pages, it should at least be gone over and probably\
+      \ named something else if nothing more than undoing the acronym to \"Object\
+      \ Collision Detection\".\n\n'''CH3Z:'''Come to think of it, the topic of collision\
+      \ seems to be scattered about and none of the page titles really elude to what\
+      \ kind of information specific to the topic will be found there. It would be\
+      \ nice if someone who has a good overview of what collision data is here could\
+      \ devise an organizational plan to tie the whole topic up in a more comprehensive\
+      \ way. ie maybe if we renamed the sub-pages of Actor to for example /Collision_Topics,\
+      \ /Lighting_Topics etc. and then alot of the scattered pages relating to the\
+      \ topic could be made into sub-pages of that _Topics page? Or maybe some thing\
+      \ like Category Collision would be better. But there are other topics here that\
+      \ seem to need to be tied together somehow as well. I wonder if a new tag like\
+      \ Collision Topics instead of more category tags would be better. Then category\
+      \ tags could be exclusive to the category of page ie tutorial, class, engine\
+      \ version, etc. and the Topic tags would be the equivelant of the Category tags\
+      \ for more UnrealEngine aspect related subdivision of this information like\
+      \ collision, lighting, AI etc. \n\n'''Xian:''' Considering around 90% of the\
+      \ text is related to how Actor Collision works, maybe it should be moved to\
+      \ it and create a new subcategory there called \"Collision Procedures\" or something...\
+      \ From what I saw, UT2004 has some new stuff added to this, so I am not sure\
+      \ how we should organize this chapter.\n\n[[Category:Legacy To Do|{{PAGENAME}}]]"
+  properties: []
+  revId: 5582
+name: "Legacy:OCD"
+revision:
+  revid: 5582
+  parentid: 5584
+  user: "Xian"
+  timestamp: 1148310241.000000000
+  comment: "bleh... coherent talk :-)"
+timestamp: 1668765102.643941000

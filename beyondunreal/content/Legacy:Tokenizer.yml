@@ -1,0 +1,548 @@
+---
+parse:
+  title: "Legacy:Tokenizer"
+  text:
+    text: "<p>A tokenizer converts a input string in to tokens. It's very usefull\
+      \ when you need to do parsing of text.</p>\n<p>This tokenizer is used by the\
+      \ <a href=\"/Legacy:BruteForce\" title=\"Legacy:BruteForce\">BruteForce</a>\
+      \ language written by <a href=\"/Legacy:El_Muerte\" title=\"Legacy:El Muerte\"\
+      \ class=\"mw-redirect\">El Muerte</a>, for information check his <a href=\"\
+      /Legacy:El_Muerte/Journal_History_1\" title=\"Legacy:El Muerte/Journal History\
+      \ 1\">El Muerte/Journal_History_1</a></p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">class</span> Tokenizer <span class=\"kw1\">extends</span>\
+      \ <span class=\"kw8\">Object</span>;\n \n<span class=\"kw1\">const</span> NEWLINE\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">10</span>;\n \n<span class=\"\
+      kw1\">var</span> <span class=\"kw1\">private</span> array<span class=\"sy0\"\
+      >&lt;</span>string<span class=\"sy0\">&gt;</span> buffer;   <span class=\"co1\"\
+      >// the input buffer</span>\n<span class=\"kw1\">var</span> <span class=\"kw1\"\
+      >private</span> <span class=\"kw5\">byte</span> c;                 <span class=\"\
+      co1\">// holds the current char</span>\n<span class=\"kw1\">var</span> <span\
+      \ class=\"kw1\">private</span> <span class=\"kw5\">int</span> linenr;      \
+      \       <span class=\"co1\">// current line in the input buffer</span>\n<span\
+      \ class=\"kw1\">var</span> <span class=\"kw1\">private</span> <span class=\"\
+      kw5\">int</span> pos;                <span class=\"co1\">// position on the\
+      \ current line</span>\n \n<span class=\"kw1\">var</span> <span class=\"kw5\"\
+      >int</span> verbose;                    <span class=\"co1\">// for debugging</span>\n\
+      \ \n<span class=\"kw1\">enum</span> tokenType \n<span class=\"br0\">{</span>\n\
+      \  TT_None,\n  TT_Literal,\n  TT_Identifier,  \n  TT_Integer,\n  TT_Float,\n\
+      \  TT_String,\n  TT_Operator,\n  TT_EOF,\n<span class=\"br0\">}</span>;</pre></div>\n\
+      </div>\n<p>This tokenizer recognizes 8 different tokens.</p>\n<dl>\n<dt>TT_None&#160;</dt>\n\
+      <dd>this token is never assigned, but used as a default</dd>\n<dt>TT_Literal&#160;</dt>\n\
+      <dd>the token is a literal, e.g. ( or ). Most tokenizers just use the ascii\
+      \ value of the literal but because of limitations in UScript we will use this</dd>\n\
+      <dt>TT_Identifier&#160;</dt>\n<dd>an identifier is a string which begins with\
+      \ a alpha or underscore followed by zero or more alphanumeric characters or\
+      \ underscores. Regular expression: <code>Identifier&#160;::= [a-z_][a-z0-9_]*</code></dd>\n\
+      <dt>TT_Integer&#160;</dt>\n<dd>a natural number, negative numbers are not supported\
+      \ because this is incompatible with a '-' operator, so you have to keep that\
+      \ in mind when you define your grammar. Regular expression: <code>Integer&#160;::=\
+      \ [0-9]+</code></dd>\n<dt>TT_Float&#160;</dt>\n<dd>a regular number with a floating\
+      \ point. Regular expression: <code>Float&#160;::= [0-9]+\\.[0-9]*</code></dd>\n\
+      <dt>TT_String&#160;</dt>\n<dd>a string of characters encapsuled with double\
+      \ quotes, literal double quotes need to be escaped using a backslashRegular\
+      \ expression: <code>String&#160;::= \"[^\"]*\"</code></dd>\n<dt>TT_Operator&#160;</dt>\n\
+      <dd>an operator: =, ==, &gt;, &gt;=, ... Regular expression: <code>Identifier&#160;::=\
+      \ [-=+&lt;&gt;*/!]+</code></dd>\n<dt>TT_EOF&#160;</dt>\n<dd>the end of file</dd>\n\
+      </dl>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"\
+      uscript source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">var</span>\
+      \ <span class=\"kw1\">private</span> tokenType curTokenType; <span class=\"\
+      co1\">// holds the current token</span>\n<span class=\"kw1\">var</span> <span\
+      \ class=\"kw1\">private</span> <span class=\"kw5\">string</span> curTokenString;\
+      \  <span class=\"co1\">// holds the current string representation</span>\n \n\
+      <span class=\"coMULTI\">/**\n  Create a tokenizer\n*/</span>\n<span class=\"\
+      kw1\">function</span> Create<span class=\"br0\">(</span>array<span class=\"\
+      sy0\">&lt;</span>string<span class=\"sy0\">&gt;</span> buf<span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n  buffer.<span class=\"me0\">length</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>;\n  buffer <span\
+      \ class=\"sy0\">=</span> buf;\n  linenr <span class=\"sy0\">=</span> <span class=\"\
+      nu0\">0</span>;\n  pos <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>;\n\
+      \  c <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>;\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p>Call this to initialize the tokenizer\
+      \ with a new buffer</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      coMULTI\">/**\n  returns the string representation of the current token\n*/</span>\n\
+      <span class=\"kw1\">function</span> <span class=\"kw5\">string</span> tokenString<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \  <span class=\"kw2\">return</span> curTokenString;\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"coMULTI\">/**\n  returns the type of the current token\n*/</span>\n\
+      <span class=\"kw1\">function</span> tokenType currentToken<span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n  <span\
+      \ class=\"kw2\">return</span> curTokenType;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>We don't want anybody writing to out variables thus provide them\
+      \ with functions to read the value</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"coMULTI\">/**\n  retreives the next token\n*/</span>\n<span class=\"\
+      kw1\">function</span> tokenType nextToken<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw2\">return</span>\
+      \ _nextToken<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n<span\
+      \ class=\"br0\">}</span></pre></div>\n</div>\n<p>Get the next token in the buffer,\
+      \ this calls the private _nextToken() for the real processing</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"coMULTI\">/* Private functions */</span>\n\
+      \ \n<span class=\"kw1\">private</span> <span class=\"kw1\">function</span> tokenType\
+      \ _nextToken<span class=\"br0\">(</span><span class=\"br0\">)</span>\n<span\
+      \ class=\"br0\">{</span>\n  <span class=\"kw1\">local</span> <span class=\"\
+      kw5\">int</span> tokenPos, endPos;\n  skipBlanks<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n  <span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span>curTokenType <span class=\"sy0\">==</span> TT_EOF<span class=\"br0\"\
+      >)</span> <span class=\"kw2\">return</span> curTokenType; \n  tokenPos <span\
+      \ class=\"sy0\">=</span> pos;\n  <span class=\"co1\">// identifier: [A-Za-z]([A-Za-z0-9_])*</span>\n\
+      \  <span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      br0\">(</span><span class=\"br0\">(</span>c <span class=\"sy0\">&gt;=</span>\
+      \ <span class=\"nu0\">65</span><span class=\"br0\">)</span> <span class=\"sy0\"\
+      >&amp;&amp;</span> <span class=\"br0\">(</span>c <span class=\"sy0\">&lt;=</span>\
+      \ <span class=\"nu0\">90</span><span class=\"br0\">)</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">||</span> <span class=\"br0\">(</span><span class=\"\
+      br0\">(</span>c <span class=\"sy0\">&gt;=</span> <span class=\"nu0\">97</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"\
+      br0\">(</span>c <span class=\"sy0\">&lt;=</span> <span class=\"nu0\">122</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span> <span class=\"sy0\">||</span>\
+      \ <span class=\"br0\">(</span>c <span class=\"sy0\">==</span> <span class=\"\
+      nu0\">95</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\n  <span\
+      \ class=\"br0\">{</span>\n    pos<span class=\"sy0\">++</span>;\n    c <span\
+      \ class=\"sy0\">=</span> _c<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \    <span class=\"kw2\">while</span> <span class=\"br0\">(</span><span class=\"\
+      br0\">(</span><span class=\"br0\">(</span>c <span class=\"sy0\">&gt;=</span>\
+      \ <span class=\"nu0\">65</span><span class=\"br0\">)</span> <span class=\"sy0\"\
+      >&amp;&amp;</span> <span class=\"br0\">(</span>c <span class=\"sy0\">&lt;=</span>\
+      \ <span class=\"nu0\">90</span><span class=\"br0\">)</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">||</span> <span class=\"br0\">(</span><span class=\"\
+      br0\">(</span>c <span class=\"sy0\">&gt;=</span> <span class=\"nu0\">97</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"\
+      br0\">(</span>c <span class=\"sy0\">&lt;=</span> <span class=\"nu0\">122</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span> <span class=\"sy0\">||</span>\
+      \ <span class=\"br0\">(</span>c <span class=\"sy0\">==</span> <span class=\"\
+      nu0\">95</span><span class=\"br0\">)</span> <span class=\"sy0\">||</span> <span\
+      \ class=\"br0\">(</span><span class=\"br0\">(</span>c <span class=\"sy0\">&gt;=</span>\
+      \ <span class=\"nu0\">48</span><span class=\"br0\">)</span> <span class=\"sy0\"\
+      >&amp;&amp;</span> <span class=\"br0\">(</span>c <span class=\"sy0\">&lt;=</span>\
+      \ <span class=\"nu0\">57</span><span class=\"br0\">)</span><span class=\"br0\"\
+      >)</span><span class=\"br0\">)</span>\n    <span class=\"br0\">{</span>\n  \
+      \    pos<span class=\"sy0\">++</span>;\n      c <span class=\"sy0\">=</span>\
+      \ _c<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n    <span class=\"\
+      br0\">}</span>\n    endPos <span class=\"sy0\">=</span> pos;\n    curTokenType\
+      \ <span class=\"sy0\">=</span> TT_Identifier;\n  <span class=\"br0\">}</span>\n\
+      \  <span class=\"co1\">// number: [0-9]+(\\.([0-9])+)?</span>\n  <span class=\"\
+      kw2\">else</span> <span class=\"kw2\">if</span> <span class=\"br0\">(</span><span\
+      \ class=\"br0\">(</span>c <span class=\"sy0\">&gt;=</span> <span class=\"nu0\"\
+      >48</span><span class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"br0\">(</span>c <span class=\"sy0\">&lt;=</span> <span class=\"\
+      nu0\">57</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\n  <span\
+      \ class=\"br0\">{</span>\n    pos<span class=\"sy0\">++</span>;\n    c <span\
+      \ class=\"sy0\">=</span> _c<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \    <span class=\"kw2\">while</span> <span class=\"br0\">(</span><span class=\"\
+      br0\">(</span>c <span class=\"sy0\">&gt;=</span> <span class=\"nu0\">48</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"\
+      br0\">(</span>c <span class=\"sy0\">&lt;=</span> <span class=\"nu0\">57</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n    <span class=\"br0\"\
+      >{</span>\n      pos<span class=\"sy0\">++</span>;\n      c <span class=\"sy0\"\
+      >=</span> _c<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n    <span\
+      \ class=\"br0\">}</span>\n    <span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span>c <span class=\"sy0\">==</span> <span class=\"nu0\">46</span><span\
+      \ class=\"br0\">)</span> <span class=\"co1\">// .</span>\n    <span class=\"\
+      br0\">{</span>\n      pos<span class=\"sy0\">++</span>;\n      c <span class=\"\
+      sy0\">=</span> _c<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \      <span class=\"kw2\">while</span> <span class=\"br0\">(</span><span class=\"\
+      br0\">(</span>c <span class=\"sy0\">&gt;=</span> <span class=\"nu0\">48</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"\
+      br0\">(</span>c <span class=\"sy0\">&lt;=</span> <span class=\"nu0\">57</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n      <span class=\"br0\"\
+      >{</span>\n        pos<span class=\"sy0\">++</span>;\n        c <span class=\"\
+      sy0\">=</span> _c<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \      <span class=\"br0\">}</span>\n      endPos <span class=\"sy0\">=</span>\
+      \ pos;\n      curTokenType <span class=\"sy0\">=</span> TT_Float;\n    <span\
+      \ class=\"br0\">}</span>\n    <span class=\"kw2\">else</span> <span class=\"\
+      br0\">{</span>\n      endPos <span class=\"sy0\">=</span> pos;\n      curTokenType\
+      \ <span class=\"sy0\">=</span> TT_Integer;\n    <span class=\"br0\">}</span>\n\
+      \  <span class=\"br0\">}</span>\n  <span class=\"co1\">// string: \"[^\"]*\"\
+      </span>\n  <span class=\"kw2\">else</span> <span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span>c <span class=\"sy0\">==</span> <span class=\"nu0\"\
+      >34</span><span class=\"br0\">)</span>\n  <span class=\"br0\">{</span>\n   \
+      \ pos<span class=\"sy0\">++</span>;\n    c <span class=\"sy0\">=</span> _c<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n    <span class=\"kw2\"\
+      >while</span> <span class=\"br0\">(</span><span class=\"kw6\">true</span><span\
+      \ class=\"br0\">)</span>\n    <span class=\"br0\">{</span>\n      <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>c <span class=\"sy0\">==</span>\
+      \ <span class=\"nu0\">34</span><span class=\"br0\">)</span> <span class=\"kw2\"\
+      >break</span>;\n      <span class=\"kw2\">if</span> <span class=\"br0\">(</span>c\
+      \ <span class=\"sy0\">==</span> <span class=\"nu0\">92</span><span class=\"\
+      br0\">)</span> <span class=\"co1\">// escape char skip one char</span>\n   \
+      \   <span class=\"br0\">{</span>\n        pos<span class=\"sy0\">++</span>;\n\
+      \      <span class=\"br0\">}</span>\n      <span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span>c <span class=\"sy0\">==</span> NEWLINE<span class=\"\
+      br0\">)</span>\n      <span class=\"br0\">{</span>\n        <span class=\"kw3\"\
+      >Warn</span><span class=\"br0\">(</span><span class=\"st0\">\"Unterminated string\
+      \ @\"</span><span class=\"sy0\">@</span>linenr<span class=\"sy0\">$</span><span\
+      \ class=\"st0\">\",\"</span><span class=\"sy0\">$</span>pos<span class=\"br0\"\
+      >)</span>;\n        <span class=\"kw2\">assert</span><span class=\"br0\">(</span><span\
+      \ class=\"kw6\">false</span><span class=\"br0\">)</span>;\n      <span class=\"\
+      br0\">}</span>\n      pos<span class=\"sy0\">++</span>;\n      c <span class=\"\
+      sy0\">=</span> _c<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \    <span class=\"br0\">}</span>\n    tokenPos<span class=\"sy0\">++</span>;\n\
+      \    endPos <span class=\"sy0\">=</span> pos;\n    pos<span class=\"sy0\">++</span>;\n\
+      \    curTokenType <span class=\"sy0\">=</span> TT_String;\n  <span class=\"\
+      br0\">}</span>\n  <span class=\"co1\">// operator: [+-*/=&gt;&lt;!]+</span>\n\
+      \  <span class=\"co1\">// literal</span>\n  <span class=\"kw2\">else</span>\
+      \ <span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"br0\"\
+      >(</span>c <span class=\"sy0\">==</span> <span class=\"nu0\">33</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">||</span> <span class=\"br0\">(</span>c\
+      \ <span class=\"sy0\">==</span> <span class=\"nu0\">42</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">||</span> <span class=\"br0\">(</span>c <span\
+      \ class=\"sy0\">==</span> <span class=\"nu0\">43</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">||</span> <span class=\"br0\">(</span>c <span class=\"\
+      sy0\">==</span> <span class=\"nu0\">45</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">||</span> <span class=\"br0\">(</span>c <span class=\"sy0\"\
+      >==</span> <span class=\"nu0\">47</span><span class=\"br0\">)</span> <span class=\"\
+      sy0\">||</span> <span class=\"br0\">(</span>c <span class=\"sy0\">==</span>\
+      \ <span class=\"nu0\">60</span><span class=\"br0\">)</span> <span class=\"sy0\"\
+      >||</span> <span class=\"br0\">(</span>c <span class=\"sy0\">==</span> <span\
+      \ class=\"nu0\">61</span><span class=\"br0\">)</span> <span class=\"sy0\">||</span>\
+      \ <span class=\"br0\">(</span>c <span class=\"sy0\">==</span> <span class=\"\
+      nu0\">62</span><span class=\"br0\">)</span> <span class=\"sy0\">||</span> <span\
+      \ class=\"br0\">(</span>c <span class=\"sy0\">==</span> <span class=\"nu0\"\
+      >61</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\n  <span\
+      \ class=\"br0\">{</span>\n    pos<span class=\"sy0\">++</span>;\n    c <span\
+      \ class=\"sy0\">=</span> _c<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \    <span class=\"kw2\">while</span> <span class=\"br0\">(</span><span class=\"\
+      br0\">(</span>c <span class=\"sy0\">==</span> <span class=\"nu0\">33</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">||</span> <span class=\"br0\">(</span>c\
+      \ <span class=\"sy0\">==</span> <span class=\"nu0\">42</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">||</span> <span class=\"br0\">(</span>c <span\
+      \ class=\"sy0\">==</span> <span class=\"nu0\">43</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">||</span> <span class=\"br0\">(</span>c <span class=\"\
+      sy0\">==</span> <span class=\"nu0\">45</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">||</span> <span class=\"br0\">(</span>c <span class=\"sy0\"\
+      >==</span> <span class=\"nu0\">47</span><span class=\"br0\">)</span> <span class=\"\
+      sy0\">||</span> <span class=\"br0\">(</span>c <span class=\"sy0\">==</span>\
+      \ <span class=\"nu0\">60</span><span class=\"br0\">)</span> <span class=\"sy0\"\
+      >||</span> <span class=\"br0\">(</span>c <span class=\"sy0\">==</span> <span\
+      \ class=\"nu0\">61</span><span class=\"br0\">)</span> <span class=\"sy0\">||</span>\
+      \ <span class=\"br0\">(</span>c <span class=\"sy0\">==</span> <span class=\"\
+      nu0\">62</span><span class=\"br0\">)</span> <span class=\"sy0\">||</span> <span\
+      \ class=\"br0\">(</span>c <span class=\"sy0\">==</span> <span class=\"nu0\"\
+      >61</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\n    <span\
+      \ class=\"br0\">{</span>\n      pos<span class=\"sy0\">++</span>;\n      c <span\
+      \ class=\"sy0\">=</span> _c<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \    <span class=\"br0\">}</span>\n    endPos <span class=\"sy0\">=</span> pos;\n\
+      \    curTokenType <span class=\"sy0\">=</span> TT_Operator;\n  <span class=\"\
+      br0\">}</span>\n  <span class=\"kw2\">else</span> <span class=\"br0\">{</span>\n\
+      \    pos<span class=\"sy0\">++</span>;\n    endPos <span class=\"sy0\">=</span>\
+      \ pos;\n    curTokenType <span class=\"sy0\">=</span> TT_Literal;\n  <span class=\"\
+      br0\">}</span>\n  <span class=\"co1\">// make up result</span>\n  <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>linenr <span class=\"sy0\">&gt;=</span>\
+      \ buffer.<span class=\"me0\">length</span><span class=\"br0\">)</span> <span\
+      \ class=\"co1\">// EOF break</span>\n  <span class=\"br0\">{</span>\n    curTokenType\
+      \ <span class=\"sy0\">=</span> TT_EOF; \n    curTokenString <span class=\"sy0\"\
+      >=</span> <span class=\"st0\">\"\"</span>;\n  <span class=\"br0\">}</span>\n\
+      \  <span class=\"kw2\">else</span> <span class=\"br0\">{</span>\n    curTokenString\
+      \ <span class=\"sy0\">=</span> <span class=\"kw3\">Mid</span><span class=\"\
+      br0\">(</span>buffer<span class=\"br0\">[</span>linenr<span class=\"br0\">]</span>,\
+      \ tokenPos, endPos<span class=\"sy0\">-</span>tokenPos<span class=\"br0\">)</span>;\n\
+      \  <span class=\"br0\">}</span>\n  <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span>verbose <span class=\"sy0\">&gt;</span> <span class=\"nu0\">0</span><span\
+      \ class=\"br0\">)</span> <span class=\"kw3\">log</span><span class=\"br0\">(</span>curTokenType<span\
+      \ class=\"sy0\">@</span>curTokenString, <span class=\"st0\">'Tokenizer'</span><span\
+      \ class=\"br0\">)</span>;\n  <span class=\"kw2\">return</span> curTokenType;\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"coMULTI\">/**\n  Skip all characters\
+      \ with ascii value &lt; 33 (32 is space)\n*/</span>\n<span class=\"kw1\">private</span>\
+      \ <span class=\"kw1\">function</span> skipBlanks<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>  \n  c <span class=\"\
+      sy0\">=</span> _c<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \  <span class=\"kw2\">while</span> <span class=\"br0\">(</span>c <span class=\"\
+      sy0\">&lt;</span> <span class=\"nu0\">33</span><span class=\"br0\">)</span>\n\
+      \  <span class=\"br0\">{</span>\n    <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span>c <span class=\"sy0\">==</span> NEWLINE<span class=\"br0\">)</span>\n\
+      \    <span class=\"br0\">{</span>\n      linenr<span class=\"sy0\">++</span>;\n\
+      \      pos <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>;\n    \
+      \  <span class=\"kw2\">if</span> <span class=\"br0\">(</span>linenr <span class=\"\
+      sy0\">&gt;=</span> buffer.<span class=\"me0\">length</span><span class=\"br0\"\
+      >)</span> <span class=\"co1\">// EOF break</span>\n      <span class=\"br0\"\
+      >{</span>\n        curTokenType <span class=\"sy0\">=</span> TT_EOF; \n    \
+      \    curTokenString <span class=\"sy0\">=</span> <span class=\"st0\">\"\"</span>;\n\
+      \        <span class=\"kw2\">return</span>;\n      <span class=\"br0\">}</span>\n\
+      \    <span class=\"br0\">}</span>\n    <span class=\"kw2\">else</span> pos<span\
+      \ class=\"sy0\">++</span>;\n    c <span class=\"sy0\">=</span> _c<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n  <span class=\"br0\">}</span>\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>skipBlanks skips all characters\
+      \ considered whitespace, in this case all ASCII controll characters including\
+      \ the space.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      coMULTI\">/**\n  returns the current char\n*/</span>\n<span class=\"kw1\">private</span>\
+      \ <span class=\"kw1\">function</span> <span class=\"kw5\">byte</span> _c<span\
+      \ class=\"br0\">(</span><span class=\"kw1\">optional</span> <span class=\"kw5\"\
+      >int</span> displacement<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \  <span class=\"kw1\">local</span> <span class=\"kw5\">string</span> t;\n \
+      \ t <span class=\"sy0\">=</span>  <span class=\"kw3\">Mid</span><span class=\"\
+      br0\">(</span>buffer<span class=\"br0\">[</span>linenr<span class=\"br0\">]</span>,\
+      \ pos<span class=\"sy0\">+</span>displacement, <span class=\"nu0\">1</span><span\
+      \ class=\"br0\">)</span>;\n  <span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span>t <span class=\"sy0\">==</span> <span class=\"st0\">\"\"</span><span\
+      \ class=\"br0\">)</span> <span class=\"kw2\">return</span> NEWLINE; <span class=\"\
+      co1\">// empty string is a newline</span>\n  <span class=\"kw2\">return</span>\
+      \ <span class=\"kw3\">Asc</span><span class=\"br0\">(</span>t<span class=\"\
+      br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>This function\
+      \ is used to read the current character, because we can't just increase the\
+      \ read pointer like you would do normaly we need to extract the current character\
+      \ from the current line and convert it to the ASCII value for better processing.</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">defaultproperties</span>\n\
+      <span class=\"br0\">{</span>\n  verbose<span class=\"sy0\">=</span><span class=\"\
+      nu0\">0</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p></p>\n\
+      <div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n</div>\n\
+      <ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#Issues\"><span class=\"\
+      tocnumber\">1</span> <span class=\"toctext\">Issues</span></a>\n<ul>\n<li class=\"\
+      toclevel-2 tocsection-2\"><a href=\"#Escape_characters_in_strings\"><span class=\"\
+      tocnumber\">1.1</span> <span class=\"toctext\">Escape characters in strings</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-3\"><a href=\"#Negative_numbers\"><span class=\"\
+      tocnumber\">1.2</span> <span class=\"toctext\">Negative numbers</span></a></li>\n\
+      </ul>\n</li>\n<li class=\"toclevel-1 tocsection-4\"><a href=\"#Discussion\"\
+      ><span class=\"tocnumber\">2</span> <span class=\"toctext\">Discussion</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-5\"><a href=\"#Related_Topics\"><span class=\"\
+      tocnumber\">3</span> <span class=\"toctext\">Related Topics</span></a></li>\n\
+      </ul>\n</div>\n<p></p>\n<h2><span class=\"mw-headline\" id=\"Issues\">Issues</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Tokenizer?section=1\" title=\"Edit section: Issues\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h2>\n<h3><span class=\"\
+      mw-headline\" id=\"Escape_characters_in_strings\">Escape characters in strings</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Tokenizer?section=2\" title=\"Edit section: Escape characters\
+      \ in strings\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>Escaped characters are accepted by this tokenizer but not <i>fixed</i>.</p>\n\
+      <p><code>\"a string with \\\"double quotes\\\"\"</code> will be returned as:</p>\n\
+      <p><code>a string with \\\"double quotes\\\"</code></p>\n<h3><span class=\"\
+      mw-headline\" id=\"Negative_numbers\">Negative numbers</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Tokenizer?section=3\"\
+      \ title=\"Edit section: Negative numbers\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Negative numbers are not supported but this tokenizer,\
+      \ instead you will get a Operator '-' and a Number '123' insetad of a Number\
+      \ '-123'. This is because it's impossible to see the diffirence between the\
+      \ operator '-' and a leading minus symbol in a string. For example:</p>\n<p><code>x\
+      \ = x - 1</code> and <code>x = -1</code></p>\n<p>So when parsing your code you\
+      \ need to keep this in mind that a number can be preceded with a '-' (pre-operator)</p>\n\
+      <h2><span class=\"mw-headline\" id=\"Discussion\">Discussion</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Tokenizer?section=4\"\
+      \ title=\"Edit section: Discussion\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p><b>Daid303:</b> I noticed that you can get an 'Unterminated\
+      \ string' error if you put a normal enter in a string, but in normal C this\
+      \ is excepted, it actualy does the same as \\n. I dunno how UCC likes enters\
+      \ in strings constants...</p>\n<p><b>Wormbo:</b> The compiler can't handle control\
+      \ characters in string constants and there are no escape characters for them.</p>\n\
+      <p><b>El Muerte:</b> It's by design (of this tokenizer). You could add support\
+      \ for it. Just remove the <code>if (c == NEWLINE)</code> check for strings to\
+      \ support newlines. Anyway, this tokenizer is experminetal and quite slow. Maybe\
+      \ I should add a notice about that on the top of the page.</p>\n<p><b>Daid303:</b>\
+      \ Ok, I just noticed that the Visual C compiler doesn't like newlines in string\
+      \ constants. While the borland compiler (I think) has no problems with them.</p>\n\
+      <p>Another thing I noticed in the operator parsing part, the comment says \"\
+      [-=+&lt;&gt;*/!]+\" those are 8 characters (the | and &amp; are missing) but\
+      \ the code has 9 character values. \"If the comment and the code disagree then\
+      \ they are both wrong\"</p>\n<p>Maybe this is updated in the latest version\
+      \ and is this not the latest version...</p>\n<p><b>PTGui:</b> I sent a string\
+      \ with 999 characters and the games just crashed in the tokenizer. The way I\
+      \ used to fix was to make a string with MID(PREVIOUS_STRING,0,995)and the problem\
+      \ was solved. I just don't know if the problem was from the type of string (was\
+      \ dynamically created), but the crash was due to the tokenizer.</p>\n<p><b>Wormbo:</b>\
+      \ UScript is not designed to handle long strings very well. Working with them\
+      \ is quite slow as they have to be copied every time they are assigned or passed\
+      \ into a function.</p>\n<h2><span class=\"mw-headline\" id=\"Related_Topics\"\
+      >Related Topics</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Tokenizer?section=5\" title=\"Edit section:\
+      \ Related Topics\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <ul>\n<li><a href=\"/Legacy:BruteForce\" title=\"Legacy:BruteForce\">BruteForce</a></li>\n\
+      <li><a href=\"/Legacy:Open_Source\" title=\"Legacy:Open Source\">Open Source</a></li>\n\
+      </ul>\n\n<!-- \nNewPP limit report\nCPU time usage: 0.125 seconds\nReal time\
+      \ usage: 0.427 seconds\nPreprocessor visited node count: 82/1000000\nPreprocessor\
+      \ generated node count: 164/1000000\nPost‐expand include size: 0/2097152 bytes\n\
+      Template argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive\
+      \ parser function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report\
+      \ (%,ms,calls,template)\n100.00%    0.000      1 - -total\n-->\n\n<!-- Saved\
+      \ in parser cache with key wiki:pcache:idhash:3130-0!*!0!!en!*!* and timestamp\
+      \ 20221118094727 and revision id 8190\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:El Muerte"
+  - ns: 100
+    exists: true
+    name: "Legacy:BruteForce"
+  - ns: 100
+    exists: true
+    name: "Legacy:El Muerte/Journal History 1"
+  - ns: 100
+    exists: true
+    name: "Legacy:Open Source"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Issues"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Tokenizer"
+    byteoffset: 6173
+    anchor: "Issues"
+  - toclevel: 2
+    level: "3"
+    line: "Escape characters in strings"
+    number: "1.1"
+    index: "2"
+    fromtitle: "Legacy:Tokenizer"
+    byteoffset: 6186
+    anchor: "Escape_characters_in_strings"
+  - toclevel: 2
+    level: "3"
+    line: "Negative numbers"
+    number: "1.2"
+    index: "3"
+    fromtitle: "Legacy:Tokenizer"
+    byteoffset: 6409
+    anchor: "Negative_numbers"
+  - toclevel: 1
+    level: "2"
+    line: "Discussion"
+    number: "2"
+    index: "4"
+    fromtitle: "Legacy:Tokenizer"
+    byteoffset: 6866
+    anchor: "Discussion"
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "3"
+    index: "5"
+    fromtitle: "Legacy:Tokenizer"
+    byteoffset: 8528
+    anchor: "Related_Topics"
+  displaytitle: "Legacy:Tokenizer"
+  iwlinks: []
+  wikitext:
+    text: "A tokenizer converts a input string in to tokens. It's very usefull when\
+      \ you need to do parsing of text.\n\nThis tokenizer is used by the [[Legacy:BruteForce|BruteForce]]\
+      \ language written by [[Legacy:El Muerte|El Muerte]], for information check\
+      \ his [[Legacy:El Muerte/Journal_History_1|El Muerte/Journal_History_1]]\n\n\
+      <uscript>\nclass Tokenizer extends Object;\n\nconst NEWLINE = 10;\n\nvar private\
+      \ array<string> buffer;   // the input buffer\nvar private byte c;         \
+      \        // holds the current char\nvar private int linenr;             // current\
+      \ line in the input buffer\nvar private int pos;                // position\
+      \ on the current line\n\nvar int verbose;                    // for debugging\n\
+      \nenum tokenType \n{\n  TT_None,\n  TT_Literal,\n  TT_Identifier,  \n  TT_Integer,\n\
+      \  TT_Float,\n  TT_String,\n  TT_Operator,\n  TT_EOF,\n};\n</uscript>\n\nThis\
+      \ tokenizer recognizes 8 different tokens.\n; TT_None : this token is never\
+      \ assigned, but used as a default\n; TT_Literal : the token is a literal, e.g.\
+      \ ( or ). Most tokenizers just use the ascii value of the literal but because\
+      \ of limitations in UScript we will use this\n; TT_Identifier : an identifier\
+      \ is a string which begins with a alpha or underscore followed by zero or more\
+      \ alphanumeric characters or underscores. Regular expression: <code>Identifier\
+      \ ::= [a-z_][a-z0-9_]*</code>\n; TT_Integer : a natural number, negative numbers\
+      \ are not supported because this is incompatible with a '-' operator, so you\
+      \ have to keep that in mind when you define your grammar. Regular expression:\
+      \ <code>Integer ::= [0-9]+</code>\n; TT_Float : a regular number with a floating\
+      \ point. Regular expression: <code>Float ::= [0-9]+\\.[0-9]*</code>\n; TT_String\
+      \ :  a string of characters encapsuled with double quotes, literal double quotes\
+      \ need to be escaped using a backslashRegular expression: <code>String ::= \"\
+      [^\"]*\"</code>\n; TT_Operator : an operator: =, ==, >, >=, ... Regular expression:\
+      \ <code>Identifier ::= [-=+<>*/!]+</code>\n; TT_EOF : the end of file\n\n<uscript>\n\
+      var private tokenType curTokenType; // holds the current token\nvar private\
+      \ string curTokenString;  // holds the current string representation\n\n/**\n\
+      \  Create a tokenizer\n*/\nfunction Create(array<string> buf)\n{\n  buffer.length\
+      \ = 0;\n  buffer = buf;\n  linenr = 0;\n  pos = 0;\n  c = 0;\n}\n</uscript>\n\
+      \nCall this to initialize the tokenizer with a new buffer\n\n<uscript>\n/**\n\
+      \  returns the string representation of the current token\n*/\nfunction string\
+      \ tokenString()\n{\n  return curTokenString;\n}\n\n/**\n  returns the type of\
+      \ the current token\n*/\nfunction tokenType currentToken()\n{\n  return curTokenType;\n\
+      }\n\n</uscript>\n\nWe don't want anybody writing to out variables thus provide\
+      \ them with functions to read the value\n\n<uscript>\n\n/**\n  retreives the\
+      \ next token\n*/\nfunction tokenType nextToken()\n{\n  return _nextToken();\n\
+      }\n</uscript>\n\nGet the next token in the buffer, this calls the private _nextToken()\
+      \ for the real processing\n\n<uscript>\n/* Private functions */\n\nprivate function\
+      \ tokenType _nextToken()\n{\n  local int tokenPos, endPos;\n  skipBlanks();\n\
+      \  if (curTokenType == TT_EOF) return curTokenType; \n  tokenPos = pos;\n  //\
+      \ identifier: [A-Za-z]([A-Za-z0-9_])*\n  if (((c >= 65) && (c <= 90)) || ((c\
+      \ >= 97) && (c <= 122)) || (c == 95))\n  {\n    pos++;\n    c = _c();\n    while\
+      \ (((c >= 65) && (c <= 90)) || ((c >= 97) && (c <= 122)) || (c == 95) || ((c\
+      \ >= 48) && (c <= 57)))\n    {\n      pos++;\n      c = _c();\n    }\n    endPos\
+      \ = pos;\n    curTokenType = TT_Identifier;\n  }\n  // number: [0-9]+(\\.([0-9])+)?\n\
+      \  else if ((c >= 48) && (c <= 57))\n  {\n    pos++;\n    c = _c();\n    while\
+      \ ((c >= 48) && (c <= 57))\n    {\n      pos++;\n      c = _c();\n    }\n  \
+      \  if (c == 46) // .\n    {\n      pos++;\n      c = _c();\n      while ((c\
+      \ >= 48) && (c <= 57))\n      {\n        pos++;\n        c = _c();\n      }\n\
+      \      endPos = pos;\n      curTokenType = TT_Float;\n    }\n    else {\n  \
+      \    endPos = pos;\n      curTokenType = TT_Integer;\n    }\n  }\n  // string:\
+      \ \"[^\"]*\"\n  else if (c == 34)\n  {\n    pos++;\n    c = _c();\n    while\
+      \ (true)\n    {\n      if (c == 34) break;\n      if (c == 92) // escape char\
+      \ skip one char\n      {\n        pos++;\n      }\n      if (c == NEWLINE)\n\
+      \      {\n        Warn(\"Unterminated string @\"@linenr$\",\"$pos);\n      \
+      \  assert(false);\n      }\n      pos++;\n      c = _c();\n    }\n    tokenPos++;\n\
+      \    endPos = pos;\n    pos++;\n    curTokenType = TT_String;\n  }\n  // operator:\
+      \ [+-*/=><!]+\n  // literal\n  else if ((c == 33) || (c == 42) || (c == 43)\
+      \ || (c == 45) || (c == 47) || (c == 60) || (c == 61) || (c == 62) || (c ==\
+      \ 61))\n  {\n    pos++;\n    c = _c();\n    while ((c == 33) || (c == 42) ||\
+      \ (c == 43) || (c == 45) || (c == 47) || (c == 60) || (c == 61) || (c == 62)\
+      \ || (c == 61))\n    {\n      pos++;\n      c = _c();\n    }\n    endPos = pos;\n\
+      \    curTokenType = TT_Operator;\n  }\n  else {\n    pos++;\n    endPos = pos;\n\
+      \    curTokenType = TT_Literal;\n  }\n  // make up result\n  if (linenr >= buffer.length)\
+      \ // EOF break\n  {\n    curTokenType = TT_EOF; \n    curTokenString = \"\"\
+      ;\n  }\n  else {\n    curTokenString = Mid(buffer[linenr], tokenPos, endPos-tokenPos);\n\
+      \  }\n  if (verbose > 0) log(curTokenType@curTokenString, 'Tokenizer');\n  return\
+      \ curTokenType;\n}\n\n/**\n  Skip all characters with ascii value < 33 (32 is\
+      \ space)\n*/\nprivate function skipBlanks()\n{  \n  c = _c();\n  while (c <\
+      \ 33)\n  {\n    if (c == NEWLINE)\n    {\n      linenr++;\n      pos = 0;\n\
+      \      if (linenr >= buffer.length) // EOF break\n      {\n        curTokenType\
+      \ = TT_EOF; \n        curTokenString = \"\";\n        return;\n      }\n   \
+      \ }\n    else pos++;\n    c = _c();\n  }\n}\n</uscript>\n\nskipBlanks skips\
+      \ all characters considered whitespace, in this case all ASCII controll characters\
+      \ including the space.\n\n<uscript>\n/**\n  returns the current char\n*/\nprivate\
+      \ function byte _c(optional int displacement)\n{\n  local string t;\n  t = \
+      \ Mid(buffer[linenr], pos+displacement, 1);\n  if (t == \"\") return NEWLINE;\
+      \ // empty string is a newline\n  return Asc(t);\n}\n</uscript>\n\nThis function\
+      \ is used to read the current character, because we can't just increase the\
+      \ read pointer like you would do normaly we need to extract the current character\
+      \ from the current line and convert it to the ASCII value for better processing.\n\
+      \n<uscript>\ndefaultproperties\n{\n  verbose=0\n}\n</uscript>\n\n==Issues ==\n\
+      \n===Escape characters in strings ===\n\nEscaped characters are accepted by\
+      \ this tokenizer but not ''fixed''. \n\n<code>\"a string with \\\"double quotes\\\
+      \"\"</code> will be returned as:\n\n<code>a string with \\\"double quotes\\\"\
+      </code>\n\n===Negative numbers ===\n\nNegative numbers are not supported but\
+      \ this tokenizer, instead you will get a Operator '-' and a Number '123' insetad\
+      \ of a Number '-123'. This is because it's impossible to see the diffirence\
+      \ between the operator '-' and a leading minus symbol in a string. For example:\n\
+      \n<code>x = x - 1</code> and <code>x = -1</code>\n\nSo when parsing your code\
+      \ you need to keep this in mind that a number can be preceded with a '-' (pre-operator)\n\
+      \n==Discussion==\n\n'''Daid303:''' I noticed that you can get an 'Unterminated\
+      \ string' error if you put a normal enter in a string, but in normal C this\
+      \ is excepted, it actualy does the same as \\n. I dunno how UCC likes enters\
+      \ in strings constants...\n\n'''Wormbo:''' The compiler can't handle control\
+      \ characters in string constants and there are no escape characters for them.\n\
+      \n'''El Muerte:''' It's by design (of this tokenizer). You could add support\
+      \ for it. Just remove the <code>if (c == NEWLINE)</code> check for strings to\
+      \ support newlines. Anyway, this tokenizer is experminetal and quite slow. Maybe\
+      \ I should add a notice about that on the top of the page.\n\n'''Daid303:'''\
+      \ Ok, I just noticed that the Visual C compiler doesn't like newlines in string\
+      \ constants. While the borland compiler (I think) has no problems with them.\n\
+      \nAnother thing I noticed in the operator parsing part, the comment says \"\
+      [-=+<>*/!]+\" those are 8 characters (the | and & are missing) but the code\
+      \ has 9 character values. \"If the comment and the code disagree then they are\
+      \ both wrong\"\n\nMaybe this is updated in the latest version and is this not\
+      \ the latest version...\n\n'''PTGui:''' I sent a string with 999 characters\
+      \ and the games just crashed in the tokenizer. The way I used to fix was to\
+      \ make a string with MID(PREVIOUS_STRING,0,995)and the problem was solved. I\
+      \ just don't know if the problem was from the type of string (was dynamically\
+      \ created), but the crash was due to the tokenizer. \n\n'''Wormbo:''' UScript\
+      \ is not designed to handle long strings very well. Working with them is quite\
+      \ slow as they have to be copied every time they are assigned or passed into\
+      \ a function.\n\n==Related Topics==\n* [[Legacy:BruteForce|BruteForce]]\n* [[Legacy:Open\
+      \ Source|Open Source]]"
+  properties: []
+  revId: 8190
+name: "Legacy:Tokenizer"
+revision:
+  revid: 8190
+  parentid: 8191
+  user: "Wormbo"
+  timestamp: 1173431841.000000000
+  comment: "*"
+timestamp: 1668764848.521370000

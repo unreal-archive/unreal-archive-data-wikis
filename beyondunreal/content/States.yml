@@ -1,0 +1,916 @@
+---
+parse:
+  title: "States"
+  text:
+    text: "<p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n\
+      </div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#Overview_of_States\"\
+      ><span class=\"tocnumber\">1</span> <span class=\"toctext\">Overview of States</span></a>\n\
+      <ul>\n<li class=\"toclevel-2 tocsection-2\"><a href=\"#Declaration_syntax\"\
+      ><span class=\"tocnumber\">1.1</span> <span class=\"toctext\">Declaration syntax</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-3\"><a href=\"#Modifiers\"><span class=\"\
+      tocnumber\">1.2</span> <span class=\"toctext\">Modifiers</span></a></li>\n</ul>\n\
+      </li>\n<li class=\"toclevel-1 tocsection-4\"><a href=\"#State_Labels_and_Latent_Functions\"\
+      ><span class=\"tocnumber\">2</span> <span class=\"toctext\">State Labels and\
+      \ Latent Functions</span></a></li>\n<li class=\"toclevel-1 tocsection-5\"><a\
+      \ href=\"#State_inheritance_inheritance_and_scoping_rules\"><span class=\"tocnumber\"\
+      >3</span> <span class=\"toctext\">State inheritance inheritance and scoping\
+      \ rules</span></a></li>\n<li class=\"toclevel-1 tocsection-6\"><a href=\"#Advanced_state_programming\"\
+      ><span class=\"tocnumber\">4</span> <span class=\"toctext\">Advanced state programming</span></a>\n\
+      <ul>\n<li class=\"toclevel-2 tocsection-7\"><a href=\"#Ignores_statement\"><span\
+      \ class=\"tocnumber\">4.1</span> <span class=\"toctext\">Ignores statement</span></a></li>\n\
+      </ul>\n</li>\n</ul>\n</div>\n<p></p>\n<h2><span class=\"mw-headline\" id=\"\
+      Overview_of_States\">Overview of States</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/States?section=1\"\
+      \ title=\"Edit section: Overview of States\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>Historically, game programmers have been using the\
+      \ concept of states ever since games evolved past the \"pong\" phase. States\
+      \ (and what is known as \"state machine programming\") are a natural way of\
+      \ making complex object behavior manageable. However, before UnrealScript, states\
+      \ have not been supported at the language level, requiring developers to create\
+      \ C/C++ \"switch\" statements based on the object's state. Such code was difficult\
+      \ to write and update.</p>\n<p>UnrealScript supports states at the language\
+      \ level.</p>\n<p>In UnrealScript, each actor in the world is always in one and\
+      \ only one state. Its state reflects the action it wants to perform. For example,\
+      \ moving brushes have several states like \"StandOpenTimed\" and \"BumpOpenTimed\"\
+      . Pawns have several states such as \"Dying\", \"Attacking\", and \"Wandering\"\
+      .</p>\n<p>In UnrealScript, you can write functions and code which exist in a\
+      \ particular state. These functions are only called when the actor is in that\
+      \ state. For example, say you're writing a monster script, and you're contemplating\
+      \ how to handle the \"SeePlayer\" function. When you're wandering around, you\
+      \ want to attack the player you see. When you're already attacking the player,\
+      \ you want to continue on uninterrupted.</p>\n<p>The easiest way to do this\
+      \ is by defining several states (Wandering and Attacking), and writing a different\
+      \ version of \"Touch\" in each state. UnrealScript supports this.</p>\n<p>Before\
+      \ delving deeper into states, you need to understand that there are two major\
+      \ benefits to states, and one complication:</p>\n<ul>\n<li>Benefit: States provide\
+      \ a simple way to write state-specific functions, so that you can handle the\
+      \ same function in different ways, depending on what the actor is doing.</li>\n\
+      <li>Benefit: With a state, you can write special \"state code\", using all of\
+      \ the regular UnrealScript commands plus several special functions known as\
+      \ \"latent functions\". A latent function is a function which executes \"slowly\"\
+      , and may return after a certain amount of \"game time\" has passed. This enables\
+      \ you to perform time-based programming – a major benefit which neither C, C++,\
+      \ nor Java offer. Namely, you can write code in the same way you conceptualize\
+      \ it; for example, you can write a script that says the equivalent of \"open\
+      \ this door; pause 2 seconds; play this sound effect; open that door; release\
+      \ that monster and have it attack the player\". You can do this with simple,\
+      \ linear code, and the Unreal engine takes care of the details of managing the\
+      \ time-based execution of the code.</li>\n</ul>\n<ul>\n<li>Complication: Now\
+      \ that you can have functions (like \"Touch\") overridden in multiple states\
+      \ as well as in child classes, you have the burden of figuring out exactly which\
+      \ \"Touch\" function is going to be called in a specific situation. UnrealScript\
+      \ provides rules which clearly delineate this process, but it is something you\
+      \ must be aware of if you create complex hierarchies of classes and states.</li>\n\
+      </ul>\n<p>Here is an example of states from the TriggerLight script:</p>\n<div\
+      \ dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"co1\">// Trigger turns\
+      \ the light on.</span>\n<span class=\"kw1\">state</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span> TriggerTurnsOn\n<span class=\"br0\">{</span>\n\
+      \t<span class=\"kw1\">function</span> <span class=\"kw4\">Trigger</span><span\
+      \ class=\"br0\">(</span> <span class=\"kw9\">Actor</span> Other, <span class=\"\
+      kw9\">Pawn</span> EventInstigator <span class=\"br0\">)</span>\n\t<span class=\"\
+      br0\">{</span>\n\t\t<span class=\"kw4\">Trigger</span> <span class=\"sy0\">=</span>\
+      \ <span class=\"kw5\">None</span>;\n\t\tDirection <span class=\"sy0\">=</span>\
+      \ <span class=\"nu0\">1.0</span>;\n\t\t<span class=\"kw3\">Enable</span><span\
+      \ class=\"br0\">(</span> <span class=\"st0\">'Tick'</span> <span class=\"br0\"\
+      >)</span>;\n\t<span class=\"br0\">}</span>\n<span class=\"br0\">}</span>\n \n\
+      <span class=\"co1\">// Trigger turns the light off.</span>\n<span class=\"kw1\"\
+      >state</span><span class=\"br0\">(</span><span class=\"br0\">)</span> TriggerTurnsOff\n\
+      <span class=\"br0\">{</span>\n\t<span class=\"kw1\">function</span> <span class=\"\
+      kw4\">Trigger</span><span class=\"br0\">(</span> <span class=\"kw9\">Actor</span>\
+      \ Other, <span class=\"kw9\">Pawn</span> EventInstigator <span class=\"br0\"\
+      >)</span>\n\t<span class=\"br0\">{</span>\n\t\t<span class=\"kw4\">Trigger</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"kw5\">None</span>;\n\t\tDirection\
+      \ <span class=\"sy0\">=</span> <span class=\"sy0\">-</span><span class=\"nu0\"\
+      >1.0</span>;\n\t\t<span class=\"kw3\">Enable</span><span class=\"br0\">(</span>\
+      \ <span class=\"st0\">'Tick'</span> <span class=\"br0\">)</span>;\n\t<span class=\"\
+      br0\">}</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>Here you\
+      \ are declaring two different states (TriggerTurnsOn and TriggerTurnsOff), and\
+      \ you're writing a different version of the Trigger function in each state.\
+      \ Though you could pull off this implementation without states, using states\
+      \ makes the code far more modular and expandable: in UnrealScript, you can easily\
+      \ subclass an existing class, add new states, and add new functions. If you\
+      \ had tried to do this without states, the resulting code would be more difficult\
+      \ to expand later.</p>\n<h3><span class=\"mw-headline\" id=\"Declaration_syntax\"\
+      >Declaration syntax</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/States?section=2\" title=\"Edit section: Declaration\
+      \ syntax\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>A general state declaration looks like this:</p>\n<pre><i><a href=\"#Modifiers\"\
+      >[modifiers]</a></i> <b>state</b> <i>statename</i> [<b><a href=\"/Extends\"\
+      \ title=\"Extends\" class=\"mw-redirect\">extends</a></b> <i>parentstate</i>]\
+      \ <b>{</b>\n  ...\n<b>};</b>\n</pre>\n<p>A state can be declared as editable,\
+      \ meaning that the user can set an actor's state in <a href=\"/UnrealEd\" title=\"\
+      UnrealEd\" class=\"mw-redirect\">UnrealEd</a>, or not. To declare an editable\
+      \ state, do the following:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">state</span><span class=\"br0\">(</span><span class=\"br0\">)</span> MyState\n\
+      <span class=\"br0\">{</span>\n\t<span class=\"co1\">//...</span>\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p>To declare a non-editable state, do this:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">state</span> MyState\n\
+      <span class=\"br0\">{</span>\n\t<span class=\"co1\">//...</span>\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<h3><span class=\"mw-headline\" id=\"Modifiers\"\
+      >Modifiers</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/States?section=3\" title=\"Edit section: Modifiers\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n<dl>\n\
+      <dt>Auto</dt>\n<dd>You can also specify the automatic, or initial state that\
+      \ an actor should be in. This causes all new actors to be placed in that state\
+      \ on the SetInitialState() event.</dd>\n<dt>Simulated</dt>\n<dd>Marks the state\
+      \ as valid for execution on clients if the actor containing it was replicated\
+      \ to that client and the local <a href=\"/edit/Role?redlink=1\" class=\"new\"\
+      \ title=\"Role (page does not exist)\">role</a> of that client is either ROLE_SimulatedProxy\
+      \ or ROLE_DumbProxy.<br />\n<b>Note:</b> The modifier <b>simulated</b> does\
+      \ not imply any kind of replication or even broadcast! Also, this modifier is\
+      \ not inherited when overriding states!</dd>\n</dl>\n<h2><span class=\"mw-headline\"\
+      \ id=\"State_Labels_and_Latent_Functions\">State Labels and Latent Functions</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/States?section=4\" title=\"Edit section: State Labels and Latent\
+      \ Functions\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>In addition to functions, a state can contain one or more labels followed\
+      \ by UnrealScript code. For example:</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">auto</span> <span class=\"kw1\">state</span> MyState\n\
+      <span class=\"br0\">{</span>\n<span class=\"kw2\">Begin</span>:\n\t<span class=\"\
+      kw3\">Log</span><span class=\"br0\">(</span> <span class=\"st0\">\"MyState has\
+      \ just begun!\"</span> <span class=\"br0\">)</span>;\n\t<span class=\"kw4\"\
+      >Sleep</span><span class=\"br0\">(</span> <span class=\"nu0\">2.0</span> <span\
+      \ class=\"br0\">)</span>;\n\t<span class=\"kw3\">Log</span><span class=\"br0\"\
+      >(</span> <span class=\"st0\">\"MyState has finished sleeping\"</span> <span\
+      \ class=\"br0\">)</span>;\n\tgoto <span class=\"st0\">'Begin'</span>;\n<span\
+      \ class=\"br0\">}</span></pre></div>\n</div>\n<p>The above state code prints\
+      \ the message \"MyState has just begun!\", then it pauses for two seconds, then\
+      \ it prints the message \"MyState has finished sleeping\". The interesting thing\
+      \ in this example is the call to the latent function \"Sleep\": this function\
+      \ call doesn't return immediately, but returns after a certain amount of game\
+      \ time has passed. Latent functions can only be called from within state code,\
+      \ and not from within functions. Latent functions let you manage complex chains\
+      \ of events which include the passage of time.</p>\n<p>All state code begins\
+      \ with a label definition; in the above example the label is named \"Begin\"\
+      . The label provides a convenient entry point into the state code. You can use\
+      \ any label name in state code, but the \"Begin\" label is special: it is the\
+      \ default starting point for code in that state. (But if the function <i>BeginState()</i>\
+      \ (see below) is defined, it is executed before this label is reached.)</p>\n\
+      <p>There are three main latent functions available to all actors:</p>\n<ul>\n\
+      <li>Sleep( float Seconds ) pauses the state execution for a certain amount of\
+      \ time, and then continues.</li>\n<li>FinishAnim() waits until the current animation\
+      \ sequence you're playing completes, and then continues. This function makes\
+      \ it easy to write animation-driven scripts, scripts whose execution is governed\
+      \ by mesh animations. For example, most of the AI scripts are animation-driven\
+      \ (as opposed to time-driven), because smooth animation is a key goal of the\
+      \ AI system.</li>\n<li>FinishInterpolation() waits for the current InterpolationPoint\
+      \ movement to complete, and then continues.</li>\n</ul>\n<p>The Pawn class defines\
+      \ several important latent functions for actions such as navigating through\
+      \ the world and short-term movement. See the separate AI docs for descriptions\
+      \ of their usage.</p>\n<p>Three native UnrealScript functions are particularly\
+      \ useful when writing state code:</p>\n<ul>\n<li>The \"Goto\" function (similar\
+      \ to the C/C++/Basic goto) within a state causes the state code to continue\
+      \ executing at a different label.</li>\n<li>The special Goto('') command within\
+      \ a state causes the state code execution to stop. State code execution doesn't\
+      \ continue until you go to a new state, or go to a new label within the current\
+      \ state.</li>\n<li>The \"GotoState\" function causes the actor to go to a new\
+      \ state, and optionally continue at a specified label (if you don't specify\
+      \ a label, the default is the \"Begin\" label). You can call GotoState from\
+      \ within state code, and it goes to the destination immediately. You can also\
+      \ call GotoState from within any function in the actor, but that does not take\
+      \ effect immediately: it doesn't take effect until execution returns back to\
+      \ the state code.</li>\n</ul>\n<p>Here is an example of the state concepts discussed\
+      \ so far:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n\
+      <div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"co1\"\
+      >// This is the automatic state to execute.</span>\n<span class=\"kw1\">auto</span>\
+      \ <span class=\"kw1\">state</span> Idle\n<span class=\"br0\">{</span>\n\t<span\
+      \ class=\"co1\">// When touched by another actor…</span>\n\t<span class=\"kw1\"\
+      >function</span> <span class=\"kw4\">Touch</span><span class=\"br0\">(</span>\
+      \ <span class=\"kw9\">actor</span> Other <span class=\"br0\">)</span>\n\t<span\
+      \ class=\"br0\">{</span>\n\t\t<span class=\"kw3\">log</span><span class=\"br0\"\
+      >(</span> <span class=\"st0\">\"I was touched, so I'm going to Attacking\"</span>\
+      \ <span class=\"br0\">)</span>;\n\t\t<span class=\"kw3\">GotoState</span><span\
+      \ class=\"br0\">(</span> <span class=\"st0\">'Attacking'</span> <span class=\"\
+      br0\">)</span>;\n\t\t<span class=\"kw3\">Log</span><span class=\"br0\">(</span>\
+      \ <span class=\"st0\">\"I have gone to the Attacking state\"</span> <span class=\"\
+      br0\">)</span>;\n\t<span class=\"br0\">}</span>\n<span class=\"kw2\">Begin</span>:\n\
+      \t<span class=\"kw3\">log</span><span class=\"br0\">(</span> <span class=\"\
+      st0\">\"I am idle…\"</span> <span class=\"br0\">)</span>;\n\t<span class=\"\
+      kw4\">sleep</span><span class=\"br0\">(</span> <span class=\"nu0\">10</span>\
+      \ <span class=\"br0\">)</span>;\n\tgoto <span class=\"st0\">'Begin'</span>;\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"co1\">// Attacking state.</span>\n\
+      <span class=\"kw1\">state</span> Attacking\n<span class=\"br0\">{</span>\n<span\
+      \ class=\"kw2\">Begin</span>:\n\t<span class=\"kw3\">Log</span><span class=\"\
+      br0\">(</span> <span class=\"st0\">\"I am executing the attacking state code\"\
+      </span> <span class=\"br0\">)</span>;\n\t<span class=\"co1\">//...</span>\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>When you run this program\
+      \ and then go touch the actor, you will see:</p>\n<p><code>I am idle...<br />\n\
+      I am idle...<br />\nI am idle...<br />\nI was touched, so I'm going to Attacking<br\
+      \ />\nI have gone to the Attacking state<br />\nI am executing the attacking\
+      \ state code<br /></code></p>\n<p>Make sure you understand this important aspect\
+      \ of GotoState: When you call GotoState from within a function, it does not\
+      \ go to the destination immediately, rather it goes there once execution returns\
+      \ back to the state code.</p>\n<h2><span class=\"mw-headline\" id=\"State_inheritance_inheritance_and_scoping_rules\"\
+      >State inheritance inheritance and scoping rules</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/States?section=5\"\
+      \ title=\"Edit section: State inheritance inheritance and scoping rules\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>In UnrealScript,\
+      \ when you subclass an existing class, your new class inherits all of the variables,\
+      \ functions and states from its parent class. This is well-understood.</p>\n\
+      <p>However, the addition of the state abstraction to the UnrealScript programming\
+      \ model adds additional twists to the inheritance and scoping rules.</p>\n<p>The\
+      \ complete inheritance rules are:</p>\n<ul>\n<li>A new class inherits all of\
+      \ the variables from its parent class.</li>\n<li>A new class inherits all of\
+      \ its parent class's non-state functions. You can override any of those inherited\
+      \ non-state functions. You can add entirely new non-state functions.</li>\n\
+      <li>A new class inherits all of its parent class's states, including the functions\
+      \ and labels within those states. You can override any of the inherited state\
+      \ functions, and you can override any of the inherited state labels, you can\
+      \ add new state functions, and you can add new state labels.</li>\n</ul>\n<p>Here\
+      \ is an example of all the overriding rules:</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"co1\">// Here is an example parent class.</span>\n\
+      <span class=\"kw1\">class</span> MyParentClass <span class=\"kw1\">extends</span>\
+      \ <span class=\"kw9\">Actor</span>;\n \n<span class=\"co1\">// A non-state function.</span>\n\
+      <span class=\"kw1\">function</span> MyInstanceFunction<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw3\"\
+      >log</span><span class=\"br0\">(</span> <span class=\"st0\">\"Executing MyInstanceFunction\"\
+      </span> <span class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n \n<span\
+      \ class=\"co1\">// A state.</span>\n<span class=\"kw1\">state</span> MyState\n\
+      <span class=\"br0\">{</span>\n\t<span class=\"co1\">// A state function.</span>\n\
+      \t<span class=\"kw1\">function</span> MyStateFunction<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t\t<span class=\"\
+      kw3\">Log</span><span class=\"br0\">(</span> <span class=\"st0\">\"Executing\
+      \ MyStateFunction\"</span> <span class=\"br0\">)</span>;\n\t<span class=\"br0\"\
+      >}</span>\n<span class=\"co1\">// The \"Begin\" label.</span>\n<span class=\"\
+      kw2\">Begin</span>:\n\t<span class=\"kw3\">Log</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">\"Beginning MyState\"</span><span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"co1\">// Here is an example child\
+      \ class.</span>\n<span class=\"kw1\">class</span> MyChildClass <span class=\"\
+      kw1\">extends</span> MyParent<span class=\"re0\">Class</span>&lt; SEMI &gt;\n\
+      \ \n<span class=\"co1\">// Here I'm overriding a non-state function.</span>\n\
+      <span class=\"kw1\">function</span> MyInstanceFunction<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw3\"\
+      >Log</span><span class=\"br0\">(</span> <span class=\"st0\">\"Executing MyInstanceFunction\
+      \ in child class\"</span> <span class=\"br0\">)</span>;\n \n<span class=\"br0\"\
+      >}</span>\n \n<span class=\"co1\">// Here I'm redeclaring MyState so that I\
+      \ can override MyStateFunction.</span>\n<span class=\"kw1\">state</span> MyState\n\
+      <span class=\"br0\">{</span>\n\t<span class=\"co1\">// Here I'm overriding MyStateFunction.</span>\n\
+      \t<span class=\"kw1\">function</span> MyStateFunction<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t\t<span class=\"\
+      kw3\">Log</span><span class=\"br0\">(</span> <span class=\"st0\">\"Executing\
+      \ MyStateFunction\"</span> <span class=\"br0\">)</span>;\n\t<span class=\"br0\"\
+      >}</span>\n<span class=\"co1\">// Here I'm overriding the \"Begin\" label.</span>\n\
+      <span class=\"kw2\">Begin</span>:\n\t<span class=\"kw3\">Log</span><span class=\"\
+      br0\">(</span> <span class=\"st0\">\"Beginning MyState in MyChildClass\"</span>\
+      \ <span class=\"br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>When you have a function that is implemented globally, in one or\
+      \ more states, and in one or more parent classes, you need to understand which\
+      \ version of the function will be called in a given context. The scoping rules,\
+      \ which resolves these complex situations, are:</p>\n<ul>\n<li>If the object\
+      \ is in a state, and an implementation of the function exists somewhere in that\
+      \ state (either in the actor's class or in some parent class), the most-derived\
+      \ state version of the function is called.</li>\n<li>Otherwise, the most-derived\
+      \ non-state version of the function is called.</li>\n</ul>\n<h2><span class=\"\
+      mw-headline\" id=\"Advanced_state_programming\">Advanced state programming</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/States?section=6\" title=\"Edit section: Advanced state programming\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>If\
+      \ a state doesn't override a state of the same name in the parent class, then\
+      \ you can optionally use the \"extends\" keyword to make the state extend an\
+      \ existing state in the current class. This is useful, for example, in a situation\
+      \ where you have a group of similar states (such as MeleeAttacking and RangeAttacking)\
+      \ which have a lot of functionality in common. In this case you could declare\
+      \ a base Attacking state as follows:</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"co1\">// Base Attacking state.</span>\n<span class=\"kw1\"\
+      >state</span> Attacking\n<span class=\"br0\">{</span>\n\t<span class=\"co1\"\
+      >// Stick base functions here...</span>\n<span class=\"br0\">}</span> \n \n\
+      <span class=\"co1\">// Attacking up-close.</span>\n<span class=\"kw1\">state</span>\
+      \ MeleeAttacking <span class=\"kw1\">extends</span> Attacking\n<span class=\"\
+      br0\">{</span>\n\t<span class=\"co1\">// Stick specialized functions here...</span>\n\
+      <span class=\"br0\">}</span> \n \n<span class=\"co1\">// Attacking from a distance.</span>\n\
+      <span class=\"kw1\">state</span> RangeAttacking <span class=\"kw1\">extends</span>\
+      \ Attacking\n<span class=\"br0\">{</span>\n\t<span class=\"co1\">// Stick specialized\
+      \ functions here...</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <p>You can tell what specific state an actor is in from its \"state\" variable,\
+      \ a variable of type \"name\".</p>\n<p>It is possible for an actor to be in\
+      \ \"no state\" by using GotoState(<i>). When an actor is in \"no state\", only\
+      \ its global (non-state) functions are called.</i></p>\n<p>When you use the\
+      \ GotoState command to set an actor's state, the engine can call two special\
+      \ notification functions, if you have defined them: EndState() and BeginState().\
+      \ EndState is called in the current state immediately before the new state is\
+      \ begun, and BeginState is called immediately after the new state begins. These\
+      \ functions provide a convenient place to do any state-specific initialization\
+      \ and cleanup which your state may require.</p>\n<p><br />\nStates Execution\
+      \ Gotcha <a href=\"/Unreal_Engine_3\" title=\"Unreal Engine 3\">Unreal Engine\
+      \ 3</a> States are executed during an actors tick, which is expected to be an\
+      \ asynchronous process. While EndState() and BeginState() execution might happen\
+      \ straight away, UnrealScript state changes from calls to GotoState('NewStateName')\
+      \ will only take effect once an actor has been Ticked. This means you should\
+      \ avoid state machines that become order-of-operation dependent or that lock,\
+      \ for example this script fragment:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">state</span> FirstState\n<span class=\"br0\">{</span>\n\
+      \    <span class=\"kw1\">event</span> Action<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n    <span class=\"br0\">{</span>\n        <span class=\"\
+      kw3\">GotoState</span><span class=\"br0\">(</span> <span class=\"st0\">'SecondState'</span>\
+      \ <span class=\"br0\">)</span>;\n    <span class=\"br0\">}</span>\n<span class=\"\
+      br0\">}</span>\n \n<span class=\"kw1\">state</span> SecondState\n<span class=\"\
+      br0\">{</span>\n    <span class=\"kw1\">event</span> Action<span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>\n    <span class=\"br0\">{</span>\n  \
+      \      <span class=\"kw3\">GotoState</span><span class=\"br0\">(</span> <span\
+      \ class=\"st0\">'ThirdState'</span> <span class=\"br0\">)</span>;\n    <span\
+      \ class=\"br0\">}</span>\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\"\
+      >state</span> ThirdState\n<span class=\"br0\">{</span>\n    <span class=\"kw1\"\
+      >event</span> Action<span class=\"br0\">(</span><span class=\"br0\">)</span>\n\
+      \    <span class=\"br0\">{</span>\n        <span class=\"sy0\">`</span><span\
+      \ class=\"kw3\">Log</span><span class=\"br0\">(</span> <span class=\"st0\">\"\
+      ProcessComplete\"</span> <span class=\"br0\">)</span>;\n    <span class=\"br0\"\
+      >}</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>...Will not\
+      \ transition to the ThirdState, even if you call:</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\">ExampleActor.<span class=\"me0\">Action</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\nExampleActor.<span class=\"me0\"\
+      >Action</span><span class=\"br0\">(</span><span class=\"br0\">)</span>;</pre></div>\n\
+      </div>\n<p>After executing the Action method twice, the class will still be\
+      \ in the SecondState, not the third as state execution is expected to be asynchronous\
+      \ and the engine hasn't ticked the actor yet. While this distinction doesn't\
+      \ often come up, it is a one-frame-bug that can cause unexpected results ingame.</p>\n\
+      <h3><span class=\"mw-headline\" id=\"Ignores_statement\">Ignores statement</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/States?section=7\" title=\"Edit section: Ignores statement\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n<p>A state\
+      \ can optionally use the <b>ignores</b> keyword to ignore <i>non-final</i> functions\
+      \ while in a state. The syntax for this is:</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">state</span> Firing\n<span class=\"br0\">{</span>\n\
+      \    <span class=\"kw1\">ignores</span> Fire, AltFire; <span class=\"co1\">//So\
+      \ player cant call Fire and AltFire when firing a weapon, meanie not refire\
+      \ and cheat</span>\n<span class=\"kw2\">Begin</span>:\n    DoTheFireStuff<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>; <span class=\"co1\">//Trace\
+      \ or spawn projectile</span>\n    <span class=\"kw4\">Sleep</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">1.0</span><span class=\"br0\">)</span>; <span\
+      \ class=\"co1\">//Some refire rate, purely demonstrational, real weapons use\
+      \ FinishAnim() instead</span>\n    <span class=\"kw3\">GotoState</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Idle'</span><span class=\"br0\"\
+      >)</span>; <span class=\"co1\">//In different state we can fire again</span>\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<table class=\"navbox nowraplinks\"\
+      \ style=\"\">\n<tr class=\"navbox-header\">\n<th colspan=\"2\" class=\"navbox-header\"\
+      \ style=\"\">\n<div style=\"position:relative; width:100%; white-space:nowrap;\"\
+      >\n<div class=\"noprint plainlinks\" style=\"background-color:transparent; padding:0;\
+      \ font-weight:normal; font-size:xx-small; white-space:nowrap; position:absolute;left:0.5em;\"\
+      ><a href=\"/Template:Navbox_unrealscript\" title=\"Template:Navbox unrealscript\"\
+      ><span title=\"View this template\">v</span></a>&#160;•&#160;<a href=\"/Template_talk:Navbox_unrealscript\"\
+      \ title=\"Template talk:Navbox unrealscript\"><span title=\"Discussion about\
+      \ this template\">d</span></a>&#160;•&#160;<a rel=\"nofollow\" class=\"external\
+      \ text\" href=\"https://wiki.beyondunreal.com/edit/Template:Navbox_unrealscript\"\
+      ><span title=\"You can edit this template. Please use the preview button before\
+      \ saving.\">e</span></a></div>\n<a href=\"/UnrealScript_reference\" title=\"\
+      UnrealScript reference\">UnrealScript reference</a></div>\n</th>\n</tr>\n<tr\
+      \ class=\"navbox-body odd\">\n<th class=\"navbox-group\" style=\"\">Declarations</th>\n\
+      <td class=\"navbox-body\" style=\"\"><a href=\"/Preprocessor\" title=\"Preprocessor\"\
+      >Preprocessor</a>&#160;• <a href=\"/Classes\" title=\"Classes\">Classes</a>&#160;•\
+      \ <a href=\"/Interfaces\" title=\"Interfaces\">Interfaces</a>&#160;• <a href=\"\
+      /Cpptext\" title=\"Cpptext\">Cpptext</a>&#160;• <a href=\"/Constants\" title=\"\
+      Constants\">Constants</a>&#160;• <a href=\"/Enums\" title=\"Enums\">Enums</a>&#160;•\
+      \ <a href=\"/Structs\" title=\"Structs\">Structs</a>&#160;• <a href=\"/Variables\"\
+      \ title=\"Variables\">Variables</a>&#160;(<a href=\"/Metadata\" title=\"Metadata\"\
+      >Metadata</a>)&#160;• <a href=\"/Replication_block\" title=\"Replication block\"\
+      >Replication block</a>&#160;• <a href=\"/Operators\" title=\"Operators\">Operators</a>&#160;•\
+      \ <a href=\"/Delegates\" title=\"Delegates\">Delegates</a>&#160;• <a href=\"\
+      /Functions\" title=\"Functions\">Functions</a>&#160;• <strong class=\"selflink\"\
+      >States</strong>&#160;• <a href=\"/Defaultproperties\" title=\"Defaultproperties\"\
+      >Defaultproperties</a>&#160;(<a href=\"/Subobjects\" title=\"Subobjects\">Subobjects</a>)</td>\n\
+      </tr>\n<tr class=\"navbox-body even\">\n<th class=\"navbox-group\" style=\"\"\
+      ><a href=\"/Types\" title=\"Types\">Types</a></th>\n<td class=\"navbox-body\"\
+      \ style=\"\"><a href=\"/Bool\" title=\"Bool\" class=\"mw-redirect\">bool</a>&#160;•\
+      \ <a href=\"/Byte\" title=\"Byte\" class=\"mw-redirect\">byte</a>&#160;• <a\
+      \ href=\"/Float\" title=\"Float\" class=\"mw-redirect\">float</a>&#160;• <a\
+      \ href=\"/Int\" title=\"Int\" class=\"mw-redirect\">int</a>&#160;• <a href=\"\
+      /Name\" title=\"Name\" class=\"mw-redirect\">name</a>&#160;• <a href=\"/String\"\
+      \ title=\"String\">string</a>&#160;• <a href=\"/Types#Reference_types\" title=\"\
+      Types\">Object</a>&#160;• <a href=\"/Class_limiter#Class\" title=\"Class limiter\"\
+      \ class=\"mw-redirect\">Class</a>&#160;• <a href=\"/Enums\" title=\"Enums\"\
+      >Enums</a>&#160;• <a href=\"/Structs\" title=\"Structs\">Structs</a>&#160;(<a\
+      \ href=\"/Vector\" title=\"Vector\">Vector</a>&#160;⋅ <a href=\"/Rotator\" title=\"\
+      Rotator\">Rotator</a>&#160;⋅ <a href=\"/Quat\" title=\"Quat\" class=\"mw-redirect\"\
+      >Quat</a>&#160;⋅ <a href=\"/Color\" title=\"Color\">Color</a>)&#160;• <a href=\"\
+      /Static_arrays\" title=\"Static arrays\">Static arrays</a>&#160;• <a href=\"\
+      /Dynamic_arrays\" title=\"Dynamic arrays\">Dynamic arrays</a>&#160;• <a href=\"\
+      /Delegates\" title=\"Delegates\">Delegates</a>&#160;• <a href=\"/Typecasting\"\
+      \ title=\"Typecasting\">Typecasting</a></td>\n</tr>\n<tr class=\"navbox-body\
+      \ odd\">\n<th class=\"navbox-group\" style=\"\"><a href=\"/Literals\" title=\"\
+      Literals\">Literals</a></th>\n<td class=\"navbox-body\" style=\"\"><a href=\"\
+      /Literals#Boolean_values\" title=\"Literals\">Boolean</a>&#160;• <a href=\"\
+      /Literals#Float_numbers\" title=\"Literals\">Float</a>&#160;• <a href=\"/Literals#Integer_numbers\"\
+      \ title=\"Literals\">Integer</a>&#160;• <a href=\"/Literals#Names\" title=\"\
+      Literals\">Names</a>&#160;• <a href=\"/Literals#Objects\" title=\"Literals\"\
+      >Objects</a> (<a href=\"/None\" title=\"None\" class=\"mw-redirect\">None</a>&#160;⋅\
+      \ <a href=\"/Self\" title=\"Self\" class=\"mw-redirect\">Self</a>)&#160;• <a\
+      \ href=\"/Literals#Vectors\" title=\"Literals\">Vectors</a>&#160;• <a href=\"\
+      /Literals#Rotators\" title=\"Literals\">Rotators</a>&#160;• <a href=\"/Literals#Strings\"\
+      \ title=\"Literals\">Strings</a></td>\n</tr>\n<tr class=\"navbox-body even\"\
+      >\n<th class=\"navbox-group\" style=\"\"><a href=\"/Flow_control\" title=\"\
+      Flow control\">Flow</a></th>\n<td class=\"navbox-body\" style=\"\"><a href=\"\
+      /GoTo_statement\" title=\"GoTo statement\">GoTo</a>&#160;• <a href=\"/If_statement\"\
+      \ title=\"If statement\">If</a>&#160;• <a href=\"/Assert_statement\" title=\"\
+      Assert statement\">Assert</a>&#160;• <a href=\"/Return_statement\" title=\"\
+      Return statement\">Return</a>&#160;• <a href=\"/Stop_statement\" title=\"Stop\
+      \ statement\">Stop</a>&#160;• <a href=\"/Switch_statement\" title=\"Switch statement\"\
+      >Switch</a>&#160;• <a href=\"/While_loop\" title=\"While loop\">While</a>&#160;•\
+      \ <a href=\"/Do...Until_loop\" title=\"Do...Until loop\">Do...Until</a>&#160;•\
+      \ <a href=\"/For_loop\" title=\"For loop\">For</a>&#160;• <a href=\"/ForEach_loop\"\
+      \ title=\"ForEach loop\">ForEach</a>&#160;• <a href=\"/Break_statement\" title=\"\
+      Break statement\">Break</a>&#160;• <a href=\"/Continue_statement\" title=\"\
+      Continue statement\">Continue</a></td>\n</tr>\n<tr class=\"navbox-body odd\"\
+      >\n<th class=\"navbox-group\" style=\"\"><a href=\"/Specifiers\" title=\"Specifiers\"\
+      >Specifiers</a></th>\n<td class=\"navbox-body\" style=\"\"><a href=\"/Function_call_specifiers#Super\"\
+      \ title=\"Function call specifiers\">Super</a>&#160;• <a href=\"/Function_call_specifiers#Global\"\
+      \ title=\"Function call specifiers\">Global</a>&#160;• <a href=\"/Functions#Syntax_3\"\
+      \ title=\"Functions\">Static</a>&#160;• <a href=\"/Variables#Accessing_variables\"\
+      \ title=\"Variables\">Default</a>&#160;• <a href=\"/Constants#Usage\" title=\"\
+      Constants\">Const</a></td>\n</tr>\n<tr class=\"navbox-body even\">\n<th class=\"\
+      navbox-group\" style=\"\"><a href=\"/UnrealScript\" title=\"UnrealScript\">UnrealScript</a></th>\n\
+      <td class=\"navbox-body\" style=\"\"><a href=\"/UnrealScript_syntax\" title=\"\
+      UnrealScript syntax\">Syntax</a>&#160;• <a href=\"/UC_File\" title=\"UC File\"\
+      >.UC</a>&#160;• <a href=\"/edit/UCI_File?redlink=1\" class=\"new\" title=\"\
+      UCI File (page does not exist)\">.UCI</a>&#160;• <a href=\"/UPKG_File\" title=\"\
+      UPKG File\">.UPKG</a>&#160;• <a href=\"/Comments\" title=\"Comments\">Comments</a>&#160;•\
+      \ <a href=\"/Compiler_directives\" title=\"Compiler directives\">#directives</a>&#160;•\
+      \ <a href=\"/edit/Native_coding?redlink=1\" class=\"new\" title=\"Native coding\
+      \ (page does not exist)\">Native</a></td>\n</tr>\n</table>\n\n<!-- \nNewPP limit\
+      \ report\nCPU time usage: 0.268 seconds\nReal time usage: 1.026 seconds\nPreprocessor\
+      \ visited node count: 281/1000000\nPreprocessor generated node count: 1128/1000000\n\
+      Post‐expand include size: 10638/2097152 bytes\nTemplate argument size: 4195/2097152\
+      \ bytes\nHighest expansion depth: 5/40\nExpensive parser function count: 0/100\n\
+      -->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n100.00%\
+      \  315.049      1 - -total\n 36.35%  114.523      1 - Template:Navbox_unrealscript\n\
+      \ 25.39%   79.983      1 - Template:Navbox\n  5.15%   16.221      1 - Template:Tnavbar\n\
+      \  4.40%   13.873      1 - Template:UE3\n-->\n\n<!-- Saved in parser cache with\
+      \ key wiki:pcache:idhash:23760-0!*!0!!en!*!* and timestamp 20221118003330 and\
+      \ revision id 46297\n -->\n"
+  categories:
+  - sortkey: "States"
+    name: "UnrealScript_reference"
+  links:
+  - ns: 0
+    exists: true
+    name: "Enums"
+  - ns: 0
+    exists: true
+    name: "Self"
+  - ns: 0
+    exists: true
+    name: "ForEach loop"
+  - ns: 0
+    exists: false
+    name: "Native coding"
+  - ns: 0
+    exists: true
+    name: "Function call specifiers"
+  - ns: 0
+    exists: true
+    name: "Flow control"
+  - ns: 0
+    exists: true
+    name: "Preprocessor"
+  - ns: 0
+    exists: true
+    name: "Types"
+  - ns: 0
+    exists: true
+    name: "Name"
+  - ns: 0
+    exists: true
+    name: "Color"
+  - ns: 0
+    exists: true
+    name: "UnrealScript syntax"
+  - ns: 0
+    exists: true
+    name: "Cpptext"
+  - ns: 0
+    exists: true
+    name: "While loop"
+  - ns: 0
+    exists: true
+    name: "Operators"
+  - ns: 0
+    exists: true
+    name: "Comments"
+  - ns: 10
+    exists: true
+    name: "Template:Navbox unrealscript"
+  - ns: 0
+    exists: true
+    name: "Variables"
+  - ns: 0
+    exists: true
+    name: "Unreal Engine 3"
+  - ns: 0
+    exists: true
+    name: "Class limiter"
+  - ns: 0
+    exists: true
+    name: "Defaultproperties"
+  - ns: 0
+    exists: true
+    name: "Byte"
+  - ns: 0
+    exists: true
+    name: "Break statement"
+  - ns: 0
+    exists: true
+    name: "Do...Until loop"
+  - ns: 0
+    exists: true
+    name: "None"
+  - ns: 0
+    exists: true
+    name: "Stop statement"
+  - ns: 0
+    exists: true
+    name: "Replication block"
+  - ns: 0
+    exists: true
+    name: "Dynamic arrays"
+  - ns: 0
+    exists: true
+    name: "UnrealEd"
+  - ns: 0
+    exists: true
+    name: "Assert statement"
+  - ns: 0
+    exists: false
+    name: "UCI File"
+  - ns: 0
+    exists: true
+    name: "Continue statement"
+  - ns: 0
+    exists: true
+    name: "Typecasting"
+  - ns: 0
+    exists: true
+    name: "Structs"
+  - ns: 0
+    exists: true
+    name: "Compiler directives"
+  - ns: 0
+    exists: true
+    name: "Metadata"
+  - ns: 0
+    exists: true
+    name: "Subobjects"
+  - ns: 0
+    exists: true
+    name: "Int"
+  - ns: 0
+    exists: true
+    name: "Return statement"
+  - ns: 0
+    exists: true
+    name: "For loop"
+  - ns: 0
+    exists: true
+    name: "Interfaces"
+  - ns: 0
+    exists: true
+    name: "Constants"
+  - ns: 0
+    exists: true
+    name: "Literals"
+  - ns: 0
+    exists: true
+    name: "UnrealScript reference"
+  - ns: 0
+    exists: true
+    name: "UC File"
+  - ns: 0
+    exists: true
+    name: "GoTo statement"
+  - ns: 0
+    exists: true
+    name: "If statement"
+  - ns: 0
+    exists: true
+    name: "Specifiers"
+  - ns: 0
+    exists: true
+    name: "Delegates"
+  - ns: 0
+    exists: true
+    name: "Float"
+  - ns: 0
+    exists: true
+    name: "Rotator"
+  - ns: 0
+    exists: true
+    name: "UPKG File"
+  - ns: 0
+    exists: true
+    name: "String"
+  - ns: 0
+    exists: true
+    name: "UnrealScript"
+  - ns: 0
+    exists: true
+    name: "Functions"
+  - ns: 11
+    exists: true
+    name: "Template talk:Navbox unrealscript"
+  - ns: 0
+    exists: true
+    name: "Vector"
+  - ns: 0
+    exists: true
+    name: "Quat"
+  - ns: 0
+    exists: true
+    name: "Switch statement"
+  - ns: 0
+    exists: true
+    name: "Extends"
+  - ns: 0
+    exists: true
+    name: "Classes"
+  - ns: 0
+    exists: true
+    name: "Bool"
+  - ns: 0
+    exists: true
+    name: "Static arrays"
+  - ns: 0
+    exists: false
+    name: "Role"
+  templates:
+  - ns: 10
+    exists: true
+    name: "Template:Navbox"
+  - ns: 10
+    exists: true
+    name: "Template:UE3"
+  - ns: 10
+    exists: true
+    name: "Template:Navbox unrealscript"
+  - ns: 10
+    exists: true
+    name: "Template:Tnavbar"
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Overview of States"
+    number: "1"
+    index: "1"
+    fromtitle: "States"
+    byteoffset: 0
+    anchor: "Overview_of_States"
+  - toclevel: 2
+    level: "3"
+    line: "Declaration syntax"
+    number: "1.1"
+    index: "2"
+    fromtitle: "States"
+    byteoffset: 3835
+    anchor: "Declaration_syntax"
+  - toclevel: 2
+    level: "3"
+    line: "Modifiers"
+    number: "1.2"
+    index: "3"
+    fromtitle: "States"
+    byteoffset: 4316
+    anchor: "Modifiers"
+  - toclevel: 1
+    level: "2"
+    line: "State Labels and Latent Functions"
+    number: "2"
+    index: "4"
+    fromtitle: "States"
+    byteoffset: 4879
+    anchor: "State_Labels_and_Latent_Functions"
+  - toclevel: 1
+    level: "2"
+    line: "State inheritance inheritance and scoping rules"
+    number: "3"
+    index: "5"
+    fromtitle: "States"
+    byteoffset: 8838
+    anchor: "State_inheritance_inheritance_and_scoping_rules"
+  - toclevel: 1
+    level: "2"
+    line: "Advanced state programming"
+    number: "4"
+    index: "6"
+    fromtitle: "States"
+    byteoffset: 11283
+    anchor: "Advanced_state_programming"
+  - toclevel: 2
+    level: "3"
+    line: "Ignores statement"
+    number: "4.1"
+    index: "7"
+    fromtitle: "States"
+    byteoffset: 13937
+    anchor: "Ignores_statement"
+  displaytitle: "States"
+  iwlinks: []
+  wikitext:
+    text: "== Overview of States ==\n\nHistorically, game programmers have been using\
+      \ the concept of states ever since games evolved past the \"pong\" phase. States\
+      \ (and what is known as \"state machine programming\") are a natural way of\
+      \ making complex object behavior manageable. However, before UnrealScript, states\
+      \ have not been supported at the language level, requiring developers to create\
+      \ C/C++ \"switch\" statements based on the object's state. Such code was difficult\
+      \ to write and update.\n\nUnrealScript supports states at the language level.\n\
+      \nIn UnrealScript, each actor in the world is always in one and only one state.\
+      \ Its state reflects the action it wants to perform. For example, moving brushes\
+      \ have several states like \"StandOpenTimed\" and \"BumpOpenTimed\". Pawns have\
+      \ several states such as \"Dying\", \"Attacking\", and \"Wandering\".\n\nIn\
+      \ UnrealScript, you can write functions and code which exist in a particular\
+      \ state. These functions are only called when the actor is in that state. For\
+      \ example, say you're writing a monster script, and you're contemplating how\
+      \ to handle the \"SeePlayer\" function. When you're wandering around, you want\
+      \ to attack the player you see. When you're already attacking the player, you\
+      \ want to continue on uninterrupted.\n\nThe easiest way to do this is by defining\
+      \ several states (Wandering and Attacking), and writing a different version\
+      \ of \"Touch\" in each state. UnrealScript supports this.\n\nBefore delving\
+      \ deeper into states, you need to understand that there are two major benefits\
+      \ to states, and one complication: \n\n* Benefit: States provide a simple way\
+      \ to write state-specific functions, so that you can handle the same function\
+      \ in different ways, depending on what the actor is doing. \n* Benefit: With\
+      \ a state, you can write special \"state code\", using all of the regular UnrealScript\
+      \ commands plus several special functions known as \"latent functions\". A latent\
+      \ function is a function which executes \"slowly\", and may return after a certain\
+      \ amount of \"game time\" has passed. This enables you to perform time-based\
+      \ programming – a major benefit which neither C, C++, nor Java offer. Namely,\
+      \ you can write code in the same way you conceptualize it; for example, you\
+      \ can write a script that says the equivalent of \"open this door; pause 2 seconds;\
+      \ play this sound effect; open that door; release that monster and have it attack\
+      \ the player\". You can do this with simple, linear code, and the Unreal engine\
+      \ takes care of the details of managing the time-based execution of the code.\
+      \ \n\n* Complication: Now that you can have functions (like \"Touch\") overridden\
+      \ in multiple states as well as in child classes, you have the burden of figuring\
+      \ out exactly which \"Touch\" function is going to be called in a specific situation.\
+      \ UnrealScript provides rules which clearly delineate this process, but it is\
+      \ something you must be aware of if you create complex hierarchies of classes\
+      \ and states.\n\nHere is an example of states from the TriggerLight script:\n\
+      \n<uscript>// Trigger turns the light on.\nstate() TriggerTurnsOn\n{\n\tfunction\
+      \ Trigger( Actor Other, Pawn EventInstigator )\n\t{\n\t\tTrigger = None;\n\t\
+      \tDirection = 1.0;\n\t\tEnable( 'Tick' );\n\t}\n}\n \n// Trigger turns the light\
+      \ off.\nstate() TriggerTurnsOff\n{\n\tfunction Trigger( Actor Other, Pawn EventInstigator\
+      \ )\n\t{\n\t\tTrigger = None;\n\t\tDirection = -1.0;\n\t\tEnable( 'Tick' );\n\
+      \t}\n}</uscript>\n\nHere you are declaring two different states (TriggerTurnsOn\
+      \ and TriggerTurnsOff), and you're writing a different version of the Trigger\
+      \ function in each state. Though you could pull off this implementation without\
+      \ states, using states makes the code far more modular and expandable: in UnrealScript,\
+      \ you can easily subclass an existing class, add new states, and add new functions.\
+      \ If you had tried to do this without states, the resulting code would be more\
+      \ difficult to expand later.\n\n===Declaration syntax===\nA general state declaration\
+      \ looks like this:\n ''[[#Modifiers|[modifiers]]]'' '''state''' ''statename''\
+      \ ['''[[extends]]''' ''parentstate''] '''{'''\n   ...\n '''};'''\n\nA state\
+      \ can be declared as editable, meaning that the user can set an actor's state\
+      \ in [[UnrealEd]], or not. To declare an editable state, do the following:\n\
+      <uscript>state() MyState\n{\n\t//...\n}</uscript>\n\nTo declare a non-editable\
+      \ state, do this:\n<uscript>state MyState\n{\n\t//...\n}</uscript>\n\n===Modifiers===\n\
+      ; Auto: You can also specify the automatic, or initial state that an actor should\
+      \ be in. This causes all new actors to be placed in that state on the SetInitialState()\
+      \ event.\n; Simulated: Marks the state as valid for execution on clients if\
+      \ the actor containing it was replicated to that client and the local [[role]]\
+      \ of that client is either ROLE_SimulatedProxy or ROLE_DumbProxy.<br/>'''Note:'''\
+      \ The modifier '''simulated''' does not imply any kind of replication or even\
+      \ broadcast! Also, this modifier is not inherited when overriding states!\n\n\
+      == State Labels and Latent Functions ==\n\nIn addition to functions, a state\
+      \ can contain one or more labels followed by UnrealScript code. For example:\n\
+      \n<uscript>auto state MyState\n{\nBegin:\n\tLog( \"MyState has just begun!\"\
+      \ );\n\tSleep( 2.0 );\n\tLog( \"MyState has finished sleeping\" );\n\tgoto 'Begin';\n\
+      }</uscript>\n\nThe above state code prints the message \"MyState has just begun!\"\
+      , then it pauses for two seconds, then it prints the message \"MyState has finished\
+      \ sleeping\". The interesting thing in this example is the call to the latent\
+      \ function \"Sleep\": this function call doesn't return immediately, but returns\
+      \ after a certain amount of game time has passed. Latent functions can only\
+      \ be called from within state code, and not from within functions. Latent functions\
+      \ let you manage complex chains of events which include the passage of time.\n\
+      \nAll state code begins with a label definition; in the above example the label\
+      \ is named \"Begin\". The label provides a convenient entry point into the state\
+      \ code. You can use any label name in state code, but the \"Begin\" label is\
+      \ special: it is the default starting point for code in that state. (But if\
+      \ the function ''BeginState()'' (see below) is defined, it is executed before\
+      \ this label is reached.)\n\nThere are three main latent functions available\
+      \ to all actors: \n\n* Sleep( float Seconds ) pauses the state execution for\
+      \ a certain amount of time, and then continues. \n* FinishAnim() waits until\
+      \ the current animation sequence you're playing completes, and then continues.\
+      \ This function makes it easy to write animation-driven scripts, scripts whose\
+      \ execution is governed by mesh animations. For example, most of the AI scripts\
+      \ are animation-driven (as opposed to time-driven), because smooth animation\
+      \ is a key goal of the AI system. \n* FinishInterpolation() waits for the current\
+      \ InterpolationPoint movement to complete, and then continues.\n\nThe Pawn class\
+      \ defines several important latent functions for actions such as navigating\
+      \ through the world and short-term movement. See the separate AI docs for descriptions\
+      \ of their usage.\n\nThree native UnrealScript functions are particularly useful\
+      \ when writing state code: \n\n* The \"Goto\" function (similar to the C/C++/Basic\
+      \ goto) within a state causes the state code to continue executing at a different\
+      \ label. \n* The special Goto(&apos;&apos;) command within a state causes the\
+      \ state code execution to stop. State code execution doesn't continue until\
+      \ you go to a new state, or go to a new label within the current state. \n*\
+      \ The \"GotoState\" function causes the actor to go to a new state, and optionally\
+      \ continue at a specified label (if you don't specify a label, the default is\
+      \ the \"Begin\" label). You can call GotoState from within state code, and it\
+      \ goes to the destination immediately. You can also call GotoState from within\
+      \ any function in the actor, but that does not take effect immediately: it doesn't\
+      \ take effect until execution returns back to the state code.\n\nHere is an\
+      \ example of the state concepts discussed so far:\n\n<uscript>// This is the\
+      \ automatic state to execute.\nauto state Idle\n{\n\t// When touched by another\
+      \ actor…\n\tfunction Touch( actor Other )\n\t{\n\t\tlog( \"I was touched, so\
+      \ I'm going to Attacking\" );\n\t\tGotoState( 'Attacking' );\n\t\tLog( \"I have\
+      \ gone to the Attacking state\" );\n\t}\nBegin:\n\tlog( \"I am idle…\" );\n\t\
+      sleep( 10 );\n\tgoto 'Begin';\n}\n \n// Attacking state.\nstate Attacking\n\
+      {\nBegin:\n\tLog( \"I am executing the attacking state code\" );\n\t//...\n\
+      }</uscript>\n\nWhen you run this program and then go touch the actor, you will\
+      \ see:\n\n<code>I am idle...<br>\nI am idle...<br>\nI am idle...<br>\nI was\
+      \ touched, so I'm going to Attacking<br>\nI have gone to the Attacking state<br>\n\
+      I am executing the attacking state code<br></code>\n\nMake sure you understand\
+      \ this important aspect of GotoState: When you call GotoState from within a\
+      \ function, it does not go to the destination immediately, rather it goes there\
+      \ once execution returns back to the state code.\n\n== State inheritance inheritance\
+      \ and scoping rules ==\n\nIn UnrealScript, when you subclass an existing class,\
+      \ your new class inherits all of the variables, functions and states from its\
+      \ parent class. This is well-understood.\n\nHowever, the addition of the state\
+      \ abstraction to the UnrealScript programming model adds additional twists to\
+      \ the inheritance and scoping rules. \n\nThe complete inheritance rules are:\
+      \ \n\n* A new class inherits all of the variables from its parent class. \n\
+      * A new class inherits all of its parent class's non-state functions. You can\
+      \ override any of those inherited non-state functions. You can add entirely\
+      \ new non-state functions. \n* A new class inherits all of its parent class's\
+      \ states, including the functions and labels within those states. You can override\
+      \ any of the inherited state functions, and you can override any of the inherited\
+      \ state labels, you can add new state functions, and you can add new state labels.\n\
+      \nHere is an example of all the overriding rules:\n\n<uscript>// Here is an\
+      \ example parent class.\nclass MyParentClass extends Actor;\n \n// A non-state\
+      \ function.\nfunction MyInstanceFunction()\n{\n\tlog( \"Executing MyInstanceFunction\"\
+      \ );\n}\n \n// A state.\nstate MyState\n{\n\t// A state function.\n\tfunction\
+      \ MyStateFunction()\n\t{\n\t\tLog( \"Executing MyStateFunction\" );\n\t}\n//\
+      \ The \"Begin\" label.\nBegin:\n\tLog(\"Beginning MyState\");\n}\n \n// Here\
+      \ is an example child class.\nclass MyChildClass extends MyParentClass;\n \n\
+      // Here I'm overriding a non-state function.\nfunction MyInstanceFunction()\n\
+      {\n\tLog( \"Executing MyInstanceFunction in child class\" );\n\n}\n \n// Here\
+      \ I'm redeclaring MyState so that I can override MyStateFunction.\nstate MyState\n\
+      {\n\t// Here I'm overriding MyStateFunction.\n\tfunction MyStateFunction()\n\
+      \t{\n\t\tLog( \"Executing MyStateFunction\" );\n\t}\n// Here I'm overriding\
+      \ the \"Begin\" label.\nBegin:\n\tLog( \"Beginning MyState in MyChildClass\"\
+      \ );\n}</uscript>\n\nWhen you have a function that is implemented globally,\
+      \ in one or more states, and in one or more parent classes, you need to understand\
+      \ which version of the function will be called in a given context. The scoping\
+      \ rules, which resolves these complex situations, are: \n\n* If the object is\
+      \ in a state, and an implementation of the function exists somewhere in that\
+      \ state (either in the actor's class or in some parent class), the most-derived\
+      \ state version of the function is called. \n* Otherwise, the most-derived non-state\
+      \ version of the function is called.\n\n== Advanced state programming ==\n\n\
+      If a state doesn't override a state of the same name in the parent class, then\
+      \ you can optionally use the \"extends\" keyword to make the state extend an\
+      \ existing state in the current class. This is useful, for example, in a situation\
+      \ where you have a group of similar states (such as MeleeAttacking and RangeAttacking)\
+      \ which have a lot of functionality in common. In this case you could declare\
+      \ a base Attacking state as follows:\n\n<uscript>// Base Attacking state.\n\
+      state Attacking\n{\n\t// Stick base functions here...\n} \n \n// Attacking up-close.\n\
+      state MeleeAttacking extends Attacking\n{\n\t// Stick specialized functions\
+      \ here...\n} \n \n// Attacking from a distance.\nstate RangeAttacking extends\
+      \ Attacking\n{\n\t// Stick specialized functions here...\n}</uscript>\n\nYou\
+      \ can tell what specific state an actor is in from its \"state\" variable, a\
+      \ variable of type \"name\".\n\nIt is possible for an actor to be in \"no state\"\
+      \ by using GotoState(''). When an actor is in \"no state\", only its global\
+      \ (non-state) functions are called.\n\nWhen you use the GotoState command to\
+      \ set an actor's state, the engine can call two special notification functions,\
+      \ if you have defined them: EndState() and BeginState(). EndState is called\
+      \ in the current state immediately before the new state is begun, and BeginState\
+      \ is called immediately after the new state begins. These functions provide\
+      \ a convenient place to do any state-specific initialization and cleanup which\
+      \ your state may require.\n\n\nStates Execution Gotcha {{UE3}}\nStates are executed\
+      \ during an actors tick, which is expected to be an asynchronous process. While\
+      \ EndState() and BeginState() execution might happen straight away, UnrealScript\
+      \ state changes from calls to GotoState('NewStateName') will only take effect\
+      \ once an actor has been Ticked.\nThis means you should avoid state machines\
+      \ that become order-of-operation dependent or that lock, for example this script\
+      \ fragment:\n<uscript>\nstate FirstState\n{\n    event Action()\n    {\n   \
+      \     GotoState( 'SecondState' );\n    }\n}\n\nstate SecondState\n{\n    event\
+      \ Action()\n    {\n        GotoState( 'ThirdState' );\n    }\n}\n\nstate ThirdState\n\
+      {\n    event Action()\n    {\n        `Log( \"ProcessComplete\" );\n    }\n\
+      }\n</uscript>\n...Will not transition to the ThirdState, even if you call:\n\
+      <uscript>ExampleActor.Action();\nExampleActor.Action();</uscript>\nAfter executing\
+      \ the Action method twice, the class will still be in the SecondState, not the\
+      \ third as state execution is expected to be asynchronous and the engine hasn't\
+      \ ticked the actor yet. While this distinction doesn't often come up, it is\
+      \ a one-frame-bug that can cause unexpected results ingame.\n\n===Ignores statement===\n\
+      A state can optionally use the '''ignores''' keyword to ignore ''non-final''\
+      \ functions while in a state. The syntax for this is:\n\n<uscript>state Firing\n\
+      {\n    ignores Fire, AltFire; //So player cant call Fire and AltFire when firing\
+      \ a weapon, meanie not refire and cheat\nBegin:\n    DoTheFireStuff(); //Trace\
+      \ or spawn projectile\n    Sleep(1.0); //Some refire rate, purely demonstrational,\
+      \ real weapons use FinishAnim() instead\n    GotoState('Idle'); //In different\
+      \ state we can fire again\n}</uscript>\n\n{{navbox unrealscript}}"
+  properties: []
+  revId: 46297
+name: "States"
+revision:
+  revid: 46297
+  parentid: 46266
+  user: "SeriousBarbie"
+  timestamp: 1455199803.000000000
+  comment: "State Labels: Label \"begin\" and function BeginState()"
+timestamp: 1668754861.930427000

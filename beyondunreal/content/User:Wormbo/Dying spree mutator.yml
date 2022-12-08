@@ -1,0 +1,1182 @@
+---
+parse:
+  title: "User:Wormbo/Dying spree mutator"
+  text:
+    text: "<p>The goal of this <a href=\"/UnrealScript\" title=\"UnrealScript\">UnrealScript</a>\
+      \ tutorial is to create a small mutator that tracks and broadcasts \"dying sprees\"\
+      , i.e. consecutive deaths of a player without any kill by that player. This\
+      \ tutorial is mainly targeted towards <a href=\"/UT2004\" title=\"UT2004\" class=\"\
+      mw-redirect\">UT2004</a>, but I hope I got the <a href=\"/UT\" title=\"UT\"\
+      \ class=\"mw-redirect\">UT</a>, <a href=\"/UT3\" title=\"UT3\" class=\"mw-redirect\"\
+      >UT3</a> and <a href=\"/UT2003\" title=\"UT2003\" class=\"mw-redirect\">UT2003</a>\
+      \ parts right as well. (I didn't compile a single line of code for this article,\
+      \ so in case of errors or problems, please leave a note on the <a href=\"/User_talk:Wormbo/Dying_spree_mutator\"\
+      \ title=\"User talk:Wormbo/Dying spree mutator\">discussion page</a>.)</p>\n\
+      <p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n\
+      </div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#Before_we_start\"\
+      ><span class=\"tocnumber\">1</span> <span class=\"toctext\">Before we start</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-2\"><a href=\"#Getting_started\"><span class=\"\
+      tocnumber\">2</span> <span class=\"toctext\">Getting started</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-3\"><a href=\"#Adding_the_mutator\"><span\
+      \ class=\"tocnumber\">3</span> <span class=\"toctext\">Adding the mutator</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-4\"><a href=\"#Setting_up_the_GameRules\"\
+      ><span class=\"tocnumber\">4</span> <span class=\"toctext\">Setting up the GameRules</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-5\"><a href=\"#Detecting_player_kills\"><span\
+      \ class=\"tocnumber\">5</span> <span class=\"toctext\">Detecting player kills</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-6\"><a href=\"#Keeping_track_of_player_deaths\"\
+      ><span class=\"tocnumber\">6</span> <span class=\"toctext\">Keeping track of\
+      \ player deaths</span></a></li>\n<li class=\"toclevel-1 tocsection-7\"><a href=\"\
+      #Maintaining_the_players_list\"><span class=\"tocnumber\">7</span> <span class=\"\
+      toctext\">Maintaining the players list</span></a></li>\n<li class=\"toclevel-1\
+      \ tocsection-8\"><a href=\"#Maintaining_the_players_list_in_UT\"><span class=\"\
+      tocnumber\">8</span> <span class=\"toctext\">Maintaining the players list in\
+      \ UT</span></a></li>\n<li class=\"toclevel-1 tocsection-9\"><a href=\"#Broadcasting_spree_messages\"\
+      ><span class=\"tocnumber\">9</span> <span class=\"toctext\">Broadcasting spree\
+      \ messages</span></a></li>\n<li class=\"toclevel-1 tocsection-10\"><a href=\"\
+      #Adding_SelfSpreeNote_to_UT\"><span class=\"tocnumber\">10</span> <span class=\"\
+      toctext\">Adding SelfSpreeNote to UT</span></a></li>\n</ul>\n</div>\n<p></p>\n\
+      <h2><span class=\"mw-headline\" id=\"Before_we_start\">Before we start</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/User:Wormbo/Dying_spree_mutator?section=1\" title=\"Edit section:\
+      \ Before we start\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>While this tutorial centers around a very simple idea, its main goal is to\
+      \ teach you how to modify rules of the game, not how to manage your project.\
+      \ Please find other \"getting started\" tutorials if you need help with the\
+      \ project setup. The legacy part of this wiki contains <a href=\"/Legacy:UnrealScript_Hello_World\"\
+      \ title=\"Legacy:UnrealScript Hello World\">\"Hello World\" examples for UT/UT200x</a>\
+      \ and <a href=\"/Legacy:UT3_Hello_World\" title=\"Legacy:UT3 Hello World\">for\
+      \ UT3</a>. Personally I use <a href=\"/UnCodeX\" title=\"UnCodeX\">UnCodeX</a>\
+      \ and (at least for UE1/2 projects) <a href=\"/edit/UMake?redlink=1\" class=\"\
+      new\" title=\"UMake (page does not exist)\">UMake</a>, so I simply tell UnCodeX\
+      \ to create a subclass in a new package (for this tutorial I will use the project\
+      \ name \"DyingSpree\"), optionally adjust the EditPackages list in UMake and\
+      \ my project is ready to compile. Please refer to <a href=\"/edit/WOTgreal?redlink=1\"\
+      \ class=\"new\" title=\"WOTgreal (page does not exist)\">WOTgreal</a> or <a\
+      \ href=\"/edit/NFringe?redlink=1\" class=\"new\" title=\"NFringe (page does\
+      \ not exist)\">nFringe</a> tutorials if you use one of those IDEs instead.</p>\n\
+      <h2><span class=\"mw-headline\" id=\"Getting_started\">Getting started</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/User:Wormbo/Dying_spree_mutator?section=2\" title=\"Edit section:\
+      \ Getting started\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>Before we start hacking in some code, we first need to figure out what exactly\
+      \ we need. The goal is to count player deaths and detect kills that might reset\
+      \ the count. Fortunately there's a perfect function for this: ScoreKill. In\
+      \ UT (and the UDK) it is part of the <a href=\"/UE1:Mutator_(UT)\" title=\"\
+      UE1:Mutator (UT)\">Mutator</a> class, later engine generations moved many Mutator\
+      \ functions related to the gameplay rules (including ScoreKill) to the <a href=\"\
+      /UE2:GameRules_(UT2004)\" title=\"UE2:GameRules (UT2004)\">GameRules</a> class.\
+      \ A Mutator class is required anyway to activate our Dying Spree mod.</p>\n\
+      <p>In other words, if you are working with UT or the UDK, only create the Mutator\
+      \ subclass. You can use any name you want, but for this tutorial I will use\
+      \ the UT200x naming convention and call it \"MutDyingSpree\". If you are using\
+      \ UT3, make sure to subclass <a href=\"/UE3:UTMutator_(UT3)\" title=\"UE3:UTMutator\
+      \ (UT3)\">UTMutator</a> instead. For UT200x or UT3 you also need a GameRules\
+      \ subclass, which I will call \"DyingSpreeRules\" in this tutorial. If you compile\
+      \ the project at this point you should get DyingSpree.u in the System directory\
+      \ for UT/UT200x or UTGame\\Unpublished\\CookedPC\\Scripts directory for UT3.</p>\n\
+      <h2><span class=\"mw-headline\" id=\"Adding_the_mutator\">Adding the mutator</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/User:Wormbo/Dying_spree_mutator?section=3\" title=\"Edit section:\
+      \ Adding the mutator\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>Now to tell the game about the new mutator.</p>\n<p>For UT and UT2003 you\
+      \ will need to create a <a href=\"/edit/Localization_file?redlink=1\" class=\"\
+      new\" title=\"Localization file (page does not exist)\">localization file</a>\
+      \ and add your mutator information to it. Since the project is called DyingSpree\
+      \ (causing the package to have the name DyingSpree.u), the obvious choice for\
+      \ the localization file is \"DyingSpree.int\". As always in UE1/2, this file\
+      \ belongs in the System directory. It is a plain text file, so you can open\
+      \ it in Notepad or any other editor you like. Add the following two lines to\
+      \ it, save and open the game to check the mutators list:</p>\n<pre>[Public]\n\
+      Object=(Name=DyingSpree.MutDyingSpree,Class=Class,MetaClass=Engine.Mutator,Description=\"\
+      Dying Sprees,Announce when a player dies multiple times in a row without making\
+      \ any kills.\")\n</pre>\n<p>UT2003 doesn't use the description part, so you\
+      \ can leave it out entirely. For UT the part of the Description value before\
+      \ the first comma is the mutator name, everything after the first comma is the\
+      \ description. If there's no comma, the entire value is used as mutator name.</p>\n\
+      <p>For UT2003 and UT2004 the name and description are stored in the mutator\
+      \ class as default values of the FriendlyName and Description properties respectively.\
+      \ Create a <a href=\"/Defaultproperties\" title=\"Defaultproperties\">defaultproperties</a>\
+      \ section in MutDyingSpree.uc and add the two values:</p>\n<div dir=\"ltr\"\
+      \ class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">class</span> MutDyingSpree <span class=\"\
+      kw1\">extends</span> <span class=\"kw9\">Mutator</span>;\n \n<span class=\"\
+      kw1\">defaultproperties</span>\n<span class=\"br0\">{</span>\n  FriendlyName<span\
+      \ class=\"sy0\">=</span><span class=\"st0\">\"Dying Sprees\"</span>\n  Description<span\
+      \ class=\"sy0\">=</span><span class=\"st0\">\"Announce when a player dies multiple\
+      \ times in a row without making any kills.\"</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>Recompile to ensure everything is syntactically correct. UT2004 will\
+      \ create a <a href=\"/edit/UCL_file?redlink=1\" class=\"new\" title=\"UCL file\
+      \ (page does not exist)\">UCL file</a> with the name \"DyingSpree.ucl\" containing\
+      \ the mutator's class, name and description. You may have to delete it and recompile\
+      \ if you make changes to the FriendlyName or Description values.</p>\n<p>UT3\
+      \ and the UDK use a special <a href=\"/edit/INI_file?redlink=1\" class=\"new\"\
+      \ title=\"INI file (page does not exist)\">INI file</a> to store information\
+      \ about the mutator and a localization file for the name and description. For\
+      \ our simple example we will put them in the INI file as well. (I don't know\
+      \ about UDK here, you might have to use the localization file.) In our case\
+      \ the INI file should be called \"UTDyingSpree.ini\" and is located in the UTGame\\\
+      Config directory. Make sure it contains the following lines:</p>\n<pre>[MutDyingSpree\
+      \ UTUIDataProvider_Mutator]\nClassName=DyingSpree.MutDyingSpree\nFriendlyName=Dying\
+      \ Sprees\nDescription=Announce when a player dies multiple times in a row without\
+      \ making any kills.\n</pre>\n<p>Keep or remove the other lines as you like,\
+      \ they don't really matter as they are the default values anyway.</p>\n<h2><span\
+      \ class=\"mw-headline\" id=\"Setting_up_the_GameRules\">Setting up the GameRules</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/User:Wormbo/Dying_spree_mutator?section=4\" title=\"Edit section:\
+      \ Setting up the GameRules\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>You can skip this step in UT and the UDK as it doesn't\
+      \ apply. Instead, put any code in the MutDyingSpree class.</p>\n<p>Ok, since\
+      \ ScoreKill is only called for GameRules, not for a Mutator, we need to set\
+      \ up our DyingSpreeRules. The ideal place for this is the MutDyingSpree's initialization,\
+      \ for example the PostBeginPlay function. Let's use that to spawn and register\
+      \ our DyingSpreeRules:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">function</span> <span class=\"kw4\">PostBeginPlay</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n \
+      \ <span class=\"co1\">// only for UT200x:</span>\n  <span class=\"kw7\">Level</span>.<span\
+      \ class=\"kw7\">Game</span>.<span class=\"me0\">AddGameModifier</span><span\
+      \ class=\"br0\">(</span><span class=\"kw4\">Spawn</span><span class=\"br0\"\
+      >(</span><span class=\"kw1\">class</span><span class=\"st0\">'DyingSpreeRules'</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>;\n \n  <span class=\"co1\"\
+      >// only for UT3:</span>\n  WorldInfo.<span class=\"kw7\">Game</span>.<span\
+      \ class=\"me0\">AddGameRules</span><span class=\"br0\">(</span><span class=\"\
+      kw1\">class</span><span class=\"st0\">'DyingSpreeRules'</span><span class=\"\
+      br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>This not\
+      \ only creates our rules modifier, but also tells the game to call ScoreKill\
+      \ (and a few other functions) when appropriate.</p>\n<p>This kind of manual\
+      \ registration is not necessary for the mutator itself because that is automatically\
+      \ registered when the game creates it.</p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Detecting_player_kills\">Detecting player kills</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/User:Wormbo/Dying_spree_mutator?section=5\"\
+      \ title=\"Edit section: Detecting player kills\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>Now to implement our kill/death detection. For UT\
+      \ and UDK this happens in the MutDyingSpree class, UT200x and UT3 do this in\
+      \ the DyingSpreeRules.</p>\n<p>Rule number 1 when overriding Mutator or GameRules\
+      \ functions: These usually call the next rule/mutator's implementation, so make\
+      \ sure you don't break the chain! If you are not sure if you are overriding\
+      \ a such a function or a \"normal\" function, simply call the super class implementation.\
+      \ At this point you might wonder why we didn't do that for PostBeginPlay. Well,\
+      \ PostBeginPlay is declared in the Actor class, but neither there, nor in Info\
+      \ or Mutator it is overridden to contain any code. Calling the super class implementation\
+      \ there wouldn't have any effect so we can safely omit it.</p>\n<p>Let's override\
+      \ ScoreKill:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">function</span> ScoreKill<span class=\"br0\">(</span><span class=\"kw9\"\
+      >Controller</span> Killer, <span class=\"kw9\">Controller</span> Killed<span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw6\"\
+      >Super</span>.<span class=\"me0\">ScoreKill</span><span class=\"br0\">(</span>Killer,\
+      \ Killed<span class=\"br0\">)</span>;\n  <span class=\"kw3\">log</span><span\
+      \ class=\"br0\">(</span>Killer<span class=\"sy0\">@</span><span class=\"st0\"\
+      >\"killed\"</span><span class=\"sy0\">@</span>Killed<span class=\"br0\">)</span>;\
+      \ <span class=\"co1\">// use `log(...) instead for UT3 and UDK</span>\n<span\
+      \ class=\"br0\">}</span></pre></div>\n</div>\n<p>In UT the two parameters are\
+      \ of type <a href=\"/UE1:Pawn_(UT)\" title=\"UE1:Pawn (UT)\">Pawn</a> instead\
+      \ of <a href=\"/UE2:Controller_(UT2004)\" title=\"UE2:Controller (UT2004)\"\
+      >Controller</a>.</p>\n<p>This doesn't do much yet, except write a line to the\
+      \ log file whenever ScoreKill is called. Compile and try playing an Instant\
+      \ Action or Practice Session with the Dying Sprees mutator. Switch to window\
+      \ mode (\"endfullscreen\") and open the log (\"showlog\") to see the live log.\
+      \ Whenever a player dies, the \"A killed B\" line should show up now. UT2004\
+      \ should be started with the -makenames parameter (\"D:\\Path\\To\\UT2004.exe\"\
+      \ -makenames) to make the output meaningful, as otherwise you will only see\
+      \ something like \"XPawn killed XPawn\". The parameter ensures the game adds\
+      \ numbers to the object names, like UT and UT3 do. Play around with different\
+      \ ways to die (e.g. suicide command, killed by weapon fire, jump into lava,\
+      \ add and remove bots) to get a feel for the ScoreKill function's parameter\
+      \ values.</p>\n<p>You can also try starting a local dedicated server with your\
+      \ mutator and connect to it. This will allow you to figure out what happens\
+      \ when you die while becoming a spectator or because you are about to disconnect.\
+      \ Your ScoreKill logs will only be added to the server's log file, not the client's.\
+      \ This is an important little fact: Mutators and GameRules only get their functions\
+      \ called on the server!</p>\n<h2><span class=\"mw-headline\" id=\"Keeping_track_of_player_deaths\"\
+      >Keeping track of player deaths</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/User:Wormbo/Dying_spree_mutator?section=6\"\
+      \ title=\"Edit section: Keeping track of player deaths\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<p>I hope you figured out how\
+      \ the Killer and Killed parameters of ScoreKill relate to the death of players.\
+      \ For reference: Killer is either None or the same as Killed if it was a death\
+      \ the player was responsible for, i.e. a suicide. Killer is something else than\
+      \ None or Killed if one player killed another. That means, whenever a player\
+      \ appears on the Killed side, we should increment that player's death spree.\
+      \ If a player appears on the Killer side <i>but not on the Killed side</i>,\
+      \ that player's dying spree should be reset.</p>\n<p>Let's express that in terms\
+      \ of UnrealScript code:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">function</span> ScoreKill<span class=\"br0\">(</span><span class=\"kw9\"\
+      >Controller</span> Killer, <span class=\"kw9\">Controller</span> Killed<span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw6\"\
+      >Super</span>.<span class=\"me0\">ScoreKill</span><span class=\"br0\">(</span>Killer,\
+      \ Killed<span class=\"br0\">)</span>;\n \n  <span class=\"co1\">// Killed is\
+      \ never None</span>\n  <span class=\"kw3\">log</span><span class=\"br0\">(</span>Killed<span\
+      \ class=\"sy0\">@</span><span class=\"st0\">\"died, increment spree\"</span><span\
+      \ class=\"br0\">)</span>;\n \n  <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span>Killer <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span>\
+      \ <span class=\"sy0\">&amp;&amp;</span> Killer <span class=\"sy0\">!=</span>\
+      \ Killed<span class=\"br0\">)</span>\n  <span class=\"br0\">{</span>\n    <span\
+      \ class=\"co1\">// one player killed another</span>\n \n    <span class=\"kw3\"\
+      >log</span><span class=\"br0\">(</span>Killer<span class=\"sy0\">@</span><span\
+      \ class=\"st0\">\"killed someone else, reset dying spree\"</span><span class=\"\
+      br0\">)</span>;\n  <span class=\"br0\">}</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>So that's the basic logic. Next we need to figure out how to store\
+      \ each player's current dying spree. As a mutator our mod shouldn't touch the\
+      \ Controller or PlayerReplicationInfo, so let's just keep a list of players\
+      \ and their dying sprees in a variable in our Mutator/GameRules class. Each\
+      \ entry in this list will contain two items, the player and the current spree\
+      \ counter. This can be done with an array of <a href=\"/Struct\" title=\"Struct\"\
+      \ class=\"mw-redirect\">structs</a>. The struct could be declared as follows:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">struct</span> DyingSpreeCount\n\
+      <span class=\"br0\">{</span>\n  <span class=\"kw1\">var</span> <span class=\"\
+      kw9\">Controller</span> <span class=\"kw8\">Player</span>; <span class=\"co1\"\
+      >// use type Pawn for UT instead</span>\n  <span class=\"kw1\">var</span> <span\
+      \ class=\"kw5\">int</span> SpreeCount;\n<span class=\"br0\">}</span>;</pre></div>\n\
+      </div>\n<p>The variable to hold our list is simply an array of that struct type.\
+      \ UT doesn't have <a href=\"/Dynamic_arrays\" title=\"Dynamic arrays\">dynamic\
+      \ arrays</a>, so we need to use a <a href=\"/Static_array\" title=\"Static array\"\
+      \ class=\"mw-redirect\">static array</a> there.</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"co1\">// only for UT200x and later:</span>\n\
+      <span class=\"kw1\">var</span> array<span class=\"sy0\">&lt;</span>DyingSpreeCount<span\
+      \ class=\"sy0\">&gt;</span> DyingSprees;\n<span class=\"co1\">// only for UT:</span>\n\
+      <span class=\"kw1\">var</span> DyingSpreeCount DyingSprees<span class=\"br0\"\
+      >[</span><span class=\"nu0\">32</span><span class=\"br0\">]</span>; <span class=\"\
+      co1\">// supporting up to 32 players</span></pre></div>\n</div>\n<p>So we know\
+      \ where to store the sprees and when to increment or reset them, but how are\
+      \ we going to keep track of the players? Since this is different for UT, we\
+      \ will need to branch here. Accessing arrays and struct members to increment\
+      \ or reset the counter is the same in all versions, only picking the correct\
+      \ array index and adding players to the array will be different. Let's encapsulate\
+      \ that task in a function, say, GetPlayerIndex.</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw1\">function</span> ScoreKill<span class=\"\
+      br0\">(</span><span class=\"kw9\">Controller</span> Killer, <span class=\"kw9\"\
+      >Controller</span> Killed<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \  <span class=\"kw1\">local</span> <span class=\"kw5\">int</span> PlayerIndex;\n\
+      \ \n  <span class=\"kw6\">Super</span>.<span class=\"me0\">ScoreKill</span><span\
+      \ class=\"br0\">(</span>Killer, Killed<span class=\"br0\">)</span>;\n \n  <span\
+      \ class=\"co1\">// increment Killed's dying spree count</span>\n  PlayerIndex\
+      \ <span class=\"sy0\">=</span> GetPlayerIndex<span class=\"br0\">(</span>Killed<span\
+      \ class=\"br0\">)</span>;\n  DyingSprees<span class=\"br0\">[</span>PlayerIndex<span\
+      \ class=\"br0\">]</span>.<span class=\"me0\">SpreeCount</span><span class=\"\
+      sy0\">++</span>;\n \n  <span class=\"kw2\">if</span> <span class=\"br0\">(</span>Killer\
+      \ <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span> <span class=\"\
+      sy0\">&amp;&amp;</span> Killer <span class=\"sy0\">!=</span> Killed<span class=\"\
+      br0\">)</span>\n  <span class=\"br0\">{</span>\n    <span class=\"co1\">// one\
+      \ player killed another</span>\n \n    <span class=\"co1\">// reset Killer's\
+      \ dying spree count</span>\n    PlayerIndex <span class=\"sy0\">=</span> GetPlayerIndex<span\
+      \ class=\"br0\">(</span>Killer<span class=\"br0\">)</span>;\n    DyingSprees<span\
+      \ class=\"br0\">[</span>PlayerIndex<span class=\"br0\">]</span>.<span class=\"\
+      me0\">SpreeCount</span> <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>;\n\
+      \  <span class=\"br0\">}</span>\n<span class=\"br0\">}</span>\n \n<span class=\"\
+      coMULTI\">/**\nReturns an index into DyingSprees array for the specified player.\n\
+      The player is added to the array if encountered for the first time.\n*/</span>\n\
+      <span class=\"kw1\">function</span> <span class=\"kw5\">int</span> GetPlayerIndex<span\
+      \ class=\"br0\">(</span><span class=\"kw9\">Controller</span> <span class=\"\
+      kw8\">Player</span><span class=\"br0\">)</span> <span class=\"co1\">// Pawn\
+      \ instead of Controller for UT</span>\n<span class=\"br0\">{</span>\n  <span\
+      \ class=\"co1\">// TODO</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <h2><span class=\"mw-headline\" id=\"Maintaining_the_players_list\">Maintaining\
+      \ the players list</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/User:Wormbo/Dying_spree_mutator?section=7\" title=\"\
+      Edit section: Maintaining the players list\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>This is probably the most complicated part of the\
+      \ entire mutator. As mentioned before, UT requires a different strategy, so\
+      \ we will focus on the other versions first. You should still read this section,\
+      \ as it points out problems that need to be solved in the UT version as well.</p>\n\
+      <p>The main task of GetPlayerIndex is to return an index value. To do so, it\
+      \ needs to perform a linear search on the DyingSprees array to find the index\
+      \ with the player's entry. If no such entry exists, it can just create a new\
+      \ entry and add it at the end of the list.</p>\n<p>UE3 is really easy to use\
+      \ here, because it provides dynamic array operations for these steps:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">function</span>\
+      \ <span class=\"kw5\">int</span> GetPlayerIndex<span class=\"br0\">(</span><span\
+      \ class=\"kw9\">Controller</span> <span class=\"kw8\">Player</span><span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">int</span> PlayerIndex;\n \n  <span class=\"co1\">// look\
+      \ up existing player entry</span>\n  PlayerIndex <span class=\"sy0\">=</span>\
+      \ DyingSprees.<span class=\"me0\">Find</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Player'</span>, <span class=\"kw8\">Player</span><span class=\"\
+      br0\">)</span>;\n \n  <span class=\"kw2\">if</span> <span class=\"br0\">(</span>PlayerIndex\
+      \ <span class=\"sy0\">==</span> INDEX_NONE<span class=\"br0\">)</span>\n  <span\
+      \ class=\"br0\">{</span>\n    <span class=\"co1\">// entry not found, create\
+      \ one</span>\n    PlayerIndex <span class=\"sy0\">=</span> DyingSprees.<span\
+      \ class=\"me0\">Length</span>;\n    DyingSprees.<span class=\"me0\">Add</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">1</span><span class=\"br0\">)</span>;\
+      \ <span class=\"co1\">// adds entry at end of list with zero spree count and\
+      \ empty player</span>\n    DyingSprees<span class=\"br0\">[</span>PlayerIndex<span\
+      \ class=\"br0\">]</span>.<span class=\"kw8\">Player</span> <span class=\"sy0\"\
+      >=</span> <span class=\"kw8\">Player</span>;\n  <span class=\"br0\">}</span>\n\
+      \  <span class=\"kw2\">return</span> PlayerIndex;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>Nice and clean, right? Ok, UT200x doesn't have those convenient array\
+      \ operations, so we need to do everything manually there:</p>\n<div dir=\"ltr\"\
+      \ class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">function</span> <span class=\"kw5\"\
+      >int</span> GetPlayerIndex<span class=\"br0\">(</span><span class=\"kw9\">Controller</span>\
+      \ <span class=\"kw8\">Player</span><span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n  <span class=\"kw1\">local</span> <span class=\"kw5\">int</span>\
+      \ PlayerIndex;\n \n  <span class=\"co1\">// look up existing player entry</span>\n\
+      \  <span class=\"kw2\">for</span> <span class=\"br0\">(</span>PlayerIndex <span\
+      \ class=\"sy0\">=</span> <span class=\"nu0\">0</span>; PlayerIndex <span class=\"\
+      sy0\">&lt;</span> DyingSprees.<span class=\"me0\">Length</span> <span class=\"\
+      sy0\">&amp;&amp;</span> DyingSprees<span class=\"br0\">[</span>PlayerIndex<span\
+      \ class=\"br0\">]</span>.<span class=\"kw8\">Player</span> <span class=\"sy0\"\
+      >!=</span> <span class=\"kw8\">Player</span>; PlayerIndex<span class=\"sy0\"\
+      >++</span><span class=\"br0\">)</span>;\n \n  <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span>PlayerIndex <span class=\"sy0\">==</span> DyingSprees.<span\
+      \ class=\"me0\">Length</span><span class=\"br0\">)</span>\n  <span class=\"\
+      br0\">{</span>\n    <span class=\"co1\">// entry not found, create one</span>\n\
+      \    DyingSprees.<span class=\"me0\">Length</span> <span class=\"sy0\">=</span>\
+      \ PlayerIndex <span class=\"sy0\">+</span> <span class=\"nu0\">1</span>; <span\
+      \ class=\"co1\">// adds entry at end of list with zero spree count and empty\
+      \ player</span>\n    DyingSprees<span class=\"br0\">[</span>PlayerIndex<span\
+      \ class=\"br0\">]</span>.<span class=\"kw8\">Player</span> <span class=\"sy0\"\
+      >=</span> <span class=\"kw8\">Player</span>;\n  <span class=\"br0\">}</span>\n\
+      \  <span class=\"kw2\">return</span> PlayerIndex;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>In case you were wondering: That first thing is a <a href=\"/For\"\
+      \ title=\"For\" class=\"mw-redirect\">for</a> loop with an empty body. We don't\
+      \ need any body there, the condition will stop the look as soon as the index\
+      \ reaches the end of the list or the player is found. Unlike the array Find\
+      \ operation we end up with the index being the array length instead of the value\
+      \ of the INDEX_NONE constant, which is -1.</p>\n<p>Now this approach will work\
+      \ nicely, but there's a small part we haven't considered yet. What happens if\
+      \ a player leaves the game? Quite simple: The player's Controller is destroyed\
+      \ and leaves an empty slot in our list. Our code simply skips the empty slot,\
+      \ but as players come and go, the list gets longer and longer, which makes our\
+      \ code slower and slower. As you can tell, that's a bad thing, so let's remove\
+      \ those empty slots while we're here. We're already iterating over the list\
+      \ to find the player's index, so how about we just remove any empty slots we\
+      \ come across? We can easily do that by extending the for loop:</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\">  <span class=\"kw2\">for</span> <span class=\"br0\">(</span>PlayerIndex\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>; PlayerIndex <span\
+      \ class=\"sy0\">&lt;</span> DyingSprees.<span class=\"me0\">Length</span>; PlayerIndex<span\
+      \ class=\"sy0\">++</span><span class=\"br0\">)</span>\n  <span class=\"br0\"\
+      >{</span>\n    <span class=\"kw2\">if</span> <span class=\"br0\">(</span>DyingSprees<span\
+      \ class=\"br0\">[</span>PlayerIndex<span class=\"br0\">]</span>.<span class=\"\
+      kw8\">Player</span> <span class=\"sy0\">==</span> <span class=\"kw8\">Player</span><span\
+      \ class=\"br0\">)</span>\n      <span class=\"kw2\">break</span>; <span class=\"\
+      co1\">// found the player, let's ignore further empty slots for now</span>\n\
+      \    <span class=\"kw2\">else</span> <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span>DyingSprees<span class=\"br0\">[</span>PlayerIndex<span class=\"\
+      br0\">]</span>.<span class=\"kw8\">Player</span> <span class=\"sy0\">==</span>\
+      \ <span class=\"kw5\">None</span><span class=\"br0\">)</span>\n      DyingSprees.<span\
+      \ class=\"me0\">Remove</span><span class=\"br0\">(</span>PlayerIndex<span class=\"\
+      sy0\">--</span>, <span class=\"nu0\">1</span><span class=\"br0\">)</span>; <span\
+      \ class=\"co1\">// decrement the index because otherwise we'd skip the next\
+      \ entry</span>\n  <span class=\"br0\">}</span></pre></div>\n</div>\n<p>There,\
+      \ all empty slots up to the player's index are now removed. We don't care about\
+      \ empty slots after the player because our primary goal is to find the player.\
+      \ Removing empty slots is just a side effect that speeds up the next call to\
+      \ GetPlayerIndex.</p>\n<p>What about UT3? It's the same problem there, so we\
+      \ could just copy over the UT200x code. We'd loose the quick lookup of the natively\
+      \ implemented Find operation, though. You know what? Let's be lazy! GetPlayerIndex\
+      \ is called quite often, so if we remove one empty slot at a time, that would\
+      \ end up having the same result at some point. Players leaving the game doesn't\
+      \ happen too often, so we don't need to waste time doing perfect cleanup.</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">function</span>\
+      \ <span class=\"kw5\">int</span> GetPlayerIndex<span class=\"br0\">(</span><span\
+      \ class=\"kw9\">Controller</span> <span class=\"kw8\">Player</span><span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">int</span> PlayerIndex;\n \n  <span class=\"co1\">// check\
+      \ if any empty slots need to be cleaned up</span>\n  PlayerIndex <span class=\"\
+      sy0\">=</span> DyingSprees.<span class=\"me0\">Find</span><span class=\"br0\"\
+      >(</span><span class=\"st0\">'Player'</span>, <span class=\"kw5\">None</span><span\
+      \ class=\"br0\">)</span>;\n  <span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span>PlayerIndex <span class=\"sy0\">!=</span> INDEX_NONE<span class=\"\
+      br0\">)</span>\n    DyingSprees.<span class=\"me0\">Remove</span><span class=\"\
+      br0\">(</span>PlayerIndex, <span class=\"nu0\">1</span><span class=\"br0\">)</span>;\
+      \ <span class=\"co1\">// remove this empty slot</span>\n \n  <span class=\"\
+      co1\">// look up existing player entry</span>\n  ...\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>Granted, in the worst case (no empty slots and player not in the\
+      \ list) this implementation needs to iterate over the entire list twice (once\
+      \ for finding empty slots, once for finding the player), but Find is implemented\
+      \ in native code, which makes it much faster than a loop in UnrealScript. The\
+      \ number of players in the game is limited, so an extra native pass over the\
+      \ list really won't make much difference.</p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Maintaining_the_players_list_in_UT\">Maintaining the players list in\
+      \ UT</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/User:Wormbo/Dying_spree_mutator?section=8\" title=\"\
+      Edit section: Maintaining the players list in UT\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>As mentioned before, UT lacks dynamic arrays, so we\
+      \ need to work on a static array. It's not possible to add or remove elements\
+      \ at runtime, so we have two options left. Either we just leave empty slots\
+      \ where they appear or we compact the list, moving all further elements down\
+      \ to close the gaps. The latter approach allows us to keep track of the highest\
+      \ slot in use, which can be used to optimize the linear search. On the other\
+      \ hand, there are only 32 elements in the array and moving elements around to\
+      \ close gaps is complicated. For this tutorial I'll pick the first approach\
+      \ (the lazy one again) and leave it to you to come up with the implementation\
+      \ for the optimized approach.</p>\n<p>So, the general implementation will end\
+      \ up being similar to the UT2004 version above. The difference obviously is\
+      \ that new players may end up being added in \"dirty\" slots that require resetting\
+      \ the spree counter. Also, the search will not only need to skip empty slots,\
+      \ but also need to remember one of them, in case there's no room for a new player\
+      \ at the end of the array.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">function</span> <span class=\"kw5\">int</span> GetPlayerIndex<span class=\"\
+      br0\">(</span><span class=\"kw9\">Pawn</span> <span class=\"kw8\">Player</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw1\"\
+      >local</span> <span class=\"kw5\">int</span> PlayerIndex, FirstEmptySlot;\n\
+      \ \n  <span class=\"co1\">// look up existing player entry</span>\n  FirstEmptySlot\
+      \ <span class=\"sy0\">=</span> <span class=\"sy0\">-</span><span class=\"nu0\"\
+      >1</span>;\n  <span class=\"kw2\">for</span> <span class=\"br0\">(</span>PlayerIndex\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>; PlayerIndex <span\
+      \ class=\"sy0\">&lt;</span> ArrayCount<span class=\"br0\">(</span>DyingSprees<span\
+      \ class=\"br0\">)</span>; PlayerIndex<span class=\"sy0\">++</span><span class=\"\
+      br0\">)</span>\n  <span class=\"br0\">{</span>\n    <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span>DyingSprees<span class=\"br0\">[</span>PlayerIndex<span\
+      \ class=\"br0\">]</span>.<span class=\"kw8\">Player</span> <span class=\"sy0\"\
+      >==</span> <span class=\"kw8\">Player</span><span class=\"br0\">)</span>\n \
+      \     <span class=\"kw2\">break</span>; <span class=\"co1\">// found the player,\
+      \ let's ignore further empty slots for now</span>\n    <span class=\"kw2\">else</span>\
+      \ <span class=\"kw2\">if</span> <span class=\"br0\">(</span>DyingSprees<span\
+      \ class=\"br0\">[</span>PlayerIndex<span class=\"br0\">]</span>.<span class=\"\
+      kw8\">Player</span> <span class=\"sy0\">==</span> <span class=\"kw5\">None</span>\
+      \ <span class=\"sy0\">&amp;&amp;</span> FirstEmptySlot <span class=\"sy0\">==</span>\
+      \ <span class=\"sy0\">-</span><span class=\"nu0\">1</span><span class=\"br0\"\
+      >)</span>\n      FirstEmptySlot <span class=\"sy0\">=</span> PlayerIndex; <span\
+      \ class=\"co1\">// if player is not in the list, add here</span>\n \n  <span\
+      \ class=\"br0\">}</span>\n \n  <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span>PlayerIndex <span class=\"sy0\">==</span> ArrayCount<span class=\"\
+      br0\">(</span>DyingSprees<span class=\"br0\">)</span><span class=\"br0\">)</span>\n\
+      \  <span class=\"br0\">{</span>\n    <span class=\"co1\">// entry not found,\
+      \ use the first empty slot</span>\n    PlayerIndex <span class=\"sy0\">=</span>\
+      \ FirstEmptySlot;\n    DyingSprees<span class=\"br0\">[</span>PlayerIndex<span\
+      \ class=\"br0\">]</span>.<span class=\"kw8\">Player</span> <span class=\"sy0\"\
+      >=</span> <span class=\"kw8\">Player</span>;\n    DyingSprees<span class=\"\
+      br0\">[</span>PlayerIndex<span class=\"br0\">]</span>.<span class=\"me0\">SpreeCount</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>;\n  <span class=\"\
+      br0\">}</span>\n  <span class=\"kw2\">return</span> PlayerIndex;\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p>Right, that should be about it. There's\
+      \ a minor problem with this approach: If there are more than 32 players, GetPlayerIndex\
+      \ may return 32, causing array out of bound warnings. I'll leave it to you to\
+      \ figure out a fix or workaround.</p>\n<h2><span class=\"mw-headline\" id=\"\
+      Broadcasting_spree_messages\">Broadcasting spree messages</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/User:Wormbo/Dying_spree_mutator?section=9\"\
+      \ title=\"Edit section: Broadcasting spree messages\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<p>Now that our mutator keeps\
+      \ track of who died how often, it's time to actually print out the corresponding\
+      \ messages. Because dying sprees are quite similar to killing sprees, we can\
+      \ just reuse the killing spree messages and add our own text and audio to them.\
+      \ Find your game's killing spree message (see example list below) and create\
+      \ a subclass called DyingSpreeMessage.</p>\n<ul>\n<li><a href=\"/UE1:KillingSpreeMessage_(UT)\"\
+      \ title=\"UE1:KillingSpreeMessage (UT)\">KillingSpreeMessage (UT)</a></li>\n\
+      <li><a href=\"/UE2:KillingSpreeMessage_(UT2003)\" title=\"UE2:KillingSpreeMessage\
+      \ (UT2003)\">KillingSpreeMessage (UT2003)</a></li>\n<li><a href=\"/UE2:KillingSpreeMessage_(UT2004)\"\
+      \ title=\"UE2:KillingSpreeMessage (UT2004)\">KillingSpreeMessage (UT2004)</a></li>\n\
+      <li><a href=\"/UE3:UTKillingSpreeMessage_(UT3)\" title=\"UE3:UTKillingSpreeMessage\
+      \ (UT3)\">UTKillingSpreeMessage (UT3)</a></li>\n</ul>\n<p>The killing spree\
+      \ message class should already contain all the logic for creating the proper\
+      \ messages, so all you need to do is adjusting the messages and sounds in defaultproperties:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">class</span> DyingSpreeMessage\
+      \ <span class=\"kw1\">extends</span> KillingSpreeMessage;\n \n<span class=\"\
+      kw1\">defaultproperties</span>\n<span class=\"br0\">{</span>\n  EndSpreeNote<span\
+      \ class=\"sy0\">=</span><span class=\"st0\">\" ended the dying spree by killing\"\
+      </span>\n  EndSpreeNoteTrailer<span class=\"sy0\">=</span><span class=\"st0\"\
+      >\"\"</span>\n  SpreeNote<span class=\"br0\">(</span><span class=\"nu0\">0</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">=</span><span class=\"st0\">\"is\
+      \ on a dying spree!\"</span>\n  SpreeNote<span class=\"br0\">(</span><span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span><span class=\"sy0\">=</span><span\
+      \ class=\"st0\">\"is being bullied!\"</span>\n  SpreeNote<span class=\"br0\"\
+      >(</span><span class=\"nu0\">2</span><span class=\"br0\">)</span><span class=\"\
+      sy0\">=</span><span class=\"st0\">\"is being dominated!\"</span>\n  SpreeNote<span\
+      \ class=\"br0\">(</span><span class=\"nu0\">3</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">=</span><span class=\"st0\">\"is being annihilated!\"</span>\n\
+      \  SpreeNote<span class=\"br0\">(</span><span class=\"nu0\">4</span><span class=\"\
+      br0\">)</span><span class=\"sy0\">=</span><span class=\"st0\">\"no longer seems\
+      \ to be playing!\"</span>\n  SpreeNote<span class=\"br0\">(</span><span class=\"\
+      nu0\">5</span><span class=\"br0\">)</span><span class=\"sy0\">=</span><span\
+      \ class=\"st0\">\"is synonymous for 'being dead'!\"</span>\n \n  SelfSpreeNote<span\
+      \ class=\"br0\">(</span><span class=\"nu0\">0</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">=</span><span class=\"st0\">\"Dying Spree!\"</span>\n  SelfSpreeNote<span\
+      \ class=\"br0\">(</span><span class=\"nu0\">1</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">=</span><span class=\"st0\">\"Bullied!\"</span>\n  SelfSpreeNote<span\
+      \ class=\"br0\">(</span><span class=\"nu0\">2</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">=</span><span class=\"st0\">\"Dominated!\"</span>\n  SelfSpreeNote<span\
+      \ class=\"br0\">(</span><span class=\"nu0\">3</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">=</span><span class=\"st0\">\"Annihilated!\"</span>\n  SelfSpreeNote<span\
+      \ class=\"br0\">(</span><span class=\"nu0\">4</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">=</span><span class=\"st0\">\"Are you still playing?\"</span>\n\
+      \  SelfSpreeNote<span class=\"br0\">(</span><span class=\"nu0\">5</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">=</span><span class=\"st0\">\"You\
+      \ like being dead, right?\"</span>\n \n  <span class=\"co1\">// these need to\
+      \ be \"SpreeSoundName\" instead of \"SpreeSound\" for UT2004</span>\n  SpreeSound<span\
+      \ class=\"br0\">(</span><span class=\"nu0\">0</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">=</span><span class=\"kw5\">None</span>\n  SpreeSound<span class=\"\
+      br0\">(</span><span class=\"nu0\">1</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">=</span><span class=\"kw5\">None</span>\n  SpreeSound<span class=\"\
+      br0\">(</span><span class=\"nu0\">2</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">=</span><span class=\"kw5\">None</span>\n  SpreeSound<span class=\"\
+      br0\">(</span><span class=\"nu0\">3</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">=</span><span class=\"kw5\">None</span>\n  SpreeSound<span class=\"\
+      br0\">(</span><span class=\"nu0\">4</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">=</span><span class=\"kw5\">None</span>\n  SpreeSound<span class=\"\
+      br0\">(</span><span class=\"nu0\">5</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">=</span><span class=\"kw5\">None</span>\n<span class=\"br0\"\
+      >}</span></pre></div>\n</div>\n<p>Interestingly the spree text and sound variable\
+      \ names are identical across all UT versions. Only UT doesn't have SelfSpreeNote,\
+      \ so you can't use that without some sort of work-around. Note that UT and UT200x\
+      \ actually allow a spree index from 0 to 9, while UT3 only has room for up to\
+      \ index 5.</p>\n<p>Ok, text messages are in place and the mutator tracks sprees.\
+      \ Time to add the broadcasting code to ScoreKill:</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw1\">function</span> ScoreKill<span class=\"\
+      br0\">(</span><span class=\"kw9\">Controller</span> Killer, <span class=\"kw9\"\
+      >Controller</span> Killed<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \  <span class=\"kw1\">local</span> <span class=\"kw5\">int</span> PlayerIndex,\
+      \ SpreeLevel;\n \n  <span class=\"kw6\">Super</span>.<span class=\"me0\">ScoreKill</span><span\
+      \ class=\"br0\">(</span>Killer, Killed<span class=\"br0\">)</span>;\n \n  <span\
+      \ class=\"co1\">// increment Killed's dying spree count</span>\n  PlayerIndex\
+      \ <span class=\"sy0\">=</span> GetPlayerIndex<span class=\"br0\">(</span>Killed<span\
+      \ class=\"br0\">)</span>;\n  DyingSprees<span class=\"br0\">[</span>PlayerIndex<span\
+      \ class=\"br0\">]</span>.<span class=\"me0\">SpreeCount</span><span class=\"\
+      sy0\">++</span>;\n  <span class=\"kw2\">if</span> <span class=\"br0\">(</span>DyingSprees<span\
+      \ class=\"br0\">[</span>PlayerIndex<span class=\"br0\">]</span>.<span class=\"\
+      me0\">SpreeCount</span> <span class=\"sy0\">%</span> <span class=\"nu0\">5</span>\
+      \ <span class=\"sy0\">==</span> <span class=\"nu0\">0</span><span class=\"br0\"\
+      >)</span>\n  <span class=\"br0\">{</span>\n    SpreeLevel <span class=\"sy0\"\
+      >=</span> DyingSprees<span class=\"br0\">[</span>PlayerIndex<span class=\"br0\"\
+      >]</span>.<span class=\"me0\">SpreeCount</span> <span class=\"sy0\">/</span>\
+      \ <span class=\"nu0\">5</span>;\n    <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span>SpreeLevel <span class=\"sy0\">&lt;</span> ArrayCount<span class=\"\
+      br0\">(</span><span class=\"kw1\">class</span><span class=\"st0\">'DyingSpreeMessage'</span>.<span\
+      \ class=\"kw1\">default</span>.<span class=\"me0\">SpreeNote</span><span class=\"\
+      br0\">)</span><span class=\"br0\">)</span>\n      BroadcastLocalizedMessage<span\
+      \ class=\"br0\">(</span><span class=\"kw1\">class</span><span class=\"st0\"\
+      >'DyingSpreeMessage'</span>, SpreeLevel <span class=\"sy0\">-</span> <span class=\"\
+      nu0\">1</span>, Killed.<span class=\"me0\">PlayerReplicationInfo</span><span\
+      \ class=\"br0\">)</span>;\n  <span class=\"br0\">}</span>\n \n  <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>Killer <span class=\"sy0\">!=</span>\
+      \ <span class=\"kw5\">None</span> <span class=\"sy0\">&amp;&amp;</span> Killer\
+      \ <span class=\"sy0\">!=</span> Killed<span class=\"br0\">)</span>\n  <span\
+      \ class=\"br0\">{</span>\n    <span class=\"co1\">// one player killed another</span>\n\
+      \ \n    <span class=\"co1\">// reset Killer's dying spree count</span>\n   \
+      \ PlayerIndex <span class=\"sy0\">=</span> GetPlayerIndex<span class=\"br0\"\
+      >(</span>Killer<span class=\"br0\">)</span>;\n    <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span>DyingSprees<span class=\"br0\">[</span>PlayerIndex<span\
+      \ class=\"br0\">]</span>.<span class=\"me0\">SpreeCount</span> <span class=\"\
+      sy0\">&gt;=</span> <span class=\"nu0\">5</span><span class=\"br0\">)</span>\n\
+      \      BroadcastLocalizedMessage<span class=\"br0\">(</span><span class=\"kw1\"\
+      >class</span><span class=\"st0\">'DyingSpreeMessage'</span>, <span class=\"\
+      nu0\">0</span>, Killer.<span class=\"me0\">PlayerReplicationInfo</span>, Killed.<span\
+      \ class=\"me0\">PlayerReplicationInfo</span><span class=\"br0\">)</span>;\n\
+      \    DyingSprees<span class=\"br0\">[</span>PlayerIndex<span class=\"br0\">]</span>.<span\
+      \ class=\"me0\">SpreeCount</span> <span class=\"sy0\">=</span> <span class=\"\
+      nu0\">0</span>;\n  <span class=\"br0\">}</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>That's it, unless you implement this in UT. Time to compile and play-test\
+      \ your masterpiece.</p>\n<h2><span class=\"mw-headline\" id=\"Adding_SelfSpreeNote_to_UT\"\
+      >Adding SelfSpreeNote to UT</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/User:Wormbo/Dying_spree_mutator?section=10\"\
+      \ title=\"Edit section: Adding SelfSpreeNote to UT\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<p>As mentioned above, the SelfSpreeNote\
+      \ array isn't available in UT. Just declaring the array isn't enough, UT is\
+      \ actually missing the function <i>GetRelatedString</i>() from later engine\
+      \ generations that is called if the message is displayed for the player owning\
+      \ RelatedPRI1. From inside <i>GetString</i>() there is no way to know whether\
+      \ the string is requested for the RelatedPRI1 player. To get around this limitation\
+      \ we will make use of the OptionalObject parameter of the LocalMessage, which\
+      \ is not used for killing sprees and therefore available for our little workaround.\
+      \ The idea is to put the receiving player's PlayerReplicationInfo into the OptionalObject\
+      \ so GetString() can check whether it needs to display a different text. Of\
+      \ course we also need to declare the missing SelfSpreeNote array to our DyingSpreeMessage\
+      \ class. Variable declarations go somewhere below the class declaration, but\
+      \ above the first function or state declaration.</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw1\">var</span> <span class=\"kw1\">localized</span>\
+      \ <span class=\"kw5\">string</span> SelfSpreeNote<span class=\"br0\">[</span>ArrayCount<span\
+      \ class=\"br0\">(</span>SpreeNote<span class=\"br0\">)</span><span class=\"\
+      br0\">]</span>;</pre></div>\n</div>\n<p>Using <a href=\"/ArrayCount\" title=\"\
+      ArrayCount\" class=\"mw-redirect\">ArrayCount</a> for the array size here ensures\
+      \ the array has the same size as the SpreeNote array.</p>\n<p>So how are we\
+      \ going to put the receiving player's PRI into the OptionalObject? One way would\
+      \ be to send the message already with the proper OptionalObject value, but we'd\
+      \ have to replace the convenient BroadcastLocalizedMessage() call with a loop\
+      \ over all players and handle everything that function does. An easier way is\
+      \ to perform the modification when the message arrives at the client via the\
+      \ ClientReceive() function in the message class itself:</p>\n<div dir=\"ltr\"\
+      \ class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">static</span> <span class=\"kw1\"\
+      >function</span> ClientReceive<span class=\"br0\">(</span>PlayerPawn P, <span\
+      \ class=\"kw1\">optional</span> <span class=\"kw5\">int</span> MessageSwitch,\
+      \ <span class=\"kw1\">optional</span> PlayerReplicationInfo RelatedPRI1, <span\
+      \ class=\"kw1\">optional</span> PlayerReplicationInfo RelatedPRI2, <span class=\"\
+      kw1\">optional</span> <span class=\"kw8\">Object</span> OptionalObject<span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"co1\"\
+      >// set OptionalObject to receiving player's PRI</span>\n  <span class=\"kw6\"\
+      >Super</span>.<span class=\"me0\">ClientReceive</span><span class=\"br0\">(</span>P,\
+      \ MessageSwitch, RelatedPRI1, RelatedPRI2, P.<span class=\"me0\">PlayerReplicationInfo</span><span\
+      \ class=\"br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <p>Yes, that's it. The ClientReceive() implementation in the LocalMessage class\
+      \ adds the message to the HUD, so if we call it with the modified OptionalObject\
+      \ parameter (the last one in the Super call), it will do exactly what we wanted.\
+      \ The only thing left to do is getting GetString() to actually return the SelfSpreeNote\
+      \ now, so we need to override that in our DyingSpreeMessage class as well. Before\
+      \ we do that, let's have a look at the GetRelatedString() function from UT2004,\
+      \ so we know what we are actually trying to achieve:</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw1\">static</span> <span class=\"kw1\">function</span>\
+      \ <span class=\"kw5\">string</span> GetRelatedString<span class=\"br0\">(</span>\n\
+      \    <span class=\"kw1\">optional</span> <span class=\"kw5\">int</span> <span\
+      \ class=\"kw2\">Switch</span>,\n    <span class=\"kw1\">optional</span> PlayerReplicationInfo\
+      \ RelatedPRI_1, \n    <span class=\"kw1\">optional</span> PlayerReplicationInfo\
+      \ RelatedPRI_2,\n    <span class=\"kw1\">optional</span> <span class=\"kw8\"\
+      >Object</span> OptionalObject\n    <span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>\
+      \ RelatedPRI_2 <span class=\"sy0\">==</span> <span class=\"kw5\">None</span>\
+      \ <span class=\"br0\">)</span>\n\t\t<span class=\"kw2\">return</span> <span\
+      \ class=\"kw1\">Default</span>.<span class=\"me0\">SelfSpreeNote</span><span\
+      \ class=\"br0\">[</span><span class=\"kw2\">Switch</span><span class=\"br0\"\
+      >]</span>;\n \n    <span class=\"kw2\">return</span> <span class=\"kw1\">static</span>.<span\
+      \ class=\"me0\">GetString</span><span class=\"br0\">(</span><span class=\"kw2\"\
+      >Switch</span>,RelatedPRI_1,RelatedPRI_2,OptionalObject<span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>What happens here is a\
+      \ check for RelatedPRI2 being None, which means it's an ongoing killing spree,\
+      \ not the end of a spree. Our dying spree message works the same way - RelatedPRI2\
+      \ is none while the spree continues and not None when the player manages to\
+      \ end the spree. Note that the end of the spree uses the same string for all\
+      \ players.</p>\n<p>With that knowledge, we can add special handling for the\
+      \ case that RelatedPRI1 belongs to the receiving player and RelatedPRI2 is empty:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">static</span> <span\
+      \ class=\"kw1\">function</span> <span class=\"kw5\">string</span> GetString<span\
+      \ class=\"br0\">(</span><span class=\"kw1\">optional</span> <span class=\"kw5\"\
+      >int</span> MessageSwitch, <span class=\"kw1\">optional</span> PlayerReplicationInfo\
+      \ RelatedPRI1, <span class=\"kw1\">optional</span> PlayerReplicationInfo RelatedPRI2,\
+      \ <span class=\"kw1\">optional</span> <span class=\"kw8\">Object</span> OptionalObject<span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"co1\"\
+      >// if displayed for receiving player and not end of spree</span>\n  <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>RelatedPRI1 <span class=\"sy0\"\
+      >==</span> OptionalObject <span class=\"sy0\">&amp;&amp;</span> ReplatedPRI2\
+      \ <span class=\"sy0\">==</span> <span class=\"kw5\">None</span><span class=\"\
+      br0\">)</span>\n    <span class=\"kw2\">return</span> <span class=\"kw1\">default</span>.<span\
+      \ class=\"me0\">SelfSpreeNote</span><span class=\"br0\">[</span>MessageSwitch<span\
+      \ class=\"br0\">]</span>; <span class=\"co1\">// display shorter message</span>\n\
+      \ \n  <span class=\"co1\">// else display the longer text</span>\n  <span class=\"\
+      kw2\">return</span> <span class=\"kw6\">Super</span>.<span class=\"me0\">GetString</span><span\
+      \ class=\"br0\">(</span>MessageSwitch, RelatedPRI1, RelatedPRI2, OptionalObject<span\
+      \ class=\"br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <p>Now the UT version should be ready for compiling and play-testing as well.</p>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.399 seconds\nReal time usage:\
+      \ 0.402 seconds\nPreprocessor visited node count: 181/1000000\nPreprocessor\
+      \ generated node count: 420/1000000\nPost‐expand include size: 55/2097152 bytes\n\
+      Template argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive\
+      \ parser function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report\
+      \ (%,ms,calls,template)\n100.00%    0.000      1 - -total\n-->\n\n<!-- Saved\
+      \ in parser cache with key wiki:pcache:idhash:29210-0!*!0!!en!*!* and timestamp\
+      \ 20221117234204 and revision id 44683\n -->\n"
+  categories:
+  - sortkey: "Dying spree mutator"
+    name: "Programming_tutorials"
+  links:
+  - ns: 0
+    exists: false
+    name: "UMake"
+  - ns: 0
+    exists: true
+    name: "UT2004"
+  - ns: 0
+    exists: true
+    name: "Dynamic arrays"
+  - ns: 0
+    exists: true
+    name: "UT"
+  - ns: 106
+    exists: true
+    name: "UE3:UTMutator (UT3)"
+  - ns: 0
+    exists: false
+    name: "UCL file"
+  - ns: 100
+    exists: true
+    name: "Legacy:UnrealScript Hello World"
+  - ns: 104
+    exists: true
+    name: "UE2:GameRules (UT2004)"
+  - ns: 0
+    exists: false
+    name: "NFringe"
+  - ns: 104
+    exists: true
+    name: "UE2:KillingSpreeMessage (UT2003)"
+  - ns: 0
+    exists: true
+    name: "Struct"
+  - ns: 102
+    exists: true
+    name: "UE1:Mutator (UT)"
+  - ns: 0
+    exists: false
+    name: "WOTgreal"
+  - ns: 0
+    exists: true
+    name: "UT3"
+  - ns: 3
+    exists: true
+    name: "User talk:Wormbo/Dying spree mutator"
+  - ns: 104
+    exists: true
+    name: "UE2:Controller (UT2004)"
+  - ns: 0
+    exists: false
+    name: "Localization file"
+  - ns: 0
+    exists: true
+    name: "Static array"
+  - ns: 102
+    exists: true
+    name: "UE1:Pawn (UT)"
+  - ns: 0
+    exists: true
+    name: "UnrealScript"
+  - ns: 0
+    exists: true
+    name: "For"
+  - ns: 100
+    exists: true
+    name: "Legacy:UT3 Hello World"
+  - ns: 0
+    exists: true
+    name: "UnCodeX"
+  - ns: 0
+    exists: true
+    name: "Defaultproperties"
+  - ns: 102
+    exists: true
+    name: "UE1:KillingSpreeMessage (UT)"
+  - ns: 0
+    exists: true
+    name: "ArrayCount"
+  - ns: 0
+    exists: false
+    name: "INI file"
+  - ns: 106
+    exists: true
+    name: "UE3:UTKillingSpreeMessage (UT3)"
+  - ns: 104
+    exists: true
+    name: "UE2:KillingSpreeMessage (UT2004)"
+  - ns: 0
+    exists: true
+    name: "UT2003"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Before we start"
+    number: "1"
+    index: "1"
+    fromtitle: "User:Wormbo/Dying_spree_mutator"
+    byteoffset: 469
+    anchor: "Before_we_start"
+  - toclevel: 1
+    level: "2"
+    line: "Getting started"
+    number: "2"
+    index: "2"
+    fromtitle: "User:Wormbo/Dying_spree_mutator"
+    byteoffset: 1254
+    anchor: "Getting_started"
+  - toclevel: 1
+    level: "2"
+    line: "Adding the mutator"
+    number: "3"
+    index: "3"
+    fromtitle: "User:Wormbo/Dying_spree_mutator"
+    byteoffset: 2374
+    anchor: "Adding_the_mutator"
+  - toclevel: 1
+    level: "2"
+    line: "Setting up the GameRules"
+    number: "4"
+    index: "4"
+    fromtitle: "User:Wormbo/Dying_spree_mutator"
+    byteoffset: 4868
+    anchor: "Setting_up_the_GameRules"
+  - toclevel: 1
+    level: "2"
+    line: "Detecting player kills"
+    number: "5"
+    index: "5"
+    fromtitle: "User:Wormbo/Dying_spree_mutator"
+    byteoffset: 5760
+    anchor: "Detecting_player_kills"
+  - toclevel: 1
+    level: "2"
+    line: "Keeping track of player deaths"
+    number: "6"
+    index: "6"
+    fromtitle: "User:Wormbo/Dying_spree_mutator"
+    byteoffset: 8055
+    anchor: "Keeping_track_of_player_deaths"
+  - toclevel: 1
+    level: "2"
+    line: "Maintaining the players list"
+    number: "7"
+    index: "7"
+    fromtitle: "User:Wormbo/Dying_spree_mutator"
+    byteoffset: 11065
+    anchor: "Maintaining_the_players_list"
+  - toclevel: 1
+    level: "2"
+    line: "Maintaining the players list in UT"
+    number: "8"
+    index: "8"
+    fromtitle: "User:Wormbo/Dying_spree_mutator"
+    byteoffset: 15667
+    anchor: "Maintaining_the_players_list_in_UT"
+  - toclevel: 1
+    level: "2"
+    line: "Broadcasting spree messages"
+    number: "9"
+    index: "9"
+    fromtitle: "User:Wormbo/Dying_spree_mutator"
+    byteoffset: 17789
+    anchor: "Broadcasting_spree_messages"
+  - toclevel: 1
+    level: "2"
+    line: "Adding SelfSpreeNote to UT"
+    number: "10"
+    index: "10"
+    fromtitle: "User:Wormbo/Dying_spree_mutator"
+    byteoffset: 20946
+    anchor: "Adding_SelfSpreeNote_to_UT"
+  displaytitle: "User:Wormbo/Dying spree mutator"
+  iwlinks: []
+  wikitext:
+    text: "The goal of this [[UnrealScript]] tutorial is to create a small mutator\
+      \ that tracks and broadcasts \"dying sprees\", i.e. consecutive deaths of a\
+      \ player without any kill by that player. This tutorial is mainly targeted towards\
+      \ [[UT2004]], but I hope I got the [[UT]], [[UT3]] and [[UT2003]] parts right\
+      \ as well. (I didn't compile a single line of code for this article, so in case\
+      \ of errors or problems, please leave a note on the [[{{TALKPAGENAME}}|discussion\
+      \ page]].)\n\n==Before we start==\nWhile this tutorial centers around a very\
+      \ simple idea, its main goal is to teach you how to modify rules of the game,\
+      \ not how to manage your project. Please find other \"getting started\" tutorials\
+      \ if you need help with the project setup. The legacy part of this wiki contains\
+      \ [[Legacy:UnrealScript Hello World|\"Hello World\" examples for UT/UT200x]]\
+      \ and [[Legacy:UT3 Hello World|for UT3]]. Personally I use [[UnCodeX]] and (at\
+      \ least for UE1/2 projects) [[UMake]], so I simply tell UnCodeX to create a\
+      \ subclass in a new package (for this tutorial I will use the project name \"\
+      DyingSpree\"), optionally adjust the EditPackages list in UMake and my project\
+      \ is ready to compile. Please refer to [[WOTgreal]] or [[nFringe]] tutorials\
+      \ if you use one of those IDEs instead.\n\n==Getting started==\nBefore we start\
+      \ hacking in some code, we first need to figure out what exactly we need. The\
+      \ goal is to count player deaths and detect kills that might reset the count.\
+      \ Fortunately there's a perfect function for this: ScoreKill. In UT (and the\
+      \ UDK) it is part of the [[UE1:Mutator (UT)|Mutator]] class, later engine generations\
+      \ moved many Mutator functions related to the gameplay rules (including ScoreKill)\
+      \ to the [[UE2:GameRules (UT2004)|GameRules]] class. A Mutator class is required\
+      \ anyway to activate our Dying Spree mod.\n\nIn other words, if you are working\
+      \ with UT or the UDK, only create the Mutator subclass. You can use any name\
+      \ you want, but for this tutorial I will use the UT200x naming convention and\
+      \ call it \"MutDyingSpree\". If you are using UT3, make sure to subclass [[UE3:UTMutator\
+      \ (UT3)|UTMutator]] instead. For UT200x or UT3 you also need a GameRules subclass,\
+      \ which I will call \"DyingSpreeRules\" in this tutorial. If you compile the\
+      \ project at this point you should get DyingSpree.u in the System directory\
+      \ for UT/UT200x or UTGame\\Unpublished\\CookedPC\\Scripts directory for UT3.\n\
+      \n==Adding the mutator==\nNow to tell the game about the new mutator.\n\nFor\
+      \ UT and UT2003 you will need to create a [[localization file]] and add your\
+      \ mutator information to it. Since the project is called DyingSpree (causing\
+      \ the package to have the name DyingSpree.u), the obvious choice for the localization\
+      \ file is \"DyingSpree.int\". As always in UE1/2, this file belongs in the System\
+      \ directory. It is a plain text file, so you can open it in Notepad or any other\
+      \ editor you like. Add the following two lines to it, save and open the game\
+      \ to check the mutators list:\n [Public]\n Object=(Name=DyingSpree.MutDyingSpree,Class=Class,MetaClass=Engine.Mutator,Description=\"\
+      Dying Sprees,Announce when a player dies multiple times in a row without making\
+      \ any kills.\")\nUT2003 doesn't use the description part, so you can leave it\
+      \ out entirely. For UT the part of the Description value before the first comma\
+      \ is the mutator name, everything after the first comma is the description.\
+      \ If there's no comma, the entire value is used as mutator name.\n\nFor UT2003\
+      \ and UT2004 the name and description are stored in the mutator class as default\
+      \ values of the FriendlyName and Description properties respectively. Create\
+      \ a [[defaultproperties]] section in MutDyingSpree.uc and add the two values:\n\
+      <uscript>\nclass MutDyingSpree extends Mutator;\n\ndefaultproperties\n{\n  FriendlyName=\"\
+      Dying Sprees\"\n  Description=\"Announce when a player dies multiple times in\
+      \ a row without making any kills.\"\n}\n</uscript>\nRecompile to ensure everything\
+      \ is syntactically correct. UT2004 will create a [[UCL file]] with the name\
+      \ \"DyingSpree.ucl\" containing the mutator's class, name and description. You\
+      \ may have to delete it and recompile if you make changes to the FriendlyName\
+      \ or Description values.\n\nUT3 and the UDK use a special [[INI file]] to store\
+      \ information about the mutator and a localization file for the name and description.\
+      \ For our simple example we will put them in the INI file as well. (I don't\
+      \ know about UDK here, you might have to use the localization file.) In our\
+      \ case the INI file should be called \"UTDyingSpree.ini\" and is located in\
+      \ the UTGame\\Config directory. Make sure it contains the following lines:\n\
+      \ [MutDyingSpree UTUIDataProvider_Mutator]\n ClassName=DyingSpree.MutDyingSpree\n\
+      \ FriendlyName=Dying Sprees\n Description=Announce when a player dies multiple\
+      \ times in a row without making any kills.\nKeep or remove the other lines as\
+      \ you like, they don't really matter as they are the default values anyway.\n\
+      \n==Setting up the GameRules==\nYou can skip this step in UT and the UDK as\
+      \ it doesn't apply. Instead, put any code in the MutDyingSpree class.\n\nOk,\
+      \ since ScoreKill is only called for GameRules, not for a Mutator, we need to\
+      \ set up our DyingSpreeRules. The ideal place for this is the MutDyingSpree's\
+      \ initialization, for example the PostBeginPlay function. Let's use that to\
+      \ spawn and register our DyingSpreeRules:\n<uscript>\nfunction PostBeginPlay()\n\
+      {\n  // only for UT200x:\n  Level.Game.AddGameModifier(Spawn(class'DyingSpreeRules'));\n\
+      \n  // only for UT3:\n  WorldInfo.Game.AddGameRules(class'DyingSpreeRules');\n\
+      }\n</uscript>\nThis not only creates our rules modifier, but also tells the\
+      \ game to call ScoreKill (and a few other functions) when appropriate.\n\nThis\
+      \ kind of manual registration is not necessary for the mutator itself because\
+      \ that is automatically registered when the game creates it.\n\n==Detecting\
+      \ player kills==\nNow to implement our kill/death detection. For UT and UDK\
+      \ this happens in the MutDyingSpree class, UT200x and UT3 do this in the DyingSpreeRules.\n\
+      \nRule number 1 when overriding Mutator or GameRules functions: These usually\
+      \ call the next rule/mutator's implementation, so make sure you don't break\
+      \ the chain! If you are not sure if you are overriding a such a function or\
+      \ a \"normal\" function, simply call the super class implementation. At this\
+      \ point you might wonder why we didn't do that for PostBeginPlay. Well, PostBeginPlay\
+      \ is declared in the Actor class, but neither there, nor in Info or Mutator\
+      \ it is overridden to contain any code. Calling the super class implementation\
+      \ there wouldn't have any effect so we can safely omit it.\n\nLet's override\
+      \ ScoreKill:\n<uscript>\nfunction ScoreKill(Controller Killer, Controller Killed)\n\
+      {\n  Super.ScoreKill(Killer, Killed);\n  log(Killer@\"killed\"@Killed); // use\
+      \ `log(...) instead for UT3 and UDK\n}\n</uscript>\nIn UT the two parameters\
+      \ are of type [[UE1:Pawn (UT)|Pawn]] instead of [[UE2:Controller (UT2004)|Controller]].\n\
+      \nThis doesn't do much yet, except write a line to the log file whenever ScoreKill\
+      \ is called. Compile and try playing an Instant Action or Practice Session with\
+      \ the Dying Sprees mutator. Switch to window mode (\"endfullscreen\") and open\
+      \ the log (\"showlog\") to see the live log. Whenever a player dies, the \"\
+      A killed B\" line should show up now. UT2004 should be started with the -makenames\
+      \ parameter (\"D:\\Path\\To\\UT2004.exe\" -makenames) to make the output meaningful,\
+      \ as otherwise you will only see something like \"XPawn killed XPawn\". The\
+      \ parameter ensures the game adds numbers to the object names, like UT and UT3\
+      \ do. Play around with different ways to die (e.g. suicide command, killed by\
+      \ weapon fire, jump into lava, add and remove bots) to get a feel for the ScoreKill\
+      \ function's parameter values.\n\nYou can also try starting a local dedicated\
+      \ server with your mutator and connect to it. This will allow you to figure\
+      \ out what happens when you die while becoming a spectator or because you are\
+      \ about to disconnect. Your ScoreKill logs will only be added to the server's\
+      \ log file, not the client's. This is an important little fact: Mutators and\
+      \ GameRules only get their functions called on the server!\n\n==Keeping track\
+      \ of player deaths==\nI hope you figured out how the Killer and Killed parameters\
+      \ of ScoreKill relate to the death of players. For reference: Killer is either\
+      \ None or the same as Killed if it was a death the player was responsible for,\
+      \ i.e. a suicide. Killer is something else than None or Killed if one player\
+      \ killed another. That means, whenever a player appears on the Killed side,\
+      \ we should increment that player's death spree. If a player appears on the\
+      \ Killer side ''but not on the Killed side'', that player's dying spree should\
+      \ be reset.\n\nLet's express that in terms of UnrealScript code:\n<uscript>\n\
+      function ScoreKill(Controller Killer, Controller Killed)\n{\n  Super.ScoreKill(Killer,\
+      \ Killed);\n\n  // Killed is never None\n  log(Killed@\"died, increment spree\"\
+      );\n\n  if (Killer != None && Killer != Killed)\n  {\n    // one player killed\
+      \ another\n\n    log(Killer@\"killed someone else, reset dying spree\");\n \
+      \ }\n}\n</uscript>\nSo that's the basic logic. Next we need to figure out how\
+      \ to store each player's current dying spree. As a mutator our mod shouldn't\
+      \ touch the Controller or PlayerReplicationInfo, so let's just keep a list of\
+      \ players and their dying sprees in a variable in our Mutator/GameRules class.\
+      \ Each entry in this list will contain two items, the player and the current\
+      \ spree counter. This can be done with an array of [[struct]]s. The struct could\
+      \ be declared as follows:\n<uscript>\nstruct DyingSpreeCount\n{\n  var Controller\
+      \ Player; // use type Pawn for UT instead\n  var int SpreeCount;\n};\n</uscript>\n\
+      The variable to hold our list is simply an array of that struct type. UT doesn't\
+      \ have [[dynamic arrays]], so we need to use a [[static array]] there.\n<uscript>\n\
+      // only for UT200x and later:\nvar array<DyingSpreeCount> DyingSprees;\n// only\
+      \ for UT:\nvar DyingSpreeCount DyingSprees[32]; // supporting up to 32 players\n\
+      </uscript>\nSo we know where to store the sprees and when to increment or reset\
+      \ them, but how are we going to keep track of the players? Since this is different\
+      \ for UT, we will need to branch here. Accessing arrays and struct members to\
+      \ increment or reset the counter is the same in all versions, only picking the\
+      \ correct array index and adding players to the array will be different. Let's\
+      \ encapsulate that task in a function, say, GetPlayerIndex.\n<uscript>\nfunction\
+      \ ScoreKill(Controller Killer, Controller Killed)\n{\n  local int PlayerIndex;\n\
+      \n  Super.ScoreKill(Killer, Killed);\n\n  // increment Killed's dying spree\
+      \ count\n  PlayerIndex = GetPlayerIndex(Killed);\n  DyingSprees[PlayerIndex].SpreeCount++;\n\
+      \n  if (Killer != None && Killer != Killed)\n  {\n    // one player killed another\n\
+      \n    // reset Killer's dying spree count\n    PlayerIndex = GetPlayerIndex(Killer);\n\
+      \    DyingSprees[PlayerIndex].SpreeCount = 0;\n  }\n}\n\n/**\nReturns an index\
+      \ into DyingSprees array for the specified player.\nThe player is added to the\
+      \ array if encountered for the first time.\n*/\nfunction int GetPlayerIndex(Controller\
+      \ Player) // Pawn instead of Controller for UT\n{\n  // TODO\n}\n</uscript>\n\
+      \n==Maintaining the players list==\nThis is probably the most complicated part\
+      \ of the entire mutator. As mentioned before, UT requires a different strategy,\
+      \ so we will focus on the other versions first. You should still read this section,\
+      \ as it points out problems that need to be solved in the UT version as well.\n\
+      \nThe main task of GetPlayerIndex is to return an index value. To do so, it\
+      \ needs to perform a linear search on the DyingSprees array to find the index\
+      \ with the player's entry. If no such entry exists, it can just create a new\
+      \ entry and add it at the end of the list.\n\nUE3 is really easy to use here,\
+      \ because it provides dynamic array operations for these steps:\n<uscript>\n\
+      function int GetPlayerIndex(Controller Player)\n{\n  local int PlayerIndex;\n\
+      \n  // look up existing player entry\n  PlayerIndex = DyingSprees.Find('Player',\
+      \ Player);\n  \n  if (PlayerIndex == INDEX_NONE)\n  {\n    // entry not found,\
+      \ create one\n    PlayerIndex = DyingSprees.Length;\n    DyingSprees.Add(1);\
+      \ // adds entry at end of list with zero spree count and empty player\n    DyingSprees[PlayerIndex].Player\
+      \ = Player;\n  }\n  return PlayerIndex;\n}\n</uscript>\nNice and clean, right?\
+      \ Ok, UT200x doesn't have those convenient array operations, so we need to do\
+      \ everything manually there:\n<uscript>\nfunction int GetPlayerIndex(Controller\
+      \ Player)\n{\n  local int PlayerIndex;\n\n  // look up existing player entry\n\
+      \  for (PlayerIndex = 0; PlayerIndex < DyingSprees.Length && DyingSprees[PlayerIndex].Player\
+      \ != Player; PlayerIndex++);\n  \n  if (PlayerIndex == DyingSprees.Length)\n\
+      \  {\n    // entry not found, create one\n    DyingSprees.Length = PlayerIndex\
+      \ + 1; // adds entry at end of list with zero spree count and empty player\n\
+      \    DyingSprees[PlayerIndex].Player = Player;\n  }\n  return PlayerIndex;\n\
+      }\n</uscript>\nIn case you were wondering: That first thing is a [[for]] loop\
+      \ with an empty body. We don't need any body there, the condition will stop\
+      \ the look as soon as the index reaches the end of the list or the player is\
+      \ found. Unlike the array Find operation we end up with the index being the\
+      \ array length instead of the value of the INDEX_NONE constant, which is -1.\n\
+      \nNow this approach will work nicely, but there's a small part we haven't considered\
+      \ yet. What happens if a player leaves the game? Quite simple: The player's\
+      \ Controller is destroyed and leaves an empty slot in our list. Our code simply\
+      \ skips the empty slot, but as players come and go, the list gets longer and\
+      \ longer, which makes our code slower and slower. As you can tell, that's a\
+      \ bad thing, so let's remove those empty slots while we're here. We're already\
+      \ iterating over the list to find the player's index, so how about we just remove\
+      \ any empty slots we come across? We can easily do that by extending the for\
+      \ loop:\n<uscript>\n  for (PlayerIndex = 0; PlayerIndex < DyingSprees.Length;\
+      \ PlayerIndex++)\n  {\n    if (DyingSprees[PlayerIndex].Player == Player)\n\
+      \      break; // found the player, let's ignore further empty slots for now\n\
+      \    else if (DyingSprees[PlayerIndex].Player == None)\n      DyingSprees.Remove(PlayerIndex--,\
+      \ 1); // decrement the index because otherwise we'd skip the next entry\n  }\n\
+      </uscript>\nThere, all empty slots up to the player's index are now removed.\
+      \ We don't care about empty slots after the player because our primary goal\
+      \ is to find the player. Removing empty slots is just a side effect that speeds\
+      \ up the next call to GetPlayerIndex.\n\nWhat about UT3? It's the same problem\
+      \ there, so we could just copy over the UT200x code. We'd loose the quick lookup\
+      \ of the natively implemented Find operation, though.\nYou know what? Let's\
+      \ be lazy! GetPlayerIndex is called quite often, so if we remove one empty slot\
+      \ at a time, that would end up having the same result at some point. Players\
+      \ leaving the game doesn't happen too often, so we don't need to waste time\
+      \ doing perfect cleanup.\n<uscript>\nfunction int GetPlayerIndex(Controller\
+      \ Player)\n{\n  local int PlayerIndex;\n\n  // check if any empty slots need\
+      \ to be cleaned up\n  PlayerIndex = DyingSprees.Find('Player', None);\n  if\
+      \ (PlayerIndex != INDEX_NONE)\n    DyingSprees.Remove(PlayerIndex, 1); // remove\
+      \ this empty slot\n\n  // look up existing player entry\n  ...\n}\n</uscript>\n\
+      Granted, in the worst case (no empty slots and player not in the list) this\
+      \ implementation needs to iterate over the entire list twice (once for finding\
+      \ empty slots, once for finding the player), but Find is implemented in native\
+      \ code, which makes it much faster than a loop in UnrealScript. The number of\
+      \ players in the game is limited, so an extra native pass over the list really\
+      \ won't make much difference.\n\n==Maintaining the players list in UT==\nAs\
+      \ mentioned before, UT lacks dynamic arrays, so we need to work on a static\
+      \ array. It's not possible to add or remove elements at runtime, so we have\
+      \ two options left. Either we just leave empty slots where they appear or we\
+      \ compact the list, moving all further elements down to close the gaps. The\
+      \ latter approach allows us to keep track of the highest slot in use, which\
+      \ can be used to optimize the linear search. On the other hand, there are only\
+      \ 32 elements in the array and moving elements around to close gaps is complicated.\
+      \ For this tutorial I'll pick the first approach (the lazy one again) and leave\
+      \ it to you to come up with the implementation for the optimized approach.\n\
+      \nSo, the general implementation will end up being similar to the UT2004 version\
+      \ above. The difference obviously is that new players may end up being added\
+      \ in \"dirty\" slots that require resetting the spree counter. Also, the search\
+      \ will not only need to skip empty slots, but also need to remember one of them,\
+      \ in case there's no room for a new player at the end of the array.\n<uscript>\n\
+      function int GetPlayerIndex(Pawn Player)\n{\n  local int PlayerIndex, FirstEmptySlot;\n\
+      \n  // look up existing player entry\n  FirstEmptySlot = -1;\n  for (PlayerIndex\
+      \ = 0; PlayerIndex < ArrayCount(DyingSprees); PlayerIndex++)\n  {\n    if (DyingSprees[PlayerIndex].Player\
+      \ == Player)\n      break; // found the player, let's ignore further empty slots\
+      \ for now\n    else if (DyingSprees[PlayerIndex].Player == None && FirstEmptySlot\
+      \ == -1)\n      FirstEmptySlot = PlayerIndex; // if player is not in the list,\
+      \ add here\n\n  }\n  \n  if (PlayerIndex == ArrayCount(DyingSprees))\n  {\n\
+      \    // entry not found, use the first empty slot\n    PlayerIndex = FirstEmptySlot;\n\
+      \    DyingSprees[PlayerIndex].Player = Player;\n    DyingSprees[PlayerIndex].SpreeCount\
+      \ = 0;\n  }\n  return PlayerIndex;\n}\n</uscript>\nRight, that should be about\
+      \ it. There's a minor problem with this approach: If there are more than 32\
+      \ players, GetPlayerIndex may return 32, causing array out of bound warnings.\
+      \ I'll leave it to you to figure out a fix or workaround.\n\n==Broadcasting\
+      \ spree messages==\nNow that our mutator keeps track of who died how often,\
+      \ it's time to actually print out the corresponding messages. Because dying\
+      \ sprees are quite similar to killing sprees, we can just reuse the killing\
+      \ spree messages and add our own text and audio to them. Find your game's killing\
+      \ spree message (see example list below) and create a subclass called DyingSpreeMessage.\n\
+      * [[UE1:KillingSpreeMessage (UT)|KillingSpreeMessage (UT)]]\n* [[UE2:KillingSpreeMessage\
+      \ (UT2003)|KillingSpreeMessage (UT2003)]]\n* [[UE2:KillingSpreeMessage (UT2004)|KillingSpreeMessage\
+      \ (UT2004)]]\n* [[UE3:UTKillingSpreeMessage (UT3)|UTKillingSpreeMessage (UT3)]]\n\
+      The killing spree message class should already contain all the logic for creating\
+      \ the proper messages, so all you need to do is adjusting the messages and sounds\
+      \ in defaultproperties:\n<uscript>\nclass DyingSpreeMessage extends KillingSpreeMessage;\n\
+      \ndefaultproperties\n{\n  EndSpreeNote=\" ended the dying spree by killing\"\
+      \n  EndSpreeNoteTrailer=\"\"\n  SpreeNote(0)=\"is on a dying spree!\"\n  SpreeNote(1)=\"\
+      is being bullied!\"\n  SpreeNote(2)=\"is being dominated!\"\n  SpreeNote(3)=\"\
+      is being annihilated!\"\n  SpreeNote(4)=\"no longer seems to be playing!\"\n\
+      \  SpreeNote(5)=\"is synonymous for 'being dead'!\"\n\n  SelfSpreeNote(0)=\"\
+      Dying Spree!\"\n  SelfSpreeNote(1)=\"Bullied!\"\n  SelfSpreeNote(2)=\"Dominated!\"\
+      \n  SelfSpreeNote(3)=\"Annihilated!\"\n  SelfSpreeNote(4)=\"Are you still playing?\"\
+      \n  SelfSpreeNote(5)=\"You like being dead, right?\"\n\n  // these need to be\
+      \ \"SpreeSoundName\" instead of \"SpreeSound\" for UT2004\n  SpreeSound(0)=None\n\
+      \  SpreeSound(1)=None\n  SpreeSound(2)=None\n  SpreeSound(3)=None\n  SpreeSound(4)=None\n\
+      \  SpreeSound(5)=None\n}\n</uscript>\nInterestingly the spree text and sound\
+      \ variable names are identical across all UT versions. Only UT doesn't have\
+      \ SelfSpreeNote, so you can't use that without some sort of work-around. Note\
+      \ that UT and UT200x actually allow a spree index from 0 to 9, while UT3 only\
+      \ has room for up to index 5.\n\nOk, text messages are in place and the mutator\
+      \ tracks sprees. Time to add the broadcasting code to ScoreKill:\n<uscript>\n\
+      function ScoreKill(Controller Killer, Controller Killed)\n{\n  local int PlayerIndex,\
+      \ SpreeLevel;\n \n  Super.ScoreKill(Killer, Killed);\n \n  // increment Killed's\
+      \ dying spree count\n  PlayerIndex = GetPlayerIndex(Killed);\n  DyingSprees[PlayerIndex].SpreeCount++;\n\
+      \  if (DyingSprees[PlayerIndex].SpreeCount % 5 == 0)\n  {\n    SpreeLevel =\
+      \ DyingSprees[PlayerIndex].SpreeCount / 5;\n    if (SpreeLevel < ArrayCount(class'DyingSpreeMessage'.default.SpreeNote))\n\
+      \      BroadcastLocalizedMessage(class'DyingSpreeMessage', SpreeLevel - 1, Killed.PlayerReplicationInfo);\n\
+      \  }\n \n  if (Killer != None && Killer != Killed)\n  {\n    // one player killed\
+      \ another\n \n    // reset Killer's dying spree count\n    PlayerIndex = GetPlayerIndex(Killer);\n\
+      \    if (DyingSprees[PlayerIndex].SpreeCount >= 5)\n      BroadcastLocalizedMessage(class'DyingSpreeMessage',\
+      \ 0, Killer.PlayerReplicationInfo, Killed.PlayerReplicationInfo);\n    DyingSprees[PlayerIndex].SpreeCount\
+      \ = 0;\n  }\n}\n</uscript>\nThat's it, unless you implement this in UT. Time\
+      \ to compile and play-test your masterpiece.\n\n==Adding SelfSpreeNote to UT==\n\
+      As mentioned above, the SelfSpreeNote array isn't available in UT. Just declaring\
+      \ the array isn't enough, UT is actually missing the function ''GetRelatedString''()\
+      \ from later engine generations that is called if the message is displayed for\
+      \ the player owning RelatedPRI1. From inside ''GetString''() there is no way\
+      \ to know whether the string is requested for the RelatedPRI1 player. To get\
+      \ around this limitation we will make use of the OptionalObject parameter of\
+      \ the LocalMessage, which is not used for killing sprees and therefore available\
+      \ for our little workaround. The idea is to put the receiving player's PlayerReplicationInfo\
+      \ into the OptionalObject so GetString() can check whether it needs to display\
+      \ a different text. Of course we also need to declare the missing SelfSpreeNote\
+      \ array to our DyingSpreeMessage class. Variable declarations go somewhere below\
+      \ the class declaration, but above the first function or state declaration.\n\
+      <uscript>\nvar localized string SelfSpreeNote[ArrayCount(SpreeNote)];\n</uscript>\n\
+      Using [[ArrayCount]] for the array size here ensures the array has the same\
+      \ size as the SpreeNote array.\n\nSo how are we going to put the receiving player's\
+      \ PRI into the OptionalObject? One way would be to send the message already\
+      \ with the proper OptionalObject value, but we'd have to replace the convenient\
+      \ BroadcastLocalizedMessage() call with a loop over all players and handle everything\
+      \ that function does. An easier way is to perform the modification when the\
+      \ message arrives at the client via the ClientReceive() function in the message\
+      \ class itself:\n<uscript>\nstatic function ClientReceive(PlayerPawn P, optional\
+      \ int MessageSwitch, optional PlayerReplicationInfo RelatedPRI1, optional PlayerReplicationInfo\
+      \ RelatedPRI2, optional Object OptionalObject)\n{\n  // set OptionalObject to\
+      \ receiving player's PRI\n  Super.ClientReceive(P, MessageSwitch, RelatedPRI1,\
+      \ RelatedPRI2, P.PlayerReplicationInfo);\n}\n</uscript>\nYes, that's it. The\
+      \ ClientReceive() implementation in the LocalMessage class adds the message\
+      \ to the HUD, so if we call it with the modified OptionalObject parameter (the\
+      \ last one in the Super call), it will do exactly what we wanted. The only thing\
+      \ left to do is getting GetString() to actually return the SelfSpreeNote now,\
+      \ so we need to override that in our DyingSpreeMessage class as well. Before\
+      \ we do that, let's have a look at the GetRelatedString() function from UT2004,\
+      \ so we know what we are actually trying to achieve:\n<uscript>\nstatic function\
+      \ string GetRelatedString(\n    optional int Switch,\n    optional PlayerReplicationInfo\
+      \ RelatedPRI_1, \n    optional PlayerReplicationInfo RelatedPRI_2,\n    optional\
+      \ Object OptionalObject\n    )\n{\n\tif ( RelatedPRI_2 == None )\n\t\treturn\
+      \ Default.SelfSpreeNote[Switch];\n\t\t\n    return static.GetString(Switch,RelatedPRI_1,RelatedPRI_2,OptionalObject);\n\
+      }\n</uscript>\nWhat happens here is a check for RelatedPRI2 being None, which\
+      \ means it's an ongoing killing spree, not the end of a spree. Our dying spree\
+      \ message works the same way - RelatedPRI2 is none while the spree continues\
+      \ and not None when the player manages to end the spree. Note that the end of\
+      \ the spree uses the same string for all players.\n\nWith that knowledge, we\
+      \ can add special handling for the case that RelatedPRI1 belongs to the receiving\
+      \ player and RelatedPRI2 is empty:\n<uscript>\nstatic function string GetString(optional\
+      \ int MessageSwitch, optional PlayerReplicationInfo RelatedPRI1, optional PlayerReplicationInfo\
+      \ RelatedPRI2, optional Object OptionalObject)\n{\n  // if displayed for receiving\
+      \ player and not end of spree\n  if (RelatedPRI1 == OptionalObject && ReplatedPRI2\
+      \ == None)\n    return default.SelfSpreeNote[MessageSwitch]; // display shorter\
+      \ message\n\n  // else display the longer text\n  return Super.GetString(MessageSwitch,\
+      \ RelatedPRI1, RelatedPRI2, OptionalObject);\n}\n</uscript>\nNow the UT version\
+      \ should be ready for compiling and play-testing as well.\n\n[[Category:Programming\
+      \ tutorials|{{SUBPAGENAME}}]]"
+  properties: []
+  revId: 44683
+name: "User:Wormbo/Dying spree mutator"
+revision:
+  revid: 44683
+  parentid: 44254
+  user: "Wormbo"
+  timestamp: 1317541664.000000000
+  comment: "\"ode\"? \"code\"!"
+timestamp: 1668761007.447867000

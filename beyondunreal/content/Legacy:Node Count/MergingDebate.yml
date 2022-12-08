@@ -1,0 +1,236 @@
+---
+parse:
+  title: "Legacy:Node Count/MergingDebate"
+  text:
+    text: "<p><i>This is a pge for Tarquin &amp; Entropic &amp; anyone else who's\
+      \ interested to thrash out this nodecount / merging thing. See if we can work\
+      \ it out ourselves... and maybe call in the Epic cavalry if we can't.&#160;;-)</i></p>\n\
+      <h2><span class=\"mw-headline\" id=\"Definitions\">Definitions</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Node_Count/MergingDebate?section=1\"\
+      \ title=\"Edit section: Definitions\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>Just so we're talking about the same stuff....</p>\n\
+      <dl>\n<dt>Face</dt>\n<dd>a maximal set of coplanar polygons of a brush. (mathematician\
+      \ terminology, sorry...)</dd>\n<dt>Surface</dt>\n<dd>a polygon entity that is\
+      \ selectable with a single click in 3D view</dd>\n<dt>BSP Poly</dt>\n<dd>(maybe\
+      \ not the right word...) An area of single colour in the Zone view. (this is\
+      \ what I *believe* is the nodecount... but that's another story)</dd>\n<dt>Edge</dt>\n\
+      <dd>the edge of either a surface or BSP poly</dd>\n</dl>\n<p>Ways to merge:</p>\n\
+      <dl>\n<dt>Polymerge&#160;</dt>\n<dd>using the Polys -&gt; merge command on aligned\
+      \ surfaces &amp; then rebuilding</dd>\n<dt>Clip&#160;</dt>\n<dd>slice off the\
+      \ face to be merged</dd>\n<dt>Intersect&#160;</dt>\n<dd>while still at the red\
+      \ build brush stage, use world geometry to slice off the face to be merged.</dd>\n\
+      </dl>\n<h2><span class=\"mw-headline\" id=\"Discussion_.3D\">Discussion =</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Node_Count/MergingDebate?section=2\" title=\"Edit section:\
+      \ Discussion =\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <h3><span class=\"mw-headline\" id=\"Exp_1\">Exp 1</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Node_Count/MergingDebate?section=3\"\
+      \ title=\"Edit section: Exp 1\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Shape: a square with the right-hand side split, and\
+      \ the new vertex brought in to the left till it's 1/4 of the width from the\
+      \ left side. The face is initially 3 surfaces.</p>\n<ul>\n<li>Intersect: 1 surface\
+      \ made of 2 BSP polys</li>\n<li>Clip: 2 surfaces, each is a single BSP poly</li>\n\
+      <li>Polymerge: 1 surface, 3 BSP polys.</li>\n</ul>\n<div class=\"center\">\n\
+      <div class=\"floatnone\"><a href=\"/File:Legacy_polymerge.shape1.gif\" class=\"\
+      image\"><img alt=\"Legacy polymerge.shape1.gif\" src=\"/w/images/Legacy_polymerge.shape1.gif\"\
+      \ width=\"268\" height=\"101\" /></a></div>\n</div>\n<p>In this particular case,\
+      \ no pair of the existing triangles can be merged to produce a convex shape,\
+      \ so the number of BSP polys isn't reduced by merging Nodecount when looking\
+      \ at this brush straight on is 4: 3 polys for the brush &amp; the subtract in\
+      \ the background. Hence for this shape, polymerging is merely a convenience\
+      \ to the mapper &amp; has no impact on the engine.</p>\n<p>On the other hand,\
+      \ the other two methods produce an off-grid point.</p>\n<dl>\n<dd>I think I\
+      \ need a picture - I can't quite visualise the geometry your are using here.\
+      \ Good idea to create this page btw - keeps what's going to be a long and tortuous\
+      \ discussion (I suspect) out of the way. I'll repeat my extrusion experiments\
+      \ tonight and update this page with the pics. and results - <a href=\"/Legacy:EntropicLqd\"\
+      \ title=\"Legacy:EntropicLqd\">EntropicLqd</a>.\n<dl>\n<dd>tada! Piccy&#160;:)\
+      \ It's starting to seem like there's not one simple answer, different shapes\
+      \ benefit most from different techniques. N00bs in search of a one-size fits\
+      \ all holy grail answer are not gonna like this... lol! – <i>Tarquin</i></dd>\n\
+      </dl>\n</dd>\n</dl>\n<div class=\"center\">\n<div class=\"floatnone\"><a href=\"\
+      /File:Legacy_archway_example.gif\" class=\"image\"><img alt=\"Legacy archway\
+      \ example.gif\" src=\"/w/images/Legacy_archway_example.gif\" width=\"568\" height=\"\
+      118\" /></a></div>\n</div>\n<p>Here's a good one. Looking from left to right\
+      \ you have the original brush (a little redundant but I forgot to clip it out\
+      \ of the picture), the merged brush, the brush created using a clip, and the\
+      \ brush created using the subtract. For both the clipped and subtracted brush\
+      \ I used an intersected version of the brush to add them to the world. When\
+      \ viewed in game, I got the following results:</p>\n<table border=\"0\" cellspacing=\"\
+      0\" cellpadding=\"4\">\n<tr>\n<td>Brush type</td>\n<td>Nodes</td>\n<td>Polygons</td>\n\
+      </tr>\n<tr>\n<td>Default extrusion</td>\n<td>29</td>\n<td>25</td>\n</tr>\n<tr>\n\
+      <td>Merged polys</td>\n<td>26</td>\n<td>11</td>\n</tr>\n<tr>\n<td>Clipped polys</td>\n\
+      <td>23</td>\n<td>16</td>\n</tr>\n<tr>\n<td>Subtracted polys</td>\n<td>26</td>\n\
+      <td>9</td>\n</tr>\n</table>\n<p>The implication of that is pretty interesting.\
+      \ It seems that as the number of points on the extruded face increases subtracting\
+      \ or clipping the face produces better results than simply merging the polys.\
+      \ The most interesting thing about the above example though is that the very\
+      \ best results would be achieved by merging the faces on the \"clipped\" brush.\
+      \ For some reason the clipped brush produces a more efficient set of Faces.</p>\n\
+      <p>Something else I just tried - Zoning the level I built (essentially a cross\
+      \ roads with four large rooms to the north, south, east, and west). This changes\
+      \ the node count which lends weight to my theory that the node count is the\
+      \ total number of nodes within the BSP traversed rather than visible (which\
+      \ makes more sense to me from a performance monitoring point of view as well).\
+      \ Here's the post level zoning results</p>\n<table border=\"0\" cellspacing=\"\
+      0\" cellpadding=\"4\">\n<tr>\n<td>Brush type</td>\n<td>Nodes</td>\n<td>Polygons</td>\n\
+      </tr>\n<tr>\n<td>Default extrusion</td>\n<td>29</td>\n<td>25</td>\n</tr>\n<tr>\n\
+      <td>Merged polys</td>\n<td>22</td>\n<td>11</td>\n</tr>\n<tr>\n<td>Clipped polys</td>\n\
+      <td>21</td>\n<td>16</td>\n</tr>\n<tr>\n<td>Subtracted polys</td>\n<td>21</td>\n\
+      <td>9</td>\n</tr>\n</table>\n<p>I did cheat a little as I set the BSP \"minimise\
+      \ cuts/balance tree\" weighting to 5 when I built the level.</p>\n<p><b>Mosquito:</b>I\
+      \ read all this and it doesn't even have a conclusion, This Channel sucks. Now\
+      \ I'm gonna be bothered for weeks.</p>\n<p><b>Tarquin:</b> Well.... the conclusion\
+      \ was, I think: \"It depends on the type of shape. Clip and intersect cuts may\
+      \ have non-grid points, so that's an extra thing to watch for.\"</p>\n<p><b>EntropicLqd:</b>\
+      \ It's more of a journey than a destination&#160;:) – To be honest this topic\
+      \ is somewhat moot now that everythings gone to static-mesh hell.</p>\n<p><b>SuicideMissions{CLR}:</b>\
+      \ LOL. We know that the leaves of the BSP tree correspond to BSP Polys. If in\
+      \ the phrase \"node:poly\" ratio, \"poly\" refers to BSP Polys, then how could\
+      \ the ratio be anything other than 1:1? Therefore, *if* poly means BSP poly,\
+      \ then node MUST mean all nodes traversed in the tree. This also does make sense\
+      \ from a performance-stat point of view.</p>\n<div class=\"center\">\n<div class=\"\
+      floatnone\"><a href=\"/File:Legacy_BSPTreeNodes.jpeg\" class=\"image\" title=\"\
+      Doggone near PROOF that &quot;Node Count&quot; refers to the number of nodes\
+      \ TRAVERSED in the BSP tree!. Count the traversed nodes (&quot;Node Count&quot;)\
+      \ vs. the leaf nodes (BSP Polys).\"><img alt=\"Doggone near PROOF that &quot;Node\
+      \ Count&quot; refers to the number of nodes TRAVERSED in the BSP tree!. Count\
+      \ the traversed nodes (&quot;Node Count&quot;) vs. the leaf nodes (BSP Polys).\"\
+      \ src=\"/w/images/Legacy_BSPTreeNodes.jpeg\" width=\"600\" height=\"800\" /></a></div>\n\
+      </div>\n<p>And that number 2 (as in 2:1) sounds suspiciously related to the\
+      \ BINARY/Logarithmic nature of BSP trees. A well balanced tree will have approximately\
+      \ a 2:1 ratio of traversal vs. leaves. Try it! Count nodes and leaves in those\
+      \ trees above! A 2:1 ratio gives you the most leaves for the fewest traversals\
+      \ possible for any non-trival tree. It happens when the tree is balanced.</p>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.084 seconds\nReal time usage:\
+      \ 0.106 seconds\nPreprocessor visited node count: 13/1000000\nPreprocessor generated\
+      \ node count: 20/1000000\nPost‐expand include size: 0/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:2256-0!*!0!!*!5!* and timestamp 20221118151122 and revision\
+      \ id 5457\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:EntropicLqd"
+  templates: []
+  images:
+  - "Legacy_polymerge.shape1.gif"
+  - "Legacy_archway_example.gif"
+  - "Legacy_BSPTreeNodes.jpeg"
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Definitions"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Node_Count/MergingDebate"
+    byteoffset: 210
+    anchor: "Definitions"
+  - toclevel: 1
+    level: "2"
+    line: "Discussion ="
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Node_Count/MergingDebate"
+    byteoffset: 902
+    anchor: "Discussion_.3D"
+  - toclevel: 2
+    level: "3"
+    line: "Exp 1"
+    number: "2.1"
+    index: "3"
+    fromtitle: "Legacy:Node_Count/MergingDebate"
+    byteoffset: 921
+    anchor: "Exp_1"
+  displaytitle: "Legacy:Node Count/MergingDebate"
+  iwlinks: []
+  wikitext:
+    text: "''This is a pge for Tarquin & Entropic & anyone else who's interested to\
+      \ thrash out this nodecount / merging thing. See if we can work it out ourselves...\
+      \ and maybe call in the Epic cavalry if we can't. ;-)''\n\n==Definitions ==\n\
+      \nJust so we're talking about the same stuff....\n;Face: a maximal set of coplanar\
+      \ polygons of a brush. (mathematician terminology, sorry...)\n;Surface: a polygon\
+      \ entity that is selectable with a single click in 3D view\n;BSP Poly: (maybe\
+      \ not the right word...) An area of single colour in the Zone view. (this is\
+      \ what I *believe* is the nodecount... but that's another story)\n;Edge: the\
+      \ edge of either a surface or BSP poly\n\nWays to merge:\n; Polymerge : using\
+      \ the Polys -> merge command on aligned surfaces & then rebuilding\n; Clip :\
+      \ slice off the face to be merged\n; Intersect : while still at the red build\
+      \ brush stage, use world geometry to slice off the face to be merged.\n\n==\
+      \ Discussion ===\n\n===Exp 1 ===\n\nShape: a square with the right-hand side\
+      \ split, and the new vertex brought in to the left till it's 1/4 of the width\
+      \ from the left side. The face is initially 3 surfaces.\n\n* Intersect: 1 surface\
+      \ made of 2 BSP polys\n*Clip: 2 surfaces, each is a single BSP poly\n*Polymerge:\
+      \ 1 surface, 3 BSP polys. \n\n[[Image:Legacy_polymerge.shape1.gif|center|]]\n\
+      \nIn this particular case, no pair of the existing triangles can be merged to\
+      \ produce a convex shape, so the number of BSP polys isn't reduced by merging\
+      \ Nodecount when looking at this brush straight on is 4: 3 polys for the brush\
+      \ & the subtract in the background. Hence for this shape, polymerging is merely\
+      \ a convenience to the mapper & has no impact on the engine. \n\nOn the other\
+      \ hand, the other two methods produce an off-grid point.\n\n: I think I need\
+      \ a picture - I can't quite visualise the geometry your are using here.  Good\
+      \ idea to create this page btw - keeps what's going to be a long and tortuous\
+      \ discussion (I suspect) out of the way.  I'll repeat my extrusion experiments\
+      \ tonight and update this page with the pics. and results - [[Legacy:EntropicLqd|EntropicLqd]].\n\
+      :: tada! Piccy :) It's starting to seem like there's not one simple answer,\
+      \ different shapes benefit most from different techniques. N00bs in search of\
+      \ a one-size fits all holy grail answer are not gonna like this... lol!  &ndash;\
+      \ ''Tarquin'' \n\n[[Image:Legacy_archway_example.gif|center|]]\n\nHere's a good\
+      \ one.  Looking from left to right you have the original brush (a little redundant\
+      \ but I forgot to clip it out of the picture), the merged brush, the brush created\
+      \ using a clip, and the brush created using the subtract.  For both the clipped\
+      \ and subtracted brush I used an intersected version of the brush to add them\
+      \ to the world.  When viewed in game, I got the following results:\n\n<table\
+      \ border=\"0\" cellspacing=\"0\" cellpadding=\"4\"><tr><td>Brush type</td><td>Nodes</td><td>Polygons</td></tr>\n\
+      \n<tr><td>Default extrusion</td><td>29</td><td>25</td></tr>\n\n<tr><td>Merged\
+      \ polys</td><td>26</td><td>11</td></tr>\n\n<tr><td>Clipped polys</td><td>23</td><td>16</td></tr>\n\
+      \n<tr><td>Subtracted polys</td><td>26</td><td>9</td></tr></table>\n\nThe implication\
+      \ of that is pretty interesting.  It seems that as the number of points on the\
+      \ extruded face increases subtracting or clipping the face produces better results\
+      \ than simply merging the polys.  The most interesting thing about the above\
+      \ example though is that the very best results would be achieved by merging\
+      \ the faces on the \"clipped\" brush.  For some reason the clipped brush produces\
+      \ a more efficient set of Faces.\n\nSomething else I just tried - Zoning the\
+      \ level I built (essentially a cross roads with four large rooms to the north,\
+      \ south, east, and west).  This changes the node count which lends weight to\
+      \ my theory that the node count is the total number of nodes within the BSP\
+      \ traversed rather than visible (which makes more sense to me from a performance\
+      \ monitoring point of view as well).  Here's the post level zoning results\n\
+      \n<table border=\"0\" cellspacing=\"0\" cellpadding=\"4\"><tr><td>Brush type</td><td>Nodes</td><td>Polygons</td></tr>\n\
+      \n<tr><td>Default extrusion</td><td>29</td><td>25</td></tr>\n\n<tr><td>Merged\
+      \ polys</td><td>22</td><td>11</td></tr>\n\n<tr><td>Clipped polys</td><td>21</td><td>16</td></tr>\n\
+      \n<tr><td>Subtracted polys</td><td>21</td><td>9</td></tr></table>\n\nI did cheat\
+      \ a little as I set the BSP \"minimise cuts/balance tree\" weighting to 5 when\
+      \ I built the level.\n\n'''Mosquito:'''I read all this and it doesn't even have\
+      \ a conclusion, This Channel sucks. Now I'm gonna be bothered for weeks.\n\n\
+      '''Tarquin:''' Well.... the conclusion was, I think: \"It depends on the type\
+      \ of shape. Clip and intersect cuts may have non-grid points, so that's an extra\
+      \ thing to watch for.\"\n\n'''EntropicLqd:''' It's more of a journey than a\
+      \ destination :) &ndash; To be honest this topic is somewhat moot now that everythings\
+      \ gone to static-mesh hell.\n\n'''SuicideMissions{CLR}:''' LOL. We know that\
+      \ the leaves of the BSP tree correspond to BSP Polys. If in the phrase \"node:poly\"\
+      \ ratio, \"poly\" refers to BSP Polys, then how could the ratio be anything\
+      \ other than 1:1? Therefore, *if* poly means BSP poly, then node MUST mean all\
+      \ nodes traversed in the tree. This also does make sense from a performance-stat\
+      \ point of view.\n\n[[Image:Legacy_BSPTreeNodes.jpeg|center|Doggone near PROOF\
+      \ that \"Node Count\" refers to the number of nodes TRAVERSED in the BSP tree!.\
+      \ Count the traversed nodes (\"Node Count\") vs. the leaf nodes (BSP Polys).]]\n\
+      \nAnd that number 2 (as in 2:1) sounds suspiciously related to the BINARY/Logarithmic\
+      \ nature of BSP trees. A well balanced tree will have approximately a 2:1 ratio\
+      \ of traversal vs. leaves. Try it! Count nodes and leaves in those trees above!\
+      \ A 2:1 ratio gives you the most leaves for the fewest traversals possible for\
+      \ any non-trival tree. It happens when the tree is balanced."
+  properties: []
+  revId: 5457
+name: "Legacy:Node Count/MergingDebate"
+revision:
+  revid: 5457
+  parentid: 5459
+  user: "C-67-183-19-195.client.comcast.net"
+  timestamp: 1110457696.000000000
+  comment: "*"
+timestamp: 1668784282.727248000

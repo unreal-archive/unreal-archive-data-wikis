@@ -1,0 +1,501 @@
+---
+parse:
+  title: "Legacy:Class Wikifier"
+  text:
+    text: "<p>The Class Wikifier takes an <a href=\"/Legacy:UnrealScript\" title=\"\
+      Legacy:UnrealScript\">UnrealScript</a> class script and produces the bare bones\
+      \ of a wiki page.</p>\n<dl>\n<dd><a rel=\"nofollow\" class=\"external free\"\
+      \ href=\"http://wiki.beyondunreal.com/cgi-bin/class.cgi\">http://wiki.beyondunreal.com/cgi-bin/class.cgi</a></dd>\n\
+      </dl>\n<p>To use it:</p>\n<ol>\n<li>The top box contains an example class: highlight\
+      \ it all replace with the script you want to process</li>\n<li>hit the button</li>\n\
+      <li>select all the text in the bottom box, copy &amp; paste to a Wiki page</li>\n\
+      </ol>\n<p>It currently produces:</p>\n<ul>\n<li>the header block (but you'll\
+      \ need to fill in the hierarchy, as the wikifier can only determine the parent)</li>\n\
+      <li>2 lists: public &amp; private variables. UnrealScript comments are kept\
+      \ as descriptions.</li>\n<li>it handles array declarations (eg float[4]) but\
+      \ could the output be made neater?</li>\n</ul>\n<p>Planned improvements:</p>\n\
+      <ul>\n<li>group the variables, ie given var(foo), group by foo</li>\n<li>create\
+      \ a list of functions with name, return type, and parameters.</li>\n</ul>\n\
+      <hr />\n<p><i>The Class Wikifier is by tarquin, built on Mychaeel's Wookee Playground\
+      \ perl script. Any mistakes are tarquin's fault&#160;:D.</i></p>\n<p></p>\n\
+      <div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n</div>\n\
+      <ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#Bugs\"><span class=\"\
+      tocnumber\">1</span> <span class=\"toctext\">Bugs</span></a>\n<ul>\n<li class=\"\
+      toclevel-2 tocsection-2\"><a href=\"#Split_line_var_declaration\"><span class=\"\
+      tocnumber\">1.1</span> <span class=\"toctext\">Split line var declaration</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-3\"><a href=\"#Superclass_detection\"><span\
+      \ class=\"tocnumber\">1.2</span> <span class=\"toctext\">Superclass detection</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-4\"><a href=\"#Fixed\"><span class=\"tocnumber\"\
+      >1.3</span> <span class=\"toctext\">Fixed</span></a></li>\n</ul>\n</li>\n<li\
+      \ class=\"toclevel-1 tocsection-5\"><a href=\"#Dev\"><span class=\"tocnumber\"\
+      >2</span> <span class=\"toctext\">Dev</span></a>\n<ul>\n<li class=\"toclevel-2\
+      \ tocsection-6\"><a href=\"#New_atomiser\"><span class=\"tocnumber\">2.1</span>\
+      \ <span class=\"toctext\">New atomiser</span></a></li>\n</ul>\n</li>\n<li class=\"\
+      toclevel-1 tocsection-7\"><a href=\"#Related_Topics\"><span class=\"tocnumber\"\
+      >3</span> <span class=\"toctext\">Related Topics</span></a></li>\n<li class=\"\
+      toclevel-1 tocsection-8\"><a href=\"#Discussion\"><span class=\"tocnumber\"\
+      >4</span> <span class=\"toctext\">Discussion</span></a></li>\n</ul>\n</div>\n\
+      <p></p>\n<h2><span class=\"mw-headline\" id=\"Bugs\">Bugs</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Class_Wikifier?section=1\"\
+      \ title=\"Edit section: Bugs\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<h3><span class=\"mw-headline\" id=\"Split_line_var_declaration\"\
+      >Split line var declaration</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Class_Wikifier?section=2\"\
+      \ title=\"Edit section: Split line var declaration\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h3>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"co1\">// Type A</span>\n<span class=\"kw1\">var</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"kw5\">bool</span>\
+      \ one, <span class=\"co1\">// the first one</span>\n  two; <span class=\"co1\"\
+      >// the seocnd one</span></pre></div>\n</div>\n<p>Is the following also possible?</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"co1\">// Type B</span>\n\
+      <span class=\"kw1\">var</span><span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span> <span class=\"kw5\">bool</span> one <span class=\"co1\">// the first\
+      \ one, but no comma .... yet</span>\n , two; <span class=\"co1\">// the seocnd\
+      \ one</span></pre></div>\n</div>\n<p><b>Mychaeel:</b> Absolutely. Line breaks\
+      \ are just another form of whitespace, and the parser doesn't care about whitespace\
+      \ between tokens. (Maybe that'd be the best approach for the Wikifier too.)</p>\n\
+      <p><b>Tarquin:</b> My problem is how to decide which variable name the comment\
+      \ belongs to.</p>\n<p><b>Tarquin:</b> Done.</p>\n<h3><span class=\"mw-headline\"\
+      \ id=\"Superclass_detection\">Superclass detection</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Class_Wikifier?section=3\"\
+      \ title=\"Edit section: Superclass detection\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Fixed, I think:</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"co2\">#exec Texture Import File=Textures\\S_FluidSurf.pcx\
+      \ Name=S_FluidSurf Mips=Off MASKED=1</span>\n \n<span class=\"kw1\">class</span>\
+      \ <span class=\"kw9\">FluidSurfaceInfo</span> <span class=\"kw1\">extends</span>\
+      \ <span class=\"kw9\">Info</span>\n\tshowcategories<span class=\"br0\">(</span>Movement,Collision,Lighting,LightColor,Karma,Force<span\
+      \ class=\"br0\">)</span>\n\t<span class=\"kw1\">native</span>\n\t<span class=\"\
+      kw1\">noexport</span>\n\t<span class=\"kw1\">placeable</span>;</pre></div>\n\
+      </div>\n<h3><span class=\"mw-headline\" id=\"Fixed\">Fixed</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Class_Wikifier?section=4\"\
+      \ title=\"Edit section: Fixed\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<ul>\n<li>expands / extends</li>\n<li>multi-line class\
+      \ and var declaration</li>\n</ul>\n<h2><span class=\"mw-headline\" id=\"Dev\"\
+      >Dev</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Class_Wikifier?section=5\" title=\"Edit section:\
+      \ Dev\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <h3><span class=\"mw-headline\" id=\"New_atomiser\">New atomiser</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Class_Wikifier?section=6\" title=\"Edit section: New atomiser\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n<p>Obviously,\
+      \ my split on /\\n/ was too simple. Here's work in progress on an atomiser:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\">  <span class=\"co2\"># split to atoms</span>\n\
+      \  <span class=\"co2\"># remove comments</span>\n  <span class=\"sy0\">$</span>textProcessed\
+      \ <span class=\"sy0\">=</span>~ s<span class=\"br0\">[</span><span class=\"\
+      sy0\">/</span>\\<span class=\"sy0\">*</span>.<span class=\"sy0\">*</span>?\\\
+      <span class=\"sy0\">*</span>\\<span class=\"sy0\">/</span><span class=\"br0\"\
+      >]</span><span class=\"br0\">[</span><span class=\"br0\">]</span>gs; <span class=\"\
+      co2\"># blocks</span>\n  <span class=\"sy0\">$</span>textProcessed <span class=\"\
+      sy0\">=</span>~ s<span class=\"br0\">[</span><span class=\"sy0\">^</span><span\
+      \ class=\"co1\">//.*\\n][]gm; # solo lines</span>\n  <span class=\"co2\"># exec\
+      \ lines</span>\n  <span class=\"sy0\">$</span>textProcessed <span class=\"sy0\"\
+      >=</span>~ s<span class=\"br0\">[</span><span class=\"sy0\">^</span>\\s<span\
+      \ class=\"sy0\">*</span>\\<span class=\"co2\">#exec.*\\n][]gm; </span>\n \n\
+      \  <span class=\"co2\"># mark end of comments</span>\n  <span class=\"sy0\"\
+      >$</span>textProcessed <span class=\"sy0\">=</span>~ s<span class=\"br0\">[</span><span\
+      \ class=\"br0\">(</span><span class=\"co1\">//.*)$][$1\\*/]mg;</span>\n \n \
+      \ <span class=\"co2\"># find &amp; mark the end of atoms</span>\n  <span class=\"\
+      sy0\">$</span>endTag <span class=\"sy0\">=</span> <span class=\"st0\">'/*END*/'</span>;\
+      \ <span class=\"co2\"># safe, since /**/ pairs already gone</span>\n  <span\
+      \ class=\"sy0\">$</span>textProcessed <span class=\"sy0\">=</span>~ s<span class=\"\
+      br0\">[</span>;\\s<span class=\"sy0\">*$</span><span class=\"br0\">]</span><span\
+      \ class=\"br0\">[</span>;<span class=\"sy0\">$</span>endTag<span class=\"br0\"\
+      >]</span>gm; <span class=\"co2\"># a ; ending</span>\n  <span class=\"sy0\"\
+      >$</span>textProcessed <span class=\"sy0\">=</span>~ s<span class=\"br0\">[</span>;.<span\
+      \ class=\"sy0\">*</span><span class=\"co1\">//(.*)$][; //$1 $endTag]gm; # a\
+      \ ; // comment ending</span>\n \n  <span class=\"co2\"># remove mid-atom newlines\
+      \ </span>\n  <span class=\"sy0\">$</span>textProcessed <span class=\"sy0\">=</span>~\
+      \ s<span class=\"br0\">[</span>\\n<span class=\"br0\">]</span><span class=\"\
+      br0\">[</span><span class=\"br0\">]</span>g;\n  <span class=\"sy0\">$</span>textProcessed\
+      \ <span class=\"sy0\">=</span>~ s<span class=\"br0\">[</span>\\Q<span class=\"\
+      sy0\">$</span>endTag\\E<span class=\"br0\">]</span><span class=\"br0\">[</span>\\\
+      n<span class=\"br0\">]</span>g; <span class=\"co2\">#wahey! I've learned how\
+      \ to use \\Q\\E!</span>\n \n  <span class=\"co2\"># now each code atom is a\
+      \ single line</span>\n  <span class=\"sy0\">@</span>classLines <span class=\"\
+      sy0\">=</span> <span class=\"kw3\">split</span><span class=\"br0\">(</span>\
+      \ <span class=\"sy0\">/</span>\\n<span class=\"sy0\">/</span>, <span class=\"\
+      sy0\">$</span>textProcessed <span class=\"br0\">)</span>;</pre></div>\n</div>\n\
+      <h2><span class=\"mw-headline\" id=\"Related_Topics\">Related Topics</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Class_Wikifier?section=7\" title=\"Edit section: Related\
+      \ Topics\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <ul>\n<li><a href=\"/Legacy:UnrealWiki_To_Do\" title=\"Legacy:UnrealWiki To\
+      \ Do\">UnrealWiki To Do</a></li>\n<li><a href=\"/Legacy:UnrealScript_Grammar\"\
+      \ title=\"Legacy:UnrealScript Grammar\">UnrealScript Grammar</a></li>\n<li><a\
+      \ href=\"/Legacy:Project_Discussion\" title=\"Legacy:Project Discussion\">Project\
+      \ Discussion</a></li>\n</ul>\n<h2><span class=\"mw-headline\" id=\"Discussion\"\
+      >Discussion</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Class_Wikifier?section=8\" title=\"Edit section:\
+      \ Discussion\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p><b>Wormbo:</b> Mistakes such as the naming conventions...&#160;:rolleyes:\
+      \ the <tt>Hidden</tt> variable is not \"private\" (as in \"accessible from this\
+      \ class only\"), it's just not visible in UnrealEd. Also the class line is not\
+      \ parsed into the wiki class definition if it contains class modifiers on the\
+      \ same line. Other than that it's really helpful.&#160;:)</p>\n<p><b>Tarquin:</b>\
+      \ Oops. Yeah, I knew about \"private\" being wrong, but by the time I notices\
+      \ I was all perled out. Should it be \"Non-editable\" instead of private? And\
+      \ drat, I forgot class modifiers.&#160;:( Expect version 2 soon ...</p>\n<p><b>Tarquin:</b>\
+      \ Fixed \"hidden\", class declaration bugs (single-line and modifiers)</p>\n\
+      <p><b>Wormbo:</b> Looks like the <a href=\"/Legacy:EnhancedItems\" title=\"\
+      Legacy:EnhancedItems\">EnhancedItems</a>.PickupPlus class is a really heavy\
+      \ task for your script. It seems that your for the script lines end after a\
+      \ newline in a comment, but in UnrealScript a newline only ends the comment,\
+      \ not the line of code. Notice how e.g. bRenderOverlays or bIsJumpBoots don't\
+      \ appear in the wikified output. Also, how about displaying the variable type\
+      \ <code>class&lt;ClassName&gt;</code> as <code>class&lt;<a href=\"/edit/Legacy:ClassName?redlink=1\"\
+      \ class=\"new\" title=\"Legacy:ClassName (page does not exist)\">ClassName</a>&gt;</code>?</p>\n\
+      <p><b>Tarquin:</b> I didn't know that was possible! <code>class&lt;<a href=\"\
+      /edit/Legacy:ClassName?redlink=1\" class=\"new\" title=\"Legacy:ClassName (page\
+      \ does not exist)\">ClassName</a>&gt;</code> is a neat idea. I'll get onto both.\
+      \ The parent didn't appear for your class because I can never remember which\
+      \ of extends / expands is used now.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">var</span><span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span> <span class=\"kw5\">bool</span> one, <span class=\"co1\">// the first\
+      \ one</span>\n  two; <span class=\"co1\">// the seocnd one</span></pre></div>\n\
+      </div>\n<p><b>ZxAnPhOrIaN:</b> Fish??</p>\n<p><b>Tarquin:</b> Yeah, fish. It's\
+      \ hard work making up variable names.</p>\n<p><b>ZxAnPhOrIaN:</b> Its reallllly\
+      \ easy... *two hours pass* how 'bout Zxan!</p>\n<p><b>DJPaul:</b> Extends is\
+      \ now used in UT2003 (i.e. warfare) builds of the engine.. older versions use\
+      \ either.</p>\n<p>Also, after this works like a charm, you should make a script\
+      \ that you can feed a list of ALL the UT2003 .uc's in at once, and make it batch\
+      \ you a lot of pages - save a lot of people doing each individuall =)</p>\n\
+      <p><b>Tarquin:</b> A sort of Wiki-<a href=\"/Legacy:UnDox\" title=\"Legacy:UnDox\"\
+      >UnDox</a> you mean? \"Extends\" is fixed in my current version. I just always\
+      \ forget which one is deprecated.</p>\n<p><b>DJPaul:</b> Yes -basically you\
+      \ make another script that feeds in text from all UT2003 classes, then this\
+      \ script creates many pages for us. Result - instant, total, complete class\
+      \ listing, reading for comments! (you could include those sections too)</p>\n\
+      <p><b>Tarquin:</b> The file-reading &amp; page-writing is beyond my abilities.\
+      \ I'm not sure that creating hundreds of pages is a good idea. I'd rather we\
+      \ only create class pages when there's new information to be added to them.</p>\n\
+      <p><b>Aphelion:</b> I don't know if you built the wikifier to cope with enumerators,\
+      \ but it certainly doesn't cope with them when they have comments inside the\
+      \ decleration.</p>\n<p><b>Wormbo:</b> Please don't use the wikifier yet, at\
+      \ least not without checking the results first. I've seen several <a href=\"\
+      /Legacy:UT2003\" title=\"Legacy:UT2003\" class=\"mw-redirect\">UT2003</a> <a\
+      \ href=\"/Legacy:GameInfo\" title=\"Legacy:GameInfo\">GameInfo</a> (sub)class\
+      \ pages which don't look very complete to me.<br />\nBTW: I prefer the <b>float\
+      \ PropertyName</b> format (which is already used throughout the Wiki) instead\
+      \ of <b>PropertyName (float)</b> which is too function-like for my taste.</p>\n\
+      <p><b>Tarquin:</b> Nope, it doesn't do enums. (arg! comments in declarations\
+      \ everywhere!). The problem with putting the type first is that the list can't\
+      \ be alphabetized.</p>\n<p><b>Aphelion:</b> Wormbo, I only picked up this error\
+      \ on the last class I did which was <a href=\"/Legacy:WeaponFire\" title=\"\
+      Legacy:WeaponFire\">WeaponFire</a>. I'll go back through the stuff I did and\
+      \ check and pretty it up and correct it all. As for it not being too complete,\
+      \ well you're damn right. However, I don't see anyone else rushing to fill out\
+      \ those classes, and I have little time to devote to coding as it is...</p>\n\
+      <p><b>Wormbo:</b> Tarquin, you could try sorting it first and then add the types.\
+      \ (or move them to the front)</p>\n<p><b>Tarquin:</b> Now handles var groups.&#160;:D\
+      \ As for how to display the type of vars in property lists, that's on <a href=\"\
+      /Legacy:Guidelines_On_General_Style\" title=\"Legacy:Guidelines On General Style\"\
+      >Guidelines On General Style</a></p>\n<p><b>Tarquin:</b> It now handles wormbo-style\
+      \ comments &amp; var-defined enums. This, however, has broken the alphabetical\
+      \ sorting. Will fix later.</p>\n<p><b>Wormbo:</b> Partly. After such a \"wormbo-style\"\
+      \ variable declaration I have this:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"co1\">// message displayed when killing with a head shot</span>\n\
+      <span class=\"co1\">// The message should respond to the Switch parameter in\
+      \ the following way:</span>\n<span class=\"co1\">// 1 = Player is killer</span>\n\
+      <span class=\"co1\">// 2 = Player is victim</span>\n<span class=\"co1\">// 3\
+      \ = Player killed self</span>\n<span class=\"co1\">// (Botpack.DecapitationMessage\
+      \ will always be displayed for killer and victim.)</span>\n<span class=\"kw1\"\
+      >var</span><span class=\"br0\">(</span><span class=\"br0\">)</span> class<span\
+      \ class=\"sy0\">&lt;</span>LocalMessage<span class=\"sy0\">&gt;</span> HeadShotMessage;\n\
+      \ \n<span class=\"kw1\">var</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span> <span class=\"kw5\">bool</span> bCanHeadShoot,\t\t<span class=\"\
+      co1\">// has special head shooting abilities (more damage, different death message)</span>\n\
+      \tbConstantSplashDamage;\t<span class=\"co1\">// causes the damage in the outer\
+      \ splash area</span></pre></div>\n</div>\n<hr />\n<dl>\n<dt>HeadShotMessage&#160;</dt>\n\
+      <dd></dd>\n<dt>bool &#160;</dt>\n<dd></dd>\n<dt>bool different death message)*/&#160;</dt>\n\
+      <dd></dd>\n<dt>bool bConstantSplashDamage &#160;</dt>\n<dd>causes the damage\
+      \ in the outer splash area</dd>\n</dl>\n<hr />\n<p>It seems like it doesn't\
+      \ handle <code>class&lt;foo&gt;</code> and has problems with \",\" in comments?</p>\n\
+      <p><b>Tarquin:</b> Problem with class&lt;foo&gt; is that it's looking for word\
+      \ characters: I'll fix that. Commas in comments? Arg! But I'm splitting the\
+      \ string on \",\"! (I think I've thought of a way to fix it though)</p>\n<p><b>Wormbo:</b>\
+      \ Some properties are missing when I use EnhancedItems.EnhancedWeapon as input.</p>\n\
+      <p><b>Tarquin:</b> Got it&#160;:)</p>\n<p><b>Wormbo:</b> Hmm, UT2003's Mover\
+      \ class breaks the enum parser. Also you shouldn't mess with the group names'\
+      \ capitalization. (i.e. keep \"MoverSounds\" instead of changing it to \"Moversounds\"\
+      )</p>\n<p><b>Mysterial:</b> It seems to be losing the data type for array declarations,\
+      \ e.g.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div\
+      \ class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\"\
+      >var</span> <span class=\"kw5\">name</span> CrouchAnims<span class=\"br0\">[</span><span\
+      \ class=\"nu0\">4</span><span class=\"br0\">]</span>;</pre></div>\n</div>\n\
+      <p>becomes</p>\n<dl>\n<dt>CrouchAnims[4]&#160;</dt>\n<dd></dd>\n</dl>\n<p>Which\
+      \ for larger classes (like Pawn) can be a pain to go through and fix.</p>\n\
+      <p><b>Tarquin:</b> yeah... I've not dealt with this in ages &amp; it's buggy.\
+      \ If anyone wants to take over the maintenance from me....&#160;:)</p>\n<p><b>Pingz:</b>\
+      \ Is it a perl cgi script? I haven't done any perl stuff in a while, but i would\
+      \ kill for the ability for function processing in the wikifier. I guess i'll\
+      \ give it a try.</p>\n<p><b>Tarquin:</b> yes, it's perl. I'll email you the\
+      \ script.&#160;:) be warned, it's not very elegant. and as pointed out above,\
+      \ it has problems dealing with certain cases. <a href=\"/Legacy:UnrealScript_Grammar\"\
+      \ title=\"Legacy:UnrealScript Grammar\">UnrealScript Grammar</a> might help.</p>\n\
+      <p><b>Pingz:</b> I've made a few simple improvements today. Should i add a link\
+      \ to the <i>in development</i> version for some testing ( more than what i already\
+      \ did ) or should we just update the existing one when there are a few improvements?\
+      \ How can i update it or should i just send it to you Tarquin?</p>\n<p><b>Tarquin:</b>\
+      \ Just mail me it and I'll replace the current version.</p>\n<p><b>Pingz:</b>\
+      \ What i'll do is get functions in there then i'll send it to you. It will probably\
+      \ be a couple of days before i get that in there anyway.</p>\n\n<!-- \nNewPP\
+      \ limit report\nCPU time usage: 0.148 seconds\nReal time usage: 0.213 seconds\n\
+      Preprocessor visited node count: 78/1000000\nPreprocessor generated node count:\
+      \ 186/1000000\nPost‐expand include size: 14/2097152 bytes\nTemplate argument\
+      \ size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser function\
+      \ count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:760-0!*!0!!en!*!* and timestamp 20221118012537 and revision\
+      \ id 2173\n -->\n"
+  categories:
+  - sortkey: "Class Wikifier"
+    name: "Legacy_Application"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:UnrealScript"
+  - ns: 100
+    exists: true
+    name: "Legacy:UnrealScript Grammar"
+  - ns: 100
+    exists: true
+    name: "Legacy:UnrealWiki To Do"
+  - ns: 100
+    exists: false
+    name: "Legacy:ClassName"
+  - ns: 100
+    exists: true
+    name: "Legacy:UT2003"
+  - ns: 100
+    exists: true
+    name: "Legacy:UnDox"
+  - ns: 100
+    exists: true
+    name: "Legacy:WeaponFire"
+  - ns: 100
+    exists: true
+    name: "Legacy:EnhancedItems"
+  - ns: 100
+    exists: true
+    name: "Legacy:Project Discussion"
+  - ns: 100
+    exists: true
+    name: "Legacy:GameInfo"
+  - ns: 100
+    exists: true
+    name: "Legacy:Guidelines On General Style"
+  templates: []
+  images: []
+  externallinks:
+  - "http://wiki.beyondunreal.com/cgi-bin/class.cgi"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Bugs"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Class_Wikifier"
+    byteoffset: 957
+    anchor: "Bugs"
+  - toclevel: 2
+    level: "3"
+    line: "Split line var declaration"
+    number: "1.1"
+    index: "2"
+    fromtitle: "Legacy:Class_Wikifier"
+    byteoffset: 968
+    anchor: "Split_line_var_declaration"
+  - toclevel: 2
+    level: "3"
+    line: "Superclass detection"
+    number: "1.2"
+    index: "3"
+    fromtitle: "Legacy:Class_Wikifier"
+    byteoffset: 1550
+    anchor: "Superclass_detection"
+  - toclevel: 2
+    level: "3"
+    line: "Fixed"
+    number: "1.3"
+    index: "4"
+    fromtitle: "Legacy:Class_Wikifier"
+    byteoffset: 1838
+    anchor: "Fixed"
+  - toclevel: 1
+    level: "2"
+    line: "Dev"
+    number: "2"
+    index: "5"
+    fromtitle: "Legacy:Class_Wikifier"
+    byteoffset: 1913
+    anchor: "Dev"
+  - toclevel: 2
+    level: "3"
+    line: "New atomiser"
+    number: "2.1"
+    index: "6"
+    fromtitle: "Legacy:Class_Wikifier"
+    byteoffset: 1923
+    anchor: "New_atomiser"
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "3"
+    index: "7"
+    fromtitle: "Legacy:Class_Wikifier"
+    byteoffset: 2774
+    anchor: "Related_Topics"
+  - toclevel: 1
+    level: "2"
+    line: "Discussion"
+    number: "4"
+    index: "8"
+    fromtitle: "Legacy:Class_Wikifier"
+    byteoffset: 2947
+    anchor: "Discussion"
+  displaytitle: "Legacy:Class Wikifier"
+  iwlinks: []
+  wikitext:
+    text: "The Class Wikifier takes an [[Legacy:UnrealScript|UnrealScript]] class\
+      \ script and produces the bare bones of a wiki page.\n\n: http://wiki.beyondunreal.com/cgi-bin/class.cgi\n\
+      \nTo use it:\n# The top box contains an example class: highlight it all replace\
+      \ with the script you want to process\n# hit the button\n# select all the text\
+      \ in the bottom box, copy & paste to a Wiki page\n\nIt currently produces:\n\
+      * the header block (but you'll need to fill in the hierarchy, as the wikifier\
+      \ can only determine the parent)\n* 2 lists: public & private variables. UnrealScript\
+      \ comments are kept as descriptions. \n* it handles array declarations (eg float[4])\
+      \ but could the output be made neater?\n\nPlanned improvements:\n* group the\
+      \ variables, ie given var(foo), group by foo\n* create a list of functions with\
+      \ name, return type, and parameters.\n\n----\n\n''The Class Wikifier is by tarquin,\
+      \ built on Mychaeel's Wookee Playground perl script. Any mistakes are tarquin's\
+      \ fault :D.''\n\n==Bugs ==\n\n===Split line var declaration ===\n\n<uscript>\n\
+      // Type A\nvar() bool one, // the first one\n  two; // the seocnd one\n</uscript>\n\
+      \nIs the following also possible?\n\n<uscript>\n// Type B\nvar() bool one //\
+      \ the first one, but no comma .... yet\n , two; // the seocnd one\n</uscript>\n\
+      \n'''Mychaeel:'''  Absolutely.  Line breaks are just another form of whitespace,\
+      \ and the parser doesn't care about whitespace between tokens.  (Maybe that'd\
+      \ be the best approach for the Wikifier too.)\n\n'''Tarquin:''' My problem is\
+      \ how to decide which variable name the comment belongs to.\n\n'''Tarquin:'''\
+      \ Done. \n\n===Superclass detection===\n\nFixed, I think:\n\n<uscript>\n#exec\
+      \ Texture Import File=Textures\\S_FluidSurf.pcx Name=S_FluidSurf Mips=Off MASKED=1\n\
+      \nclass FluidSurfaceInfo extends Info\n\tshowcategories(Movement,Collision,Lighting,LightColor,Karma,Force)\n\
+      \tnative\n\tnoexport\n\tplaceable;\n</uscript>\n\n===Fixed ===\n\n* expands\
+      \ / extends \n* multi-line class and var declaration\n\n==Dev ==\n\n===New atomiser\
+      \ ===\n\nObviously, my split on /\\n/ was too simple. Here's work in progress\
+      \ on an atomiser:\n\n<uscript>\n  # split to atoms\n  # remove comments\n  $textProcessed\
+      \ =~ s[/\\*.*?\\*\\/][]gs; # blocks\n  $textProcessed =~ s[^//.*\\n][]gm; #\
+      \ solo lines\n  # exec lines\n  $textProcessed =~ s[^\\s*\\#exec.*\\n][]gm;\
+      \ \n\n  # mark end of comments\n  $textProcessed =~ s[(//.*)$][$1\\*/]mg;\n\
+      \  \n  # find & mark the end of atoms\n  $endTag = '/*END*/'; # safe, since\
+      \ /**/ pairs already gone\n  $textProcessed =~ s[;\\s*$][;$endTag]gm; # a ;\
+      \ ending\n  $textProcessed =~ s[;.*//(.*)$][; //$1 $endTag]gm; # a ; // comment\
+      \ ending\n  \n  # remove mid-atom newlines \n  $textProcessed =~ s[\\n][]g;\n\
+      \  $textProcessed =~ s[\\Q$endTag\\E][\\n]g; #wahey! I've learned how to use\
+      \ \\Q\\E!\n  \n  # now each code atom is a single line\n  @classLines = split(\
+      \ /\\n/, $textProcessed );\n</uscript>\n\n==Related Topics==\n* [[Legacy:UnrealWiki\
+      \ To Do|UnrealWiki To Do]]\n* [[Legacy:UnrealScript Grammar|UnrealScript Grammar]]\n\
+      * [[Legacy:Project Discussion|Project Discussion]]\n\n==Discussion==\n\n'''Wormbo:'''\
+      \ Mistakes such as the naming conventions... :rolleyes: the <tt>Hidden</tt>\
+      \ variable is not \"private\" (as in \"accessible from this class only\"), it's\
+      \ just not visible in UnrealEd. Also the class line is not parsed into the wiki\
+      \ class definition if it contains class modifiers on the same line. Other than\
+      \ that it's really helpful. :)\n\n'''Tarquin:''' Oops. Yeah, I knew about \"\
+      private\" being wrong, but by the time I notices I was all perled out. Should\
+      \ it be \"Non-editable\" instead of private? And drat, I forgot class modifiers.\
+      \ :( Expect version 2 soon ...\n\n'''Tarquin:''' Fixed \"hidden\", class declaration\
+      \ bugs (single-line and modifiers)\n\n'''Wormbo:''' Looks like the [[Legacy:EnhancedItems|EnhancedItems]].PickupPlus\
+      \ class is a really heavy task for your script. It seems that your for the script\
+      \ lines end after a newline in a comment, but in UnrealScript a newline only\
+      \ ends the comment, not the line of code. Notice how e.g. bRenderOverlays or\
+      \ bIsJumpBoots don't appear in the wikified output. Also, how about displaying\
+      \ the variable type <code>class<ClassName></code> as <code>class<[[Legacy:ClassName|ClassName]]></code>?\n\
+      \n'''Tarquin:''' I didn't know that was possible! <code>class<[[Legacy:ClassName|ClassName]]></code>\
+      \ is a neat idea. I'll get onto both. The parent didn't appear for your class\
+      \ because I can never remember which of extends / expands is used now.\n\n<uscript>\n\
+      var() bool one, // the first one\n  two; // the seocnd one\n</uscript>\n\n'''ZxAnPhOrIaN:'''\
+      \ Fish??\n\n'''Tarquin:''' Yeah, fish. It's hard work making up variable names.\
+      \ \n\n'''ZxAnPhOrIaN:''' Its reallllly easy... *two hours pass* how 'bout Zxan!\n\
+      \n'''DJPaul:''' Extends is now used in UT2003 (i.e. warfare) builds of the engine..\
+      \ older versions use either.\n\nAlso, after this works like a charm, you should\
+      \ make a script that you can feed a list of ALL the UT2003 .uc's in at once,\
+      \ and make it batch you a lot of pages - save a lot of people doing each individuall\
+      \ =)\n\n'''Tarquin:''' A sort of Wiki-[[Legacy:UnDox|UnDox]] you mean? \"Extends\"\
+      \ is fixed in my current version. I just always forget which one is deprecated.\n\
+      \n'''DJPaul:''' Yes -basically you make another script that feeds in text from\
+      \ all UT2003 classes, then this script creates many pages for us.  Result -\
+      \ instant, total, complete class listing, reading for comments! (you could include\
+      \ those sections too)\n\n'''Tarquin:''' The file-reading & page-writing is beyond\
+      \ my abilities. I'm not sure that creating hundreds of pages is a good idea.\
+      \ I'd rather we only create class pages when there's new information to be added\
+      \ to them.\n\n'''Aphelion:''' I don't know if you built the wikifier to cope\
+      \ with enumerators, but it certainly doesn't cope with them when they have comments\
+      \ inside the decleration.\n\n'''Wormbo:''' Please don't use the wikifier yet,\
+      \ at least not without checking the results first. I've seen several [[Legacy:UT2003|UT2003]]\
+      \ [[Legacy:GameInfo|GameInfo]] (sub)class pages which don't look very complete\
+      \ to me.<br />BTW: I prefer the '''float PropertyName''' format (which is already\
+      \ used throughout the Wiki) instead of '''PropertyName (float)''' which is too\
+      \ function-like for my taste.\n\n'''Tarquin:''' Nope, it doesn't do enums. (arg!\
+      \ comments in declarations everywhere!). The problem with putting the type first\
+      \ is that the list can't be alphabetized. \n\n'''Aphelion:'''  Wormbo, I only\
+      \ picked up this error on the last class I did which was [[Legacy:WeaponFire|WeaponFire]].\
+      \  I'll go back through the stuff I did and check and pretty it up and correct\
+      \ it all.  As for it not being too complete, well you're damn right.  However,\
+      \ I don't see anyone else rushing to fill out those classes, and I have little\
+      \ time to devote to coding as it is...\n\n'''Wormbo:''' Tarquin, you could try\
+      \ sorting it first and then add the types. (or move them to the front)\n\n'''Tarquin:'''\
+      \ Now handles var groups. :D As for how to display the type of vars in property\
+      \ lists, that's on [[Legacy:Guidelines On General Style|Guidelines On General\
+      \ Style]]\n\n'''Tarquin:''' It now handles wormbo-style comments & var-defined\
+      \ enums. This, however, has broken the alphabetical sorting. Will fix later.\n\
+      \n'''Wormbo:''' Partly. After such a \"wormbo-style\" variable declaration I\
+      \ have this:\n\n<uscript>\n// message displayed when killing with a head shot\n\
+      // The message should respond to the Switch parameter in the following way:\n\
+      // 1 = Player is killer\n// 2 = Player is victim\n// 3 = Player killed self\n\
+      // (Botpack.DecapitationMessage will always be displayed for killer and victim.)\n\
+      var() class<LocalMessage> HeadShotMessage;\n\nvar() bool bCanHeadShoot,\t\t\
+      // has special head shooting abilities (more damage, different death message)\n\
+      \tbConstantSplashDamage;\t// causes the damage in the outer splash area\n</uscript>\n\
+      \n----\n;  HeadShotMessage :  \n; bool  :  \n; bool different death message)*/\
+      \ :  \n; bool bConstantSplashDamage  :  causes the damage in the outer splash\
+      \ area \n\n----\n\nIt seems like it doesn't handle <code>class<foo></code> and\
+      \ has problems with \",\" in comments?\n\n'''Tarquin:''' Problem with class<foo>\
+      \ is that it's looking for word characters: I'll fix that. Commas in comments?\
+      \ Arg! But I'm splitting the string on \",\"! (I think I've thought of a way\
+      \ to fix it though)\n\n'''Wormbo:''' Some properties are missing when I use\
+      \ EnhancedItems.EnhancedWeapon as input.\n\n'''Tarquin:''' Got it :)\n\n'''Wormbo:'''\
+      \ Hmm, UT2003's Mover class breaks the enum parser. Also you shouldn't mess\
+      \ with the group names' capitalization. (i.e. keep \"MoverSounds\" instead of\
+      \ changing it to \"Moversounds\")\n\n'''Mysterial:''' It seems to be losing\
+      \ the data type for array declarations, e.g.\n\n<uscript>\nvar name CrouchAnims[4];\n\
+      </uscript>\n\nbecomes\n;CrouchAnims[4] : \n\nWhich for larger classes (like\
+      \ Pawn) can be a pain to go through and fix.\n\n'''Tarquin:''' yeah... I've\
+      \ not dealt with this in ages & it's buggy. If anyone wants to take over the\
+      \ maintenance from me.... :)\n\n'''Pingz:''' Is it a perl cgi script?  I haven't\
+      \ done any perl stuff in a while, but i would kill for the ability for function\
+      \ processing in the wikifier.  I guess i'll give it a try.\n\n'''Tarquin:'''\
+      \ yes, it's perl. I'll email you the script. :) be warned, it's not very elegant.\
+      \ and as pointed out above, it has problems dealing with certain cases. [[Legacy:UnrealScript\
+      \ Grammar|UnrealScript Grammar]] might help.\n\n'''Pingz:''' I've made a few\
+      \ simple improvements today.  Should i add a link to the ''in development''\
+      \ version for some testing ( more than what i already did ) or should we just\
+      \ update the existing one when there are a few improvements?  How can i update\
+      \ it or should i just send it to you Tarquin?\n\n'''Tarquin:''' Just mail me\
+      \ it and I'll replace the current version.\n\n'''Pingz:''' What i'll do is get\
+      \ functions in there then i'll send it to you.  It will probably be a couple\
+      \ of days before i get that in there anyway.\n\n[[Category:Legacy Application|{{PAGENAME}}]]"
+  properties: []
+  revId: 2173
+name: "Legacy:Class Wikifier"
+revision:
+  revid: 2173
+  parentid: 2174
+  user: "SuperApe"
+  timestamp: 1136440788.000000000
+  comment: "Nick89, here's the Wikifier I mentioned."
+timestamp: 1668766160.767236000

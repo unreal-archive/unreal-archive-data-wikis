@@ -1,0 +1,481 @@
+---
+parse:
+  title: "Replication block"
+  text:
+    text: "<p>The <b>replication</b> block specifies conditions for replicating <a\
+      \ href=\"/Variables\" title=\"Variables\">variables</a> and prior to <a href=\"\
+      /Unreal_Engine_3\" title=\"Unreal Engine 3\">Unreal Engine 3</a> also for <a\
+      \ href=\"/Functions\" title=\"Functions\">functions</a>. It contains one or\
+      \ more replication conditions, each with one or more variable or function names\
+      \ to which the condition applies.</p>\n<h2><span class=\"mw-headline\" id=\"\
+      Syntax\">Syntax</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Replication_block?section=1\" title=\"Edit section:\
+      \ Syntax\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>The general syntax of the replication block looks as follows:</p>\n<pre><b>replication</b>\n\
+      <b>{</b>\n  <i>condition 1</i>\n  <i>condition 2</i>\n  ...\n<b>}</b>\n</pre>\n\
+      <p>Replication conditions in <a href=\"/edit/Unreal_Engine_1?redlink=1\" class=\"\
+      new\" title=\"Unreal Engine 1 (page does not exist)\">Unreal Engine 1</a> and\
+      \ <a href=\"/edit/Unreal_Engine_2?redlink=1\" class=\"new\" title=\"Unreal Engine\
+      \ 2 (page does not exist)\">2</a> have the following syntax:</p>\n<pre>[<b>un</b>]<b>reliable\
+      \ if (</b><i>boolean expression</i><b>)</b>\n  <i>variable or function name</i>\
+      \ [<b>,</b> ...] <b>;</b>\n</pre>\n<p>The keyword <b>reliable</b> or <b>unreliable</b>\
+      \ only affects functions, but still must be specified for variables even though\
+      \ it doesn't make a difference there. Unreliably replicated <a href=\"/Function_calls\"\
+      \ title=\"Function calls\" class=\"mw-redirect\">function calls</a> may be dropped\
+      \ due to bandwidth saturation, while reliably replicated function calls will\
+      \ be delayed in that case.</p>\n<p><a href=\"/Unreal_Engine_3\" title=\"Unreal\
+      \ Engine 3\">Unreal Engine 3</a> uses simplified replication conditions because\
+      \ function replication is specified via <a href=\"/Functions#Network_modifiers\"\
+      \ title=\"Functions\">function modifiers</a>:</p>\n<pre><b>if (</b><i>boolean\
+      \ expression</i><b>)</b>\n  <i>variable name</i> [<b>,</b> ...] <b>;</b>\n</pre>\n\
+      <p>Typically a replication condition tests the local value of the <a href=\"\
+      /edit/Role?redlink=1\" class=\"new\" title=\"Role (page does not exist)\">Role</a>\
+      \ property, usually as <code>Role == ROLE_Authority</code> for server-to-client\
+      \ replication or <code>Role&#160;!= ROLE_Authority</code> for client-to-server\
+      \ replication. For replicated functions this is usually the only condition.</p>\n\
+      <p>In Unreal Engine 1 variables can be replicated from the server to all clients,\
+      \ but also from the client owning the actor to the server, similar to replicated\
+      \ function calls. That's why Unreal engine 1 replication conditions always check\
+      \ the Role. In Unreal Engine 2 and 3 variables can only be replicated from the\
+      \ server to clients, so technically the Role doesn't need to be checked at all.\
+      \ Still even Epic code contains Role checks for replicated variables in many\
+      \ classes.</p>\n<p>For variable replication there are also other useful actor\
+      \ properties, such as bNetInitial and bNetOwner, which further narrow down when\
+      \ to replicate the variable and who to replicate it to.</p>\n<p>Unlike any other\
+      \ data type in UnrealScript, <a href=\"/Dynamic_arrays\" title=\"Dynamic arrays\"\
+      >dynamic arrays</a> have absolutely no support for replication whatsoever. Attempting\
+      \ to replicate a dynamic array variable will have no effect on the remote instance\
+      \ of that variable. Attempting to use a dynamic array as parameter of a <a href=\"\
+      /edit/Replicated_function?redlink=1\" class=\"new\" title=\"Replicated function\
+      \ (page does not exist)\">replicated function</a> will result in the parameter\
+      \ being empty when the function is executed on the remote side. Similar restrictions\
+      \ apply to dynamic arrays within replicated struct values.</p>\n<h2><span class=\"\
+      mw-headline\" id=\"Exceptions\">Exceptions</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Replication_block?section=2\"\
+      \ title=\"Edit section: Exceptions\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>For relatively obvious reasons, functions declared\
+      \ as <i>static</i>, <i>latent</i> or <i>iterator</i> can't or shouldn't be replicated.\
+      \ Functions replicated to clients must be declared as <i>simulated</i> if you\
+      \ want them to be executable on <i>ROLE_SimulatedProxy</i> or <i>ROLE_DumbProxy</i>\
+      \ clients. Note that the UE3 <a href=\"/Functions#Network_modifiers\" title=\"\
+      Functions\">function modifiers</a> <i>client</i> or <i>demorecording</i> already\
+      \ imply the <i>simulated</i> modifier, so you don't need to specify it again.\
+      \ The same goes for the <i>native</i> function modifier. Whether the similar\
+      \ <a href=\"/DLLImport\" title=\"DLLImport\" class=\"mw-redirect\">DLLImport</a>\
+      \ modifier implies <i>simulated</i> (or whether such functions support replication\
+      \ at all) is currently unknown, but then again you probably don't want to call\
+      \ such a function directly via replication.</p>\n<p>If a class is declared with\
+      \ the <i>NativeReplication</i> modifiers, the replication conditions in its\
+      \ replication block are ignored for variables. Instead variable replication\
+      \ conditions are defined in native code. Function replication conditions are\
+      \ still specified in the replication block (or in UE3 via function modifiers)\
+      \ as usual. The reason these classes still contain replication conditions for\
+      \ variables is that UnrealScript coders should know when variables are actually\
+      \ replicated. The information may be inaccurate though, as the UT2004 <a href=\"\
+      /UE2:Pickup_(UT2004)\" title=\"UE2:Pickup (UT2004)\">Pickup</a> class shows.\
+      \ Its bOnlyReplicateHidden property turns off replication for all but the bHidden\
+      \ property.</p>\n<p>Replicating variables declared as <i>config</i>, <i>globalconfig</i>\
+      \ or <i>localized</i> may not have the desired effect as these variables may\
+      \ have different initial values on the server and the clients. The configured\
+      \ or localized values <i>are</i> the default values on the server and replication\
+      \ only kicks in if the values have changed.</p>\n<table class=\"navbox nowraplinks\"\
+      \ style=\"\">\n<tr class=\"navbox-header\">\n<th colspan=\"2\" class=\"navbox-header\"\
+      \ style=\"\">\n<div style=\"position:relative; width:100%; white-space:nowrap;\"\
+      >\n<div class=\"noprint plainlinks\" style=\"background-color:transparent; padding:0;\
+      \ font-weight:normal; font-size:xx-small; white-space:nowrap; position:absolute;left:0.5em;\"\
+      ><a href=\"/Template:Navbox_unrealscript\" title=\"Template:Navbox unrealscript\"\
+      ><span title=\"View this template\">v</span></a>&#160;•&#160;<a href=\"/Template_talk:Navbox_unrealscript\"\
+      \ title=\"Template talk:Navbox unrealscript\"><span title=\"Discussion about\
+      \ this template\">d</span></a>&#160;•&#160;<a rel=\"nofollow\" class=\"external\
+      \ text\" href=\"https://wiki.beyondunreal.com/edit/Template:Navbox_unrealscript\"\
+      ><span title=\"You can edit this template. Please use the preview button before\
+      \ saving.\">e</span></a></div>\n<a href=\"/UnrealScript_reference\" title=\"\
+      UnrealScript reference\">UnrealScript reference</a></div>\n</th>\n</tr>\n<tr\
+      \ class=\"navbox-body odd\">\n<th class=\"navbox-group\" style=\"\">Declarations</th>\n\
+      <td class=\"navbox-body\" style=\"\"><a href=\"/Preprocessor\" title=\"Preprocessor\"\
+      >Preprocessor</a>&#160;• <a href=\"/Classes\" title=\"Classes\">Classes</a>&#160;•\
+      \ <a href=\"/Interfaces\" title=\"Interfaces\">Interfaces</a>&#160;• <a href=\"\
+      /Cpptext\" title=\"Cpptext\">Cpptext</a>&#160;• <a href=\"/Constants\" title=\"\
+      Constants\">Constants</a>&#160;• <a href=\"/Enums\" title=\"Enums\">Enums</a>&#160;•\
+      \ <a href=\"/Structs\" title=\"Structs\">Structs</a>&#160;• <a href=\"/Variables\"\
+      \ title=\"Variables\">Variables</a>&#160;(<a href=\"/Metadata\" title=\"Metadata\"\
+      >Metadata</a>)&#160;• <strong class=\"selflink\">Replication block</strong>&#160;•\
+      \ <a href=\"/Operators\" title=\"Operators\">Operators</a>&#160;• <a href=\"\
+      /Delegates\" title=\"Delegates\">Delegates</a>&#160;• <a href=\"/Functions\"\
+      \ title=\"Functions\">Functions</a>&#160;• <a href=\"/States\" title=\"States\"\
+      >States</a>&#160;• <a href=\"/Defaultproperties\" title=\"Defaultproperties\"\
+      >Defaultproperties</a>&#160;(<a href=\"/Subobjects\" title=\"Subobjects\">Subobjects</a>)</td>\n\
+      </tr>\n<tr class=\"navbox-body even\">\n<th class=\"navbox-group\" style=\"\"\
+      ><a href=\"/Types\" title=\"Types\">Types</a></th>\n<td class=\"navbox-body\"\
+      \ style=\"\"><a href=\"/Bool\" title=\"Bool\" class=\"mw-redirect\">bool</a>&#160;•\
+      \ <a href=\"/Byte\" title=\"Byte\" class=\"mw-redirect\">byte</a>&#160;• <a\
+      \ href=\"/Float\" title=\"Float\" class=\"mw-redirect\">float</a>&#160;• <a\
+      \ href=\"/Int\" title=\"Int\" class=\"mw-redirect\">int</a>&#160;• <a href=\"\
+      /Name\" title=\"Name\" class=\"mw-redirect\">name</a>&#160;• <a href=\"/String\"\
+      \ title=\"String\">string</a>&#160;• <a href=\"/Types#Reference_types\" title=\"\
+      Types\">Object</a>&#160;• <a href=\"/Class_limiter#Class\" title=\"Class limiter\"\
+      \ class=\"mw-redirect\">Class</a>&#160;• <a href=\"/Enums\" title=\"Enums\"\
+      >Enums</a>&#160;• <a href=\"/Structs\" title=\"Structs\">Structs</a>&#160;(<a\
+      \ href=\"/Vector\" title=\"Vector\">Vector</a>&#160;⋅ <a href=\"/Rotator\" title=\"\
+      Rotator\">Rotator</a>&#160;⋅ <a href=\"/Quat\" title=\"Quat\" class=\"mw-redirect\"\
+      >Quat</a>&#160;⋅ <a href=\"/Color\" title=\"Color\">Color</a>)&#160;• <a href=\"\
+      /Static_arrays\" title=\"Static arrays\">Static arrays</a>&#160;• <a href=\"\
+      /Dynamic_arrays\" title=\"Dynamic arrays\">Dynamic arrays</a>&#160;• <a href=\"\
+      /Delegates\" title=\"Delegates\">Delegates</a>&#160;• <a href=\"/Typecasting\"\
+      \ title=\"Typecasting\">Typecasting</a></td>\n</tr>\n<tr class=\"navbox-body\
+      \ odd\">\n<th class=\"navbox-group\" style=\"\"><a href=\"/Literals\" title=\"\
+      Literals\">Literals</a></th>\n<td class=\"navbox-body\" style=\"\"><a href=\"\
+      /Literals#Boolean_values\" title=\"Literals\">Boolean</a>&#160;• <a href=\"\
+      /Literals#Float_numbers\" title=\"Literals\">Float</a>&#160;• <a href=\"/Literals#Integer_numbers\"\
+      \ title=\"Literals\">Integer</a>&#160;• <a href=\"/Literals#Names\" title=\"\
+      Literals\">Names</a>&#160;• <a href=\"/Literals#Objects\" title=\"Literals\"\
+      >Objects</a> (<a href=\"/None\" title=\"None\" class=\"mw-redirect\">None</a>&#160;⋅\
+      \ <a href=\"/Self\" title=\"Self\" class=\"mw-redirect\">Self</a>)&#160;• <a\
+      \ href=\"/Literals#Vectors\" title=\"Literals\">Vectors</a>&#160;• <a href=\"\
+      /Literals#Rotators\" title=\"Literals\">Rotators</a>&#160;• <a href=\"/Literals#Strings\"\
+      \ title=\"Literals\">Strings</a></td>\n</tr>\n<tr class=\"navbox-body even\"\
+      >\n<th class=\"navbox-group\" style=\"\"><a href=\"/Flow_control\" title=\"\
+      Flow control\">Flow</a></th>\n<td class=\"navbox-body\" style=\"\"><a href=\"\
+      /GoTo_statement\" title=\"GoTo statement\">GoTo</a>&#160;• <a href=\"/If_statement\"\
+      \ title=\"If statement\">If</a>&#160;• <a href=\"/Assert_statement\" title=\"\
+      Assert statement\">Assert</a>&#160;• <a href=\"/Return_statement\" title=\"\
+      Return statement\">Return</a>&#160;• <a href=\"/Stop_statement\" title=\"Stop\
+      \ statement\">Stop</a>&#160;• <a href=\"/Switch_statement\" title=\"Switch statement\"\
+      >Switch</a>&#160;• <a href=\"/While_loop\" title=\"While loop\">While</a>&#160;•\
+      \ <a href=\"/Do...Until_loop\" title=\"Do...Until loop\">Do...Until</a>&#160;•\
+      \ <a href=\"/For_loop\" title=\"For loop\">For</a>&#160;• <a href=\"/ForEach_loop\"\
+      \ title=\"ForEach loop\">ForEach</a>&#160;• <a href=\"/Break_statement\" title=\"\
+      Break statement\">Break</a>&#160;• <a href=\"/Continue_statement\" title=\"\
+      Continue statement\">Continue</a></td>\n</tr>\n<tr class=\"navbox-body odd\"\
+      >\n<th class=\"navbox-group\" style=\"\"><a href=\"/Specifiers\" title=\"Specifiers\"\
+      >Specifiers</a></th>\n<td class=\"navbox-body\" style=\"\"><a href=\"/Function_call_specifiers#Super\"\
+      \ title=\"Function call specifiers\">Super</a>&#160;• <a href=\"/Function_call_specifiers#Global\"\
+      \ title=\"Function call specifiers\">Global</a>&#160;• <a href=\"/Functions#Syntax_3\"\
+      \ title=\"Functions\">Static</a>&#160;• <a href=\"/Variables#Accessing_variables\"\
+      \ title=\"Variables\">Default</a>&#160;• <a href=\"/Constants#Usage\" title=\"\
+      Constants\">Const</a></td>\n</tr>\n<tr class=\"navbox-body even\">\n<th class=\"\
+      navbox-group\" style=\"\"><a href=\"/UnrealScript\" title=\"UnrealScript\">UnrealScript</a></th>\n\
+      <td class=\"navbox-body\" style=\"\"><a href=\"/UnrealScript_syntax\" title=\"\
+      UnrealScript syntax\">Syntax</a>&#160;• <a href=\"/UC_File\" title=\"UC File\"\
+      >.UC</a>&#160;• <a href=\"/edit/UCI_File?redlink=1\" class=\"new\" title=\"\
+      UCI File (page does not exist)\">.UCI</a>&#160;• <a href=\"/UPKG_File\" title=\"\
+      UPKG File\">.UPKG</a>&#160;• <a href=\"/Comments\" title=\"Comments\">Comments</a>&#160;•\
+      \ <a href=\"/Compiler_directives\" title=\"Compiler directives\">#directives</a>&#160;•\
+      \ <a href=\"/edit/Native_coding?redlink=1\" class=\"new\" title=\"Native coding\
+      \ (page does not exist)\">Native</a></td>\n</tr>\n</table>\n\n<!-- \nNewPP limit\
+      \ report\nCPU time usage: 0.087 seconds\nReal time usage: 0.090 seconds\nPreprocessor\
+      \ visited node count: 169/1000000\nPreprocessor generated node count: 873/1000000\n\
+      Post‐expand include size: 10650/2097152 bytes\nTemplate argument size: 4195/2097152\
+      \ bytes\nHighest expansion depth: 5/40\nExpensive parser function count: 0/100\n\
+      -->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n100.00%\
+      \   25.906      1 - -total\n100.00%   25.906      1 - Template:Navbox_unrealscript\n\
+      \ 74.33%   19.256      1 - Template:Navbox\n 13.59%    3.521      1 - Template:Tnavbar\n\
+      -->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:28575-0!*!0!!*!*!*\
+      \ and timestamp 20221118025757 and revision id 44334\n -->\n"
+  categories:
+  - sortkey: ""
+    name: "Replication"
+  - sortkey: "Replication block"
+    name: "UnrealScript_reference"
+  links:
+  - ns: 0
+    exists: true
+    name: "Vector"
+  - ns: 0
+    exists: true
+    name: "UC File"
+  - ns: 0
+    exists: true
+    name: "Constants"
+  - ns: 11
+    exists: true
+    name: "Template talk:Navbox unrealscript"
+  - ns: 0
+    exists: true
+    name: "Rotator"
+  - ns: 0
+    exists: true
+    name: "Return statement"
+  - ns: 0
+    exists: true
+    name: "Static arrays"
+  - ns: 0
+    exists: true
+    name: "Typecasting"
+  - ns: 0
+    exists: true
+    name: "Interfaces"
+  - ns: 0
+    exists: true
+    name: "Float"
+  - ns: 0
+    exists: true
+    name: "Subobjects"
+  - ns: 0
+    exists: true
+    name: "Do...Until loop"
+  - ns: 0
+    exists: true
+    name: "None"
+  - ns: 0
+    exists: true
+    name: "Literals"
+  - ns: 104
+    exists: true
+    name: "UE2:Pickup (UT2004)"
+  - ns: 0
+    exists: true
+    name: "Operators"
+  - ns: 0
+    exists: true
+    name: "GoTo statement"
+  - ns: 0
+    exists: true
+    name: "Functions"
+  - ns: 0
+    exists: true
+    name: "While loop"
+  - ns: 0
+    exists: true
+    name: "Delegates"
+  - ns: 0
+    exists: false
+    name: "Unreal Engine 1"
+  - ns: 0
+    exists: true
+    name: "Assert statement"
+  - ns: 0
+    exists: false
+    name: "Replicated function"
+  - ns: 0
+    exists: true
+    name: "UnrealScript syntax"
+  - ns: 0
+    exists: true
+    name: "DLLImport"
+  - ns: 0
+    exists: true
+    name: "Variables"
+  - ns: 0
+    exists: true
+    name: "Switch statement"
+  - ns: 0
+    exists: true
+    name: "Int"
+  - ns: 0
+    exists: true
+    name: "Continue statement"
+  - ns: 0
+    exists: true
+    name: "Break statement"
+  - ns: 0
+    exists: true
+    name: "Classes"
+  - ns: 0
+    exists: true
+    name: "Name"
+  - ns: 0
+    exists: true
+    name: "For loop"
+  - ns: 0
+    exists: true
+    name: "Function call specifiers"
+  - ns: 0
+    exists: true
+    name: "Stop statement"
+  - ns: 0
+    exists: true
+    name: "Quat"
+  - ns: 0
+    exists: false
+    name: "Role"
+  - ns: 0
+    exists: true
+    name: "Specifiers"
+  - ns: 0
+    exists: false
+    name: "Native coding"
+  - ns: 0
+    exists: true
+    name: "UnrealScript"
+  - ns: 0
+    exists: true
+    name: "UnrealScript reference"
+  - ns: 0
+    exists: true
+    name: "Defaultproperties"
+  - ns: 0
+    exists: true
+    name: "Comments"
+  - ns: 0
+    exists: true
+    name: "Cpptext"
+  - ns: 0
+    exists: true
+    name: "States"
+  - ns: 0
+    exists: true
+    name: "Compiler directives"
+  - ns: 0
+    exists: true
+    name: "Unreal Engine 3"
+  - ns: 0
+    exists: false
+    name: "UCI File"
+  - ns: 0
+    exists: true
+    name: "Color"
+  - ns: 10
+    exists: true
+    name: "Template:Navbox unrealscript"
+  - ns: 0
+    exists: true
+    name: "Dynamic arrays"
+  - ns: 0
+    exists: true
+    name: "Structs"
+  - ns: 0
+    exists: true
+    name: "Byte"
+  - ns: 0
+    exists: true
+    name: "Class limiter"
+  - ns: 0
+    exists: true
+    name: "Enums"
+  - ns: 0
+    exists: true
+    name: "If statement"
+  - ns: 0
+    exists: true
+    name: "Self"
+  - ns: 0
+    exists: true
+    name: "UPKG File"
+  - ns: 0
+    exists: false
+    name: "Unreal Engine 2"
+  - ns: 0
+    exists: true
+    name: "Metadata"
+  - ns: 0
+    exists: true
+    name: "Flow control"
+  - ns: 0
+    exists: true
+    name: "Preprocessor"
+  - ns: 0
+    exists: true
+    name: "Bool"
+  - ns: 0
+    exists: true
+    name: "ForEach loop"
+  - ns: 0
+    exists: true
+    name: "Function calls"
+  - ns: 0
+    exists: true
+    name: "String"
+  - ns: 0
+    exists: true
+    name: "Types"
+  templates:
+  - ns: 10
+    exists: true
+    name: "Template:Navbox"
+  - ns: 10
+    exists: true
+    name: "Template:Navbox unrealscript"
+  - ns: 10
+    exists: true
+    name: "Template:Tnavbar"
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Syntax"
+    number: "1"
+    index: "1"
+    fromtitle: "Replication_block"
+    byteoffset: 266
+    anchor: "Syntax"
+  - toclevel: 1
+    level: "2"
+    line: "Exceptions"
+    number: "2"
+    index: "2"
+    fromtitle: "Replication_block"
+    byteoffset: 2636
+    anchor: "Exceptions"
+  displaytitle: "Replication block"
+  iwlinks: []
+  wikitext:
+    text: "The '''replication''' block specifies conditions for replicating [[variables]]\
+      \ and prior to [[Unreal Engine 3]] also for [[functions]]. It contains one or\
+      \ more replication conditions, each with one or more variable or function names\
+      \ to which the condition applies.\n\n==Syntax==\nThe general syntax of the replication\
+      \ block looks as follows:\n '''replication'''\n '''{'''\n   ''condition 1''\n\
+      \   ''condition 2''\n   ...\n '''}'''\n\nReplication conditions in [[Unreal\
+      \ Engine 1]] and [[Unreal Engine 2|2]] have the following syntax:\n ['''un''']'''reliable\
+      \ if ('''''boolean expression''''')'''\n   ''variable or function name'' [''','''\
+      \ ...] ''';'''\nThe keyword '''reliable''' or '''unreliable''' only affects\
+      \ functions, but still must be specified for variables even though it doesn't\
+      \ make a difference there. Unreliably replicated [[function calls]] may be dropped\
+      \ due to bandwidth saturation, while reliably replicated function calls will\
+      \ be delayed in that case.\n\n[[Unreal Engine 3]] uses simplified replication\
+      \ conditions because function replication is specified via [[Functions#Network\
+      \ modifiers|function modifiers]]:\n '''if ('''''boolean expression''''')'''\n\
+      \   ''variable name'' [''',''' ...] ''';'''\n\nTypically a replication condition\
+      \ tests the local value of the [[Role]] property, usually as <code>Role == ROLE_Authority</code>\
+      \ for server-to-client replication or <code>Role != ROLE_Authority</code> for\
+      \ client-to-server replication. For replicated functions this is usually the\
+      \ only condition.\n\nIn Unreal Engine 1 variables can be replicated from the\
+      \ server to all clients, but also from the client owning the actor to the server,\
+      \ similar to replicated function calls. That's why Unreal engine 1 replication\
+      \ conditions always check the Role. In Unreal Engine 2 and 3 variables can only\
+      \ be replicated from the server to clients, so technically the Role doesn't\
+      \ need to be checked at all. Still even Epic code contains Role checks for replicated\
+      \ variables in many classes.\n\nFor variable replication there are also other\
+      \ useful actor properties, such as bNetInitial and bNetOwner, which further\
+      \ narrow down when to replicate the variable and who to replicate it to.\n\n\
+      Unlike any other data type in UnrealScript, [[dynamic arrays]] have absolutely\
+      \ no support for replication whatsoever. Attempting to replicate a dynamic array\
+      \ variable will have no effect on the remote instance of that variable. Attempting\
+      \ to use a dynamic array as parameter of a [[replicated function]] will result\
+      \ in the parameter being empty when the function is executed on the remote side.\
+      \ Similar restrictions apply to dynamic arrays within replicated struct values.\n\
+      \n==Exceptions==\nFor relatively obvious reasons, functions declared as ''static'',\
+      \ ''latent'' or ''iterator'' can't or shouldn't be replicated. Functions replicated\
+      \ to clients must be declared as ''simulated'' if you want them to be executable\
+      \ on ''ROLE_SimulatedProxy'' or ''ROLE_DumbProxy'' clients. Note that the UE3\
+      \ [[Functions#Network modifiers|function modifiers]] ''client'' or ''demorecording''\
+      \ already imply the ''simulated'' modifier, so you don't need to specify it\
+      \ again. The same goes for the ''native'' function modifier. Whether the similar\
+      \ [[DLLImport]] modifier implies ''simulated'' (or whether such functions support\
+      \ replication at all) is currently unknown, but then again you probably don't\
+      \ want to call such a function directly via replication.\n\nIf a class is declared\
+      \ with the ''NativeReplication'' modifiers, the replication conditions in its\
+      \ replication block are ignored for variables. Instead variable replication\
+      \ conditions are defined in native code. Function replication conditions are\
+      \ still specified in the replication block (or in UE3 via function modifiers)\
+      \ as usual. The reason these classes still contain replication conditions for\
+      \ variables is that UnrealScript coders should know when variables are actually\
+      \ replicated. The information may be inaccurate though, as the UT2004 [[UE2:Pickup\
+      \ (UT2004)|Pickup]] class shows. Its bOnlyReplicateHidden property turns off\
+      \ replication for all but the bHidden property.\n\nReplicating variables declared\
+      \ as ''config'', ''globalconfig'' or ''localized'' may not have the desired\
+      \ effect as these variables may have different initial values on the server\
+      \ and the clients. The configured or localized values ''are'' the default values\
+      \ on the server and replication only kicks in if the values have changed.\n\n\
+      {{navbox unrealscript}}\n[[Category:Replication]]"
+  properties: []
+  revId: 44334
+name: "Replication block"
+revision:
+  revid: 44334
+  parentid: 43596
+  user: "Wormbo"
+  timestamp: 1299504930.000000000
+  comment: "more clarifications and details"
+timestamp: 1668754731.676872000

@@ -1,0 +1,222 @@
+---
+parse:
+  title: "Legacy:Relevance"
+  text:
+    text: "<p><b>Relevance</b> is a concept in <a href=\"/Legacy:Unreal_Engine\" title=\"\
+      Legacy:Unreal Engine\">Unreal Engine</a> <a href=\"/Legacy:Replication\" title=\"\
+      Legacy:Replication\">replication</a>. Often there are <a href=\"/Legacy:Actor\"\
+      \ title=\"Legacy:Actor\">Actors</a> in the level (like server actors, pathnodes,\
+      \ some keypoints) that cannot be seen by, and will not influence, a particular\
+      \ client. Any bandwidth used to update these <a href=\"/Legacy:Actor\" title=\"\
+      Legacy:Actor\">Actors</a> is wasted, so replication uses the concept of relevance\
+      \ to avoid this waste.</p>\n<p>The Unreal engine uses a set of conditions to\
+      \ determine whether an <a href=\"/Legacy:Actor\" title=\"Legacy:Actor\">Actor</a>\
+      \ is relevant or not:</p>\n<ul>\n<li>If the <a href=\"/Legacy:Actor\" title=\"\
+      Legacy:Actor\">Actor</a> has bAlwaysRelevant set to true, then this <a href=\"\
+      /Legacy:Actor\" title=\"Legacy:Actor\">Actor</a> is relevant.</li>\n<li>If an\
+      \ actor's <a href=\"/Legacy:Owner\" title=\"Legacy:Owner\" class=\"mw-redirect\"\
+      >owner</a> is set to the local player, then that actor is relevant.</li>\n<li>If\
+      \ an actor has bOnlyRelevantToOwner set to true, it will not be replicated to\
+      \ any other clients. It exists only on the server and the actor's owner. (But\
+      \ note that bAlwaysRelevant overrides bOnlyRelevantToOwner, which is.... weird)</li>\n\
+      <li>If an actor is a subclass of <a href=\"/Legacy:Weapon\" title=\"Legacy:Weapon\"\
+      >Weapon</a> and it is owned by an actor who is visible, then it is relevant.</li>\n\
+      <li>If the actor has bHidden set to false, bBlockPlayers set to true, or an\
+      \ AmbientSound set, then the actor is relevant.</li>\n<li>If the actor is visible\
+      \ on the client's screen, then it is relevant. Note that this goes by the center\
+      \ of the mesh so actors with very large meshes can sometimes become irrelevant\
+      \ while some part of them is still visible.</li>\n<li>If the actor is not visible\
+      \ on the client's screen but was recently visible, then it is still considered\
+      \ relevant. The amount of time it remains relevant varies based on bandwidth\
+      \ availible, and will vary from 2 to 10 seconds.</li>\n<li>The <a href=\"/Legacy:Linked_List\"\
+      \ title=\"Legacy:Linked List\">linked lists</a> <b>Level.ControllerList</b>\
+      \ (UT2003) and <b>Level.PawnList</b> (UT) do not exist on network clients. If\
+      \ you attempt to reference them the list will appear empty. <b>Level.Game</b>\
+      \ is also never replicated and does not exist on the client at all. If you need\
+      \ to access the game's <a href=\"/Legacy:GameReplicationInfo\" title=\"Legacy:GameReplicationInfo\"\
+      >GameReplicationInfo</a>, it can still be referenced by the locally controlled\
+      \ player's <a href=\"/Legacy:PlayerController\" title=\"Legacy:PlayerController\"\
+      >PlayerController</a> (<tt>PlayerController.GameReplicationInfo</tt>) or <a\
+      \ href=\"/Legacy:PlayerPawn\" title=\"Legacy:PlayerPawn\">PlayerPawn</a>. See\
+      \ <a href=\"/Legacy:Netcode_Idioms\" title=\"Legacy:Netcode Idioms\">Netcode\
+      \ Idioms</a> for an explanation of how to do this.</li>\n</ul>\n<h2><span class=\"\
+      mw-headline\" id=\"Notes\">Notes</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Relevance?section=1\"\
+      \ title=\"Edit section: Notes\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p><i><b>A warning for the programmer:</b></i> <a href=\"\
+      /Legacy:Actor\" title=\"Legacy:Actor\">Actors</a> deemed irrelevant may be destroyed\
+      \ on the client side while continuing to exist and be updated on the server.\
+      \ You must keep this in mind when checking a reference to another object in\
+      \ client-side script: the object and the reference still persist on the server\
+      \ and will be linked back up automatically once the server decides it is relevant\
+      \ again.</p>\n<h2><span class=\"mw-headline\" id=\"Related_Topics\">Related\
+      \ Topics</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Relevance?section=2\" title=\"Edit section:\
+      \ Related Topics\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <ul>\n<li><a href=\"/Legacy:Replication\" title=\"Legacy:Replication\">Replication</a></li>\n\
+      </ul>\n<h2><span class=\"mw-headline\" id=\"Comments\">Comments</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Relevance?section=3\" title=\"Edit section: Comments\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n<p><b>Tarquin:</b>\
+      \ Where is bAlwaysRelevant defined?</p>\n<p><b>SuperApe:</b> <tt>bAlwaysRelevant</tt>\
+      \ is defined in Actor, but only used in subclasses.</p>\n<p><b>Tarquin:</b>\
+      \ I think it's missing on <a href=\"/Legacy:Actor\" title=\"Legacy:Actor\">Actor</a></p>\n\
+      <p><b>Kohan:</b> What's the thing about <a href=\"/Legacy:ZoneInfo\" title=\"\
+      Legacy:ZoneInfo\">ZoneInfo</a> always being relevant? <tt>bAlwaysRelevant</tt>\
+      \ isn't set in it, though it is set in <a href=\"/Legacy:LevelInfo\" title=\"\
+      Legacy:LevelInfo\">LevelInfo</a>.</p>\n<p><b>Dimension4:</b> <a href=\"/Legacy:ZoneInfo\"\
+      \ title=\"Legacy:ZoneInfo\">ZoneInfos</a> are <tt>bNoDelete</tt>, so they are\
+      \ always relevant</p>\n<p><b>Buggie:</b> Not really. this rule not work at all.\
+      \ Proved by source code and by real tests. So I remove it. <a href=\"/Legacy:ZoneInfo\"\
+      \ title=\"Legacy:ZoneInfo\">ZoneInfo</a> always being relevant because bAlwaysRelevant\
+      \ set by default to true. If you override it to false, then no any replication\
+      \ occur. You can check it with make simple map, which change ZoneLight and run\
+      \ it on dedic server.</p>\n<hr />\n<p><a href=\"/Category:Legacy_To_Do\" title=\"\
+      Category:Legacy To Do\">Category:Legacy To Do</a> – Work in with <a href=\"\
+      /Legacy:Replication\" title=\"Legacy:Replication\">Replication</a> family of\
+      \ pages, as per <a href=\"/edit/Legacy:Replication/Discussion?redlink=1\" class=\"\
+      new\" title=\"Legacy:Replication/Discussion (page does not exist)\">Replication/Discussion</a>.</p>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.026 seconds\nReal time usage:\
+      \ 0.028 seconds\nPreprocessor visited node count: 13/1000000\nPreprocessor generated\
+      \ node count: 32/1000000\nPost‐expand include size: 18/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:2691-0!*!0!!*!*!* and timestamp 20221118043138 and revision\
+      \ id 46440\n -->\n"
+  categories:
+  - sortkey: "Relevance"
+    name: "Legacy_To_Do"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:PlayerPawn"
+  - ns: 100
+    exists: true
+    name: "Legacy:Actor"
+  - ns: 100
+    exists: true
+    name: "Legacy:GameReplicationInfo"
+  - ns: 100
+    exists: true
+    name: "Legacy:LevelInfo"
+  - ns: 100
+    exists: true
+    name: "Legacy:Unreal Engine"
+  - ns: 14
+    exists: true
+    name: "Category:Legacy To Do"
+  - ns: 100
+    exists: true
+    name: "Legacy:Weapon"
+  - ns: 100
+    exists: false
+    name: "Legacy:Replication/Discussion"
+  - ns: 100
+    exists: true
+    name: "Legacy:Replication"
+  - ns: 100
+    exists: true
+    name: "Legacy:Owner"
+  - ns: 100
+    exists: true
+    name: "Legacy:Netcode Idioms"
+  - ns: 100
+    exists: true
+    name: "Legacy:PlayerController"
+  - ns: 100
+    exists: true
+    name: "Legacy:ZoneInfo"
+  - ns: 100
+    exists: true
+    name: "Legacy:Linked List"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Notes"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Relevance"
+    byteoffset: 2310
+    anchor: "Notes"
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Relevance"
+    byteoffset: 2736
+    anchor: "Related_Topics"
+  - toclevel: 1
+    level: "2"
+    line: "Comments"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:Relevance"
+    byteoffset: 2793
+    anchor: "Comments"
+  displaytitle: "Legacy:Relevance"
+  iwlinks: []
+  wikitext:
+    text: "'''Relevance''' is a concept in [[Legacy:Unreal Engine|Unreal Engine]]\
+      \ [[Legacy:Replication|replication]]. Often there are [[Legacy:Actor|Actor]]s\
+      \ in the level (like server actors, pathnodes, some keypoints) that cannot be\
+      \ seen by, and will not influence, a particular client.  Any bandwidth used\
+      \ to update these [[Legacy:Actor|Actor]]s is wasted, so replication uses the\
+      \ concept of relevance to avoid this waste.\n\nThe Unreal engine uses a set\
+      \ of conditions to determine whether an [[Legacy:Actor|Actor]] is relevant or\
+      \ not:\n* If the [[Legacy:Actor|Actor]] has bAlwaysRelevant set to true, then\
+      \ this [[Legacy:Actor|Actor]] is relevant.\n* If an actor's [[Legacy:Owner|owner]]\
+      \ is set to the local player, then that actor is relevant.\n* If an actor has\
+      \ bOnlyRelevantToOwner set to true, it will not be replicated to any other clients.\
+      \  It exists only on the server and the actor's owner. (But note that bAlwaysRelevant\
+      \ overrides bOnlyRelevantToOwner, which is.... weird)\n* If an actor is a subclass\
+      \ of [[Legacy:Weapon|Weapon]] and it is owned by an actor who is visible, then\
+      \ it is relevant.\n* If the actor has bHidden set to false, bBlockPlayers set\
+      \ to true, or an AmbientSound set, then the actor is relevant.\n* If the actor\
+      \ is visible on the client's screen, then it is relevant.  Note that this goes\
+      \ by the center of the mesh so actors with very large meshes can sometimes become\
+      \ irrelevant while some part of them is still visible.\n* If the actor is not\
+      \ visible on the client's screen but was recently visible, then it is still\
+      \ considered relevant.  The amount of time it remains relevant varies based\
+      \ on bandwidth availible, and will vary from 2 to 10 seconds.\n* The [[Legacy:Linked\
+      \ List|linked list]]s '''Level.ControllerList''' (UT2003) and '''Level.PawnList'''\
+      \ (UT) do not exist on network clients. If you attempt to reference them the\
+      \ list will appear empty. '''Level.Game''' is also never replicated and does\
+      \ not exist on the client at all. If you need to access the game's [[Legacy:GameReplicationInfo|GameReplicationInfo]],\
+      \ it can still be referenced by the locally controlled player's [[Legacy:PlayerController|PlayerController]]\
+      \ (<tt>PlayerController.GameReplicationInfo</tt>) or [[Legacy:PlayerPawn|PlayerPawn]].\
+      \ See [[Legacy:Netcode Idioms|Netcode Idioms]] for an explanation of how to\
+      \ do this.\n\n==Notes==\n\n'''''A warning for the programmer:''''' [[Legacy:Actor|Actor]]s\
+      \ deemed irrelevant may be destroyed on the client side while continuing to\
+      \ exist and be updated on the server.  You must keep this in mind when checking\
+      \ a reference to another object in client-side script: the object and the reference\
+      \ still persist on the server and will be linked back up automatically once\
+      \ the server decides it is relevant again. \n\n==Related Topics==\n* [[Legacy:Replication|Replication]]\n\
+      \n==Comments==\n\n'''Tarquin:''' Where is bAlwaysRelevant defined?\n\n'''SuperApe:'''\
+      \ <tt>bAlwaysRelevant</tt> is defined in Actor, but only used in subclasses.\n\
+      \n'''Tarquin:''' I think it's missing on [[Legacy:Actor|Actor]]\n\n'''Kohan:'''\
+      \ What's the thing about [[Legacy:ZoneInfo|ZoneInfo]] always being relevant?\
+      \  <tt>bAlwaysRelevant</tt> isn't set in it, though it is set in [[Legacy:LevelInfo|LevelInfo]].\n\
+      \n'''Dimension4:''' [[Legacy:ZoneInfo|ZoneInfo]]s are <tt>bNoDelete</tt>, so\
+      \ they are always relevant\n\n'''Buggie:''' Not really. this rule not work at\
+      \ all. Proved by source code and by real tests. So I remove it. [[Legacy:ZoneInfo|ZoneInfo]]\
+      \ always being relevant because bAlwaysRelevant set by default to true. If you\
+      \ override it to false, then no any replication occur. You can check it with\
+      \ make simple map, which change ZoneLight and run it on dedic server.\n\n----\n\
+      \n[[:Category:Legacy To Do]] &ndash; Work in with [[Legacy:Replication|Replication]]\
+      \ family of pages, as per [[Legacy:Replication/Discussion|Replication/Discussion]].\n\
+      [[Category:Legacy To Do|{{PAGENAME}}]]\n[[Category:Legacy To Do|{{PAGENAME}}]]"
+  properties: []
+  revId: 46440
+name: "Legacy:Relevance"
+revision:
+  revid: 46440
+  parentid: 6408
+  user: "172.19.0.2"
+  timestamp: 1637530182.000000000
+  comment: "Remove two wrong rules. Add comment."
+timestamp: 1668759858.067500000

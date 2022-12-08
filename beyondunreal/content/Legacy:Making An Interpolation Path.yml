@@ -1,0 +1,466 @@
+---
+parse:
+  title: "Legacy:Making An Interpolation Path"
+  text:
+    text: "<p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n\
+      </div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#Definition\"\
+      ><span class=\"tocnumber\">1</span> <span class=\"toctext\">Definition</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-2\"><a href=\"#Laying_the_path\"><span class=\"\
+      tocnumber\">2</span> <span class=\"toctext\">Laying the path</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-3\"><a href=\"#The_dynamics\"><span class=\"\
+      tocnumber\">3</span> <span class=\"toctext\">The dynamics</span></a>\n<ul>\n\
+      <li class=\"toclevel-2 tocsection-4\"><a href=\"#Setting_up_the_path.27s_parameters\"\
+      ><span class=\"tocnumber\">3.1</span> <span class=\"toctext\">Setting up the\
+      \ path's parameters</span></a></li>\n<li class=\"toclevel-2 tocsection-5\"><a\
+      \ href=\"#Finally\"><span class=\"tocnumber\">3.2</span> <span class=\"toctext\"\
+      >Finally</span></a></li>\n<li class=\"toclevel-2 tocsection-6\"><a href=\"#Adding_Interpolation_Points_to_your_map\"\
+      ><span class=\"tocnumber\">3.3</span> <span class=\"toctext\">Adding Interpolation\
+      \ Points to your map</span></a></li>\n<li class=\"toclevel-2 tocsection-7\"\
+      ><a href=\"#Setting_the_speed_of_the_Interpolation_Points\"><span class=\"tocnumber\"\
+      >3.4</span> <span class=\"toctext\">Setting the speed of the Interpolation Points</span></a></li>\n\
+      </ul>\n</li>\n</ul>\n</div>\n<p></p>\n<h2><span class=\"mw-headline\" id=\"\
+      Definition\">Definition</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Making_An_Interpolation_Path?section=1\"\
+      \ title=\"Edit section: Definition\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>What the heck is an interpolation path? Quite simply,\
+      \ a triggered path that sends the player to diferrent points in it, in a specific\
+      \ order. An interpolation path was used for Unreal Tournament's CityIntro map\
+      \ that starts up when you first load UT. Some of the editable variables include\
+      \ skipping the next point, speed of the game (this makes cool matrix-like scenes\
+      \ possible if you know what you're doing), speed of the camera, etc.</p>\n<p>An\
+      \ interpolated curve doesn't actually touch the points at all. It is pulled\
+      \ towards the points, but without actually going through them. (It is not the\
+      \ same as splining. A spline is a smoothed line that goes through all of the\
+      \ points in the path. This is commonly used for smooth paths, but not in Unreal.)</p>\n\
+      <h2><span class=\"mw-headline\" id=\"Laying_the_path\">Laying the path</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Making_An_Interpolation_Path?section=2\" title=\"Edit\
+      \ section: Laying the path\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>The path points are defined with <a href=\"/Legacy:Actor\"\
+      \ title=\"Legacy:Actor\">Actor</a> &gt;&gt; <a href=\"/Legacy:Keypoint_(UT)\"\
+      \ title=\"Legacy:Keypoint (UT)\">Keypoint (UT)</a> &gt;&gt; <a href=\"/Legacy:InterpolationPoint\"\
+      \ title=\"Legacy:InterpolationPoint\">InterpolationPoint</a>. Set:</p>\n<table>\n\
+      <tr>\n<td>Events -&gt; Tag</td>\n<td>Tie all the points with the name</td>\n\
+      </tr>\n<tr>\n<td>InterpolationPoint -&gt; Position</td>\n<td>order of each poit\
+      \ in the path, starting with 0</td>\n</tr>\n<tr>\n<td>InterpolationPoint -&gt;\
+      \ bEndOfPath</td>\n<td>This value in the last point determines whether the path\
+      \ is open or closed</td>\n</tr>\n</table>\n<p>You need at least 3 points for\
+      \ a closed path, 4 for an open path. When any point of the path is selected,\
+      \ UnreaEd shows the path as a curved white line, with little axes glyphs at\
+      \ intervals. These don't actually mean anything, and they will never rotate.</p>\n\
+      <p>First of all, lay out your path. Find Actor &gt;&gt; Keypoint &gt;&gt; <a\
+      \ href=\"/Legacy:InterpolationPoint\" title=\"Legacy:InterpolationPoint\">InterpolationPoint</a>\
+      \ in the <a href=\"/Legacy:Actor_Classes_Browser\" title=\"Legacy:Actor Classes\
+      \ Browser\" class=\"mw-redirect\">Actor Classes Browser</a>. The camera will\
+      \ travel in a straight line from one point to the next, so set your path up\
+      \ accordingly.</p>\n<p>Define the order of the points with the InterpolationPoint\
+      \ -&gt; Position property. This must be set to 0,1,2... etc.</p>\n<p><b>Tarquin:</b>\
+      \ No-one mentioned the freaky lines and circle that appears in UEd at this point!\
+      \ O_o Or that you need a minimum of 3. And bEndOfPath makes the lines disappear.</p>\n\
+      <p><b>EntropicLqd:</b> And how the heck do you figure out which way the camera\
+      \ is actually pointing? I've spent hours trying to figure out how to get my\
+      \ <i>InterpolatingSkyZone</i> to actually travel the path I want without any\
+      \ crazy rotations but to no avail. It's fine most of the way around and then\
+      \ it suddenly goes wacky and spins randomly.</p>\n<p><b>Tarquin:</b> I've just\
+      \ got this to work. Doesnt seem any way to take the player <i>off</i> the path\
+      \ again. The direction of each IP gives the directio the player will point in,\
+      \ but the path glyphs in UEd dont show this. I've just made myself seasick.,,,\
+      \ urg</p>\n<p><b>Mychaeel:</b> No, it doesn't spin randomly. It interpolates\
+      \ the angles numerically, so if one of your interpolation points is set to 355°\
+      \ and the next to 5° (a 10° difference, you'd think), it'll not rotate 355°\
+      ...359°...0°...5° but <i>backwards</i>. To make it behave as you want it to,\
+      \ you'd have to set the second InterpolationPoint's rotation to 365° rather\
+      \ than 5°.</p>\n<p><b>Neveos:</b> Everything is set correctly on mine (it is\
+      \ important that it starts at \"0\", btw, or it crashes at the end), but it\
+      \ wants to head back to the first point at the end of the path, before ending.\
+      \ It doesn't make it all the way to the beginning before it ends, but it definitely\
+      \ is heading to the first point as though it were the last point. Why is this\
+      \ happening?</p>\n<h2><span class=\"mw-headline\" id=\"The_dynamics\">The dynamics</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Making_An_Interpolation_Path?section=3\" title=\"Edit\
+      \ section: The dynamics\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>The main use of a path is to make the player follow it. This is done with\
+      \ a <a href=\"/Legacy:SpecialEvent\" title=\"Legacy:SpecialEvent\">SpecialEvent</a>.</p>\n\
+      <p>(what about making movers folow paths?)</p>\n<p>Match the following to iniate\
+      \ the path</p>\n<ul>\n<li>SpecialEvent's Events -&gt; Event</li>\n<li>All the\
+      \ IP's Events -&gt; Tag</li>\n</ul>\n<p><b>Question</b>: How does one set the\
+      \ object which will take the path?</p>\n<p>Set up a <a href=\"/Legacy:Trigger\"\
+      \ title=\"Legacy:Trigger\">Trigger</a> to trigger the SpecialEVent to set off\
+      \ the whole process.</p>\n<p>Once you have your path laid out, right click on\
+      \ one of the points and select \"Select All Interpolation Point\". Now open\
+      \ the actor properties and change their Event Tags to \"Path1\" or, if you'd\
+      \ like, a diferrent name of your choice. Just make sure that you use that name\
+      \ instead of \"Path1\" wherever we mention it, if you do use something diferrent.</p>\n\
+      <p>Now add a regular <a href=\"/Legacy:Trigger\" title=\"Legacy:Trigger\">Trigger</a>\
+      \ (Actor &gt;&gt; Triggers &gt;&gt; Trigger) wherever you like – just make sure\
+      \ you'll be able to find it. To see it in game, either</p>\n<ul>\n<li>set it\
+      \ to display the trigger's sprite in game with Advanced -&gt; bHidden = True</li>\n\
+      <li>set it to cast a small circle of light (set Lighting -&gt; LightType and\
+      \ LightColor properties)</li>\n</ul>\n<p>Now, anywhere you like (it can be literally\
+      \ anywhere in the map, doesn't matter where), add a <a href=\"/Legacy:SpecialEvent\"\
+      \ title=\"Legacy:SpecialEvent\">SpecialEvent</a> from the same menu. Change\
+      \ its event tag to \"PathStart\", and its Event to \"Path1\". Now open up the\
+      \ regular Trigger's properties and change its Event to \"PathStart\".</p>\n\
+      <p><b>Flopsy:</b> Just a comment you need to set the Default State of the Special\
+      \ Event actor to PlayerPath under Object&gt;&gt;InitialState.</p>\n<h4><span\
+      \ class=\"mw-headline\" id=\"Setting_up_the_path.27s_parameters\">Setting up\
+      \ the path's parameters</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Making_An_Interpolation_Path?section=4\"\
+      \ title=\"Edit section: Setting up the path's parameters\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h4>\n<p>In the properties for each\
+      \ point are modifiers for Game Speed (the speed of everything going on, including\
+      \ that of the camera - bullets will move slower based on this value, for example)\
+      \ and Camera Speed (the actual speed of the camera. This rate of movement depends\
+      \ on the value in the game speed property). Note that these are not the actual\
+      \ names of the properties - again my memory is foggy. It should, however, be\
+      \ pretty obvious. You'll just have to experiment with the values and se what\
+      \ speed works best for you. Start with low numbers however.</p>\n<h4><span class=\"\
+      mw-headline\" id=\"Finally\">Finally</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Making_An_Interpolation_Path?section=5\"\
+      \ title=\"Edit section: Finally\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h4>\n<p>While the interpolation path should now work in any\
+      \ game mode, playing it in, say, DM, will show your weapon as you move along\
+      \ the path. You probably don't want this, unless you're making some sort of\
+      \ ride for the player (in single player for example). In order to make the player\
+      \ appear without any HUD or weaponry of any kind, you'll have to set the default\
+      \ game type (under level properties) to the appropriate actor. You can find\
+      \ these under Info&gt;GameInfo. Again I forget the proper name (sorry about\
+      \ all this folks, it's been over a month since I've messed with interpol points),\
+      \ but it should have something to do with \"intro\" and will be fairly obvious.\
+      \ Finally, you will need a playerstart in any case, of course, and rebuilding\
+      \ is just as mandatory as ever. Unless you're doing something special, you'll\
+      \ probably just want to start the player hovering in the air over the trigger,\
+      \ so that they drop onto upon start, triggering your cutscene.</p>\n<p>Please\
+      \ note that interpol points can be rotated just like playerstarts. Whatever\
+      \ direction they are facing is the direction the camera will rotate to.</p>\n\
+      <p>If I missed anything important, or if anybody wants to look up what the proper\
+      \ names are, feel free to edit it into this page.</p>\n<p><i>The following pages\
+      \ also have tutorial-style information on making paths. Merging those into this\
+      \ might be a good idea:</i></p>\n<ul>\n<li><a href=\"/Legacy:UMS/InterpolationTutorial\"\
+      \ title=\"Legacy:UMS/InterpolationTutorial\">UMS/InterpolationTutorial</a></li>\n\
+      <li><a href=\"/Legacy:InterpolationPoint\" title=\"Legacy:InterpolationPoint\"\
+      >InterpolationPoint</a></li>\n</ul>\n<hr />\n<p>content from other pages...\
+      \ refactoring &amp; mergine needed.</p>\n<h3><span class=\"mw-headline\" id=\"\
+      Adding_Interpolation_Points_to_your_map\">Adding Interpolation Points to your\
+      \ map</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Making_An_Interpolation_Path?section=6\" title=\"\
+      Edit section: Adding Interpolation Points to your map\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h3>\n<ol>\n<li>InterpolationPoints\
+      \ (hereafter called IP's) can be found under <b>Keypoint &gt;&gt; InterpolationPoint</b>\
+      \ in the <a href=\"/Legacy:Actor_Classes\" title=\"Legacy:Actor Classes\" class=\"\
+      mw-redirect\">Actor Classes</a> Browser. The first thing to do is to add one\
+      \ to your level where you want the Interpolation path to start. IPs show a directional\
+      \ arrow in UnrealEd, which defines (funnily enough) the direction that the actor\
+      \ on the path will be pointing. Set their direction with the <a href=\"/Legacy:Brush_Rotate\"\
+      \ title=\"Legacy:Brush Rotate\">Brush Rotate</a> tool or the Movement -&gt;\
+      \ Rotation property.</li>\n</ol>\n<ol>\n<li>In InterpolationPoint Properties\
+      \ -&gt; InterpolationPoint -&gt; Position, you should put the number that defines\
+      \ what point in the path this IP is at. This should start at 0, and I have been\
+      \ informed that the upper limit is 127 (thanks to TheMapper for that).</li>\n\
+      </ol>\n<ol>\n<li>I think the best thing to do, is to first add the IP's to your\
+      \ level, in aproximately the right places. Then you can get the path set up\
+      \ correctly, before changing the speed.</li>\n</ol>\n<ol>\n<li>Once you have\
+      \ got all your IP's in, there are two more that you have to put in. At the last\
+      \ point, you need to have two IP's. Then, put another one in the same position\
+      \ as the first, and give it the next Position after the last one. This is because\
+      \ IP paths actually loop, and the only way to get the path to go through a point\
+      \ is to put two IP's on top of each other. The reason the highest number IP\
+      \ is at the beginning of the path is because the actor following the path will\
+      \ start half way between the first and last IP's.</li>\n</ol>\n<h3><span class=\"\
+      mw-headline\" id=\"Setting_the_speed_of_the_Interpolation_Points\">Setting the\
+      \ speed of the Interpolation Points</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Making_An_Interpolation_Path?section=7\"\
+      \ title=\"Edit section: Setting the speed of the Interpolation Points\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h3>\n<ol>\n<li>Once you\
+      \ have your path correct, you may want to play around with the speed. You will\
+      \ find that it looks a lot nicer if the speed does vary. Knowing when to vary\
+      \ the speed isn't something that I can teach you.</li>\n</ol>\n<ol>\n<li>To\
+      \ change the speed, go to <b>InterpolationPoint Properties -&gt; InterpolationPoint\
+      \ -&gt; RateModifier</b>. Again, it is a matter of trial and error to find a\
+      \ series of values which you like. On each IP, the rate will be at that point,\
+      \ and it will change between the two points. If you want to change the rate\
+      \ very quickly, have two IPs very close to each other with different rate values.</li>\n\
+      </ol>\n<ol>\n<li>You can, if you want, change the speed of the game with the\
+      \ <b>GameSpeedModifier</b>, but this works seperately from <b>SetSpeed</b>.\
+      \ If you do use <b>GameSpeedModifier</b>, then make sure that it is reset back\
+      \ to 1 for the end of the IP path.</li>\n</ol>\n<hr />\n<ul>\n<li>Note: Most\
+      \ of the content from this page is adapted from a tutorial for <a href=\"/Legacy:UMS\"\
+      \ title=\"Legacy:UMS\">UMS</a> that <a href=\"/Legacy:Hugh\" title=\"Legacy:Hugh\"\
+      >Hugh</a> wrote, and this section certainly isn't complete - the specifics of\
+      \ how to get an actor to actually follow the Interpolation path without using\
+      \ UMS I'm not clear on, maybe someone else could help out there – <i>Birelli</i></li>\n\
+      </ul>\n<p>This tutorial I'm only going to tell you the basic technical things\
+      \ you need to do to set up a regular interpolation path. I'm not expert in this\
+      \ area, but I do know how to create one. Please note that the terminal I am\
+      \ typing this up at is not equipped with Ued, so I may not tell you the exact\
+      \ name of things. An interpolation point is actually \"InterpolPoint\" or something\
+      \ like that, it should be pretty obvious when you're staring at the Keypoint\
+      \ menu.</p>\n<hr />\n<p><a href=\"/Category:Legacy_Tutorial\" title=\"Category:Legacy\
+      \ Tutorial\">Category:Legacy Tutorial</a>, <a href=\"/Category:Legacy_To_Do\"\
+      \ title=\"Category:Legacy To Do\">Category:Legacy To Do</a>: mucho refactoring\
+      \ to do.</p>\n<p><a rel=\"nofollow\" class=\"external free\" href=\"http://www.planetdeusex.com/tack/InterpolationPoints.html\"\
+      >http://www.planetdeusex.com/tack/InterpolationPoints.html</a></p>\n\n<!-- \n\
+      NewPP limit report\nCPU time usage: 0.046 seconds\nReal time usage: 0.096 seconds\n\
+      Preprocessor visited node count: 28/1000000\nPreprocessor generated node count:\
+      \ 48/1000000\nPost‐expand include size: 56/2097152 bytes\nTemplate argument\
+      \ size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser function\
+      \ count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:1863-0!*!0!!en!*!* and timestamp 20221118015801 and revision\
+      \ id 44756\n -->\n"
+  categories:
+  - sortkey: "Making An Interpolation Path"
+    name: "Legacy_To_Do"
+  - sortkey: "Making An Interpolation Path"
+    name: "Legacy_Tutorial"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Actor Classes"
+  - ns: 100
+    exists: true
+    name: "Legacy:Keypoint (UT)"
+  - ns: 100
+    exists: true
+    name: "Legacy:Actor"
+  - ns: 14
+    exists: true
+    name: "Category:Legacy Tutorial"
+  - ns: 14
+    exists: true
+    name: "Category:Legacy To Do"
+  - ns: 100
+    exists: true
+    name: "Legacy:Trigger"
+  - ns: 100
+    exists: true
+    name: "Legacy:Hugh"
+  - ns: 100
+    exists: true
+    name: "Legacy:Brush Rotate"
+  - ns: 100
+    exists: true
+    name: "Legacy:UMS/InterpolationTutorial"
+  - ns: 100
+    exists: true
+    name: "Legacy:UMS"
+  - ns: 100
+    exists: true
+    name: "Legacy:Actor Classes Browser"
+  - ns: 100
+    exists: true
+    name: "Legacy:SpecialEvent"
+  - ns: 100
+    exists: true
+    name: "Legacy:InterpolationPoint"
+  templates: []
+  images: []
+  externallinks:
+  - "http://www.planetdeusex.com/tack/InterpolationPoints.html"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Definition"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Making_An_Interpolation_Path"
+    byteoffset: 0
+    anchor: "Definition"
+  - toclevel: 1
+    level: "2"
+    line: "Laying the path"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Making_An_Interpolation_Path"
+    byteoffset: 763
+    anchor: "Laying_the_path"
+  - toclevel: 1
+    level: "2"
+    line: "The dynamics"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:Making_An_Interpolation_Path"
+    byteoffset: 3378
+    anchor: "The_dynamics"
+  - toclevel: 2
+    level: "4"
+    line: "Setting up the path's parameters"
+    number: "3.1"
+    index: "4"
+    fromtitle: "Legacy:Making_An_Interpolation_Path"
+    byteoffset: 4955
+    anchor: "Setting_up_the_path.27s_parameters"
+  - toclevel: 2
+    level: "4"
+    line: "Finally"
+    number: "3.2"
+    index: "5"
+    fromtitle: "Legacy:Making_An_Interpolation_Path"
+    byteoffset: 5555
+    anchor: "Finally"
+  - toclevel: 2
+    level: "3"
+    line: "Adding Interpolation Points to your map"
+    number: "3.3"
+    index: "6"
+    fromtitle: "Legacy:Making_An_Interpolation_Path"
+    byteoffset: 7117
+    anchor: "Adding_Interpolation_Points_to_your_map"
+  - toclevel: 2
+    level: "3"
+    line: "Setting the speed of the Interpolation Points"
+    number: "3.4"
+    index: "7"
+    fromtitle: "Legacy:Making_An_Interpolation_Path"
+    byteoffset: 8631
+    anchor: "Setting_the_speed_of_the_Interpolation_Points"
+  displaytitle: "Legacy:Making An Interpolation Path"
+  iwlinks: []
+  wikitext:
+    text: "==Definition ==\n\nWhat the heck is an interpolation path? Quite simply,\
+      \ a triggered path that sends the player to diferrent points in it, in a specific\
+      \ order.  An interpolation path was used for Unreal Tournament's CityIntro map\
+      \ that starts up when you first load UT.  Some of the editable variables include\
+      \ skipping the next point, speed of the game (this makes cool matrix-like scenes\
+      \ possible if you know what you're doing), speed of the camera, etc.\n\nAn interpolated\
+      \ curve doesn't actually touch the points at all. It is pulled towards the points,\
+      \ but without actually going through them. (It is not the same as splining.\
+      \ A spline is a smoothed line that goes through all of the points in the path.\
+      \ This is commonly used for smooth paths, but not in Unreal.)\n\n==Laying the\
+      \ path ==\n\nThe path points are defined with [[Legacy:Actor|Actor]] >> [[Legacy:Keypoint\
+      \ (UT)|Keypoint (UT)]] >> [[Legacy:InterpolationPoint|InterpolationPoint]].\
+      \ Set:\n\n{|\n\n|-\n|Events -> Tag\n|Tie all the points with the name \n|-\n\
+      |InterpolationPoint -> Position\n|order of each poit in the path, starting with\
+      \ 0\n|-\n|InterpolationPoint -> bEndOfPath\n|This value in the last point determines\
+      \ whether the path is open or closed\n|}\n\nYou need at least 3 points for a\
+      \ closed path, 4 for an open path. When any point of the path is selected, UnreaEd\
+      \ shows the path as a curved white line, with little axes glyphs at intervals.\
+      \ These don't actually mean anything, and they will never rotate.\n\nFirst of\
+      \ all, lay out your path. Find Actor >> Keypoint >> [[Legacy:InterpolationPoint|InterpolationPoint]]\
+      \ in the [[Legacy:Actor Classes Browser|Actor Classes Browser]].  The camera\
+      \ will travel in a straight line from one point to the next, so set your path\
+      \ up accordingly.  \n\nDefine the order of the points with the InterpolationPoint\
+      \ -> Position property. This must be set to 0,1,2... etc.\n\n'''Tarquin:'''\
+      \ No-one mentioned the freaky lines and circle that appears in UEd at this point!\
+      \ O_o Or that you need a minimum of 3. And bEndOfPath makes the lines disappear.\n\
+      \n'''EntropicLqd:'''  And how the heck do you figure out which way the camera\
+      \ is actually pointing?  I've spent hours trying to figure out how to get my\
+      \ ''InterpolatingSkyZone'' to actually travel the path I want without any crazy\
+      \ rotations but to no avail.  It's fine most of the way around and then it suddenly\
+      \ goes wacky and spins randomly.\n\n'''Tarquin:''' I've just got this to work.\
+      \ Doesnt seem any way to take the player ''off'' the path again. The direction\
+      \ of each IP gives the directio the player will point in, but the path glyphs\
+      \ in UEd dont show this. I've just made myself seasick.,,, urg\n\n'''Mychaeel:'''\
+      \ No, it doesn't spin randomly.  It interpolates the angles numerically, so\
+      \ if one of your interpolation points is set to 355° and the next to 5° (a 10°\
+      \ difference, you'd think), it'll not rotate 355°...359°...0°...5° but ''backwards''.\
+      \  To make it behave as you want it to, you'd have to set the second InterpolationPoint's\
+      \ rotation to 365° rather than 5°.\n\n'''Neveos:'''  Everything is set correctly\
+      \ on mine (it is important that it starts at \"0\", btw, or it crashes at the\
+      \ end), but it wants to head back to the first point at the end of the path,\
+      \ before ending.  It doesn't make it all the way to the beginning before it\
+      \ ends, but it definitely is heading to the first point as though it were the\
+      \ last point.  Why is this happening?\n\n==The dynamics ==\n\nThe main use of\
+      \ a path is to make the player follow it. This is done with a [[Legacy:SpecialEvent|SpecialEvent]].\n\
+      \n(what about making movers folow paths?)\n\nMatch the following to iniate the\
+      \ path\n* SpecialEvent's Events -> Event \n* All the IP's Events -> Tag\n\n\
+      '''Question''': How does one set the object which will take the path?\n\nSet\
+      \ up a [[Legacy:Trigger|Trigger]] to trigger the SpecialEVent to set off the\
+      \ whole process.\n\nOnce you have your path laid out, right click on one of\
+      \ the points and select \"Select All Interpolation Point\".  Now open the actor\
+      \ properties and change their Event Tags to \"Path1\" or, if you'd like, a diferrent\
+      \  name of your choice.  Just make sure that you use that name instead of \"\
+      Path1\" wherever we mention it, if you do use something diferrent.\n\nNow add\
+      \ a regular [[Legacy:Trigger|Trigger]] (Actor >> Triggers >> Trigger) wherever\
+      \ you like &ndash; just make sure you'll be able to find it. To see it in game,\
+      \ either\n* set it to display the trigger's sprite in game with Advanced ->\
+      \ bHidden = True \n* set it to cast a small circle of light (set Lighting ->\
+      \ LightType and LightColor properties)\n\nNow, anywhere you like (it can be\
+      \ literally anywhere in the map, doesn't matter where), add a [[Legacy:SpecialEvent|SpecialEvent]]\
+      \ from the same menu.  Change its event tag to \"PathStart\", and its Event\
+      \ to \"Path1\".  Now open up the regular Trigger's properties and change its\
+      \ Event to \"PathStart\".\n\n'''Flopsy:''' Just a comment you need to set the\
+      \ Default State of the Special Event actor to PlayerPath under Object>>InitialState.\n\
+      \n====Setting up the path's parameters====\n\nIn the properties for each point\
+      \ are modifiers for Game Speed (the speed of everything going on, including\
+      \ that of the camera - bullets will move slower based on this value, for example)\
+      \ and Camera Speed (the actual speed of the camera.  This rate of movement depends\
+      \ on the value in the game speed property).  Note that these are not the actual\
+      \ names of the properties - again my memory is foggy.  It should, however, be\
+      \ pretty obvious.  You'll just have to experiment with the values and se what\
+      \ speed works best for you.  Start with low numbers however.\n\n====Finally====\n\
+      \nWhile the interpolation path should now work in any game mode, playing it\
+      \ in, say, DM, will show your weapon as you move along the path.  You probably\
+      \ don't want this, unless you're making some sort of ride for the player (in\
+      \ single player for example).  In order to make the player appear without any\
+      \ HUD or weaponry of any kind, you'll have to set the default game type (under\
+      \ level properties) to the appropriate actor.  You can find these under Info>GameInfo.\
+      \  Again I forget the proper name (sorry about all this folks, it's been over\
+      \ a month since I've messed with interpol points), but it should have something\
+      \ to do with \"intro\" and will be fairly obvious.  Finally, you will need a\
+      \ playerstart in any case, of course, and rebuilding is just as mandatory as\
+      \ ever.  Unless you're doing something special, you'll probably just want to\
+      \ start the player hovering in the air over the trigger, so that they drop onto\
+      \ upon start, triggering your cutscene.\n\nPlease note that interpol points\
+      \ can be rotated just like playerstarts.  Whatever direction they are facing\
+      \ is the direction the camera will rotate to.\n\nIf I missed anything important,\
+      \ or if anybody wants to look up what the proper names are, feel free to edit\
+      \ it into this page.\n\n''The following pages also have tutorial-style information\
+      \ on making paths. Merging those into this might be a good idea:''\n* [[Legacy:UMS/InterpolationTutorial|UMS/InterpolationTutorial]]\n\
+      * [[Legacy:InterpolationPoint|InterpolationPoint]]\n\n----\n\ncontent from other\
+      \ pages... refactoring & mergine needed.\n\n===Adding Interpolation Points to\
+      \ your map ===\n\n# InterpolationPoints (hereafter called IP's) can be found\
+      \ under '''Keypoint >> InterpolationPoint''' in the [[Legacy:Actor Classes|Actor\
+      \ Classes]] Browser. The first thing to do is to add one to your level where\
+      \ you want the Interpolation path to start. IPs show a  directional arrow in\
+      \ UnrealEd, which defines (funnily enough) the direction that the actor on the\
+      \ path will be pointing. Set their direction with the [[Legacy:Brush Rotate|Brush\
+      \ Rotate]] tool or the Movement -> Rotation property.\n\n# In InterpolationPoint\
+      \ Properties -> InterpolationPoint -> Position, you should put the number that\
+      \ defines what point in the path this IP is at. This should start at 0, and\
+      \ I have been informed that the upper limit is 127 (thanks to TheMapper for\
+      \ that). \n\n# I think the best thing to do, is to first add the IP's to your\
+      \ level, in aproximately the right places. Then you can get the path set up\
+      \ correctly, before changing the speed. \n\n# Once you have got all your IP's\
+      \ in, there are two more that you have to put in. At the last point, you need\
+      \ to have two IP's. Then, put another one in the same position as the first,\
+      \ and give it the next Position after the last one. This is because IP paths\
+      \ actually loop, and the only way to get the path to go through a point is to\
+      \ put two IP's on top of each other. The reason the highest number IP is at\
+      \ the beginning of the path is because the actor following the path will start\
+      \ half way between the first and last IP's. \n\n===Setting the speed of the\
+      \ Interpolation Points===\n\n# Once you have your path correct, you may want\
+      \ to play around with the speed. You will find that it looks a lot nicer if\
+      \ the speed does vary. Knowing when to vary the speed isn't something that I\
+      \ can teach you. \n\n# To change the speed, go to '''InterpolationPoint Properties\
+      \ -> InterpolationPoint -> RateModifier'''. Again, it is a matter of trial and\
+      \ error to find a series of values which you like. On each IP, the rate will\
+      \ be at that point, and it will change between the two points. If you want to\
+      \ change the rate very quickly, have two IPs very close to each other with different\
+      \ rate values.\n\n# You can, if you want, change the speed of the game with\
+      \ the '''GameSpeedModifier''', but this works seperately from '''SetSpeed'''.\
+      \ If you do use '''GameSpeedModifier''', then make sure that it is reset back\
+      \ to 1 for the end of the IP path. \n\n----\n\n* Note: Most of the content from\
+      \ this page is adapted from a tutorial for [[Legacy:UMS|UMS]] that [[Legacy:Hugh|Hugh]]\
+      \ wrote, and this section certainly isn't complete - the specifics of how to\
+      \ get an actor to actually follow the Interpolation path without using UMS I'm\
+      \ not clear on, maybe someone else could help out there &ndash; ''Birelli''\n\
+      \nThis tutorial I'm only going to tell you the basic technical things you need\
+      \ to do to set up a regular interpolation path.  I'm not expert in this area,\
+      \ but I do know how to create one.  Please note that the terminal I am typing\
+      \ this up at is not equipped with Ued, so I may not tell you the exact name\
+      \ of things.  An interpolation point is actually \"InterpolPoint\" or something\
+      \ like that, it should be pretty obvious when you're staring at the Keypoint\
+      \ menu.\n\n----\n\n[[:Category:Legacy Tutorial]], [[:Category:Legacy To Do]]:\
+      \ mucho refactoring to do.\n\nhttp://www.planetdeusex.com/tack/InterpolationPoints.html\n\
+      [[Category:Legacy Tutorial|{{PAGENAME}}]]\n[[Category:Legacy To Do|{{PAGENAME}}]]"
+  properties: []
+  revId: 44756
+name: "Legacy:Making An Interpolation Path"
+revision:
+  revid: 44756
+  parentid: 4575
+  user: "98.98.130.166"
+  timestamp: 1321491470.000000000
+  comment: "/* Laying the path */"
+timestamp: 1668762304.061949000

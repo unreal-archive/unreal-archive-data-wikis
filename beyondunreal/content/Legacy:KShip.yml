@@ -1,0 +1,1447 @@
+---
+parse:
+  title: "Legacy:KShip"
+  text:
+    text: "<p>Well this is basically my code for a space ship, thanks a lot to Daid\
+      \ for lending me his replication code (which turned out to come from KCar but\
+      \ i thank him non the less, great guy he is&#160;:D)</p>\n<p>I currently use\
+      \ a different, more client oriented replication system, but this one here is\
+      \ a lot better, i havent incorporated my ship to it yet because i have some\
+      \ other problems that come with it that i have to solve, but since the \"core\"\
+      \ ship here is simple, ill use the better replication for you guys&#160;:)</p>\n\
+      <p>(Btw i deal with all the entering/leaving of the vehicle in a parent class,\
+      \ this is really irrelevant to physics and is easy to do, so i left it out just\
+      \ so there will be less and easier to read code)</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw1\">var</span> <span class=\"kw5\">float</span>\t\
+      \t\tRoll, CThrust, TempThrust, OldThrust; \n<span class=\"co1\">// Throttle\
+      \ and Steering are already declared in KVehicle, so all we need is roll, CThrust,\
+      \ TempThrust, OldThrust will be explained soon</span>\n<span class=\"co1\">//\
+      \ BTW note that i use Throttle for Pitch alteration because it is already bound\
+      \ by other vehicles to the forward/backward key</span>\n<span class=\"co1\"\
+      >// ok i have also incorporated a system that allows for various thrust managments,\
+      \ </span>\n<span class=\"co1\">//if you simply want to move forward full speed\
+      \ only while you press the the thrust button, you would use TempThrust. </span>\n\
+      <span class=\"co1\">//when you release the thrust button you though you should\
+      \ always set TempThrust to -1</span>\n<span class=\"co1\">// if you want to\
+      \ have a constant speed, assign it to CThrust, so every time you release the\
+      \ thrust button (the one that changes TempThrust) </span>\n<span class=\"co1\"\
+      >// you would automatically start going at that speed (good for stuff like dogifghting\
+      \ and matching speeds)</span>\n<span class=\"co1\">// and lastly i added an\
+      \ afterburner effect, ill include it here for you guys to see although it isnt\
+      \ hard to do.</span>\n<span class=\"co1\">// also what i did with it was that\
+      \ when you afterburn and you run out of energy, while you still hold the afterburn\
+      \ key</span>\n<span class=\"co1\">// you would keep going at your max possible\
+      \ speed, and once you release it you would start going at your constant wanted\
+      \ speed (CThrust)</span>\n<span class=\"co1\">// Thats why i have 2 vars, bAfterburn\
+      \ is for after burning (holding key and having enough E), bBurn is for only\
+      \ holding the afterburn key with no regard to its depletion</span>\n<span class=\"\
+      kw1\">var</span> <span class=\"kw5\">bool</span>\t\t\tbAfterburn, bBurn; <span\
+      \ class=\"co1\">// note that you should set both of those to true when you want\
+      \ to afterburn</span>\n<span class=\"kw1\">var</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span> <span class=\"kw5\">float</span>\t\t\tForwardTrust,\
+      \ TurnRate, AfterBurnThrust; <span class=\"co1\">// This is basically how fast\
+      \ our ship turns/moves</span>\n<span class=\"kw1\">var</span> <span class=\"\
+      kw5\">float</span>\t\t\tCurRoll, CurSteering, CurThrottle, UnitAccRate; <span\
+      \ class=\"co1\">// This is used for acceleration</span>\n<span class=\"co1\"\
+      >// CThrust is used for ships that can assign a specific throttle value, like\
+      \ 75% of max speed or whatever...</span>\n<span class=\"co1\">// UnitAccRate\
+      \ is how much each value increases per second</span>\n<span class=\"kw1\">var</span>\
+      \ <span class=\"kw5\">vector</span>\t\t\tExtraForce, ExtraTorque; <span class=\"\
+      co1\">// Used for Karama forces pileup</span>\n \n<span class=\"co1\">// Ship\
+      \ replication vars and functions, thanks daid!</span>\n<span class=\"kw1\">struct</span>\
+      \ StructShipState\n<span class=\"br0\">{</span>\n\t<span class=\"kw1\">var</span>\
+      \ KRBVec\t\t\t\tChassisPosition;\n\t<span class=\"kw1\">var</span> <span class=\"\
+      kw5\">Quat</span>\t\t\t\tChassisQuaternion;\n\t<span class=\"kw1\">var</span>\
+      \ KRBVec\t\t\t\tChassisLinVel;\n\t<span class=\"kw1\">var</span> KRBVec\t\t\t\
+      \tChassisAngVel;\n \n\t<span class=\"kw1\">var</span> <span class=\"kw5\">float</span>\t\
+      \t\t\tServerSteering;\n\t<span class=\"kw1\">var</span> <span class=\"kw5\"\
+      >float</span>\t\t\t\tServerThrottle;\n\t<span class=\"kw1\">var</span> <span\
+      \ class=\"kw5\">float</span>\t\t\t\tServerRoll;\n \n\t<span class=\"kw1\">var</span>\
+      \ <span class=\"kw5\">bool</span>\t\t\t\tServerbAfterburn;\n\t<span class=\"\
+      kw1\">var</span> <span class=\"kw5\">bool</span>\t\t\t\tServerbBurn;\n \n\t\
+      <span class=\"kw1\">var</span> <span class=\"kw5\">bool</span>\t\t\t\tbNewState;\
+      \ <span class=\"co1\">// Set to true whenever a new state is received and should\
+      \ be processed</span>\n<span class=\"br0\">}</span>;\n \n<span class=\"kw1\"\
+      >var</span> <span class=\"kw5\">KRigidBodyState</span>\t\tChassisState;\n \n\
+      <span class=\"kw1\">var</span> StructShipState\t\tShipState; <span class=\"\
+      co1\">// This is replicated to the ship, and processed to update all the parts.</span>\n\
+      <span class=\"kw1\">var</span> <span class=\"kw5\">bool</span>\t\t\tbNewShipState;\
+      \ <span class=\"co1\">// Indicated there is new data processed, and chassis\
+      \ RBState should be updated.</span>\n \n<span class=\"kw1\">var</span> <span\
+      \ class=\"kw5\">float</span>\t\t\tNextNetUpdateTime;\t<span class=\"co1\">//\
+      \ Next time we should force an update of vehicles state.</span>\n<span class=\"\
+      kw1\">var</span><span class=\"br0\">(</span><span class=\"br0\">)</span> <span\
+      \ class=\"kw5\">float</span>\t\t\tMaxNetUpdateInterval;\n \n<span class=\"kw1\"\
+      >var</span> <span class=\"kw5\">int</span> AVar;<span class=\"co1\">//Just for\
+      \ replication, else the ShipState doesn't get replicated</span>\n \n<span class=\"\
+      kw1\">Replication</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw1\"\
+      >unreliable</span> <span class=\"kw2\">if</span><span class=\"br0\">(</span><span\
+      \ class=\"kw7\">Role</span> <span class=\"sy0\">==</span> <span class=\"kw7\"\
+      >ROLE_Authority</span><span class=\"br0\">)</span>\n\t\tShipState, AVar;\n<span\
+      \ class=\"br0\">}</span>\n \n<span class=\"kw1\">simulated</span> <span class=\"\
+      kw1\">event</span> VehicleStateReceived<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span><span class=\"sy0\">!</span>ShipState.<span class=\"\
+      me0\">bNewState</span><span class=\"br0\">)</span>\n\t\t<span class=\"kw2\"\
+      >return</span>;\n \n\t<span class=\"co1\">// Get root chassis info</span>\n\t\
+      ChassisState.<span class=\"me0\">Position</span> <span class=\"sy0\">=</span>\
+      \ ShipState.<span class=\"me0\">ChassisPosition</span>;\n\tChassisState.<span\
+      \ class=\"me0\">Quaternion</span> <span class=\"sy0\">=</span> ShipState.<span\
+      \ class=\"me0\">ChassisQuaternion</span>;\n\tChassisState.<span class=\"me0\"\
+      >LinVel</span> <span class=\"sy0\">=</span> ShipState.<span class=\"me0\">ChassisLinVel</span>;\n\
+      \tChassisState.<span class=\"me0\">AngVel</span> <span class=\"sy0\">=</span>\
+      \ ShipState.<span class=\"me0\">ChassisAngVel</span>;\n \n\t<span class=\"co1\"\
+      >// Update control inputs</span>\n\tSteering <span class=\"sy0\">=</span> ShipState.<span\
+      \ class=\"me0\">ServerSteering</span>;\n\tThrottle <span class=\"sy0\">=</span>\
+      \ ShipState.<span class=\"me0\">ServerThrottle</span>;\n\tRoll <span class=\"\
+      sy0\">=</span> ShipState.<span class=\"me0\">ServerRoll</span>;\n \n\t<span\
+      \ class=\"co1\">// Afterburner</span>\n\tbAfterburn <span class=\"sy0\">=</span>\
+      \ ShipState.<span class=\"me0\">ServerbAfterburn</span>;\n\tbBurn <span class=\"\
+      sy0\">=</span> ShipState.<span class=\"me0\">ServerbBurn</span>;\n \n\t<span\
+      \ class=\"co1\">// Update flags</span>\n\tShipState.<span class=\"me0\">bNewState</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"kw6\">false</span>;\n\tbNewShipState\
+      \ <span class=\"sy0\">=</span> <span class=\"kw6\">true</span>;\n<span class=\"\
+      br0\">}</span>\n \n<span class=\"kw1\">simulated</span> <span class=\"kw1\"\
+      >event</span> <span class=\"kw5\">bool</span> KUpdateState<span class=\"br0\"\
+      >(</span><span class=\"kw1\">out</span> <span class=\"kw5\">KRigidBodyState</span>\
+      \ newState<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span\
+      \ class=\"co1\">// This should never get called on the server - but just in\
+      \ case!</span>\n\t<span class=\"kw2\">if</span><span class=\"br0\">(</span><span\
+      \ class=\"kw7\">Role</span> <span class=\"sy0\">==</span> <span class=\"kw7\"\
+      >ROLE_Authority</span> <span class=\"sy0\">||</span> <span class=\"sy0\">!</span>bNewShipState<span\
+      \ class=\"br0\">)</span>\n\t\t<span class=\"kw2\">return</span> <span class=\"\
+      kw6\">false</span>;\n \n\t<span class=\"co1\">// Apply received data as new\
+      \ position of ship chassis.</span>\n\tnewState <span class=\"sy0\">=</span>\
+      \ ChassisState;\n\tbNewShipState <span class=\"sy0\">=</span> <span class=\"\
+      kw6\">false</span>;\n \n\t<span class=\"kw2\">return</span> <span class=\"kw6\"\
+      >true</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">function</span>\
+      \ PackState<span class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n\t<span class=\"kw1\">local</span> <span class=\"kw5\">vector</span>\
+      \ chassisPos, chassisLinVel, chassisAngVel;\n\t<span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">vector</span> oldPos, oldLinVel;\n\t<span class=\"kw1\"\
+      >local</span> <span class=\"kw5\">KRigidBodyState</span> ChassisState;\n \n\t\
+      <span class=\"co1\">// Get chassis state.</span>\n\tKGetRigidBodyState<span\
+      \ class=\"br0\">(</span>ChassisState<span class=\"br0\">)</span>;\n \n\tchassisPos\
+      \ <span class=\"sy0\">=</span> KRBVecToVector<span class=\"br0\">(</span>ChassisState.<span\
+      \ class=\"me0\">Position</span><span class=\"br0\">)</span>;\n\tchassisLinVel\
+      \ <span class=\"sy0\">=</span> KRBVecToVector<span class=\"br0\">(</span>ChassisState.<span\
+      \ class=\"me0\">LinVel</span><span class=\"br0\">)</span>;\n\tchassisAngVel\
+      \ <span class=\"sy0\">=</span> KRBVecToVector<span class=\"br0\">(</span>ChassisState.<span\
+      \ class=\"me0\">AngVel</span><span class=\"br0\">)</span>;\n \n\t<span class=\"\
+      co1\">// Last position we sent</span>\n\toldPos <span class=\"sy0\">=</span>\
+      \ KRBVectoVector<span class=\"br0\">(</span>ShipState.<span class=\"me0\">ChassisPosition</span><span\
+      \ class=\"br0\">)</span>;\n\toldLinVel <span class=\"sy0\">=</span> KRBVectoVector<span\
+      \ class=\"br0\">(</span>ShipState.<span class=\"me0\">ChassisLinVel</span><span\
+      \ class=\"br0\">)</span>;\n \n\t<span class=\"co1\">// See if state has changed\
+      \ enough, or enough time has passed, that we </span>\n\t<span class=\"co1\"\
+      >// should send out another update by updating the state struct.</span>\n\t\
+      <span class=\"kw2\">if</span><span class=\"br0\">(</span> <span class=\"sy0\"\
+      >!</span>KIsAwake<span class=\"br0\">(</span><span class=\"br0\">)</span> <span\
+      \ class=\"br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t\t<span class=\"\
+      kw2\">return</span>; <span class=\"co1\">// Never send updates if physics is\
+      \ at rest</span>\n\t<span class=\"br0\">}</span>\n \n\t<span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span> <span class=\"kw3\">VSize</span><span class=\"br0\"\
+      >(</span>oldPos <span class=\"sy0\">-</span> chassisPos<span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">&gt;</span> <span class=\"nu0\">5</span> <span class=\"\
+      sy0\">||</span>\n\t\t<span class=\"kw3\">VSize</span><span class=\"br0\">(</span>oldLinVel\
+      \ <span class=\"sy0\">-</span> chassisLinVel<span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">&gt;</span> <span class=\"nu0\">1</span> <span class=\"sy0\"\
+      >||</span>\n\t\t<span class=\"kw3\">Abs</span><span class=\"br0\">(</span>ShipState.<span\
+      \ class=\"me0\">ServerThrottle</span> <span class=\"sy0\">-</span> Throttle<span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">&gt;</span> <span class=\"nu0\"\
+      >0.1</span> <span class=\"sy0\">||</span>\n\t\t<span class=\"kw3\">Abs</span><span\
+      \ class=\"br0\">(</span>ShipState.<span class=\"me0\">ServerSteering</span>\
+      \ <span class=\"sy0\">-</span> Steering<span class=\"br0\">)</span> <span class=\"\
+      sy0\">&gt;</span> <span class=\"nu0\">0.1</span> <span class=\"sy0\">||</span>\n\
+      \t\t<span class=\"kw3\">Abs</span><span class=\"br0\">(</span>ShipState.<span\
+      \ class=\"me0\">ServerRoll</span> <span class=\"sy0\">-</span> Roll<span class=\"\
+      br0\">)</span> <span class=\"sy0\">&gt;</span> <span class=\"nu0\">0.1</span>\
+      \ <span class=\"sy0\">||</span>\n\t\tbAfterburn <span class=\"sy0\">!=</span>\
+      \ ShipState.<span class=\"me0\">ServerbAfterburn</span> <span class=\"sy0\"\
+      >||</span>\n\t\tbBurn <span class=\"sy0\">!=</span> ShipState.<span class=\"\
+      me0\">ServerbBurn</span> <span class=\"sy0\">||</span>\n\t\t<span class=\"kw7\"\
+      >Level</span>.<span class=\"me0\">TimeSeconds</span> <span class=\"sy0\">&gt;</span>\
+      \ NextNetUpdateTime <span class=\"br0\">)</span>\n\t<span class=\"br0\">{</span>\n\
+      \t\tNextNetUpdateTime <span class=\"sy0\">=</span> <span class=\"kw7\">Level</span>.<span\
+      \ class=\"me0\">TimeSeconds</span> <span class=\"sy0\">+</span> MaxNetUpdateInterval;\n\
+      \t<span class=\"br0\">}</span>\n\t<span class=\"kw2\">else</span>\n\t<span class=\"\
+      br0\">{</span>\n\t\t<span class=\"kw2\">return</span>;\n\t<span class=\"br0\"\
+      >}</span>\n \n\tShipState.<span class=\"me0\">ChassisPosition</span> <span class=\"\
+      sy0\">=</span> ChassisState.<span class=\"me0\">Position</span>;\n\tShipState.<span\
+      \ class=\"me0\">ChassisQuaternion</span> <span class=\"sy0\">=</span> ChassisState.<span\
+      \ class=\"me0\">Quaternion</span>;\n\tShipState.<span class=\"me0\">ChassisLinVel</span>\
+      \ <span class=\"sy0\">=</span> ChassisState.<span class=\"me0\">LinVel</span>;\n\
+      \tShipState.<span class=\"me0\">ChassisAngVel</span> <span class=\"sy0\">=</span>\
+      \ ChassisState.<span class=\"me0\">AngVel</span>;\n \n\t<span class=\"co1\"\
+      >// Player Input</span>\n\tShipState.<span class=\"me0\">ServerSteering</span>\
+      \ <span class=\"sy0\">=</span> Steering;\n\tShipState.<span class=\"me0\">ServerThrottle</span>\
+      \ <span class=\"sy0\">=</span> Throttle;\n\tShipState.<span class=\"me0\">ServerRoll</span>\
+      \ <span class=\"sy0\">=</span> Roll;\n \n\t<span class=\"co1\">// AfterBurner</span>\n\
+      \tShipState.<span class=\"me0\">ServerbAfterburn</span> <span class=\"sy0\"\
+      >=</span> bAfterburn;\n\tShipState.<span class=\"me0\">ServerbBurn</span> <span\
+      \ class=\"sy0\">=</span> bBurn;\n \n\t<span class=\"co1\">// This flag lets\
+      \ the client know this data is new.</span>\n\tShipState.<span class=\"me0\"\
+      >bNewState</span> <span class=\"sy0\">=</span> <span class=\"kw6\">true</span>;\n\
+      \t<span class=\"co1\">//Make sure ShipState gets replicated</span>\n\tAVar<span\
+      \ class=\"sy0\">++</span>;\n\t<span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span>AVar <span class=\"sy0\">&gt;</span> <span class=\"nu0\">10</span><span\
+      \ class=\"br0\">)</span>\n\t\tAVar<span class=\"sy0\">=</span><span class=\"\
+      nu0\">0</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">simulated</span>\
+      \ <span class=\"kw1\">function</span> <span class=\"kw4\">Tick</span><span class=\"\
+      br0\">(</span><span class=\"kw5\">float</span> DeltaTime<span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw6\">Super</span>.<span\
+      \ class=\"kw4\">Tick</span><span class=\"br0\">(</span>DeltaTime<span class=\"\
+      br0\">)</span>;\n\t<span class=\"kw2\">if</span><span class=\"br0\">(</span><span\
+      \ class=\"sy0\">!</span>KIsAwake<span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"kw9\">Controller</span><span\
+      \ class=\"sy0\">!=</span><span class=\"kw5\">None</span><span class=\"br0\"\
+      >)</span>\n\t\tKWake<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \t<span class=\"kw2\">if</span><span class=\"br0\">(</span><span class=\"kw7\"\
+      >Role</span> <span class=\"sy0\">==</span> <span class=\"kw7\">ROLE_Authority</span>\
+      \ <span class=\"sy0\">&amp;&amp;</span> <span class=\"kw7\">Level</span>.<span\
+      \ class=\"me0\">NetMode</span> <span class=\"sy0\">!=</span> NM_StandAlone<span\
+      \ class=\"br0\">)</span>\n\t\tPackState<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n\tUpdateAcceleration<span class=\"br0\">(</span>DeltaTime<span\
+      \ class=\"br0\">)</span>;\n\tUpdateExtraForce<span class=\"br0\">(</span>DeltaTime<span\
+      \ class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n<span class=\"kw1\"\
+      >simulated</span> <span class=\"kw1\">function</span> UpdateAcceleration<span\
+      \ class=\"br0\">(</span><span class=\"kw5\">float</span> Delta<span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n\tCurSteering <span class=\"sy0\"\
+      >=</span> CurSteering <span class=\"sy0\">+</span> Steering <span class=\"sy0\"\
+      >*</span> UnitAccRate <span class=\"sy0\">*</span> Delta;\n\tCurThrottle <span\
+      \ class=\"sy0\">=</span> CurThrottle <span class=\"sy0\">+</span> Throttle <span\
+      \ class=\"sy0\">*</span> UnitAccRate <span class=\"sy0\">*</span> Delta;\n\t\
+      CurRoll     <span class=\"sy0\">=</span> CurRoll     <span class=\"sy0\">+</span>\
+      \ Roll     <span class=\"sy0\">*</span> UnitAccRate <span class=\"sy0\">*</span>\
+      \ Delta;\n\t<span class=\"kw2\">if</span><span class=\"br0\">(</span>Steering<span\
+      \ class=\"sy0\">==</span><span class=\"nu0\">0</span><span class=\"br0\">)</span>\n\
+      \t\tCurSteering<span class=\"sy0\">=</span><span class=\"nu0\">0</span>;\n\t\
+      <span class=\"kw2\">if</span><span class=\"br0\">(</span>Throttle<span class=\"\
+      sy0\">==</span><span class=\"nu0\">0</span><span class=\"br0\">)</span>\n\t\t\
+      CurThrottle<span class=\"sy0\">=</span><span class=\"nu0\">0</span>;\n\t<span\
+      \ class=\"kw2\">if</span><span class=\"br0\">(</span>Roll<span class=\"sy0\"\
+      >==</span><span class=\"nu0\">0</span><span class=\"br0\">)</span>\n\t\tCurRoll<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0</span>;\n \n\t<span class=\"kw2\"\
+      >if</span><span class=\"br0\">(</span><span class=\"kw3\">Abs</span><span class=\"\
+      br0\">(</span>CurSteering<span class=\"br0\">)</span><span class=\"sy0\">&gt;</span><span\
+      \ class=\"kw3\">Abs</span><span class=\"br0\">(</span>Steering<span class=\"\
+      br0\">)</span><span class=\"br0\">)</span>\n\t\tCurSteering<span class=\"sy0\"\
+      >=</span>Steering;\n\t<span class=\"kw2\">if</span><span class=\"br0\">(</span><span\
+      \ class=\"kw3\">Abs</span><span class=\"br0\">(</span>CurThrottle<span class=\"\
+      br0\">)</span><span class=\"sy0\">&gt;</span><span class=\"kw3\">Abs</span><span\
+      \ class=\"br0\">(</span>Throttle<span class=\"br0\">)</span><span class=\"br0\"\
+      >)</span>\n\t\tCurThrottle<span class=\"sy0\">=</span>Throttle;\n\t<span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span><span class=\"kw3\">Abs</span><span\
+      \ class=\"br0\">(</span>CurRoll<span class=\"br0\">)</span><span class=\"sy0\"\
+      >&gt;</span><span class=\"kw3\">Abs</span><span class=\"br0\">(</span>Roll<span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\tCurRoll<span class=\"\
+      sy0\">=</span>Roll;\n \n\t<span class=\"kw2\">if</span><span class=\"br0\">(</span>bAfterBurn<span\
+      \ class=\"br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t\tReduceAfterBurnEnergy<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>; <span class=\"co1\">//\
+      \ just made this up, put it here incase you have something like this</span>\n\
+      \t\t<span class=\"kw2\">if</span><span class=\"br0\">(</span>GetAfterburnEnergy<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span><span class=\"sy0\">&lt;=</span><span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span> <span class=\"co1\">//\
+      \ Another fictional function...</span>\n\t\t<span class=\"br0\">{</span>\n\t\
+      \t\tbAfterBurn<span class=\"sy0\">=</span><span class=\"kw6\">False</span>;\n\
+      \t\t<span class=\"br0\">}</span>\n\t\t<span class=\"kw2\">else</span>\n\t\t\
+      <span class=\"br0\">{</span>\n\t\t\tCThrust<span class=\"sy0\">=</span>AfterBurnThrust;\n\
+      \t\t<span class=\"br0\">}</span>\n\t<span class=\"br0\">}</span>\n\t<span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span>bBurn <span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"sy0\">!</span>bAfterBurn <span class=\"sy0\">&amp;&amp;</span>\
+      \ CThrust<span class=\"sy0\">!=</span><span class=\"nu0\">1</span><span class=\"\
+      br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t\tCThrust<span class=\"sy0\"\
+      >=</span><span class=\"nu0\">1</span>;\n\t<span class=\"br0\">}</span>\n\t<span\
+      \ class=\"kw2\">else</span> <span class=\"kw2\">if</span><span class=\"br0\"\
+      >(</span><span class=\"sy0\">!</span>bBurn <span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"sy0\">!</span>bAfterBurn <span class=\"sy0\">&amp;&amp;</span>\
+      \ CThrust<span class=\"sy0\">!=</span>OldThrust<span class=\"br0\">)</span>\n\
+      \t<span class=\"br0\">{</span>\n\t\tCThrust<span class=\"sy0\">=</span>OldThrust;\n\
+      \t<span class=\"br0\">}</span>\n \n\t<span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span>TempThrust<span class=\"sy0\">!=-</span><span class=\"nu0\">1</span>\
+      \ <span class=\"sy0\">&amp;&amp;</span> <span class=\"sy0\">!</span>bAfterBurn<span\
+      \ class=\"br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t\t<span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span><span class=\"kw3\">Abs</span><span\
+      \ class=\"br0\">(</span>CurThrust<span class=\"sy0\">-</span>TempThrust<span\
+      \ class=\"br0\">)</span><span class=\"sy0\">&lt;</span><span class=\"nu0\">0.01</span><span\
+      \ class=\"br0\">)</span>\n\t\t\tCurThrust<span class=\"sy0\">=</span>TempThrust;\n\
+      \t\t<span class=\"kw2\">if</span><span class=\"br0\">(</span>CurThrust<span\
+      \ class=\"sy0\">&gt;</span>TempThrust<span class=\"br0\">)</span>\n\t\t\tCurThrust\
+      \ <span class=\"sy0\">=</span> CurThrust <span class=\"sy0\">-</span> UnitAccRate\
+      \ <span class=\"sy0\">*</span> Delta <span class=\"sy0\">/</span> <span class=\"\
+      nu0\">4</span>; \n\t\t\t<span class=\"co1\">// I made linear acceleration 4\
+      \ times slower than rotation, you can do whatever you want though</span>\n\t\
+      \t<span class=\"kw2\">else</span> <span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span>CurThrust<span class=\"sy0\">&lt;</span>TempThrust<span class=\"\
+      br0\">)</span>\n\t\t\tCurThrust <span class=\"sy0\">=</span> CurThrust <span\
+      \ class=\"sy0\">+</span> UnitAccRate <span class=\"sy0\">*</span> Delta <span\
+      \ class=\"sy0\">/</span> <span class=\"nu0\">4</span>;\n\t<span class=\"br0\"\
+      >}</span>\n\t<span class=\"kw2\">else</span> <span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span>CurThrust<span class=\"sy0\">!=</span>CThrust <span\
+      \ class=\"sy0\">&amp;&amp;</span> <span class=\"sy0\">!</span>bAfterBurn<span\
+      \ class=\"br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t\t<span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span><span class=\"kw3\">Abs</span><span\
+      \ class=\"br0\">(</span>CurThrust<span class=\"sy0\">-</span>CThrust<span class=\"\
+      br0\">)</span><span class=\"sy0\">&lt;</span><span class=\"nu0\">0.01</span><span\
+      \ class=\"br0\">)</span>\n\t\t\tCurThrust<span class=\"sy0\">=</span>CThrust;\n\
+      \t\t<span class=\"kw2\">else</span> <span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span>CurThrust<span class=\"sy0\">&gt;</span>CThrust<span class=\"\
+      br0\">)</span>\n\t\t\tCurThrust <span class=\"sy0\">=</span> CurThrust <span\
+      \ class=\"sy0\">-</span> UnitAccRate <span class=\"sy0\">*</span> Delta <span\
+      \ class=\"sy0\">/</span> <span class=\"nu0\">4</span>;\n\t\t<span class=\"kw2\"\
+      >else</span> <span class=\"kw2\">if</span><span class=\"br0\">(</span>CurThrust<span\
+      \ class=\"sy0\">&lt;</span>CThrust<span class=\"br0\">)</span>\n\t\t\tCurThrust\
+      \ <span class=\"sy0\">=</span> CurThrust <span class=\"sy0\">+</span> UnitAccRate\
+      \ <span class=\"sy0\">*</span> Delta <span class=\"sy0\">/</span> <span class=\"\
+      nu0\">4</span>;\n\t<span class=\"br0\">}</span>\n\t<span class=\"kw2\">else</span>\
+      \ <span class=\"kw2\">if</span><span class=\"br0\">(</span>CurThrust<span class=\"\
+      sy0\">!=</span>CThrust <span class=\"sy0\">&amp;&amp;</span> bAfterBurn<span\
+      \ class=\"br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t\t<span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span><span class=\"kw3\">Abs</span><span\
+      \ class=\"br0\">(</span>CurThrust<span class=\"sy0\">-</span>CThrust<span class=\"\
+      br0\">)</span><span class=\"sy0\">&lt;</span><span class=\"nu0\">0.01</span><span\
+      \ class=\"br0\">)</span>\n\t\t\tCurThrust<span class=\"sy0\">=</span>CThrust;\n\
+      \t\t<span class=\"kw2\">else</span> <span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span>CurThrust<span class=\"sy0\">&gt;</span>CThrust<span class=\"\
+      br0\">)</span>\n\t\t\tCurThrust <span class=\"sy0\">=</span> CurThrust <span\
+      \ class=\"sy0\">-</span> UnitAccRate <span class=\"sy0\">*</span> Delta <span\
+      \ class=\"sy0\">/</span> <span class=\"nu0\">2.2</span>; <span class=\"co1\"\
+      >// Acceleration with afterburner a lot faster</span>\n\t\t<span class=\"kw2\"\
+      >else</span> <span class=\"kw2\">if</span><span class=\"br0\">(</span>CurThrust<span\
+      \ class=\"sy0\">&lt;</span>CThrust<span class=\"br0\">)</span>\n\t\t\tCurThrust\
+      \ <span class=\"sy0\">=</span> CurThrust <span class=\"sy0\">+</span> UnitAccRate\
+      \ <span class=\"sy0\">*</span> Delta <span class=\"sy0\">/</span> <span class=\"\
+      nu0\">2.2</span>;\n\t<span class=\"br0\">}</span>\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"kw1\">simulated</span> <span class=\"kw1\">function</span>\
+      \ UpdateExtraForce<span class=\"br0\">(</span><span class=\"kw5\">float</span>\
+      \ Delta<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"\
+      kw1\">local</span> <span class=\"kw5\">vector</span> worldForward, worldDown,\
+      \ worldLeft;\n \n\tworldForward <span class=\"sy0\">=</span> <span class=\"\
+      kw3\">vect</span><span class=\"br0\">(</span><span class=\"nu0\">1</span>, <span\
+      \ class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">&gt;&gt;</span> <span class=\"kw7\">Rotation</span>;\n\
+      \tworldDown <span class=\"sy0\">=</span> <span class=\"kw3\">vect</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>,\
+      \ <span class=\"sy0\">-</span><span class=\"nu0\">1</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">&gt;&gt;</span> <span class=\"kw7\">Rotation</span>;\n\
+      \tworldLeft <span class=\"sy0\">=</span> <span class=\"kw3\">vect</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">0</span>, <span class=\"sy0\">-</span><span\
+      \ class=\"nu0\">1</span>, <span class=\"nu0\">0</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">&gt;&gt;</span> <span class=\"kw7\">Rotation</span>;\n\
+      \ \n\tExtraForce <span class=\"sy0\">=</span> ExtraForce <span class=\"sy0\"\
+      >+</span> worldForward <span class=\"sy0\">*</span> ForwardThrust <span class=\"\
+      sy0\">*</span> Delta <span class=\"sy0\">*</span> CurThrust; <span class=\"\
+      co1\">// Speed</span>\n\tExtraTorque <span class=\"sy0\">=</span> ExtraTorque\
+      \ <span class=\"sy0\">+</span> worldDown <span class=\"sy0\">*</span> TurnRate\
+      \ <span class=\"sy0\">*</span> Delta <span class=\"sy0\">*</span> CurSteering;\
+      \ <span class=\"co1\">// Yaw</span>\n\tExtraTorque <span class=\"sy0\">=</span>\
+      \ ExtraTorque <span class=\"sy0\">+</span> worldLeft <span class=\"sy0\">*</span>\
+      \ TurnRate <span class=\"sy0\">*</span> Delta <span class=\"sy0\">*</span> CurThrottle;\
+      \ <span class=\"co1\">// Pitch</span>\n\tExtraTorque <span class=\"sy0\">=</span>\
+      \ ExtraTorque <span class=\"sy0\">+</span> worldForward <span class=\"sy0\"\
+      >*</span> TurnRate <span class=\"sy0\">*</span> Delta <span class=\"sy0\">*</span>\
+      \ <span class=\"sy0\">-</span>CurRoll; <span class=\"co1\">// Roll</span>\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">simulated</span> <span\
+      \ class=\"kw1\">event</span> <span class=\"kw4\">KApplyForce</span><span class=\"\
+      br0\">(</span><span class=\"kw1\">out</span> <span class=\"kw5\">vector</span>\
+      \ Force, <span class=\"kw1\">out</span> <span class=\"kw5\">vector</span> Torque<span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"co1\"\
+      >// This actually does the applying of the piled up force</span>\n\tForce <span\
+      \ class=\"sy0\">=</span> ExtraForce;\n\tTorque <span class=\"sy0\">=</span>\
+      \ ExtraTorque;\n\tExtraForce <span class=\"sy0\">=</span> <span class=\"kw3\"\
+      >vect</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>,<span class=\"\
+      nu0\">0</span>,<span class=\"nu0\">0</span><span class=\"br0\">)</span>;\n\t\
+      ExtraTorque <span class=\"sy0\">=</span> <span class=\"kw3\">vect</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">0</span>,<span class=\"nu0\">0</span>,<span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"kw1\">DefaultProperties</span>\n<span class=\"br0\">{</span>\n\
+      \     <span class=\"co1\">// Create Karma collision Params for ourselves, you\
+      \ can change whatever you want here</span>\n     <span class=\"kw2\">Begin</span>\
+      \ <span class=\"kw8\">Object</span> <span class=\"kw1\">Class</span><span class=\"\
+      sy0\">=</span><span class=\"kw8\">KarmaParamsRBFull</span> <span class=\"kw5\"\
+      >Name</span><span class=\"sy0\">=</span>KParams0\n         KLinearDamping<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">2.000</span>;\n         KAngularDamping<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">2.000</span>;\n         KStartEnabled<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">True</span>\n         bHighDetailOnly<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">False</span>\n         bClientOnly<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">False</span>\n         bKDoubleTickRate<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">False</span>\n         KFriction<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">1.600000</span>\n         KActorGravScale\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">0.0</span>;\n\t KMass<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">2</span>;\n         <span class=\"\
+      kw5\">Name</span><span class=\"sy0\">=</span><span class=\"st0\">\"KParams0\"\
+      </span>\n     End <span class=\"kw8\">Object</span>\n     KParams<span class=\"\
+      sy0\">=</span><span class=\"kw8\">KarmaParamsRBFull</span><span class=\"st0\"\
+      >'&lt;MyPackage&gt;.&lt;MyShipClass&gt;.KParams0'</span>\n \n     <span class=\"\
+      co1\">// And just some other variables:</span>\n     TurnRate<span class=\"\
+      sy0\">=</span><span class=\"nu0\">8</span>\n     ForwardThrust<span class=\"\
+      sy0\">=</span><span class=\"nu0\">5000</span>\n     UnitAccRate<span class=\"\
+      sy0\">=</span><span class=\"nu0\">2.0</span>\n     AfterBurnThrust<span class=\"\
+      sy0\">=</span><span class=\"nu0\">1.20</span> <span class=\"co1\">// basically\
+      \ means that afterburner goes at 120% of regular maximum speed</span>\n<span\
+      \ class=\"br0\">}</span></pre></div>\n</div>\n<p>and that should be it, i hope\
+      \ i didnt miss anything...</p>\n<p><b>Spark:</b> KParams=KarmaParamsRBFull'&lt;MyPackage&gt;.&lt;MyShipClass&gt;.KParams0'\
+      \ &lt;– Is this supposed to be a trap?&#160;;) Took me a while to figure out\
+      \ that my ship didn't fly because this wasn't set to KParams0 and thus wasn't\
+      \ enabled at all.&#160;:)</p>\n<p><b>Sir_Brizz:</b> Zep, did you end up getting\
+      \ your Quaternion working for the indicator? I have a few ideas that work if\
+      \ you want to know what they are.</p>\n<p><b>ProjectX:</b> I'm a n00b to coding,\
+      \ but is it possible to take this code, and change it to create a \"hovering\
+      \ vehicles\" class, that basicly, wont go a certan height above ground, but,\
+      \ from high jumps, etc., go lower to the ground? I also saw that there was 3\
+      \ types of thrust, is it possible to bind a key that will cycle through the\
+      \ flying types (for more precise flying, eg. for dog matches and realism)?</p>\n\
+      <p><b>NickR:</b> Does anyone have a working example of a flying vehicle?</p>\n\
+      <p><b>Foxpaw:</b> I do, but my mod is still quite a ways from release. The code\
+      \ above allegedly is working code for a flying vehicle, though I've never tested\
+      \ it.</p>\n<p><b>LiKeMiKeS:</b> I've tried many times compiling this KShip script\
+      \ and have ended up with an error for the ShipState 'struct' &amp; 'var' references\
+      \ obscuring each other and haven't been able to figure out a clean fix so it\
+      \ will compile - without creating another unneeded var instance or reference.\
+      \ I'm still learning the nuances of uscript, so it's difficult to debug atm.</p>\n\
+      <p><b>Brold9999:</b> I tried the above code long ago and it didn't seem to work.\
+      \ I have gotten a lot of questions on my mod, UT Space Battle, as to how I implemented\
+      \ the vehicles. I did not use a Karma or PhysX based approach but that is what\
+      \ most of the people who have asked me about this seem to be looking for. I\
+      \ have taken the code above and hammered away at it until it works. I ripped\
+      \ out many unnecessary sections (such as afterburner) which only cluttered the\
+      \ salient concepts of implementing a 6DOF vehicle. The new version should compile\
+      \ and work out-of-the-box and has (mostly) working netcode. Some tweaks are\
+      \ still necessary to make a vehicle suitable for a mod but this one does the\
+      \ basics that seem to trip most people up when they try to implement a 6DOF\
+      \ vehicle. KShip is the base 6DOF vehicle, FlyingDog is a butchered Bulldog\
+      \ which is based on KShip. Code follows:</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">class</span> KShip <span class=\"kw1\">extends</span>\
+      \ <span class=\"kw9\">KVehicle</span>;\n \n<span class=\"co1\">// Used for Karma\
+      \ forces pileup</span>\n<span class=\"co1\">// Add to these variables to apply\
+      \ force and torque to the ship.</span>\n<span class=\"kw1\">var</span> <span\
+      \ class=\"kw5\">vector</span> extraForce, extraTorque;\n \n<span class=\"co1\"\
+      >// Amount to increment/decrement shipSteering.roll for every click of the mouse\
+      \ wheel.</span>\n<span class=\"kw1\">var</span> <span class=\"kw5\">float</span>\
+      \ rollUnit;\n<span class=\"co1\">// Desired rotation torque is reduced each\
+      \ tick. This factor controls how rapidly old inputs decay.</span>\n<span class=\"\
+      kw1\">var</span> <span class=\"kw5\">float</span> turnDecayTime;\n<span class=\"\
+      co1\">// Amount of rotation torque to apply for a given amount of mouse movement.</span>\n\
+      <span class=\"kw1\">var</span> <span class=\"kw5\">float</span> turnSensitivity;\n\
+      <span class=\"co1\">// Maximum amount of rotation torque that can be accumulated.</span>\n\
+      <span class=\"kw1\">var</span> <span class=\"kw5\">float</span> maximumTurnRate;\n\
+      <span class=\"co1\">// Maximum linear thrust the ship can apply.</span>\n<span\
+      \ class=\"kw1\">var</span> <span class=\"kw5\">float</span> maximumThrust;\n\
+      \ \n<span class=\"co1\">// Desired torque on the ship - relative to it's current\
+      \ rotation.</span>\n<span class=\"kw1\">var</span> <span class=\"kw5\">rotator</span>\
+      \ shipSteering;\n<span class=\"co1\">// Desired linear thrust to apply to the\
+      \ ship - not relative to it's current rotation.</span>\n<span class=\"kw1\"\
+      >var</span> <span class=\"kw5\">vector</span> shipThrust;\n \n<span class=\"\
+      co1\">// Ship replication vars and functions, thanks daid!</span>\n<span class=\"\
+      kw1\">struct</span> StructShipState\n<span class=\"br0\">{</span>\n  <span class=\"\
+      kw1\">var</span> KRBVec  ChassisPosition;\n  <span class=\"kw1\">var</span>\
+      \ <span class=\"kw5\">Quat</span>    ChassisQuaternion;\n  <span class=\"kw1\"\
+      >var</span> KRBVec  ChassisLinVel;\n  <span class=\"kw1\">var</span> KRBVec\
+      \  ChassisAngVel;\n \n  <span class=\"kw1\">var</span> <span class=\"kw5\">rotator</span>\
+      \ serverSteering;\n  <span class=\"kw1\">var</span> <span class=\"kw5\">vector</span>\
+      \  serverThrust;\n \n  <span class=\"kw1\">var</span> <span class=\"kw5\">bool</span>\
+      \    bNewState; <span class=\"co1\">// Set to true whenever a new state is received\
+      \ and should be processed</span>\n<span class=\"br0\">}</span>;\n \n<span class=\"\
+      kw1\">var</span> <span class=\"kw5\">KRigidBodyState</span> ChassisState;\n\
+      <span class=\"kw1\">var</span> StructShipState ShipState; <span class=\"co1\"\
+      >// This is replicated to the ship, and processed to update all the parts.</span>\n\
+      <span class=\"kw1\">var</span> <span class=\"kw5\">bool</span> bNewShipState;\
+      \ <span class=\"co1\">// Indicated there is new data processed, and chassis\
+      \ RBState should be updated.</span>\n \n<span class=\"kw1\">var</span> <span\
+      \ class=\"kw5\">float</span> NextNetUpdateTime;  <span class=\"co1\">// Next\
+      \ time we should force an update of vehicles state.</span>\n<span class=\"kw1\"\
+      >var</span><span class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"\
+      kw5\">float</span> MaxNetUpdateInterval;\n \n<span class=\"kw1\">var</span>\
+      \ <span class=\"kw5\">int</span> AVar;<span class=\"co1\">//Just for replication,\
+      \ else the ShipState doesn't get replicated</span>\n \n<span class=\"kw1\">replication</span>\n\
+      <span class=\"br0\">{</span>\n  <span class=\"kw1\">unreliable</span> <span\
+      \ class=\"kw2\">if</span><span class=\"br0\">(</span><span class=\"kw7\">Role</span>\
+      \ <span class=\"sy0\">==</span> <span class=\"kw7\">ROLE_Authority</span><span\
+      \ class=\"br0\">)</span>\n    ShipState, AVar;\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"kw1\">simulated</span> <span class=\"kw1\">event</span> VehicleStateReceived<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \  <span class=\"kw2\">if</span><span class=\"br0\">(</span><span class=\"sy0\"\
+      >!</span>ShipState.<span class=\"me0\">bNewState</span><span class=\"br0\">)</span>\n\
+      \    <span class=\"kw2\">return</span>;\n \n  <span class=\"co1\">// Get root\
+      \ chassis info</span>\n  ChassisState.<span class=\"me0\">Position</span> <span\
+      \ class=\"sy0\">=</span> ShipState.<span class=\"me0\">ChassisPosition</span>;\n\
+      \  ChassisState.<span class=\"me0\">Quaternion</span> <span class=\"sy0\">=</span>\
+      \ ShipState.<span class=\"me0\">ChassisQuaternion</span>;\n  ChassisState.<span\
+      \ class=\"me0\">LinVel</span> <span class=\"sy0\">=</span> ShipState.<span class=\"\
+      me0\">ChassisLinVel</span>;\n  ChassisState.<span class=\"me0\">AngVel</span>\
+      \ <span class=\"sy0\">=</span> ShipState.<span class=\"me0\">ChassisAngVel</span>;\n\
+      \ \n  <span class=\"co1\">// Update control inputs</span>\n  shipSteering <span\
+      \ class=\"sy0\">=</span> ShipState.<span class=\"me0\">serverSteering</span>;\n\
+      \  shipThrust <span class=\"sy0\">=</span> ShipState.<span class=\"me0\">serverThrust</span>;\n\
+      \ \n  <span class=\"co1\">// Update flags</span>\n  ShipState.<span class=\"\
+      me0\">bNewState</span> <span class=\"sy0\">=</span> <span class=\"kw6\">false</span>;\n\
+      \  bNewShipState <span class=\"sy0\">=</span> <span class=\"kw6\">true</span>;\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">simulated</span> <span\
+      \ class=\"kw1\">event</span> <span class=\"kw5\">bool</span> KUpdateState<span\
+      \ class=\"br0\">(</span><span class=\"kw1\">out</span> <span class=\"kw5\">KRigidBodyState</span>\
+      \ newState<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n  <span\
+      \ class=\"co1\">// This should never get called on the server - but just in\
+      \ case!</span>\n  <span class=\"kw2\">if</span><span class=\"br0\">(</span><span\
+      \ class=\"kw7\">Role</span> <span class=\"sy0\">==</span> <span class=\"kw7\"\
+      >ROLE_Authority</span> <span class=\"sy0\">||</span> <span class=\"sy0\">!</span>bNewShipState<span\
+      \ class=\"br0\">)</span>\n    <span class=\"kw2\">return</span> <span class=\"\
+      kw6\">false</span>;\n \n  <span class=\"co1\">// Apply received data as new\
+      \ position of ship chassis.</span>\n  newState <span class=\"sy0\">=</span>\
+      \ ChassisState;\n  bNewShipState <span class=\"sy0\">=</span> <span class=\"\
+      kw6\">false</span>;\n \n  <span class=\"kw2\">return</span> <span class=\"kw6\"\
+      >true</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">function</span>\
+      \ PackState<span class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n  <span class=\"kw1\">local</span> <span class=\"kw5\">vector</span>\
+      \ chassisPos, chassisLinVel, chassisAngVel;\n  <span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">vector</span> oldPos, oldLinVel;\n  <span class=\"kw1\"\
+      >local</span> <span class=\"kw5\">KRigidBodyState</span> localChassisState;\n\
+      \ \n  <span class=\"co1\">// Get chassis state.</span>\n  KGetRigidBodyState<span\
+      \ class=\"br0\">(</span>localChassisState<span class=\"br0\">)</span>;\n \n\
+      \  chassisPos <span class=\"sy0\">=</span> KRBVecToVector<span class=\"br0\"\
+      >(</span>localChassisState.<span class=\"me0\">Position</span><span class=\"\
+      br0\">)</span>;\n  chassisLinVel <span class=\"sy0\">=</span> KRBVecToVector<span\
+      \ class=\"br0\">(</span>localChassisState.<span class=\"me0\">LinVel</span><span\
+      \ class=\"br0\">)</span>;\n  chassisAngVel <span class=\"sy0\">=</span> KRBVecToVector<span\
+      \ class=\"br0\">(</span>localChassisState.<span class=\"me0\">AngVel</span><span\
+      \ class=\"br0\">)</span>;\n \n  <span class=\"co1\">// Last position we sent</span>\n\
+      \  oldPos <span class=\"sy0\">=</span> KRBVectoVector<span class=\"br0\">(</span>ShipState.<span\
+      \ class=\"me0\">ChassisPosition</span><span class=\"br0\">)</span>;\n  oldLinVel\
+      \ <span class=\"sy0\">=</span> KRBVectoVector<span class=\"br0\">(</span>ShipState.<span\
+      \ class=\"me0\">ChassisLinVel</span><span class=\"br0\">)</span>;\n \n  <span\
+      \ class=\"co1\">// See if state has changed enough, or enough time has passed,\
+      \ that we </span>\n  <span class=\"co1\">// should send out another update by\
+      \ updating the state struct.</span>\n  <span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span> <span class=\"sy0\">!</span>KIsAwake<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span> <span class=\"br0\">)</span>\n  <span class=\"br0\"\
+      >{</span>\n    <span class=\"kw2\">return</span>; <span class=\"co1\">// Never\
+      \ send updates if physics is at rest</span>\n  <span class=\"br0\">}</span>\n\
+      \ \n  <span class=\"kw2\">if</span><span class=\"br0\">(</span> <span class=\"\
+      kw3\">VSize</span><span class=\"br0\">(</span>oldPos <span class=\"sy0\">-</span>\
+      \ chassisPos<span class=\"br0\">)</span> <span class=\"sy0\">&gt;</span> <span\
+      \ class=\"nu0\">5</span> <span class=\"sy0\">||</span>\n    <span class=\"kw3\"\
+      >VSize</span><span class=\"br0\">(</span>oldLinVel <span class=\"sy0\">-</span>\
+      \ chassisLinVel<span class=\"br0\">)</span> <span class=\"sy0\">&gt;</span>\
+      \ <span class=\"nu0\">1</span> <span class=\"sy0\">||</span>\n    <span class=\"\
+      kw3\">abs</span><span class=\"br0\">(</span>shipState.<span class=\"me0\">serverSteering</span>.<span\
+      \ class=\"me0\">yaw</span> <span class=\"sy0\">-</span> shipSteering.<span class=\"\
+      me0\">yaw</span><span class=\"br0\">)</span> <span class=\"sy0\">&gt;</span>\
+      \ <span class=\"nu0\">0.1</span> <span class=\"sy0\">||</span>\n    <span class=\"\
+      kw3\">abs</span><span class=\"br0\">(</span>shipState.<span class=\"me0\">serverSteering</span>.<span\
+      \ class=\"me0\">pitch</span> <span class=\"sy0\">-</span> shipSteering.<span\
+      \ class=\"me0\">pitch</span><span class=\"br0\">)</span> <span class=\"sy0\"\
+      >&gt;</span> <span class=\"nu0\">0.1</span> <span class=\"sy0\">||</span>\n\
+      \    <span class=\"kw3\">abs</span><span class=\"br0\">(</span>shipState.<span\
+      \ class=\"me0\">serverSteering</span>.<span class=\"me0\">roll</span> <span\
+      \ class=\"sy0\">-</span> shipSteering.<span class=\"me0\">roll</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">&gt;</span> <span class=\"nu0\">0.1</span>\
+      \ <span class=\"sy0\">||</span>\n    <span class=\"kw3\">VSize</span><span class=\"\
+      br0\">(</span>shipState.<span class=\"me0\">serverThrust</span> <span class=\"\
+      sy0\">-</span> shipThrust<span class=\"br0\">)</span> <span class=\"sy0\">&gt;</span>\
+      \ <span class=\"nu0\">1</span> <span class=\"sy0\">||</span>\n    <span class=\"\
+      kw7\">Level</span>.<span class=\"me0\">TimeSeconds</span> <span class=\"sy0\"\
+      >&gt;</span> NextNetUpdateTime <span class=\"br0\">)</span>\n  <span class=\"\
+      br0\">{</span>\n    NextNetUpdateTime <span class=\"sy0\">=</span> <span class=\"\
+      kw7\">Level</span>.<span class=\"me0\">TimeSeconds</span> <span class=\"sy0\"\
+      >+</span> MaxNetUpdateInterval;\n  <span class=\"br0\">}</span>\n  <span class=\"\
+      kw2\">else</span>\n  <span class=\"br0\">{</span>\n    <span class=\"kw2\">return</span>;\n\
+      \  <span class=\"br0\">}</span>\n \n  ShipState.<span class=\"me0\">ChassisPosition</span>\
+      \ <span class=\"sy0\">=</span> localChassisState.<span class=\"me0\">Position</span>;\n\
+      \  ShipState.<span class=\"me0\">ChassisQuaternion</span> <span class=\"sy0\"\
+      >=</span> localChassisState.<span class=\"me0\">Quaternion</span>;\n  ShipState.<span\
+      \ class=\"me0\">ChassisLinVel</span> <span class=\"sy0\">=</span> localChassisState.<span\
+      \ class=\"me0\">LinVel</span>;\n  ShipState.<span class=\"me0\">ChassisAngVel</span>\
+      \ <span class=\"sy0\">=</span> localChassisState.<span class=\"me0\">AngVel</span>;\n\
+      \ \n  shipState.<span class=\"me0\">serverSteering</span> <span class=\"sy0\"\
+      >=</span> shipSteering;\n  shipState.<span class=\"me0\">serverThrust</span>\
+      \ <span class=\"sy0\">=</span> shipThrust;\n \n  <span class=\"co1\">// This\
+      \ flag lets the client know this data is new.</span>\n  ShipState.<span class=\"\
+      me0\">bNewState</span> <span class=\"sy0\">=</span> <span class=\"kw6\">true</span>;\n\
+      \  <span class=\"co1\">//Make sure ShipState gets replicated</span>\n  AVar<span\
+      \ class=\"sy0\">++</span>;\n  <span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span>AVar <span class=\"sy0\">&gt;</span> <span class=\"nu0\">10</span><span\
+      \ class=\"br0\">)</span>\n    AVar<span class=\"sy0\">=</span><span class=\"\
+      nu0\">0</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">simulated</span>\
+      \ <span class=\"kw1\">function</span> setInitialState<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span> <span class=\"br0\">{</span>\n  <span class=\"kw6\"\
+      >super</span>.<span class=\"me0\">setInitialState</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>;\n \n  <span class=\"co1\">// don't disable\
+      \ my tick!</span>\n  <span class=\"kw3\">enable</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'tick'</span><span class=\"br0\">)</span>;\n<span class=\"br0\"\
+      >}</span>\n \n \n<span class=\"kw1\">simulated</span> <span class=\"kw1\">event</span>\
+      \ drivingStatusChanged<span class=\"br0\">(</span><span class=\"br0\">)</span>\
+      \ <span class=\"br0\">{</span>\n  <span class=\"kw6\">super</span>.<span class=\"\
+      me0\">drivingStatusChanged</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n \n  <span class=\"co1\">// don't disable my tick!</span>\n\
+      \  <span class=\"kw3\">enable</span><span class=\"br0\">(</span><span class=\"\
+      st0\">'tick'</span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"kw1\">function</span> KDriverEnter<span class=\"br0\">(</span><span\
+      \ class=\"kw9\">Pawn</span> P<span class=\"br0\">)</span> <span class=\"br0\"\
+      >{</span>\n  <span class=\"kw6\">super</span>.<span class=\"me0\">KDriverEnter</span><span\
+      \ class=\"br0\">(</span>p<span class=\"br0\">)</span>;\n \n  <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span><span class=\"kw9\">PlayerController</span><span\
+      \ class=\"br0\">(</span><span class=\"kw9\">controller</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">!=</span> <span class=\"kw5\">none</span><span\
+      \ class=\"br0\">)</span>\n    <span class=\"kw9\">controller</span>.<span class=\"\
+      kw3\">gotoState</span><span class=\"br0\">(</span>landMovementState<span class=\"\
+      br0\">)</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">simulated</span>\
+      \ <span class=\"kw1\">function</span> prevWeapon<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span> <span class=\"br0\">{</span>\n  shipSteering.<span\
+      \ class=\"me0\">roll</span> <span class=\"sy0\">=</span> <span class=\"kw3\"\
+      >fclamp</span><span class=\"br0\">(</span>shipSteering.<span class=\"me0\">roll</span>\
+      \ <span class=\"sy0\">-</span> <span class=\"br0\">(</span>rollUnit <span class=\"\
+      sy0\">*</span> turnSensitivity<span class=\"br0\">)</span>, <span class=\"sy0\"\
+      >-</span>maximumTurnRate, maximumTurnRate<span class=\"br0\">)</span>;\n<span\
+      \ class=\"br0\">}</span>\n \n<span class=\"kw1\">simulated</span> <span class=\"\
+      kw1\">function</span> nextWeapon<span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span> <span class=\"br0\">{</span>\n  shipSteering.<span class=\"me0\">roll</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"kw3\">fclamp</span><span class=\"\
+      br0\">(</span>shipSteering.<span class=\"me0\">roll</span> <span class=\"sy0\"\
+      >+</span> <span class=\"br0\">(</span>rollUnit <span class=\"sy0\">*</span>\
+      \ turnSensitivity<span class=\"br0\">)</span>, <span class=\"sy0\">-</span>maximumTurnRate,\
+      \ maximumTurnRate<span class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"kw1\">simulated</span> <span class=\"kw1\">function</span>\
+      \ updateRocketAcceleration<span class=\"br0\">(</span><span class=\"kw5\">float</span>\
+      \ deltaTime, <span class=\"kw5\">float</span> yawChange, <span class=\"kw5\"\
+      >float</span> pitchChange<span class=\"br0\">)</span> <span class=\"br0\">{</span>\n\
+      \  <span class=\"kw2\">if</span> <span class=\"br0\">(</span>deltaTime <span\
+      \ class=\"sy0\">&gt;=</span> turnDecayTime<span class=\"br0\">)</span>\n   \
+      \ shipSteering <span class=\"sy0\">=</span> <span class=\"kw3\">rot</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">0</span>,<span class=\"nu0\">0</span>,<span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span>;\n  <span class=\"kw2\"\
+      >else</span>\n    shipSteering <span class=\"sy0\">*=</span> <span class=\"\
+      br0\">(</span>turnDecayTime<span class=\"sy0\">-</span>deltaTime<span class=\"\
+      br0\">)</span> <span class=\"sy0\">/</span> turnDecayTime;\n \n  <span class=\"\
+      co1\">// / 6000 because the aForward, etc. are 6000 by default when the appropriate\
+      \ button is pressed.</span>\n  shipThrust <span class=\"sy0\">=</span> <span\
+      \ class=\"br0\">(</span><span class=\"br0\">(</span><span class=\"br0\">(</span><span\
+      \ class=\"kw3\">vect</span><span class=\"br0\">(</span><span class=\"nu0\">1</span>,<span\
+      \ class=\"nu0\">0</span>,<span class=\"nu0\">0</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">*</span> <span class=\"kw9\">PlayerController</span><span\
+      \ class=\"br0\">(</span><span class=\"kw9\">Controller</span><span class=\"\
+      br0\">)</span>.<span class=\"me0\">aForward</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">+</span> <span class=\"br0\">(</span><span class=\"kw3\"\
+      >vect</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>,<span class=\"\
+      nu0\">1</span>,<span class=\"nu0\">0</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">*</span> <span class=\"kw9\">PlayerController</span><span class=\"\
+      br0\">(</span><span class=\"kw9\">Controller</span><span class=\"br0\">)</span>.<span\
+      \ class=\"me0\">aStrafe</span><span class=\"br0\">)</span> <span class=\"sy0\"\
+      >+</span> <span class=\"br0\">(</span><span class=\"kw3\">vect</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">0</span>,<span class=\"nu0\">0</span>,<span\
+      \ class=\"nu0\">1</span><span class=\"br0\">)</span> <span class=\"sy0\">*</span>\
+      \ <span class=\"kw9\">PlayerController</span><span class=\"br0\">(</span><span\
+      \ class=\"kw9\">Controller</span><span class=\"br0\">)</span>.<span class=\"\
+      me0\">aUp</span><span class=\"br0\">)</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">/</span> <span class=\"nu0\">6000</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">&gt;&gt;</span> <span class=\"kw7\">rotation</span>;\n\
+      \  <span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      kw3\">vsize</span><span class=\"br0\">(</span>shipThrust<span class=\"br0\"\
+      >)</span> <span class=\"sy0\">&gt;</span> <span class=\"nu0\">1</span><span\
+      \ class=\"br0\">)</span>\n    shipThrust <span class=\"sy0\">=</span> <span\
+      \ class=\"kw3\">normal</span><span class=\"br0\">(</span>shipThrust<span class=\"\
+      br0\">)</span>;\n \n  shipSteering.<span class=\"me0\">yaw</span> <span class=\"\
+      sy0\">=</span> <span class=\"kw3\">fclamp</span><span class=\"br0\">(</span>shipSteering.<span\
+      \ class=\"me0\">yaw</span> <span class=\"sy0\">-</span> <span class=\"br0\"\
+      >(</span>yawChange <span class=\"sy0\">*</span> turnSensitivity<span class=\"\
+      br0\">)</span>, <span class=\"sy0\">-</span>maximumTurnRate, maximumTurnRate<span\
+      \ class=\"br0\">)</span>;\n  shipSteering.<span class=\"me0\">pitch</span> <span\
+      \ class=\"sy0\">=</span> <span class=\"kw3\">fclamp</span><span class=\"br0\"\
+      >(</span>shipSteering.<span class=\"me0\">pitch</span> <span class=\"sy0\">+</span>\
+      \ <span class=\"br0\">(</span>pitchChange <span class=\"sy0\">*</span> turnSensitivity<span\
+      \ class=\"br0\">)</span>, <span class=\"sy0\">-</span>maximumTurnRate, maximumTurnRate<span\
+      \ class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\"\
+      >simulated</span> <span class=\"kw1\">function</span> <span class=\"kw4\">tick</span><span\
+      \ class=\"br0\">(</span><span class=\"kw5\">float</span> delta<span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>  <span class=\"kw6\">super</span>.<span\
+      \ class=\"kw4\">tick</span><span class=\"br0\">(</span>delta<span class=\"br0\"\
+      >)</span>;\n \n  <span class=\"kw2\">if</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw9\">controller</span> <span class=\"sy0\">==</span> <span class=\"\
+      kw5\">none</span><span class=\"br0\">)</span> <span class=\"br0\">{</span>\n\
+      \    shipThrust <span class=\"sy0\">=</span> <span class=\"kw3\">vect</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">0</span>,<span class=\"nu0\">0</span>,<span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span>;\n    shipSteering <span\
+      \ class=\"sy0\">=</span> <span class=\"kw3\">rot</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">0</span>,<span class=\"nu0\">0</span>,<span class=\"nu0\">0</span><span\
+      \ class=\"br0\">)</span>;\n  <span class=\"br0\">}</span>\n \n  <span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span><span class=\"sy0\">!</span>KIsAwake<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"kw9\">controller</span> <span class=\"sy0\">!=</span> <span\
+      \ class=\"kw5\">none</span><span class=\"br0\">)</span>\n    KWake<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n \n  <span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span><span class=\"kw7\">Role</span> <span class=\"sy0\"\
+      >==</span> <span class=\"kw7\">ROLE_Authority</span> <span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"kw7\">Level</span>.<span class=\"me0\">NetMode</span> <span\
+      \ class=\"sy0\">!=</span> NM_StandAlone<span class=\"br0\">)</span>\n    PackState<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n \n  updateExtraForce<span\
+      \ class=\"br0\">(</span>delta<span class=\"br0\">)</span>;\n<span class=\"br0\"\
+      >}</span>\n \n<span class=\"kw1\">simulated</span> <span class=\"kw1\">function</span>\
+      \ updateExtraForce<span class=\"br0\">(</span><span class=\"kw5\">float</span>\
+      \ delta<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"\
+      kw1\">local</span> <span class=\"kw5\">vector</span> worldForward, worldDown,\
+      \ worldLeft;\n \n  worldForward <span class=\"sy0\">=</span> <span class=\"\
+      kw3\">vect</span><span class=\"br0\">(</span><span class=\"nu0\">1</span>, <span\
+      \ class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">&gt;&gt;</span> <span class=\"kw7\">Rotation</span>;\n\
+      \  worldDown <span class=\"sy0\">=</span> <span class=\"kw3\">vect</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>,\
+      \ <span class=\"sy0\">-</span><span class=\"nu0\">1</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">&gt;&gt;</span> <span class=\"kw7\">Rotation</span>;\n\
+      \  worldLeft <span class=\"sy0\">=</span> <span class=\"kw3\">vect</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">0</span>, <span class=\"sy0\">-</span><span\
+      \ class=\"nu0\">1</span>, <span class=\"nu0\">0</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">&gt;&gt;</span> <span class=\"kw7\">Rotation</span>;\n\
+      \ \n  ExtraForce <span class=\"sy0\">=</span> ExtraForce <span class=\"sy0\"\
+      >+</span> shipThrust <span class=\"sy0\">*</span> maximumThrust <span class=\"\
+      sy0\">*</span> delta; <span class=\"co1\">// Speed</span>\n  ExtraTorque <span\
+      \ class=\"sy0\">=</span> ExtraTorque <span class=\"sy0\">+</span> worldDown\
+      \ <span class=\"sy0\">*</span> shipSteering.<span class=\"me0\">yaw</span> <span\
+      \ class=\"sy0\">*</span> delta; <span class=\"co1\">// Yaw</span>\n  ExtraTorque\
+      \ <span class=\"sy0\">=</span> ExtraTorque <span class=\"sy0\">-</span> worldLeft\
+      \ <span class=\"sy0\">*</span> <span class=\"sy0\">-</span>shipSteering.<span\
+      \ class=\"me0\">pitch</span> <span class=\"sy0\">*</span> delta; <span class=\"\
+      co1\">// Pitch</span>\n  ExtraTorque <span class=\"sy0\">=</span> ExtraTorque\
+      \ <span class=\"sy0\">+</span> worldForward <span class=\"sy0\">*</span> <span\
+      \ class=\"sy0\">-</span>shipSteering.<span class=\"me0\">roll</span> <span class=\"\
+      sy0\">*</span> delta; <span class=\"co1\">// Roll</span>\n<span class=\"br0\"\
+      >}</span>\n \n<span class=\"kw1\">simulated</span> <span class=\"kw1\">event</span>\
+      \ <span class=\"kw4\">KApplyForce</span><span class=\"br0\">(</span><span class=\"\
+      kw1\">out</span> <span class=\"kw5\">vector</span> Force, <span class=\"kw1\"\
+      >out</span> <span class=\"kw5\">vector</span> Torque<span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n  <span class=\"co1\">// This actually does the\
+      \ applying of the piled up force</span>\n  Force <span class=\"sy0\">=</span>\
+      \ ExtraForce;\n  Torque <span class=\"sy0\">=</span> ExtraTorque;\n  ExtraForce\
+      \ <span class=\"sy0\">=</span> <span class=\"kw3\">vect</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">0</span>,<span class=\"nu0\">0</span>,<span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span>;\n  ExtraTorque <span class=\"\
+      sy0\">=</span> <span class=\"kw3\">vect</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">0</span>,<span class=\"nu0\">0</span>,<span class=\"nu0\">0</span><span\
+      \ class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\"\
+      >DefaultProperties</span>\n<span class=\"br0\">{</span>\n  landMovementState<span\
+      \ class=\"sy0\">=</span>PlayerSpaceFlying\n \n  rollUnit<span class=\"sy0\"\
+      >=</span><span class=\"nu0\">1024</span>\n \n  turnDecayTime<span class=\"sy0\"\
+      >=</span><span class=\"nu0\">0.5</span>\n  turnSensitivity<span class=\"sy0\"\
+      >=</span><span class=\"nu0\">0.5</span>\n  maximumTurnRate<span class=\"sy0\"\
+      >=</span><span class=\"nu0\">5000</span>\n  maximumThrust<span class=\"sy0\"\
+      >=</span><span class=\"nu0\">2500</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"\
+      uscript source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">class</span>\
+      \ FlyingDog <span class=\"kw1\">extends</span> KShip <span class=\"kw1\">placeable</span>\
+      \ <span class=\"kw1\">CacheExempt</span>;\n \n<span class=\"co1\">// triggers\
+      \ used to get into the FlyingDog</span>\n<span class=\"kw1\">var</span> <span\
+      \ class=\"kw1\">const</span> <span class=\"kw5\">vector</span>  FrontTriggerOffset;\n\
+      <span class=\"kw1\">var</span> SVehicleTrigger  FLTrigger, FRTrigger;\n \n<span\
+      \ class=\"co1\">// Maximum speed at which you can get in the vehicle.</span>\n\
+      <span class=\"kw1\">var</span> <span class=\"br0\">(</span>FlyingDog<span class=\"\
+      br0\">)</span> <span class=\"kw5\">float</span> TriggerSpeedThresh;\n<span class=\"\
+      kw1\">var</span> <span class=\"kw5\">bool</span>      TriggerState; <span class=\"\
+      co1\">// true for on, false for off.</span>\n \n<span class=\"co1\">// Destroyed\
+      \ Buggy</span>\n<span class=\"kw1\">var</span> <span class=\"br0\">(</span>FlyingDog<span\
+      \ class=\"br0\">)</span> class<span class=\"sy0\">&lt;</span>Actor<span class=\"\
+      sy0\">&gt;</span>  DestroyedEffect;\n<span class=\"kw1\">var</span> <span class=\"\
+      br0\">(</span>FlyingDog<span class=\"br0\">)</span> <span class=\"kw5\">sound</span>\
+      \         DestroyedSound;\n \n<span class=\"co1\">// Weapon</span>\n<span class=\"\
+      kw1\">var</span>       <span class=\"kw5\">float</span> FireCountdown;\n \n\
+      <span class=\"kw1\">var</span> <span class=\"br0\">(</span>FlyingDog<span class=\"\
+      br0\">)</span> <span class=\"kw5\">float</span>   FireInterval;\n<span class=\"\
+      kw1\">var</span> <span class=\"br0\">(</span>FlyingDog<span class=\"br0\">)</span>\
+      \ <span class=\"kw5\">vector</span>  weaponFireOffset;\n \n<span class=\"kw1\"\
+      >simulated</span> <span class=\"kw1\">function</span> <span class=\"kw4\">PostNetBeginPlay</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \  <span class=\"kw1\">local</span> <span class=\"kw5\">vector</span> RotX,\
+      \ RotY, RotZ;\n \n  <span class=\"kw6\">Super</span>.<span class=\"kw4\">PostNetBeginPlay</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n \n  <span class=\"kw3\"\
+      >GetAxes</span><span class=\"br0\">(</span><span class=\"kw7\">Rotation</span>,RotX,RotY,RotZ<span\
+      \ class=\"br0\">)</span>;\n \n  <span class=\"co1\">// Only have triggers on\
+      \ server</span>\n  <span class=\"kw2\">if</span><span class=\"br0\">(</span><span\
+      \ class=\"kw7\">Level</span>.<span class=\"me0\">NetMode</span> <span class=\"\
+      sy0\">!=</span> NM_Client<span class=\"br0\">)</span>\n  <span class=\"br0\"\
+      >{</span>\n    <span class=\"co1\">// Create triggers for gettting into the\
+      \ FlyingDog</span>\n    FLTrigger <span class=\"sy0\">=</span> <span class=\"\
+      kw4\">spawn</span><span class=\"br0\">(</span><span class=\"kw1\">class</span><span\
+      \ class=\"st0\">'SVehicleTrigger'</span>, <span class=\"kw6\">self</span>,,\
+      \ <span class=\"kw7\">Location</span> <span class=\"sy0\">+</span> FrontTriggerOffset.<span\
+      \ class=\"me0\">X</span> <span class=\"sy0\">*</span> RotX <span class=\"sy0\"\
+      >+</span> FrontTriggerOffset.<span class=\"me0\">Y</span> <span class=\"sy0\"\
+      >*</span> RotY <span class=\"sy0\">+</span> FrontTriggerOffset.<span class=\"\
+      me0\">Z</span> <span class=\"sy0\">*</span> RotZ<span class=\"br0\">)</span>;\n\
+      \    FLTrigger.<span class=\"kw4\">SetBase</span><span class=\"br0\">(</span><span\
+      \ class=\"kw6\">self</span><span class=\"br0\">)</span>;\n    FLTrigger.<span\
+      \ class=\"kw4\">SetCollision</span><span class=\"br0\">(</span><span class=\"\
+      kw6\">true</span>, <span class=\"kw6\">false</span>, <span class=\"kw6\">false</span><span\
+      \ class=\"br0\">)</span>;\n \n    FRTrigger <span class=\"sy0\">=</span> <span\
+      \ class=\"kw4\">spawn</span><span class=\"br0\">(</span><span class=\"kw1\"\
+      >class</span><span class=\"st0\">'SVehicleTrigger'</span>, <span class=\"kw6\"\
+      >self</span>,, <span class=\"kw7\">Location</span> <span class=\"sy0\">+</span>\
+      \ FrontTriggerOffset.<span class=\"me0\">X</span> <span class=\"sy0\">*</span>\
+      \ RotX <span class=\"sy0\">-</span> FrontTriggerOffset.<span class=\"me0\">Y</span>\
+      \ <span class=\"sy0\">*</span> RotY <span class=\"sy0\">+</span> FrontTriggerOffset.<span\
+      \ class=\"me0\">Z</span> <span class=\"sy0\">*</span> RotZ<span class=\"br0\"\
+      >)</span>;\n    FRTrigger.<span class=\"kw4\">SetBase</span><span class=\"br0\"\
+      >(</span><span class=\"kw6\">self</span><span class=\"br0\">)</span>;\n    FRTrigger.<span\
+      \ class=\"kw4\">SetCollision</span><span class=\"br0\">(</span><span class=\"\
+      kw6\">true</span>, <span class=\"kw6\">false</span>, <span class=\"kw6\">false</span><span\
+      \ class=\"br0\">)</span>;\n \n    TriggerState <span class=\"sy0\">=</span>\
+      \ <span class=\"kw6\">true</span>;\n  <span class=\"br0\">}</span>\n \n  <span\
+      \ class=\"co1\">// If this is not 'authority' version - don't destroy it if\
+      \ there is a problem.</span>\n  <span class=\"co1\">// The network should sort\
+      \ things out.</span>\n  <span class=\"kw2\">if</span><span class=\"br0\">(</span><span\
+      \ class=\"kw7\">Role</span> <span class=\"sy0\">!=</span> <span class=\"kw7\"\
+      >ROLE_Authority</span><span class=\"br0\">)</span> <span class=\"br0\">{</span>\n\
+      \    <span class=\"kw8\">KarmaParams</span><span class=\"br0\">(</span>KParams<span\
+      \ class=\"br0\">)</span>.<span class=\"me0\">bDestroyOnSimError</span> <span\
+      \ class=\"sy0\">=</span> <span class=\"kw6\">False</span>;\n  <span class=\"\
+      br0\">}</span>\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">simulated</span>\
+      \ <span class=\"kw1\">event</span> <span class=\"kw4\">Destroyed</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \  <span class=\"co1\">// Clean up random stuff attached to the car</span>\n\
+      \  <span class=\"kw2\">if</span><span class=\"br0\">(</span><span class=\"kw7\"\
+      >Level</span>.<span class=\"me0\">NetMode</span> <span class=\"sy0\">!=</span>\
+      \ NM_Client<span class=\"br0\">)</span>\n  <span class=\"br0\">{</span>\n  \
+      \  FLTrigger.<span class=\"kw4\">Destroy</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n    FRTrigger.<span class=\"kw4\">Destroy</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n  <span class=\"br0\"\
+      >}</span>\n \n  <span class=\"kw6\">Super</span>.<span class=\"kw4\">Destroyed</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n \n  <span class=\"co1\"\
+      >// Trigger destroyed sound and effect</span>\n  <span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span><span class=\"kw7\">Level</span>.<span class=\"me0\"\
+      >NetMode</span> <span class=\"sy0\">!=</span> NM_DedicatedServer<span class=\"\
+      br0\">)</span>\n  <span class=\"br0\">{</span>\n    <span class=\"kw4\">spawn</span><span\
+      \ class=\"br0\">(</span>DestroyedEffect, <span class=\"kw6\">self</span>, ,\
+      \ <span class=\"kw7\">Location</span> <span class=\"br0\">)</span>;\n    <span\
+      \ class=\"kw4\">PlaySound</span><span class=\"br0\">(</span>DestroyedSound<span\
+      \ class=\"br0\">)</span>;\n  <span class=\"br0\">}</span>\n<span class=\"br0\"\
+      >}</span>\n \n<span class=\"kw1\">function</span> KDriverEnter<span class=\"\
+      br0\">(</span><span class=\"kw9\">Pawn</span> p<span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n  <span class=\"kw6\">Super</span>.<span class=\"\
+      me0\">KDriverEnter</span><span class=\"br0\">(</span>p<span class=\"br0\">)</span>;\n\
+      \ \n  p.<span class=\"me0\">bHidden</span> <span class=\"sy0\">=</span> <span\
+      \ class=\"kw6\">True</span>;\n  ReceiveLocalizedMessage<span class=\"br0\">(</span><span\
+      \ class=\"kw1\">class</span><span class=\"st0\">'Vehicles.BulldogMessage'</span>,\
+      \ <span class=\"nu0\">1</span><span class=\"br0\">)</span>;\n<span class=\"\
+      br0\">}</span>\n \n<span class=\"kw1\">function</span> <span class=\"kw5\">bool</span>\
+      \ KDriverLeave<span class=\"br0\">(</span><span class=\"kw5\">bool</span> bForceLeave<span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw1\"\
+      >local</span> <span class=\"kw9\">Pawn</span> OldDriver;\n \n  OldDriver <span\
+      \ class=\"sy0\">=</span> Driver;\n \n  <span class=\"co1\">// If we succesfully\
+      \ got out of the car, make driver visible again.</span>\n  <span class=\"kw2\"\
+      >if</span><span class=\"br0\">(</span> <span class=\"kw6\">Super</span>.<span\
+      \ class=\"me0\">KDriverLeave</span><span class=\"br0\">(</span>bForceLeave<span\
+      \ class=\"br0\">)</span> <span class=\"br0\">)</span>\n  <span class=\"br0\"\
+      >{</span>\n    OldDriver.<span class=\"me0\">bHidden</span> <span class=\"sy0\"\
+      >=</span> <span class=\"kw6\">false</span>;\n    <span class=\"kw9\">AmbientSound</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"kw5\">None</span>;\n    <span class=\"\
+      kw2\">return</span> <span class=\"kw6\">true</span>;\n  <span class=\"br0\"\
+      >}</span>\n  <span class=\"kw2\">else</span>\n    <span class=\"kw2\">return</span>\
+      \ <span class=\"kw6\">false</span>;\n<span class=\"br0\">}</span>\n \n<span\
+      \ class=\"kw1\">function</span> fireWeapons<span class=\"br0\">(</span><span\
+      \ class=\"kw5\">bool</span> bWasAltFire<span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n  <span class=\"kw1\">local</span> <span class=\"kw5\">vector</span>\
+      \ FireLocation;\n  <span class=\"kw1\">local</span> <span class=\"kw9\">PlayerController</span>\
+      \ PC;\n \n  <span class=\"co1\">// Client can't do firing</span>\n  <span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span><span class=\"kw7\">Role</span> <span\
+      \ class=\"sy0\">!=</span> <span class=\"kw7\">ROLE_Authority</span><span class=\"\
+      br0\">)</span>\n    <span class=\"kw2\">return</span>;\n \n  FireLocation <span\
+      \ class=\"sy0\">=</span> <span class=\"kw7\">Location</span> <span class=\"\
+      sy0\">+</span> <span class=\"br0\">(</span>weaponFireOffset <span class=\"sy0\"\
+      >&gt;&gt;</span> <span class=\"kw7\">Rotation</span><span class=\"br0\">)</span>;\n\
+      \ \n  <span class=\"kw2\">while</span><span class=\"br0\">(</span>FireCountdown\
+      \ <span class=\"sy0\">&lt;=</span> <span class=\"nu0\">0</span><span class=\"\
+      br0\">)</span>\n  <span class=\"br0\">{</span>\n    <span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span><span class=\"sy0\">!</span>bWasAltFire<span class=\"\
+      br0\">)</span>\n    <span class=\"br0\">{</span>\n      <span class=\"kw4\"\
+      >spawn</span><span class=\"br0\">(</span><span class=\"kw1\">class</span><span\
+      \ class=\"st0\">'PROJ_TurretSkaarjPlasma'</span>, <span class=\"kw6\">self</span>,\
+      \ , FireLocation, <span class=\"kw7\">rotation</span><span class=\"br0\">)</span>;\n\
+      \ \n      <span class=\"co1\">// Play firing noise</span>\n      <span class=\"\
+      kw4\">PlaySound</span><span class=\"br0\">(</span><span class=\"kw5\">Sound</span><span\
+      \ class=\"st0\">'ONSVehicleSounds-S.Laser02'</span>, <span class=\"kw7\">SLOT_None</span>,,,,,\
+      \ <span class=\"kw6\">false</span><span class=\"br0\">)</span>;\n      PC <span\
+      \ class=\"sy0\">=</span> <span class=\"kw9\">PlayerController</span><span class=\"\
+      br0\">(</span><span class=\"kw9\">Controller</span><span class=\"br0\">)</span>;\n\
+      \      <span class=\"kw2\">if</span> <span class=\"br0\">(</span>PC <span class=\"\
+      sy0\">!=</span> <span class=\"kw5\">None</span> <span class=\"sy0\">&amp;&amp;</span>\
+      \ PC.<span class=\"me0\">bEnableWeaponForceFeedback</span><span class=\"br0\"\
+      >)</span>\n        PC.<span class=\"me0\">ClientPlayForceFeedback</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">\"RocketLauncherFire\"</span><span\
+      \ class=\"br0\">)</span>;\n    <span class=\"br0\">}</span>\n    <span class=\"\
+      kw2\">else</span>\n    <span class=\"br0\">{</span>\n      <span class=\"kw4\"\
+      >spawn</span><span class=\"br0\">(</span><span class=\"kw1\">class</span><span\
+      \ class=\"st0\">'PROJ_SpaceFighter_Rocket'</span>, <span class=\"kw6\">self</span>,\
+      \ , FireLocation, <span class=\"kw5\">rotator</span><span class=\"br0\">(</span><span\
+      \ class=\"kw5\">vector</span><span class=\"br0\">(</span><span class=\"kw7\"\
+      >rotation</span><span class=\"br0\">)</span> <span class=\"sy0\">+</span> <span\
+      \ class=\"kw3\">Vrand</span><span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">*</span> <span class=\"nu0\">0.05</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>;\n \n      <span class=\"\
+      co1\">// Play firing noise</span>\n      <span class=\"kw4\">PlaySound</span><span\
+      \ class=\"br0\">(</span><span class=\"kw5\">Sound</span><span class=\"st0\"\
+      >'AssaultSounds.HnShipFire01'</span>, <span class=\"kw7\">SLOT_None</span>,,,,,\
+      \ <span class=\"kw6\">false</span><span class=\"br0\">)</span>;\n      PC <span\
+      \ class=\"sy0\">=</span> <span class=\"kw9\">PlayerController</span><span class=\"\
+      br0\">(</span><span class=\"kw9\">Controller</span><span class=\"br0\">)</span>;\n\
+      \      <span class=\"kw2\">if</span> <span class=\"br0\">(</span>PC <span class=\"\
+      sy0\">!=</span> <span class=\"kw5\">None</span> <span class=\"sy0\">&amp;&amp;</span>\
+      \ PC.<span class=\"me0\">bEnableWeaponForceFeedback</span><span class=\"br0\"\
+      >)</span>\n        PC.<span class=\"me0\">ClientPlayForceFeedback</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">\"RocketLauncherFire\"</span><span\
+      \ class=\"br0\">)</span>;\n    <span class=\"br0\">}</span>\n \n    FireCountdown\
+      \ <span class=\"sy0\">+=</span> FireInterval;\n  <span class=\"br0\">}</span>\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"co1\">// Fire a rocket (if we've\
+      \ had time to reload!)</span>\n<span class=\"kw1\">function</span> VehicleFire<span\
+      \ class=\"br0\">(</span><span class=\"kw5\">bool</span> bWasAltFire<span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw6\">Super</span>.<span\
+      \ class=\"me0\">VehicleFire</span><span class=\"br0\">(</span>bWasAltFire<span\
+      \ class=\"br0\">)</span>;\n \n  <span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span>FireCountdown <span class=\"sy0\">&lt;</span> <span class=\"nu0\"\
+      >0</span><span class=\"br0\">)</span>\n  <span class=\"br0\">{</span>\n    FireCountdown\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>;\n    fireWeapons<span\
+      \ class=\"br0\">(</span>bWasAltFire<span class=\"br0\">)</span>;\n  <span class=\"\
+      br0\">}</span>\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">simulated</span>\
+      \ <span class=\"kw1\">function</span> <span class=\"kw4\">Tick</span><span class=\"\
+      br0\">(</span><span class=\"kw5\">float</span> Delta<span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n  <span class=\"kw1\">Local</span> <span class=\"\
+      kw5\">float</span> VMag;\n \n  <span class=\"kw6\">Super</span>.<span class=\"\
+      kw4\">Tick</span><span class=\"br0\">(</span>Delta<span class=\"br0\">)</span>;\n\
+      \ \n  <span class=\"co1\">// Weapons (run on server and replicated to client)</span>\n\
+      \  <span class=\"kw2\">if</span><span class=\"br0\">(</span><span class=\"kw7\"\
+      >Role</span> <span class=\"sy0\">==</span> <span class=\"kw7\">ROLE_Authority</span><span\
+      \ class=\"br0\">)</span>\n  <span class=\"br0\">{</span>\n    <span class=\"\
+      co1\">// Countdown to next shot</span>\n    FireCountdown <span class=\"sy0\"\
+      >-=</span> Delta;\n \n    <span class=\"co1\">// This is for sustained barrages.</span>\n\
+      \    <span class=\"co1\">// Primary fire takes priority</span>\n    <span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span>bVehicleIsFiring<span class=\"br0\"\
+      >)</span>\n      fireWeapons<span class=\"br0\">(</span><span class=\"kw6\"\
+      >false</span><span class=\"br0\">)</span>;\n    <span class=\"kw2\">else</span>\
+      \ <span class=\"kw2\">if</span><span class=\"br0\">(</span>bVehicleIsAltFiring<span\
+      \ class=\"br0\">)</span>\n      fireWeapons<span class=\"br0\">(</span><span\
+      \ class=\"kw6\">true</span><span class=\"br0\">)</span>;\n  <span class=\"br0\"\
+      >}</span>\n \n  <span class=\"co1\">// Dont have triggers on network clients.</span>\n\
+      \  <span class=\"kw2\">if</span><span class=\"br0\">(</span><span class=\"kw7\"\
+      >Level</span>.<span class=\"me0\">NetMode</span> <span class=\"sy0\">!=</span>\
+      \ NM_Client<span class=\"br0\">)</span>\n  <span class=\"br0\">{</span>\n  \
+      \  <span class=\"co1\">// If vehicle is moving, disable collision for trigger.</span>\n\
+      \    VMag <span class=\"sy0\">=</span> <span class=\"kw3\">VSize</span><span\
+      \ class=\"br0\">(</span><span class=\"kw7\">Velocity</span><span class=\"br0\"\
+      >)</span>;\n \n    <span class=\"kw2\">if</span><span class=\"br0\">(</span>VMag\
+      \ <span class=\"sy0\">&lt;</span> TriggerSpeedThresh <span class=\"sy0\">&amp;&amp;</span>\
+      \ TriggerState <span class=\"sy0\">==</span> <span class=\"kw6\">false</span><span\
+      \ class=\"br0\">)</span>\n    <span class=\"br0\">{</span>\n      FLTrigger.<span\
+      \ class=\"kw4\">SetCollision</span><span class=\"br0\">(</span><span class=\"\
+      kw6\">true</span>, <span class=\"kw6\">false</span>, <span class=\"kw6\">false</span><span\
+      \ class=\"br0\">)</span>;\n      FRTrigger.<span class=\"kw4\">SetCollision</span><span\
+      \ class=\"br0\">(</span><span class=\"kw6\">true</span>, <span class=\"kw6\"\
+      >false</span>, <span class=\"kw6\">false</span><span class=\"br0\">)</span>;\n\
+      \      TriggerState <span class=\"sy0\">=</span> <span class=\"kw6\">true</span>;\n\
+      \    <span class=\"br0\">}</span>\n    <span class=\"kw2\">else</span> <span\
+      \ class=\"kw2\">if</span><span class=\"br0\">(</span>VMag <span class=\"sy0\"\
+      >&gt;</span> TriggerSpeedThresh <span class=\"sy0\">&amp;&amp;</span> TriggerState\
+      \ <span class=\"sy0\">==</span> <span class=\"kw6\">true</span><span class=\"\
+      br0\">)</span>\n    <span class=\"br0\">{</span>\n      FLTrigger.<span class=\"\
+      kw4\">SetCollision</span><span class=\"br0\">(</span><span class=\"kw6\">false</span>,\
+      \ <span class=\"kw6\">false</span>, <span class=\"kw6\">false</span><span class=\"\
+      br0\">)</span>;\n      FRTrigger.<span class=\"kw4\">SetCollision</span><span\
+      \ class=\"br0\">(</span><span class=\"kw6\">false</span>, <span class=\"kw6\"\
+      >false</span>, <span class=\"kw6\">false</span><span class=\"br0\">)</span>;\n\
+      \      TriggerState <span class=\"sy0\">=</span> <span class=\"kw6\">false</span>;\n\
+      \    <span class=\"br0\">}</span>\n  <span class=\"br0\">}</span>\n<span class=\"\
+      br0\">}</span>\n \n<span class=\"co1\">// Really simple at the moment!</span>\n\
+      <span class=\"kw1\">function</span> <span class=\"kw4\">TakeDamage</span><span\
+      \ class=\"br0\">(</span><span class=\"kw5\">int</span> Damage, <span class=\"\
+      kw9\">Pawn</span> instigatedBy, <span class=\"kw5\">Vector</span> hitlocation,\n\
+      \            <span class=\"kw5\">Vector</span> momentum, class<span class=\"\
+      sy0\">&lt;</span>DamageType<span class=\"sy0\">&gt;</span> <span class=\"kw9\"\
+      >damageType</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \  <span class=\"co1\">// Avoid damage healing the car!</span>\n  <span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span>Damage <span class=\"sy0\">&lt;</span>\
+      \ <span class=\"nu0\">0</span><span class=\"br0\">)</span>\n    <span class=\"\
+      kw2\">return</span>;\n \n  <span class=\"kw2\">if</span><span class=\"br0\"\
+      >(</span><span class=\"kw9\">damageType</span> <span class=\"sy0\">==</span>\
+      \ <span class=\"kw1\">class</span><span class=\"st0\">'DamTypeSuperShockBeam'</span><span\
+      \ class=\"br0\">)</span>\n    Health <span class=\"sy0\">-=</span> <span class=\"\
+      nu0\">100</span>; <span class=\"co1\">// Instagib doesn't work on vehicles</span>\n\
+      \  <span class=\"kw2\">else</span>\n    Health <span class=\"sy0\">-=</span>\
+      \ <span class=\"nu0\">0.5</span> <span class=\"sy0\">*</span> Damage; <span\
+      \ class=\"co1\">// Weapons do less damage</span>\n \n  <span class=\"co1\">//\
+      \ The vehicle is dead!</span>\n  <span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span>Health <span class=\"sy0\">&lt;=</span> <span class=\"nu0\">0</span><span\
+      \ class=\"br0\">)</span>\n  <span class=\"br0\">{</span>\n    <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span> <span class=\"kw9\">Controller</span>\
+      \ <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span> <span class=\"\
+      br0\">)</span>\n    <span class=\"br0\">{</span>\n      <span class=\"kw2\"\
+      >if</span><span class=\"br0\">(</span> <span class=\"kw9\">Controller</span>.<span\
+      \ class=\"me0\">bIsPlayer</span> <span class=\"br0\">)</span>\n      <span class=\"\
+      br0\">{</span>\n        ClientKDriverLeave<span class=\"br0\">(</span><span\
+      \ class=\"kw9\">PlayerController</span><span class=\"br0\">(</span><span class=\"\
+      kw9\">Controller</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\
+      \ <span class=\"co1\">// Just to reset HUD etc.</span>\n        <span class=\"\
+      kw9\">Controller</span>.<span class=\"me0\">PawnDied</span><span class=\"br0\"\
+      >(</span><span class=\"kw6\">self</span><span class=\"br0\">)</span>; <span\
+      \ class=\"co1\">// This should unpossess the controller and let the player respawn</span>\n\
+      \      <span class=\"br0\">}</span>\n      <span class=\"kw2\">else</span>\n\
+      \        <span class=\"kw9\">Controller</span>.<span class=\"kw4\">Destroy</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n    <span class=\"br0\"\
+      >}</span>\n \n    <span class=\"kw4\">Destroy</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>; <span class=\"co1\">// Destroy the vehicle itself\
+      \ (see Destroyed below)</span>\n  <span class=\"br0\">}</span>\n \n    <span\
+      \ class=\"co1\">//KAddImpulse(momentum, hitlocation);</span>\n<span class=\"\
+      br0\">}</span>\n \n<span class=\"co1\">// AI Related code</span>\n<span class=\"\
+      kw1\">function</span> <span class=\"kw9\">Actor</span> GetBestEntry<span class=\"\
+      br0\">(</span><span class=\"kw9\">Pawn</span> P<span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n  <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span> <span class=\"kw3\">VSize</span><span class=\"br0\">(</span>P.<span\
+      \ class=\"kw7\">Location</span> <span class=\"sy0\">-</span> FLTrigger.<span\
+      \ class=\"kw7\">Location</span><span class=\"br0\">)</span> <span class=\"sy0\"\
+      >&lt;</span> <span class=\"kw3\">VSize</span><span class=\"br0\">(</span>P.<span\
+      \ class=\"kw7\">Location</span> <span class=\"sy0\">-</span> FRTrigger.<span\
+      \ class=\"kw7\">Location</span><span class=\"br0\">)</span> <span class=\"br0\"\
+      >)</span>\n    <span class=\"kw2\">return</span> FLTrigger;\n  <span class=\"\
+      kw2\">return</span> FRTrigger;\n<span class=\"br0\">}</span>\n \n<span class=\"\
+      kw1\">defaultproperties</span>\n<span class=\"br0\">{</span>\n  <span class=\"\
+      kw7\">DrawType</span><span class=\"sy0\">=</span><span class=\"kw7\">DT_StaticMesh</span>\n\
+      \  <span class=\"kw5\">StaticMesh</span><span class=\"sy0\">=</span><span class=\"\
+      kw5\">StaticMesh</span><span class=\"st0\">'BulldogMeshes.Simple.S_Chassis'</span>\n\
+      \ \n  <span class=\"kw2\">Begin</span> <span class=\"kw8\">Object</span> <span\
+      \ class=\"kw1\">Class</span><span class=\"sy0\">=</span><span class=\"kw8\"\
+      >KarmaParamsRBFull</span> <span class=\"kw5\">Name</span><span class=\"sy0\"\
+      >=</span>KParams0\n    KActorGravScale<span class=\"sy0\">=</span><span class=\"\
+      nu0\">0</span>\n    KInertiaTensor<span class=\"br0\">(</span><span class=\"\
+      nu0\">0</span><span class=\"br0\">)</span><span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">20</span>\n    KInertiaTensor<span class=\"br0\">(</span><span\
+      \ class=\"nu0\">1</span><span class=\"br0\">)</span><span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0</span>\n    KInertiaTensor<span class=\"br0\">(</span><span\
+      \ class=\"nu0\">2</span><span class=\"br0\">)</span><span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0</span>\n    KInertiaTensor<span class=\"br0\">(</span><span\
+      \ class=\"nu0\">3</span><span class=\"br0\">)</span><span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">30</span>\n    KInertiaTensor<span class=\"br0\">(</span><span\
+      \ class=\"nu0\">4</span><span class=\"br0\">)</span><span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0</span>\n    KInertiaTensor<span class=\"br0\">(</span><span\
+      \ class=\"nu0\">5</span><span class=\"br0\">)</span><span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">48</span>\n    KCOMOffset<span class=\"sy0\">=</span><span class=\"\
+      br0\">(</span>X<span class=\"sy0\">=</span><span class=\"nu0\">0.8</span>,Y<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0.0</span>,Z<span class=\"sy0\"\
+      >=-</span><span class=\"nu0\">0.7</span><span class=\"br0\">)</span>\n    KStartEnabled<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">True</span>\n    KFriction<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">1.6</span>\n    KLinearDamping<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">1</span>\n    KAngularDamping<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">10</span>\n    bKNonSphericalInertia<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">False</span>\n    bHighDetailOnly<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">False</span>\n    bClientOnly<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">False</span>\n    bKDoubleTickRate<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">True</span>\n    <span class=\"\
+      kw5\">Name</span><span class=\"sy0\">=</span><span class=\"st0\">\"KParams0\"\
+      </span>\n  End <span class=\"kw8\">Object</span>\n  KParams<span class=\"sy0\"\
+      >=</span><span class=\"kw8\">KarmaParams</span><span class=\"st0\">'KParams0'</span>\n\
+      \ \n  <span class=\"kw7\">DrawScale</span><span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0.4</span>\n  <span class=\"kw7\">drawScale3D</span><span class=\"\
+      sy0\">=</span><span class=\"br0\">(</span>x<span class=\"sy0\">=-</span><span\
+      \ class=\"nu0\">1</span>,y<span class=\"sy0\">=</span><span class=\"nu0\">1</span>,z<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">1</span><span class=\"br0\">)</span>\n\
+      \ \n  DestroyedEffect<span class=\"sy0\">=</span><span class=\"kw1\">class</span><span\
+      \ class=\"st0\">'XEffects.RocketExplosion'</span>\n  DestroyedSound<span class=\"\
+      sy0\">=</span><span class=\"kw5\">sound</span><span class=\"st0\">'WeaponSounds.P1RocketLauncherAltFire'</span>\n\
+      \ \n  FrontTriggerOffset<span class=\"sy0\">=</span><span class=\"br0\">(</span>X<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0</span>,Y<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">165</span>,Z<span class=\"sy0\">=</span><span class=\"nu0\"\
+      >10</span><span class=\"br0\">)</span>\n \n  TriggerSpeedThresh<span class=\"\
+      sy0\">=</span><span class=\"nu0\">40</span>\n \n  <span class=\"co1\">// Weaponry</span>\n\
+      \  FireInterval<span class=\"sy0\">=</span><span class=\"nu0\">0.1</span>\n\
+      \  weaponFireOffset<span class=\"sy0\">=</span><span class=\"br0\">(</span>X<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0</span>,Y<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0</span>,Z<span class=\"sy0\">=</span><span class=\"nu0\">80</span><span\
+      \ class=\"br0\">)</span>\n \n  <span class=\"co1\">// Driver positions</span>\n\
+      \  ExitPositions<span class=\"br0\">(</span><span class=\"nu0\">0</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">=</span><span class=\"br0\">(</span>X<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0</span>,Y<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">200</span>,Z<span class=\"sy0\">=</span><span class=\"nu0\"\
+      >100</span><span class=\"br0\">)</span>\n  ExitPositions<span class=\"br0\"\
+      >(</span><span class=\"nu0\">1</span><span class=\"br0\">)</span><span class=\"\
+      sy0\">=</span><span class=\"br0\">(</span>X<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0</span>,Y<span class=\"sy0\">=-</span><span class=\"nu0\">200</span>,Z<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">100</span><span class=\"br0\">)</span>\n\
+      \  ExitPositions<span class=\"br0\">(</span><span class=\"nu0\">2</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">=</span><span class=\"br0\">(</span>X<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">350</span>,Y<span class=\"sy0\"\
+      >=</span><span class=\"nu0\">0</span>,Z<span class=\"sy0\">=</span><span class=\"\
+      nu0\">100</span><span class=\"br0\">)</span>\n  ExitPositions<span class=\"\
+      br0\">(</span><span class=\"nu0\">3</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">=</span><span class=\"br0\">(</span>X<span class=\"sy0\">=-</span><span\
+      \ class=\"nu0\">350</span>,Y<span class=\"sy0\">=</span><span class=\"nu0\"\
+      >0</span>,Z<span class=\"sy0\">=</span><span class=\"nu0\">100</span><span class=\"\
+      br0\">)</span>\n \n  DrivePos<span class=\"sy0\">=</span><span class=\"br0\"\
+      >(</span>X<span class=\"sy0\">=-</span><span class=\"nu0\">165</span>,Y<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0</span>,Z<span class=\"sy0\">=-</span><span\
+      \ class=\"nu0\">100</span><span class=\"br0\">)</span>\n \n  Health<span class=\"\
+      sy0\">=</span><span class=\"nu0\">800</span>\n  HealthMax<span class=\"sy0\"\
+      >=</span><span class=\"nu0\">800</span>\n \n  <span class=\"kw7\">SoundRadius</span><span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">255</span>\n<span class=\"br0\"\
+      >}</span></pre></div>\n</div>\n\n<!-- \nNewPP limit report\nCPU time usage:\
+      \ 0.304 seconds\nReal time usage: 0.525 seconds\nPreprocessor visited node count:\
+      \ 10/1000000\nPreprocessor generated node count: 64/1000000\nPost‐expand include\
+      \ size: 0/2097152 bytes\nTemplate argument size: 0/2097152 bytes\nHighest expansion\
+      \ depth: 2/40\nExpensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion\
+      \ expansion time report (%,ms,calls,template)\n100.00%    0.000      1 - -total\n\
+      -->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:1587-0!*!*!*!*!*!*\
+      \ and timestamp 20221118154315 and revision id 42913\n -->\n"
+  categories: []
+  links: []
+  templates: []
+  images: []
+  externallinks: []
+  sections: []
+  displaytitle: "Legacy:KShip"
+  iwlinks: []
+  wikitext:
+    text: "Well this is basically my code for a space ship, thanks a lot to Daid for\
+      \ lending me his replication code (which turned out to come from KCar but i\
+      \ thank him non the less, great guy he is :D)\n\nI currently use a different,\
+      \ more client oriented replication system, but this one here is a lot better,\
+      \ i havent incorporated my ship to it yet because i have some other problems\
+      \ that come with it that i have to solve, but since the \"core\" ship here is\
+      \ simple, ill use the better replication for you guys :)\n\n(Btw i deal with\
+      \ all the entering/leaving of the vehicle in a parent class, this is really\
+      \ irrelevant to physics and is easy to do, so i left it out just so there will\
+      \ be less and easier to read code)\n\n<uscript>\nvar float\t\t\tRoll, CThrust,\
+      \ TempThrust, OldThrust; \n// Throttle and Steering are already declared in\
+      \ KVehicle, so all we need is roll, CThrust, TempThrust, OldThrust will be explained\
+      \ soon\n// BTW note that i use Throttle for Pitch alteration because it is already\
+      \ bound by other vehicles to the forward/backward key\n// ok i have also incorporated\
+      \ a system that allows for various thrust managments, \n//if you simply want\
+      \ to move forward full speed only while you press the the thrust button, you\
+      \ would use TempThrust. \n//when you release the thrust button you though you\
+      \ should always set TempThrust to -1\n// if you want to have a constant speed,\
+      \ assign it to CThrust, so every time you release the thrust button (the one\
+      \ that changes TempThrust) \n// you would automatically start going at that\
+      \ speed (good for stuff like dogifghting and matching speeds)\n// and lastly\
+      \ i added an afterburner effect, ill include it here for you guys to see although\
+      \ it isnt hard to do.\n// also what i did with it was that when you afterburn\
+      \ and you run out of energy, while you still hold the afterburn key\n// you\
+      \ would keep going at your max possible speed, and once you release it you would\
+      \ start going at your constant wanted speed (CThrust)\n// Thats why i have 2\
+      \ vars, bAfterburn is for after burning (holding key and having enough E), bBurn\
+      \ is for only holding the afterburn key with no regard to its depletion\nvar\
+      \ bool\t\t\tbAfterburn, bBurn; // note that you should set both of those to\
+      \ true when you want to afterburn\nvar() float\t\t\tForwardTrust, TurnRate,\
+      \ AfterBurnThrust; // This is basically how fast our ship turns/moves\nvar float\t\
+      \t\tCurRoll, CurSteering, CurThrottle, UnitAccRate; // This is used for acceleration\n\
+      // CThrust is used for ships that can assign a specific throttle value, like\
+      \ 75% of max speed or whatever...\n// UnitAccRate is how much each value increases\
+      \ per second\nvar vector\t\t\tExtraForce, ExtraTorque; // Used for Karama forces\
+      \ pileup\n\n// Ship replication vars and functions, thanks daid!\nstruct StructShipState\n\
+      {\n\tvar KRBVec\t\t\t\tChassisPosition;\n\tvar Quat\t\t\t\tChassisQuaternion;\n\
+      \tvar KRBVec\t\t\t\tChassisLinVel;\n\tvar KRBVec\t\t\t\tChassisAngVel;\n\n\t\
+      var float\t\t\t\tServerSteering;\n\tvar float\t\t\t\tServerThrottle;\n\tvar\
+      \ float\t\t\t\tServerRoll;\n\n\tvar bool\t\t\t\tServerbAfterburn;\n\tvar bool\t\
+      \t\t\tServerbBurn;\n\n\tvar bool\t\t\t\tbNewState; // Set to true whenever a\
+      \ new state is received and should be processed\n};\n\nvar KRigidBodyState\t\
+      \tChassisState;\n\nvar StructShipState\t\tShipState; // This is replicated to\
+      \ the ship, and processed to update all the parts.\nvar bool\t\t\tbNewShipState;\
+      \ // Indicated there is new data processed, and chassis RBState should be updated.\n\
+      \nvar float\t\t\tNextNetUpdateTime;\t// Next time we should force an update\
+      \ of vehicles state.\nvar() float\t\t\tMaxNetUpdateInterval;\n\nvar int AVar;//Just\
+      \ for replication, else the ShipState doesn't get replicated\n\nReplication\n\
+      {\n\tunreliable if(Role == ROLE_Authority)\n\t\tShipState, AVar;\n}\n\nsimulated\
+      \ event VehicleStateReceived()\n{\n\tif(!ShipState.bNewState)\n\t\treturn;\n\
+      \n\t// Get root chassis info\n\tChassisState.Position = ShipState.ChassisPosition;\n\
+      \tChassisState.Quaternion = ShipState.ChassisQuaternion;\n\tChassisState.LinVel\
+      \ = ShipState.ChassisLinVel;\n\tChassisState.AngVel = ShipState.ChassisAngVel;\n\
+      \n\t// Update control inputs\n\tSteering = ShipState.ServerSteering;\n\tThrottle\
+      \ = ShipState.ServerThrottle;\n\tRoll = ShipState.ServerRoll;\n\n\t// Afterburner\n\
+      \tbAfterburn = ShipState.ServerbAfterburn;\n\tbBurn = ShipState.ServerbBurn;\n\
+      \n\t// Update flags\n\tShipState.bNewState = false;\n\tbNewShipState = true;\n\
+      }\n\nsimulated event bool KUpdateState(out KRigidBodyState newState)\n{\n\t\
+      // This should never get called on the server - but just in case!\n\tif(Role\
+      \ == ROLE_Authority || !bNewShipState)\n\t\treturn false;\n\n\t// Apply received\
+      \ data as new position of ship chassis.\n\tnewState = ChassisState;\n\tbNewShipState\
+      \ = false;\n\n\treturn true;\n}\n\nfunction PackState()\n{\n\tlocal vector chassisPos,\
+      \ chassisLinVel, chassisAngVel;\n\tlocal vector oldPos, oldLinVel;\n\tlocal\
+      \ KRigidBodyState ChassisState;\n\n\t// Get chassis state.\n\tKGetRigidBodyState(ChassisState);\n\
+      \n\tchassisPos = KRBVecToVector(ChassisState.Position);\n\tchassisLinVel = KRBVecToVector(ChassisState.LinVel);\n\
+      \tchassisAngVel = KRBVecToVector(ChassisState.AngVel);\n\n\t// Last position\
+      \ we sent\n\toldPos = KRBVectoVector(ShipState.ChassisPosition);\n\toldLinVel\
+      \ = KRBVectoVector(ShipState.ChassisLinVel);\n\n\t// See if state has changed\
+      \ enough, or enough time has passed, that we \n\t// should send out another\
+      \ update by updating the state struct.\n\tif( !KIsAwake() )\n\t{\n\t\treturn;\
+      \ // Never send updates if physics is at rest\n\t}\n\n\tif( VSize(oldPos - chassisPos)\
+      \ > 5 ||\n\t\tVSize(oldLinVel - chassisLinVel) > 1 ||\n\t\tAbs(ShipState.ServerThrottle\
+      \ - Throttle) > 0.1 ||\n\t\tAbs(ShipState.ServerSteering - Steering) > 0.1 ||\n\
+      \t\tAbs(ShipState.ServerRoll - Roll) > 0.1 ||\n\t\tbAfterburn != ShipState.ServerbAfterburn\
+      \ ||\n\t\tbBurn != ShipState.ServerbBurn ||\n\t\tLevel.TimeSeconds > NextNetUpdateTime\
+      \ )\n\t{\n\t\tNextNetUpdateTime = Level.TimeSeconds + MaxNetUpdateInterval;\n\
+      \t}\n\telse\n\t{\n\t\treturn;\n\t}\n\n\tShipState.ChassisPosition = ChassisState.Position;\n\
+      \tShipState.ChassisQuaternion = ChassisState.Quaternion;\n\tShipState.ChassisLinVel\
+      \ = ChassisState.LinVel;\n\tShipState.ChassisAngVel = ChassisState.AngVel;\n\
+      \n\t// Player Input\n\tShipState.ServerSteering = Steering;\n\tShipState.ServerThrottle\
+      \ = Throttle;\n\tShipState.ServerRoll = Roll;\n\n\t// AfterBurner\n\tShipState.ServerbAfterburn\
+      \ = bAfterburn;\n\tShipState.ServerbBurn = bBurn;\n\n\t// This flag lets the\
+      \ client know this data is new.\n\tShipState.bNewState = true;\n\t//Make sure\
+      \ ShipState gets replicated\n\tAVar++;\n\tif (AVar > 10)\n\t\tAVar=0;\n}\n\n\
+      simulated function Tick(float DeltaTime)\n{\n\tSuper.Tick(DeltaTime);\n\tif(!KIsAwake()\
+      \ && Controller!=None)\n\t\tKWake();\n\tif(Role == ROLE_Authority && Level.NetMode\
+      \ != NM_StandAlone)\n\t\tPackState();\n\tUpdateAcceleration(DeltaTime);\n\t\
+      UpdateExtraForce(DeltaTime);\n}\nsimulated function UpdateAcceleration(float\
+      \ Delta)\n{\n\tCurSteering = CurSteering + Steering * UnitAccRate * Delta;\n\
+      \tCurThrottle = CurThrottle + Throttle * UnitAccRate * Delta;\n\tCurRoll   \
+      \  = CurRoll     + Roll     * UnitAccRate * Delta;\n\tif(Steering==0)\n\t\t\
+      CurSteering=0;\n\tif(Throttle==0)\n\t\tCurThrottle=0;\n\tif(Roll==0)\n\t\tCurRoll=0;\n\
+      \n\tif(Abs(CurSteering)>Abs(Steering))\n\t\tCurSteering=Steering;\n\tif(Abs(CurThrottle)>Abs(Throttle))\n\
+      \t\tCurThrottle=Throttle;\n\tif(Abs(CurRoll)>Abs(Roll))\n\t\tCurRoll=Roll;\n\
+      \n\tif(bAfterBurn)\n\t{\n\t\tReduceAfterBurnEnergy(); // just made this up,\
+      \ put it here incase you have something like this\n\t\tif(GetAfterburnEnergy()<=0)\
+      \ // Another fictional function...\n\t\t{\n\t\t\tbAfterBurn=False;\n\t\t}\n\t\
+      \telse\n\t\t{\n\t\t\tCThrust=AfterBurnThrust;\n\t\t}\n\t}\n\tif(bBurn && !bAfterBurn\
+      \ && CThrust!=1)\n\t{\n\t\tCThrust=1;\n\t}\n\telse if(!bBurn && !bAfterBurn\
+      \ && CThrust!=OldThrust)\n\t{\n\t\tCThrust=OldThrust;\n\t}\n\n\tif(TempThrust!=-1\
+      \ && !bAfterBurn)\n\t{\n\t\tif(Abs(CurThrust-TempThrust)<0.01)\n\t\t\tCurThrust=TempThrust;\n\
+      \t\tif(CurThrust>TempThrust)\n\t\t\tCurThrust = CurThrust - UnitAccRate * Delta\
+      \ / 4; \n\t\t\t// I made linear acceleration 4 times slower than rotation, you\
+      \ can do whatever you want though\n\t\telse if(CurThrust<TempThrust)\n\t\t\t\
+      CurThrust = CurThrust + UnitAccRate * Delta / 4;\n\t}\n\telse if(CurThrust!=CThrust\
+      \ && !bAfterBurn)\n\t{\n\t\tif(Abs(CurThrust-CThrust)<0.01)\n\t\t\tCurThrust=CThrust;\n\
+      \t\telse if(CurThrust>CThrust)\n\t\t\tCurThrust = CurThrust - UnitAccRate *\
+      \ Delta / 4;\n\t\telse if(CurThrust<CThrust)\n\t\t\tCurThrust = CurThrust +\
+      \ UnitAccRate * Delta / 4;\n\t}\n\telse if(CurThrust!=CThrust && bAfterBurn)\n\
+      \t{\n\t\tif(Abs(CurThrust-CThrust)<0.01)\n\t\t\tCurThrust=CThrust;\n\t\telse\
+      \ if(CurThrust>CThrust)\n\t\t\tCurThrust = CurThrust - UnitAccRate * Delta /\
+      \ 2.2; // Acceleration with afterburner a lot faster\n\t\telse if(CurThrust<CThrust)\n\
+      \t\t\tCurThrust = CurThrust + UnitAccRate * Delta / 2.2;\n\t}\n}\n\nsimulated\
+      \ function UpdateExtraForce(float Delta)\n{\n\tlocal vector worldForward, worldDown,\
+      \ worldLeft;\n\n\tworldForward = vect(1, 0, 0) >> Rotation;\n\tworldDown = vect(0,\
+      \ 0, -1) >> Rotation;\n\tworldLeft = vect(0, -1, 0) >> Rotation;\n\n\tExtraForce\
+      \ = ExtraForce + worldForward * ForwardThrust * Delta * CurThrust; // Speed\n\
+      \tExtraTorque = ExtraTorque + worldDown * TurnRate * Delta * CurSteering; //\
+      \ Yaw\n\tExtraTorque = ExtraTorque + worldLeft * TurnRate * Delta * CurThrottle;\
+      \ // Pitch\n\tExtraTorque = ExtraTorque + worldForward * TurnRate * Delta *\
+      \ -CurRoll; // Roll\n}\n\nsimulated event KApplyForce(out vector Force, out\
+      \ vector Torque)\n{\n\t// This actually does the applying of the piled up force\n\
+      \tForce = ExtraForce;\n\tTorque = ExtraTorque;\n\tExtraForce = vect(0,0,0);\n\
+      \tExtraTorque = vect(0,0,0);\n}\n\nDefaultProperties\n{\n     // Create Karma\
+      \ collision Params for ourselves, you can change whatever you want here\n  \
+      \   Begin Object Class=KarmaParamsRBFull Name=KParams0\n         KLinearDamping=2.000;\n\
+      \         KAngularDamping=2.000;\n         KStartEnabled=True\n         bHighDetailOnly=False\n\
+      \         bClientOnly=False\n         bKDoubleTickRate=False\n         KFriction=1.600000\n\
+      \         KActorGravScale = 0.0;\n\t KMass=2;\n         Name=\"KParams0\"\n\
+      \     End Object\n     KParams=KarmaParamsRBFull'<MyPackage>.<MyShipClass>.KParams0'\n\
+      \n     // And just some other variables:\n     TurnRate=8\n     ForwardThrust=5000\n\
+      \     UnitAccRate=2.0\n     AfterBurnThrust=1.20 // basically means that afterburner\
+      \ goes at 120% of regular maximum speed\n}\n</uscript>\n\nand that should be\
+      \ it, i hope i didnt miss anything...\n\n'''Spark: ''' KParams=KarmaParamsRBFull'<MyPackage>.<MyShipClass>.KParams0'\
+      \ <&ndash; Is this supposed to be a trap? ;) Took me a while to figure out that\
+      \ my ship didn't fly because this wasn't set to KParams0 and thus wasn't enabled\
+      \ at all. :)\n\n'''Sir_Brizz: ''' Zep, did you end up getting your Quaternion\
+      \ working for the indicator? I have a few ideas that work if you want to know\
+      \ what they are.\n\n'''ProjectX:''' I'm a n00b to coding, but is it possible\
+      \ to take this code, and change it to create a \"hovering vehicles\" class,\
+      \ that basicly, wont go a certan height above ground, but, from high jumps,\
+      \ etc., go lower to the ground? I also saw that there was 3 types of thrust,\
+      \ is it possible to bind a key that will cycle through the flying types (for\
+      \ more precise flying, eg. for dog matches and realism)?\n\n'''NickR:''' Does\
+      \ anyone have a working example of a flying vehicle?\n\n'''Foxpaw:''' I do,\
+      \ but my mod is still quite a ways from release. The code above allegedly is\
+      \ working code for a flying vehicle, though I've never tested it.\n\n'''LiKeMiKeS:'''\
+      \ I've tried many times compiling this KShip script and have ended up with an\
+      \ error for the ShipState 'struct' & 'var' references obscuring each other and\
+      \ haven't been able to figure out a clean fix so it will compile - without creating\
+      \ another unneeded var instance or reference. I'm still learning the nuances\
+      \ of uscript, so it's difficult to debug atm.\n\n'''Brold9999:''' I tried the\
+      \ above code long ago and it didn't seem to work. I have gotten a lot of questions\
+      \ on my mod, UT Space Battle, as to how I implemented the vehicles. I did not\
+      \ use a Karma or PhysX based approach but that is what most of the people who\
+      \ have asked me about this seem to be looking for. I have taken the code above\
+      \ and hammered away at it until it works. I ripped out many unnecessary sections\
+      \ (such as afterburner) which only cluttered the salient concepts of implementing\
+      \ a 6DOF vehicle. The new version should compile and work out-of-the-box and\
+      \ has (mostly) working netcode. Some tweaks are still necessary to make a vehicle\
+      \ suitable for a mod but this one does the basics that seem to trip most people\
+      \ up when they try to implement a 6DOF vehicle. KShip is the base 6DOF vehicle,\
+      \ FlyingDog is a butchered Bulldog which is based on KShip. Code follows:\n\n\
+      <uscript>\nclass KShip extends KVehicle;\n\n// Used for Karma forces pileup\n\
+      // Add to these variables to apply force and torque to the ship.\nvar vector\
+      \ extraForce, extraTorque;\n\n// Amount to increment/decrement shipSteering.roll\
+      \ for every click of the mouse wheel.\nvar float rollUnit;\n// Desired rotation\
+      \ torque is reduced each tick. This factor controls how rapidly old inputs decay.\n\
+      var float turnDecayTime;\n// Amount of rotation torque to apply for a given\
+      \ amount of mouse movement.\nvar float turnSensitivity;\n// Maximum amount of\
+      \ rotation torque that can be accumulated.\nvar float maximumTurnRate;\n// Maximum\
+      \ linear thrust the ship can apply.\nvar float maximumThrust;\n\n// Desired\
+      \ torque on the ship - relative to it's current rotation.\nvar rotator shipSteering;\n\
+      // Desired linear thrust to apply to the ship - not relative to it's current\
+      \ rotation.\nvar vector shipThrust;\n\n// Ship replication vars and functions,\
+      \ thanks daid!\nstruct StructShipState\n{\n  var KRBVec  ChassisPosition;\n\
+      \  var Quat    ChassisQuaternion;\n  var KRBVec  ChassisLinVel;\n  var KRBVec\
+      \  ChassisAngVel;\n \n  var rotator serverSteering;\n  var vector  serverThrust;\n\
+      \n  var bool    bNewState; // Set to true whenever a new state is received and\
+      \ should be processed\n};\n \nvar KRigidBodyState ChassisState;\nvar StructShipState\
+      \ ShipState; // This is replicated to the ship, and processed to update all\
+      \ the parts.\nvar bool bNewShipState; // Indicated there is new data processed,\
+      \ and chassis RBState should be updated.\n \nvar float NextNetUpdateTime;  //\
+      \ Next time we should force an update of vehicles state.\nvar() float MaxNetUpdateInterval;\n\
+      \ \nvar int AVar;//Just for replication, else the ShipState doesn't get replicated\n\
+      \nreplication\n{\n  unreliable if(Role == ROLE_Authority)\n    ShipState, AVar;\n\
+      }\n \nsimulated event VehicleStateReceived()\n{\n  if(!ShipState.bNewState)\n\
+      \    return;\n \n  // Get root chassis info\n  ChassisState.Position = ShipState.ChassisPosition;\n\
+      \  ChassisState.Quaternion = ShipState.ChassisQuaternion;\n  ChassisState.LinVel\
+      \ = ShipState.ChassisLinVel;\n  ChassisState.AngVel = ShipState.ChassisAngVel;\n\
+      \ \n  // Update control inputs\n  shipSteering = ShipState.serverSteering;\n\
+      \  shipThrust = ShipState.serverThrust;\n \n  // Update flags\n  ShipState.bNewState\
+      \ = false;\n  bNewShipState = true;\n}\n \nsimulated event bool KUpdateState(out\
+      \ KRigidBodyState newState)\n{\n  // This should never get called on the server\
+      \ - but just in case!\n  if(Role == ROLE_Authority || !bNewShipState)\n    return\
+      \ false;\n \n  // Apply received data as new position of ship chassis.\n  newState\
+      \ = ChassisState;\n  bNewShipState = false;\n \n  return true;\n}\n \nfunction\
+      \ PackState()\n{\n  local vector chassisPos, chassisLinVel, chassisAngVel;\n\
+      \  local vector oldPos, oldLinVel;\n  local KRigidBodyState localChassisState;\n\
+      \ \n  // Get chassis state.\n  KGetRigidBodyState(localChassisState);\n \n \
+      \ chassisPos = KRBVecToVector(localChassisState.Position);\n  chassisLinVel\
+      \ = KRBVecToVector(localChassisState.LinVel);\n  chassisAngVel = KRBVecToVector(localChassisState.AngVel);\n\
+      \ \n  // Last position we sent\n  oldPos = KRBVectoVector(ShipState.ChassisPosition);\n\
+      \  oldLinVel = KRBVectoVector(ShipState.ChassisLinVel);\n \n  // See if state\
+      \ has changed enough, or enough time has passed, that we \n  // should send\
+      \ out another update by updating the state struct.\n  if( !KIsAwake() )\n  {\n\
+      \    return; // Never send updates if physics is at rest\n  }\n \n  if( VSize(oldPos\
+      \ - chassisPos) > 5 ||\n    VSize(oldLinVel - chassisLinVel) > 1 ||\n    abs(shipState.serverSteering.yaw\
+      \ - shipSteering.yaw) > 0.1 ||\n    abs(shipState.serverSteering.pitch - shipSteering.pitch)\
+      \ > 0.1 ||\n    abs(shipState.serverSteering.roll - shipSteering.roll) > 0.1\
+      \ ||\n    VSize(shipState.serverThrust - shipThrust) > 1 ||\n    Level.TimeSeconds\
+      \ > NextNetUpdateTime )\n  {\n    NextNetUpdateTime = Level.TimeSeconds + MaxNetUpdateInterval;\n\
+      \  }\n  else\n  {\n    return;\n  }\n \n  ShipState.ChassisPosition = localChassisState.Position;\n\
+      \  ShipState.ChassisQuaternion = localChassisState.Quaternion;\n  ShipState.ChassisLinVel\
+      \ = localChassisState.LinVel;\n  ShipState.ChassisAngVel = localChassisState.AngVel;\n\
+      \ \n  shipState.serverSteering = shipSteering;\n  shipState.serverThrust = shipThrust;\n\
+      \ \n  // This flag lets the client know this data is new.\n  ShipState.bNewState\
+      \ = true;\n  //Make sure ShipState gets replicated\n  AVar++;\n  if (AVar >\
+      \ 10)\n    AVar=0;\n}\n \nsimulated function setInitialState() {\n  super.setInitialState();\n\
+      \n  // don't disable my tick!\n  enable('tick');\n}\n\n\nsimulated event drivingStatusChanged()\
+      \ {\n  super.drivingStatusChanged();\n\n  // don't disable my tick!\n  enable('tick');\n\
+      }\n\nfunction KDriverEnter(Pawn P) {\n  super.KDriverEnter(p);\n  \n  if (PlayerController(controller)\
+      \ != none)\n    controller.gotoState(landMovementState);\n}\n\nsimulated function\
+      \ prevWeapon() {\n  shipSteering.roll = fclamp(shipSteering.roll - (rollUnit\
+      \ * turnSensitivity), -maximumTurnRate, maximumTurnRate);\n}\n\nsimulated function\
+      \ nextWeapon() {\n  shipSteering.roll = fclamp(shipSteering.roll + (rollUnit\
+      \ * turnSensitivity), -maximumTurnRate, maximumTurnRate);\n}\n\nsimulated function\
+      \ updateRocketAcceleration(float deltaTime, float yawChange, float pitchChange)\
+      \ {\n  if (deltaTime >= turnDecayTime)\n    shipSteering = rot(0,0,0);\n  else\n\
+      \    shipSteering *= (turnDecayTime-deltaTime) / turnDecayTime;\n  \n  // /\
+      \ 6000 because the aForward, etc. are 6000 by default when the appropriate button\
+      \ is pressed.\n  shipThrust = (((vect(1,0,0) * PlayerController(Controller).aForward)\
+      \ + (vect(0,1,0) * PlayerController(Controller).aStrafe) + (vect(0,0,1) * PlayerController(Controller).aUp))\
+      \ / 6000) >> rotation;\n  if (vsize(shipThrust) > 1)\n    shipThrust = normal(shipThrust);\n\
+      \n  shipSteering.yaw = fclamp(shipSteering.yaw - (yawChange * turnSensitivity),\
+      \ -maximumTurnRate, maximumTurnRate);\n  shipSteering.pitch = fclamp(shipSteering.pitch\
+      \ + (pitchChange * turnSensitivity), -maximumTurnRate, maximumTurnRate);\n}\n\
+      \  \nsimulated function tick(float delta)\n{  super.tick(delta);\n\n  if (controller\
+      \ == none) {\n    shipThrust = vect(0,0,0);\n    shipSteering = rot(0,0,0);\n\
+      \  }\n\n  if(!KIsAwake() && controller != none)\n    KWake();\n    \n  if(Role\
+      \ == ROLE_Authority && Level.NetMode != NM_StandAlone)\n    PackState();\n\n\
+      \  updateExtraForce(delta);\n}\n\nsimulated function updateExtraForce(float\
+      \ delta)\n{\n  local vector worldForward, worldDown, worldLeft;\n \n  worldForward\
+      \ = vect(1, 0, 0) >> Rotation;\n  worldDown = vect(0, 0, -1) >> Rotation;\n\
+      \  worldLeft = vect(0, -1, 0) >> Rotation;\n \n  ExtraForce = ExtraForce + shipThrust\
+      \ * maximumThrust * delta; // Speed\n  ExtraTorque = ExtraTorque + worldDown\
+      \ * shipSteering.yaw * delta; // Yaw\n  ExtraTorque = ExtraTorque - worldLeft\
+      \ * -shipSteering.pitch * delta; // Pitch\n  ExtraTorque = ExtraTorque + worldForward\
+      \ * -shipSteering.roll * delta; // Roll\n}\n\nsimulated event KApplyForce(out\
+      \ vector Force, out vector Torque)\n{\n  // This actually does the applying\
+      \ of the piled up force\n  Force = ExtraForce;\n  Torque = ExtraTorque;\n  ExtraForce\
+      \ = vect(0,0,0);\n  ExtraTorque = vect(0,0,0);\n}\n\nDefaultProperties\n{\n\
+      \  landMovementState=PlayerSpaceFlying\n\n  rollUnit=1024\n  \n  turnDecayTime=0.5\n\
+      \  turnSensitivity=0.5\n  maximumTurnRate=5000\n  maximumThrust=2500\n}\n</uscript>\n\
+      \n<uscript>\nclass FlyingDog extends KShip placeable CacheExempt;\n\n// triggers\
+      \ used to get into the FlyingDog\nvar const vector  FrontTriggerOffset;\nvar\
+      \ SVehicleTrigger  FLTrigger, FRTrigger;\n\n// Maximum speed at which you can\
+      \ get in the vehicle.\nvar (FlyingDog) float TriggerSpeedThresh;\nvar bool \
+      \     TriggerState; // true for on, false for off.\n\n// Destroyed Buggy\nvar\
+      \ (FlyingDog) class<Actor>  DestroyedEffect;\nvar (FlyingDog) sound        \
+      \ DestroyedSound;\n\n// Weapon\nvar       float FireCountdown;\n\nvar (FlyingDog)\
+      \ float   FireInterval;\nvar (FlyingDog) vector  weaponFireOffset;\n\nsimulated\
+      \ function PostNetBeginPlay()\n{\n  local vector RotX, RotY, RotZ;\n\n  Super.PostNetBeginPlay();\n\
+      \n  GetAxes(Rotation,RotX,RotY,RotZ);\n\n  // Only have triggers on server\n\
+      \  if(Level.NetMode != NM_Client)\n  {\n    // Create triggers for gettting\
+      \ into the FlyingDog\n    FLTrigger = spawn(class'SVehicleTrigger', self,, Location\
+      \ + FrontTriggerOffset.X * RotX + FrontTriggerOffset.Y * RotY + FrontTriggerOffset.Z\
+      \ * RotZ);\n    FLTrigger.SetBase(self);\n    FLTrigger.SetCollision(true, false,\
+      \ false);\n\n    FRTrigger = spawn(class'SVehicleTrigger', self,, Location +\
+      \ FrontTriggerOffset.X * RotX - FrontTriggerOffset.Y * RotY + FrontTriggerOffset.Z\
+      \ * RotZ);\n    FRTrigger.SetBase(self);\n    FRTrigger.SetCollision(true, false,\
+      \ false);\n\n    TriggerState = true;\n  }\n\n  // If this is not 'authority'\
+      \ version - don't destroy it if there is a problem.\n  // The network should\
+      \ sort things out.\n  if(Role != ROLE_Authority) {\n    KarmaParams(KParams).bDestroyOnSimError\
+      \ = False;\n  }\n}\n\nsimulated event Destroyed()\n{\n  // Clean up random stuff\
+      \ attached to the car\n  if(Level.NetMode != NM_Client)\n  {\n    FLTrigger.Destroy();\n\
+      \    FRTrigger.Destroy();\n  }\n\n  Super.Destroyed();\n\n  // Trigger destroyed\
+      \ sound and effect\n  if(Level.NetMode != NM_DedicatedServer)\n  {\n    spawn(DestroyedEffect,\
+      \ self, , Location );\n    PlaySound(DestroyedSound);\n  }\n}\n\nfunction KDriverEnter(Pawn\
+      \ p)\n{\n  Super.KDriverEnter(p);\n\n  p.bHidden = True;\n  ReceiveLocalizedMessage(class'Vehicles.BulldogMessage',\
+      \ 1);\n}\n\nfunction bool KDriverLeave(bool bForceLeave)\n{\n  local Pawn OldDriver;\n\
+      \n  OldDriver = Driver;\n\n  // If we succesfully got out of the car, make driver\
+      \ visible again.\n  if( Super.KDriverLeave(bForceLeave) )\n  {\n    OldDriver.bHidden\
+      \ = false;\n    AmbientSound = None;\n    return true;\n  }\n  else\n    return\
+      \ false;\n}\n\nfunction fireWeapons(bool bWasAltFire)\n{\n  local vector FireLocation;\n\
+      \  local PlayerController PC;\n  \n  // Client can't do firing\n  if(Role !=\
+      \ ROLE_Authority)\n    return;\n\n  FireLocation = Location + (weaponFireOffset\
+      \ >> Rotation);\n\n  while(FireCountdown <= 0)\n  {\n    if(!bWasAltFire)\n\
+      \    {\n      spawn(class'PROJ_TurretSkaarjPlasma', self, , FireLocation, rotation);\n\
+      \n      // Play firing noise\n      PlaySound(Sound'ONSVehicleSounds-S.Laser02',\
+      \ SLOT_None,,,,, false);\n      PC = PlayerController(Controller);\n      if\
+      \ (PC != None && PC.bEnableWeaponForceFeedback)\n        PC.ClientPlayForceFeedback(\"\
+      RocketLauncherFire\");\n    }\n    else\n    {\n      spawn(class'PROJ_SpaceFighter_Rocket',\
+      \ self, , FireLocation, rotator(vector(rotation) + Vrand() * 0.05));\n\n   \
+      \   // Play firing noise\n      PlaySound(Sound'AssaultSounds.HnShipFire01',\
+      \ SLOT_None,,,,, false);\n      PC = PlayerController(Controller);\n      if\
+      \ (PC != None && PC.bEnableWeaponForceFeedback)\n        PC.ClientPlayForceFeedback(\"\
+      RocketLauncherFire\");\n    }\n\n    FireCountdown += FireInterval;\n  }\n}\n\
+      \n// Fire a rocket (if we've had time to reload!)\nfunction VehicleFire(bool\
+      \ bWasAltFire)\n{\n  Super.VehicleFire(bWasAltFire);\n\n  if(FireCountdown <\
+      \ 0)\n  {\n    FireCountdown = 0;\n    fireWeapons(bWasAltFire);\n  }\n}\n\n\
+      simulated function Tick(float Delta)\n{\n  Local float VMag;\n\n  Super.Tick(Delta);\n\
+      \n  // Weapons (run on server and replicated to client)\n  if(Role == ROLE_Authority)\n\
+      \  {\n    // Countdown to next shot\n    FireCountdown -= Delta;\n\n    // This\
+      \ is for sustained barrages.\n    // Primary fire takes priority\n    if(bVehicleIsFiring)\n\
+      \      fireWeapons(false);\n    else if(bVehicleIsAltFiring)\n      fireWeapons(true);\n\
+      \  }\n\n  // Dont have triggers on network clients.\n  if(Level.NetMode != NM_Client)\n\
+      \  {\n    // If vehicle is moving, disable collision for trigger.\n    VMag\
+      \ = VSize(Velocity);\n\n    if(VMag < TriggerSpeedThresh && TriggerState ==\
+      \ false)\n    {\n      FLTrigger.SetCollision(true, false, false);\n      FRTrigger.SetCollision(true,\
+      \ false, false);\n      TriggerState = true;\n    }\n    else if(VMag > TriggerSpeedThresh\
+      \ && TriggerState == true)\n    {\n      FLTrigger.SetCollision(false, false,\
+      \ false);\n      FRTrigger.SetCollision(false, false, false);\n      TriggerState\
+      \ = false;\n    }\n  }\n}\n\n// Really simple at the moment!\nfunction TakeDamage(int\
+      \ Damage, Pawn instigatedBy, Vector hitlocation,\n            Vector momentum,\
+      \ class<DamageType> damageType)\n{\n  // Avoid damage healing the car!\n  if(Damage\
+      \ < 0)\n    return;\n\n  if(damageType == class'DamTypeSuperShockBeam')\n  \
+      \  Health -= 100; // Instagib doesn't work on vehicles\n  else\n    Health -=\
+      \ 0.5 * Damage; // Weapons do less damage\n\n  // The vehicle is dead!\n  if(Health\
+      \ <= 0)\n  {\n    if ( Controller != None )\n    {\n      if( Controller.bIsPlayer\
+      \ )\n      {\n        ClientKDriverLeave(PlayerController(Controller)); // Just\
+      \ to reset HUD etc.\n        Controller.PawnDied(self); // This should unpossess\
+      \ the controller and let the player respawn\n      }\n      else\n        Controller.Destroy();\n\
+      \    }\n\n    Destroy(); // Destroy the vehicle itself (see Destroyed below)\n\
+      \  }\n\n    //KAddImpulse(momentum, hitlocation);\n}\n\n// AI Related code\n\
+      function Actor GetBestEntry(Pawn P)\n{\n  if ( VSize(P.Location - FLTrigger.Location)\
+      \ < VSize(P.Location - FRTrigger.Location) )\n    return FLTrigger;\n  return\
+      \ FRTrigger;\n}\n\ndefaultproperties\n{\n  DrawType=DT_StaticMesh\n  StaticMesh=StaticMesh'BulldogMeshes.Simple.S_Chassis'\n\
+      \n  Begin Object Class=KarmaParamsRBFull Name=KParams0\n    KActorGravScale=0\n\
+      \    KInertiaTensor(0)=20\n    KInertiaTensor(1)=0\n    KInertiaTensor(2)=0\n\
+      \    KInertiaTensor(3)=30\n    KInertiaTensor(4)=0\n    KInertiaTensor(5)=48\n\
+      \    KCOMOffset=(X=0.8,Y=0.0,Z=-0.7)\n    KStartEnabled=True\n    KFriction=1.6\n\
+      \    KLinearDamping=1\n    KAngularDamping=10\n    bKNonSphericalInertia=False\n\
+      \    bHighDetailOnly=False\n    bClientOnly=False\n    bKDoubleTickRate=True\n\
+      \    Name=\"KParams0\"\n  End Object\n  KParams=KarmaParams'KParams0'\n\n  DrawScale=0.4\n\
+      \  drawScale3D=(x=-1,y=1,z=1)\n\n  DestroyedEffect=class'XEffects.RocketExplosion'\n\
+      \  DestroyedSound=sound'WeaponSounds.P1RocketLauncherAltFire'\n\n  FrontTriggerOffset=(X=0,Y=165,Z=10)\n\
+      \n  TriggerSpeedThresh=40\n\n  // Weaponry\n  FireInterval=0.1\n  weaponFireOffset=(X=0,Y=0,Z=80)\n\
+      \n  // Driver positions\n  ExitPositions(0)=(X=0,Y=200,Z=100)\n  ExitPositions(1)=(X=0,Y=-200,Z=100)\n\
+      \  ExitPositions(2)=(X=350,Y=0,Z=100)\n  ExitPositions(3)=(X=-350,Y=0,Z=100)\n\
+      \n  DrivePos=(X=-165,Y=0,Z=-100)\n\n  Health=800\n  HealthMax=800\n\n  SoundRadius=255\n\
+      }\n</uscript>"
+  properties: []
+  revId: 42913
+name: "Legacy:KShip"
+revision:
+  revid: 42913
+  parentid: 42912
+  user: "99.236.204.143"
+  timestamp: 1271518330.000000000
+  comment: "Added an implmentation for KShip which should work out-of-the-box, and\
+    \ a sample vehicle (FlyingDog) based on it."
+timestamp: 1668786119.710838000

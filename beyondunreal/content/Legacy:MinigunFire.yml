@@ -1,0 +1,600 @@
+---
+parse:
+  title: "Legacy:MinigunFire"
+  text:
+    text: "<p><i><b>UT2003, Build 2225</b></i></p>\n<p>Once again another reference\
+      \ of code, but this time for the Primary Fire of the minigun. Oh, and please\
+      \ correct me if I'm wrong. I won't get too pissed off&#160;;)</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">class</span> MinigunFire <span class=\"\
+      kw1\">extends</span> InstantFire; <span class=\"co1\">//This is the class and\
+      \ the parent that it inherits some functionality from.</span>\n \n<span class=\"\
+      co1\">// These are declarations of variables used in the code.</span>\n<span\
+      \ class=\"kw1\">var</span><span class=\"br0\">(</span><span class=\"br0\">)</span>\
+      \ <span class=\"kw5\">float</span> MaxRollSpeed; \n<span class=\"kw1\">var</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"kw5\">float</span>\
+      \ RollSpeed; \n<span class=\"kw1\">var</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span> <span class=\"kw5\">float</span> BarrelRotationsPerSec;\
+      \ <span class=\"co1\">//Amount of rotations of the barrel per sec</span>\n<span\
+      \ class=\"kw1\">var</span><span class=\"br0\">(</span><span class=\"br0\">)</span>\
+      \ <span class=\"kw5\">int</span>   RoundsPerRotation;     <span class=\"co1\"\
+      >//Rounds fired per rotation</span>\n<span class=\"kw1\">var</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span> <span class=\"kw5\">float</span>\
+      \ FireTime;\n<span class=\"kw1\">var</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span> <span class=\"kw5\">Sound</span> WindingSound;    \
+      \      <span class=\"co1\">//The sound you hear when the minigun is getting\
+      \ ready to shoot.</span>\n<span class=\"kw1\">var</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span> <span class=\"kw5\">Sound</span> FiringSound;\
+      \           <span class=\"co1\">//The sound you hear when the minigun is actually\
+      \ shooting.</span>\n<span class=\"kw1\">var</span> MiniGun Gun;\n<span class=\"\
+      kw1\">var</span><span class=\"br0\">(</span><span class=\"br0\">)</span> <span\
+      \ class=\"kw5\">float</span> WindUpTime;            <span class=\"co1\">//Amount\
+      \ of time it takes to wind up</span>\n \n<span class=\"kw1\">var</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"kw5\">String</span>\
+      \ FiringForce;          <span class=\"co1\">//Amount of recoil</span>\n<span\
+      \ class=\"kw1\">var</span><span class=\"br0\">(</span><span class=\"br0\">)</span>\
+      \ <span class=\"kw5\">String</span> WindingForce;\n \n<span class=\"co1\">//What\
+      \ happens when you beserk (adrenaline combo) with this firing mode</span>\n\
+      <span class=\"kw1\">function</span> StartBerserk<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span> \n<span class=\"br0\">{</span>\n    DamageMin <span\
+      \ class=\"sy0\">=</span> <span class=\"kw1\">default</span>.<span class=\"me0\"\
+      >DamageMin</span> <span class=\"sy0\">*</span> <span class=\"nu0\">1.33</span>;\n\
+      \    DamageMax <span class=\"sy0\">=</span> <span class=\"kw1\">default</span>.<span\
+      \ class=\"me0\">DamageMax</span> <span class=\"sy0\">*</span> <span class=\"\
+      nu0\">1.33</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"co1\">//What\
+      \ happens when you stop beserking</span>\n<span class=\"kw1\">function</span>\
+      \ StopBerserk<span class=\"br0\">(</span><span class=\"br0\">)</span> \n<span\
+      \ class=\"br0\">{</span>\n    DamageMin <span class=\"sy0\">=</span> <span class=\"\
+      kw1\">default</span>.<span class=\"me0\">DamageMin</span>;\n    DamageMax <span\
+      \ class=\"sy0\">=</span> <span class=\"kw1\">default</span>.<span class=\"me0\"\
+      >DamageMax</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"co1\">//Initiate\
+      \ this code after game begins</span>\n<span class=\"kw1\">function</span> <span\
+      \ class=\"kw4\">PostBeginPlay</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span> \n<span class=\"br0\">{</span>\n    <span class=\"kw6\">Super</span>.<span\
+      \ class=\"kw4\">PostBeginPlay</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n \n    <span class=\"co1\">//Set the firing rate</span>\n \
+      \   FireRate <span class=\"sy0\">=</span> <span class=\"nu0\">1</span>.<span\
+      \ class=\"me0\">f</span> <span class=\"sy0\">/</span> <span class=\"br0\">(</span>RoundsPerRotation\
+      \ <span class=\"sy0\">*</span> BarrelRotationsPerSec<span class=\"br0\">)</span>;\n\
+      \ \n    <span class=\"co1\">//Set the maximum barrel rotation speed</span>\n\
+      \    MaxRollSpeed <span class=\"sy0\">=</span> <span class=\"nu0\">65536</span>.<span\
+      \ class=\"me0\">f</span><span class=\"sy0\">*</span>BarrelRotationsPerSec; \n\
+      \    Gun <span class=\"sy0\">=</span> Minigun<span class=\"br0\">(</span><span\
+      \ class=\"kw7\">Owner</span><span class=\"br0\">)</span>;\n<span class=\"br0\"\
+      >}</span>\n \n<span class=\"co1\">//DoTrace is a function common to all weapons\
+      \ that handles the movement of projectiles and the determination </span>\n<span\
+      \ class=\"co1\">//of the point of impact for instant-hit weapons.</span>\n<span\
+      \ class=\"kw1\">function</span> DoTrace<span class=\"br0\">(</span><span class=\"\
+      kw5\">Vector</span> Start, <span class=\"kw5\">Rotator</span> Dir<span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span> <span class=\"kw3\">FRand</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span> <span class=\"sy0\">&lt;</span> <span\
+      \ class=\"kw9\">DeathMatch</span><span class=\"br0\">(</span><span class=\"\
+      kw7\">Level</span>.<span class=\"kw7\">Game</span><span class=\"br0\">)</span>.<span\
+      \ class=\"me0\">MinigunLockDownFactor</span> <span class=\"br0\">)</span>\n\t\
+      \tMomentum <span class=\"sy0\">=</span> <span class=\"kw3\">FMax</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">1.0</span>,<span class=\"kw9\">DeathMatch</span><span\
+      \ class=\"br0\">(</span><span class=\"kw7\">Level</span>.<span class=\"kw7\"\
+      >Game</span><span class=\"br0\">)</span>.<span class=\"me0\">MinigunLockDownFactor</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">*</span> <span class=\"kw1\">Default</span>.<span\
+      \ class=\"me0\">Momentum</span>;\n\t<span class=\"kw2\">else</span>\n\t\tMomentum\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>;\n\t<span class=\"\
+      kw6\">Super</span>.<span class=\"me0\">DoTrace</span><span class=\"br0\">(</span>Start,Dir<span\
+      \ class=\"br0\">)</span>;\n<span class=\"br0\">}</span> \n \n<span class=\"\
+      co1\">//Set muzzle flash to proper location on the gun</span>\n<span class=\"\
+      kw1\">function</span> FlashMuzzleFlash<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span> \n<span class=\"br0\">{</span>\n    <span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">rotator</span> r;\n    r.<span class=\"me0\">Roll</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"kw3\">Rand</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">65536</span><span class=\"br0\">)</span>;\n\
+      \    <span class=\"kw9\">Weapon</span>.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bone_Flash'</span>, r, <span class=\"\
+      nu0\">0</span>, <span class=\"nu0\">1</span>.<span class=\"me0\">f</span><span\
+      \ class=\"br0\">)</span>;\n    <span class=\"kw6\">Super</span>.<span class=\"\
+      me0\">FlashMuzzleFlash</span><span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"co1\">//Set effects\
+      \ of the gun</span>\n<span class=\"kw1\">function</span> InitEffects<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span> \n<span class=\"br0\">{</span>\n\
+      \    <span class=\"kw6\">Super</span>.<span class=\"me0\">InitEffects</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n    <span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span> FlashEmitter <span class=\"sy0\">!=</span>\
+      \ <span class=\"kw5\">None</span> <span class=\"br0\">)</span>\n\t\t<span class=\"\
+      kw9\">Weapon</span>.<span class=\"kw4\">AttachToBone</span><span class=\"br0\"\
+      >(</span>FlashEmitter, <span class=\"st0\">'flash'</span><span class=\"br0\"\
+      >)</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"co1\">//Set ambient\
+      \ sounds</span>\n<span class=\"kw1\">function</span> PlayAmbientSound<span class=\"\
+      br0\">(</span><span class=\"kw5\">Sound</span> aSound<span class=\"br0\">)</span>\
+      \ \n<span class=\"br0\">{</span>\n    <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span> <span class=\"br0\">(</span>Minigun<span class=\"br0\">(</span><span\
+      \ class=\"kw9\">Weapon</span><span class=\"br0\">)</span> <span class=\"sy0\"\
+      >==</span> <span class=\"kw5\">None</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">||</span> <span class=\"br0\">(</span><span class=\"kw7\">Instigator</span>\
+      \ <span class=\"sy0\">==</span> <span class=\"kw5\">None</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">||</span> <span class=\"br0\">(</span>aSound\
+      \ <span class=\"sy0\">==</span> <span class=\"kw5\">None</span> <span class=\"\
+      sy0\">&amp;&amp;</span> ThisModeNum <span class=\"sy0\">!=</span> Gun.<span\
+      \ class=\"me0\">CurrentMode</span><span class=\"br0\">)</span> <span class=\"\
+      br0\">)</span>\n        <span class=\"kw2\">return</span>;\n \n    <span class=\"\
+      kw7\">Instigator</span>.<span class=\"kw9\">AmbientSound</span> <span class=\"\
+      sy0\">=</span> aSound;\n    Gun.<span class=\"me0\">CurrentMode</span> <span\
+      \ class=\"sy0\">=</span> ThisModeNum;\n<span class=\"br0\">}</span>\n \n<span\
+      \ class=\"co1\">//Stop the barrel roll</span>\n<span class=\"co1\">//When this\
+      \ function is called, it does an error check to make sure it's a valid call,\
+      \ then it simply sets</span>\n<span class=\"co1\">//the rollspeed to 0.0 --\
+      \ stopping the roll.</span>\n<span class=\"kw1\">function</span> StopRolling<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \    <span class=\"kw2\">if</span> <span class=\"br0\">(</span>Gun <span class=\"\
+      sy0\">==</span> <span class=\"kw5\">None</span> <span class=\"sy0\">||</span>\
+      \ ThisModeNum <span class=\"sy0\">!=</span> Gun.<span class=\"me0\">CurrentMode</span><span\
+      \ class=\"br0\">)</span>\n        <span class=\"kw2\">return</span>;\n \n  \
+      \  RollSpeed <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>.<span\
+      \ class=\"me0\">f</span>;\n    Gun.<span class=\"me0\">RollSpeed</span> <span\
+      \ class=\"sy0\">=</span> <span class=\"nu0\">0</span>.<span class=\"me0\">f</span>;\n\
+      <span class=\"br0\">}</span> \n \n<span class=\"kw1\">function</span> PlayPreFire<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"br0\">{</span><span\
+      \ class=\"br0\">}</span>\n<span class=\"kw1\">function</span> PlayStartHold<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"br0\">{</span><span\
+      \ class=\"br0\">}</span>\n<span class=\"kw1\">function</span> PlayFiring<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"br0\">{</span><span\
+      \ class=\"br0\">}</span>\n<span class=\"kw1\">function</span> PlayFireEnd<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"br0\">{</span><span\
+      \ class=\"br0\">}</span>\n<span class=\"kw1\">function</span> StartFiring<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n<span class=\"kw1\">function</span>\
+      \ StopFiring<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n<span\
+      \ class=\"kw1\">function</span> <span class=\"kw5\">bool</span> IsIdle<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \t<span class=\"kw2\">return</span> <span class=\"kw6\">false</span>;\n<span\
+      \ class=\"br0\">}</span>\n \n<span class=\"kw1\">auto</span> <span class=\"\
+      kw1\">state</span> Idle\n<span class=\"br0\">{</span>\n\t<span class=\"kw1\"\
+      >function</span> <span class=\"kw5\">bool</span> IsIdle<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t\t<span class=\"\
+      kw2\">return</span> <span class=\"kw6\">true</span>;\n\t<span class=\"br0\"\
+      >}</span>\n \n    <span class=\"kw1\">function</span> <span class=\"kw3\">BeginState</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n    <span class=\"br0\"\
+      >{</span>\n        PlayAmbientSound<span class=\"br0\">(</span><span class=\"\
+      kw5\">None</span><span class=\"br0\">)</span>;\n        StopRolling<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n    <span class=\"br0\">}</span>\n\
+      \ \n    <span class=\"kw1\">function</span> <span class=\"kw3\">EndState</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n    <span class=\"br0\"\
+      >{</span>\n        PlayAmbientSound<span class=\"br0\">(</span>WindingSound<span\
+      \ class=\"br0\">)</span>;\n    <span class=\"br0\">}</span>\n \n    <span class=\"\
+      kw1\">function</span> StartFiring<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span> <span class=\"co1\">//Says once you start to fire it winds up\
+      \ first</span>\n    <span class=\"br0\">{</span>\n        RollSpeed <span class=\"\
+      sy0\">=</span> <span class=\"nu0\">0</span>;\n\tFireTime <span class=\"sy0\"\
+      >=</span> <span class=\"br0\">(</span>RollSpeed<span class=\"sy0\">/</span>MaxRollSpeed<span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">*</span> WindUpTime;\n        <span\
+      \ class=\"kw3\">GotoState</span><span class=\"br0\">(</span><span class=\"st0\"\
+      >'WindUp'</span><span class=\"br0\">)</span>;\n    <span class=\"br0\">}</span>\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">state</span> WindUp\n<span\
+      \ class=\"br0\">{</span>\n    <span class=\"kw1\">function</span> <span class=\"\
+      kw3\">BeginState</span><span class=\"br0\">(</span><span class=\"br0\">)</span>\
+      \ <span class=\"co1\">//Starts the wind-up Procedure</span>\n    <span class=\"\
+      br0\">{</span>\n        ClientPlayForceFeedback<span class=\"br0\">(</span>WindingForce<span\
+      \ class=\"br0\">)</span>;  <span class=\"co1\">// jdf</span>\n    <span class=\"\
+      br0\">}</span>\n \n    <span class=\"kw1\">function</span> <span class=\"kw3\"\
+      >EndState</span><span class=\"br0\">(</span><span class=\"br0\">)</span> <span\
+      \ class=\"co1\">//Says when wind-up ends the firing begins</span>\n    <span\
+      \ class=\"br0\">{</span>\n        <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span>ThisModeNum <span class=\"sy0\">==</span> <span class=\"nu0\"\
+      >0</span><span class=\"br0\">)</span>\n        <span class=\"br0\">{</span>\n\
+      \            <span class=\"kw2\">if</span> <span class=\"br0\">(</span> <span\
+      \ class=\"br0\">(</span><span class=\"kw9\">Weapon</span> <span class=\"sy0\"\
+      >==</span> <span class=\"kw5\">None</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">||</span> <span class=\"sy0\">!</span><span class=\"kw9\">Weapon</span>.<span\
+      \ class=\"me0\">FireMode</span><span class=\"br0\">[</span><span class=\"nu0\"\
+      >1</span><span class=\"br0\">]</span>.<span class=\"me0\">bIsFiring</span> <span\
+      \ class=\"br0\">)</span>\n                StopForceFeedback<span class=\"br0\"\
+      >(</span>WindingForce<span class=\"br0\">)</span>;\n        <span class=\"br0\"\
+      >}</span>\n        <span class=\"kw2\">else</span>\n        <span class=\"br0\"\
+      >{</span>\n            <span class=\"kw2\">if</span> <span class=\"br0\">(</span>\
+      \ <span class=\"br0\">(</span><span class=\"kw9\">Weapon</span> <span class=\"\
+      sy0\">==</span> <span class=\"kw5\">None</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">||</span> <span class=\"sy0\">!</span><span class=\"kw9\"\
+      >Weapon</span>.<span class=\"me0\">FireMode</span><span class=\"br0\">[</span><span\
+      \ class=\"nu0\">0</span><span class=\"br0\">]</span>.<span class=\"me0\">bIsFiring</span>\
+      \ <span class=\"br0\">)</span>\n                StopForceFeedback<span class=\"\
+      br0\">(</span>WindingForce<span class=\"br0\">)</span>;\n        <span class=\"\
+      br0\">}</span>        \n    <span class=\"br0\">}</span>\n \n    <span class=\"\
+      kw1\">function</span> ModeTick<span class=\"br0\">(</span><span class=\"kw5\"\
+      >float</span> dt<span class=\"br0\">)</span>\n    <span class=\"br0\">{</span>\n\
+      \        FireTime <span class=\"sy0\">+=</span> dt;\n        RollSpeed <span\
+      \ class=\"sy0\">=</span> <span class=\"br0\">(</span>FireTime<span class=\"\
+      sy0\">/</span>WindUpTime<span class=\"br0\">)</span> <span class=\"sy0\">*</span>\
+      \ MaxRollSpeed;\n \n        <span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span> <span class=\"sy0\">!</span>bIsFiring <span class=\"br0\">)</span>\n\
+      \        <span class=\"br0\">{</span>\n\t    <span class=\"kw3\">GotoState</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'WindDown'</span><span class=\"\
+      br0\">)</span>;\n\t    <span class=\"kw2\">return</span>;\n\t<span class=\"\
+      br0\">}</span>\n \n        <span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span>RollSpeed <span class=\"sy0\">&gt;=</span> MaxRollSpeed<span class=\"\
+      br0\">)</span>\n        <span class=\"br0\">{</span>\n            RollSpeed\
+      \ <span class=\"sy0\">=</span> MaxRollSpeed;\n            FireTime <span class=\"\
+      sy0\">=</span> WindUpTime;\n            Gun.<span class=\"me0\">UpdateRoll</span><span\
+      \ class=\"br0\">(</span>dt, RollSpeed, ThisModeNum<span class=\"br0\">)</span>;\n\
+      \t    <span class=\"kw3\">GotoState</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'FireLoop'</span><span class=\"br0\">)</span>;\n           \
+      \ <span class=\"kw2\">return</span>;\n        <span class=\"br0\">}</span>\n\
+      \ \n        Gun.<span class=\"me0\">UpdateRoll</span><span class=\"br0\">(</span>dt,\
+      \ RollSpeed, ThisModeNum<span class=\"br0\">)</span>;\n    <span class=\"br0\"\
+      >}</span>\n \n    <span class=\"kw1\">function</span> StopFiring<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span> <span class=\"co1\">//Says if you\
+      \ stop firing it winds down</span>\n    <span class=\"br0\">{</span>\n     \
+      \   <span class=\"kw3\">GotoState</span><span class=\"br0\">(</span><span class=\"\
+      st0\">'WindDown'</span><span class=\"br0\">)</span>;\n    <span class=\"br0\"\
+      >}</span>\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">state</span>\
+      \ FireLoop <span class=\"co1\">//A loop that continues only if the boolean variable\
+      \ bIsFiring is true</span>\n<span class=\"br0\">{</span>\n    <span class=\"\
+      kw1\">function</span> <span class=\"kw3\">BeginState</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>\n    <span class=\"br0\">{</span>\n  \
+      \      NextFireTime <span class=\"sy0\">=</span> <span class=\"kw7\">Level</span>.<span\
+      \ class=\"me0\">TimeSeconds</span> <span class=\"sy0\">-</span> <span class=\"\
+      nu0\">0.1</span>; <span class=\"co1\">//fire now!</span>\n        PlayAmbientSound<span\
+      \ class=\"br0\">(</span>FiringSound<span class=\"br0\">)</span>;\n        ClientPlayForceFeedback<span\
+      \ class=\"br0\">(</span>FiringForce<span class=\"br0\">)</span>;  <span class=\"\
+      co1\">// jdf</span>\n        Gun.<span class=\"kw4\">LoopAnim</span><span class=\"\
+      br0\">(</span>FireLoopAnim, FireLoopAnimRate, TweenTime<span class=\"br0\">)</span>;\n\
+      \        Gun.<span class=\"me0\">SpawnShells</span><span class=\"br0\">(</span>RoundsPerRotation<span\
+      \ class=\"sy0\">*</span>BarrelRotationsPerSec<span class=\"br0\">)</span>;\n\
+      \    <span class=\"br0\">}</span>\n \n    <span class=\"kw1\">function</span>\
+      \ StopFiring<span class=\"br0\">(</span><span class=\"br0\">)</span>\n    <span\
+      \ class=\"br0\">{</span>\n        <span class=\"kw3\">GotoState</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'WindDown'</span><span class=\"\
+      br0\">)</span>;\n    <span class=\"br0\">}</span>\n \n    <span class=\"kw1\"\
+      >function</span> <span class=\"kw3\">EndState</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span> <span class=\"co1\">//What happens after you stop firing</span>\n\
+      \    <span class=\"br0\">{</span>\n        PlayAmbientSound<span class=\"br0\"\
+      >(</span>WindingSound<span class=\"br0\">)</span>;\n        StopForceFeedback<span\
+      \ class=\"br0\">(</span>FiringForce<span class=\"br0\">)</span>;  <span class=\"\
+      co1\">// jdf</span>\n        Gun.<span class=\"kw4\">LoopAnim</span><span class=\"\
+      br0\">(</span>Gun.<span class=\"me0\">IdleAnim</span>, Gun.<span class=\"me0\"\
+      >IdleAnimRate</span>, TweenTime<span class=\"br0\">)</span>;\n        Gun.<span\
+      \ class=\"me0\">SpawnShells</span><span class=\"br0\">(</span><span class=\"\
+      nu0\">0</span>.<span class=\"me0\">f</span><span class=\"br0\">)</span>;\n \
+      \    <span class=\"br0\">}</span>\n \n    <span class=\"kw1\">function</span>\
+      \ ModeTick<span class=\"br0\">(</span><span class=\"kw5\">float</span> dt<span\
+      \ class=\"br0\">)</span>\n    <span class=\"br0\">{</span>\n        <span class=\"\
+      kw6\">Super</span>.<span class=\"me0\">ModeTick</span><span class=\"br0\">(</span>dt<span\
+      \ class=\"br0\">)</span>;\n        Gun.<span class=\"me0\">UpdateRoll</span><span\
+      \ class=\"br0\">(</span>dt, RollSpeed, ThisModeNum<span class=\"br0\">)</span>;\n\
+      \        <span class=\"kw2\">if</span> <span class=\"br0\">(</span> <span class=\"\
+      sy0\">!</span>bIsFiring <span class=\"br0\">)</span>\n        <span class=\"\
+      br0\">{</span>\n\t    <span class=\"kw3\">GotoState</span><span class=\"br0\"\
+      >(</span><span class=\"st0\">'WindDown'</span><span class=\"br0\">)</span>;\n\
+      \t    <span class=\"kw2\">return</span>;\n\t<span class=\"br0\">}</span>\n \
+      \   <span class=\"br0\">}</span>\n<span class=\"br0\">}</span>\n \n<span class=\"\
+      kw1\">state</span> WindDown\n<span class=\"br0\">{</span>\n    <span class=\"\
+      kw1\">function</span> <span class=\"kw3\">BeginState</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span> <span class=\"co1\">//Begins the wind-down\
+      \ procedure</span>\n    <span class=\"br0\">{</span>\n        ClientPlayForceFeedback<span\
+      \ class=\"br0\">(</span>WindingForce<span class=\"br0\">)</span>;  <span class=\"\
+      co1\">// jdf</span>\n    <span class=\"br0\">}</span>\n \n    <span class=\"\
+      kw1\">function</span> <span class=\"kw3\">EndState</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>\n    <span class=\"br0\">{</span>\n  \
+      \      <span class=\"kw2\">if</span> <span class=\"br0\">(</span>ThisModeNum\
+      \ <span class=\"sy0\">==</span> <span class=\"nu0\">0</span><span class=\"br0\"\
+      >)</span>\n        <span class=\"br0\">{</span>\n            <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw9\">Weapon</span> <span class=\"sy0\">==</span> <span class=\"kw5\"\
+      >None</span><span class=\"br0\">)</span> <span class=\"sy0\">||</span> <span\
+      \ class=\"sy0\">!</span><span class=\"kw9\">Weapon</span>.<span class=\"me0\"\
+      >FireMode</span><span class=\"br0\">[</span><span class=\"nu0\">1</span><span\
+      \ class=\"br0\">]</span>.<span class=\"me0\">bIsFiring</span> <span class=\"\
+      br0\">)</span>\n                StopForceFeedback<span class=\"br0\">(</span>WindingForce<span\
+      \ class=\"br0\">)</span>;\n        <span class=\"br0\">}</span>\n        <span\
+      \ class=\"kw2\">else</span>\n        <span class=\"br0\">{</span>\n        \
+      \    <span class=\"kw2\">if</span> <span class=\"br0\">(</span> <span class=\"\
+      br0\">(</span><span class=\"kw9\">Weapon</span> <span class=\"sy0\">==</span>\
+      \ <span class=\"kw5\">None</span><span class=\"br0\">)</span> <span class=\"\
+      sy0\">||</span> <span class=\"sy0\">!</span><span class=\"kw9\">Weapon</span>.<span\
+      \ class=\"me0\">FireMode</span><span class=\"br0\">[</span><span class=\"nu0\"\
+      >0</span><span class=\"br0\">]</span>.<span class=\"me0\">bIsFiring</span> <span\
+      \ class=\"br0\">)</span>\n                StopForceFeedback<span class=\"br0\"\
+      >(</span>WindingForce<span class=\"br0\">)</span>;\n        <span class=\"br0\"\
+      >}</span><span class=\"co1\">//This checks to see what mode is firing, and stops\
+      \ the force feedback if any is occuring.</span>\n    <span class=\"br0\">}</span>\n\
+      \ \n    <span class=\"kw1\">function</span> ModeTick<span class=\"br0\">(</span><span\
+      \ class=\"kw5\">float</span> dt<span class=\"br0\">)</span>\n    <span class=\"\
+      br0\">{</span>\n        FireTime <span class=\"sy0\">-=</span> dt;\n       \
+      \ RollSpeed <span class=\"sy0\">=</span> <span class=\"br0\">(</span>FireTime<span\
+      \ class=\"sy0\">/</span>WindUpTime<span class=\"br0\">)</span> <span class=\"\
+      sy0\">*</span> MaxRollSpeed;\n \n        <span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span>RollSpeed <span class=\"sy0\">&lt;=</span> <span class=\"\
+      nu0\">0</span>.<span class=\"me0\">f</span><span class=\"br0\">)</span>\n  \
+      \      <span class=\"br0\">{</span>\n            RollSpeed <span class=\"sy0\"\
+      >=</span> <span class=\"nu0\">0</span>.<span class=\"me0\">f</span>;\n     \
+      \       FireTime <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>.<span\
+      \ class=\"me0\">f</span>;\n            Gun.<span class=\"me0\">UpdateRoll</span><span\
+      \ class=\"br0\">(</span>dt, RollSpeed, ThisModeNum<span class=\"br0\">)</span>;\n\
+      \            <span class=\"kw3\">GotoState</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Idle'</span><span class=\"br0\">)</span>;\n            <span\
+      \ class=\"kw2\">return</span>;\n        <span class=\"br0\">}</span>\n \n  \
+      \      Gun.<span class=\"me0\">UpdateRoll</span><span class=\"br0\">(</span>dt,\
+      \ RollSpeed, ThisModeNum<span class=\"br0\">)</span>;\n    <span class=\"br0\"\
+      >}</span>\n \n    <span class=\"kw1\">function</span> StartFiring<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span> <span class=\"co1\">//Says in order\
+      \ to fire the gun must wind-up</span>\n    <span class=\"br0\">{</span>\n  \
+      \      <span class=\"kw3\">GotoState</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'WindUp'</span><span class=\"br0\">)</span>;\n    <span class=\"\
+      br0\">}</span>\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">defaultproperties</span>\
+      \ <span class=\"co1\">//Default variable settings. Some were declared at the\
+      \ top of the file, others were declared in the parent class.</span>\n<span class=\"\
+      br0\">{</span>\n     BarrelRotationsPerSec<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">3.000000</span>                              <span class=\"\
+      co1\">// How many times the barrel rotates every second.</span>\n     RoundsPerRotation<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">5</span>                       \
+      \                  <span class=\"co1\">// How many rounds (shots) it fires every\
+      \ rotation.</span>\n     WindingSound<span class=\"sy0\">=</span><span class=\"\
+      kw5\">Sound</span><span class=\"st0\">'WeaponSounds.Minigun.miniempty'</span>\
+      \          <span class=\"co1\">// The sound it plays when the gun is winding\
+      \ up.</span>\n     FiringSound<span class=\"sy0\">=</span><span class=\"kw5\"\
+      >Sound</span><span class=\"st0\">'WeaponSounds.Minigun.minifireb'</span>   \
+      \        <span class=\"co1\">// The sound it plays when the gun is firing.</span>\n\
+      \     WindUpTime<span class=\"sy0\">=</span><span class=\"nu0\">0.270000</span>\
+      \                                         <span class=\"co1\">// The default\
+      \ windup time.</span>\n     FiringForce<span class=\"sy0\">=</span><span class=\"\
+      st0\">\"minifireb\"</span>\n     WindingForce<span class=\"sy0\">=</span><span\
+      \ class=\"st0\">\"miniempty\"</span>\n     <span class=\"kw9\">DamageType</span><span\
+      \ class=\"sy0\">=</span><span class=\"kw1\">Class</span><span class=\"st0\"\
+      >'XWeapons.DamTypeMinigunBullet'</span>\n     DamageMin<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">6</span>                                                 <span\
+      \ class=\"co1\">// The minimum amount of damage each bullet does.</span>\n \
+      \    DamageMax<span class=\"sy0\">=</span><span class=\"nu0\">7</span>     \
+      \                                            <span class=\"co1\">// The maximum\
+      \ amount of damage each bullet does.</span>\n     Momentum<span class=\"sy0\"\
+      >=</span><span class=\"nu0\">1200.000000</span>\n     FireLoopAnimRate<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">9.000000</span>\n     PreFireTime<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0.270000</span>\n     AmmoClass<span\
+      \ class=\"sy0\">=</span><span class=\"kw1\">Class</span><span class=\"st0\"\
+      >'XWeapons.MinigunAmmo'</span>                       <span class=\"co1\">//\
+      \ Which class of ammunition this weapon uses.</span>\n     AmmoPerFire<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">1</span>                       \
+      \                        <span class=\"co1\">// How much of that ammuntion is\
+      \ used per shot. This might</span>\n                                       \
+      \                          <span class=\"co1\">// seem pointless, but recall\
+      \ how the alt-fire on the Flak</span>\n                                    \
+      \                             <span class=\"co1\">// Cannon uses more than one\
+      \ piece of ammo.</span>\n     ShakeRotMag<span class=\"sy0\">=</span><span class=\"\
+      br0\">(</span>X<span class=\"sy0\">=</span><span class=\"nu0\">50.000000</span>,Y<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">50.000000</span>,Z<span class=\"\
+      sy0\">=</span><span class=\"nu0\">50.000000</span><span class=\"br0\">)</span>\n\
+      \     ShakeRotRate<span class=\"sy0\">=</span><span class=\"br0\">(</span>X<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">10000.000000</span>,Y<span class=\"\
+      sy0\">=</span><span class=\"nu0\">10000.000000</span>,Z<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">10000.000000</span><span class=\"br0\">)</span>\n     ShakeRotTime<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">2.000000</span>\n     ShakeOffsetMag<span\
+      \ class=\"sy0\">=</span><span class=\"br0\">(</span>X<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">1.000000</span>,Y<span class=\"sy0\">=</span><span class=\"\
+      nu0\">1.000000</span>,Z<span class=\"sy0\">=</span><span class=\"nu0\">1.000000</span><span\
+      \ class=\"br0\">)</span>\n     ShakeOffsetRate<span class=\"sy0\">=</span><span\
+      \ class=\"br0\">(</span>X<span class=\"sy0\">=</span><span class=\"nu0\">1000.000000</span>,Y<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">1000.000000</span>,Z<span class=\"\
+      sy0\">=</span><span class=\"nu0\">1000.000000</span><span class=\"br0\">)</span>\n\
+      \     ShakeOffsetTime<span class=\"sy0\">=</span><span class=\"nu0\">2.000000</span>\n\
+      \     BotRefireRate<span class=\"sy0\">=</span><span class=\"nu0\">0.990000</span>\n\
+      \     bPawnRapidFireAnim<span class=\"sy0\">=</span><span class=\"kw6\">True</span>\n\
+      \     FlashEmitterClass<span class=\"sy0\">=</span><span class=\"kw1\">Class</span><span\
+      \ class=\"st0\">'XEffects.MinigunMuzFlash1st'</span>       <span class=\"co1\"\
+      >// Which class the weapon will use for its muzzle flash emitter.</span>\n \
+      \    SmokeEmitterClass<span class=\"sy0\">=</span><span class=\"kw1\">Class</span><span\
+      \ class=\"st0\">'XEffects.MinigunMuzzleSmoke'</span>       <span class=\"co1\"\
+      >// Which class the weapon will use for its muzzle smoke emitter.</span>\n \
+      \    aimerror<span class=\"sy0\">=</span><span class=\"nu0\">900.000000</span>\n\
+      \ \n     Spread<span class=\"sy0\">=</span><span class=\"nu0\">0.080000</span>\
+      \        <span class=\"co1\">// How much variation there is between shots. This\
+      \ keeps the bullets going in slightly different directions.           </span>\n\
+      \     SpreadStyle<span class=\"sy0\">=</span>SS_Random  <span class=\"co1\"\
+      >// This makes sure that the Spread is truly random, so that the bullets going\
+      \ in slightly different directions looks pretty realistic.</span>\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p>Once again I would like anyone to correct\
+      \ or add to any of this.</p>\n<h2><span class=\"mw-headline\" id=\"Related_Topics\"\
+      >Related Topics</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:MinigunFire?section=1\" title=\"Edit section:\
+      \ Related Topics\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p><a href=\"/Legacy:MinigunAmmo\" title=\"Legacy:MinigunAmmo\">MinigunAmmo</a></p>\n\
+      <p><a href=\"/Legacy:MinigunPickup\" title=\"Legacy:MinigunPickup\">MinigunPickup</a></p>\n\
+      <p><a href=\"/Legacy:MinigunAmmoPickup\" title=\"Legacy:MinigunAmmoPickup\"\
+      >MinigunAmmoPickup</a></p>\n<p><a href=\"/Legacy:InstantFire\" title=\"Legacy:InstantFire\"\
+      >InstantFire</a></p>\n<p><a href=\"/Legacy:MinigunAltFire\" title=\"Legacy:MinigunAltFire\"\
+      >MinigunAltFire</a></p>\n<p><a href=\"/Legacy:MinigunAttachment\" title=\"Legacy:MinigunAttachment\"\
+      >MinigunAttachment</a></p>\n<p><a href=\"/Legacy:Code_References\" title=\"\
+      Legacy:Code References\">Code References</a></p>\n<p><a href=\"/Category:Legacy_Class_(UT2003)\"\
+      \ title=\"Category:Legacy Class (UT2003)\">Category:Legacy Class (UT2003)</a></p>\n\
+      <h2><span class=\"mw-headline\" id=\"Comments\">Comments</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:MinigunFire?section=2\"\
+      \ title=\"Edit section: Comments\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n\n<!-- \nNewPP limit report\nCPU time usage: 0.142 seconds\n\
+      Real time usage: 0.143 seconds\nPreprocessor visited node count: 17/1000000\n\
+      Preprocessor generated node count: 40/1000000\nPost‐expand include size: 11/2097152\
+      \ bytes\nTemplate argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\n\
+      Expensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion expansion\
+      \ time report (%,ms,calls,template)\n100.00%    0.000      1 - -total\n-->\n\
+      \n<!-- Saved in parser cache with key wiki:pcache:idhash:2118-0!*!0!!*!*!* and\
+      \ timestamp 20221118160248 and revision id 5159\n -->\n"
+  categories:
+  - sortkey: "MinigunFire"
+    name: "Legacy_Class_(UT2003)"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:MinigunAltFire"
+  - ns: 14
+    exists: true
+    name: "Category:Legacy Class (UT2003)"
+  - ns: 100
+    exists: true
+    name: "Legacy:InstantFire"
+  - ns: 100
+    exists: true
+    name: "Legacy:MinigunAmmo"
+  - ns: 100
+    exists: true
+    name: "Legacy:MinigunAttachment"
+  - ns: 100
+    exists: true
+    name: "Legacy:Code References"
+  - ns: 100
+    exists: true
+    name: "Legacy:MinigunPickup"
+  - ns: 100
+    exists: true
+    name: "Legacy:MinigunAmmoPickup"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:MinigunFire"
+    byteoffset: 9421
+    anchor: "Related_Topics"
+  - toclevel: 1
+    level: "2"
+    line: "Comments"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:MinigunFire"
+    byteoffset: 9772
+    anchor: "Comments"
+  displaytitle: "Legacy:MinigunFire"
+  iwlinks: []
+  wikitext:
+    text: "'''''UT2003, Build 2225'''''\n\nOnce again another reference of code, but\
+      \ this time for the Primary Fire of the minigun.  Oh, and please correct me\
+      \ if I'm wrong.  I won't get too pissed off ;)\n\n<uscript>\nclass MinigunFire\
+      \ extends InstantFire; //This is the class and the parent that it inherits some\
+      \ functionality from.\n\n// These are declarations of variables used in the\
+      \ code.\nvar() float MaxRollSpeed; \nvar() float RollSpeed; \nvar() float BarrelRotationsPerSec;\
+      \ //Amount of rotations of the barrel per sec\nvar() int   RoundsPerRotation;\
+      \     //Rounds fired per rotation\nvar() float FireTime;\nvar() Sound WindingSound;\
+      \          //The sound you hear when the minigun is getting ready to shoot.\n\
+      var() Sound FiringSound;           //The sound you hear when the minigun is\
+      \ actually shooting.\nvar MiniGun Gun;\nvar() float WindUpTime;            //Amount\
+      \ of time it takes to wind up\n\nvar() String FiringForce;          //Amount\
+      \ of recoil\nvar() String WindingForce;\n\n//What happens when you beserk (adrenaline\
+      \ combo) with this firing mode\nfunction StartBerserk() \n{\n    DamageMin =\
+      \ default.DamageMin * 1.33;\n    DamageMax = default.DamageMax * 1.33;\n}\n\n\
+      //What happens when you stop beserking\nfunction StopBerserk() \n{\n    DamageMin\
+      \ = default.DamageMin;\n    DamageMax = default.DamageMax;\n}\n\n//Initiate\
+      \ this code after game begins\nfunction PostBeginPlay() \n{\n    Super.PostBeginPlay();\n\
+      \n    //Set the firing rate\n    FireRate = 1.f / (RoundsPerRotation * BarrelRotationsPerSec);\n\
+      \n    //Set the maximum barrel rotation speed\n    MaxRollSpeed = 65536.f*BarrelRotationsPerSec;\
+      \ \n    Gun = Minigun(Owner);\n}\n\n//DoTrace is a function common to all weapons\
+      \ that handles the movement of projectiles and the determination \n//of the\
+      \ point of impact for instant-hit weapons.\nfunction DoTrace(Vector Start, Rotator\
+      \ Dir)\n{\n\tif ( FRand() < DeathMatch(Level.Game).MinigunLockDownFactor )\n\
+      \t\tMomentum = FMax(1.0,DeathMatch(Level.Game).MinigunLockDownFactor) * Default.Momentum;\n\
+      \telse\n\t\tMomentum = 0;\n\tSuper.DoTrace(Start,Dir);\n} \n\n//Set muzzle flash\
+      \ to proper location on the gun\nfunction FlashMuzzleFlash() \n{\n    local\
+      \ rotator r;\n    r.Roll = Rand(65536);\n    Weapon.SetBoneRotation('Bone_Flash',\
+      \ r, 0, 1.f);\n    Super.FlashMuzzleFlash();\n}\n\n//Set effects of the gun\n\
+      function InitEffects() \n{\n    Super.InitEffects();\n    if ( FlashEmitter\
+      \ != None )\n\t\tWeapon.AttachToBone(FlashEmitter, 'flash');\n}\n\n//Set ambient\
+      \ sounds\nfunction PlayAmbientSound(Sound aSound) \n{\n    if ( (Minigun(Weapon)\
+      \ == None) || (Instigator == None) || (aSound == None && ThisModeNum != Gun.CurrentMode)\
+      \ )\n        return;\n\n    Instigator.AmbientSound = aSound;\n    Gun.CurrentMode\
+      \ = ThisModeNum;\n}\n\n//Stop the barrel roll\n//When this function is called,\
+      \ it does an error check to make sure it's a valid call, then it simply sets\n\
+      //the rollspeed to 0.0 -- stopping the roll.\nfunction StopRolling()\n{\n  \
+      \  if (Gun == None || ThisModeNum != Gun.CurrentMode)\n        return;\n\n \
+      \   RollSpeed = 0.f;\n    Gun.RollSpeed = 0.f;\n} \n\nfunction PlayPreFire()\
+      \ {}\nfunction PlayStartHold() {}\nfunction PlayFiring() {}\nfunction PlayFireEnd()\
+      \ {}\nfunction StartFiring();\nfunction StopFiring();\nfunction bool IsIdle()\n\
+      {\n\treturn false;\n}\n\nauto state Idle\n{\n\tfunction bool IsIdle()\n\t{\n\
+      \t\treturn true;\n\t}\n\n    function BeginState()\n    {\n        PlayAmbientSound(None);\n\
+      \        StopRolling();\n    }\n\n    function EndState()\n    {\n        PlayAmbientSound(WindingSound);\n\
+      \    }\n\n    function StartFiring() //Says once you start to fire it winds\
+      \ up first\n    {\n        RollSpeed = 0;\n\tFireTime = (RollSpeed/MaxRollSpeed)\
+      \ * WindUpTime;\n        GotoState('WindUp');\n    }\n}\n\nstate WindUp\n{\n\
+      \    function BeginState() //Starts the wind-up Procedure\n    {\n        ClientPlayForceFeedback(WindingForce);\
+      \  // jdf\n    }\n\n    function EndState() //Says when wind-up ends the firing\
+      \ begins\n    {\n        if (ThisModeNum == 0)\n        {\n            if (\
+      \ (Weapon == None) || !Weapon.FireMode[1].bIsFiring )\n                StopForceFeedback(WindingForce);\n\
+      \        }\n        else\n        {\n            if ( (Weapon == None) || !Weapon.FireMode[0].bIsFiring\
+      \ )\n                StopForceFeedback(WindingForce);\n        }        \n \
+      \   }\n\n    function ModeTick(float dt)\n    {\n        FireTime += dt;\n \
+      \       RollSpeed = (FireTime/WindUpTime) * MaxRollSpeed;\n\n        if ( !bIsFiring\
+      \ )\n        {\n\t    GotoState('WindDown');\n\t    return;\n\t}\n        \n\
+      \        if (RollSpeed >= MaxRollSpeed)\n        {\n            RollSpeed =\
+      \ MaxRollSpeed;\n            FireTime = WindUpTime;\n            Gun.UpdateRoll(dt,\
+      \ RollSpeed, ThisModeNum);\n\t    GotoState('FireLoop');\n            return;\n\
+      \        }\n\n        Gun.UpdateRoll(dt, RollSpeed, ThisModeNum);\n    }\n\n\
+      \    function StopFiring() //Says if you stop firing it winds down\n    {\n\
+      \        GotoState('WindDown');\n    }\n}\n\nstate FireLoop //A loop that continues\
+      \ only if the boolean variable bIsFiring is true\n{\n    function BeginState()\n\
+      \    {\n        NextFireTime = Level.TimeSeconds - 0.1; //fire now!\n      \
+      \  PlayAmbientSound(FiringSound);\n        ClientPlayForceFeedback(FiringForce);\
+      \  // jdf\n        Gun.LoopAnim(FireLoopAnim, FireLoopAnimRate, TweenTime);\n\
+      \        Gun.SpawnShells(RoundsPerRotation*BarrelRotationsPerSec);\n    }\n\n\
+      \    function StopFiring()\n    {\n        GotoState('WindDown');\n    }\n\n\
+      \    function EndState() //What happens after you stop firing\n    {\n     \
+      \   PlayAmbientSound(WindingSound);\n        StopForceFeedback(FiringForce);\
+      \  // jdf\n        Gun.LoopAnim(Gun.IdleAnim, Gun.IdleAnimRate, TweenTime);\n\
+      \        Gun.SpawnShells(0.f);\n     }\n\n    function ModeTick(float dt)\n\
+      \    {\n        Super.ModeTick(dt);\n        Gun.UpdateRoll(dt, RollSpeed, ThisModeNum);\n\
+      \        if ( !bIsFiring )\n        {\n\t    GotoState('WindDown');\n\t    return;\n\
+      \t}\n    }\n}\n\nstate WindDown\n{\n    function BeginState() //Begins the wind-down\
+      \ procedure\n    {\n        ClientPlayForceFeedback(WindingForce);  // jdf\n\
+      \    }\n\n    function EndState()\n    {\n        if (ThisModeNum == 0)\n  \
+      \      {\n            if ( (Weapon == None) || !Weapon.FireMode[1].bIsFiring\
+      \ )\n                StopForceFeedback(WindingForce);\n        }\n        else\n\
+      \        {\n            if ( (Weapon == None) || !Weapon.FireMode[0].bIsFiring\
+      \ )\n                StopForceFeedback(WindingForce);\n        }//This checks\
+      \ to see what mode is firing, and stops the force feedback if any is occuring.\n\
+      \    }\n\n    function ModeTick(float dt)\n    {\n        FireTime -= dt;\n\
+      \        RollSpeed = (FireTime/WindUpTime) * MaxRollSpeed;\n         \n    \
+      \    if (RollSpeed <= 0.f)\n        {\n            RollSpeed = 0.f;\n      \
+      \      FireTime = 0.f;\n            Gun.UpdateRoll(dt, RollSpeed, ThisModeNum);\n\
+      \            GotoState('Idle');\n            return;\n        }\n\n        Gun.UpdateRoll(dt,\
+      \ RollSpeed, ThisModeNum);\n    }\n\n    function StartFiring() //Says in order\
+      \ to fire the gun must wind-up\n    {\n        GotoState('WindUp');\n    }\n\
+      }\n\ndefaultproperties //Default variable settings. Some were declared at the\
+      \ top of the file, others were declared in the parent class.\n{\n     BarrelRotationsPerSec=3.000000\
+      \                              // How many times the barrel rotates every second.\n\
+      \     RoundsPerRotation=5                                         // How many\
+      \ rounds (shots) it fires every rotation.\n     WindingSound=Sound'WeaponSounds.Minigun.miniempty'\
+      \          // The sound it plays when the gun is winding up.\n     FiringSound=Sound'WeaponSounds.Minigun.minifireb'\
+      \           // The sound it plays when the gun is firing.\n     WindUpTime=0.270000\
+      \                                         // The default windup time.\n    \
+      \ FiringForce=\"minifireb\"\n     WindingForce=\"miniempty\"\n     DamageType=Class'XWeapons.DamTypeMinigunBullet'\n\
+      \     DamageMin=6                                                 // The minimum\
+      \ amount of damage each bullet does.\n     DamageMax=7                     \
+      \                            // The maximum amount of damage each bullet does.\n\
+      \     Momentum=1200.000000\n     FireLoopAnimRate=9.000000\n     PreFireTime=0.270000\n\
+      \     AmmoClass=Class'XWeapons.MinigunAmmo'                       // Which class\
+      \ of ammunition this weapon uses.\n     AmmoPerFire=1                      \
+      \                         // How much of that ammuntion is used per shot. This\
+      \ might\n                                                                 //\
+      \ seem pointless, but recall how the alt-fire on the Flak\n                \
+      \                                                 // Cannon uses more than one\
+      \ piece of ammo.\n     ShakeRotMag=(X=50.000000,Y=50.000000,Z=50.000000)\n \
+      \    ShakeRotRate=(X=10000.000000,Y=10000.000000,Z=10000.000000)\n     ShakeRotTime=2.000000\n\
+      \     ShakeOffsetMag=(X=1.000000,Y=1.000000,Z=1.000000)\n     ShakeOffsetRate=(X=1000.000000,Y=1000.000000,Z=1000.000000)\n\
+      \     ShakeOffsetTime=2.000000\n     BotRefireRate=0.990000\n     bPawnRapidFireAnim=True\n\
+      \     FlashEmitterClass=Class'XEffects.MinigunMuzFlash1st'       // Which class\
+      \ the weapon will use for its muzzle flash emitter.\n     SmokeEmitterClass=Class'XEffects.MinigunMuzzleSmoke'\
+      \       // Which class the weapon will use for its muzzle smoke emitter.\n \
+      \    aimerror=900.000000\n\n     Spread=0.080000        // How much variation\
+      \ there is between shots. This keeps the bullets going in slightly different\
+      \ directions.           \n     SpreadStyle=SS_Random  // This makes sure that\
+      \ the Spread is truly random, so that the bullets going in slightly different\
+      \ directions looks pretty realistic.\n}\n</uscript>\n\nOnce again I would like\
+      \ anyone to correct or add to any of this.\n\n==Related Topics==\n\n[[Legacy:MinigunAmmo|MinigunAmmo]]\n\
+      \n[[Legacy:MinigunPickup|MinigunPickup]]\n\n[[Legacy:MinigunAmmoPickup|MinigunAmmoPickup]]\n\
+      \n[[Legacy:InstantFire|InstantFire]]\n\n[[Legacy:MinigunAltFire|MinigunAltFire]]\n\
+      \n[[Legacy:MinigunAttachment|MinigunAttachment]]\n\n[[Legacy:Code References|Code\
+      \ References]]\n\n[[:Category:Legacy Class (UT2003)]]\n\n==Comments==\n[[Category:Legacy\
+      \ Class (UT2003)|{{PAGENAME}}]]"
+  properties: []
+  revId: 5159
+name: "Legacy:MinigunFire"
+revision:
+  revid: 5159
+  parentid: 5161
+  user: "RDGDanClark"
+  timestamp: 1066083205.000000000
+  comment: "*"
+timestamp: 1668787217.777666000

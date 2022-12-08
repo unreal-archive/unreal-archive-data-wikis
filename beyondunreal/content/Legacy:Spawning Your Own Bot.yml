@@ -1,0 +1,404 @@
+---
+parse:
+  title: "Legacy:Spawning Your Own Bot"
+  text:
+    text: "<h2><span class=\"mw-headline\" id=\"Spawning_and_Controlling_a_Bot\">Spawning\
+      \ and Controlling a Bot</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Spawning_Your_Own_Bot?section=1\"\
+      \ title=\"Edit section: Spawning and Controlling a Bot\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<p>This question I have noticed\
+      \ gets asked a lot on the Unreal Forums. In fact I was one of those who asked\
+      \ the question, and after numerous tries and asking around. I eventually found\
+      \ the answer. So I decided that a Unreal Wiki Page should be written about it.\
+      \ You can look at forum discussion I had about it where I final got it to work\
+      \ at <a rel=\"nofollow\" class=\"external text\" href=\"http://forums.beyondunreal.com/showthread.php?threadid=123677\"\
+      >123677</a>.</p>\n<p>Now on to some work. The first thing you need to understand\
+      \ is how to make a <a href=\"/Legacy:Gametype\" title=\"Legacy:Gametype\">gametype</a>.</p>\n\
+      <p>See Link: <a href=\"/Legacy:INT_File\" title=\"Legacy:INT File\">INT File</a>.</p>\n\
+      <p>Okay now we will be creating 3 classes. The first on is going to be a new\
+      \ xDeathMatch subclass. The only really thing we are going to do in this class\
+      \ is to rewrite the SpawnBot function. Just cut and copied the spawn function\
+      \ from the DeathMatch class and changed the thinks in bold. So our class should\
+      \ look like:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">class</span> NewDeathMatch <span class=\"kw1\">extends</span> <span class=\"\
+      kw9\">xDeathMatch</span>; \n \n<span class=\"kw1\">function</span> <span class=\"\
+      kw9\">Bot</span> SpawnBot<span class=\"br0\">(</span><span class=\"kw1\">optional</span>\
+      \ <span class=\"kw5\">string</span> botName<span class=\"br0\">)</span>\n<span\
+      \ class=\"br0\">{</span>\n<span class=\"kw1\">local</span> <span class=\"kw9\"\
+      >Bot</span> NewBot;\n<span class=\"kw1\">local</span> RosterEntry Chosen;\n\
+      <span class=\"kw1\">local</span> UnrealTeamInfo BotTeam;\n \n    BotTeam <span\
+      \ class=\"sy0\">=</span> GetBotTeam<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n    Chosen <span class=\"sy0\">=</span> BotTeam.<span class=\"\
+      me0\">ChooseBotClass</span><span class=\"br0\">(</span>botName<span class=\"\
+      br0\">)</span>;\n \n    <span class=\"co1\">//set the pawn class name and pawnclass\
+      \ to our own pawn class</span>\n    Chosen.<span class=\"me0\">PawnClassName</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"st0\">\"MutSpawningBot.NewPawn\"\
+      </span>;\n    Chosen.<span class=\"me0\">PawnClass</span> <span class=\"sy0\"\
+      >=</span> <span class=\"kw1\">class</span><span class=\"st0\">'MutSpawningBot.NewPawn'</span>;\n\
+      \ \n    <span class=\"co1\">//comment out these because the because we just\
+      \ set the pawnclass</span>\n    <span class=\"coMULTI\">/*  if (Chosen.PawnClass\
+      \ == None)\n            Chosen.Init(); //amb\n        // log(\"Chose pawn class\
+      \ \"$Chosen.PawnClass);\n    */</span>\n \n    NewBot <span class=\"sy0\">=</span>\
+      \ <span class=\"kw9\">Bot</span><span class=\"br0\">(</span><span class=\"kw4\"\
+      >Spawn</span><span class=\"br0\">(</span>Chosen.<span class=\"me0\">PawnClass</span>.<span\
+      \ class=\"kw1\">default</span>.<span class=\"me0\">ControllerClass</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>;\n \n    <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span> NewBot <span class=\"sy0\">!=</span>\
+      \ <span class=\"kw5\">None</span> <span class=\"br0\">)</span>\n        InitializeBot<span\
+      \ class=\"br0\">(</span>NewBot,BotTeam,Chosen<span class=\"br0\">)</span>;\n\
+      \    <span class=\"kw2\">return</span> NewBot;\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"kw1\">defaultproperties</span>\n<span class=\"br0\">{</span>\n\
+      \     MapPrefix<span class=\"sy0\">=</span><span class=\"st0\">\"BS\"</span>\n\
+      \     BeaconName<span class=\"sy0\">=</span><span class=\"st0\">\"BS\"</span>\n\
+      \     GameName<span class=\"sy0\">=</span><span class=\"st0\">\"NEW DeathMatch\"\
+      </span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>Note the function\
+      \ Spawnbot was provided with assistance by smattbac. Now we will make our new\
+      \ Pawn class that will be a subclass of xPawn class.</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw1\">class</span> NewPawn <span class=\"kw1\"\
+      >extends</span> <span class=\"kw9\">xPawn</span>;\n \n<span class=\"co1\">//used\
+      \ to just show that the class has been initalized</span>\n<span class=\"kw1\"\
+      >event</span> <span class=\"kw4\">PostBeginPlay</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw6\"\
+      >Super</span>.<span class=\"kw4\">PostBeginPlay</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n\t<span class=\"kw3\">Log</span><span class=\"br0\"\
+      >(</span><span class=\"st0\">\"Pawns begin Play\"</span><span class=\"br0\"\
+      >)</span>;\n<span class=\"br0\">}</span>\n<span class=\"co1\">//assign our controller\
+      \ class through the default properties</span>\n<span class=\"kw1\">defaultproperties</span>\n\
+      <span class=\"br0\">{</span>\n\tControllerClass<span class=\"sy0\">=</span><span\
+      \ class=\"kw1\">class</span><span class=\"st0\">'MutSpawningBot.NewController'</span>\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>And our last class will\
+      \ be the Controller class where we will make a subclass of the xBot class.</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">class</span> NewController\
+      \ <span class=\"kw1\">extends</span> <span class=\"kw9\">xBot</span>;\n \n<span\
+      \ class=\"co1\">//copied from bot class</span>\n<span class=\"kw1\">function</span>\
+      \ SetAttractionState<span class=\"br0\">(</span><span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n\t<span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span> Enemy <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span>\
+      \ <span class=\"br0\">)</span>\n\t\t<span class=\"kw3\">GotoState</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'FallBack'</span><span class=\"\
+      br0\">)</span>;\n\t<span class=\"kw2\">else</span>\n\t<span class=\"br0\">{</span>\t\
+      <span class=\"co1\">//want to change this to whatever your default state is\
+      \ you \t</span>\n\t       <span class=\"co1\">//want for your bot.</span>\n\t\
+      \t<span class=\"kw3\">GotoState</span><span class=\"br0\">(</span><span class=\"\
+      st0\">'Roaming'</span><span class=\"br0\">)</span>;\n \n\t<span class=\"br0\"\
+      >}</span><span class=\"co1\">//close if</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>As far as I can tell the only way to get the controller to start\
+      \ in whatever your default state is, you must override the Function <b>function\
+      \ SetAttractionState()</b> and change the <b>GotoState(‘Roaming’)</b> to whatever\
+      \ your state is. I have tried using auto state but it doesn’t seem to work.\
+      \ Heed this advice - the game <i><b>will ignore the code under your Begin: labels</b></i>\
+      \ inside of your initial state until after reaching this settling point.</p>\n\
+      <p>Now when you load up UT2k3 change the Bot count to 1. Type in the following\
+      \ console command: <i>showdebug</i> and if your controller says: NewController\
+      \ and your Pawn says: NewPawn then there you have it the bot is now under your\
+      \ control.:)</p>\n<p>Here is another way of doing the same thing that was sent\
+      \ to me:</p>\n<p>These provided by NickR</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">class</span> YourGame <span class=\"kw1\">extends</span>\
+      \ <span class=\"kw9\">TeamGame</span>; \n \n<span class=\"kw1\">function</span>\
+      \ <span class=\"kw9\">Bot</span> SpawnBot<span class=\"br0\">(</span><span class=\"\
+      kw1\">optional</span> <span class=\"kw5\">string</span> botName<span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw1\">local</span>\
+      \ <span class=\"kw9\">Bot</span> NewBot;\n\t<span class=\"kw1\">local</span>\
+      \ RosterEntry Chosen;\n\t<span class=\"kw1\">local</span> UnrealTeamInfo BotTeam;\n\
+      \ \n\tBotTeam <span class=\"sy0\">=</span> GetBotTeam<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n\tChosen <span class=\"sy0\">=</span> BotTeam.<span\
+      \ class=\"me0\">ChooseBotClass</span><span class=\"br0\">(</span>botName<span\
+      \ class=\"br0\">)</span>;\n \n\t<span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span>Chosen.<span class=\"me0\">PawnClass</span> <span class=\"sy0\"\
+      >==</span> <span class=\"kw5\">None</span><span class=\"br0\">)</span>\n\t\t\
+      Chosen.<span class=\"me0\">Init</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n \n\tNewBot <span class=\"sy0\">=</span> <span class=\"kw4\"\
+      >Spawn</span><span class=\"br0\">(</span><span class=\"kw1\">class</span><span\
+      \ class=\"st0\">'YourPackage.YourAIController'</span><span class=\"br0\">)</span>;\n\
+      \ \n\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>NewBot <span\
+      \ class=\"sy0\">!=</span> <span class=\"kw5\">None</span><span class=\"br0\"\
+      >)</span>\n\t\tInitializeBot<span class=\"br0\">(</span>NewBot, BotTeam, Chosen<span\
+      \ class=\"br0\">)</span>;\n \n\t<span class=\"kw2\">return</span> NewBot;\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">defaultproperties</span>\n\
+      <span class=\"br0\">{</span>\n\tPlayerControllerClassName<span class=\"sy0\"\
+      >=</span><span class=\"st0\">\"YourPackage.YourPlayerController\"</span>\n\t\
+      DefaultPlayerClassName<span class=\"sy0\">=</span><span class=\"st0\">\"YourPackage.YourPawn\"\
+      </span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n<div dir=\"ltr\"\
+      \ class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">class</span> YourAIController <span\
+      \ class=\"kw1\">extends</span> <span class=\"kw9\">AIController</span>;\n \n\
+      <span class=\"kw1\">function</span> SetPawnClass<span class=\"br0\">(</span><span\
+      \ class=\"kw5\">string</span> inClass, <span class=\"kw5\">string</span> inCharacter<span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw6\"\
+      >Super</span>.<span class=\"me0\">SetPawnClass</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">\"YourPackage.YourPawn\"</span>, inCharacter<span class=\"br0\"\
+      >)</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">defaultproperties</span>\n\
+      <span class=\"br0\">{</span>\n\tPawnClass<span class=\"sy0\">=</span><span class=\"\
+      kw1\">class</span><span class=\"st0\">'YourPackage.YourPawn'</span>\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">class</span> YourPlayerController <span class=\"kw1\">extends</span>\
+      \ <span class=\"kw9\">PlayerController</span>;\n \n<span class=\"kw1\">function</span>\
+      \ SetPawnClass<span class=\"br0\">(</span><span class=\"kw5\">string</span>\
+      \ inClass, <span class=\"kw5\">string</span> inCharacter<span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw6\">Super</span>.<span\
+      \ class=\"me0\">SetPawnClass</span><span class=\"br0\">(</span><span class=\"\
+      st0\">\"YourPackage.YourPawn\"</span>, inCharacter<span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">defaultproperties</span>\n\
+      <span class=\"br0\">{</span>\n\tPawnClass<span class=\"sy0\">=</span><span class=\"\
+      kw1\">class</span><span class=\"st0\">'YourPackage.YourPawn'</span>\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<h2><span class=\"mw-headline\" id=\"Related_Topics\"\
+      >Related Topics</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Spawning_Your_Own_Bot?section=2\" title=\"Edit\
+      \ section: Related Topics\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <ul>\n<li><a href=\"/Legacy:Changing_Bots_Pawn_Class\" title=\"Legacy:Changing\
+      \ Bots Pawn Class\">Changing Bots Pawn Class</a></li>\n<li><a href=\"/Legacy:Making_Mods\"\
+      \ title=\"Legacy:Making Mods\">Making Mods</a></li>\n<li><a href=\"/Legacy:Bot_Vision\"\
+      \ title=\"Legacy:Bot Vision\">Bot Vision</a></li>\n<li><a href=\"/Legacy:Artificial_Intelligence\"\
+      \ title=\"Legacy:Artificial Intelligence\">Artificial Intelligence</a>\n<ul>\n\
+      <li><a href=\"/Legacy:Bot_Support\" title=\"Legacy:Bot Support\">Bot Support</a>\n\
+      <ul>\n<li><a href=\"/Legacy:Strategic_Bots\" title=\"Legacy:Strategic Bots\"\
+      >Strategic Bots</a></li>\n</ul>\n</li>\n</ul>\n</li>\n</ul>\n<h2><span class=\"\
+      mw-headline\" id=\"Discussion\">Discussion</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Spawning_Your_Own_Bot?section=3\"\
+      \ title=\"Edit section: Discussion\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p><b>Miszt:</b> I keep geting \"Cant find class MutSpawningBot.NewPawn\"\
+      \ when I compile, I guess I'm missing somthing here as I dont have MutSpawningBot\
+      \ in any of my UT dirs...I'm a total n00b btw, so please dont shout at me for\
+      \ being dumb&#160;:P (also apologies if I shouldnt be adding my question here)</p>\n\
+      <p><b>Toeses:</b> The second method doesn't work, you get a type mismatch on\
+      \ the line <b>NewBot = Spawn(class'YourPackage.YourAIController');</b> makes\
+      \ sense really, you can't spawn an AIController and cast it to a bot can you?</p>\n\
+      <p><b>Wormbo:</b> For obvious reasons you're supposed to create your own subclass\
+      \ of <a href=\"/Legacy:Bot\" title=\"Legacy:Bot\">Bot</a> (which is an indirect\
+      \ subclass of <a href=\"/Legacy:AIController\" title=\"Legacy:AIController\"\
+      >AIController</a>) and specify that in the Spawn() call, hence the page name\
+      \ \"Spawning Your <i>Own</i> Bot\".</p>\n<p><b>Juxtapose:</b> I'm having the\
+      \ same problem as Miszt above. I'm a total n00b as well, but I don't see any\
+      \ follow up . . . I will try making a MutSpawningBot.NewPawn class in a separate\
+      \ file (and otherwise blank, i'm thinking) later and post again to let you know\
+      \ how it goes.</p>\n<p><b>Juxtapose:</b> I got my error to go away by carefully\
+      \ retyping my class names; I hope for Miszts sake that his error was that simple\
+      \ as well.</p>\n<p>So my code is compiling but not working. There is no direct\
+      \ mention of how to enable the game type. 'NewDeathMatch' doesn't show up under\
+      \ the available game types. Also, showdebug is an unrecognized command in the\
+      \ UT2k4 console. I'll try harder tonight but I think the page itself could use\
+      \ some touching up and more comments between the code. In particular, the intro\
+      \ header says \". . . The first thing you need to understand is how to make\
+      \ a gametype\" but doesn't link anywhere too useful (at least that I can understand).\
+      \ Maybe a separate page on creating a custom gametype is in order? I'll do it\
+      \ myself once I know what I'm talking about and if no one else wants to step\
+      \ up.</p>\n<p><b>Moonfisher:</b> Hey I got the same error Jux, it's because\
+      \ you have no maps for that gametype, the prefix is BS in the code above, so\
+      \ if you copy a deathmatch map (Or any map realy) and rename the prefix to BS\
+      \ your gametype should apear in the menu.</p>\n<p>In case anyone else found\
+      \ this confusing (As I did).</p>\n<p>The bots you spawn will start fighting\
+      \ eachother and will have the AI that you assigned in the game rules. Now I'm\
+      \ only just starting this myself, so don't take my word for anything I say,\
+      \ and please correct me if I'm wrong&#160;:</p>\n<p>Because our NewController\
+      \ extends the xBot class wich extends the Bot class, you need to overide the\
+      \ functions in the Bot class that you want to controll youself.</p>\n<p>A good\
+      \ way to start off getting your bots to just stop and do nothing is to overide\
+      \ the Roaming state from the Bot class (In your NewController class)&#160;:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">state</span> Roaming\n\
+      <span class=\"br0\">{</span>\n\t<span class=\"kw1\">ignores</span> EnemyNotVisible;\n\
+      <span class=\"kw2\">Begin</span>:\n\tSwitchToBestWeapon<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n\tWaitForLanding<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\nDoneRoaming:\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>You can check the properties for the <a href=\"/Legacy:Bot\" title=\"\
+      Legacy:Bot\">Bot</a> class, but it doesn't list or explain most of the functions\
+      \ and states that you'll want to overide though. There are some coments in the\
+      \ source, but far from all functions are explained.</p>\n<p>If someone has a\
+      \ link to a good reference or further guidance on making an AI for a Bot I'd\
+      \ apretiate it, till then I would sugest getting to know the Bot class, that's\
+      \ what I'll be doing.</p>\n\n<!-- \nNewPP limit report\nCPU time usage: 0.158\
+      \ seconds\nReal time usage: 0.160 seconds\nPreprocessor visited node count:\
+      \ 68/1000000\nPreprocessor generated node count: 164/1000000\nPost‐expand include\
+      \ size: 21/2097152 bytes\nTemplate argument size: 0/2097152 bytes\nHighest expansion\
+      \ depth: 2/40\nExpensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion\
+      \ expansion time report (%,ms,calls,template)\n100.00%    0.000      1 - -total\n\
+      -->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:2891-0!*!0!!*!*!*\
+      \ and timestamp 20221118014911 and revision id 7699\n -->\n"
+  categories:
+  - sortkey: "Spawning Your Own Bot"
+    name: "Legacy_Tutorial"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:INT File"
+  - ns: 100
+    exists: true
+    name: "Legacy:AIController"
+  - ns: 100
+    exists: true
+    name: "Legacy:Bot Support"
+  - ns: 100
+    exists: true
+    name: "Legacy:Strategic Bots"
+  - ns: 100
+    exists: true
+    name: "Legacy:Artificial Intelligence"
+  - ns: 100
+    exists: true
+    name: "Legacy:Making Mods"
+  - ns: 100
+    exists: true
+    name: "Legacy:Bot"
+  - ns: 100
+    exists: true
+    name: "Legacy:Changing Bots Pawn Class"
+  - ns: 100
+    exists: true
+    name: "Legacy:Gametype"
+  - ns: 100
+    exists: true
+    name: "Legacy:Bot Vision"
+  templates: []
+  images: []
+  externallinks:
+  - "http://forums.beyondunreal.com/showthread.php?threadid=123677"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Spawning and Controlling a Bot"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Spawning_Your_Own_Bot"
+    byteoffset: 0
+    anchor: "Spawning_and_Controlling_a_Bot"
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Spawning_Your_Own_Bot"
+    byteoffset: 4552
+    anchor: "Related_Topics"
+  - toclevel: 1
+    level: "2"
+    line: "Discussion"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:Spawning_Your_Own_Bot"
+    byteoffset: 4851
+    anchor: "Discussion"
+  displaytitle: "Legacy:Spawning Your Own Bot"
+  iwlinks: []
+  wikitext:
+    text: "==Spawning and Controlling a Bot==\n\nThis question I have noticed gets\
+      \ asked a lot on the Unreal Forums. In fact I was one of those who asked the\
+      \ question, and after numerous tries and asking around. I eventually found the\
+      \ answer. So I decided that a Unreal Wiki Page should be written about it. You\
+      \ can look at forum discussion I had about it where I final got it to work at\
+      \ [http://forums.beyondunreal.com/showthread.php?threadid=123677 123677].\n\n\
+      Now on to some work. The first thing you need to understand is how to make a\
+      \ [[Legacy:Gametype|gametype]]. \n\nSee Link: [[Legacy:INT File|INT File]].\n\
+      \nOkay now we will be creating 3 classes. The first on is going to be a new\
+      \ xDeathMatch subclass. The only really thing we are going to do in this class\
+      \ is to rewrite the SpawnBot function. Just cut and copied the spawn function\
+      \ from the DeathMatch class and changed the thinks in bold. So our class should\
+      \ look like:\n\n<uscript>\nclass NewDeathMatch extends xDeathMatch; \n\nfunction\
+      \ Bot SpawnBot(optional string botName)\n{\nlocal Bot NewBot;\nlocal RosterEntry\
+      \ Chosen;\nlocal UnrealTeamInfo BotTeam;\n\n    BotTeam = GetBotTeam();\n  \
+      \  Chosen = BotTeam.ChooseBotClass(botName);\n\n    //set the pawn class name\
+      \ and pawnclass to our own pawn class\n    Chosen.PawnClassName = \"MutSpawningBot.NewPawn\"\
+      ;\n    Chosen.PawnClass = class'MutSpawningBot.NewPawn';\n    \n    //comment\
+      \ out these because the because we just set the pawnclass\n    /*  if (Chosen.PawnClass\
+      \ == None)\n            Chosen.Init(); //amb\n        // log(\"Chose pawn class\
+      \ \"$Chosen.PawnClass);\n    */\n    \n    NewBot = Bot(Spawn(Chosen.PawnClass.default.ControllerClass));\n\
+      \    \n    if ( NewBot != None )\n        InitializeBot(NewBot,BotTeam,Chosen);\n\
+      \    return NewBot;\n}\n\ndefaultproperties\n{\n     MapPrefix=\"BS\"\n    \
+      \ BeaconName=\"BS\"\n     GameName=\"NEW DeathMatch\"\n}\n</uscript>\n\nNote\
+      \ the function Spawnbot was provided with assistance by smattbac. Now we will\
+      \ make our new Pawn class that will be a subclass of xPawn class.\n\n<uscript>\n\
+      class NewPawn extends xPawn;\n\n//used to just show that the class has been\
+      \ initalized\nevent PostBeginPlay()\n{\n\tSuper.PostBeginPlay();\n\tLog(\"Pawns\
+      \ begin Play\");\n}\n//assign our controller class through the default properties\n\
+      defaultproperties\n{\n\tControllerClass=class'MutSpawningBot.NewController'\n\
+      }\n</uscript>\n\nAnd our last class will be the Controller class where we will\
+      \ make a subclass of the xBot class.\n\n<uscript>\nclass NewController extends\
+      \ xBot;\n\n//copied from bot class\nfunction SetAttractionState()\n{\n\tif (\
+      \ Enemy != None )\n\t\tGotoState('FallBack');\n\telse\n\t{\t//want to change\
+      \ this to whatever your default state is you \t\n\t       //want for your bot.\n\
+      \t\tGotoState('Roaming');\n\n\t}//close if\n}\n</uscript>\n\nAs far as I can\
+      \ tell the only way to get the controller to start in whatever your default\
+      \ state is, you must override the Function '''function SetAttractionState()'''\
+      \ and change the '''GotoState(‘Roaming’)''' to whatever your state is. I have\
+      \ tried using auto state but it doesn’t seem to work.  Heed this advice - the\
+      \ game '''''will ignore the code under your Begin: labels''''' inside of your\
+      \ initial state until after reaching this settling point.\n\nNow when you load\
+      \ up UT2k3 change the Bot count to 1. Type in the following console command:\
+      \  ''showdebug'' and if your controller says: NewController  and your Pawn says:\
+      \ NewPawn then there you have it the bot is now under your control.:)\n\nHere\
+      \ is another way of doing the same thing that was sent to me: \n\nThese provided\
+      \ by NickR\n\n<uscript>\nclass YourGame extends TeamGame; \n\nfunction Bot SpawnBot(optional\
+      \ string botName)\n{\n\tlocal Bot NewBot;\n\tlocal RosterEntry Chosen;\n\tlocal\
+      \ UnrealTeamInfo BotTeam;\n\n\tBotTeam = GetBotTeam();\n\tChosen = BotTeam.ChooseBotClass(botName);\n\
+      \n\tif (Chosen.PawnClass == None)\n\t\tChosen.Init();\n\n\tNewBot = Spawn(class'YourPackage.YourAIController');\n\
+      \n\tif (NewBot != None)\n\t\tInitializeBot(NewBot, BotTeam, Chosen);\n\n\treturn\
+      \ NewBot;\n}\n\ndefaultproperties\n{\n\tPlayerControllerClassName=\"YourPackage.YourPlayerController\"\
+      \n\tDefaultPlayerClassName=\"YourPackage.YourPawn\"\n}\n</uscript>\n\n<uscript>\n\
+      class YourAIController extends AIController;\n\nfunction SetPawnClass(string\
+      \ inClass, string inCharacter)\n{\n\tSuper.SetPawnClass(\"YourPackage.YourPawn\"\
+      , inCharacter);\n}\n\ndefaultproperties\n{\n\tPawnClass=class'YourPackage.YourPawn'\n\
+      }\n</uscript>\n\n<uscript>\nclass YourPlayerController extends PlayerController;\n\
+      \nfunction SetPawnClass(string inClass, string inCharacter)\n{\n\tSuper.SetPawnClass(\"\
+      YourPackage.YourPawn\", inCharacter);\n}\n\ndefaultproperties\n{\n\tPawnClass=class'YourPackage.YourPawn'\n\
+      }\n\n</uscript>\n\n==Related Topics==\n* [[Legacy:Changing Bots Pawn Class|Changing\
+      \ Bots Pawn Class]]\n* [[Legacy:Making Mods|Making Mods]]\n* [[Legacy:Bot Vision|Bot\
+      \ Vision]]\n* [[Legacy:Artificial Intelligence|Artificial Intelligence]]\n**\
+      \ [[Legacy:Bot Support|Bot Support]]\n*** [[Legacy:Strategic Bots|Strategic\
+      \ Bots]]\n\n==Discussion==\n\n'''Miszt:''' I keep geting \"Cant find class MutSpawningBot.NewPawn\"\
+      \ when I compile, I guess I'm missing somthing here as I dont have MutSpawningBot\
+      \ in any of my UT dirs...I'm a total n00b btw, so please dont shout at me for\
+      \ being dumb :P (also apologies if I shouldnt be adding my question here)\n\n\
+      '''Toeses:''' The second method doesn't work, you get a type mismatch on the\
+      \ line '''NewBot = Spawn(class'YourPackage.YourAIController');''' makes sense\
+      \ really, you can't spawn an AIController and cast it to a bot can you?\n\n\
+      '''Wormbo:''' For obvious reasons you're supposed to create your own subclass\
+      \ of [[Legacy:Bot|Bot]] (which is an indirect subclass of [[Legacy:AIController|AIController]])\
+      \ and specify that in the Spawn() call, hence the page name \"Spawning Your\
+      \ ''Own'' Bot\".\n\n'''Juxtapose:''' I'm having the same problem as Miszt above.\
+      \ I'm a total n00b as well, but I don't see any follow up . . . I will try making\
+      \ a MutSpawningBot.NewPawn class in a separate file (and otherwise blank, i'm\
+      \ thinking) later and post again to let you know how it goes.\n\n'''Juxtapose:'''\
+      \ I got my error to go away by carefully retyping my class names; I hope for\
+      \ Miszts sake that his error was that simple as well.\n\nSo my code is compiling\
+      \ but not working. There is no direct mention of how to enable the game type.\
+      \ 'NewDeathMatch' doesn't show up under the available game types. Also, showdebug\
+      \ is an unrecognized command in the UT2k4 console. I'll try harder tonight but\
+      \ I think the page itself could use some touching up and more comments between\
+      \ the code. In particular, the intro header says \". . . The first thing you\
+      \ need to understand is how to make a gametype\" but doesn't link anywhere too\
+      \ useful (at least that I can understand). Maybe a separate page on creating\
+      \ a custom gametype is in order? I'll do it myself once I know what I'm talking\
+      \ about and if no one else wants to step up.\n\n'''Moonfisher:''' Hey I got\
+      \ the same error Jux, it's because you have no maps for that gametype, the prefix\
+      \ is BS in the code above, so if you copy a deathmatch map (Or any map realy)\
+      \ and rename the prefix to BS your gametype should apear in the menu.\n\nIn\
+      \ case anyone else found this confusing (As I did).\n\nThe bots you spawn will\
+      \ start fighting eachother and will have the AI that you assigned in the game\
+      \ rules. Now I'm only just starting this myself, so don't take my word for anything\
+      \ I say, and please correct me if I'm wrong :\n\nBecause our NewController extends\
+      \ the xBot class wich extends the Bot class, you need to overide the functions\
+      \ in the Bot class that you want to controll youself.\n\nA good way to start\
+      \ off getting your bots to just stop and do nothing is to overide the Roaming\
+      \ state from the Bot class (In your NewController class) :\n\n<uscript>\nstate\
+      \ Roaming\n{\n\tignores EnemyNotVisible;\nBegin:\n\tSwitchToBestWeapon();\n\t\
+      WaitForLanding();\nDoneRoaming:\n}\n</uscript>\n\nYou can check the properties\
+      \ for the [[Legacy:Bot|Bot]] class, but it doesn't list or explain most of the\
+      \ functions and states that you'll want to overide though. There are some coments\
+      \ in the source, but far from all functions are explained.\n\nIf someone has\
+      \ a link to a good reference or further guidance on making an AI for a Bot I'd\
+      \ apretiate it, till then I would sugest getting to know the Bot class, that's\
+      \ what I'll be doing.\n\n[[Category:Legacy Tutorial|{{PAGENAME}}]]"
+  properties: []
+  revId: 7699
+name: "Legacy:Spawning Your Own Bot"
+revision:
+  revid: 7699
+  parentid: 7701
+  user: "Moonfisher"
+  timestamp: 1187397370.000000000
+  comment: "*"
+timestamp: 1668764313.074115000

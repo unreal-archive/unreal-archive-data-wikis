@@ -1,0 +1,584 @@
+---
+parse:
+  title: "Legacy:BruteForce"
+  text:
+    text: "<p>BruteForce is a programming language I (<a href=\"/Legacy:El_Muerte_TDS\"\
+      \ title=\"Legacy:El Muerte TDS\" class=\"mw-redirect\">El Muerte TDS</a>) specified.\
+      \ It's being compiled and executed from within the Unreal Warfare engine.</p>\n\
+      <p>I thought it would be intresting if I explained how I designed it and how\
+      \ it works. Some things might be usefull for other people.</p>\n<p>The latest\
+      \ source code of BruteForce is avilable from my <a href=\"/Legacy:CVS\" title=\"\
+      Legacy:CVS\">CVS</a> repository, module name: <i>BruteForce</i></p>\n<p>Or you\
+      \ can download a snapshot of the source code here: <a rel=\"nofollow\" class=\"\
+      external free\" href=\"http://unreal.student.utwente.nl/Source/BruteForce-source.zip\"\
+      >http://unreal.student.utwente.nl/Source/BruteForce-source.zip</a></p>\n<p></p>\n\
+      <div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n</div>\n\
+      <ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#Step_1:_the_specification\"\
+      ><span class=\"tocnumber\">1</span> <span class=\"toctext\">Step 1: the specification</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-2\"><a href=\"#Step_2.2B3:_the_parser_and_compiler\"\
+      ><span class=\"tocnumber\">2</span> <span class=\"toctext\">Step 2+3: the parser\
+      \ and compiler</span></a></li>\n<li class=\"toclevel-1 tocsection-3\"><a href=\"\
+      #Step_4:_the_checker_.28optional.29\"><span class=\"tocnumber\">3</span> <span\
+      \ class=\"toctext\">Step 4: the checker (optional)</span></a></li>\n<li class=\"\
+      toclevel-1 tocsection-4\"><a href=\"#Step_5:_the_interpreter\"><span class=\"\
+      tocnumber\">4</span> <span class=\"toctext\">Step 5: the interpreter</span></a>\n\
+      <ul>\n<li class=\"toclevel-2 tocsection-5\"><a href=\"#Step_5.1:_the_scope\"\
+      ><span class=\"tocnumber\">4.1</span> <span class=\"toctext\">Step 5.1: the\
+      \ scope</span></a></li>\n</ul>\n</li>\n<li class=\"toclevel-1 tocsection-6\"\
+      ><a href=\"#Step_6:_combining_it_all\"><span class=\"tocnumber\">5</span> <span\
+      \ class=\"toctext\">Step 6: combining it all</span></a></li>\n<li class=\"toclevel-1\
+      \ tocsection-7\"><a href=\"#Issues.2Fthings_to_think_about\"><span class=\"\
+      tocnumber\">6</span> <span class=\"toctext\">Issues/things to think about</span></a>\n\
+      <ul>\n<li class=\"toclevel-2 tocsection-8\"><a href=\"#Type_complete\"><span\
+      \ class=\"tocnumber\">6.1</span> <span class=\"toctext\">Type complete</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-9\"><a href=\"#Function_declarations\"><span\
+      \ class=\"tocnumber\">6.2</span> <span class=\"toctext\">Function declarations</span></a></li>\n\
+      </ul>\n</li>\n<li class=\"toclevel-1 tocsection-10\"><a href=\"#Related_articles\"\
+      ><span class=\"tocnumber\">7</span> <span class=\"toctext\">Related articles</span></a>\n\
+      <ul>\n<li class=\"toclevel-2 tocsection-11\"><a href=\"#BruteForce_documents\"\
+      ><span class=\"tocnumber\">7.1</span> <span class=\"toctext\">BruteForce documents</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-12\"><a href=\"#Other_documents\"><span class=\"\
+      tocnumber\">7.2</span> <span class=\"toctext\">Other documents</span></a></li>\n\
+      </ul>\n</li>\n<li class=\"toclevel-1 tocsection-13\"><a href=\"#Discussion\"\
+      ><span class=\"tocnumber\">8</span> <span class=\"toctext\">Discussion</span></a></li>\n\
+      </ul>\n</div>\n<p></p>\n<h2><span class=\"mw-headline\" id=\"Step_1:_the_specification\"\
+      >Step 1: the specification</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:BruteForce?section=1\"\
+      \ title=\"Edit section: Step 1: the specification\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>The most important part of a language, that can be\
+      \ a programming language or even a file format, is the specification. This is\
+      \ usualy done using <a rel=\"nofollow\" class=\"external text\" href=\"http://www.garshol.priv.no/download/text/bnf.html\"\
+      >EBNF</a> format.</p>\n<p>The EBNF specification defines how the source code\
+      \ should be written, if the source code doesn't match all the rules of the EBNF\
+      \ specification it can not be compiled.</p>\n<p><a href=\"/Legacy:BruteForce/EBNF\"\
+      \ title=\"Legacy:BruteForce/EBNF\">Read more about the BruteForce EBNF specification</a></p>\n\
+      <h2><span class=\"mw-headline\" id=\"Step_2.2B3:_the_parser_and_compiler\">Step\
+      \ 2+3: the parser and compiler</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:BruteForce?section=2\"\
+      \ title=\"Edit section: Step 2+3: the parser and compiler\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<p>Now you have to write the\
+      \ parser that checks if the input source conforms to your EBNF specification.\
+      \ The easiest way to do that is to use a <a href=\"/Legacy:Tokenizer\" title=\"\
+      Legacy:Tokenizer\">tokenizer</a> to retreive the significant blocks from the\
+      \ source file.</p>\n<p>I've named by parser class <i>compiler</i> because it\
+      \ will also compile the source file to usefull data for the execution of the\
+      \ code. Usualy the parser will also compile the input source to an internal\
+      \ format, for later processing/execution. So that's why I will handle both at\
+      \ the same time.</p>\n<p>The compiler will translate the input code to a Abstract\
+      \ Syntax Tree (<a href=\"/Legacy:BruteForce/AST\" title=\"Legacy:BruteForce/AST\"\
+      >Legacy:BruteForce/AST</a>), the AST is a tree representation of the input code.\
+      \ This tree makes it easier to do something with the code. The main advatage\
+      \ of a tree over a stack machine is that you can execute tree nodes and always\
+      \ return to that node by reference, very usefull in while loops. Basically a\
+      \ tree works the same like a stack machine, but the jumps are just more friendlier\
+      \ to use than labels.</p>\n<p>Your language has to be readable for humans, at\
+      \ least that is the nicest way. But you AST has to be easy to read for a machine.\
+      \ So what's the diffirent, well a machine wants to know what it has to do as\
+      \ fast as possible, it doesn't want to look ahead to see what it has to do,\
+      \ this is not efficient. This comes down to that your tree has to use a prefix\
+      \ notation, but mostlikely you designed your language to use infix.</p>\n<div\
+      \ dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\">x <span class=\"sy0\">=</span> <span\
+      \ class=\"nu0\">1</span> <span class=\"sy0\">+</span> <span class=\"nu0\">2</span>\
+      \ <span class=\"co1\">// infix</span>\n<span class=\"sy0\">=</span> x <span\
+      \ class=\"sy0\">+</span> <span class=\"nu0\">1</span> <span class=\"nu0\">2</span>\
+      \ <span class=\"co1\">// prefix</span></pre></div>\n</div>\n<p>So during compiling\
+      \ you need to translate the infix notation to prefix.</p>\n<p>The easiest way\
+      \ to create a parser for your language is to create a <a href=\"http://en.wikipedia.org/wiki/Recursive_descent_parser\"\
+      \ class=\"extiw\" title=\"wikipedia:Recursive descent parser\">Wikipedia:Recursive\
+      \ descent parser</a>, e.g. each non terminal is a new function. This might result\
+      \ in a lot of small functions or even function that just call another function,\
+      \ but that doesn't matter. Maybe in the future you want to extend your language\
+      \ and you will be happy that you did it this way.</p>\n<p><a href=\"/Legacy:BruteForce/Compiler\"\
+      \ title=\"Legacy:BruteForce/Compiler\">The parser + compiler</a></p>\n<p><a\
+      \ href=\"/Legacy:BruteForce/AST\" title=\"Legacy:BruteForce/AST\">Abstract Syntax\
+      \ Tree (AST)</a></p>\n<h2><span class=\"mw-headline\" id=\"Step_4:_the_checker_.28optional.29\"\
+      >Step 4: the checker (optional)</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:BruteForce?section=3\"\
+      \ title=\"Edit section: Step 4: the checker (optional)\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<p>After you compiled your input\
+      \ source to a AST you may want to check if the content is correct, e.g. check\
+      \ for unresolved variables/functions/... or even do range checking or other\
+      \ content checking.</p>\n<p>The parser/compiler only checks if the course is\
+      \ correctly used not if you didn't do <i>stupid</i> things. This is what the\
+      \ checker does.</p>\n<p>The step is not required to do and I left it out in\
+      \ the current version. The only problem you get is that you program might crash\
+      \ or returns undesireable information.</p>\n<p>The code of the checker is basically\
+      \ the same as that of the interpreter, it also walks through the AST, except\
+      \ that it doesn't interpret the code, it doesn't calculate the values. So run\
+      \ time errors (e.g. divide by zero) are not checked by the checker.</p>\n<h2><span\
+      \ class=\"mw-headline\" id=\"Step_5:_the_interpreter\">Step 5: the interpreter</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:BruteForce?section=4\" title=\"Edit section: Step 5: the\
+      \ interpreter\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>When you have created the AST you can execute/interpret it and return a result.\
+      \ All the interpreter has to do is walk down the tree. For this it's also best\
+      \ to write a recursive descent parser, but note that it does <i>not</i> work\
+      \ the same way like with the parser/compiler. This one is much easier since\
+      \ you can see at the tree node where you have to go.</p>\n<p>Unlike with the\
+      \ parser you do have to pass arguments to the diffirent functions, each function\
+      \ receives the current tree node to process. This way you can easily create\
+      \ a while loop by calling the same function with the same node.</p>\n<p>Expressions\
+      \ return results, there are two common ways to pass these results up the tree\
+      \ to the node where they are used.</p>\n<p>One way is to use a data stack where\
+      \ you push and pop the to/from. For this to work you have to create the logic\
+      \ for the stack administration (e.g. the push and pop). Using the static is\
+      \ what usualy is done in assambler languages (and finally in the CPU).</p>\n\
+      <p>An other, modern, way is to return the results of a function, this might\
+      \ involve storing the results in local variables, but it's generaly easier to\
+      \ write and use (specially for debugging).</p>\n<p><a href=\"/Legacy:BruteForce/Interpreter\"\
+      \ title=\"Legacy:BruteForce/Interpreter\">Legacy:BruteForce/Interpreter</a></p>\n\
+      <h3><span class=\"mw-headline\" id=\"Step_5.1:_the_scope\">Step 5.1: the scope</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:BruteForce?section=5\" title=\"Edit section: Step 5.1:\
+      \ the scope\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>While interpreting your AST you need to keep track of functions and variables\
+      \ used. You also might need to keep track of global and local definitions. For\
+      \ this you needs to create a class that keeps track of this. I've called it\
+      \ <i>the scope</i>. This stores the declarations and values and returns them\
+      \ when the interpreter requests it.</p>\n<p><a href=\"/Legacy:BruteForce/Scope\"\
+      \ title=\"Legacy:BruteForce/Scope\">Legacy:BruteForce/Scope</a></p>\n<h2><span\
+      \ class=\"mw-headline\" id=\"Step_6:_combining_it_all\">Step 6: combining it\
+      \ all</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:BruteForce?section=6\" title=\"Edit section:\
+      \ Step 6: combining it all\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>Now combine all seperate pieces into one thing that\
+      \ you can use.</p>\n<p>Create a tokenizer ans pass it the source code. Create\
+      \ an AST and a Compiler and pass the compiler the tokenizer and AST. Create\
+      \ an interpreter and pass it the AST and your Scope.</p>\n<p><a href=\"/Legacy:BruteForce/Main\"\
+      \ title=\"Legacy:BruteForce/Main\">Legacy:BruteForce/Main</a></p>\n<h2><span\
+      \ class=\"mw-headline\" id=\"Issues.2Fthings_to_think_about\">Issues/things\
+      \ to think about</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:BruteForce?section=7\" title=\"Edit section:\
+      \ Issues/things to think about\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<h3><span class=\"mw-headline\" id=\"Type_complete\"\
+      >Type complete</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:BruteForce?section=8\" title=\"Edit section:\
+      \ Type complete\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>I designed BruteForce to be type complete, this means that every type is\
+      \ treated equally, each type is automatically casted to an other type when needed.</p>\n\
+      <p>Ofcourse this can result in intresting issues like what to do with operators.\
+      \ As a general rule the left side defines the type, ofcourse this will also\
+      \ be confusing sometimes.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      co1\">// easy ones</span>\n<span class=\"st0\">\"some string\"</span> <span\
+      \ class=\"sy0\">+</span> <span class=\"st0\">\"other string\"</span> <span class=\"\
+      sy0\">=</span> <span class=\"st0\">\"some stringother string\"</span> \n<span\
+      \ class=\"st0\">\"string\"</span> <span class=\"sy0\">+</span> <span class=\"\
+      nu0\">123.67</span> <span class=\"sy0\">=</span> <span class=\"st0\">\"string123.67\"\
+      </span>\n<span class=\"nu0\">123</span> <span class=\"sy0\">+</span> <span class=\"\
+      st0\">\"56\"</span> <span class=\"sy0\">=</span> <span class=\"nu0\">179</span>\
+      \ \n \n<span class=\"co1\">// a little bit difficult</span>\n<span class=\"\
+      nu0\">123</span> <span class=\"sy0\">+</span> <span class=\"st0\">\"weird stuff\"\
+      </span> <span class=\"sy0\">=</span> <span class=\"nu0\">123</span> <span class=\"\
+      sy0\">+</span> <span class=\"nu0\">0</span> <span class=\"sy0\">=</span> <span\
+      \ class=\"nu0\">123</span> <span class=\"co1\">// \"weird stuff\" is not a number\
+      \ so it's 0</span>\n<span class=\"kw6\">true</span> <span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"st0\">\"\"</span> <span class=\"sy0\">=</span> <span class=\"\
+      kw6\">true</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"kw6\"\
+      >false</span>          <span class=\"co1\">// an empty string, or for int/float\
+      \ 0 equals to false</span>\n \n<span class=\"co1\">// weird</span>\n<span class=\"\
+      st0\">\"string 1\"</span> <span class=\"sy0\">-</span> <span class=\"st0\">\"\
+      string\"</span> <span class=\"sy0\">=</span> ??   <span class=\"co1\">// maybe\
+      \ \" 1\"</span>\n<span class=\"st0\">\"string\"</span> <span class=\"sy0\">-</span>\
+      \ <span class=\"nu0\">1</span> <span class=\"sy0\">=</span> ??            <span\
+      \ class=\"co1\">// maybe \"strin\"</span>\n<span class=\"st0\">\"string 1\"\
+      </span> <span class=\"sy0\">*</span> <span class=\"st0\">\"string\"</span> <span\
+      \ class=\"sy0\">=</span> ??   <span class=\"co1\">// I've got no idea</span>\n\
+      <span class=\"st0\">\"string 1\"</span> <span class=\"sy0\">*</span> <span class=\"\
+      nu0\">2</span> <span class=\"sy0\">=</span> ??          <span class=\"co1\"\
+      >// maybe \"string 1string 1\"</span>\n<span class=\"st0\">\"string 1\"</span>\
+      \ <span class=\"sy0\">/</span> <span class=\"st0\">\"string\"</span> <span class=\"\
+      sy0\">=</span> ??</pre></div>\n</div>\n<h3><span class=\"mw-headline\" id=\"\
+      Function_declarations\">Function declarations</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:BruteForce?section=9\"\
+      \ title=\"Edit section: Function declarations\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Function declarations are great, using the AST and\
+      \ Scope it's even very easy, when you reach a function declaration just add\
+      \ the declaration with type <i>function</i> and as value the node where the\
+      \ function begins.</p>\n<p>When that function is called jou just lookup the\
+      \ function in the scope and execute the returned node.</p>\n<h2><span class=\"\
+      mw-headline\" id=\"Related_articles\">Related articles</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:BruteForce?section=10\"\
+      \ title=\"Edit section: Related articles\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<h3><span class=\"mw-headline\" id=\"BruteForce_documents\"\
+      >BruteForce documents</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:BruteForce?section=11\" title=\"Edit section:\
+      \ BruteForce documents\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <ul>\n<li><a href=\"/Legacy:BruteForce/AST\" title=\"Legacy:BruteForce/AST\"\
+      >Legacy:BruteForce/AST</a></li>\n<li><a href=\"/Legacy:BruteForce/Compiler\"\
+      \ title=\"Legacy:BruteForce/Compiler\">Legacy:BruteForce/Compiler</a></li>\n\
+      <li><a href=\"/Legacy:BruteForce/EBNF\" title=\"Legacy:BruteForce/EBNF\">Legacy:BruteForce/EBNF</a></li>\n\
+      <li><a href=\"/Legacy:BruteForce/Interpreter\" title=\"Legacy:BruteForce/Interpreter\"\
+      >Legacy:BruteForce/Interpreter</a></li>\n<li><a href=\"/Legacy:BruteForce/Main\"\
+      \ title=\"Legacy:BruteForce/Main\">Legacy:BruteForce/Main</a></li>\n<li><a href=\"\
+      /Legacy:BruteForce/Scope\" title=\"Legacy:BruteForce/Scope\">Legacy:BruteForce/Scope</a></li>\n\
+      <li><a href=\"/Legacy:Tokenizer\" title=\"Legacy:Tokenizer\">Tokenizer</a></li>\n\
+      </ul>\n<h3><span class=\"mw-headline\" id=\"Other_documents\">Other documents</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:BruteForce?section=12\" title=\"Edit section: Other documents\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n<ul>\n\
+      <li><a href=\"http://en.wikipedia.org/wiki/Abstract_syntax_tree\" class=\"extiw\"\
+      \ title=\"wikipedia:Abstract syntax tree\">Wikipedia:Abstract syntax tree</a></li>\n\
+      <li><a rel=\"nofollow\" class=\"external text\" href=\"http://www.garshol.priv.no/download/text/bnf.html\"\
+      >BNF and EBNF: What are they and how do they work?</a></li>\n<li><a rel=\"nofollow\"\
+      \ class=\"external text\" href=\"http://www.antlr.org\">ANTLR</a> - ANother\
+      \ Tool for Language Recognition</li>\n</ul>\n<hr />\n<h2><span class=\"mw-headline\"\
+      \ id=\"Discussion\">Discussion</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:BruteForce?section=13\"\
+      \ title=\"Edit section: Discussion\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p><b>Tarquin:</b> very interesting. care to tell us\
+      \ what it's useful for – what advatages does this have over Uscript?</p>\n<p><b>Mychaeel:</b>\
+      \ Sounds like a case study to me, not anything with an actual intent or purpose.\
+      \ – How's the compiler's and interpreter's performance?</p>\n<p><b>El Muerte\
+      \ TDS:</b> Just started on it for fun, I am following a course about translaters\
+      \ and compilers at the uni at the moment and this makes it more intresting.\
+      \ As for the performance, the sample script on the <a href=\"/Legacy:BruteForce/EBNF\"\
+      \ title=\"Legacy:BruteForce/EBNF\">Legacy:BruteForce/EBNF</a> page takes about\
+      \ 50ms to compile and 170ms to execute (and calculate the first 10 dates). I\
+      \ think the most time is used by <a href=\"/Legacy:BruteForce/Scope\" title=\"\
+      Legacy:BruteForce/Scope\">Legacy:BruteForce/Scope</a> class, need to improve\
+      \ this somehow.</p>\n<p><b>Zedsquared</b> I think this is all great fun and\
+      \ doesn't need a reason at all&#160;:) El Muerte, why not go on to create a\
+      \ radical 3d debugging environment for code written in bruteforce seeing as\
+      \ how you've got this 3d engine sitting there doing nothing ATM... seems such\
+      \ a shame to restrict output to the log&#160;:)</p>\n<p>One possible use for\
+      \ this: Write a 'core war 3D' mod where you can get together online, code up\
+      \ simple AI for some sort of combat actors in real time and get them battling...\
+      \ I was thinking along these lines for my GP stuff but the 'language' such as\
+      \ it is would only appeal to lisp hackers, bruteforce is much more friendly.\
+      \ All very geeky I know but I reckon the world needs more geeky games&#160;:)</p>\n\
+      <p><b>Tarquin:</b> Hey, I'm a mathematician! I know all about things which serve\
+      \ no purpose but are elegant!&#160;;) ElM, do you want to write a short paragraph\
+      \ on this to submit to BU news?</p>\n<p><b>El Muerte TDS:</b> eek, an mathematician&#160;:D\
+      \ Uhm, this is news worthy&#160;? Lemme use my excelent writing skills, ...\
+      \ uhm... uhm...</p>\n<p><b>Tarquin:</b> I can make something up if you like&#160;:)\
+      \ it's not newsworthy that I'm a mathematician...&#160;;) but I think a language\
+      \ written in Uscrip is kinda cool... we should show it off!</p>\n<p><b>hc:</b>\
+      \ Could you set up a BruteForce download that doesn't require you to use cvs?\
+      \ (I'm behind a firewall...)</p>\n<p><b>El Muerte:</b> check the top of the\
+      \ page for a zip file containing a snapshot from the CVS</p>\n<p><b>hc:</b>\
+      \ Thanks!</p>\n<p><b>MythOpus:</b> Quick question: You've stated that it is\
+      \ being compiled and executed within the engine... Does that mean that one could\
+      \ write something up when you are running the game (whatever game/mod that would\
+      \ be) and compile it/execute it without getting out of the game. I hate how\
+      \ you have to write your code, compile it, start the game, exit the game, make\
+      \ changes, delete the .u file, re-compile and do it all over again. Would that\
+      \ be neccesary with this? And also, is BruteForce an alternative to UScript,\
+      \ in that you could write up a mutator and/or complete total conversion using\
+      \ BF for use with the Unreal Engine?</p>\n<p><b>El Muerte:</b> bruteforce is\
+      \ <i>not</i> an alternative to unrealscript. It's just a programming language\
+      \ written using unrealscript. You can not use it to write a mutator or total\
+      \ conversion (not unless you also add all required bindings between bruteforce\
+      \ and the unrealengine, but that's just a waste of time because you already\
+      \ have unrealscript).</p>\n\n<!-- \nNewPP limit report\nCPU time usage: 0.079\
+      \ seconds\nReal time usage: 0.245 seconds\nPreprocessor visited node count:\
+      \ 151/1000000\nPreprocessor generated node count: 336/1000000\nPost‐expand include\
+      \ size: 240/2097152 bytes\nTemplate argument size: 0/2097152 bytes\nHighest\
+      \ expansion depth: 2/40\nExpensive parser function count: 0/100\n-->\n\n<!--\
+      \ \nTransclusion expansion time report (%,ms,calls,template)\n100.00%    0.000\
+      \      1 - -total\n-->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:601-0!*!0!!en!*!*\
+      \ and timestamp 20221118014253 and revision id 1812\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Tokenizer"
+  - ns: 100
+    exists: true
+    name: "Legacy:CVS"
+  - ns: 100
+    exists: true
+    name: "Legacy:BruteForce/Scope"
+  - ns: 100
+    exists: true
+    name: "Legacy:BruteForce/Compiler"
+  - ns: 100
+    exists: true
+    name: "Legacy:El Muerte TDS"
+  - ns: 100
+    exists: true
+    name: "Legacy:BruteForce/Main"
+  - ns: 100
+    exists: true
+    name: "Legacy:BruteForce/EBNF"
+  - ns: 100
+    exists: true
+    name: "Legacy:BruteForce/AST"
+  - ns: 100
+    exists: true
+    name: "Legacy:BruteForce/Interpreter"
+  templates: []
+  images: []
+  externallinks:
+  - "http://unreal.student.utwente.nl/Source/BruteForce-source.zip"
+  - "http://www.garshol.priv.no/download/text/bnf.html"
+  - "http://www.antlr.org"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Step 1: the specification"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:BruteForce"
+    byteoffset: 533
+    anchor: "Step_1:_the_specification"
+  - toclevel: 1
+    level: "2"
+    line: "Step 2+3: the parser and compiler"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:BruteForce"
+    byteoffset: 1039
+    anchor: "Step_2.2B3:_the_parser_and_compiler"
+  - toclevel: 1
+    level: "2"
+    line: "Step 4: the checker (optional)"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:BruteForce"
+    byteoffset: 3167
+    anchor: "Step_4:_the_checker_.28optional.29"
+  - toclevel: 1
+    level: "2"
+    line: "Step 5: the interpreter"
+    number: "4"
+    index: "4"
+    fromtitle: "Legacy:BruteForce"
+    byteoffset: 3962
+    anchor: "Step_5:_the_interpreter"
+  - toclevel: 2
+    level: "3"
+    line: "Step 5.1: the scope"
+    number: "4.1"
+    index: "5"
+    fromtitle: "Legacy:BruteForce"
+    byteoffset: 5203
+    anchor: "Step_5.1:_the_scope"
+  - toclevel: 1
+    level: "2"
+    line: "Step 6: combining it all"
+    number: "5"
+    index: "6"
+    fromtitle: "Legacy:BruteForce"
+    byteoffset: 5614
+    anchor: "Step_6:_combining_it_all"
+  - toclevel: 1
+    level: "2"
+    line: "Issues/things to think about"
+    number: "6"
+    index: "7"
+    fromtitle: "Legacy:BruteForce"
+    byteoffset: 5937
+    anchor: "Issues.2Fthings_to_think_about"
+  - toclevel: 2
+    level: "3"
+    line: "Type complete"
+    number: "6.1"
+    index: "8"
+    fromtitle: "Legacy:BruteForce"
+    byteoffset: 5972
+    anchor: "Type_complete"
+  - toclevel: 2
+    level: "3"
+    line: "Function declarations"
+    number: "6.2"
+    index: "9"
+    fromtitle: "Legacy:BruteForce"
+    byteoffset: 6904
+    anchor: "Function_declarations"
+  - toclevel: 1
+    level: "2"
+    line: "Related articles"
+    number: "7"
+    index: "10"
+    fromtitle: "Legacy:BruteForce"
+    byteoffset: 7251
+    anchor: "Related_articles"
+  - toclevel: 2
+    level: "3"
+    line: "BruteForce documents"
+    number: "7.1"
+    index: "11"
+    fromtitle: "Legacy:BruteForce"
+    byteoffset: 7274
+    anchor: "BruteForce_documents"
+  - toclevel: 2
+    level: "3"
+    line: "Other documents"
+    number: "7.2"
+    index: "12"
+    fromtitle: "Legacy:BruteForce"
+    byteoffset: 7623
+    anchor: "Other_documents"
+  - toclevel: 1
+    level: "2"
+    line: "Discussion"
+    number: "8"
+    index: "13"
+    fromtitle: "Legacy:BruteForce"
+    byteoffset: 7865
+    anchor: "Discussion"
+  displaytitle: "Legacy:BruteForce"
+  iwlinks:
+  - prefix: "wikipedia"
+    url: "http://en.wikipedia.org/wiki/Recursive_descent_parser"
+    name: "wikipedia:Recursive descent parser"
+  - prefix: "wikipedia"
+    url: "http://en.wikipedia.org/wiki/Abstract_syntax_tree"
+    name: "wikipedia:Abstract syntax tree"
+  wikitext:
+    text: "BruteForce is a programming language I ([[Legacy:El Muerte TDS|El Muerte\
+      \ TDS]]) specified. It's being compiled and executed from within  the Unreal\
+      \ Warfare engine.\n\nI thought it would be intresting if I explained how I designed\
+      \ it and how it works. Some things might be usefull for other people.\n\nThe\
+      \ latest source code of BruteForce is avilable from my [[Legacy:CVS|CVS]] repository,\
+      \ module name: ''BruteForce''\n\nOr you can download a snapshot of the source\
+      \ code here: http://unreal.student.utwente.nl/Source/BruteForce-source.zip\n\
+      \n==Step 1: the specification ==\n\nThe most important part of a language, that\
+      \ can be a programming language or even a file format, is the specification.\
+      \ This is usualy done using [http://www.garshol.priv.no/download/text/bnf.html\
+      \ EBNF] format.\n\nThe EBNF specification defines how the source code should\
+      \ be written, if the source code doesn't match all the rules of the EBNF specification\
+      \ it can not be compiled.\n\n[[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/EBNF|Read\
+      \ more about the BruteForce EBNF specification]]\n\n==Step 2+3: the parser and\
+      \ compiler ==\n\nNow you have to write the parser that checks if the input source\
+      \ conforms to your EBNF specification. The easiest way to do that is to use\
+      \ a [[Legacy:Tokenizer|tokenizer]] to retreive the significant blocks from the\
+      \ source file.\n\nI've named by parser class ''compiler'' because it will also\
+      \ compile the source file to usefull data for the execution of the code. Usualy\
+      \ the parser will also compile the input source to an internal format, for later\
+      \ processing/execution. So that's why I will handle both at the same time.\n\
+      \nThe compiler will translate the input code to a Abstract Syntax Tree ([[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/AST]]),\
+      \ the AST is a tree representation of the input code. This tree makes it easier\
+      \ to do something with the code. The main advatage of a tree over a stack machine\
+      \ is that you can execute tree nodes and always return to that node by reference,\
+      \ very usefull in while loops. Basically a tree works the same like a stack\
+      \ machine, but the jumps are just more friendlier to use than labels.\n\nYour\
+      \ language has to be readable for humans, at least that is the nicest way. But\
+      \ you AST has to be easy to read for a machine. So what's the diffirent, well\
+      \ a machine wants to know what it has to do as fast as possible, it doesn't\
+      \ want to look ahead to see what it has to do, this is not efficient. This comes\
+      \ down to that your tree has to use a prefix notation, but mostlikely you designed\
+      \ your language to use infix.\n\n<uscript>\nx = 1 + 2 // infix\n= x + 1 2 //\
+      \ prefix\n</uscript>\n\nSo during compiling you need to translate the infix\
+      \ notation to prefix.\n\nThe easiest way to create a parser for your language\
+      \ is to create a [[Wikipedia:Recursive descent parser]], e.g. each non terminal\
+      \ is a new function. This might result in a lot of small functions or even function\
+      \ that just call another function, but that doesn't matter. Maybe in the future\
+      \ you want to extend your language and you will be happy that you did it this\
+      \ way.\n\n[[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/Compiler|The parser + compiler]]\n\
+      \n[[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/AST|Abstract Syntax Tree (AST)]]\n\n\
+      ==Step 4: the checker (optional) ==\n\nAfter you compiled your input source\
+      \ to a AST you may want to check if the content is correct, e.g. check for unresolved\
+      \ variables/functions/... or even do range checking or other content checking.\n\
+      \nThe parser/compiler only checks if the course is correctly used not if you\
+      \ didn't do ''stupid'' things. This is what the checker does.\n\nThe step is\
+      \ not required to do and I left it out in the current version. The only problem\
+      \ you get is that you program might crash or returns undesireable information.\n\
+      \nThe code of the checker is basically the same as that of the interpreter,\
+      \ it also walks through the AST, except that it doesn't interpret the code,\
+      \ it doesn't calculate the values. So run time errors (e.g. divide by zero)\
+      \ are not checked by the checker.\n\n==Step 5: the interpreter ==\n\nWhen you\
+      \ have created the AST you can execute/interpret it and return a result. All\
+      \ the interpreter has to do is walk down the tree. For this it's also best to\
+      \ write a recursive descent parser, but note that it does ''not'' work the same\
+      \ way like with the parser/compiler. This one is much easier since you can see\
+      \ at the tree node where you have to go.\n\nUnlike with the parser you do have\
+      \ to pass arguments to the diffirent functions, each function receives the current\
+      \ tree node to process. This way you can easily create a while loop by calling\
+      \ the same function with the same node.\n\nExpressions return results, there\
+      \ are two common ways to pass these results up the tree to the node where they\
+      \ are used.  \n\nOne way is to use a data stack where you push and pop the to/from.\
+      \ For this to work you have to create the logic for the stack administration\
+      \ (e.g. the push and pop). Using the static is what usualy is done in assambler\
+      \ languages (and finally in the CPU).\n\nAn other, modern, way is to return\
+      \ the results of a function, this might involve storing the results in local\
+      \ variables, but it's generaly easier to write and use (specially for debugging).\n\
+      \n[[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/Interpreter]]\n\n===Step 5.1: the scope\
+      \ ===\n\nWhile interpreting your AST you need to keep track of functions and\
+      \ variables used. You also might need to keep track of global and local definitions.\
+      \ For this you needs to create a class that keeps track of this. I've called\
+      \ it ''the scope''. This stores the declarations and values and returns them\
+      \ when the interpreter requests it. \n\n[[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/Scope]]\n\
+      \n==Step 6: combining it all ==\n\nNow combine all seperate pieces into one\
+      \ thing that you can use.\n\nCreate a tokenizer ans pass it the source code.\
+      \ Create an AST and a Compiler and pass the compiler the tokenizer and AST.\
+      \ Create an interpreter and pass it the AST and your Scope.\n\n[[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/Main]]\n\
+      \n==Issues/things to think about ==\n\n===Type complete ===\n\nI designed BruteForce\
+      \ to be type complete, this means that every type is treated equally, each type\
+      \ is automatically casted to an other type when needed.\n\nOfcourse this can\
+      \ result in intresting issues like what to do with operators. As a general rule\
+      \ the left side defines the type, ofcourse this will also be confusing sometimes.\n\
+      \n<uscript>\n// easy ones\n\"some string\" + \"other string\" = \"some stringother\
+      \ string\" \n\"string\" + 123.67 = \"string123.67\"\n123 + \"56\" = 179 \n\n\
+      // a little bit difficult\n123 + \"weird stuff\" = 123 + 0 = 123 // \"weird\
+      \ stuff\" is not a number so it's 0\ntrue && \"\" = true && false          //\
+      \ an empty string, or for int/float 0 equals to false\n\n// weird\n\"string\
+      \ 1\" - \"string\" = ??   // maybe \" 1\"\n\"string\" - 1 = ??            //\
+      \ maybe \"strin\"\n\"string 1\" * \"string\" = ??   // I've got no idea\n\"\
+      string 1\" * 2 = ??          // maybe \"string 1string 1\"\n\"string 1\" / \"\
+      string\" = ?? \n</uscript>\n\n===Function declarations ===\n\nFunction declarations\
+      \ are great, using the AST and Scope it's even very easy, when you reach a function\
+      \ declaration just add the declaration with type ''function'' and as value the\
+      \ node where the function begins.\n\nWhen that function is called jou just lookup\
+      \ the function in the scope and execute the returned node.\n\n==Related articles\
+      \ ==\n\n===BruteForce documents ===\n* [[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/AST]]\n\
+      * [[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/Compiler]]\n* [[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/EBNF]]\n\
+      * [[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/Interpreter]]\n* [[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/Main]]\n\
+      * [[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/Scope]]\n* [[Legacy:Tokenizer|Tokenizer]]\n\
+      \n===Other documents ===\n* [[Wikipedia:Abstract syntax tree]]\n* [http://www.garshol.priv.no/download/text/bnf.html\
+      \ BNF and EBNF: What are they and how do they work?]\n* [http://www.antlr.org\
+      \ ANTLR] - ANother Tool for Language Recognition\n\n----\n\n==Discussion ==\n\
+      \n'''Tarquin:''' very interesting. care to tell us what it's useful for &ndash;\
+      \ what advatages does this have over Uscript?\n\n'''Mychaeel:''' Sounds like\
+      \ a case study to me, not anything with an actual intent or purpose. &ndash;\
+      \ How's the compiler's and interpreter's performance?\n\n'''El Muerte TDS:'''\
+      \ Just started on it for fun, I am following a course about translaters and\
+      \ compilers at the uni at the moment and this makes it more intresting. As for\
+      \ the performance, the sample script on the [[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/EBNF]]\
+      \ page takes about 50ms to compile and 170ms to execute (and calculate the first\
+      \ 10 dates). I think the most time is used by [[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/Scope]]\
+      \ class, need to improve this somehow.\n\n'''Zedsquared''' I think this is all\
+      \ great fun and doesn't need a reason at all :) El Muerte, why not go on to\
+      \ create a radical 3d debugging environment for code written in bruteforce seeing\
+      \ as how you've got this 3d engine sitting there doing nothing ATM... seems\
+      \ such a shame to restrict output to the log :) \n\nOne possible use for this:\
+      \ Write a 'core war 3D' mod where you can get together online, code up simple\
+      \ AI for some sort of combat actors in real time and get them battling... I\
+      \ was thinking along these lines for my GP stuff but the 'language' such as\
+      \ it is would only appeal to lisp hackers, bruteforce is much more friendly.\
+      \ All very geeky I know but I reckon the world needs more geeky games :) \n\n\
+      '''Tarquin:''' Hey, I'm a mathematician! I know all about things which serve\
+      \ no purpose but are elegant! ;) ElM, do you want to write a short paragraph\
+      \ on this to submit to BU news? \n\n'''El Muerte TDS:''' eek, an mathematician\
+      \ :D Uhm, this is news worthy ? Lemme use my excelent writing skills, ... uhm...\
+      \ uhm...\n\n'''Tarquin:''' I can make something up if you like :)  it's not\
+      \ newsworthy that I'm a mathematician... ;) but I think a language written in\
+      \ Uscrip is kinda cool... we should show it off!\n\n'''hc:''' Could you set\
+      \ up a BruteForce download that doesn't require you to use cvs? (I'm behind\
+      \ a firewall...)\n\n'''El Muerte:''' check the top of the page for a zip file\
+      \ containing a snapshot from the CVS\n\n'''hc:''' Thanks!\n\n'''MythOpus:'''\
+      \ Quick question:  You've stated that it is being compiled and executed within\
+      \ the engine... Does that mean that one could write something up when you are\
+      \ running the game (whatever game/mod that would be) and compile it/execute\
+      \ it without getting out of the game.  I hate how you have to write your code,\
+      \ compile it, start the game, exit the game, make changes, delete the .u file,\
+      \ re-compile and do it all over again.  Would that be neccesary with this? \
+      \ And also, is BruteForce an alternative to UScript, in that you could write\
+      \ up a mutator and/or complete total conversion using BF for use with the Unreal\
+      \ Engine?\n\n'''El Muerte:''' bruteforce is ''not'' an alternative to unrealscript.\
+      \ It's just a programming language written using unrealscript. You can not use\
+      \ it to write a mutator or total conversion (not unless you also add all required\
+      \ bindings between bruteforce and the unrealengine, but that's just a waste\
+      \ of time because you already have unrealscript)."
+  properties: []
+  revId: 1812
+name: "Legacy:BruteForce"
+revision:
+  revid: 1812
+  parentid: 1813
+  user: "El Muerte"
+  timestamp: 1122297275.000000000
+  comment: "*"
+timestamp: 1668763843.736466000

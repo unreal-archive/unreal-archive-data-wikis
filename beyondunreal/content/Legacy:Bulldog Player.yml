@@ -1,0 +1,366 @@
+---
+parse:
+  title: "Legacy:Bulldog Player"
+  text:
+    text: "<h2><span class=\"mw-headline\" id=\"Making_the_bulldog_the_player_pawn\"\
+      >Making the bulldog the player pawn</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Bulldog_Player?section=1\"\
+      \ title=\"Edit section: Making the bulldog the player pawn\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<p>I'm a bit of a uscript n00b\
+      \ and this is aimed at n00bs. Just delete it if it doesn't really belong. And\
+      \ please edit it if it's really crap or just too simple&#160;:/</p>\n<p>If you\
+      \ want the player to spawn as a bulldog, this is how you do it. Keep in mind\
+      \ that the player actually is the bulldog so they can never exit the vehicle.</p>\n\
+      <p>OK, the first thing to do is to create a new bulldog which subclasses the\
+      \ old one. We have to do this because it's not as simple as setting the pawn\
+      \ class in the game info class.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">class</span> NewBulldog <span class=\"kw1\">extends</span>\
+      \ Bulldog\n    <span class=\"kw1\">placeable</span>;\n \n<span class=\"kw1\"\
+      >simulated</span> <span class=\"kw1\">event</span> <span class=\"kw4\">Destroyed</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \    Driver <span class=\"sy0\">=</span> <span class=\"kw5\">None</span>;\n\
+      \    <span class=\"kw6\">super</span>.<span class=\"kw4\">Destroyed</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"kw1\">function</span> PostSpawn<span class=\"br0\">(</span><span\
+      \ class=\"kw9\">Pawn</span> p<span class=\"br0\">)</span>\n<span class=\"br0\"\
+      >{</span>\n    <span class=\"kw1\">local</span> <span class=\"kw9\">PlayerController</span>\
+      \ pc;\n \n    Driver <span class=\"sy0\">=</span> p;\n    pc <span class=\"\
+      sy0\">=</span> BulldogSpawnPlayer<span class=\"br0\">(</span>p.<span class=\"\
+      kw9\">Controller</span><span class=\"br0\">)</span>;\n    pc.<span class=\"\
+      kw3\">GotoState</span><span class=\"br0\">(</span><span class=\"st0\">'PlayerDriving'</span><span\
+      \ class=\"br0\">)</span>;\n    ClientKDriverEnter<span class=\"br0\">(</span>pc<span\
+      \ class=\"br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <p>The first thing that is done is in event destroyed. Because this new car\
+      \ won't be the same as other vehicles ie. there is no pawn inside doing the\
+      \ driving, it is driving itself; we have to tell the vehicle that there is no\
+      \ longer a driver before it is destroyed, or else it gets messy and eventually\
+      \ throws back a critical error.</p>\n<p>Then there's the PostSpawn function.\
+      \ This function is called straight after the player spawns from the game info\
+      \ class. If nothing is done after the car spawns, it doesn't act like a car,\
+      \ the chassis just spins around when the mouse is moved. The parameter p is\
+      \ just the bulldog that has spawned. So first the driver is set to the car itself,\
+      \ because there is no driver.</p>\n<p>Then the PlayerController class is set\
+      \ to PlayerDriving so the car acts like a car. Then the function ClientKDriverEnter\
+      \ is called, which does some stuff to the HUD (but it is also vital to the car\
+      \ driving, I don't know why&#160;:/ ).</p>\n<p>Now, since there is no pawn inside\
+      \ the vehicle driving, we have to prevent the player from exiting when they\
+      \ are in the PlayerDriving state. So we create a new PlayerController class.\
+      \ This is fairly messy so please edit it if there is a better way to do it.</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">class</span> BulldogSpawnPlayer\
+      \ <span class=\"kw1\">extends</span> <span class=\"kw9\">xPlayer</span>;\n \n\
+      <span class=\"kw1\">state</span> PlayerDriving\n<span class=\"br0\">{</span>\n\
+      <span class=\"kw1\">ignores</span> SeePlayer, HearNoise, <span class=\"kw4\"\
+      >Bump</span>;\n \n    <span class=\"kw1\">function</span> ProcessMove<span class=\"\
+      br0\">(</span><span class=\"kw5\">float</span> DeltaTime, <span class=\"kw5\"\
+      >vector</span> NewAccel, eDoubleClickDir DoubleClickMove, <span class=\"kw5\"\
+      >rotator</span> DeltaRot<span class=\"br0\">)</span>\n    <span class=\"br0\"\
+      >{</span>\n \n    <span class=\"br0\">}</span>\n \n    <span class=\"kw1\">exec</span>\
+      \ <span class=\"kw1\">function</span> Fire<span class=\"br0\">(</span><span\
+      \ class=\"kw1\">optional</span> <span class=\"kw5\">float</span> F<span class=\"\
+      br0\">)</span>\n    <span class=\"br0\">{</span>\n        <span class=\"kw1\"\
+      >local</span> <span class=\"kw9\">KVehicle</span> DrivenVehicle;\n \n      \
+      \  DrivenVehicle <span class=\"sy0\">=</span> <span class=\"kw9\">KVehicle</span><span\
+      \ class=\"br0\">(</span><span class=\"kw9\">Pawn</span><span class=\"br0\">)</span>;\n\
+      \        <span class=\"kw2\">if</span><span class=\"br0\">(</span>DrivenVehicle\
+      \ <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span><span class=\"\
+      br0\">)</span>\n        <span class=\"br0\">{</span>\n            DrivenVehicle.<span\
+      \ class=\"me0\">VehicleFire</span><span class=\"br0\">(</span><span class=\"\
+      kw6\">false</span><span class=\"br0\">)</span>;\n            DrivenVehicle.<span\
+      \ class=\"me0\">bVehicleIsFiring</span> <span class=\"sy0\">=</span> <span class=\"\
+      kw6\">true</span>;\n        <span class=\"br0\">}</span>\n    <span class=\"\
+      br0\">}</span>\n \n    <span class=\"kw1\">exec</span> <span class=\"kw1\">function</span>\
+      \ AltFire<span class=\"br0\">(</span><span class=\"kw1\">optional</span> <span\
+      \ class=\"kw5\">float</span> F<span class=\"br0\">)</span>\n    <span class=\"\
+      br0\">{</span>\n        <span class=\"kw1\">local</span> <span class=\"kw9\"\
+      >KVehicle</span> DrivenVehicle;\n \n        DrivenVehicle <span class=\"sy0\"\
+      >=</span> <span class=\"kw9\">KVehicle</span><span class=\"br0\">(</span><span\
+      \ class=\"kw9\">Pawn</span><span class=\"br0\">)</span>;\n        <span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span>DrivenVehicle <span class=\"sy0\"\
+      >!=</span> <span class=\"kw5\">None</span><span class=\"br0\">)</span>\n   \
+      \     <span class=\"br0\">{</span>\n            DrivenVehicle.<span class=\"\
+      me0\">VehicleFire</span><span class=\"br0\">(</span><span class=\"kw6\">true</span><span\
+      \ class=\"br0\">)</span>;\n            DrivenVehicle.<span class=\"me0\">bVehicleIsAltFiring</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"kw6\">true</span>;\n        <span\
+      \ class=\"br0\">}</span>\n    <span class=\"br0\">}</span>\n \n    <span class=\"\
+      co1\">// Set the throttle, steering etc. for the vehicle based on the input\
+      \ provided</span>\n    <span class=\"kw1\">function</span> ProcessDrive<span\
+      \ class=\"br0\">(</span><span class=\"kw5\">float</span> InForward, <span class=\"\
+      kw5\">float</span> InStrafe, <span class=\"kw5\">bool</span> InJump<span class=\"\
+      br0\">)</span>\n    <span class=\"br0\">{</span>\n        <span class=\"kw1\"\
+      >local</span> <span class=\"kw9\">KVehicle</span> DrivenVehicle;\n \n      \
+      \  DrivenVehicle <span class=\"sy0\">=</span> <span class=\"kw9\">KVehicle</span><span\
+      \ class=\"br0\">(</span><span class=\"kw9\">Pawn</span><span class=\"br0\">)</span>;\n\
+      \ \n        <span class=\"kw2\">if</span><span class=\"br0\">(</span>DrivenVehicle\
+      \ <span class=\"sy0\">==</span> <span class=\"kw5\">None</span><span class=\"\
+      br0\">)</span>\n        <span class=\"br0\">{</span>\n            <span class=\"\
+      kw3\">log</span><span class=\"br0\">(</span><span class=\"st0\">\"PlayerDriving.PlayerMove:\
+      \ No Vehicle\"</span><span class=\"br0\">)</span>;\n            <span class=\"\
+      kw2\">return</span>;\n        <span class=\"br0\">}</span>\n \n        <span\
+      \ class=\"co1\">// check for 'jump' to throw the driver out.</span>\n<span class=\"\
+      coMULTI\">/*        if(InJump &amp;&amp; Role == ROLE_Authority)\n        {\n\
+      \            DrivenVehicle.bGetOut = true;\n            return;\n        }*/</span>\n\
+      \ \n        <span class=\"co1\">//log(\"Drive:\"$InForward$\" Steer:\"$InStrafe);</span>\n\
+      \ \n        <span class=\"kw2\">if</span><span class=\"br0\">(</span>InForward\
+      \ <span class=\"sy0\">&gt;</span> <span class=\"nu0\">1</span><span class=\"\
+      br0\">)</span>\n            DrivenVehicle.<span class=\"me0\">Throttle</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">1</span>;\n        <span\
+      \ class=\"kw2\">else</span> <span class=\"kw2\">if</span><span class=\"br0\"\
+      >(</span>InForward <span class=\"sy0\">&lt;</span> <span class=\"sy0\">-</span><span\
+      \ class=\"nu0\">1</span><span class=\"br0\">)</span>\n            DrivenVehicle.<span\
+      \ class=\"me0\">Throttle</span> <span class=\"sy0\">=</span> <span class=\"\
+      sy0\">-</span><span class=\"nu0\">1</span>;\n        <span class=\"kw2\">else</span>\n\
+      \            DrivenVehicle.<span class=\"me0\">Throttle</span> <span class=\"\
+      sy0\">=</span> <span class=\"nu0\">0</span>;\n \n        <span class=\"kw2\"\
+      >if</span><span class=\"br0\">(</span>InStrafe <span class=\"sy0\">&lt;</span>\
+      \ <span class=\"sy0\">-</span><span class=\"nu0\">1</span><span class=\"br0\"\
+      >)</span>\n            DrivenVehicle.<span class=\"me0\">Steering</span> <span\
+      \ class=\"sy0\">=</span> <span class=\"nu0\">1</span>;\n        <span class=\"\
+      kw2\">else</span> <span class=\"kw2\">if</span><span class=\"br0\">(</span>InStrafe\
+      \ <span class=\"sy0\">&gt;</span> <span class=\"nu0\">1</span><span class=\"\
+      br0\">)</span>\n            DrivenVehicle.<span class=\"me0\">Steering</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"sy0\">-</span><span class=\"nu0\"\
+      >1</span>;\n        <span class=\"kw2\">else</span>\n            DrivenVehicle.<span\
+      \ class=\"me0\">Steering</span> <span class=\"sy0\">=</span> <span class=\"\
+      nu0\">0</span>;\n\t<span class=\"br0\">}</span>\n \n    <span class=\"kw1\"\
+      >function</span> PlayerMove<span class=\"br0\">(</span> <span class=\"kw5\"\
+      >float</span> DeltaTime <span class=\"br0\">)</span>\n    <span class=\"br0\"\
+      >{</span>\n        <span class=\"kw1\">local</span> <span class=\"kw9\">KVehicle</span>\
+      \ DrivenVehicle;\n \n        <span class=\"co1\">// Only servers can actually\
+      \ do the driving logic.</span>\n        <span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span><span class=\"kw7\">Role</span> <span class=\"sy0\">&lt;</span>\
+      \ <span class=\"kw7\">ROLE_Authority</span><span class=\"br0\">)</span>\n  \
+      \          ServerDrive<span class=\"br0\">(</span>aForward, aStrafe, bPressedJump<span\
+      \ class=\"br0\">)</span>;\n        <span class=\"kw2\">else</span>\n       \
+      \     ProcessDrive<span class=\"br0\">(</span>aForward, aStrafe, bPressedJump<span\
+      \ class=\"br0\">)</span>;\n \n        <span class=\"co1\">// If the vehicle\
+      \ is being controlled here - set replicated variables.</span>\n        DrivenVehicle\
+      \ <span class=\"sy0\">=</span> <span class=\"kw9\">KVehicle</span><span class=\"\
+      br0\">(</span><span class=\"kw9\">Pawn</span><span class=\"br0\">)</span>;\n\
+      \        <span class=\"kw2\">if</span><span class=\"br0\">(</span>DrivenVehicle\
+      \ <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span><span class=\"\
+      br0\">)</span>\n        <span class=\"br0\">{</span>\n            <span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span>bFire <span class=\"sy0\">==</span>\
+      \ <span class=\"nu0\">0</span> <span class=\"sy0\">&amp;&amp;</span> DrivenVehicle.<span\
+      \ class=\"me0\">bVehicleIsFiring</span><span class=\"br0\">)</span>\n      \
+      \      <span class=\"br0\">{</span>\n                DrivenVehicle.<span class=\"\
+      me0\">VehicleCeaseFire</span><span class=\"br0\">(</span><span class=\"kw6\"\
+      >false</span><span class=\"br0\">)</span>;\n                DrivenVehicle.<span\
+      \ class=\"me0\">bVehicleIsFiring</span> <span class=\"sy0\">=</span> <span class=\"\
+      kw6\">false</span>;\n            <span class=\"br0\">}</span>\n \n         \
+      \   <span class=\"kw2\">if</span><span class=\"br0\">(</span>bAltFire <span\
+      \ class=\"sy0\">==</span> <span class=\"nu0\">0</span> <span class=\"sy0\">&amp;&amp;</span>\
+      \ DrivenVehicle.<span class=\"me0\">bVehicleIsAltFiring</span><span class=\"\
+      br0\">)</span>\n            <span class=\"br0\">{</span>\n                DrivenVehicle.<span\
+      \ class=\"me0\">VehicleCeaseFire</span><span class=\"br0\">(</span><span class=\"\
+      kw6\">true</span><span class=\"br0\">)</span>;\n                DrivenVehicle.<span\
+      \ class=\"me0\">bVehicleIsAltFiring</span> <span class=\"sy0\">=</span> <span\
+      \ class=\"kw6\">false</span>;\n            <span class=\"br0\">}</span>\n  \
+      \      <span class=\"br0\">}</span>\n \n        <span class=\"co1\">// update\
+      \ 'looking' rotation - no affect on driving</span>\n        UpdateRotation<span\
+      \ class=\"br0\">(</span>DeltaTime, <span class=\"nu0\">2</span><span class=\"\
+      br0\">)</span>;\n    <span class=\"br0\">}</span>\n \n    <span class=\"kw1\"\
+      >function</span> <span class=\"kw3\">BeginState</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n    <span class=\"br0\">{</span>\n        CleanOutSavedMoves<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n    <span class=\"br0\"\
+      >}</span>\n \n    <span class=\"kw1\">function</span> <span class=\"kw3\">EndState</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n    <span class=\"br0\"\
+      >{</span>\n        CleanOutSavedMoves<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n    <span class=\"br0\">}</span>\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"kw1\">defaultproperties</span>\n<span class=\"br0\">{</span>\n\
+      \     PawnClass<span class=\"sy0\">=</span><span class=\"kw1\">Class</span><span\
+      \ class=\"st0\">'BulldogSpawn.NewBulldog'</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>I have just copied the state PlayerDriving from this class's parent\
+      \ and commented out the vehicle exit code.This is messy because I don't know\
+      \ how to do it any better.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\">        <span\
+      \ class=\"co1\">// check for 'jump' to throw the driver out.</span>\n<span class=\"\
+      coMULTI\">/*        if(InJump &amp;&amp; Role == ROLE_Authority)\n        {\n\
+      \            DrivenVehicle.bGetOut = true;\n            return;\n        }*/</span></pre></div>\n\
+      </div>\n<p>The only other thing from this class is the PawnClass is set to the\
+      \ new bulldog created before in defaultproperties. This is pretty important&#160;;).</p>\n\
+      <p>The final thing to do is in the game info class.</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw1\">class</span> BulldogSpawn <span class=\"\
+      kw1\">extends</span> <span class=\"kw9\">xDeathMatch</span>;\n \n<span class=\"\
+      kw1\">function</span> RestartPlayer<span class=\"br0\">(</span><span class=\"\
+      kw9\">Controller</span> aPlayer<span class=\"br0\">)</span> <span class=\"br0\"\
+      >{</span>\n    <span class=\"kw6\">Super</span>.<span class=\"me0\">RestartPlayer</span><span\
+      \ class=\"br0\">(</span>aPlayer<span class=\"br0\">)</span>;\n \n    NewBulldog<span\
+      \ class=\"br0\">(</span>aPlayer.<span class=\"kw9\">Pawn</span><span class=\"\
+      br0\">)</span>.<span class=\"me0\">PostSpawn</span><span class=\"br0\">(</span>aPlayer.<span\
+      \ class=\"kw9\">Pawn</span><span class=\"br0\">)</span>;\n<span class=\"br0\"\
+      >}</span>\n \n<span class=\"kw1\">defaultproperties</span>\n<span class=\"br0\"\
+      >{</span>\n     MapPrefix<span class=\"sy0\">=</span><span class=\"st0\">\"\
+      BS\"</span>\n     BeaconName<span class=\"sy0\">=</span><span class=\"st0\"\
+      >\"BS\"</span>\n     GameName<span class=\"sy0\">=</span><span class=\"st0\"\
+      >\"Bulldog Spawn\"</span>\n     PlayerControllerClassName<span class=\"sy0\"\
+      >=</span><span class=\"st0\">\"BulldogSpawn.BulldogSpawnPlayer\"</span>\n<span\
+      \ class=\"br0\">}</span></pre></div>\n</div>\n<p>All that is done here is when\
+      \ the new bulldog spawns, the PostSpawn function is called that was written\
+      \ earlier. Then in defaultproperties the PlayerController class is set to the\
+      \ one which was written earlier. And voila, you spawn as the bulldog. Hopefully\
+      \ some people will find this useful&#160;:).</p>\n<hr />\n<p>Hi, I tried all\
+      \ this out but i dont seem to ge it to work, can someone help me out,</p>\n\
+      <p>I named my map bs-test and also putted in a bulldogfactory and stuff to</p>\n\
+      <p>get bulldogs into my map. What else do i have to do to get it right&#160;?</p>\n\
+      <p>Greetz</p>\n<hr />\n<p>to get this example to work (ut2003):</p>\n<p>1. save\
+      \ the above classes as separate files with the filenames that correspond to\
+      \ the the class name (eg: NewBulldog class -&gt; NewBulldog.uc)</p>\n<p>2. save\
+      \ these files under the directory [ut2003 home dir]/BulldogSpawn</p>\n<p>3.\
+      \ edit UT2003.ini, underneath the [Editor.EditorEngine] section where the other\
+      \ EditPackages=xxxxxxx enrties are, add the line EditPackages=BulldogSpawn</p>\n\
+      <p>4. navigate to [ut2003 home dir]/System at the prompt and type 'ucc make'</p>\n\
+      <p>5. from this system directory type 'UT2003 VehicleDemo?Game=BulldogSpawn.BulldogSpawn'</p>\n\
+      <p>ps. bit of an unfair advantage, but try 'UT2003 VehicleDemo?Game=BulldogSpawn.BulldogSpawn?NumBots=20'</p>\n\
+      <p>cheers</p>\n<p>ehendrikd</p>\n<h2><span class=\"mw-headline\" id=\"Discussion\"\
+      >Discussion</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Bulldog_Player?section=2\" title=\"Edit section:\
+      \ Discussion\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p><b>iZiMO:</b> If you're creating a KVehicle subclass you could just overwrite\
+      \ the KDriverLeave function and make it simply always return false..? This prevents\
+      \ the player from leaving the vehicle and saves copying the whole Driving state\
+      \ from the controller class</p>\n\n<!-- \nNewPP limit report\nCPU time usage:\
+      \ 0.115 seconds\nReal time usage: 0.119 seconds\nPreprocessor visited node count:\
+      \ 42/1000000\nPreprocessor generated node count: 92/1000000\nPost‐expand include\
+      \ size: 0/2097152 bytes\nTemplate argument size: 0/2097152 bytes\nHighest expansion\
+      \ depth: 2/40\nExpensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion\
+      \ expansion time report (%,ms,calls,template)\n100.00%    0.000      1 - -total\n\
+      -->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:630-0!*!*!!*!*!*\
+      \ and timestamp 20221117154639 and revision id 1879\n -->\n"
+  categories: []
+  links: []
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Making the bulldog the player pawn"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Bulldog_Player"
+    byteoffset: 0
+    anchor: "Making_the_bulldog_the_player_pawn"
+  - toclevel: 1
+    level: "2"
+    line: "Discussion"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Bulldog_Player"
+    byteoffset: 7273
+    anchor: "Discussion"
+  displaytitle: "Legacy:Bulldog Player"
+  iwlinks: []
+  wikitext:
+    text: "==Making the bulldog the player pawn ==\n\nI'm a bit of a uscript n00b\
+      \ and this is aimed at n00bs.  Just delete it if it doesn't really belong. \
+      \ And please edit it if it's really crap or just too simple :/\n\nIf you want\
+      \ the player to spawn as a bulldog, this is how you do it.  Keep in mind that\
+      \ the player actually is the bulldog so they can never exit the vehicle.\n\n\
+      OK, the first thing to do is to create a new bulldog which subclasses the old\
+      \ one. We have to do this because it's not as simple as setting the pawn class\
+      \ in the game info class.\n\n<uscript>class NewBulldog extends Bulldog\n   \
+      \ placeable;\n\nsimulated event Destroyed()\n{\n    Driver = None;\n    super.Destroyed();\n\
+      }\n\nfunction PostSpawn(Pawn p)\n{\n    local PlayerController pc;\n\n    Driver\
+      \ = p;\n    pc = BulldogSpawnPlayer(p.Controller);\n    pc.GotoState('PlayerDriving');\n\
+      \    ClientKDriverEnter(pc);\n}</uscript>\n\nThe first thing that is done is\
+      \ in event destroyed.  Because this new car won't be the same as other vehicles\
+      \ ie. there is no pawn inside doing the driving, it is driving itself; we have\
+      \ to tell the vehicle that there is no longer a driver before it is destroyed,\
+      \ or else it gets messy and eventually throws back a critical error.\n\nThen\
+      \ there's the PostSpawn function.  This function is called straight after the\
+      \ player spawns from the game info class.  If nothing is done after the car\
+      \ spawns, it doesn't act like a car, the chassis just spins around when the\
+      \ mouse is moved.  The parameter p is just the bulldog that has spawned.  So\
+      \ first the driver is set to the car itself, because there is no driver.  \n\
+      \nThen the PlayerController class is set to PlayerDriving so the car acts like\
+      \ a car.  Then the function ClientKDriverEnter is called, which does some stuff\
+      \ to the HUD (but it is also vital to the car driving, I don't know why :/ ).\n\
+      \nNow, since there is no pawn inside the vehicle driving, we have to prevent\
+      \ the player from exiting when they are in the PlayerDriving state.  So we create\
+      \ a new PlayerController class.  This is fairly messy so please edit it if there\
+      \ is a better way to do it.\n\n<uscript>class BulldogSpawnPlayer extends xPlayer;\n\
+      \nstate PlayerDriving\n{\nignores SeePlayer, HearNoise, Bump;\n\n    function\
+      \ ProcessMove(float DeltaTime, vector NewAccel, eDoubleClickDir DoubleClickMove,\
+      \ rotator DeltaRot)\n    {\n\n    }\n\n    exec function Fire(optional float\
+      \ F)\n    {\n        local KVehicle DrivenVehicle;\n\n        DrivenVehicle\
+      \ = KVehicle(Pawn);\n        if(DrivenVehicle != None)\n        {\n        \
+      \    DrivenVehicle.VehicleFire(false);\n            DrivenVehicle.bVehicleIsFiring\
+      \ = true;\n        }\n    }\n\n    exec function AltFire(optional float F)\n\
+      \    {\n        local KVehicle DrivenVehicle;\n\n        DrivenVehicle = KVehicle(Pawn);\n\
+      \        if(DrivenVehicle != None)\n        {\n            DrivenVehicle.VehicleFire(true);\n\
+      \            DrivenVehicle.bVehicleIsAltFiring = true;\n        }\n    }\n\n\
+      \    // Set the throttle, steering etc. for the vehicle based on the input provided\n\
+      \    function ProcessDrive(float InForward, float InStrafe, bool InJump)\n \
+      \   {\n        local KVehicle DrivenVehicle;\n\n        DrivenVehicle = KVehicle(Pawn);\n\
+      \n        if(DrivenVehicle == None)\n        {\n            log(\"PlayerDriving.PlayerMove:\
+      \ No Vehicle\");\n            return;\n        }\n\n        // check for 'jump'\
+      \ to throw the driver out.\n/*        if(InJump && Role == ROLE_Authority)\n\
+      \        {\n            DrivenVehicle.bGetOut = true;\n            return;\n\
+      \        }*/\n\n        //log(\"Drive:\"$InForward$\" Steer:\"$InStrafe);\n\n\
+      \        if(InForward > 1)\n            DrivenVehicle.Throttle = 1;\n      \
+      \  else if(InForward < -1)\n            DrivenVehicle.Throttle = -1;\n     \
+      \   else\n            DrivenVehicle.Throttle = 0;\n\n        if(InStrafe < -1)\n\
+      \            DrivenVehicle.Steering = 1;\n        else if(InStrafe > 1)\n  \
+      \          DrivenVehicle.Steering = -1;\n        else\n            DrivenVehicle.Steering\
+      \ = 0;\n\t}\n\n    function PlayerMove( float DeltaTime )\n    {\n        local\
+      \ KVehicle DrivenVehicle;\n\n        // Only servers can actually do the driving\
+      \ logic.\n        if(Role < ROLE_Authority)\n            ServerDrive(aForward,\
+      \ aStrafe, bPressedJump);\n        else\n            ProcessDrive(aForward,\
+      \ aStrafe, bPressedJump);\n\n        // If the vehicle is being controlled here\
+      \ - set replicated variables.\n        DrivenVehicle = KVehicle(Pawn);\n   \
+      \     if(DrivenVehicle != None)\n        {\n            if(bFire == 0 && DrivenVehicle.bVehicleIsFiring)\n\
+      \            {\n                DrivenVehicle.VehicleCeaseFire(false);\n   \
+      \             DrivenVehicle.bVehicleIsFiring = false;\n            }\n\n   \
+      \         if(bAltFire == 0 && DrivenVehicle.bVehicleIsAltFiring)\n         \
+      \   {\n                DrivenVehicle.VehicleCeaseFire(true);\n             \
+      \   DrivenVehicle.bVehicleIsAltFiring = false;\n            }\n        }\n\n\
+      \        // update 'looking' rotation - no affect on driving\n        UpdateRotation(DeltaTime,\
+      \ 2);\n    }\n\n    function BeginState()\n    {\n        CleanOutSavedMoves();\n\
+      \    }\n\n    function EndState()\n    {\n        CleanOutSavedMoves();\n  \
+      \  }\n}\n\ndefaultproperties\n{\n     PawnClass=Class'BulldogSpawn.NewBulldog'\n\
+      }</uscript>\n\nI have just copied the state PlayerDriving from this class's\
+      \ parent and commented out the vehicle exit code.This is messy because I don't\
+      \ know how to do it any better.\n\n<uscript>        // check for 'jump' to throw\
+      \ the driver out.\n/*        if(InJump && Role == ROLE_Authority)\n        {\n\
+      \            DrivenVehicle.bGetOut = true;\n            return;\n        }*/</uscript>\n\
+      \nThe only other thing from this class is the PawnClass is set to the new bulldog\
+      \ created before in defaultproperties.  This is pretty important ;).\n\nThe\
+      \ final thing to do is in the game info class.\n\n<uscript>class BulldogSpawn\
+      \ extends xDeathMatch;\n\nfunction RestartPlayer(Controller aPlayer) {\n   \
+      \ Super.RestartPlayer(aPlayer);\n\n    NewBulldog(aPlayer.Pawn).PostSpawn(aPlayer.Pawn);\n\
+      }\n\ndefaultproperties\n{\n     MapPrefix=\"BS\"\n     BeaconName=\"BS\"\n \
+      \    GameName=\"Bulldog Spawn\"\n     PlayerControllerClassName=\"BulldogSpawn.BulldogSpawnPlayer\"\
+      \n}</uscript>\n\nAll that is done here is when the new bulldog spawns, the PostSpawn\
+      \ function is called that was written earlier.  Then in defaultproperties the\
+      \ PlayerController class is set to the one which was written earlier.  And voila,\
+      \ you spawn as the bulldog.  Hopefully some people will find this useful :).\n\
+      \n----\n\nHi, I tried all this out but i dont seem to ge it to work, can someone\
+      \ help me out,\n\nI named my map bs-test and also putted in a bulldogfactory\
+      \ and stuff to \n\nget bulldogs into my map. What else do i have to do to get\
+      \ it right ?\n\nGreetz\n\n----\n\nto get this example to work (ut2003):\n\n\
+      1. save the above classes as separate files with the filenames that correspond\
+      \ to the the class name (eg: NewBulldog class -> NewBulldog.uc)\n\n2. save these\
+      \ files under the directory [ut2003 home dir]/BulldogSpawn\n\n3. edit UT2003.ini,\
+      \ underneath the [Editor.EditorEngine] section where the other EditPackages=xxxxxxx\
+      \ enrties are, add the line EditPackages=BulldogSpawn\n\n4. navigate to [ut2003\
+      \ home dir]/System at the prompt and type 'ucc make'\n\n5. from this system\
+      \ directory type 'UT2003 VehicleDemo?Game=BulldogSpawn.BulldogSpawn'\n\nps.\
+      \ bit of an unfair advantage, but try 'UT2003 VehicleDemo?Game=BulldogSpawn.BulldogSpawn?NumBots=20'\n\
+      \ncheers\n\nehendrikd\n\n==Discussion ==\n\n'''iZiMO:''' If you're creating\
+      \ a KVehicle subclass you could just overwrite the KDriverLeave function and\
+      \ make it simply always return false..? This prevents the player from leaving\
+      \ the vehicle and saves copying the whole Driving state from the controller\
+      \ class"
+  properties: []
+  revId: 1879
+name: "Legacy:Bulldog Player"
+revision:
+  revid: 1879
+  parentid: 1880
+  user: "IZiMO"
+  timestamp: 1195107249.000000000
+  comment: "*"
+timestamp: 1668764220.962340000

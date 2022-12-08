@@ -1,0 +1,675 @@
+---
+parse:
+  title: "Legacy:XPawn Priority Bug"
+  text:
+    text: "<p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n\
+      </div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#Overview\"><span\
+      \ class=\"tocnumber\">1</span> <span class=\"toctext\">Overview</span></a>\n\
+      <ul>\n<li class=\"toclevel-2 tocsection-2\"><a href=\"#Goal\"><span class=\"\
+      tocnumber\">1.1</span> <span class=\"toctext\">Goal</span></a></li>\n<li class=\"\
+      toclevel-2 tocsection-3\"><a href=\"#Volume_Priority\"><span class=\"tocnumber\"\
+      >1.2</span> <span class=\"toctext\">Volume Priority</span></a></li>\n<li class=\"\
+      toclevel-2 tocsection-4\"><a href=\"#The_Bug_-_In_Brief\"><span class=\"tocnumber\"\
+      >1.3</span> <span class=\"toctext\">The Bug - In Brief</span></a></li>\n</ul>\n\
+      </li>\n<li class=\"toclevel-1 tocsection-5\"><a href=\"#Cause\"><span class=\"\
+      tocnumber\">2</span> <span class=\"toctext\">Cause</span></a>\n<ul>\n<li class=\"\
+      toclevel-2 tocsection-6\"><a href=\"#How_Volume_Priority_And_Splashing_Are_Handled\"\
+      ><span class=\"tocnumber\">2.1</span> <span class=\"toctext\">How Volume Priority\
+      \ And Splashing Are Handled</span></a>\n<ul>\n<li class=\"toclevel-3 tocsection-7\"\
+      ><a href=\"#PlayerReplicationInfo\"><span class=\"tocnumber\">2.1.1</span> <span\
+      \ class=\"toctext\">PlayerReplicationInfo</span></a></li>\n<li class=\"toclevel-3\
+      \ tocsection-8\"><a href=\"#xPawn\"><span class=\"tocnumber\">2.1.2</span> <span\
+      \ class=\"toctext\">xPawn</span></a></li>\n<li class=\"toclevel-3 tocsection-9\"\
+      ><a href=\"#PhysicsVolume\"><span class=\"tocnumber\">2.1.3</span> <span class=\"\
+      toctext\">PhysicsVolume</span></a></li>\n</ul>\n</li>\n<li class=\"toclevel-2\
+      \ tocsection-10\"><a href=\"#The_Problem\"><span class=\"tocnumber\">2.2</span>\
+      \ <span class=\"toctext\">The Problem</span></a></li>\n</ul>\n</li>\n<li class=\"\
+      toclevel-1 tocsection-11\"><a href=\"#Solutions\"><span class=\"tocnumber\"\
+      >3</span> <span class=\"toctext\">Solutions</span></a>\n<ul>\n<li class=\"toclevel-2\
+      \ tocsection-12\"><a href=\"#Proposal_One:_Avoid_Overlapping_Volumes\"><span\
+      \ class=\"tocnumber\">3.1</span> <span class=\"toctext\">Proposal One: Avoid\
+      \ Overlapping Volumes</span></a></li>\n<li class=\"toclevel-2 tocsection-13\"\
+      ><a href=\"#Proposal_Two:_Modify_xPawn\"><span class=\"tocnumber\">3.2</span>\
+      \ <span class=\"toctext\">Proposal Two: Modify xPawn</span></a></li>\n</ul>\n\
+      </li>\n</ul>\n</div>\n<p></p>\n<h2><span class=\"mw-headline\" id=\"Overview\"\
+      >Overview</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:XPawn_Priority_Bug?section=1\" title=\"Edit\
+      \ section: Overview\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <h3><span class=\"mw-headline\" id=\"Goal\">Goal</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:XPawn_Priority_Bug?section=2\"\
+      \ title=\"Edit section: Goal\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>This page will describe, and will hopefully provide\
+      \ solutions to, the <a href=\"/Legacy:XPawn\" title=\"Legacy:XPawn\">xPawn</a>\
+      \ \"priority bug\" in <a href=\"/Legacy:UT2003\" title=\"Legacy:UT2003\" class=\"\
+      mw-redirect\">UT2003</a> and <a href=\"/Legacy:UT2004\" title=\"Legacy:UT2004\"\
+      \ class=\"mw-redirect\">UT2004</a>.</p>\n<h3><span class=\"mw-headline\" id=\"\
+      Volume_Priority\">Volume Priority</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:XPawn_Priority_Bug?section=3\"\
+      \ title=\"Edit section: Volume Priority\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>The <tt>priority</tt> variable found in <a href=\"\
+      /Legacy:PhysicsVolume\" title=\"Legacy:PhysicsVolume\">PhysicsVolume</a> determines\
+      \ which one of several overlapping PhysicsVolumes gets to apply its physics\
+      \ properties (Gravity, GroundFriction, ZoneVelocity and so on) on players and\
+      \ other actors in the overlapping area. The higher the value of <tt>priority</tt>,\
+      \ the higher the Priority. Every <a href=\"/Legacy:PhysicsVolume\" title=\"\
+      Legacy:PhysicsVolume\">PhysicsVolume</a> added, however, even if <tt>priority</tt>\
+      \ is 0, has a higher priority than the <a href=\"/Legacy:DefaultPhysicsVolume\"\
+      \ title=\"Legacy:DefaultPhysicsVolume\">DefaultPhysicsVolume</a>.</p>\n<h3><span\
+      \ class=\"mw-headline\" id=\"The_Bug_-_In_Brief\">The Bug - In Brief</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:XPawn_Priority_Bug?section=4\" title=\"Edit section: The\
+      \ Bug - In Brief\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>There is a bug in the implementation of the priority scheme in <a href=\"\
+      /Legacy:XPawn\" title=\"Legacy:XPawn\">xPawn</a> as it pertains to interactions\
+      \ with <a href=\"/Legacy:PhysicsVolume\" title=\"Legacy:PhysicsVolume\">PhysicsVolumes</a>.\
+      \ If the player is contained within overlapping volumes and one of the volumes\
+      \ has <tt>bWaterVolume</tt> set to <tt>True</tt>, splashing sounds are likely\
+      \ to be played when a Player walks, dodges, or whatever, regardless of which\
+      \ volume has priority.</p>\n<h2><span class=\"mw-headline\" id=\"Cause\">Cause</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:XPawn_Priority_Bug?section=5\" title=\"Edit section: Cause\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n<h3><span\
+      \ class=\"mw-headline\" id=\"How_Volume_Priority_And_Splashing_Are_Handled\"\
+      >How Volume Priority And Splashing Are Handled</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:XPawn_Priority_Bug?section=6\"\
+      \ title=\"Edit section: How Volume Priority And Splashing Are Handled\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h3>\n<h4><span class=\"\
+      mw-headline\" id=\"PlayerReplicationInfo\">PlayerReplicationInfo</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:XPawn_Priority_Bug?section=7\" title=\"Edit section: PlayerReplicationInfo\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h4>\n<p>The\
+      \ following code was extracted from an export of the <a href=\"/Legacy:PlayerReplicationInfo\"\
+      \ title=\"Legacy:PlayerReplicationInfo\">PlayerReplicationInfo</a> class, <a\
+      \ href=\"/Legacy:UT2004\" title=\"Legacy:UT2004\" class=\"mw-redirect\">UT2004</a>\
+      \ build 3186</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">function</span> UpdatePlayerLocation<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n    <span class=\"kw1\"\
+      >local</span> <span class=\"kw9\">Volume</span> V, Best;\n    <span class=\"\
+      kw1\">local</span> <span class=\"kw9\">Pawn</span> P;\n    <span class=\"kw1\"\
+      >local</span> <span class=\"kw9\">Controller</span> C;\n \n    C <span class=\"\
+      sy0\">=</span> <span class=\"kw9\">Controller</span><span class=\"br0\">(</span><span\
+      \ class=\"kw7\">Owner</span><span class=\"br0\">)</span>;\n \n    <span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span> C <span class=\"sy0\">!=</span>\
+      \ <span class=\"kw5\">None</span> <span class=\"br0\">)</span>\n        P <span\
+      \ class=\"sy0\">=</span> C.<span class=\"kw9\">Pawn</span>;\n \n    <span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span> P <span class=\"sy0\">==</span>\
+      \ <span class=\"kw5\">None</span> <span class=\"br0\">)</span>\n    <span class=\"\
+      br0\">{</span>\n        PlayerVolume <span class=\"sy0\">=</span> <span class=\"\
+      kw5\">None</span>;\n        PlayerZone <span class=\"sy0\">=</span> <span class=\"\
+      kw5\">None</span>;\n        <span class=\"kw2\">return</span>;\n    <span class=\"\
+      br0\">}</span>\n \n    <span class=\"kw2\">if</span> <span class=\"br0\">(</span>\
+      \ PlayerZone <span class=\"sy0\">!=</span> P.<span class=\"me0\">Region</span>.<span\
+      \ class=\"me0\">Zone</span> <span class=\"br0\">)</span>\n\t\tPlayerZone <span\
+      \ class=\"sy0\">=</span> P.<span class=\"me0\">Region</span>.<span class=\"\
+      me0\">Zone</span>;\n \n    <span class=\"kw2\">foreach</span> P.<span class=\"\
+      kw2\">TouchingActors</span><span class=\"br0\">(</span> <span class=\"kw1\"\
+      >class</span><span class=\"st0\">'Volume'</span>, V <span class=\"br0\">)</span>\n\
+      \    <span class=\"br0\">{</span>\n        <span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span> V.<span class=\"me0\">LocationName</span> <span class=\"\
+      sy0\">==</span> <span class=\"st0\">\"\"</span><span class=\"br0\">)</span>\n\
+      \            <span class=\"kw2\">continue</span>;\n \n        <span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span> <span class=\"br0\">(</span>Best\
+      \ <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span>V.<span\
+      \ class=\"me0\">LocationPriority</span> <span class=\"sy0\">&lt;=</span> Best.<span\
+      \ class=\"me0\">LocationPriority</span><span class=\"br0\">)</span> <span class=\"\
+      br0\">)</span>\n            <span class=\"kw2\">continue</span>;\n \n      \
+      \  <span class=\"kw2\">if</span><span class=\"br0\">(</span> V.<span class=\"\
+      me0\">Encompasses</span><span class=\"br0\">(</span>P<span class=\"br0\">)</span>\
+      \ <span class=\"br0\">)</span>\n            Best <span class=\"sy0\">=</span>\
+      \ V;\n    <span class=\"br0\">}</span>\n    <span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span> PlayerVolume <span class=\"sy0\">!=</span> Best <span\
+      \ class=\"br0\">)</span>\n\t\tPlayerVolume <span class=\"sy0\">=</span> Best;\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<h4><span class=\"mw-headline\"\
+      \ id=\"xPawn\">xPawn</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:XPawn_Priority_Bug?section=8\" title=\"Edit\
+      \ section: xPawn\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h4>\n\
+      <p>The following code was extracted from an export of the <a href=\"/Legacy:XPawn\"\
+      \ title=\"Legacy:XPawn\">xPawn</a> class, <a href=\"/Legacy:UT2004\" title=\"\
+      Legacy:UT2004\" class=\"mw-redirect\">UT2004</a> build 3186</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">simulated</span> <span class=\"kw1\"\
+      >function</span> FootStepping<span class=\"br0\">(</span><span class=\"kw5\"\
+      >int</span> Side<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \    <span class=\"kw1\">local</span> <span class=\"kw5\">int</span> SurfaceNum,\
+      \ i;\n\t<span class=\"kw1\">local</span> <span class=\"kw9\">actor</span> A;\n\
+      \t<span class=\"kw1\">local</span> <span class=\"kw5\">material</span> FloorMat;\n\
+      \t<span class=\"kw1\">local</span> <span class=\"kw5\">vector</span> HL,HN,Start,End;\n\
+      \ \n    SurfaceNum <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>;\n\
+      \ \n    <span class=\"kw2\">for</span> <span class=\"br0\">(</span> i<span class=\"\
+      sy0\">=</span><span class=\"nu0\">0</span>; i<span class=\"sy0\">&lt;</span>Touching.<span\
+      \ class=\"me0\">Length</span>; i<span class=\"sy0\">++</span> <span class=\"\
+      br0\">)</span>\n\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>\
+      \ <span class=\"br0\">(</span><span class=\"br0\">(</span><span class=\"kw9\"\
+      >PhysicsVolume</span><span class=\"br0\">(</span>Touching<span class=\"br0\"\
+      >[</span>i<span class=\"br0\">]</span><span class=\"br0\">)</span> <span class=\"\
+      sy0\">!=</span> <span class=\"kw5\">None</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">&amp;&amp;</span> <span class=\"kw9\">PhysicsVolume</span><span\
+      \ class=\"br0\">(</span>Touching<span class=\"br0\">[</span>i<span class=\"\
+      br0\">]</span><span class=\"br0\">)</span>.<span class=\"me0\">bWaterVolume</span><span\
+      \ class=\"br0\">)</span>\n\t\t\t<span class=\"sy0\">||</span> <span class=\"\
+      br0\">(</span><span class=\"kw9\">FluidSurfaceInfo</span><span class=\"br0\"\
+      >(</span>Touching<span class=\"br0\">[</span>i<span class=\"br0\">]</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span><span\
+      \ class=\"br0\">)</span> <span class=\"br0\">)</span>\n\t\t<span class=\"br0\"\
+      >{</span>\n\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>\
+      \ <span class=\"kw3\">FRand</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">&lt;</span> <span class=\"nu0\">0.5</span>\
+      \ <span class=\"br0\">)</span>\n\t\t\t\t<span class=\"kw4\">PlaySound</span><span\
+      \ class=\"br0\">(</span><span class=\"kw5\">sound</span><span class=\"st0\"\
+      >'PlayerSounds.FootStepWater2'</span>, <span class=\"kw7\">SLOT_Interact</span>,\
+      \ FootstepVolume <span class=\"br0\">)</span>;\n\t\t\t<span class=\"kw2\">else</span>\n\
+      \t\t\t\t<span class=\"kw4\">PlaySound</span><span class=\"br0\">(</span><span\
+      \ class=\"kw5\">sound</span><span class=\"st0\">'PlayerSounds.FootStepWater1'</span>,\
+      \ <span class=\"kw7\">SLOT_Interact</span>, FootstepVolume <span class=\"br0\"\
+      >)</span>;\n\t\t\t<span class=\"kw2\">return</span>;\n\t\t<span class=\"br0\"\
+      >}</span>\n \n\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span> bIsCrouched\
+      \ <span class=\"sy0\">||</span> bIsWalking <span class=\"br0\">)</span>\n\t\t\
+      <span class=\"kw2\">return</span>;\n \n\t<span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span> <span class=\"br0\">(</span><span class=\"kw7\">Base</span><span\
+      \ class=\"sy0\">!=</span><span class=\"kw5\">None</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span><span\
+      \ class=\"sy0\">!</span><span class=\"kw7\">Base</span>.<span class=\"kw3\"\
+      >IsA</span><span class=\"br0\">(</span><span class=\"st0\">'LevelInfo'</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"br0\">(</span><span class=\"kw7\">Base</span>.<span class=\"\
+      me0\">SurfaceType</span><span class=\"sy0\">!=</span><span class=\"nu0\">0</span><span\
+      \ class=\"br0\">)</span> <span class=\"br0\">)</span>\n\t<span class=\"br0\"\
+      >{</span>\n\t\tSurfaceNum <span class=\"sy0\">=</span> <span class=\"kw7\">Base</span>.<span\
+      \ class=\"me0\">SurfaceType</span>;\n\t<span class=\"br0\">}</span>\n\t<span\
+      \ class=\"kw2\">else</span>\n\t<span class=\"br0\">{</span>\n\t\tStart <span\
+      \ class=\"sy0\">=</span> <span class=\"kw7\">Location</span> <span class=\"\
+      sy0\">-</span> <span class=\"kw3\">Vect</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">0</span>,<span class=\"nu0\">0</span>,<span class=\"nu0\">1</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">*</span><span class=\"kw7\">CollisionHeight</span>;\n\
+      \t\tEnd <span class=\"sy0\">=</span> Start <span class=\"sy0\">-</span> <span\
+      \ class=\"kw3\">Vect</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>,<span\
+      \ class=\"nu0\">0</span>,<span class=\"nu0\">16</span><span class=\"br0\">)</span>;\n\
+      \t\tA <span class=\"sy0\">=</span> <span class=\"kw4\">Trace</span><span class=\"\
+      br0\">(</span>hl,hn,End,Start,<span class=\"kw6\">false</span>,,FloorMat<span\
+      \ class=\"br0\">)</span>;\n\t\t<span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span>FloorMat <span class=\"sy0\">!=</span><span class=\"kw5\">None</span><span\
+      \ class=\"br0\">)</span>\n\t\t\tSurfaceNum <span class=\"sy0\">=</span> FloorMat.<span\
+      \ class=\"me0\">SurfaceType</span>;\n\t<span class=\"br0\">}</span>\n\t<span\
+      \ class=\"kw4\">PlaySound</span><span class=\"br0\">(</span>SoundFootsteps<span\
+      \ class=\"br0\">[</span>SurfaceNum<span class=\"br0\">]</span>, <span class=\"\
+      kw7\">SLOT_Interact</span>, FootstepVolume,,<span class=\"nu0\">400</span> <span\
+      \ class=\"br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <h4><span class=\"mw-headline\" id=\"PhysicsVolume\">PhysicsVolume</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:XPawn_Priority_Bug?section=9\" title=\"Edit section: PhysicsVolume\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h4>\n<p>The\
+      \ following code was extracted from an export of the <a href=\"/Legacy:PhysicsVolume\"\
+      \ title=\"Legacy:PhysicsVolume\">PhysicsVolume</a> class, <a href=\"/Legacy:UT2004\"\
+      \ title=\"Legacy:UT2004\" class=\"mw-redirect\">UT2004</a> build 3186</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">simulated</span>\
+      \ <span class=\"kw1\">function</span> <span class=\"kw4\">PostBeginPlay</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \t<span class=\"kw6\">super</span>.<span class=\"kw4\">PostBeginPlay</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n \n\tBACKUP_Gravity\t\
+      \t<span class=\"sy0\">=</span> Gravity;\n\tBACKUP_bPainCausing\t<span class=\"\
+      sy0\">=</span> bPainCausing;\n\t<span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span> VolumeEffect <span class=\"sy0\">==</span> <span class=\"kw5\"\
+      >None</span> <span class=\"sy0\">&amp;&amp;</span> bWaterVolume <span class=\"\
+      br0\">)</span>\n\t\tVolumeEffect <span class=\"sy0\">=</span> <span class=\"\
+      kw1\">new</span><span class=\"br0\">(</span><span class=\"kw5\">None</span><span\
+      \ class=\"br0\">)</span> <span class=\"kw1\">class</span><span class=\"st0\"\
+      >'EFFECT_WaterVolume'</span>;\n<span class=\"br0\">}</span>\n \n \n<span class=\"\
+      co1\">//</span>\n<span class=\"co1\">// (...)</span>\n<span class=\"co1\">//</span>\n\
+      \ \n \n<span class=\"kw1\">event</span> <span class=\"kw4\">touch</span><span\
+      \ class=\"br0\">(</span><span class=\"kw9\">Actor</span> Other<span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw1\">local</span>\
+      \ <span class=\"kw9\">Pawn</span> P;\n\t<span class=\"kw1\">local</span> <span\
+      \ class=\"kw5\">bool</span> bFoundPawn;\n \n\t<span class=\"kw6\">Super</span>.<span\
+      \ class=\"kw4\">Touch</span><span class=\"br0\">(</span>Other<span class=\"\
+      br0\">)</span>;\n\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>\
+      \ Other <span class=\"sy0\">==</span> <span class=\"kw5\">None</span> <span\
+      \ class=\"br0\">)</span>\n\t\t<span class=\"kw2\">return</span>;\n\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span> bNoInventory <span class=\"sy0\"\
+      >&amp;&amp;</span> <span class=\"br0\">(</span><span class=\"kw9\">Pickup</span><span\
+      \ class=\"br0\">(</span>Other<span class=\"br0\">)</span> <span class=\"sy0\"\
+      >!=</span> <span class=\"kw5\">None</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span>Other.<span class=\"\
+      kw7\">Owner</span> <span class=\"sy0\">==</span> <span class=\"kw5\">None</span><span\
+      \ class=\"br0\">)</span> <span class=\"br0\">)</span>\n\t<span class=\"br0\"\
+      >{</span>\n\t\tOther.<span class=\"kw7\">LifeSpan</span> <span class=\"sy0\"\
+      >=</span> <span class=\"nu0\">1.5</span>;\n\t\t<span class=\"kw2\">return</span>;\n\
+      \t<span class=\"br0\">}</span>\n\t<span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span> bMoveProjectiles <span class=\"sy0\">&amp;&amp;</span> <span\
+      \ class=\"br0\">(</span>ZoneVelocity <span class=\"sy0\">!=</span> <span class=\"\
+      kw3\">vect</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>,<span\
+      \ class=\"nu0\">0</span>,<span class=\"nu0\">0</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span> <span class=\"br0\">)</span>\n\t<span class=\"br0\"\
+      >{</span>\n\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span> Other.<span\
+      \ class=\"kw7\">Physics</span> <span class=\"sy0\">==</span> <span class=\"\
+      kw7\">PHYS_Projectile</span> <span class=\"br0\">)</span>\n\t\t\tOther.<span\
+      \ class=\"kw7\">Velocity</span> <span class=\"sy0\">+=</span> ZoneVelocity;\n\
+      \t\t<span class=\"kw2\">else</span> <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span> <span class=\"br0\">(</span>Other.<span class=\"kw7\">Base</span>\
+      \ <span class=\"sy0\">==</span> <span class=\"kw5\">None</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">&amp;&amp;</span> Other.<span class=\"kw3\"\
+      >IsA</span><span class=\"br0\">(</span><span class=\"st0\">'Emitter'</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"\
+      br0\">(</span>Other.<span class=\"kw7\">Physics</span> <span class=\"sy0\">==</span>\
+      \ <span class=\"kw7\">PHYS_None</span><span class=\"br0\">)</span> <span class=\"\
+      br0\">)</span>\n\t\t<span class=\"br0\">{</span>\n\t\t\tOther.<span class=\"\
+      kw4\">SetPhysics</span><span class=\"br0\">(</span><span class=\"kw7\">PHYS_Projectile</span><span\
+      \ class=\"br0\">)</span>;\n\t\t\tOther.<span class=\"kw7\">Velocity</span> <span\
+      \ class=\"sy0\">+=</span> ZoneVelocity;\n\t\t<span class=\"br0\">}</span>\n\t\
+      <span class=\"br0\">}</span>\n\t<span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span> bPainCausing <span class=\"br0\">)</span>\n\t<span class=\"br0\"\
+      >{</span>\n\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span> Other.<span\
+      \ class=\"me0\">bDestroyInPainVolume</span> <span class=\"br0\">)</span>\n\t\
+      \t<span class=\"br0\">{</span>\n\t\t\tOther.<span class=\"kw4\">Destroy</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n\t\t\t<span class=\"\
+      kw2\">return</span>;\n\t\t<span class=\"br0\">}</span>\n\t\t<span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span> Other.<span class=\"me0\">bCanBeDamaged</span>\
+      \ <span class=\"sy0\">&amp;&amp;</span> <span class=\"sy0\">!</span>Other.<span\
+      \ class=\"me0\">bStatic</span> <span class=\"br0\">)</span>\n\t\t<span class=\"\
+      br0\">{</span>\n\t\t\tCausePainTo<span class=\"br0\">(</span>Other<span class=\"\
+      br0\">)</span>;\n\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>\
+      \ Other <span class=\"sy0\">==</span> <span class=\"kw5\">None</span> <span\
+      \ class=\"br0\">)</span>\n\t\t\t\t<span class=\"kw2\">return</span>;\n\t\t\t\
+      <span class=\"kw2\">if</span> <span class=\"br0\">(</span> PainTimer <span class=\"\
+      sy0\">==</span> <span class=\"kw5\">None</span> <span class=\"br0\">)</span>\n\
+      \t\t\t\tPainTimer <span class=\"sy0\">=</span> <span class=\"kw4\">Spawn</span><span\
+      \ class=\"br0\">(</span><span class=\"kw1\">class</span><span class=\"st0\"\
+      >'VolumeTimer'</span>, <span class=\"kw6\">self</span><span class=\"br0\">)</span>;\n\
+      \t\t\t<span class=\"kw2\">else</span> <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span> <span class=\"kw9\">Pawn</span><span class=\"br0\">(</span>Other<span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span>\
+      \ <span class=\"br0\">)</span>\n\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\
+      <span class=\"kw2\">ForEach</span> <span class=\"kw2\">TouchingActors</span><span\
+      \ class=\"br0\">(</span><span class=\"kw1\">class</span><span class=\"st0\"\
+      >'Pawn'</span>, P<span class=\"br0\">)</span>\n\t\t\t\t\t<span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span> <span class=\"br0\">(</span>P <span\
+      \ class=\"sy0\">!=</span> Other<span class=\"br0\">)</span> <span class=\"sy0\"\
+      >&amp;&amp;</span> P.<span class=\"me0\">bCanBeDamaged</span> <span class=\"\
+      br0\">)</span>\n\t\t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\t\tbFoundPawn\
+      \ <span class=\"sy0\">=</span> <span class=\"kw6\">true</span>;\n\t\t\t\t\t\t\
+      <span class=\"kw2\">break</span>;\n\t\t\t\t\t<span class=\"br0\">}</span>\n\t\
+      \t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span> <span class=\"\
+      sy0\">!</span>bFoundPawn <span class=\"br0\">)</span>\n\t\t\t\t\tPainTimer.<span\
+      \ class=\"kw4\">SetTimer</span><span class=\"br0\">(</span><span class=\"nu0\"\
+      >1.0</span>,<span class=\"kw6\">true</span><span class=\"br0\">)</span>;\n\t\
+      \t\t<span class=\"br0\">}</span>\n\t\t<span class=\"br0\">}</span>\n\t<span\
+      \ class=\"br0\">}</span>\n\t<span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span> bWaterVolume <span class=\"sy0\">&amp;&amp;</span> Other.<span class=\"\
+      me0\">CanSplash</span><span class=\"br0\">(</span><span class=\"br0\">)</span>\
+      \ <span class=\"br0\">)</span>\n\t\tPlayEntrySplash<span class=\"br0\">(</span>Other<span\
+      \ class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n \n \n<span class=\"\
+      co1\">//</span>\n<span class=\"co1\">// (...)</span>\n<span class=\"co1\">//</span>\n\
+      \ \n \n<span class=\"kw1\">function</span> PlayEntrySplash<span class=\"br0\"\
+      >(</span><span class=\"kw9\">Actor</span> Other<span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n\t<span class=\"kw1\">local</span> <span class=\"\
+      kw5\">float</span> SplashSize;\n\t<span class=\"kw1\">local</span> <span class=\"\
+      kw9\">actor</span> splash;\n \n\tsplashSize <span class=\"sy0\">=</span> <span\
+      \ class=\"kw3\">FClamp</span><span class=\"br0\">(</span><span class=\"nu0\"\
+      >0.00003</span> <span class=\"sy0\">*</span> Other.<span class=\"kw7\">Mass</span>\
+      \ <span class=\"sy0\">*</span> <span class=\"br0\">(</span><span class=\"nu0\"\
+      >250</span> <span class=\"sy0\">-</span> <span class=\"nu0\">0.5</span> <span\
+      \ class=\"sy0\">*</span> <span class=\"kw3\">FMax</span><span class=\"br0\"\
+      >(</span><span class=\"sy0\">-</span><span class=\"nu0\">600</span>,Other.<span\
+      \ class=\"kw7\">Velocity</span>.<span class=\"me0\">Z</span><span class=\"br0\"\
+      >)</span><span class=\"br0\">)</span>, <span class=\"nu0\">0.1</span>, <span\
+      \ class=\"nu0\">1.0</span> <span class=\"br0\">)</span>;\n\t<span class=\"kw2\"\
+      >if</span><span class=\"br0\">(</span> EntrySound <span class=\"sy0\">!=</span>\
+      \ <span class=\"kw5\">None</span> <span class=\"br0\">)</span>\n\t<span class=\"\
+      br0\">{</span>\n\t\t<span class=\"kw4\">PlaySound</span><span class=\"br0\"\
+      >(</span>EntrySound, <span class=\"kw7\">SLOT_Interact</span>, splashSize<span\
+      \ class=\"br0\">)</span>;\n\t\t<span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span> Other.<span class=\"kw7\">Instigator</span> <span class=\"sy0\"\
+      >!=</span> <span class=\"kw5\">None</span> <span class=\"br0\">)</span>\n\t\t\
+      \t<span class=\"kw4\">MakeNoise</span><span class=\"br0\">(</span>SplashSize<span\
+      \ class=\"br0\">)</span>;\n\t<span class=\"br0\">}</span>\n\t<span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span> EntryActor <span class=\"sy0\">!=</span>\
+      \ <span class=\"kw5\">None</span> <span class=\"br0\">)</span>\n\t<span class=\"\
+      br0\">{</span>\n\t\tsplash <span class=\"sy0\">=</span> <span class=\"kw4\"\
+      >Spawn</span><span class=\"br0\">(</span>EntryActor<span class=\"br0\">)</span>;\n\
+      \t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span> splash <span\
+      \ class=\"sy0\">!=</span> <span class=\"kw5\">None</span> <span class=\"br0\"\
+      >)</span>\n\t\t\tsplash.<span class=\"kw4\">SetDrawScale</span><span class=\"\
+      br0\">(</span>splashSize<span class=\"br0\">)</span>;\n\t<span class=\"br0\"\
+      >}</span>\n<span class=\"br0\">}</span>\n \n \n<span class=\"kw1\">event</span>\
+      \ <span class=\"kw4\">untouch</span><span class=\"br0\">(</span><span class=\"\
+      kw9\">Actor</span> Other<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \t<span class=\"kw2\">if</span> <span class=\"br0\">(</span> bWaterVolume <span\
+      \ class=\"sy0\">&amp;&amp;</span> Other.<span class=\"me0\">CanSplash</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"br0\">)</span>\n\
+      \t\tPlayExitSplash<span class=\"br0\">(</span>Other<span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span>\n \n \n<span class=\"kw1\">function</span> PlayExitSplash<span\
+      \ class=\"br0\">(</span><span class=\"kw9\">Actor</span> Other<span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">float</span> SplashSize;\n\t<span class=\"kw1\">local</span>\
+      \ <span class=\"kw9\">actor</span> splash;\n \n\tsplashSize <span class=\"sy0\"\
+      >=</span> <span class=\"kw3\">FClamp</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">0.003</span> <span class=\"sy0\">*</span> Other.<span class=\"\
+      kw7\">Mass</span>, <span class=\"nu0\">0.1</span>, <span class=\"nu0\">1.0</span>\
+      \ <span class=\"br0\">)</span>;\n\t<span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span> ExitSound <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span>\
+      \ <span class=\"br0\">)</span>\n\t\t<span class=\"kw4\">PlaySound</span><span\
+      \ class=\"br0\">(</span>ExitSound, <span class=\"kw7\">SLOT_Interact</span>,\
+      \ splashSize<span class=\"br0\">)</span>;\n\t<span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span> ExitActor <span class=\"sy0\">!=</span> <span class=\"\
+      kw5\">None</span> <span class=\"br0\">)</span>\n\t<span class=\"br0\">{</span>\n\
+      \t\tsplash <span class=\"sy0\">=</span> <span class=\"kw4\">Spawn</span><span\
+      \ class=\"br0\">(</span>ExitActor<span class=\"br0\">)</span>;\n\t\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span> splash <span class=\"sy0\">!=</span>\
+      \ <span class=\"kw5\">None</span> <span class=\"br0\">)</span>\n\t\t\tsplash.<span\
+      \ class=\"kw4\">SetDrawScale</span><span class=\"br0\">(</span>splashSize<span\
+      \ class=\"br0\">)</span>;\n\t<span class=\"br0\">}</span>\n<span class=\"br0\"\
+      >}</span></pre></div>\n</div>\n<h3><span class=\"mw-headline\" id=\"The_Problem\"\
+      >The Problem</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:XPawn_Priority_Bug?section=10\" title=\"Edit\
+      \ section: The Problem\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>The most obvious problem is that the FootStepping() function in <a href=\"\
+      /Legacy:XPawn\" title=\"Legacy:XPawn\">xPawn</a> takes it upon itself to check\
+      \ for touching <a href=\"/Legacy:PhysicsVolume\" title=\"Legacy:PhysicsVolume\"\
+      >PhysicsVolumes</a>, rather than using the <tt>PlayerVolume</tt> var in <a href=\"\
+      /Legacy:PlayerReplicationInfo\" title=\"Legacy:PlayerReplicationInfo\">PlayerReplicationInfo</a>,\
+      \ in order to determine if a \"splash\" should be \"played\". In doing this,\
+      \ it bypasses the priority check made in the UpdatePlayerLocation() function\
+      \ of <a href=\"/Legacy:PlayerReplicationInfo\" title=\"Legacy:PlayerReplicationInfo\"\
+      >PlayerReplicationInfo</a>, thus eliminating the priority scheme for the \"\
+      splashing\" functionality.</p>\n<h2><span class=\"mw-headline\" id=\"Solutions\"\
+      >Solutions</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:XPawn_Priority_Bug?section=11\" title=\"Edit\
+      \ section: Solutions\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <h3><span class=\"mw-headline\" id=\"Proposal_One:_Avoid_Overlapping_Volumes\"\
+      >Proposal One: Avoid Overlapping Volumes</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:XPawn_Priority_Bug?section=12\"\
+      \ title=\"Edit section: Proposal One: Avoid Overlapping Volumes\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h3>\n<p><i><b>Note:</b></i>\
+      \ Obviously, this is just a work-around...</p>\n<p>Just like the title says:\
+      \ Avoid overlapping <a href=\"/Legacy:PhysicsVolume\" title=\"Legacy:PhysicsVolume\"\
+      >PhysicsVolumes</a>.</p>\n<p><b>Pros:</b></p>\n<ul>\n<li>You avoid the issue\
+      \ all together</li>\n</ul>\n<p><b>Cons:</b></p>\n<ul>\n<li>You potentially sacrifice\
+      \ certain senarios–\"dynamic\" volumes attached to movers interacting with one\
+      \ another, for instance.</li>\n</ul>\n<h3><span class=\"mw-headline\" id=\"\
+      Proposal_Two:_Modify_xPawn\">Proposal Two: Modify xPawn</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:XPawn_Priority_Bug?section=13\"\
+      \ title=\"Edit section: Proposal Two: Modify xPawn\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h3>\n<p>One solution may be to add\
+      \ a new check to the simulated function FootStepping() in xPawn (or in your\
+      \ own new pawn class) that compares touching volumes with <tt>bWaterVolume</tt>\
+      \ set to <tt>True</tt> with <tt>PlayerVolume</tt> in <a href=\"/Legacy:PlayerReplicationInfo\"\
+      \ title=\"Legacy:PlayerReplicationInfo\">PlayerReplicationInfo</a>. If they\
+      \ are not one in the same, skip the splashing code.</p>\n<p><b>Pros:</b></p>\n\
+      <ul>\n<li>Will likely solve the problem</li>\n</ul>\n<p><b>Cons:</b></p>\n<ul>\n\
+      <li>By extending xPawn, you now essentially are forced into making a <a href=\"\
+      /Legacy:Mod\" title=\"Legacy:Mod\" class=\"mw-redirect\">mod</a>/<a href=\"\
+      /Legacy:Mutator\" title=\"Legacy:Mutator\">mutator</a> in order to impliment\
+      \ your changes. Pawn-type is set in the <a href=\"/Legacy:Player\" title=\"\
+      Legacy:Player\">player</a> class (by default, <a href=\"/Legacy:XPlayer\" title=\"\
+      Legacy:XPlayer\">xPlayer</a>) which is in turn is set by a <a href=\"/Legacy:GameInfo\"\
+      \ title=\"Legacy:GameInfo\">GameInfo</a> actor like xDeathMatch.</li>\n</ul>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.116 seconds\nReal time usage:\
+      \ 0.362 seconds\nPreprocessor visited node count: 79/1000000\nPreprocessor generated\
+      \ node count: 132/1000000\nPost‐expand include size: 36/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:3824-0!*!0!!en!*!* and timestamp 20221120202011 and revision\
+      \ id 9675\n -->\n"
+  categories:
+  - sortkey: "XPawn Priority Bug"
+    name: "Legacy_Mapping"
+  - sortkey: "XPawn Priority Bug"
+    name: "Legacy_Troubleshooting"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:UT2004"
+  - ns: 100
+    exists: true
+    name: "Legacy:Mod"
+  - ns: 100
+    exists: true
+    name: "Legacy:UT2003"
+  - ns: 100
+    exists: true
+    name: "Legacy:GameInfo"
+  - ns: 100
+    exists: true
+    name: "Legacy:PlayerReplicationInfo"
+  - ns: 100
+    exists: true
+    name: "Legacy:XPawn"
+  - ns: 100
+    exists: true
+    name: "Legacy:Mutator"
+  - ns: 100
+    exists: true
+    name: "Legacy:PhysicsVolume"
+  - ns: 100
+    exists: true
+    name: "Legacy:Player"
+  - ns: 100
+    exists: true
+    name: "Legacy:DefaultPhysicsVolume"
+  - ns: 100
+    exists: true
+    name: "Legacy:XPlayer"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Overview"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:XPawn_Priority_Bug"
+    byteoffset: 0
+    anchor: "Overview"
+  - toclevel: 2
+    level: "3"
+    line: "Goal"
+    number: "1.1"
+    index: "2"
+    fromtitle: "Legacy:XPawn_Priority_Bug"
+    byteoffset: 14
+    anchor: "Goal"
+  - toclevel: 2
+    level: "3"
+    line: "Volume Priority"
+    number: "1.2"
+    index: "3"
+    fromtitle: "Legacy:XPawn_Priority_Bug"
+    byteoffset: 193
+    anchor: "Volume_Priority"
+  - toclevel: 2
+    level: "3"
+    line: "The Bug - In Brief"
+    number: "1.3"
+    index: "4"
+    fromtitle: "Legacy:XPawn_Priority_Bug"
+    byteoffset: 747
+    anchor: "The_Bug_-_In_Brief"
+  - toclevel: 1
+    level: "2"
+    line: "Cause"
+    number: "2"
+    index: "5"
+    fromtitle: "Legacy:XPawn_Priority_Bug"
+    byteoffset: 1186
+    anchor: "Cause"
+  - toclevel: 2
+    level: "3"
+    line: "How Volume Priority And Splashing Are Handled"
+    number: "2.1"
+    index: "6"
+    fromtitle: "Legacy:XPawn_Priority_Bug"
+    byteoffset: 1197
+    anchor: "How_Volume_Priority_And_Splashing_Are_Handled"
+  - toclevel: 3
+    level: "4"
+    line: "PlayerReplicationInfo"
+    number: "2.1.1"
+    index: "7"
+    fromtitle: "Legacy:XPawn_Priority_Bug"
+    byteoffset: 1250
+    anchor: "PlayerReplicationInfo"
+  - toclevel: 3
+    level: "4"
+    line: "xPawn"
+    number: "2.1.2"
+    index: "8"
+    fromtitle: "Legacy:XPawn_Priority_Bug"
+    byteoffset: 2133
+    anchor: "xPawn"
+  - toclevel: 3
+    level: "4"
+    line: "PhysicsVolume"
+    number: "2.1.3"
+    index: "9"
+    fromtitle: "Legacy:XPawn_Priority_Bug"
+    byteoffset: 3291
+    anchor: "PhysicsVolume"
+  - toclevel: 2
+    level: "3"
+    line: "The Problem"
+    number: "2.2"
+    index: "10"
+    fromtitle: "Legacy:XPawn_Priority_Bug"
+    byteoffset: 5783
+    anchor: "The_Problem"
+  - toclevel: 1
+    level: "2"
+    line: "Solutions"
+    number: "3"
+    index: "11"
+    fromtitle: "Legacy:XPawn_Priority_Bug"
+    byteoffset: 6359
+    anchor: "Solutions"
+  - toclevel: 2
+    level: "3"
+    line: "Proposal One: Avoid Overlapping Volumes"
+    number: "3.1"
+    index: "12"
+    fromtitle: "Legacy:XPawn_Priority_Bug"
+    byteoffset: 6374
+    anchor: "Proposal_One:_Avoid_Overlapping_Volumes"
+  - toclevel: 2
+    level: "3"
+    line: "Proposal Two: Modify xPawn"
+    number: "3.2"
+    index: "13"
+    fromtitle: "Legacy:XPawn_Priority_Bug"
+    byteoffset: 6758
+    anchor: "Proposal_Two:_Modify_xPawn"
+  displaytitle: "Legacy:XPawn Priority Bug"
+  iwlinks: []
+  wikitext:
+    text: "==Overview==\n\n===Goal===\n\nThis page will describe, and will hopefully\
+      \ provide solutions to, the [[Legacy:XPawn|xPawn]] \"priority bug\" in [[Legacy:UT2003|UT2003]]\
+      \ and [[Legacy:UT2004|UT2004]].\n\n===Volume Priority===\n\nThe  <tt>priority</tt>\
+      \  variable found in [[Legacy:PhysicsVolume|PhysicsVolume]] determines which\
+      \ one of several overlapping PhysicsVolumes gets to apply its physics properties\
+      \ (Gravity, GroundFriction, ZoneVelocity and so on) on players and other actors\
+      \ in the overlapping area. The higher the value of  <tt>priority</tt>, the higher\
+      \ the Priority.  Every [[Legacy:PhysicsVolume|PhysicsVolume]] added, however,\
+      \ even if  <tt>priority</tt>  is 0, has a higher priority than the [[Legacy:DefaultPhysicsVolume|DefaultPhysicsVolume]].\n\
+      \n===The Bug - In Brief===\n\nThere is a bug in the implementation of the priority\
+      \ scheme in [[Legacy:XPawn|xPawn]] as it pertains to interactions with [[Legacy:PhysicsVolume|PhysicsVolume]]s.\
+      \ If the player is contained within overlapping volumes and one of the volumes\
+      \ has <tt>bWaterVolume</tt> set to <tt>True</tt>, splashing sounds are likely\
+      \ to be played when a Player walks, dodges, or whatever, regardless of which\
+      \ volume has priority.\n\n==Cause==\n\n===How Volume Priority And Splashing\
+      \ Are Handled===\n\n====PlayerReplicationInfo====\n\nThe following code was\
+      \ extracted from an export of the [[Legacy:PlayerReplicationInfo|PlayerReplicationInfo]]\
+      \ class, [[Legacy:UT2004|UT2004]] build 3186\n\n<uscript>\nfunction UpdatePlayerLocation()\n\
+      {\n    local Volume V, Best;\n    local Pawn P;\n    local Controller C;\n\n\
+      \    C = Controller(Owner);\n\n    if( C != None )\n        P = C.Pawn;\n\n\
+      \    if( P == None )\n    {\n        PlayerVolume = None;\n        PlayerZone\
+      \ = None;\n        return;\n    }\n\n    if ( PlayerZone != P.Region.Zone )\n\
+      \t\tPlayerZone = P.Region.Zone;\n\n    foreach P.TouchingActors( class'Volume',\
+      \ V )\n    {\n        if( V.LocationName == \"\")\n            continue;\n\n\
+      \        if( (Best != None) && (V.LocationPriority <= Best.LocationPriority)\
+      \ )\n            continue;\n\n        if( V.Encompasses(P) )\n            Best\
+      \ = V;\n    }\n    if ( PlayerVolume != Best )\n\t\tPlayerVolume = Best;\n}\n\
+      </uscript>\n\n====xPawn====\n\nThe following code was extracted from an export\
+      \ of the [[Legacy:XPawn|xPawn]] class, [[Legacy:UT2004|UT2004]] build 3186\n\
+      \n<uscript>\nsimulated function FootStepping(int Side)\n{\n    local int SurfaceNum,\
+      \ i;\n\tlocal actor A;\n\tlocal material FloorMat;\n\tlocal vector HL,HN,Start,End;\n\
+      \n    SurfaceNum = 0;\n\n    for ( i=0; i<Touching.Length; i++ )\n\t\tif ( ((PhysicsVolume(Touching[i])\
+      \ != None) && PhysicsVolume(Touching[i]).bWaterVolume)\n\t\t\t|| (FluidSurfaceInfo(Touching[i])\
+      \ != None) )\n\t\t{\n\t\t\tif ( FRand() < 0.5 )\n\t\t\t\tPlaySound(sound'PlayerSounds.FootStepWater2',\
+      \ SLOT_Interact, FootstepVolume );\n\t\t\telse\n\t\t\t\tPlaySound(sound'PlayerSounds.FootStepWater1',\
+      \ SLOT_Interact, FootstepVolume );\n\t\t\treturn;\n\t\t}\n\n\tif ( bIsCrouched\
+      \ || bIsWalking )\n\t\treturn;\n\n\tif ( (Base!=None) && (!Base.IsA('LevelInfo'))\
+      \ && (Base.SurfaceType!=0) )\n\t{\n\t\tSurfaceNum = Base.SurfaceType;\n\t}\n\
+      \telse\n\t{\n\t\tStart = Location - Vect(0,0,1)*CollisionHeight;\n\t\tEnd =\
+      \ Start - Vect(0,0,16);\n\t\tA = Trace(hl,hn,End,Start,false,,FloorMat);\n\t\
+      \tif (FloorMat !=None)\n\t\t\tSurfaceNum = FloorMat.SurfaceType;\n\t}\n\tPlaySound(SoundFootsteps[SurfaceNum],\
+      \ SLOT_Interact, FootstepVolume,,400 );\n}\n</uscript>\n\n====PhysicsVolume====\n\
+      \nThe following code was extracted from an export of the [[Legacy:PhysicsVolume|PhysicsVolume]]\
+      \ class, [[Legacy:UT2004|UT2004]] build 3186\n\n<uscript>\nsimulated function\
+      \ PostBeginPlay()\n{\n\tsuper.PostBeginPlay();\n\n\tBACKUP_Gravity\t\t= Gravity;\n\
+      \tBACKUP_bPainCausing\t= bPainCausing;\n\tif( VolumeEffect == None && bWaterVolume\
+      \ )\n\t\tVolumeEffect = new(None) class'EFFECT_WaterVolume';\n}\n\n\n//\n//\
+      \ (...)\n//\n\n\nevent touch(Actor Other)\n{\n\tlocal Pawn P;\n\tlocal bool\
+      \ bFoundPawn;\n\n\tSuper.Touch(Other);\n\tif ( Other == None )\n\t\treturn;\n\
+      \tif ( bNoInventory && (Pickup(Other) != None) && (Other.Owner == None) )\n\t\
+      {\n\t\tOther.LifeSpan = 1.5;\n\t\treturn;\n\t}\n\tif ( bMoveProjectiles && (ZoneVelocity\
+      \ != vect(0,0,0)) )\n\t{\n\t\tif ( Other.Physics == PHYS_Projectile )\n\t\t\t\
+      Other.Velocity += ZoneVelocity;\n\t\telse if ( (Other.Base == None) && Other.IsA('Emitter')\
+      \ && (Other.Physics == PHYS_None) )\n\t\t{\n\t\t\tOther.SetPhysics(PHYS_Projectile);\n\
+      \t\t\tOther.Velocity += ZoneVelocity;\n\t\t}\n\t}\n\tif ( bPainCausing )\n\t\
+      {\n\t\tif ( Other.bDestroyInPainVolume )\n\t\t{\n\t\t\tOther.Destroy();\n\t\t\
+      \treturn;\n\t\t}\n\t\tif ( Other.bCanBeDamaged && !Other.bStatic )\n\t\t{\n\t\
+      \t\tCausePainTo(Other);\n\t\t\tif ( Other == None )\n\t\t\t\treturn;\n\t\t\t\
+      if ( PainTimer == None )\n\t\t\t\tPainTimer = Spawn(class'VolumeTimer', self);\n\
+      \t\t\telse if ( Pawn(Other) != None )\n\t\t\t{\n\t\t\t\tForEach TouchingActors(class'Pawn',\
+      \ P)\n\t\t\t\t\tif ( (P != Other) && P.bCanBeDamaged )\n\t\t\t\t\t{\n\t\t\t\t\
+      \t\tbFoundPawn = true;\n\t\t\t\t\t\tbreak;\n\t\t\t\t\t}\n\t\t\t\tif ( !bFoundPawn\
+      \ )\n\t\t\t\t\tPainTimer.SetTimer(1.0,true);\n\t\t\t}\n\t\t}\n\t}\n\tif ( bWaterVolume\
+      \ && Other.CanSplash() )\n\t\tPlayEntrySplash(Other);\n}\n\n\n//\n// (...)\n\
+      //\n\n\nfunction PlayEntrySplash(Actor Other)\n{\n\tlocal float SplashSize;\n\
+      \tlocal actor splash;\n\n\tsplashSize = FClamp(0.00003 * Other.Mass * (250 -\
+      \ 0.5 * FMax(-600,Other.Velocity.Z)), 0.1, 1.0 );\n\tif( EntrySound != None\
+      \ )\n\t{\n\t\tPlaySound(EntrySound, SLOT_Interact, splashSize);\n\t\tif ( Other.Instigator\
+      \ != None )\n\t\t\tMakeNoise(SplashSize);\n\t}\n\tif( EntryActor != None )\n\
+      \t{\n\t\tsplash = Spawn(EntryActor);\n\t\tif ( splash != None )\n\t\t\tsplash.SetDrawScale(splashSize);\n\
+      \t}\n}\n\n\nevent untouch(Actor Other)\n{\n\tif ( bWaterVolume && Other.CanSplash()\
+      \ )\n\t\tPlayExitSplash(Other);\n}\n\n\nfunction PlayExitSplash(Actor Other)\n\
+      {\n\tlocal float SplashSize;\n\tlocal actor splash;\n\n\tsplashSize = FClamp(0.003\
+      \ * Other.Mass, 0.1, 1.0 );\n\tif( ExitSound != None )\n\t\tPlaySound(ExitSound,\
+      \ SLOT_Interact, splashSize);\n\tif( ExitActor != None )\n\t{\n\t\tsplash =\
+      \ Spawn(ExitActor);\n\t\tif ( splash != None )\n\t\t\tsplash.SetDrawScale(splashSize);\n\
+      \t}\n}\n</uscript>\n\n===The Problem===\n\nThe most obvious problem is that\
+      \ the FootStepping() function in [[Legacy:XPawn|xPawn]] takes it upon itself\
+      \ to check for touching [[Legacy:PhysicsVolume|PhysicsVolume]]s, rather than\
+      \ using the <tt>PlayerVolume</tt> var in [[Legacy:PlayerReplicationInfo|PlayerReplicationInfo]],\
+      \ in order to determine if a \"splash\" should be \"played\".  In doing this,\
+      \ it bypasses the priority check made in the UpdatePlayerLocation() function\
+      \ of [[Legacy:PlayerReplicationInfo|PlayerReplicationInfo]], thus eliminating\
+      \ the priority scheme for the \"splashing\" functionality.\n\n==Solutions==\n\
+      \n===Proposal One: Avoid Overlapping Volumes===\n\n'''''Note:''''' Obviously,\
+      \ this is just a work-around...\n\nJust like the title says: Avoid overlapping\
+      \ [[Legacy:PhysicsVolume|PhysicsVolume]]s.\n\n'''Pros:'''\n* You avoid the issue\
+      \ all together\n\n'''Cons:'''\n* You potentially sacrifice certain senarios&ndash;\"\
+      dynamic\" volumes attached to movers interacting with one another, for instance.\n\
+      \n===Proposal Two: Modify xPawn===\n\nOne solution may be to add a new check\
+      \ to the simulated function FootStepping() in xPawn (or in your own new pawn\
+      \ class) that compares touching volumes with <tt>bWaterVolume</tt> set to <tt>True</tt>\
+      \ with <tt>PlayerVolume</tt> in [[Legacy:PlayerReplicationInfo|PlayerReplicationInfo]].\
+      \  If they are not one in the same, skip the splashing code.\n\n'''Pros:'''\n\
+      * Will likely solve the problem\n\n'''Cons:'''\n* By extending xPawn, you now\
+      \ essentially are forced into making a [[Legacy:Mod|mod]]/[[Legacy:Mutator|mutator]]\
+      \ in order to impliment your changes.  Pawn-type is set in  the [[Legacy:Player|player]]\
+      \ class (by default, [[Legacy:XPlayer|xPlayer]]) which is in turn is set by\
+      \ a [[Legacy:GameInfo|GameInfo]] actor like xDeathMatch.\n\n[[Category:Legacy\
+      \ Mapping|{{PAGENAME}}]]\n[[Category:Legacy Troubleshooting|{{PAGENAME}}]]"
+  properties: []
+  revId: 9675
+name: "Legacy:XPawn Priority Bug"
+revision:
+  revid: 9675
+  parentid: 9676
+  user: "Dr.AwkwArD"
+  timestamp: 1081352325.000000000
+  comment: "Thanks for renaming the page.  I removed my comments and fixed a link."
+timestamp: 1668975352.105113000

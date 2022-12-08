@@ -1,0 +1,208 @@
+---
+parse:
+  title: "Legacy:Another Look At Replication"
+  text:
+    text: "<h2><span class=\"mw-headline\" id=\"The_Meaning_Of_The_Replication_Block\"\
+      >The Meaning Of The Replication Block</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Another_Look_At_Replication?section=1\"\
+      \ title=\"Edit section: The Meaning Of The Replication Block\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h2>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw1\">replication</span>\n<span class=\"br0\"\
+      >{</span>\n         <span class=\"kw1\">reliable</span> <span class=\"kw2\"\
+      >if</span><span class=\"br0\">(</span> <span class=\"kw7\">Role</span> <span\
+      \ class=\"sy0\">==</span> <span class=\"kw7\">ROLE_Authority</span> <span class=\"\
+      br0\">)</span>\n           somevar;\n         <span class=\"kw1\">reliable</span>\
+      \ <span class=\"kw2\">if</span><span class=\"br0\">(</span> <span class=\"kw7\"\
+      >Role</span> <span class=\"sy0\">&lt;</span> <span class=\"kw7\">ROLE_Authority</span>\
+      \ <span class=\"br0\">)</span>\n            someInputVar;\n<span class=\"br0\"\
+      >}</span></pre></div>\n</div>\n<p>The first part of the replication block here\
+      \ is saying, if 'somevar' changes on the server, then the server should tell\
+      \ others about it.</p>\n<p>The second part says if 'someInputVar' changes on\
+      \ the client, then the client will send that data back to the server.</p>\n\
+      <p>When writing your replication statements, your conditional check is a specification\
+      \ of who should be SENDING the data, and then that data will be sent to everyone\
+      \ applicable.</p>\n<p>I'm guessing this means that the server will always send\
+      \ to the owner of the actor, and maybe even ALL clients.</p>\n<p>On the other\
+      \ hand, Clients can ONLY send data to the server.</p>\n<p><b>MtTracer:</b> As\
+      \ far as I know variables are not necessarily sent directly after they changed.\
+      \ Replication happens frequently but you can't tell when exactly. Only bNetDirty\
+      \ can be used to see if at least one property of this a class has been changed\
+      \ since the last replication check. Second, the server will allways send its\
+      \ variables to every \"copy\" of this actor on all clients except you used bNetOwner\
+      \ in the condition check.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">replication</span>\n<span class=\"br0\">{</span>\n<span class=\"kw1\"\
+      >reliable</span> <span class=\"kw2\">if</span><span class=\"br0\">(</span> <span\
+      \ class=\"kw7\">ROLE</span> <span class=\"sy0\">==</span> <span class=\"kw7\"\
+      >ROLE_Authority</span> <span class=\"br0\">)</span>\n   ServerVersionOfSomeImportantValueTheClientIsGoingToChange;\n\
+      <span class=\"kw1\">reliable</span> <span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span> <span class=\"kw7\">ROLE</span> <span class=\"sy0\">&lt;</span>\
+      \ <span class=\"kw7\">ROLE_Authority</span> <span class=\"br0\">)</span>\n \
+      \  NotifyServer, SomeImportantValueTheClientIsGoingToChange;\n<span class=\"\
+      br0\">}</span>\n \n<span class=\"kw1\">simulated</span> <span class=\"kw1\"\
+      >function</span> MyClientSideFunc<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\nSomeImportantValueTheClientIsGoingToChange<span\
+      \ class=\"sy0\">++</span>;\nNotifyServer<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">function</span>\
+      \ NotifyServer<span class=\"br0\">(</span><span class=\"br0\">)</span>\n<span\
+      \ class=\"br0\">{</span>\n    <span class=\"kw2\">if</span><span class=\"br0\"\
+      >(</span> SomeImportantValueTheClientIsGoingToChange <span class=\"sy0\">==</span>\
+      \ NOT_A_PROBLEMATIC_CHANGE <span class=\"br0\">)</span>\n       ServerVersionOfSomeIMportantValueTheClientIsGoingToChange<span\
+      \ class=\"sy0\">=</span>SomeImportantValueTheClientIsGoingToChange;\n<span class=\"\
+      br0\">}</span>\n \n<span class=\"kw1\">simulated</span> <span class=\"kw1\"\
+      >event</span> DrawHUD<span class=\"br0\">(</span><span class=\"kw8\">Canvas</span>\
+      \ C<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n   C.<span class=\"\
+      me0\">DrawText</span><span class=\"br0\">(</span><span class=\"st0\">\"Client\
+      \ Value specified is: \"</span><span class=\"sy0\">@</span>ServerVersionOfSomeImportantValueTheClientIsGoingToChange<span\
+      \ class=\"br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <p>Now what's going on here, is that the client is going to change SomeIMportantValueTheClientIsGoingToChange,\
+      \ and call NotifyServer.</p>\n<p>This call to notify server is going to be called\
+      \ on the ServerMachine, both because it's non-simulated, so it can't execute\
+      \ on the client, and because we are replicating this function from the client\
+      \ to the server.</p>\n<p>in NotifyServer The server will allow the change and\
+      \ set it's version of this variable, 'SeverVersionOfSomeIMportantValueTheClientIsGoingToChange'\
+      \ to the client variables value.</p>\n<p>Now that this has happened, the drawhud\
+      \ function is going to draw the value of the server's version of the variable\
+      \ to the clients hud during updates.</p>\n<p>This is simply an example to get\
+      \ the point across. Specifically, i have not tested to see whether SomeImportantValueTheClientIsGoingToChange\
+      \ will take it's new, client modified value, before NotifyServer is called and\
+      \ the value is assigned.</p>\n<p>This understanding has fixed some of my recent\
+      \ problems so i hope it helps you too.</p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Comments\">Comments</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Another_Look_At_Replication?section=2\"\
+      \ title=\"Edit section: Comments\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p><b>Tarquin:</b> Perhaps this can be folded into <a\
+      \ href=\"/Legacy:Introduction_To_Replication\" title=\"Legacy:Introduction To\
+      \ Replication\">Introduction To Replication</a>?</p>\n<p><b>Solid Snake:</b>\
+      \ Fixed a spelling mistake for those who cut-copy code from places, and also\
+      \ it may be better to just use A, B instead of really long labels for the sake\
+      \ of readability?</p>\n<p><b>Mychaeel:</b> <i>Especially</i> for sake of readability\
+      \ I'm particularly fond of well-crafted, long symbol names... though I have\
+      \ to admit that the ones used here aren't terribly well-crafted. They're just\
+      \ a string of <a href=\"http://c2.com/cgi/wiki?WordsSmashedTogetherLikeSo\"\
+      \ class=\"extiw\" title=\"wiki:WordsSmashedTogetherLikeSo\">WordsSmashedTogetherLikeSo</a>.</p>\n\
+      <p><b>Sweavo:</b> Agree that this should be folded-in, also that human-meaningful\
+      \ names are better than A and B</p>\n<p><b>*mGm*Lizard:</b> Does this page apply\
+      \ to <a href=\"/Unreal_Tournament_2004\" title=\"Unreal Tournament 2004\">UT2004</a>?</p>\n\
+      <p><b>Wormbo:</b> It talks about variables being replicated from client to server,\
+      \ a feature not present in UE2, so it's likely related only to UE1 games.</p>\n\
+      <hr />\n<p><a href=\"/Category:Legacy_To_Do\" title=\"Category:Legacy To Do\"\
+      >Category:Legacy To Do</a> – This needs merged into the grand topic of <a href=\"\
+      /Legacy:Replication\" title=\"Legacy:Replication\">Replication</a>. See <a href=\"\
+      /Legacy:Replication/Discussing\" title=\"Legacy:Replication/Discussing\">Replication/Discussing</a></p>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.064 seconds\nReal time usage:\
+      \ 0.242 seconds\nPreprocessor visited node count: 25/1000000\nPreprocessor generated\
+      \ node count: 60/1000000\nPost‐expand include size: 27/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:480-0!*!0!!*!*!* and timestamp 20221118001729 and revision\
+      \ id 46283\n -->\n"
+  categories:
+  - sortkey: "Another Look At Replication"
+    name: "Legacy_To_Do"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Introduction To Replication"
+  - ns: 0
+    exists: true
+    name: "Unreal Tournament 2004"
+  - ns: 100
+    exists: true
+    name: "Legacy:Replication"
+  - ns: 14
+    exists: true
+    name: "Category:Legacy To Do"
+  - ns: 100
+    exists: true
+    name: "Legacy:Replication/Discussing"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "The Meaning Of The Replication Block"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Another_Look_At_Replication"
+    byteoffset: 0
+    anchor: "The_Meaning_Of_The_Replication_Block"
+  - toclevel: 1
+    level: "2"
+    line: "Comments"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Another_Look_At_Replication"
+    byteoffset: 2974
+    anchor: "Comments"
+  displaytitle: "Legacy:Another Look At Replication"
+  iwlinks:
+  - prefix: "wiki"
+    url: "http://c2.com/cgi/wiki?WordsSmashedTogetherLikeSo"
+    name: "wiki:WordsSmashedTogetherLikeSo"
+  wikitext:
+    text: "==The Meaning Of The Replication Block==\n\n<uscript>\nreplication\n{\n\
+      \         reliable if( Role == ROLE_Authority )\n           somevar;\n     \
+      \    reliable if( Role < ROLE_Authority )\n            someInputVar;\n}\n</uscript>\n\
+      \nThe first part of the replication block here is saying, if 'somevar' changes\
+      \ on the server, then the server should tell others about it.\n\nThe second\
+      \ part says if 'someInputVar' changes on the client, then the client will send\
+      \ that data back to the server.\n\nWhen writing your replication statements,\
+      \ your conditional check is a specification of who should be SENDING the data,\
+      \ and then that data will be sent to everyone applicable.\n\nI'm guessing this\
+      \ means that the server will always send to the owner of the actor, and maybe\
+      \ even ALL clients.\n\nOn the other hand, Clients can ONLY send data to the\
+      \ server.\n\n'''MtTracer:''' As far as I know variables are not necessarily\
+      \ sent directly after they changed. Replication happens frequently but you can't\
+      \ tell when exactly. Only bNetDirty can be used to see if at least one property\
+      \ of this a class has been changed since the last replication check. Second,\
+      \ the server will allways send its variables to every \"copy\" of this actor\
+      \ on all clients except you used bNetOwner in the condition check.\n\n<uscript>\n\
+      replication\n{\nreliable if( ROLE == ROLE_Authority )\n   ServerVersionOfSomeImportantValueTheClientIsGoingToChange;\n\
+      reliable if( ROLE < ROLE_Authority )\n   NotifyServer, SomeImportantValueTheClientIsGoingToChange;\n\
+      }\n\nsimulated function MyClientSideFunc()\n{\nSomeImportantValueTheClientIsGoingToChange++;\n\
+      NotifyServer();\n}\n\nfunction NotifyServer()\n{\n    if( SomeImportantValueTheClientIsGoingToChange\
+      \ == NOT_A_PROBLEMATIC_CHANGE )\n       ServerVersionOfSomeIMportantValueTheClientIsGoingToChange=SomeImportantValueTheClientIsGoingToChange;\n\
+      }\n\nsimulated event DrawHUD(Canvas C)\n{\n   C.DrawText(\"Client Value specified\
+      \ is: \"@ServerVersionOfSomeImportantValueTheClientIsGoingToChange);\n}\n \n\
+      </uscript>\n\nNow what's going on here, is that the client is going to change\
+      \ SomeIMportantValueTheClientIsGoingToChange, and call NotifyServer. \n\nThis\
+      \ call to notify server is going to be called on the ServerMachine, both because\
+      \ it's non-simulated, so it can't execute on the client, and because we are\
+      \ replicating this function from the client to the server. \n\nin NotifyServer\
+      \ The server will allow the change and set it's version of this variable, 'SeverVersionOfSomeIMportantValueTheClientIsGoingToChange'\
+      \ to the client variables value.\n\nNow that this has happened, the drawhud\
+      \ function is going to draw the value of the server's version of the variable\
+      \ to the clients hud during updates.\n\nThis is simply an example to get the\
+      \ point across. Specifically, i have not tested to see whether SomeImportantValueTheClientIsGoingToChange\
+      \ will take it's new, client modified value, before NotifyServer is called and\
+      \ the value is assigned.\n\nThis understanding has fixed some of my recent problems\
+      \ so i hope it helps you too.\n\n==Comments==\n\n'''Tarquin:''' Perhaps this\
+      \ can be folded into [[Legacy:Introduction To Replication|Introduction To Replication]]?\n\
+      \n'''Solid Snake:''' Fixed a spelling mistake for those who cut-copy code from\
+      \ places, and also it may be better to just use A, B instead of really long\
+      \ labels for the sake of readability?\n\n'''Mychaeel:''' ''Especially'' for\
+      \ sake of readability I'm particularly fond of well-crafted, long symbol names...\
+      \ though I have to admit that the ones used here aren't terribly well-crafted.\
+      \  They're just a string of [[Wiki:WordsSmashedTogetherLikeSo|WordsSmashedTogetherLikeSo]].\n\
+      \n'''Sweavo:''' Agree that this should be folded-in, also that human-meaningful\
+      \ names are better than A and B \n\n'''*mGm*Lizard:''' Does this page apply\
+      \ to [[Unreal Tournament 2004|UT2004]]?\n\n'''Wormbo:''' It talks about variables\
+      \ being replicated from client to server, a feature not present in UE2, so it's\
+      \ likely related only to UE1 games.\n----\n\n[[:Category:Legacy To Do]] &ndash;\
+      \ This needs merged into the grand topic of [[Legacy:Replication|Replication]].\
+      \ See [[Legacy:Replication/Discussing|Replication/Discussing]]\n[[Category:Legacy\
+      \ To Do|{{PAGENAME}}]]"
+  properties: []
+  revId: 46283
+name: "Legacy:Another Look At Replication"
+revision:
+  revid: 46283
+  parentid: 46282
+  user: "Wormbo"
+  timestamp: 1452233350.000000000
+  comment: ""
+timestamp: 1668772510.955529000

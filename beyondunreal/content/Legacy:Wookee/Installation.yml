@@ -1,0 +1,176 @@
+---
+parse:
+  title: "Legacy:Wookee/Installation"
+  text:
+    text: "<p>To use <a href=\"/Legacy:Wookee\" title=\"Legacy:Wookee\">Wookee</a>\
+      \ with UseMod Wiki instead of its built-in formatter, patch wiki.cgi as follows:</p>\n\
+      <ol>\n<li>Download the Wookee Perl modules from <a rel=\"nofollow\" class=\"\
+      external free\" href=\"http://mb.link-m.de/wiki/Wookee.zip\">http://mb.link-m.de/wiki/Wookee.zip</a>.</li>\n\
+      </ol>\n<ol>\n<li>Import Wookee.pm in wiki.cgi, using the following line of code\
+      \ somewhere at the start of wiki.cgi:\n<pre>  use Wookee;</pre></li>\n</ol>\n\
+      <ol>\n<li>Change the WikiToHTML sub as follows:\n<pre>  sub WikiToHTML {</pre></li>\n\
+      </ol>\n<pre>   return BlockWiki-&gt;new()-&gt;parseBlock(shift);\n</pre>\n<p>}</p>\n\
+      <p>That's all. To use additional Wookee modules, just <code>use</code> them\
+      \ after importing Wookee itself.</p>\n<h2><span class=\"mw-headline\" id=\"\
+      To_Do\">To Do</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Wookee/Installation?section=1\" title=\"Edit\
+      \ section: To Do\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <ul>\n<li>Diffs don't use Wookee yet; it'd be possible though to have that done\
+      \ by feeding the text into a stand-alone Paragraph object. That wouldn't take\
+      \ embedded blocks into account though (like <tt>&lt;code&gt;...&lt;/code&gt;</tt>).\
+      \ Alternatively, the whole text blocks returned by diff could be fed into WikiToHTML\
+      \ – that might not quite look like the same text would look in its original\
+      \ location if it's put out of context of some block markup like\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><code>...</code></pre></div>\n</div>\n, but neither does\
+      \ the text piped through CommonMarkup.</li>\n</ul>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Known_Issues\">Known Issues</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Wookee/Installation?section=2\"\
+      \ title=\"Edit section: Known Issues\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<ul>\n<li>A couple of other parts of wiki.cgi implement\
+      \ their own notion of what Wiki markup looks like; for instance the code that\
+      \ automatically updates page links when a page is renamed, and the code that\
+      \ extracts page links from Wiki pages. Due to Wookee's modular and open-ended\
+      \ design, I'm currently not sure how to handle the first issue; the second,\
+      \ though, could be easily handled by just having Wookee parse the page and take\
+      \ the page links out of the main block's <i>info</i> hash.</li>\n</ul>\n<ul>\n\
+      <li>Wookee is currently not compatible with mod_perl; the reason for this is\
+      \ its use of INIT and CHECK blocks in the Perl code which aren't supported by\
+      \ mod_perl. Rewriting the code to avoid those blocks solves the problem. (Thanks\
+      \ to Erik Moeller for the hint.)</li>\n</ul>\n<hr />\n<p><b>Spoon</b>: Just\
+      \ an observation from my own experience. Wiki (UseMod) and Wookee would not\
+      \ work under mod_perl, but worked under normal Perl CGI handling, for me at\
+      \ least.</p>\n<p><b>Mychaeel:</b> What do you mean by \"doesn't work\"? Does\
+      \ it leak memory, or does it fail to work altogether? (If so, with which error\
+      \ message if there is any?) I'd be very interested in getting Wookee to work\
+      \ under mod_perl in order to make Unreal Wiki a bit more responsive than it\
+      \ is right now and to relieve the server load caused by it on BeyondUnreal's\
+      \ web server.</p>\n<p>When coding the <a href=\"/Legacy:Offline_Wiki\" title=\"\
+      Legacy:Offline Wiki\">Offline Wiki</a> engine I found that Wookee leaked memory\
+      \ due to Perl's somewhat subpar reference counting mechanism; but I fixed that\
+      \ at that time.</p>\n<p><b>Spoon</b>: There are no error messages, the page\
+      \ does not load under mod_perl. It's like it's stuck in a loop.</p>\n<p><b>Mychaeel:</b>\
+      \ That is weird. Any idea where it is stuck? Does it work at least the first\
+      \ time a page is requested? (If so, it could be that there are some leftovers\
+      \ in memory after the first request.) Does the server process continue running\
+      \ (and perhaps eating memory), or does it stop/crash?</p>\n<p><b>Spoon</b>:\
+      \ (sorry for the delay). I'll have to try it again. I want to say it just kept\
+      \ loading, I didn't check memeory usage. Normally, global variables mess up\
+      \ perl scripts running in mod_perl since the namespace is not flushed when the\
+      \ script ends. 99% if perl script migrated to mod_perl, that have problems are,\
+      \ caused by this. I'll try is again ( need to finish a code release first ).</p>\n\
+      <p><b>inio:</b> Two things:\\</p>\n<p>1. was I really supposed to \"Write mychaeel@beyondunreal.com\
+      \ an email to obtain the Wookee Perl modules.\" when there's a download link\
+      \ on <a href=\"/Legacy:Wookee\" title=\"Legacy:Wookee\">Wookee</a>?\\</p>\n\
+      <p>2. If I <tt>use Wookee;</tt> from a file that's executed via a <tt>do 'foo.pl';</tt>\
+      \ rather than in the main file thats being executed it gets stuck in the big\
+      \ while loop in Paragraph::addParsed. Any clue why this is? Here's a <a rel=\"\
+      nofollow\" class=\"external text\" href=\"http://tmwiki.inio.org/lockupstack.txt\"\
+      >stack trace</a> if it would help.</p>\n<p><b>Mychaeel:</b> Perhaps that's the\
+      \ same problem as the one with trying to use Wookee with mod_perl (see above).\
+      \ Maybe some crucial initialization code of Wookee's isn't executed if it is\
+      \ included that way.</p>\n\n<!-- \nNewPP limit report\nCPU time usage: 0.034\
+      \ seconds\nReal time usage: 0.059 seconds\nPreprocessor visited node count:\
+      \ 43/1000000\nPreprocessor generated node count: 92/1000000\nPost‐expand include\
+      \ size: 0/2097152 bytes\nTemplate argument size: 0/2097152 bytes\nHighest expansion\
+      \ depth: 2/40\nExpensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion\
+      \ expansion time report (%,ms,calls,template)\n100.00%    0.000      1 - -total\n\
+      -->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:3686-0!*!0!!*!*!*\
+      \ and timestamp 20221118013056 and revision id 9372\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Offline Wiki"
+  - ns: 100
+    exists: true
+    name: "Legacy:Wookee"
+  templates: []
+  images: []
+  externallinks:
+  - "http://mb.link-m.de/wiki/Wookee.zip"
+  - "http://tmwiki.inio.org/lockupstack.txt"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "To Do"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Wookee/Installation"
+    byteoffset: 544
+    anchor: "To_Do"
+  - toclevel: 1
+    level: "2"
+    line: "Known Issues"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Wookee/Installation"
+    byteoffset: 1110
+    anchor: "Known_Issues"
+  displaytitle: "Legacy:Wookee/Installation"
+  iwlinks: []
+  wikitext:
+    text: "To use [[Legacy:Wookee|Wookee]] with UseMod Wiki instead of its built-in\
+      \ formatter, patch wiki.cgi as follows:\n\n# Download the Wookee Perl modules\
+      \ from http://mb.link-m.de/wiki/Wookee.zip.\n\n# Import Wookee.pm in wiki.cgi,\
+      \ using the following line of code somewhere at the start of wiki.cgi:<pre>\
+      \  use Wookee;</pre>\n\n# Change the WikiToHTML sub as follows:<pre>  sub WikiToHTML\
+      \ {\n    return BlockWiki->new()->parseBlock(shift);\n  }</pre>\n\nThat's all.\
+      \  To use additional Wookee modules, just <code>use</code> them after importing\
+      \ Wookee itself.\n\n==To Do ==\n\n* Diffs don't use Wookee yet; it'd be possible\
+      \ though to have that done by feeding the text into a stand-alone Paragraph\
+      \ object.  That wouldn't take embedded blocks into account though (like <tt><nowiki><code>...</code></nowiki></tt>).\
+      \  Alternatively, the whole text blocks returned by diff could be fed into WikiToHTML\
+      \ &ndash; that might not quite look like the same text would look in its original\
+      \ location if it's put out of context of some block markup like <code><uscript>...</uscript></code>,\
+      \ but neither does the text piped through CommonMarkup.\n\n==Known Issues ==\n\
+      \n* A couple of other parts of wiki.cgi implement their own notion of what Wiki\
+      \ markup looks like; for instance the code that automatically updates page links\
+      \ when a page is renamed, and the code that extracts page links from Wiki pages.\
+      \  Due to Wookee's modular and open-ended design, I'm currently not sure how\
+      \ to handle the first issue; the second, though, could be easily handled by\
+      \ just having Wookee parse the page and take the page links out of the main\
+      \ block's ''info'' hash.\n\n* Wookee is currently not compatible with mod_perl;\
+      \ the reason for this is its use of INIT and CHECK blocks in the Perl code which\
+      \ aren't supported by mod_perl.  Rewriting the code to avoid those blocks solves\
+      \ the problem.  (Thanks to Erik Moeller for the hint.)\n\n----\n\n'''Spoon''':\
+      \ Just an observation from my own experience. Wiki (UseMod) and Wookee would\
+      \ not work under mod_perl, but worked under normal Perl CGI handling, for me\
+      \ at least.\n\n'''Mychaeel:''' What do you mean by \"doesn't work\"?  Does it\
+      \ leak memory, or does it fail to work altogether?  (If so, with which error\
+      \ message if there is any?)  I'd be very interested in getting Wookee to work\
+      \ under mod_perl in order to make Unreal Wiki a bit more responsive than it\
+      \ is right now and to relieve the server load caused by it on BeyondUnreal's\
+      \ web server.\n\nWhen coding the [[Legacy:Offline Wiki|Offline Wiki]] engine\
+      \ I found that Wookee leaked memory due to Perl's somewhat subpar reference\
+      \ counting mechanism; but I fixed that at that time.\n\n'''Spoon''': There are\
+      \ no error messages, the page does not load under mod_perl. It's like it's stuck\
+      \ in a loop.\n\n'''Mychaeel:''' That is weird.  Any idea where it is stuck?\
+      \  Does it work at least the first time a page is requested?  (If so, it could\
+      \ be that there are some leftovers in memory after the first request.)  Does\
+      \ the server process continue running (and perhaps eating memory), or does it\
+      \ stop/crash?\n\n'''Spoon''': (sorry for the delay). I'll have to try it again.\
+      \ I want to say it just kept loading, I didn't check memeory usage. Normally,\
+      \ global variables mess up perl scripts running in mod_perl since the namespace\
+      \ is not flushed when the script ends. 99% if perl script migrated to mod_perl,\
+      \ that have problems are, caused by this. I'll try is again ( need to finish\
+      \ a code release first ).\n\n'''inio:''' Two things:\\\n\n1. was I really supposed\
+      \ to \"Write mychaeel@beyondunreal.com an email to obtain the Wookee Perl modules.\"\
+      \ when there's a download link on [[Legacy:Wookee|Wookee]]?\\\n\n2. If I <tt>use\
+      \ Wookee;</tt> from a file that's executed via a <tt>do 'foo.pl';</tt> rather\
+      \ than in the main file thats being executed it gets stuck in the big while\
+      \ loop in Paragraph::addParsed.  Any clue why this is?  Here's a [http://tmwiki.inio.org/lockupstack.txt\
+      \ stack trace] if it would help.\n\n'''Mychaeel:''' Perhaps that's the same\
+      \ problem as the one with trying to use Wookee with mod_perl (see above).  Maybe\
+      \ some crucial initialization code of Wookee's isn't executed if it is included\
+      \ that way."
+  properties: []
+  revId: 9372
+name: "Legacy:Wookee/Installation"
+revision:
+  revid: 9372
+  parentid: 9374
+  user: "Wormbo"
+  timestamp: 1183909533.000000000
+  comment: "reverted again, this gets boring"
+timestamp: 1668786747.914183000

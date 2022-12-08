@@ -1,0 +1,290 @@
+---
+parse:
+  title: "User:Wormbo/Optimizing JB-Aswan-v2 (UT2004)"
+  text:
+    text: "<p>When I converted <a href=\"http://liandri.beyondunreal.com/DOM-Aswan\"\
+      \ class=\"extiw\" title=\"liandri:DOM-Aswan\">DOM-Aswan</a> to a Jailbreak map,\
+      \ people reported bad framerates. Until then I only paid attention to setting\
+      \ up the Jailbreak-specific actors and just \"reused\" the original optimizations.\
+      \ To achieve better performance, I started \"from scratch\" by removing all\
+      \ <a href=\"/edit/Zone_portal?redlink=1\" class=\"new\" title=\"Zone portal\
+      \ (page does not exist)\">zone portals</a>, <a href=\"/UE2:ZoneInfo_(UT2004)\"\
+      \ title=\"UE2:ZoneInfo (UT2004)\">ZoneInfos</a> and <a href=\"/UE2:AntiPortalActor_(UT2004)\"\
+      \ title=\"UE2:AntiPortalActor (UT2004)\">AntiPortalActors</a>, and disabling\
+      \ the <a href=\"/Anti_portal\" title=\"Anti portal\" class=\"mw-redirect\">anti\
+      \ portal</a> flag of all <a href=\"/edit/BSP_surface?redlink=1\" class=\"new\"\
+      \ title=\"BSP surface (page does not exist)\">BSP surfaces</a>.</p>\n<p>For\
+      \ JB-Aswan-v2 I ended up using about all of the map optimization techniques\
+      \ UT2004 offers. This article will sum up their application and the ideas behind\
+      \ why they where applied this way.</p>\n<p></p>\n<div id=\"toc\" class=\"toc\"\
+      >\n<div id=\"toctitle\">\n<h2>Contents</h2>\n</div>\n<ul>\n<li class=\"toclevel-1\
+      \ tocsection-1\"><a href=\"#Optimized_zoning\"><span class=\"tocnumber\">1</span>\
+      \ <span class=\"toctext\">Optimized zoning</span></a></li>\n<li class=\"toclevel-1\
+      \ tocsection-2\"><a href=\"#Optimizing_zone_visibility\"><span class=\"tocnumber\"\
+      >2</span> <span class=\"toctext\">Optimizing zone visibility</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-3\"><a href=\"#Forcing_actor_visibility_zones\"\
+      ><span class=\"tocnumber\">3</span> <span class=\"toctext\">Forcing actor visibility\
+      \ zones</span></a></li>\n<li class=\"toclevel-1 tocsection-4\"><a href=\"#Using_anti_portals\"\
+      ><span class=\"tocnumber\">4</span> <span class=\"toctext\">Using anti portals</span></a></li>\n\
+      </ul>\n</div>\n<p></p>\n<h2><span class=\"mw-headline\" id=\"Optimized_zoning\"\
+      >Optimized zoning</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/User:Wormbo/Optimizing_JB-Aswan-v2_(UT2004)?section=1\"\
+      \ title=\"Edit section: Optimized zoning\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>The first step in successful optimization always is\
+      \ a proper zoning layout. Ideally the map doesn't have long lines of sight,\
+      \ but sometimes you don't really have a choice. In these cases it is important\
+      \ to make portal sheets between zones as small as possible, while still retaining\
+      \ a convex shape. Most importantly, zone portals do not need to overlap BSP\
+      \ geometry. It is enough if they fit the opening perfectly, and in fact, making\
+      \ them any larger is suboptimal for performance.</p>\n<p>On Aswan this especially\
+      \ goes for the lower corridors from the side to the back rooms and for the exits\
+      \ of the side rooms. These originally used just square portal sheets that were\
+      \ quite a bit larger than the actually visible shape. An optimized shape would\
+      \ be a <a href=\"http://en.wikipedia.org/wiki/isosceles_trapezoid\" class=\"\
+      extiw\" title=\"wp:isosceles trapezoid\">isosceles trapezoid</a> in both cases.</p>\n\
+      <p>Another zoning consideration is whether to place just one portal in a small\
+      \ corridor or actually make the corridor a separate zone by using two portals.\
+      \ I decided to make the front entrances to the back rooms separate zones because\
+      \ there's enough chance that the second portal isn't visible from the first\
+      \ when viewing from an angle. If the portals were closer together this wouldn't\
+      \ happen often enough, and if only a small part of a portal sheet is visible,\
+      \ the entire portal is considered visible.</p>\n<p>Other parts that got their\
+      \ own zones are the area below the upper walkway right outside the back rooms,\
+      \ the ramps between the back rooms and the lower corridors, and the top part\
+      \ of the back rooms which isn't visible from the outside. Those complex lightbox\
+      \ meshes in the back rooms are quite a performance hit, so best effort must\
+      \ be made to prevent them from being rendered if they aren't actually visible.</p>\n\
+      <h2><span class=\"mw-headline\" id=\"Optimizing_zone_visibility\">Optimizing\
+      \ zone visibility</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/User:Wormbo/Optimizing_JB-Aswan-v2_(UT2004)?section=2\"\
+      \ title=\"Edit section: Optimizing zone visibility\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<p>For the next step, all zones\
+      \ should get their own ZoneInfo actor. Open the level in the game, fly around\
+      \ as spectator and use the command <b>rmode 1</b> to switch to wireframe mode.\
+      \ Now check the view through your zone portals. In this step you try to identify\
+      \ pairs of zones which are not actually visible from each other, yet the engine\
+      \ decides to render them.</p>\n<p>For Aswan this is the case for the lower corridors\
+      \ from the side to the back rooms. They definitely aren't visible from each\
+      \ other, but because BSP doesn't occlude visibility, the zone portals \"see\"\
+      \ each other. This could probably be fixed with anti portals, but it is much\
+      \ cheaper and almost as efficient to just manually tell the engine that the\
+      \ zones aren't visible from each other by using <a href=\"/edit/Manual_excludes?redlink=1\"\
+      \ class=\"new\" title=\"Manual excludes (page does not exist)\">manual excludes</a>.\
+      \ (ZoneInfo property <a href=\"/UE2:ZoneInfo_(UT2004)#ManualExcludes\" title=\"\
+      UE2:ZoneInfo (UT2004)\">ManualExcludes</a>) For example, the red flak cannon\
+      \ corridor and the blue rocket launcher corridor are set as manual excludes\
+      \ for each other. It turned out that the engine also considers the red jail\
+      \ to be visible from either of those corridors, so the red jail zone is also\
+      \ added to the corridors' manual excludes.</p>\n<p>Other manual excludes are\
+      \ the lower front entrance areas, which aren't visible from each other because\
+      \ the Double Damage pedestal in the middle blocks the view. The engine still\
+      \ renders them because their front portals are in the same zone.</p>\n<p>If\
+      \ a zone doesn't have any zone portals or fake backdrop surfaces, it should\
+      \ be flagged as lonely zone. (ZoneInfo property <a href=\"/UE2:ZoneInfo_(UT2004)#bLonelyZone\"\
+      \ title=\"UE2:ZoneInfo (UT2004)\">bLonelyZone</a>) This allows the engine to\
+      \ skip any considerations about rendering the zone when it renders other zones\
+      \ and about rendering other zones when it renders this zone. JB-Aswan-v2 uses\
+      \ this for the arena zone, because it is entirely separate.</p>\n<h2><span class=\"\
+      mw-headline\" id=\"Forcing_actor_visibility_zones\">Forcing actor visibility\
+      \ zones</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/User:Wormbo/Optimizing_JB-Aswan-v2_(UT2004)?section=3\"\
+      \ title=\"Edit section: Forcing actor visibility zones\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<p>Actors that are not entirely\
+      \ contained in a single zone are often considered visible from other zones even\
+      \ though other geometry or meshes block the view. On Aswan this mostly affects\
+      \ the lightbox meshes in the back rooms and some of the pillars on the front\
+      \ wall of the bases. For these large actors it makes sense to match their <a\
+      \ href=\"/UE2:Actor_properties_(UT2004)#ForcedFisibilityZoneTag\" title=\"UE2:Actor\
+      \ properties (UT2004)\">ForcedFisibilityZoneTag</a> with the ZoneInfo Tag of\
+      \ the zones the actor really is contained in. For the lightboxes this is the\
+      \ red/blue backroom zone, and for the pillars it's the \"outside\", i.e. the\
+      \ outside zone and the front entrance zones. Similarly, the fluid surfaces are\
+      \ set to use their corresponding corridor as visibility zone.</p>\n<h2><span\
+      \ class=\"mw-headline\" id=\"Using_anti_portals\">Using anti portals</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/User:Wormbo/Optimizing_JB-Aswan-v2_(UT2004)?section=4\" title=\"\
+      Edit section: Using anti portals\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>The final step of optimization is placing <a href=\"\
+      /Anti_portals\" title=\"Anti portals\">anti portals</a>. Good locations for\
+      \ these are e.g. large pillars that block much of the player's view. Anti portals\
+      \ should always have a simple shape, yet fill out as much space as possible\
+      \ because they are only considered separately for visibility occlusion.</p>\n\
+      <p>On Aswan, the front row of pillars in front of the bases use six-sided cylinders\
+      \ as anti portals, the blocks between the jail bars contain upside-down four-sided\
+      \ pyramid shapes, the middle one cut off because it would reach into the escape\
+      \ tunnel. The entire wall with the escape tunnel door contains a large anti\
+      \ portal sheet that is tied to the escape door mover, the side walls of the\
+      \ middle area contain sheet anti portals, and finally the Double Damage pedestal\
+      \ contains an eight-sided cylinder anti portal. Additionally, some BSP surfaces\
+      \ are marked as anti portals, for example the upper walkway in front of the\
+      \ bases, which occlude the portals to the lower entrance areas.</p>\n\n<!--\
+      \ \nNewPP limit report\nCPU time usage: 0.026 seconds\nReal time usage: 0.055\
+      \ seconds\nPreprocessor visited node count: 15/1000000\nPreprocessor generated\
+      \ node count: 20/1000000\nPost‐expand include size: 0/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:24398-0!*!0!!en!*!* and timestamp 20221117233754 and revision\
+      \ id 35394\n -->\n"
+  categories:
+  - sortkey: "Optimizing JB-Aswan-v2"
+    name: "Mapping_tutorials"
+  links:
+  - ns: 0
+    exists: false
+    name: "BSP surface"
+  - ns: 0
+    exists: true
+    name: "Anti portal"
+  - ns: 0
+    exists: false
+    name: "Zone portal"
+  - ns: 104
+    exists: true
+    name: "UE2:Actor properties (UT2004)"
+  - ns: 0
+    exists: true
+    name: "Anti portals"
+  - ns: 104
+    exists: true
+    name: "UE2:AntiPortalActor (UT2004)"
+  - ns: 104
+    exists: true
+    name: "UE2:ZoneInfo (UT2004)"
+  - ns: 0
+    exists: false
+    name: "Manual excludes"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Optimized zoning"
+    number: "1"
+    index: "1"
+    fromtitle: "User:Wormbo/Optimizing_JB-Aswan-v2_(UT2004)"
+    byteoffset: 661
+    anchor: "Optimized_zoning"
+  - toclevel: 1
+    level: "2"
+    line: "Optimizing zone visibility"
+    number: "2"
+    index: "2"
+    fromtitle: "User:Wormbo/Optimizing_JB-Aswan-v2_(UT2004)"
+    byteoffset: 2403
+    anchor: "Optimizing_zone_visibility"
+  - toclevel: 1
+    level: "2"
+    line: "Forcing actor visibility zones"
+    number: "3"
+    index: "3"
+    fromtitle: "User:Wormbo/Optimizing_JB-Aswan-v2_(UT2004)"
+    byteoffset: 4240
+    anchor: "Forcing_actor_visibility_zones"
+  - toclevel: 1
+    level: "2"
+    line: "Using anti portals"
+    number: "4"
+    index: "4"
+    fromtitle: "User:Wormbo/Optimizing_JB-Aswan-v2_(UT2004)"
+    byteoffset: 4999
+    anchor: "Using_anti_portals"
+  displaytitle: "User:Wormbo/Optimizing JB-Aswan-v2 (UT2004)"
+  iwlinks:
+  - prefix: "wp"
+    url: "http://en.wikipedia.org/wiki/isosceles_trapezoid"
+    name: "wp:isosceles trapezoid"
+  - prefix: "liandri"
+    url: "http://liandri.beyondunreal.com/DOM-Aswan"
+    name: "liandri:DOM-Aswan"
+  wikitext:
+    text: "When I converted [[liandri:DOM-Aswan|DOM-Aswan]] to a Jailbreak map, people\
+      \ reported bad framerates. Until then I only paid attention to setting up the\
+      \ Jailbreak-specific actors and just \"reused\" the original optimizations.\
+      \ To achieve better performance, I started \"from scratch\" by removing all\
+      \ [[zone portal]]s, [[UE2:ZoneInfo (UT2004)|ZoneInfo]]s and [[UE2:AntiPortalActor\
+      \ (UT2004)|AntiPortalActor]]s, and disabling the [[anti portal]] flag of all\
+      \ [[BSP surface]]s.\n\nFor JB-Aswan-v2 I ended up using about all of the map\
+      \ optimization techniques UT2004 offers. This article will sum up their application\
+      \ and the ideas behind why they where applied this way.\n\n==Optimized zoning==\n\
+      The first step in successful optimization always is a proper zoning layout.\
+      \ Ideally the map doesn't have long lines of sight, but sometimes you don't\
+      \ really have a choice. In these cases it is important to make portal sheets\
+      \ between zones as small as possible, while still retaining a convex shape.\
+      \ Most importantly, zone portals do not need to overlap BSP geometry. It is\
+      \ enough if they fit the opening perfectly, and in fact, making them any larger\
+      \ is suboptimal for performance.\n\nOn Aswan this especially goes for the lower\
+      \ corridors from the side to the back rooms and for the exits of the side rooms.\
+      \ These originally used just square portal sheets that were quite a bit larger\
+      \ than the actually visible shape. An optimized shape would be a [[wp:isosceles\
+      \ trapezoid|isosceles trapezoid]] in both cases.\n\nAnother zoning consideration\
+      \ is whether to place just one portal in a small corridor or actually make the\
+      \ corridor a separate zone by using two portals. I decided to make the front\
+      \ entrances to the back rooms separate zones because there's enough chance that\
+      \ the second portal isn't visible from the first when viewing from an angle.\
+      \ If the portals were closer together this wouldn't happen often enough, and\
+      \ if only a small part of a portal sheet is visible, the entire portal is considered\
+      \ visible.\n\nOther parts that got their own zones are the area below the upper\
+      \ walkway right outside the back rooms, the ramps between the back rooms and\
+      \ the lower corridors, and the top part of the back rooms which isn't visible\
+      \ from the outside. Those complex lightbox meshes in the back rooms are quite\
+      \ a performance hit, so best effort must be made to prevent them from being\
+      \ rendered if they aren't actually visible.\n\n==Optimizing zone visibility==\n\
+      For the next step, all zones should get their own ZoneInfo actor. Open the level\
+      \ in the game, fly around as spectator and use the command '''rmode 1''' to\
+      \ switch to wireframe mode. Now check the view through your zone portals. In\
+      \ this step you try to identify pairs of zones which are not actually visible\
+      \ from each other, yet the engine decides to render them.\n\nFor Aswan this\
+      \ is the case for the lower corridors from the side to the back rooms. They\
+      \ definitely aren't visible from each other, but because BSP doesn't occlude\
+      \ visibility, the zone portals \"see\" each other. This could probably be fixed\
+      \ with anti portals, but it is much cheaper and almost as efficient to just\
+      \ manually tell the engine that the zones aren't visible from each other by\
+      \ using [[manual excludes]]. (ZoneInfo property [[UE2:ZoneInfo (UT2004)#ManualExcludes|ManualExcludes]])\
+      \ For example, the red flak cannon corridor and the blue rocket launcher corridor\
+      \ are set as manual excludes for each other. It turned out that the engine also\
+      \ considers the red jail to be visible from either of those corridors, so the\
+      \ red jail zone is also added to the corridors' manual excludes.\n\nOther manual\
+      \ excludes are the lower front entrance areas, which aren't visible from each\
+      \ other because the Double Damage pedestal in the middle blocks the view. The\
+      \ engine still renders them because their front portals are in the same zone.\n\
+      \nIf a zone doesn't have any zone portals or fake backdrop surfaces, it should\
+      \ be flagged as lonely zone. (ZoneInfo property [[UE2:ZoneInfo (UT2004)#bLonelyZone|bLonelyZone]])\
+      \ This allows the engine to skip any considerations about rendering the zone\
+      \ when it renders other zones and about rendering other zones when it renders\
+      \ this zone. JB-Aswan-v2 uses this for the arena zone, because it is entirely\
+      \ separate.\n\n==Forcing actor visibility zones==\nActors that are not entirely\
+      \ contained in a single zone are often considered visible from other zones even\
+      \ though other geometry or meshes block the view. On Aswan this mostly affects\
+      \ the lightbox meshes in the back rooms and some of the pillars on the front\
+      \ wall of the bases. For these large actors it makes sense to match their [[UE2:Actor\
+      \ properties (UT2004)#ForcedFisibilityZoneTag|ForcedFisibilityZoneTag]] with\
+      \ the ZoneInfo Tag of the zones the actor really is contained in. For the lightboxes\
+      \ this is the red/blue backroom zone, and for the pillars it's the \"outside\"\
+      , i.e. the outside zone and the front entrance zones. Similarly, the fluid surfaces\
+      \ are set to use their corresponding corridor as visibility zone.\n\n==Using\
+      \ anti portals==\nThe final step of optimization is placing [[anti portals]].\
+      \ Good locations for these are e.g. large pillars that block much of the player's\
+      \ view. Anti portals should always have a simple shape, yet fill out as much\
+      \ space as possible because they are only considered separately for visibility\
+      \ occlusion.\n\nOn Aswan, the front row of pillars in front of the bases use\
+      \ six-sided cylinders as anti portals, the blocks between the jail bars contain\
+      \ upside-down four-sided pyramid shapes, the middle one cut off because it would\
+      \ reach into the escape tunnel. The entire wall with the escape tunnel door\
+      \ contains a large anti portal sheet that is tied to the escape door mover,\
+      \ the side walls of the middle area contain sheet anti portals, and finally\
+      \ the Double Damage pedestal contains an eight-sided cylinder anti portal. Additionally,\
+      \ some BSP surfaces are marked as anti portals, for example the upper walkway\
+      \ in front of the bases, which occlude the portals to the lower entrance areas.\n\
+      \n[[Category:Mapping tutorials|Optimizing JB-Aswan-v2]]"
+  properties: []
+  revId: 35394
+name: "User:Wormbo/Optimizing JB-Aswan-v2 (UT2004)"
+revision:
+  revid: 35394
+  parentid: 35393
+  user: "Wormbo"
+  timestamp: 1251883820.000000000
+  comment: ""
+timestamp: 1668760975.405103000

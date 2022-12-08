@@ -1,0 +1,234 @@
+---
+parse:
+  title: "Legacy:Hitscan Weapons"
+  text:
+    text: "<p><b>Work in progress!</b></p>\n<p>This page is currently being created\
+      \ by <a href=\"/Legacy:Computergod666\" title=\"Legacy:Computergod666\">computergod666</a>.\
+      \ You are free to add helpful content in any way if you want.</p>\n<h2><span\
+      \ class=\"mw-headline\" id=\"Before_reading_this_tutorial\">Before reading this\
+      \ tutorial</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Hitscan_Weapons?section=1\" title=\"Edit section:\
+      \ Before reading this tutorial\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>This tutorial assumes that you have already read the\
+      \ first tutorial, <a href=\"/Legacy:Basic_Weapon_Class\" title=\"Legacy:Basic\
+      \ Weapon Class\">Basic weapon class</a>. If you haven't, it provides an analysis\
+      \ of the Fire and AltFire functions, animation, sound, and firing projectiles\
+      \ using TournamentWeapon.</p>\n<h2><span class=\"mw-headline\" id=\"Projectiles_vs._Hitscans\"\
+      >Projectiles vs. Hitscans</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Hitscan_Weapons?section=2\"\
+      \ title=\"Edit section: Projectiles vs. Hitscans\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>When I first started scripting, I assumed that the\
+      \ ProjectileClass default property specified the kind of projectile that was\
+      \ fired, and that this was true for every UT weapon. So when I looked at the\
+      \ ShockRifle code, I was surprised to find that the ProjectileClass was the\
+      \ same as the AltProjectileClass! Everyone knows that the shock beam is not\
+      \ the same as the plasma grenade, so I went looking for an equivalent for ages.\
+      \ I was additionally confused by the absence of a ProjectileFire call in the\
+      \ ShockRifle code.</p>\n<p>The mystery was explained by the TraceFire function.\
+      \ The Shock Rifle primary fire is an instant-hit attack instead of a projectile.\
+      \ Basically, a hitscan calculates a line between the player or bot who fired\
+      \ the weapon, finds the first actor that is in the way, and does whatever is\
+      \ supposed to happen when you shoot someone with it. For the Shock Rifle, it\
+      \ spawns a ShockBeam effect to make it look like there's a laser beam between\
+      \ the target and the player, it deals damage to the target, and spawns a ring\
+      \ explosion effect wherever the beam hits.</p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Analysis_of_a_typical_TournamentWeapon_hitscan_call\">Analysis of a typical\
+      \ TournamentWeapon hitscan call</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Hitscan_Weapons?section=3\"\
+      \ title=\"Edit section: Analysis of a typical TournamentWeapon hitscan call\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>In\
+      \ the TournamentWeapon class, the Fire and AltFire functions support firing\
+      \ either a hitscan attack or a projectile, depending on how the variable bInstantHit\
+      \ is set:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n\
+      <div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\"\
+      >function</span> Fire<span class=\"br0\">(</span> <span class=\"kw5\">float</span>\
+      \ Value <span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span> <span class=\"br0\">(</span>AmmoType\
+      \ <span class=\"sy0\">==</span> <span class=\"kw5\">None</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span>AmmoName\
+      \ <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span><span class=\"\
+      br0\">)</span> <span class=\"br0\">)</span>\n <span class=\"br0\">{</span>\n\
+      \  <span class=\"co1\">// ammocheck</span>\n  GiveAmmo<span class=\"br0\">(</span><span\
+      \ class=\"kw9\">Pawn</span><span class=\"br0\">(</span><span class=\"kw7\">Owner</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>;\n <span class=\"br0\"\
+      >}</span>\n <span class=\"kw2\">if</span> <span class=\"br0\">(</span> AmmoType.<span\
+      \ class=\"me0\">UseAmmo</span><span class=\"br0\">(</span><span class=\"nu0\"\
+      >1</span><span class=\"br0\">)</span> <span class=\"br0\">)</span>\n <span class=\"\
+      br0\">{</span>\n  <span class=\"kw3\">GotoState</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'NormalFire'</span><span class=\"br0\">)</span>;\n  bPointing<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">True</span>;\n  bCanClientFire <span\
+      \ class=\"sy0\">=</span> <span class=\"kw6\">true</span>;\n  ClientFire<span\
+      \ class=\"br0\">(</span>Value<span class=\"br0\">)</span>;\n  <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span> bRapidFire <span class=\"sy0\"\
+      >||</span> <span class=\"br0\">(</span>FiringSpeed <span class=\"sy0\">&gt;</span>\
+      \ <span class=\"nu0\">0</span><span class=\"br0\">)</span> <span class=\"br0\"\
+      >)</span>\n   <span class=\"kw9\">Pawn</span><span class=\"br0\">(</span><span\
+      \ class=\"kw7\">Owner</span><span class=\"br0\">)</span>.<span class=\"me0\"\
+      >PlayRecoil</span><span class=\"br0\">(</span>FiringSpeed<span class=\"br0\"\
+      >)</span>;\n  <span class=\"kw2\">if</span> <span class=\"br0\">(</span> bInstantHit\
+      \ <span class=\"br0\">)</span>\n   TraceFire<span class=\"br0\">(</span><span\
+      \ class=\"nu0\">0.0</span><span class=\"br0\">)</span>;\n  <span class=\"kw2\"\
+      >else</span>\n   ProjectileFire<span class=\"br0\">(</span>ProjectileClass,\
+      \ ProjectileSpeed, bWarnTarget<span class=\"br0\">)</span>;\n <span class=\"\
+      br0\">}</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>If bInstantHit\
+      \ is true, the Fire function will call the TraceFire() function. If it is false,\
+      \ it will attempt to fire the ProjectileClass. Let's focus on TraceFire for\
+      \ now.</p>\n<p>TraceFire() takes a single argument, which specifies the accuracy\
+      \ of the attack. Lower numbers mean higher accuracy. The following is a sample\
+      \ of the TraceFire code:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">function</span> TraceFire<span class=\"br0\">(</span> <span class=\"kw5\"\
+      >float</span> Accuracy <span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \ <span class=\"kw1\">local</span> <span class=\"kw5\">vector</span> HitLocation,\
+      \ HitNormal, StartTrace, EndTrace, X,Y,Z;\n <span class=\"kw1\">local</span>\
+      \ <span class=\"kw9\">Actor</span> Other;\n \n <span class=\"co1\">//Make sure\
+      \ that bots hear the weapon firing.</span>\n <span class=\"kw7\">Owner</span>.<span\
+      \ class=\"kw4\">MakeNoise</span><span class=\"br0\">(</span><span class=\"kw9\"\
+      >Pawn</span><span class=\"br0\">(</span><span class=\"kw7\">Owner</span><span\
+      \ class=\"br0\">)</span>.<span class=\"me0\">SoundDampening</span><span class=\"\
+      br0\">)</span>;\n \n <span class=\"co1\">//Get three vectors corresponding to\
+      \ the player's axes:</span>\n <span class=\"co1\">// X points forward, Y points\
+      \ right, and Z points up.</span>\n <span class=\"kw3\">GetAxes</span><span class=\"\
+      br0\">(</span><span class=\"kw9\">Pawn</span><span class=\"br0\">(</span><span\
+      \ class=\"kw7\">Owner</span><span class=\"br0\">)</span>.<span class=\"me0\"\
+      >ViewRotation</span>,X,Y,Z<span class=\"br0\">)</span>;\n <span class=\"co1\"\
+      >//Calculate the coordinates for the beginning and end of the trace.</span>\n\
+      \ StartTrace <span class=\"sy0\">=</span> <span class=\"kw7\">Owner</span>.<span\
+      \ class=\"kw7\">Location</span> <span class=\"sy0\">+</span> CalcDrawOffset<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"sy0\">+</span>\
+      \ FireOffset.<span class=\"me0\">Y</span> <span class=\"sy0\">*</span> Y <span\
+      \ class=\"sy0\">+</span> FireOffset.<span class=\"me0\">Z</span> <span class=\"\
+      sy0\">*</span> Z; \n EndTrace <span class=\"sy0\">=</span> StartTrace <span\
+      \ class=\"sy0\">+</span> Accuracy <span class=\"sy0\">*</span> <span class=\"\
+      br0\">(</span><span class=\"kw3\">FRand</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">-</span> <span class=\"nu0\">0.5</span>\
+      \ <span class=\"br0\">)</span><span class=\"sy0\">*</span> Y <span class=\"\
+      sy0\">*</span> <span class=\"nu0\">1000</span>\n\t\t<span class=\"sy0\">+</span>\
+      \ Accuracy <span class=\"sy0\">*</span> <span class=\"br0\">(</span><span class=\"\
+      kw3\">FRand</span><span class=\"br0\">(</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">-</span> <span class=\"nu0\">0.5</span> <span class=\"br0\"\
+      >)</span> <span class=\"sy0\">*</span> Z <span class=\"sy0\">*</span> <span\
+      \ class=\"nu0\">1000</span> ;\n \n <span class=\"co1\">//Adjust aim for bots.</span>\n\
+      \ AdjustedAim <span class=\"sy0\">=</span> <span class=\"kw9\">pawn</span><span\
+      \ class=\"br0\">(</span><span class=\"kw7\">Owner</span><span class=\"br0\"\
+      >)</span>.<span class=\"me0\">AdjustAim</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">1000000</span>, StartTrace, <span class=\"nu0\">2.75</span><span\
+      \ class=\"sy0\">*</span>AimError, <span class=\"kw6\">False</span>, <span class=\"\
+      kw6\">False</span><span class=\"br0\">)</span>;\t\n EndTrace <span class=\"\
+      sy0\">+=</span> <span class=\"br0\">(</span><span class=\"nu0\">10000</span>\
+      \ <span class=\"sy0\">*</span> <span class=\"kw5\">vector</span><span class=\"\
+      br0\">(</span>AdjustedAim<span class=\"br0\">)</span><span class=\"br0\">)</span>;\
+      \ \n \n <span class=\"co1\">//Do the actual tracing!</span>\n Other <span class=\"\
+      sy0\">=</span> <span class=\"kw9\">Pawn</span><span class=\"br0\">(</span><span\
+      \ class=\"kw7\">Owner</span><span class=\"br0\">)</span>.<span class=\"me0\"\
+      >TraceShot</span><span class=\"br0\">(</span>HitLocation,HitNormal,EndTrace,StartTrace<span\
+      \ class=\"br0\">)</span>;\n ProcessTraceHit<span class=\"br0\">(</span>Other,\
+      \ HitLocation, HitNormal, <span class=\"kw5\">vector</span><span class=\"br0\"\
+      >(</span>AdjustedAim<span class=\"br0\">)</span>,Y,Z<span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>This function only does\
+      \ the tracing. Then, it calls ProcessTraceHit() to do damage and effects.</p>\n\
+      <pre>WORK IN PROGRESS\n</pre>\n<!-- \nNewPP limit report\nCPU time usage: 0.067\
+      \ seconds\nReal time usage: 0.208 seconds\nPreprocessor visited node count:\
+      \ 17/1000000\nPreprocessor generated node count: 56/1000000\nPost‐expand include\
+      \ size: 0/2097152 bytes\nTemplate argument size: 0/2097152 bytes\nHighest expansion\
+      \ depth: 2/40\nExpensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion\
+      \ expansion time report (%,ms,calls,template)\n100.00%    0.000      1 - -total\n\
+      -->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:1450-0!*!0!!*!*!*\
+      \ and timestamp 20221118014958 and revision id 3648\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Basic Weapon Class"
+  - ns: 100
+    exists: true
+    name: "Legacy:Computergod666"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Before reading this tutorial"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Hitscan_Weapons"
+    byteoffset: 168
+    anchor: "Before_reading_this_tutorial"
+  - toclevel: 1
+    level: "2"
+    line: "Projectiles vs. Hitscans"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Hitscan_Weapons"
+    byteoffset: 462
+    anchor: "Projectiles_vs._Hitscans"
+  - toclevel: 1
+    level: "2"
+    line: "Analysis of a typical TournamentWeapon hitscan call"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:Hitscan_Weapons"
+    byteoffset: 1563
+    anchor: "Analysis_of_a_typical_TournamentWeapon_hitscan_call"
+  displaytitle: "Legacy:Hitscan Weapons"
+  iwlinks: []
+  wikitext:
+    text: "'''Work in progress!'''\n\nThis page is currently being created by [[Legacy:Computergod666|computergod666]].\
+      \ You are free to add helpful content in any way if you want.\n\n==Before reading\
+      \ this tutorial==\n\nThis tutorial assumes that you have already read the first\
+      \ tutorial, [[Legacy:Basic Weapon Class|Basic weapon class]]. If you haven't,\
+      \ it provides an analysis of the Fire and AltFire functions, animation, sound,\
+      \ and firing projectiles using TournamentWeapon.\n\n==Projectiles vs. Hitscans==\n\
+      \nWhen I first started scripting, I assumed that the ProjectileClass default\
+      \ property specified the kind of projectile that was fired, and that this was\
+      \ true for every UT weapon. So when I looked at the ShockRifle code, I was surprised\
+      \ to find that the ProjectileClass was the same as the AltProjectileClass! Everyone\
+      \ knows that the shock beam is not the same as the plasma grenade, so I went\
+      \ looking for an equivalent for ages. I was additionally confused by the absence\
+      \ of a ProjectileFire call in the ShockRifle code.\n\nThe mystery was explained\
+      \ by the TraceFire function. The Shock Rifle primary fire is an instant-hit\
+      \ attack instead of a projectile. Basically, a hitscan calculates a line between\
+      \ the player or bot who fired the weapon, finds the first actor that is in the\
+      \ way, and does whatever is supposed to happen when you shoot someone with it.\
+      \ For the Shock Rifle, it spawns a ShockBeam effect to make it look like there's\
+      \ a laser beam between the target and the player, it deals damage to the target,\
+      \ and spawns a ring explosion effect wherever the beam hits.\n\n==Analysis of\
+      \ a typical TournamentWeapon hitscan call==\n\nIn the TournamentWeapon class,\
+      \ the Fire and AltFire functions support firing either a hitscan attack or a\
+      \ projectile, depending on how the variable bInstantHit is set:\n\n<uscript>function\
+      \ Fire( float Value )\n{\n if ( (AmmoType == None) && (AmmoName != None) )\n\
+      \ {\n  // ammocheck\n  GiveAmmo(Pawn(Owner));\n }\n if ( AmmoType.UseAmmo(1)\
+      \ )\n {\n  GotoState('NormalFire');\n  bPointing=True;\n  bCanClientFire = true;\n\
+      \  ClientFire(Value);\n  if ( bRapidFire || (FiringSpeed > 0) )\n   Pawn(Owner).PlayRecoil(FiringSpeed);\n\
+      \  if ( bInstantHit )\n   TraceFire(0.0);\n  else\n   ProjectileFire(ProjectileClass,\
+      \ ProjectileSpeed, bWarnTarget);\n }\n}</uscript>\n\nIf bInstantHit is true,\
+      \ the Fire function will call the TraceFire() function. If it is false, it will\
+      \ attempt to fire the ProjectileClass. Let's focus on TraceFire for now.\n\n\
+      TraceFire() takes a single argument, which specifies the accuracy of the attack.\
+      \ Lower numbers mean higher accuracy. The following is a sample of the TraceFire\
+      \ code:\n\n<uscript>function TraceFire( float Accuracy )\n{\n local vector HitLocation,\
+      \ HitNormal, StartTrace, EndTrace, X,Y,Z;\n local Actor Other;\n\n //Make sure\
+      \ that bots hear the weapon firing.\n Owner.MakeNoise(Pawn(Owner).SoundDampening);\n\
+      \n //Get three vectors corresponding to the player's axes:\n // X points forward,\
+      \ Y points right, and Z points up.\n GetAxes(Pawn(Owner).ViewRotation,X,Y,Z);\n\
+      \ //Calculate the coordinates for the beginning and end of the trace.\n StartTrace\
+      \ = Owner.Location + CalcDrawOffset() + FireOffset.Y * Y + FireOffset.Z * Z;\
+      \ \n EndTrace = StartTrace + Accuracy * (FRand() - 0.5 )* Y * 1000\n\t\t+ Accuracy\
+      \ * (FRand() - 0.5 ) * Z * 1000 ;\n\n //Adjust aim for bots.\n AdjustedAim =\
+      \ pawn(Owner).AdjustAim(1000000, StartTrace, 2.75*AimError, False, False);\t\
+      \n EndTrace += (10000 * vector(AdjustedAim)); \n\n //Do the actual tracing!\n\
+      \ Other = Pawn(Owner).TraceShot(HitLocation,HitNormal,EndTrace,StartTrace);\n\
+      \ ProcessTraceHit(Other, HitLocation, HitNormal, vector(AdjustedAim),Y,Z);\n\
+      }</uscript>\n\nThis function only does the tracing. Then, it calls ProcessTraceHit()\
+      \ to do damage and effects.\n\n WORK IN PROGRESS"
+  properties: []
+  revId: 3648
+name: "Legacy:Hitscan Weapons"
+revision:
+  revid: 3648
+  parentid: 3649
+  user: "Computergod666"
+  timestamp: 1202335352.000000000
+  comment: "*"
+timestamp: 1668764272.373530000

@@ -1,0 +1,304 @@
+---
+parse:
+  title: "Legacy:How UT Weapons Work/Firing A Weapon"
+  text:
+    text: "<p>This might seem pretty short, but there isn't that much to talk about\
+      \ here.</p>\n<p>Basically we go through Engine.<a href=\"/Legacy:Weapon_(UT)\"\
+      \ title=\"Legacy:Weapon (UT)\">Weapon (UT)</a> and Botpack.<a href=\"/Legacy:TournamentWeapon\"\
+      \ title=\"Legacy:TournamentWeapon\">TournamentWeapon</a> here and have a short\
+      \ look at Botpack.<a href=\"/Legacy:UT_BioRifle\" title=\"Legacy:UT BioRifle\"\
+      >UT_BioRifle</a>'s alt fire mode.</p>\n<hr />\n<p>When a <a href=\"/Legacy:PlayerPawn\"\
+      \ title=\"Legacy:PlayerPawn\">PlayerPawn</a> wants to fire his weapon he executes\
+      \ his Fire (or AltFire) function which in turn calls the <a href=\"/Legacy:TournamentWeapon\"\
+      \ title=\"Legacy:TournamentWeapon\">TournamentWeapon</a>'s (Alt)Fire function.\
+      \ This function might be overridden in subclasses of actual weapons, but often\
+      \ the default version is used.</p>\n<p></p>\n<div id=\"toc\" class=\"toc\">\n\
+      <div id=\"toctitle\">\n<h2>Contents</h2>\n</div>\n<ul>\n<li class=\"toclevel-1\
+      \ tocsection-1\"><a href=\"#The_Default_Fire_Function\"><span class=\"tocnumber\"\
+      >1</span> <span class=\"toctext\">The Default Fire Function</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-2\"><a href=\"#The_Default_NormalFire_State\"\
+      ><span class=\"tocnumber\">2</span> <span class=\"toctext\">The Default NormalFire\
+      \ State</span></a></li>\n<li class=\"toclevel-1 tocsection-3\"><a href=\"#The_Finish_Function\"\
+      ><span class=\"tocnumber\">3</span> <span class=\"toctext\">The Finish Function</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-4\"><a href=\"#The_.27Idle.27_State\"><span\
+      \ class=\"tocnumber\">4</span> <span class=\"toctext\">The 'Idle' State</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-5\"><a href=\"#Firing_On_A_Network_Client\"\
+      ><span class=\"tocnumber\">5</span> <span class=\"toctext\">Firing On A Network\
+      \ Client</span></a></li>\n<li class=\"toclevel-1 tocsection-6\"><a href=\"#Examples_For_Custom_Firing_Behavior\"\
+      ><span class=\"tocnumber\">6</span> <span class=\"toctext\">Examples For Custom\
+      \ Firing Behavior</span></a>\n<ul>\n<li class=\"toclevel-2 tocsection-7\"><a\
+      \ href=\"#UT_Bio_Rifle\"><span class=\"tocnumber\">6.1</span> <span class=\"\
+      toctext\">UT Bio Rifle</span></a></li>\n</ul>\n</li>\n<li class=\"toclevel-1\
+      \ tocsection-8\"><a href=\"#Comments\"><span class=\"tocnumber\">7</span> <span\
+      \ class=\"toctext\">Comments</span></a></li>\n</ul>\n</div>\n<p></p>\n<h2><span\
+      \ class=\"mw-headline\" id=\"The_Default_Fire_Function\">The Default Fire Function</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:How_UT_Weapons_Work/Firing_A_Weapon?section=1\" title=\"\
+      Edit section: The Default Fire Function\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>First the weapon checks, if it has ammo, then it tries\
+      \ to use one ammo unit. If successful it goes into 'NormalFire' state and (still\
+      \ in the Fire function) either traces the shot using TraceFire (for hitscan\
+      \ weapons) or spawns a projectile using ProjectileFire.</p>\n<p>The Fire function\
+      \ also calls ClientFire which by default only executes when bCanClientFire is\
+      \ True. ClientFire is responsible for all the things only visible to the player\
+      \ actually owning the weapon, like screen flashes, playing the firing animation\
+      \ and calling the FireEffect function of the <a href=\"/Legacy:TournamentPickup\"\
+      \ title=\"Legacy:TournamentPickup\">TournamentPickup</a> registered as the weapon's\
+      \ affector.</p>\n<p>If ClientFire is not executed on a listen server or in singleplayer\
+      \ the weapon also goes into 'ClientFiring' state. (see below)</p>\n<h2><span\
+      \ class=\"mw-headline\" id=\"The_Default_NormalFire_State\">The Default NormalFire\
+      \ State</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:How_UT_Weapons_Work/Firing_A_Weapon?section=2\"\
+      \ title=\"Edit section: The Default NormalFire State\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<p>After the Fire function has\
+      \ finished code execution continues in the 'NormalFire' state. Well, it doesn't\
+      \ really \"continue\" because the state code only consists of \"Sleep(0.0);\"\
+      \ which actually does nothing.</p>\n<p>The actual \"magic\" is in the <i>empty</i>\
+      \ Fire and AltFire functions, which prevent firing another shot while the firing\
+      \ animation isn't finished, and in the AnimEnd function which ends the 'NormalFire'\
+      \ state by calling Finish.</p>\n<h2><span class=\"mw-headline\" id=\"The_Finish_Function\"\
+      >The Finish Function</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:How_UT_Weapons_Work/Firing_A_Weapon?section=3\"\
+      \ title=\"Edit section: The Finish Function\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p><i>(someone please add how bForceFire works)</i></p>\n\
+      <p>The first interesting thing here is the check for bChangeWeapon. This variable\
+      \ is set when the player wants to change to another weapon. If this is the case\
+      \ the weapon goes to the 'DownWeapon' state. (see <a href=\"/Legacy:How_UT_Weapons_Work/Switching_To_Another_Weapon\"\
+      \ title=\"Legacy:How UT Weapons Work/Switching To Another Weapon\">Legacy:How\
+      \ UT Weapons Work/Switching To Another Weapon</a>)</p>\n<p>The next part applies\
+      \ only to <a href=\"/Legacy:Bot_(UT)\" title=\"Legacy:Bot (UT)\">Bot (UT)s</a>\
+      \ and checks if the weapon still has ammo and whether the bot still wants to\
+      \ shoot.</p>\n<p>Now Finish checks whether the weapon still has ammo and the\
+      \ player still presses the (alt)fire button. If so the global (Alt)Fire function\
+      \ is called, if not the weapon goes into 'Idle' state.</p>\n<h2><span class=\"\
+      mw-headline\" id=\"The_.27Idle.27_State\">The 'Idle' State</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:How_UT_Weapons_Work/Firing_A_Weapon?section=4\"\
+      \ title=\"Edit section: The 'Idle' State\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>We are back where we started – in the 'Idle' state.\
+      \ The weapon checks if it still has ammo. If not it switches to the best weapon\
+      \ available. If the player presses the (alt)fire button the cycle starts again,\
+      \ if not the weapon disables its AnimEnd function and plays its idle animation.</p>\n\
+      <h2><span class=\"mw-headline\" id=\"Firing_On_A_Network_Client\">Firing On\
+      \ A Network Client</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:How_UT_Weapons_Work/Firing_A_Weapon?section=5\"\
+      \ title=\"Edit section: Firing On A Network Client\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<p>The client can't spawn projectiles\
+      \ or trace shots. Clients have to simulate the behavior of the weapon as good\
+      \ as possible, so the 'Client(Alt)Firing' state waits untill the firing animation\
+      \ is finished and checks whether the player still presses the (alt)fire button.\
+      \ If the player doesn't fire anymore the weapon plays its idle animation and\
+      \ goes into the null state (with <code>GotoState(<i>);</i></code><i>, the 'Idle'\
+      \ state is only used server-side).</i></p>\n<p>The client code usually is completely\
+      \ different than the code used for the server-side behavior.</p>\n<hr />\n<h2><span\
+      \ class=\"mw-headline\" id=\"Examples_For_Custom_Firing_Behavior\">Examples\
+      \ For Custom Firing Behavior</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:How_UT_Weapons_Work/Firing_A_Weapon?section=6\"\
+      \ title=\"Edit section: Examples For Custom Firing Behavior\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h2>\n<h3><span class=\"\
+      mw-headline\" id=\"UT_Bio_Rifle\">UT Bio Rifle</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:How_UT_Weapons_Work/Firing_A_Weapon?section=7\"\
+      \ title=\"Edit section: UT Bio Rifle\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>The load-and-hold feature in the Bio Rifle's secondary\
+      \ firing mode is created by ignoring the AnimEnd function inside the 'AltFiring'\
+      \ state. Instead there is a check in the Tick function if the player still presses\
+      \ the altfire button. When the button is released the Bio Rifle goes into 'ShootLoad'\
+      \ state to fire its load.</p>\n<p>When entering the 'ShootLoad' state a UT_BioGlob\
+      \ is fired and the corresponding animation is played. In this state AnimEnd\
+      \ is not ignored and executes the Finish function to end the firing sequence.\
+      \ (Don't get confused by the Timer function in this state, it isn't used.)</p>\n\
+      <hr />\n<h2><span class=\"mw-headline\" id=\"Comments\">Comments</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:How_UT_Weapons_Work/Firing_A_Weapon?section=8\" title=\"\
+      Edit section: Comments\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>Please complain here if something isn't explained clearly enough.</p>\n<p><b>HunterKiller:</b>\
+      \ It's not a complain&#160;:) , Its a request. Can someone update this to UT2K3?\
+      \ I don't feel good enough to make the research and change (or make a new) firing\
+      \ a weapon page.</p>\n<p><b>Wormbo:</b> UT2k3 weapons work completely different,\
+      \ so it would be better to start a whole new page for that. Unfortunately I\
+      \ don't have the time to do all the research either. Somebody who made/makes\
+      \ a weapon mod could probably create the <a href=\"/Legacy:How_UT2003_Weapons_Work\"\
+      \ title=\"Legacy:How UT2003 Weapons Work\">How UT2003 Weapons Work</a> page\
+      \ and subpages.</p>\n<p><b>Eldhrin:</b> I'm working with UT2K3 weapons quite\
+      \ a bit at the moment, so I might be able to start that off some time.</p>\n\
+      <p><b>HunterKiller:</b> Okay, I'm giving the first step. Please contribute to\
+      \ <a href=\"/Legacy:How_UT2003_Weapons_Work\" title=\"Legacy:How UT2003 Weapons\
+      \ Work\">How UT2003 Weapons Work</a>&#160;:D</p>\n\n<!-- \nNewPP limit report\n\
+      CPU time usage: 0.033 seconds\nReal time usage: 0.034 seconds\nPreprocessor\
+      \ visited node count: 37/1000000\nPreprocessor generated node count: 52/1000000\n\
+      Post‐expand include size: 25/2097152 bytes\nTemplate argument size: 0/2097152\
+      \ bytes\nHighest expansion depth: 2/40\nExpensive parser function count: 0/100\n\
+      -->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n100.00%\
+      \    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:1388-0!*!0!!en!*!*\
+      \ and timestamp 20221118080536 and revision id 3517\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:PlayerPawn"
+  - ns: 100
+    exists: true
+    name: "Legacy:Weapon (UT)"
+  - ns: 100
+    exists: true
+    name: "Legacy:TournamentPickup"
+  - ns: 100
+    exists: true
+    name: "Legacy:UT BioRifle"
+  - ns: 100
+    exists: true
+    name: "Legacy:TournamentWeapon"
+  - ns: 100
+    exists: true
+    name: "Legacy:How UT2003 Weapons Work"
+  - ns: 100
+    exists: true
+    name: "Legacy:Bot (UT)"
+  - ns: 100
+    exists: true
+    name: "Legacy:How UT Weapons Work/Switching To Another Weapon"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "The Default Fire Function"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:How_UT_Weapons_Work/Firing_A_Weapon"
+    byteoffset: 603
+    anchor: "The_Default_Fire_Function"
+  - toclevel: 1
+    level: "2"
+    line: "The Default NormalFire State"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:How_UT_Weapons_Work/Firing_A_Weapon"
+    byteoffset: 1402
+    anchor: "The_Default_NormalFire_State"
+  - toclevel: 1
+    level: "2"
+    line: "The Finish Function"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:How_UT_Weapons_Work/Firing_A_Weapon"
+    byteoffset: 1870
+    anchor: "The_Finish_Function"
+  - toclevel: 1
+    level: "2"
+    line: "The 'Idle' State"
+    number: "4"
+    index: "4"
+    fromtitle: "Legacy:How_UT_Weapons_Work/Firing_A_Weapon"
+    byteoffset: 2552
+    anchor: "The_.27Idle.27_State"
+  - toclevel: 1
+    level: "2"
+    line: "Firing On A Network Client"
+    number: "5"
+    index: "5"
+    fromtitle: "Legacy:How_UT_Weapons_Work/Firing_A_Weapon"
+    byteoffset: 2867
+    anchor: "Firing_On_A_Network_Client"
+  - toclevel: 1
+    level: "2"
+    line: "Examples For Custom Firing Behavior"
+    number: "6"
+    index: "6"
+    fromtitle: "Legacy:How_UT_Weapons_Work/Firing_A_Weapon"
+    byteoffset: 3452
+    anchor: "Examples_For_Custom_Firing_Behavior"
+  - toclevel: 2
+    level: "3"
+    line: "UT Bio Rifle"
+    number: "6.1"
+    index: "7"
+    fromtitle: "Legacy:How_UT_Weapons_Work/Firing_A_Weapon"
+    byteoffset: 3493
+    anchor: "UT_Bio_Rifle"
+  - toclevel: 1
+    level: "2"
+    line: "Comments"
+    number: "7"
+    index: "8"
+    fromtitle: "Legacy:How_UT_Weapons_Work/Firing_A_Weapon"
+    byteoffset: 4116
+    anchor: "Comments"
+  displaytitle: "Legacy:How UT Weapons Work/Firing A Weapon"
+  iwlinks: []
+  wikitext:
+    text: "This might seem pretty short, but there isn't that much to talk about here.\n\
+      \nBasically we go through Engine.[[Legacy:Weapon (UT)|Weapon (UT)]] and Botpack.[[Legacy:TournamentWeapon|TournamentWeapon]]\
+      \ here and have a short look at Botpack.[[Legacy:UT_BioRifle|UT_BioRifle]]'s\
+      \ alt fire mode.\n\n----\n\nWhen a [[Legacy:PlayerPawn|PlayerPawn]] wants to\
+      \ fire his weapon he executes his Fire (or AltFire) function which in turn calls\
+      \ the [[Legacy:TournamentWeapon|TournamentWeapon]]'s (Alt)Fire function. This\
+      \ function might be overridden in subclasses of actual weapons, but often the\
+      \ default version is used.\n\n==The Default Fire Function==\n\nFirst the weapon\
+      \ checks, if it has ammo, then it tries to use one ammo unit. If successful\
+      \ it goes into 'NormalFire' state and (still in the Fire function) either traces\
+      \ the shot using TraceFire (for hitscan weapons) or spawns a projectile using\
+      \ ProjectileFire.\n\nThe Fire function also calls ClientFire which by default\
+      \ only executes when bCanClientFire is True. ClientFire is responsible for all\
+      \ the things only visible to the player actually owning the weapon, like screen\
+      \ flashes, playing the firing animation and calling the FireEffect function\
+      \ of the [[Legacy:TournamentPickup|TournamentPickup]] registered as the weapon's\
+      \ affector.\n\nIf ClientFire is not executed on a listen server or in singleplayer\
+      \ the weapon also goes into 'ClientFiring' state. (see below)\n\n==The Default\
+      \ NormalFire State==\n\nAfter the Fire function has finished code execution\
+      \ continues in the 'NormalFire' state. Well, it doesn't really \"continue\"\
+      \ because the state code only consists of \"Sleep(0.0);\" which actually does\
+      \ nothing.\n\nThe actual \"magic\" is in the ''empty'' Fire and AltFire functions,\
+      \ which prevent firing another shot while the firing animation isn't finished,\
+      \ and in the AnimEnd function which ends the 'NormalFire' state by calling Finish.\n\
+      \n==The Finish Function==\n\n''(someone please add how bForceFire works)''\n\
+      \nThe first interesting thing here is the check for bChangeWeapon. This variable\
+      \ is set when the player wants to change to another weapon. If this is the case\
+      \ the weapon goes to the 'DownWeapon' state. (see [[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/Switching\
+      \ To Another Weapon]])\n\nThe next part applies only to [[Legacy:Bot (UT)|Bot\
+      \ (UT)]]s and checks if the weapon still has ammo and whether the bot still\
+      \ wants to shoot.\n\nNow Finish checks whether the weapon still has ammo and\
+      \ the player still presses the (alt)fire button. If so the global (Alt)Fire\
+      \ function is called, if not the weapon goes into 'Idle' state.\n\n==The 'Idle'\
+      \ State==\n\nWe are back where we started &ndash; in the 'Idle' state. The weapon\
+      \ checks if it still has ammo. If not it switches to the best weapon available.\
+      \ If the player presses the (alt)fire button the cycle starts again, if not\
+      \ the weapon disables its AnimEnd function and plays its idle animation.\n\n\
+      ==Firing On A Network Client==\n\nThe client can't spawn projectiles or trace\
+      \ shots. Clients have to simulate the behavior of the weapon as good as possible,\
+      \ so the 'Client(Alt)Firing' state waits untill the firing animation is finished\
+      \ and checks whether the player still presses the (alt)fire button. If the player\
+      \ doesn't fire anymore the weapon plays its idle animation and goes into the\
+      \ null state (with <code>GotoState('');</code>, the 'Idle' state is only used\
+      \ server-side).\n\nThe client code usually is completely different than the\
+      \ code used for the server-side behavior.\n\n----\n\n==Examples For Custom Firing\
+      \ Behavior==\n\n===UT Bio Rifle===\n\nThe load-and-hold feature in the Bio Rifle's\
+      \ secondary firing mode is created by ignoring the AnimEnd function inside the\
+      \ 'AltFiring' state. Instead there is a check in the Tick function if the player\
+      \ still presses the altfire button. When the button is released the Bio Rifle\
+      \ goes into 'ShootLoad' state to fire its load.\n\nWhen entering the 'ShootLoad'\
+      \ state a UT_BioGlob is fired and the corresponding animation is played. In\
+      \ this state AnimEnd is not ignored and executes the Finish function to end\
+      \ the firing sequence. (Don't get confused by the Timer function in this state,\
+      \ it isn't used.)\n\n----\n\n==Comments==\n\nPlease complain here if something\
+      \ isn't explained clearly enough.\n\n'''HunterKiller:''' It's not a complain\
+      \ :) , Its a request. Can someone update this to UT2K3? I don't feel good enough\
+      \ to make the research and change (or make a new) firing a weapon page.\n\n\
+      '''Wormbo:''' UT2k3 weapons work completely different, so it would be better\
+      \ to start a whole new page for that. Unfortunately I don't have the time to\
+      \ do all the research either. Somebody who made/makes a weapon mod could probably\
+      \ create the [[Legacy:How UT2003 Weapons Work|How UT2003 Weapons Work]] page\
+      \ and subpages.\n\n'''Eldhrin:''' I'm working with UT2K3 weapons quite a bit\
+      \ at the moment, so I might be able to start that off some time.\n\n'''HunterKiller:'''\
+      \ Okay, I'm giving the first step. Please contribute to [[Legacy:How UT2003\
+      \ Weapons Work|How UT2003 Weapons Work]] :D"
+  properties: []
+  revId: 3517
+name: "Legacy:How UT Weapons Work/Firing A Weapon"
+revision:
+  revid: 3517
+  parentid: 3518
+  user: "HunterKiller"
+  timestamp: 1040835888.000000000
+  comment: "*"
+timestamp: 1668787960.804313000

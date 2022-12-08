@@ -1,0 +1,660 @@
+---
+parse:
+  title: "Legacy:AssociativeArray"
+  text:
+    text: "<p>When learning <a href=\"/Legacy:UnrealScript\" title=\"Legacy:UnrealScript\"\
+      >UnrealScript</a> I found the idea of operator overloading very enticing. These\
+      \ pages describe the design and implementation of an associative array, providing\
+      \ (I hope) some insight into how UnrealScript operators are overloaded.</p>\n\
+      <p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n\
+      </div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#Overview\"><span\
+      \ class=\"tocnumber\">1</span> <span class=\"toctext\">Overview</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-2\"><a href=\"#Data_Structure\"><span class=\"\
+      tocnumber\">2</span> <span class=\"toctext\">Data Structure</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-3\"><a href=\"#Operators\"><span class=\"\
+      tocnumber\">3</span> <span class=\"toctext\">Operators</span></a>\n<ul>\n<li\
+      \ class=\"toclevel-2 tocsection-4\"><a href=\"#Diversion:_Picking_Operators\"\
+      ><span class=\"tocnumber\">3.1</span> <span class=\"toctext\">Diversion: Picking\
+      \ Operators</span></a></li>\n<li class=\"toclevel-2 tocsection-5\"><a href=\"\
+      #Diversion:_Operator_Precedence\"><span class=\"tocnumber\">3.2</span> <span\
+      \ class=\"toctext\">Diversion: Operator Precedence</span></a></li>\n</ul>\n\
+      </li>\n<li class=\"toclevel-1 tocsection-6\"><a href=\"#Iterator\"><span class=\"\
+      tocnumber\">4</span> <span class=\"toctext\">Iterator</span></a></li>\n<li class=\"\
+      toclevel-1 tocsection-7\"><a href=\"#Extensions\"><span class=\"tocnumber\"\
+      >5</span> <span class=\"toctext\">Extensions</span></a></li>\n<li class=\"toclevel-1\
+      \ tocsection-8\"><a href=\"#Related_Topics\"><span class=\"tocnumber\">6</span>\
+      \ <span class=\"toctext\">Related Topics</span></a></li>\n<li class=\"toclevel-1\
+      \ tocsection-9\"><a href=\"#Discussion\"><span class=\"tocnumber\">7</span>\
+      \ <span class=\"toctext\">Discussion</span></a></li>\n</ul>\n</div>\n<p></p>\n\
+      <h2><span class=\"mw-headline\" id=\"Overview\">Overview</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:AssociativeArray?section=1\"\
+      \ title=\"Edit section: Overview\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>An <a href=\"http://en.wikipedia.org/wiki/associative_array\"\
+      \ class=\"extiw\" title=\"wikipedia:associative array\">Wikipedia:associative\
+      \ array</a> is an array that is indexed by something <i>other</i> than a sequence\
+      \ of small integers. C++ has <tt>std::map</tt>, Perl has its <tt>hash</tt>,\
+      \ and JavaScript has its structures. The power of these structures is that using\
+      \ them is <i>just like</i> using a regular array; assuming that <tt>AA</tt>\
+      \ is a <tt>map</tt> from string to string, the following C++ code should make\
+      \ sense:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n\
+      <div class=\"uscript source-uscript\">\n<pre class=\"de1\">AA<span class=\"\
+      br0\">[</span><span class=\"st0\">\"pet\"</span><span class=\"br0\">]</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"st0\">\"dog\"</span>;\nAA<span\
+      \ class=\"br0\">[</span><span class=\"st0\">\"car\"</span><span class=\"br0\"\
+      >]</span> <span class=\"sy0\">=</span> <span class=\"st0\">\"jaguar\"</span>;\n\
+      AA<span class=\"br0\">[</span><span class=\"st0\">\"programming language\"</span><span\
+      \ class=\"br0\">]</span> <span class=\"sy0\">=</span> <span class=\"st0\">\"\
+      UnrealScript\"</span>;\n \ncout <span class=\"sy0\">&lt;&lt;</span> AA<span\
+      \ class=\"br0\">[</span><span class=\"st0\">\"programming language\"</span><span\
+      \ class=\"br0\">]</span> <span class=\"sy0\">&lt;&lt;</span> endl;   <span class=\"\
+      co1\">// C++ output statement</span></pre></div>\n</div>\n<p><br />\nAssociative\
+      \ arrays are powerful data structures; much of their power stems from their\
+      \ \"natural\" notation. <a href=\"/Legacy:UnrealScript\" title=\"Legacy:UnrealScript\"\
+      >UnrealScript's</a> <a href=\"/Legacy:Scripting_Operators\" title=\"Legacy:Scripting\
+      \ Operators\">operator overloading</a> provides a chance to implement associative\
+      \ arrays with a \"natural\" notation (for an appropriately loose definition\
+      \ of natural).</p>\n<p>This proof of concept focuses on implementing an associative\
+      \ array indexed by strings and containing strings. There are three phases of\
+      \ implementation:</p>\n<ul>\n<li>Selecting a <a href=\"/Legacy:AssociativeArray/DataStructure\"\
+      \ title=\"Legacy:AssociativeArray/DataStructure\">datastructure</a> to associate\
+      \ key/value pairs of strings.</li>\n<li>Selecting <a href=\"/Legacy:AssociativeArray/OperatorOverloading\"\
+      \ title=\"Legacy:AssociativeArray/OperatorOverloading\">operators</a> to wrap\
+      \ the data structure in \"natural\" notation.</li>\n<li>Making <a href=\"/Legacy:AssociativeArray/Iterator\"\
+      \ title=\"Legacy:AssociativeArray/Iterator\">iterators</a> to traverse the contents\
+      \ of the associative array.</li>\n</ul>\n<p>The remainder of this page discusses\
+      \ the high-level design of the each phase; the copiously commented code for\
+      \ each phase is included in its own subpage.</p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Data_Structure\">Data Structure</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:AssociativeArray?section=2\"\
+      \ title=\"Edit section: Data Structure\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>An associtive array associates keys drawn from some\
+      \ domain with values drawn from some domain. Thus it is a mapping from key space\
+      \ to value space.</p>\n<p>Depending on speed requirements and restrictions placed\
+      \ on key and vlaue types, such a mapping could be implemented with a hard-coded\
+      \ function, a linear array of pairs, a haash table of pairs, or a tree of pairs.\
+      \ This is a representative rather than an exhaustive list.</p>\n<p>A function\
+      \ is a good, compact representation if it is easy to hard-code the relationship\
+      \ between key and value types. Not an option for associative arrays.</p>\n<p>A\
+      \ linear list of pairs could be implemented as a <a href=\"/Legacy:Dynamic_Array\"\
+      \ title=\"Legacy:Dynamic Array\">UT2K3 dynamic array</a> of structs or objects.\
+      \ An unsorted list is easy to insert into but costly to look things up in; a\
+      \ sorted list is faster for lookup but more costly for insertion. The overall\
+      \ cost is just a little bit too high; besides, this is a chance to play with\
+      \ <a href=\"/Legacy:UnrealScript\" title=\"Legacy:UnrealScript\">UnrealScript</a>\
+      \ and that seems too easy.</p>\n<p>A hash table is fast for lookup and insertion\
+      \ but a good hash function is difficult to design. Also, a hash table makes\
+      \ in-order traversal of the data difficult without another data structure.</p>\n\
+      <p>A binary search tree is a good compromise with fairly fast insertion, fairly\
+      \ fast lookup, and easy ordered traversal (assuming the tree is close to balanced).\
+      \ Other, more complex, trees can make tight guarantees on performance. This\
+      \ proof of concept uses a simple BST</p>\n<p>For demonstration purposes, we\
+      \ use strings as both keys and values. The only real restriction on the types\
+      \ is that key values must be comparable with <tt>&lt;</tt> and <tt>----</tt>.\
+      \ The ordering requirement can be relaxed with a linear list or hash table.</p>\n\
+      <p><a href=\"/Legacy:AssociativeArray/DataStructure\" title=\"Legacy:AssociativeArray/DataStructure\"\
+      >Legacy:AssociativeArray/DataStructure</a> presents the code that implements\
+      \ the BST nodes and BST. The decision was made that an associative array is\
+      \ single valued.</p>\n<h2><span class=\"mw-headline\" id=\"Operators\">Operators</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:AssociativeArray?section=3\" title=\"Edit section: Operators\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>After\
+      \ implementing an association between keys and values, it is necessary to wrap\
+      \ calls to the impelemntation functions in <a href=\"/Legacy:UnrealScript\"\
+      \ title=\"Legacy:UnrealScript\">UnrealScript</a> operators.</p>\n<h3><span class=\"\
+      mw-headline\" id=\"Diversion:_Picking_Operators\">Diversion: Picking Operators</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:AssociativeArray?section=4\" title=\"Edit section: Diversion:\
+      \ Picking Operators\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>By preference, overloading either <tt>[]</tt> or <tt>()</tt> would make the\
+      \ associative array notation most natural. <a href=\"/Legacy:UnrealScript\"\
+      \ title=\"Legacy:UnrealScript\">UnrealScript</a> does not treat either pair\
+      \ of symbols as an operator so they cannot be overloaded. The UT <a href=\"\
+      /Legacy:Dynamic_Array\" title=\"Legacy:Dynamic Array\">dynamic arrays</a> implementation\
+      \ used the <tt>&lt;&lt;</tt> operator for assignment and paired the <tt>&lt;&gt;</tt>\
+      \ operators for refering to elements in the array. Treating the <tt>&lt;</tt>\
+      \ and <tt>&gt;</tt> operators as angle brackets produced a pleasing appearance\
+      \ as in</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div\
+      \ class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span>best<span class=\"sy0\">&lt;</span><span\
+      \ class=\"st0\">\"movie\"</span><span class=\"sy0\">&gt;</span> <span class=\"\
+      sy0\">==</span> <span class=\"st0\">\"Road Warrior\"</span><span class=\"br0\"\
+      >)</span>\n  <span class=\"kw3\">log</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">\"Programmer is too old.\"</span><span class=\"br0\">)</span>;</pre></div>\n\
+      </div>\n<p>The only thing missing is an assignment operator. Using the left-shift\
+      \ operator breaks the \"naturalness\" of using the associative array as an array\
+      \ and the assignment operator (<tt>=</tt>) is not available for redefinition.\
+      \ <tt>&gt;=</tt> (greater-than equals) <i>is</i> available and it can make for\
+      \ some very \"natural\" assignment statements:</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\">best<span class=\"sy0\">&lt;</span><span class=\"st0\">\"\
+      icecream\"</span><span class=\"sy0\">&gt;=</span> <span class=\"st0\">\"vanilla\"\
+      </span>;\nbest<span class=\"sy0\">&lt;</span><span class=\"st0\">\"vegetable\"\
+      </span><span class=\"sy0\">&gt;=</span> <span class=\"st0\">\"califlower\"</span>;\n\
+      best<span class=\"sy0\">&lt;</span><span class=\"st0\">\"stooge\"</span><span\
+      \ class=\"sy0\">&gt;=</span> <span class=\"st0\">\"moe\"</span>;</pre></div>\n\
+      </div>\n<p>There cannot be a space between the <tt>&gt;</tt> and the <tt>=</tt>\
+      \ (it has to parse as a single symbol for the operator look up to trigger) but\
+      \ that is a small price to pay for something that looks like assignment to an\
+      \ element in an array.</p>\n<hr />\n<p>Now for the hard part: <tt>best&lt;\"\
+      icecream</tt> can be the prefix to either an assignment statement <i>or</i>\
+      \ an evaluation of a value in the associative array. In computer science speak,\
+      \ we want <tt>best&lt;\"icecream</tt> to represent either an <i>l-value</i>\
+      \ (left-hand side of an assignment) or an <i>r-value</i> (right-hand side of\
+      \ an assignemnt statement). Note that <a href=\"/Legacy:UnrealScript\" title=\"\
+      Legacy:UnrealScript\">UnrealScript</a> has no way of knowing, parsing left-to-right,\
+      \ what the following context of the given prefix is.</p>\n<p>In C++ (and in\
+      \ Perl, under the hood) the problem is solved using <i>references</i>; the <tt>[]</tt>\
+      \ operator typically returns a reference to the element in the \"array\" and\
+      \ the compiler can convert a reference (really an l-value) into an r-value at\
+      \ need. <a href=\"/Legacy:UnrealScript\" title=\"Legacy:UnrealScript\">UnrealScript</a>\
+      \ has no reference type so that solution is not possible.</p>\n<p>Inspired by\
+      \ the <a href=\"/Legacy:Dynamic_Array\" title=\"Legacy:Dynamic Array\">Dynamic_Array</a>\
+      \ for UT, this solution uses a <i>proxy</i> class. In <a href=\"/Legacy:Dynamic_Array\"\
+      \ title=\"Legacy:Dynamic Array\">Dynamic_Array</a> the author uses a special\
+      \ type to represent the indices for setting values; here the prefix expression\
+      \ (the array, the angle bracket, and the key string) will return a type that\
+      \ can behave as either an l-value or an r-value.</p>\n<p><tt>AAProxy</tt> serves\
+      \ this role by keeping track of a location inside an associative array. If it\
+      \ is followed by a <tt>&gt;</tt> it returns the value stored at that location.\
+      \ If it is followed by a <tt>&gt;=</tt> it sets the value at that location to\
+      \ the value of the expression following the operator. Yes, this is far, far\
+      \ too clever to be considered good code; in my humble opinion, it is also far,\
+      \ far too clever to be considered bad code.</p>\n<h3><span class=\"mw-headline\"\
+      \ id=\"Diversion:_Operator_Precedence\">Diversion: Operator Precedence</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:AssociativeArray?section=5\" title=\"Edit section: Diversion:\
+      \ Operator Precedence\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>Both <a href=\"/Legacy:Operators\" title=\"Legacy:Operators\">Operators</a>\
+      \ and <a href=\"/Legacy:Scripting_Operators\" title=\"Legacy:Scripting Operators\"\
+      >Scripting_Operators</a> cover operator precedence. <a href=\"/Legacy:Scripting_Operators\"\
+      \ title=\"Legacy:Scripting Operators\">Scripting_Operators</a> does leave the\
+      \ impression that when scripting an operator, the compiler pays attention to\
+      \ the precedence number you set for the operator. This may be the case when\
+      \ defining operators that are not already part of the system. It is most definitely\
+      \ <b>not</b> the case when defining (or should that be redefining) operators\
+      \ that already exist. So the <tt>&gt;=</tt> operator has precedence 24 as defined\
+      \ in <tt>Object.uc</tt> and any version I define will have that same precedence\
+      \ <i>no matter what number I put as its precedence</i>.</p>\n<p>This became\
+      \ a problem when defining the <tt>&gt;=</tt> operator. It is supposed to be\
+      \ an assignment operator so it should bind very loosely. In particular, it should\
+      \ probably bind more loosely than <tt>$</tt> so that the following line assigns\
+      \ \"golden-delicious\" to the associative array entry \"apple\":</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\">AA<span class=\"sy0\">&lt;</span><span class=\"st0\">\"\
+      apple\"</span><span class=\"sy0\">&gt;=</span><span class=\"st0\">\"golden\"\
+      </span><span class=\"sy0\">$</span><span class=\"st0\">\"-delicious\"</span>;</pre></div>\n\
+      </div>\n<p>Unfortunately, the line assigns the value \"golden\" to the entry,\
+      \ concatenates \"golden\" with \"-delicious\" and throws away the value of the\
+      \ expression. The following parentheses are necessary:</p>\n<div dir=\"ltr\"\
+      \ class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\">AA<span class=\"sy0\">&lt;</span><span class=\"st0\">\"\
+      apple\"</span><span class=\"sy0\">&gt;=</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">\"golden\"</span><span class=\"sy0\">$</span><span class=\"\
+      st0\">\"-delicious\"</span><span class=\"br0\">)</span>;</pre></div>\n</div>\n\
+      <hr />\n<p><a href=\"/Legacy:AssociativeArray/OperatorOverloading\" title=\"\
+      Legacy:AssociativeArray/OperatorOverloading\">Legacy:AssociativeArray/OperatorOverloading</a>\
+      \ presents the code for the <tt>AAProxy</tt> and the demonstration commandlet.\
+      \ <a href=\"/Legacy:UnrealScript\" title=\"Legacy:UnrealScript\">UnrealScript</a>\
+      \ restricts the use of overloaded operators to the decendents of the class defining\
+      \ them; without access to <tt>Object</tt>, the associative array operators are\
+      \ defined in the commandlet. This limits the usefulness of the associative array.</p>\n\
+      <h2><span class=\"mw-headline\" id=\"Iterator\">Iterator</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:AssociativeArray?section=6\"\
+      \ title=\"Edit section: Iterator\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>It is not possible to write an <a href=\"/Legacy:UnrealScript\"\
+      \ title=\"Legacy:UnrealScript\">UnrealScript</a> <a href=\"/Legacy:Iterator\"\
+      \ title=\"Legacy:Iterator\">iterator</a> in script alone. Without access to\
+      \ the engine source code, the <tt>AssociativeArrayIterator</tt> was designed\
+      \ to emulate the iterators in C++'s STL. So the iterator is a class that behaves\
+      \ like a pointer at a location in the associative array. The \"only\" way to\
+      \ get an iterator is through a call to an iterator generating function of an\
+      \ associated array: <tt>AssociativeArray::begin()</tt> or <tt>AssociativeArray::end()</tt>.</p>\n\
+      <p><tt>begin()</tt> returns an <tt>AssociativeArrayIterator</tt> that refers\
+      \ to the first element in the array (if there is one) and <tt>end()</tt> returns\
+      \ an iterator that is one <i>past</i> the last element in the associative array\
+      \ (this is C++'s standard asymetry). With appropriately defined <tt>++</tt>\
+      \ and <tt>!=</tt> operators for iterators, the following loop should visit every\
+      \ element in the associative array:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">local</span> AssociatveArrayIterator it;\n \n<span class=\"\
+      kw2\">for</span> <span class=\"br0\">(</span>it <span class=\"sy0\">=</span>\
+      \ best.<span class=\"kw2\">begin</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>; it <span class=\"sy0\">!=</span> best.<span class=\"me0\">end</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>; <span class=\"sy0\">++</span>i<span\
+      \ class=\"br0\">)</span> <span class=\"br0\">{</span>\n  <span class=\"co1\"\
+      >// visit element referred to by it here</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>We need some manner of \"visiting\" the elements. One solution is\
+      \ to use two functions, one to get the key and the other to get the value at\
+      \ the location referred to by the iterator. This is done here with <tt>first()</tt>\
+      \ and <tt>second()</tt> so to log the key/value pairs, the following code works:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw2\">for</span> <span\
+      \ class=\"br0\">(</span>it <span class=\"sy0\">=</span> best.<span class=\"\
+      kw2\">begin</span><span class=\"br0\">(</span><span class=\"br0\">)</span>;\
+      \ it <span class=\"sy0\">!=</span> best.<span class=\"me0\">end</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>; <span class=\"sy0\">++</span>i<span\
+      \ class=\"br0\">)</span> <span class=\"br0\">{</span>\n    <span class=\"kw3\"\
+      >log</span><span class=\"br0\">(</span>it.<span class=\"me0\">first</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"sy0\">$</span>\
+      \ <span class=\"st0\">\"/\"</span> <span class=\"sy0\">$</span> it.<span class=\"\
+      me0\">second</span><span class=\"br0\">(</span><span class=\"br0\">)</span>,\
+      \ <span class=\"st0\">'AssociativeArray'</span><span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>This is nice. Could we\
+      \ use operators? Sure. Assume you only need the value (not the key) associated\
+      \ with each element. Then the following notation works:</p>\n<div dir=\"ltr\"\
+      \ class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw2\">for</span> <span class=\"br0\">(</span>it\
+      \ <span class=\"sy0\">=</span> best.<span class=\"kw2\">begin</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>; it <span class=\"sy0\">!=</span>\
+      \ best.<span class=\"me0\">end</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>; <span class=\"sy0\">++</span>i<span class=\"br0\">)</span> <span\
+      \ class=\"br0\">{</span>\n    <span class=\"kw3\">log</span><span class=\"br0\"\
+      >(</span><span class=\"st0\">\"Value: \"</span> <span class=\"sy0\">$</span>\
+      \ <span class=\"sy0\">&lt;</span>it<span class=\"sy0\">&gt;</span> , <span class=\"\
+      st0\">'AssociativeArray'</span><span class=\"br0\">)</span>;\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p>But what if we wanted to append \"'s\"\
+      \ to every value. Could it be done? With the mechanics we have already developed,\
+      \ having <tt>&lt;it</tt> return an <tt>AAProxy</tt>, it can use the same r-value/l-value\
+      \ determination used for regular array access with iterators. So you can add\
+      \ the \"'s\" with the following code:</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw2\">for</span> <span class=\"br0\">(</span>it <span class=\"\
+      sy0\">=</span> best.<span class=\"kw2\">begin</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>; it <span class=\"sy0\">!=</span> best.<span class=\"\
+      me0\">end</span><span class=\"br0\">(</span><span class=\"br0\">)</span>; <span\
+      \ class=\"sy0\">++</span>i<span class=\"br0\">)</span> <span class=\"br0\">{</span>\n\
+      \    <span class=\"sy0\">&lt;</span>it<span class=\"sy0\">&gt;=</span> <span\
+      \ class=\"sy0\">&lt;</span>it<span class=\"sy0\">&gt;</span> <span class=\"\
+      sy0\">$</span> <span class=\"st0\">\"'s\"</span>;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p><a href=\"/Legacy:AssociativeArray/Iterator\" title=\"Legacy:AssociativeArray/Iterator\"\
+      >Legacy:AssociativeArray/Iterator</a> presents the code for the iterator and\
+      \ its supporting stack. The actual algorithm for traversing a BST is described\
+      \ in the embedded comments.</p>\n<h2><span class=\"mw-headline\" id=\"Extensions\"\
+      >Extensions</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:AssociativeArray?section=7\" title=\"Edit section:\
+      \ Extensions\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>It may be hard to believe after looking at the amount written about this\
+      \ silly proof of concept but there is more that could be done. The operations\
+      \ on the array could be extended (but notation would have to be found), iterators\
+      \ could be extended (forward and reverse, iterator invalidation), and it could\
+      \ easily be made more efficient.</p>\n<p>The BST implementation could be extended\
+      \ with a mechanism for removing nodes. It would be nice to come up with an obvious,\
+      \ natural notation for deleting a node. There is also no way to check whether\
+      \ a given key is in the associative array (no way to differentiate between a\
+      \ stored empty string and a key that is not present).</p>\n<p>The iterator could\
+      \ be more closely associated with the associative array in such a way that the\
+      \ iterator could be invalidated (or corrected, perahps) when the associative\
+      \ array changes. Invalidation could be accomplished with a list of active iterators\
+      \ (iterators on the array) that is checked when the array changes.</p>\n<p>Using\
+      \ <tt>new</tt> is the standard way of allocating binary search tree nodes. In\
+      \ <a href=\"/Legacy:UnrealScript\" title=\"Legacy:UnrealScript\">UnrealScript</a>\
+      \ it would be more efficient to maintain a dynamic array of BST nodes; this\
+      \ would be even more advantageous when deletion is possible. The associative\
+      \ array could keep a free list threaded through the dynamic array or it could\
+      \ compact the array on occasion (iterators would have to be invalidated in this\
+      \ case, too).</p>\n<h2><span class=\"mw-headline\" id=\"Related_Topics\">Related\
+      \ Topics</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:AssociativeArray?section=8\" title=\"Edit section:\
+      \ Related Topics\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <ul>\n<li><a href=\"/Legacy:UnrealScript\" title=\"Legacy:UnrealScript\">UnrealScript</a></li>\n\
+      <li><a href=\"/Legacy:Dynamic_Array\" title=\"Legacy:Dynamic Array\">Dynamic\
+      \ Array</a></li>\n<li><a href=\"/Legacy:Operators\" title=\"Legacy:Operators\"\
+      >Operators</a></li>\n<li><a href=\"/Legacy:Scripting_Operators\" title=\"Legacy:Scripting\
+      \ Operators\">Scripting Operators</a></li>\n<li><a href=\"/Legacy:Iterator\"\
+      \ title=\"Legacy:Iterator\">Iterator</a></li>\n</ul>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Discussion\">Discussion</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:AssociativeArray?section=9\"\
+      \ title=\"Edit section: Discussion\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p><b>El Muerte TDS:</b> Nice concept, too bad that this\
+      \ adds a lot of overhead. Usualy it's better to just create a Key-Value struct\
+      \ and a dynamic array of this struct. The engine does support associative arrays,\
+      \ it's called Map. But there are no unrealscript bindings for it.</p>\n<p><i><b>Bcladd:</b></i>\
+      \ Of course this adds a great deal of overhead; all the preparation is done\
+      \ so the loop for traversing the structure appears \"natural\". Only argument\
+      \ against the straight dynamic array of key/value pairs is the cost of lookup\
+      \ and insertion (both O(<i>n</i>)). Actually, the implementation of associative\
+      \ array (and iterator) could be changed very easily and the operator notation\
+      \ still used. Note that I wrote this implementation before I had ever seen the\
+      \ insides of the engine.</p>\n<p><b>El Muerte TDS:</b> The cost of lookup and\
+      \ insertion for a dynamic array is less than using object references and function\
+      \ calls in unreal script. Functions have to be lookup in each object before\
+      \ they are executed.</p>\n<p><i><b>Bcladd:</b></i> Point taken: the constant\
+      \ cost of multiple (recursive) function calls from script outweights the asymptotic\
+      \ performance benefits of the binary tree for any realistic number of entries.\
+      \ This really is just a write up of my playing with operator overloading from\
+      \ script. Since I got great pleasure out of the <a href=\"/Legacy:Dynamic_Array\"\
+      \ title=\"Legacy:Dynamic Array\">UT dynamic array</a> code, I thought someone\
+      \ might find the hackery here interesting.</p>\n<p><b>Mychaeel:</b> El Muerte\
+      \ – Without wanting to go into details at this time (and without claiming intimate\
+      \ knowledge of the Unreal engine), I am rather sure that function invocations\
+      \ in UnrealScript are constant-time and rather efficient at that. I expect that\
+      \ after loading an UnrealScript class into memory all function references in\
+      \ function calls are directly resolved as pointers to the C++ \"UnrealScript\
+      \ function\" objects that are stored as such in UnrealScript code packages;\
+      \ involving any sort of hash or array lookup in calling an UnrealScript function\
+      \ on engine level would strike me as needlessly inefficient.</p>\n<p>Bcladd\
+      \ – It's a real pity I don't have the time to look into your code right now,\
+      \ but from what I've seen at a first glance I'm pretty intrigued by your approach.\
+      \ I'll certainly have a closer look when I've got my normal share of free time\
+      \ back.</p>\n\n<!-- \nNewPP limit report\nCPU time usage: 0.135 seconds\nReal\
+      \ time usage: 0.162 seconds\nPreprocessor visited node count: 152/1000000\n\
+      Preprocessor generated node count: 316/1000000\nPost‐expand include size: 132/2097152\
+      \ bytes\nTemplate argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\n\
+      Expensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion expansion\
+      \ time report (%,ms,calls,template)\n100.00%    0.000      1 - -total\n-->\n\
+      \n<!-- Saved in parser cache with key wiki:pcache:idhash:440-0!*!0!!en!*!* and\
+      \ timestamp 20221118151233 and revision id 1469\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Iterator"
+  - ns: 100
+    exists: true
+    name: "Legacy:UnrealScript"
+  - ns: 100
+    exists: true
+    name: "Legacy:AssociativeArray/OperatorOverloading"
+  - ns: 100
+    exists: true
+    name: "Legacy:AssociativeArray/DataStructure"
+  - ns: 100
+    exists: true
+    name: "Legacy:Dynamic Array"
+  - ns: 100
+    exists: true
+    name: "Legacy:Operators"
+  - ns: 100
+    exists: true
+    name: "Legacy:AssociativeArray/Iterator"
+  - ns: 100
+    exists: true
+    name: "Legacy:Scripting Operators"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Overview"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:AssociativeArray"
+    byteoffset: 264
+    anchor: "Overview"
+  - toclevel: 1
+    level: "2"
+    line: "Data Structure"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:AssociativeArray"
+    byteoffset: 1877
+    anchor: "Data_Structure"
+  - toclevel: 1
+    level: "2"
+    line: "Operators"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:AssociativeArray"
+    byteoffset: 3777
+    anchor: "Operators"
+  - toclevel: 2
+    level: "3"
+    line: "Diversion: Picking Operators"
+    number: "3.1"
+    index: "4"
+    fromtitle: "Legacy:AssociativeArray"
+    byteoffset: 3966
+    anchor: "Diversion:_Picking_Operators"
+  - toclevel: 2
+    level: "3"
+    line: "Diversion: Operator Precedence"
+    number: "3.2"
+    index: "5"
+    fromtitle: "Legacy:AssociativeArray"
+    byteoffset: 6998
+    anchor: "Diversion:_Operator_Precedence"
+  - toclevel: 1
+    level: "2"
+    line: "Iterator"
+    number: "4"
+    index: "6"
+    fromtitle: "Legacy:AssociativeArray"
+    byteoffset: 8766
+    anchor: "Iterator"
+  - toclevel: 1
+    level: "2"
+    line: "Extensions"
+    number: "5"
+    index: "7"
+    fromtitle: "Legacy:AssociativeArray"
+    byteoffset: 11183
+    anchor: "Extensions"
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "6"
+    index: "8"
+    fromtitle: "Legacy:AssociativeArray"
+    byteoffset: 12619
+    anchor: "Related_Topics"
+  - toclevel: 1
+    level: "2"
+    line: "Discussion"
+    number: "7"
+    index: "9"
+    fromtitle: "Legacy:AssociativeArray"
+    byteoffset: 12836
+    anchor: "Discussion"
+  displaytitle: "Legacy:AssociativeArray"
+  iwlinks:
+  - prefix: "wikipedia"
+    url: "http://en.wikipedia.org/wiki/associative_array"
+    name: "wikipedia:associative array"
+  wikitext:
+    text: "When learning [[Legacy:UnrealScript|UnrealScript]] I found the idea of\
+      \ operator overloading very enticing. These pages describe the design and implementation\
+      \ of an associative array, providing (I hope) some insight into how UnrealScript\
+      \ operators are overloaded.\n\n==Overview  ==\n\nAn [[Wikipedia:associative\
+      \ array]] is an array that is indexed by something ''other'' than a sequence\
+      \ of small integers. C++ has <tt>std::map</tt>, Perl has its <tt>hash</tt>,\
+      \ and JavaScript has its structures. The power of these structures is that using\
+      \ them is ''just like'' using a regular array; assuming that <tt>AA</tt> is\
+      \ a <tt>map</tt> from string to string, the following C++ code should make sense:\n\
+      \n<uscript>\nAA[\"pet\"] = \"dog\";\nAA[\"car\"] = \"jaguar\";\nAA[\"programming\
+      \ language\"] = \"UnrealScript\";\n\ncout << AA[\"programming language\"] <<\
+      \ endl;   // C++ output statement\n</uscript>\n \n\nAssociative arrays are powerful\
+      \ data structures; much of their power stems from their \"natural\" notation.\
+      \ [[Legacy:UnrealScript|UnrealScript's]] [[Legacy:Scripting_Operators|operator\
+      \ overloading]] provides a chance to implement associative arrays with a \"\
+      natural\" notation (for an appropriately loose definition of natural).\n\nThis\
+      \ proof of concept focuses on implementing an associative array indexed by strings\
+      \ and containing strings. There are three phases of implementation:\n\n* Selecting\
+      \ a [[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/DataStructure|datastructure]] to associate\
+      \ key/value pairs of strings.\n* Selecting [[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/OperatorOverloading|operators]]\
+      \ to wrap the data structure in \"natural\" notation.\n* Making [[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/Iterator|iterators]]\
+      \ to traverse the contents of the associative array.\n\nThe remainder of this\
+      \ page discusses the high-level design of the each phase; the copiously commented\
+      \ code for each phase is included in its own subpage.\n\n==Data Structure==\n\
+      \nAn associtive array associates keys drawn from some domain with values drawn\
+      \ from some domain. Thus it is a mapping from key space to value space.\n\n\
+      Depending on speed requirements and restrictions placed on key and vlaue types,\
+      \ such a mapping could be implemented with a hard-coded function, a linear array\
+      \ of pairs, a haash table of pairs, or a tree of pairs. This is a representative\
+      \ rather than an exhaustive list.\n\nA function is a good, compact representation\
+      \ if it is easy to hard-code the relationship between key and value types. Not\
+      \ an option for associative arrays.\n\nA linear list of pairs could be implemented\
+      \ as a [[Legacy:Dynamic_Array|UT2K3 dynamic array]] of structs or objects. An\
+      \ unsorted list is easy to insert into but costly to look things up in; a sorted\
+      \ list is faster for lookup but more costly for insertion. The overall cost\
+      \ is just a little bit too high; besides, this is a chance to play with [[Legacy:UnrealScript|UnrealScript]]\
+      \ and that seems too easy.\n\nA hash table is fast for lookup and insertion\
+      \ but a good hash function is difficult to design. Also, a hash table makes\
+      \ in-order traversal of the data difficult without another data structure.\n\
+      \nA binary search tree is a good compromise with fairly fast insertion, fairly\
+      \ fast lookup, and easy ordered traversal (assuming the tree is close to balanced).\
+      \ Other, more complex, trees can make tight guarantees on performance. This\
+      \ proof of concept uses a simple BST\n\nFor demonstration purposes, we use strings\
+      \ as both keys and values. The only real restriction on the types is that key\
+      \ values must be comparable with <tt>&lt;</tt> and <tt>----</tt>. The ordering\
+      \ requirement can be relaxed with a linear list or hash table.\n\n[[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/DataStructure]]\
+      \ presents the code that implements the BST nodes and BST. The decision was\
+      \ made that an associative array is single valued.\n\n==Operators ==\n\nAfter\
+      \ implementing an association between keys and values, it is necessary to wrap\
+      \ calls to the impelemntation functions in [[Legacy:UnrealScript|UnrealScript]]\
+      \ operators.\n\n===Diversion: Picking Operators===\n\nBy preference, overloading\
+      \ either <tt>[]</tt> or <tt>()</tt> would make the associative array notation\
+      \ most natural. [[Legacy:UnrealScript|UnrealScript]] does not treat either pair\
+      \ of symbols as an operator so they cannot be overloaded. The UT [[Legacy:Dynamic_Array|dynamic\
+      \ arrays]] implementation used the <tt>&lt;&lt;</tt> operator for assignment\
+      \ and paired the <tt>&lt;&gt;</tt> operators for refering to elements in the\
+      \ array. Treating the <tt>&lt;</tt> and <tt>&gt;</tt> operators as angle brackets\
+      \ produced a pleasing appearance as in\n\n<uscript>\nif (best<\"movie\"> ==\
+      \ \"Road Warrior\")\n  log(\"Programmer is too old.\");\n</uscript>\n\nThe only\
+      \ thing missing is an assignment operator. Using the left-shift operator breaks\
+      \ the \"naturalness\" of using the associative array as an array and the assignment\
+      \ operator (<tt>=</tt>) is not available for redefinition. <tt>&gt;=</tt> (greater-than\
+      \ equals) ''is'' available and it can make for some very \"natural\" assignment\
+      \ statements:\n\n<uscript>\nbest<\"icecream\">= \"vanilla\";\nbest<\"vegetable\"\
+      >= \"califlower\";\nbest<\"stooge\">= \"moe\";\n</uscript>\n\nThere cannot be\
+      \ a space between the <tt>&gt;</tt> and the <tt>=</tt> (it has to parse as a\
+      \ single symbol for the operator look up to trigger) but that is a small price\
+      \ to pay for something that looks like assignment to an element in an array.\n\
+      \n----\n\nNow for the hard part: <tt>best&lt;\"icecream</tt> can be the prefix\
+      \ to either an assignment statement ''or'' an evaluation of a value in the associative\
+      \ array. In computer science speak, we want <tt>best&lt;\"icecream</tt> to represent\
+      \ either an ''l-value'' (left-hand side of an assignment) or an ''r-value''\
+      \ (right-hand side of an assignemnt statement). Note that [[Legacy:UnrealScript|UnrealScript]]\
+      \ has no way of knowing, parsing left-to-right, what the following context of\
+      \ the given prefix is.\n\nIn C++ (and in Perl, under the hood) the problem is\
+      \ solved using ''references''; the <tt>[]</tt> operator typically returns a\
+      \ reference to the element in the \"array\" and the compiler can convert a reference\
+      \ (really an l-value) into an r-value at need. [[Legacy:UnrealScript|UnrealScript]]\
+      \ has no reference type so that solution is not possible.\n\nInspired by the\
+      \ [[Legacy:Dynamic_Array|Dynamic_Array]] for UT, this solution uses a ''proxy''\
+      \ class. In [[Legacy:Dynamic_Array|Dynamic_Array]] the author uses a special\
+      \ type to represent the indices for setting values; here the prefix expression\
+      \ (the array, the angle bracket, and the key string) will return a type that\
+      \ can behave as either an l-value or an r-value.\n\n<tt>AAProxy</tt> serves\
+      \ this role by keeping track of a location inside an associative array. If it\
+      \ is followed by a <tt>&gt;</tt> it returns the value stored at that location.\
+      \ If it is followed by a <tt>&gt;=</tt> it sets the value at that location to\
+      \ the value of the expression following the operator. Yes, this is far, far\
+      \ too clever to be considered good code; in my humble opinion, it is also far,\
+      \ far too clever to be considered bad code.\n\n===Diversion: Operator Precedence===\n\
+      \nBoth [[Legacy:Operators|Operators]] and [[Legacy:Scripting_Operators|Scripting_Operators]]\
+      \ cover operator precedence. [[Legacy:Scripting_Operators|Scripting_Operators]]\
+      \ does leave the impression that when scripting an operator, the compiler pays\
+      \ attention to the precedence number you set for the operator. This may be the\
+      \ case when defining operators that are not already part of the system. It is\
+      \ most definitely '''not''' the case when defining (or should that be redefining)\
+      \ operators that already exist. So the <tt>&gt;=</tt> operator has precedence\
+      \ 24 as defined in <tt>Object.uc</tt> and any version I define will have that\
+      \ same precedence ''no matter what number I put as its precedence''.\n\nThis\
+      \ became a problem when defining the <tt>&gt;=</tt> operator. It is supposed\
+      \ to be an assignment operator so it should bind very loosely. In particular,\
+      \ it should probably bind more loosely than <tt>$</tt> so that the following\
+      \ line assigns \"golden-delicious\" to the associative array entry \"apple\"\
+      :\n\n<uscript>\nAA<\"apple\">=\"golden\"$\"-delicious\";\n</uscript>\n\nUnfortunately,\
+      \ the line assigns the value \"golden\" to the entry, concatenates \"golden\"\
+      \ with \"-delicious\" and throws away the value of the expression. The following\
+      \ parentheses are necessary:\n\n<uscript>\nAA<\"apple\">=(\"golden\"$\"-delicious\"\
+      );\n</uscript>\n\n----\n\n[[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/OperatorOverloading]]\
+      \ presents the code for the <tt>AAProxy</tt> and the demonstration commandlet.\
+      \ [[Legacy:UnrealScript|UnrealScript]] restricts the use of overloaded operators\
+      \ to the decendents of the class defining them; without access to <tt>Object</tt>,\
+      \ the associative array operators are defined in the commandlet. This limits\
+      \ the usefulness of the associative array.\n\n==Iterator==\n\nIt is not possible\
+      \ to write an [[Legacy:UnrealScript|UnrealScript]] [[Legacy:Iterator|iterator]]\
+      \ in script alone. Without access to the engine source code, the <tt>AssociativeArrayIterator</tt>\
+      \ was designed to emulate the iterators in C++'s STL. So the iterator is a class\
+      \ that behaves like a pointer at a location in the associative array. The \"\
+      only\" way to get an iterator is through a call to an iterator generating function\
+      \ of an associated array: <tt>AssociativeArray::begin()</tt> or <tt>AssociativeArray::end()</tt>.\n\
+      \n<tt>begin()</tt> returns an <tt>AssociativeArrayIterator</tt> that refers\
+      \ to the first element in the array (if there is one) and <tt>end()</tt> returns\
+      \ an iterator that is one ''past'' the last element in the associative array\
+      \ (this is C++'s standard asymetry). With appropriately defined <tt>++</tt>\
+      \ and <tt>!=</tt> operators for iterators, the following loop should visit every\
+      \ element in the associative array:\n\n<uscript>\nlocal AssociatveArrayIterator\
+      \ it;\n\nfor (it = best.begin(); it != best.end(); ++i) {\n  // visit element\
+      \ referred to by it here\n}\n</uscript>\n\nWe need some manner of \"visiting\"\
+      \ the elements. One solution is to use two functions, one to get the key and\
+      \ the other to get the value at the location referred to by the iterator. This\
+      \ is done here with <tt>first()</tt> and <tt>second()</tt> so to log the key/value\
+      \ pairs, the following code works:\n\n<uscript>\nfor (it = best.begin(); it\
+      \ != best.end(); ++i) {\n    log(it.first() $ \"/\" $ it.second(), 'AssociativeArray');\n\
+      }\n</uscript>\n\nThis is nice. Could we use operators? Sure. Assume you only\
+      \ need the value (not the key) associated with each element. Then the following\
+      \ notation works:\n\n<uscript>\nfor (it = best.begin(); it != best.end(); ++i)\
+      \ {\n    log(\"Value: \" $ <it> , 'AssociativeArray');\n}\n</uscript>\n\nBut\
+      \ what if we wanted to append \"'s\" to every value. Could it be done? With\
+      \ the mechanics we have already developed, having <tt>&lt;it</tt> return an\
+      \ <tt>AAProxy</tt>, it can use the same r-value/l-value determination used for\
+      \ regular array access with iterators. So you can add the \"'s\" with the following\
+      \ code:\n\n<uscript>\nfor (it = best.begin(); it != best.end(); ++i) {\n   \
+      \ <it>= <it> $ \"'s\";\n}\n</uscript>\n\n[[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/Iterator]]\
+      \ presents the code for the iterator and its supporting stack. The actual algorithm\
+      \ for traversing a BST is described in the embedded comments.\n\n==Extensions\
+      \ ==\n\nIt may be hard to believe after looking at the amount written about\
+      \ this silly proof of concept but there is more that could be done. The operations\
+      \ on the array could be extended (but notation would have to be found), iterators\
+      \ could be extended (forward and reverse, iterator invalidation), and it could\
+      \ easily be made more efficient.\n\nThe BST implementation could be extended\
+      \ with a mechanism for removing nodes. It would be nice to come up with an obvious,\
+      \ natural notation for deleting a node. There is also no way to check whether\
+      \ a given key is in the associative array (no way to differentiate between a\
+      \ stored empty string and a key that is not present).\n\nThe iterator could\
+      \ be more closely associated with the associative array in such a way that the\
+      \ iterator could be invalidated (or corrected, perahps) when the associative\
+      \ array changes. Invalidation could be accomplished with a list of active iterators\
+      \ (iterators on the array) that is checked when the array changes.\n\nUsing\
+      \ <tt>new</tt> is the standard way of allocating binary search tree nodes. In\
+      \ [[Legacy:UnrealScript|UnrealScript]] it would be more efficient to maintain\
+      \ a dynamic array of BST nodes; this would be even more advantageous when deletion\
+      \ is possible. The associative array could keep a free list threaded through\
+      \ the dynamic array or it could compact the array on occasion (iterators would\
+      \ have to be invalidated in this case, too).\n\n==Related Topics==\n* [[Legacy:UnrealScript|UnrealScript]]\n\
+      * [[Legacy:Dynamic Array|Dynamic Array]]\n* [[Legacy:Operators|Operators]]\n\
+      * [[Legacy:Scripting Operators|Scripting Operators]]\n* [[Legacy:Iterator|Iterator]]\n\
+      \n==Discussion==\n\n'''El Muerte TDS:''' Nice concept, too bad that this adds\
+      \ a lot of overhead. Usualy it's better to just create a Key-Value struct and\
+      \ a dynamic array of this struct. The engine does support associative arrays,\
+      \ it's called Map. But there are no unrealscript bindings for it.\n\n'''''Bcladd:'''''\
+      \ Of course this adds a great deal of overhead; all the preparation is done\
+      \ so the loop for traversing the structure appears \"natural\". Only argument\
+      \ against the straight dynamic array of key/value pairs is the cost of lookup\
+      \ and insertion (both O(''n'')). Actually, the implementation of associative\
+      \ array (and iterator) could be changed very easily and the operator notation\
+      \ still used. Note that I wrote this implementation before I had ever seen the\
+      \ insides of the engine.\n\n'''El Muerte TDS:''' The cost of lookup and insertion\
+      \ for a dynamic array is less than using object references and function calls\
+      \ in unreal script. Functions have to be lookup in each object before they are\
+      \ executed. \n\n'''''Bcladd:''''' Point taken: the constant cost of multiple\
+      \ (recursive) function calls from script outweights the asymptotic performance\
+      \ benefits of the binary tree for any realistic number of entries. This really\
+      \ is just a write up of my playing with operator overloading from script. Since\
+      \ I got great pleasure out of the [[Legacy:Dynamic Array|UT dynamic array]]\
+      \ code, I thought someone might find the hackery here interesting.\n\n'''Mychaeel:'''\
+      \ El Muerte &ndash; Without wanting to go into details at this time (and without\
+      \ claiming intimate knowledge of the Unreal engine), I am rather sure that function\
+      \ invocations in UnrealScript are constant-time and rather efficient at that.\
+      \  I expect that after loading an UnrealScript class into memory all function\
+      \ references in function calls are directly resolved as pointers to the C++\
+      \ \"UnrealScript function\" objects that are stored as such in UnrealScript\
+      \ code packages; involving any sort of hash or array lookup in calling an UnrealScript\
+      \ function on engine level would strike me as needlessly inefficient.\n\nBcladd\
+      \ &ndash; It's a real pity I don't have the time to look into your code right\
+      \ now, but from what I've seen at a first glance I'm pretty intrigued by your\
+      \ approach.  I'll certainly have a closer look when I've got my normal share\
+      \ of free time back."
+  properties: []
+  revId: 1469
+name: "Legacy:AssociativeArray"
+revision:
+  revid: 1469
+  parentid: 1471
+  user: "SuperApe"
+  timestamp: 1132345403.000000000
+  comment: "*"
+timestamp: 1668784354.107702000

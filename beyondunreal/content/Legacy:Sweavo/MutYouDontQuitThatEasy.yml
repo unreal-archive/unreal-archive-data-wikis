@@ -1,0 +1,280 @@
+---
+parse:
+  title: "Legacy:Sweavo/MutYouDontQuitThatEasy"
+  text:
+    text: "<p>The mutator has a reference to a ScoreHolder which subclasses actor.\
+      \ On prebeginplay it creates one called dummy and sets its playerID to 0.</p>\n\
+      <hr />\n<h3><span class=\"mw-headline\" id=\"23.2F02.2F2006_Bug_found_:-.28\"\
+      >23/02/2006 Bug found&#160;:-(</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Sweavo/MutYouDontQuitThatEasy?section=1\"\
+      \ title=\"Edit section: 23/02/2006 Bug found\_:-(\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>It has been intermittently giving people a score when\
+      \ they join the server. I think this is due to different players sharing a playerhash.\
+      \ Try GameStats.GetStatsIdentifier() instead.</p>\n<hr />\n<div dir=\"ltr\"\
+      \ class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"coMULTI\">/*****************************************************************************\n\
+      \ *\n * $Id: MutYouDontQuitThatEasy.uc 87 2006-01-21 18:48:59Z sweavo $\n *\n\
+      \ * Email: public at sweavo.34sp.com \n *\n * If a player quits and returns\
+      \ again, they keep their score.  Especially\n * useful if a mutator may cause\
+      \ negative scores, like the SASKillsMinusDeaths\n * \n *****************************************************************************/</span>\n\
+      <span class=\"kw1\">class</span> MutYouDontQuitThatEasy <span class=\"kw1\"\
+      >extends</span> <span class=\"kw9\">Mutator</span>;\n \n<span class=\"kw1\"\
+      >var</span> ScoreHolder Dummy;\n \n<span class=\"kw1\">event</span> <span class=\"\
+      kw4\">PreBeginPlay</span><span class=\"br0\">(</span><span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n\t<span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span> <span class=\"sy0\">!</span>MutatorIsAllowed<span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span> <span class=\"br0\">)</span>\n\t\t<span\
+      \ class=\"kw4\">Destroy</span><span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>;\n\t<span class=\"kw2\">else</span> <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span>bAddToServerPackages<span class=\"br0\">)</span>\n\
+      \t\tAddToPackageMap<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \ \n\tDummy<span class=\"sy0\">=</span><span class=\"kw4\">spawn</span><span\
+      \ class=\"br0\">(</span><span class=\"kw1\">class</span><span class=\"st0\"\
+      >'ScoreHolder'</span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"co1\">// When PlayerReplicationInfos are created, load their\
+      \ scores if available</span>\n<span class=\"kw1\">function</span> <span class=\"\
+      kw5\">bool</span> CheckReplacement<span class=\"br0\">(</span><span class=\"\
+      kw9\">Actor</span> Other,<span class=\"kw1\">out</span> <span class=\"kw5\"\
+      >byte</span> SuperRelevant<span class=\"br0\">)</span>\n<span class=\"br0\"\
+      >{</span>\n\t<span class=\"kw2\">if</span><span class=\"br0\">(</span>TeamPlayerReplicationInfo<span\
+      \ class=\"br0\">(</span>Other<span class=\"br0\">)</span><span class=\"sy0\"\
+      >!=</span><span class=\"kw5\">None</span> <span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"kw9\">PlayerController</span><span class=\"br0\">(</span>Other.<span\
+      \ class=\"kw7\">Owner</span><span class=\"br0\">)</span><span class=\"sy0\"\
+      >!=</span><span class=\"kw5\">None</span><span class=\"br0\">)</span>\n\t<span\
+      \ class=\"br0\">{</span>\n\t\t<span class=\"co1\">//log(\"$Id: MutYouDontQuitThatEasy.uc\
+      \ 87 2006-01-21 18:48:59Z sweavo $ mutator calls load: \"$PlayerReplicationInfo(Other).PlayerName$\"\
+      \ - \"$PlayerController(Other.Owner).GetPlayerIdHash());</span>\n \n\t\tDummy.<span\
+      \ class=\"me0\">LoadScore</span><span class=\"br0\">(</span><span class=\"kw9\"\
+      >PlayerController</span><span class=\"br0\">(</span>Other.<span class=\"kw7\"\
+      >Owner</span><span class=\"br0\">)</span>.<span class=\"me0\">GetPlayerIdHash</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>,TeamPlayerReplicationInfo<span\
+      \ class=\"br0\">(</span>Other<span class=\"br0\">)</span><span class=\"br0\"\
+      >)</span>;\n \n\t<span class=\"br0\">}</span>\t\t\n\t<span class=\"kw2\">return</span>\
+      \ <span class=\"kw6\">super</span>.<span class=\"me0\">CheckReplacement</span><span\
+      \ class=\"br0\">(</span>Other,SuperRelevant<span class=\"br0\">)</span>;\t\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">function</span> NotifyLogout<span\
+      \ class=\"br0\">(</span><span class=\"kw9\">Controller</span> Exiting<span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span><span class=\"kw9\">PlayerController</span><span\
+      \ class=\"br0\">(</span>Exiting<span class=\"br0\">)</span><span class=\"sy0\"\
+      >!=</span><span class=\"kw5\">None</span><span class=\"br0\">)</span>\n\t<span\
+      \ class=\"br0\">{</span>\n\t\t<span class=\"co1\">//log(\"$Id: MutYouDontQuitThatEasy.uc\
+      \ 87 2006-01-21 18:48:59Z sweavo $ mutator calls save: \"$PlayerController(Exiting).PlayerReplicationInfo.PlayerName$\"\
+      \ \"$PlayerController(Exiting).PlayerReplicationInfo.PlayerId);</span>\n\t\t\
+      Dummy.<span class=\"me0\">SaveScore</span><span class=\"br0\">(</span><span\
+      \ class=\"kw9\">PlayerController</span><span class=\"br0\">(</span>Exiting<span\
+      \ class=\"br0\">)</span>.<span class=\"me0\">GetPlayerIdHash</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>,TeamPlayerReplicationInfo<span class=\"\
+      br0\">(</span>Exiting.<span class=\"me0\">PlayerReplicationInfo</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>;\n\t<span class=\"br0\"\
+      >}</span>\n<span class=\"br0\">}</span>\n<span class=\"kw1\">function</span>\
+      \ <span class=\"kw4\">Destroyed</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"co1\">//log(\"\
+      $Id: MutYouDontQuitThatEasy.uc 87 2006-01-21 18:48:59Z sweavo $ method 'Destroyed'\
+      \ was called.\");</span>\n\t<span class=\"kw6\">Super</span>.<span class=\"\
+      kw4\">Destroyed</span><span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">defaultproperties</span>\n\
+      <span class=\"br0\">{</span>\n    bHidden<span class=\"sy0\">=</span><span class=\"\
+      kw6\">true</span>\n    GroupName<span class=\"sy0\">=</span><span class=\"st0\"\
+      >\"Score Mods\"</span>\n    FriendlyName<span class=\"sy0\">=</span><span class=\"\
+      st0\">\"[SAS]You Don't Quit That Easy $Revision: 64 $\"</span>\n    Description<span\
+      \ class=\"sy0\">=</span><span class=\"st0\">\"If a player quits and returns,\
+      \ they keep their score.  By sweavo for SAS http://wiki.beyondunreal.com/wiki/Sweavo\
+      \ http://www.sassniperclan.com/\"</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>When CheckReplacement spots a TeamPlayerReplicationInfo being created,\
+      \ it calls Dummy.LoadScore passing in the player's stats ID and the PRI itself.\
+      \ If the player's score is not stored, this has no effect on the PRI.</p>\n\
+      <p>When NotifyLogout is called, Dummy.SaveScore is called with the same parameters.</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"coMULTI\">/*****************************************************************************\n\
+      \ *\n * $Id: ScoreHolder.uc 87 2006-01-21 18:48:59Z sweavo $\n *\n * Email:\
+      \ public at sweavo.34sp.com \n *\n * Part of MutYouDontQuitThatEasy\n *\n *\
+      \ There is one of these present for each player who has been in this level.\n\
+      \ *\n *****************************************************************************/</span>\n\
+      \ \n<span class=\"kw1\">class</span> ScoreHolder <span class=\"kw1\">extends</span>\
+      \ <span class=\"kw9\">Actor</span>;\n \n<span class=\"kw1\">var</span> <span\
+      \ class=\"kw5\">string</span> PlayerHash;\n<span class=\"kw1\">var</span> <span\
+      \ class=\"kw5\">int</span> Score;\n<span class=\"kw1\">var</span> <span class=\"\
+      kw5\">int</span> Deaths;\n<span class=\"kw1\">var</span> <span class=\"kw5\"\
+      >int</span> Kills;\n<span class=\"kw1\">var</span> <span class=\"kw5\">int</span>\
+      \ Headcount;\n \n<span class=\"kw1\">var</span> ScoreHolder Next;\n \n<span\
+      \ class=\"kw1\">function</span> SaveScore<span class=\"br0\">(</span><span class=\"\
+      kw5\">String</span> Hash,TeamPlayerReplicationInfo PRI<span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n\t<span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span>PlayerHash <span class=\"sy0\">==</span> Hash<span class=\"br0\"\
+      >)</span>\n\t<span class=\"br0\">{</span>\n\t\tScore<span class=\"sy0\">=</span>PRI.<span\
+      \ class=\"me0\">Score</span>;\n\t\tDeaths<span class=\"sy0\">=</span>PRI.<span\
+      \ class=\"me0\">Deaths</span>;\n\t\tKills<span class=\"sy0\">=</span>PRI.<span\
+      \ class=\"me0\">Kills</span>;\n\t\tHeadCount<span class=\"sy0\">=</span>PRI.<span\
+      \ class=\"me0\">HeadCount</span>;\t\t\n\t\t<span class=\"co1\">//log(\"$Id:\
+      \ ScoreHolder.uc 87 2006-01-21 18:48:59Z sweavo $ saved score of \"$kills$\"\
+      +\"$headcount$\"-\"$deaths$\"=\"$score$\" for ID \"$hash);</span>\n\t<span class=\"\
+      br0\">}</span>\n\t<span class=\"kw2\">else</span>\n\t<span class=\"br0\">{</span>\n\
+      \t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>Next <span class=\"\
+      sy0\">==</span> <span class=\"kw5\">None</span><span class=\"br0\">)</span>\n\
+      \t\t<span class=\"br0\">{</span>\n\t\t\tNext <span class=\"sy0\">=</span> <span\
+      \ class=\"kw4\">Spawn</span><span class=\"br0\">(</span><span class=\"kw1\"\
+      >class</span><span class=\"st0\">'ScoreHolder'</span><span class=\"br0\">)</span>;<span\
+      \ class=\"co1\">//TODO isn't this going to get tidied up unexpectedly?</span>\n\
+      \t\t\tNext.<span class=\"me0\">PlayerHash</span><span class=\"sy0\">=</span>Hash;\n\
+      \t\t\t<span class=\"co1\">//log(\"$Id: ScoreHolder.uc 87 2006-01-21 18:48:59Z\
+      \ sweavo $ spawned new ScoreHolder for ID \"$hash);\t\t\t\t</span>\n\t\t\tNext.<span\
+      \ class=\"me0\">SaveScore</span><span class=\"br0\">(</span>Hash,PRI<span class=\"\
+      br0\">)</span>;\n\t\t<span class=\"br0\">}</span>\n\t\t<span class=\"kw2\">else</span>\n\
+      \t\t<span class=\"br0\">{</span>\n\t\t\t<span class=\"co1\">//log(\"$Id: ScoreHolder.uc\
+      \ 87 2006-01-21 18:48:59Z sweavo $ save recursing \"$hash);\t\t\t\t</span>\n\
+      \t\t\tNext.<span class=\"me0\">SaveScore</span><span class=\"br0\">(</span>Hash,PRI<span\
+      \ class=\"br0\">)</span>;\n\t\t<span class=\"br0\">}</span>\n\t<span class=\"\
+      br0\">}</span>\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">function</span>\
+      \ LoadScore<span class=\"br0\">(</span><span class=\"kw5\">string</span> Hash,\
+      \ TeamPlayerReplicationInfo PRI<span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>PlayerHash\
+      \ <span class=\"sy0\">==</span> Hash<span class=\"br0\">)</span>\n\t<span class=\"\
+      br0\">{</span>\n\t\tPRI.<span class=\"me0\">Score</span><span class=\"sy0\"\
+      >=</span>Score;\n\t\tPRI.<span class=\"me0\">Deaths</span><span class=\"sy0\"\
+      >=</span>Deaths;\n\t\tPRI.<span class=\"me0\">Kills</span><span class=\"sy0\"\
+      >=</span>Kills;\n\t\tPRI.<span class=\"me0\">HeadCount</span><span class=\"\
+      sy0\">=</span>HeadCount;\t\t\n\t\t<span class=\"co1\">//log(\"$Id: ScoreHolder.uc\
+      \ 87 2006-01-21 18:48:59Z sweavo $ loaded score of \"$kills$\"+\"$headcount$\"\
+      -\"$deaths$\"=\"$score$\" for ID \"$Hash);</span>\n\t<span class=\"br0\">}</span>\n\
+      \t<span class=\"kw2\">else</span>\n\t<span class=\"br0\">{</span>\n\t\t<span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span>Next <span class=\"sy0\"\
+      >==</span> <span class=\"kw5\">None</span><span class=\"br0\">)</span>\n\t\t\
+      <span class=\"br0\">{</span>\n\t\t\t<span class=\"co1\">//log(\"$Id: ScoreHolder.uc\
+      \ 87 2006-01-21 18:48:59Z sweavo $ no saved score for \"$Hash);\t\t\t\t</span>\n\
+      \t\t<span class=\"br0\">}</span>\n\t\t<span class=\"kw2\">else</span>\n\t\t\
+      <span class=\"br0\">{</span>\n\t\t\t<span class=\"co1\">//log(\"$Id: ScoreHolder.uc\
+      \ 87 2006-01-21 18:48:59Z sweavo $ load recursing \"$Hash);\t\t\t\t</span>\n\
+      \t\t\tNext.<span class=\"me0\">LoadScore</span><span class=\"br0\">(</span>Hash,PRI<span\
+      \ class=\"br0\">)</span>;\n\t\t<span class=\"br0\">}</span>\n\t<span class=\"\
+      br0\">}</span>\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">defaultproperties</span>\n\
+      <span class=\"br0\">{</span>\n\tbHidden<span class=\"sy0\">=</span><span class=\"\
+      kw6\">true</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>Recursively,\
+      \ if the ScoreHolder.PlayerID matches the stats id then it sets the score, kills,\
+      \ deaths, and headcount; else it recurses on its Next. If Next is nothing then\
+      \ it simply returns without loading anything into the PRI.</p>\n<p>Savescore\
+      \ recurses in the same manner except if the Next==Nothing then it spawns a new\
+      \ ScoreHolder and sets its PlayerID to the passed-in Stats ID, then when it\
+      \ recurses one more time it will match, and save the score in that slot. By\
+      \ recursing one more time we keep all the actual save logic in one place. The\
+      \ recursion only happens when someone quits the game so it's hardly going to\
+      \ being the server to its knees&#160;:-)</p>\n<p>Since the ScoreHolders are\
+      \ all actors, they are destroyed at level end.</p>\n<p>There may be a bug in\
+      \ the load: I don't know whether there are other reasons for a PRI to be created?\
+      \ If this happens the player's score will be loaded from the buffer (if present\
+      \ - i.e. if the player has quit at any stage). I can't imagine that PRIs <i>are</i>\
+      \ created at any time other than player joining the server, but hey.</p>\n<p>Here's\
+      \ the source (and makefile, if you use cygwin): <a rel=\"nofollow\" class=\"\
+      external free\" href=\"http://www.soycarretero.com/misc/utmods/MutYouDontQuitThatEasy_87_src.tgz\"\
+      >http://www.soycarretero.com/misc/utmods/MutYouDontQuitThatEasy_87_src.tgz</a></p>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.084 seconds\nReal time usage:\
+      \ 0.272 seconds\nPreprocessor visited node count: 9/1000000\nPreprocessor generated\
+      \ node count: 48/1000000\nPost‐expand include size: 0/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:2978-0!*!*!*!*!*!* and timestamp 20221122021626 and revision\
+      \ id 32991\n -->\n"
+  categories: []
+  links: []
+  templates: []
+  images: []
+  externallinks:
+  - "http://www.soycarretero.com/misc/utmods/MutYouDontQuitThatEasy_87_src.tgz"
+  sections:
+  - toclevel: 1
+    level: "3"
+    line: "23/02/2006 Bug found :-("
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Sweavo/MutYouDontQuitThatEasy"
+    byteoffset: 149
+    anchor: "23.2F02.2F2006_Bug_found_:-.28"
+  displaytitle: "Legacy:Sweavo/MutYouDontQuitThatEasy"
+  iwlinks: []
+  wikitext:
+    text: "The mutator has a reference to a ScoreHolder which subclasses actor.  On\
+      \ prebeginplay it creates one called dummy and sets its playerID to 0.\n\n----\n\
+      \n===23/02/2006 Bug found :-(===\n\nIt has been intermittently giving people\
+      \ a score when they join the server.  I think this is due to different players\
+      \ sharing a playerhash.  Try GameStats.GetStatsIdentifier() instead.\n\n----\n\
+      \n<uscript>\n/*****************************************************************************\n\
+      \ *\n * $Id: MutYouDontQuitThatEasy.uc 87 2006-01-21 18:48:59Z sweavo $\n *\n\
+      \ * Email: public at sweavo.34sp.com \n *\n * If a player quits and returns\
+      \ again, they keep their score.  Especially\n * useful if a mutator may cause\
+      \ negative scores, like the SASKillsMinusDeaths\n * \n *****************************************************************************/\n\
+      class MutYouDontQuitThatEasy extends Mutator;\n\nvar ScoreHolder Dummy;\n\n\
+      event PreBeginPlay()\n{\n\tif ( !MutatorIsAllowed() )\n\t\tDestroy();\n\telse\
+      \ if (bAddToServerPackages)\n\t\tAddToPackageMap();\n\t\t\n\tDummy=spawn(class'ScoreHolder');\n\
+      }\n\n// When PlayerReplicationInfos are created, load their scores if available\n\
+      function bool CheckReplacement(Actor Other,out byte SuperRelevant)\n{\n\tif(TeamPlayerReplicationInfo(Other)!=None\
+      \ && PlayerController(Other.Owner)!=None)\n\t{\n\t\t//log(\"$Id: MutYouDontQuitThatEasy.uc\
+      \ 87 2006-01-21 18:48:59Z sweavo $ mutator calls load: \"$PlayerReplicationInfo(Other).PlayerName$\"\
+      \ - \"$PlayerController(Other.Owner).GetPlayerIdHash());\n\n\t\tDummy.LoadScore(PlayerController(Other.Owner).GetPlayerIdHash(),TeamPlayerReplicationInfo(Other));\n\
+      \t\t\n\t}\t\t\n\treturn super.CheckReplacement(Other,SuperRelevant);\t\n}\n\n\
+      function NotifyLogout(Controller Exiting)\n{\n\tif (PlayerController(Exiting)!=None)\n\
+      \t{\n\t\t//log(\"$Id: MutYouDontQuitThatEasy.uc 87 2006-01-21 18:48:59Z sweavo\
+      \ $ mutator calls save: \"$PlayerController(Exiting).PlayerReplicationInfo.PlayerName$\"\
+      \ \"$PlayerController(Exiting).PlayerReplicationInfo.PlayerId);\n\t\tDummy.SaveScore(PlayerController(Exiting).GetPlayerIdHash(),TeamPlayerReplicationInfo(Exiting.PlayerReplicationInfo));\n\
+      \t}\n}\nfunction Destroyed()\n{\n\t//log(\"$Id: MutYouDontQuitThatEasy.uc 87\
+      \ 2006-01-21 18:48:59Z sweavo $ method 'Destroyed' was called.\");\n\tSuper.Destroyed();\n\
+      }\n\ndefaultproperties\n{\n    bHidden=true\n    GroupName=\"Score Mods\"\n\
+      \    FriendlyName=\"[SAS]You Don't Quit That Easy $Revision: 64 $\"\n    Description=\"\
+      If a player quits and returns, they keep their score.  By sweavo for SAS http://wiki.beyondunreal.com/wiki/Sweavo\
+      \ http://www.sassniperclan.com/\"\n}\n</uscript>\n\nWhen CheckReplacement spots\
+      \ a TeamPlayerReplicationInfo being created, it calls Dummy.LoadScore passing\
+      \ in the player's stats ID and the PRI itself.  If the player's score is not\
+      \ stored, this has no effect on the PRI.\n\nWhen NotifyLogout is called, Dummy.SaveScore\
+      \ is called with the same parameters.  \n\n<uscript>\n/*****************************************************************************\n\
+      \ *\n * $Id: ScoreHolder.uc 87 2006-01-21 18:48:59Z sweavo $\n *\n * Email:\
+      \ public at sweavo.34sp.com \n *\n * Part of MutYouDontQuitThatEasy\n *\n *\
+      \ There is one of these present for each player who has been in this level.\n\
+      \ *\n *****************************************************************************/\n\
+      \nclass ScoreHolder extends Actor;\n\nvar string PlayerHash;\nvar int Score;\n\
+      var int Deaths;\nvar int Kills;\nvar int Headcount;\n\nvar ScoreHolder Next;\n\
+      \nfunction SaveScore(String Hash,TeamPlayerReplicationInfo PRI)\n{\n\tif (PlayerHash\
+      \ == Hash)\n\t{\n\t\tScore=PRI.Score;\n\t\tDeaths=PRI.Deaths;\n\t\tKills=PRI.Kills;\n\
+      \t\tHeadCount=PRI.HeadCount;\t\t\n\t\t//log(\"$Id: ScoreHolder.uc 87 2006-01-21\
+      \ 18:48:59Z sweavo $ saved score of \"$kills$\"+\"$headcount$\"-\"$deaths$\"\
+      =\"$score$\" for ID \"$hash);\n\t}\n\telse\n\t{\n\t\tif (Next == None)\n\t\t\
+      {\n\t\t\tNext = Spawn(class'ScoreHolder');//TODO isn't this going to get tidied\
+      \ up unexpectedly?\n\t\t\tNext.PlayerHash=Hash;\n\t\t\t//log(\"$Id: ScoreHolder.uc\
+      \ 87 2006-01-21 18:48:59Z sweavo $ spawned new ScoreHolder for ID \"$hash);\t\
+      \t\t\t\n\t\t\tNext.SaveScore(Hash,PRI);\n\t\t}\n\t\telse\n\t\t{\n\t\t\t//log(\"\
+      $Id: ScoreHolder.uc 87 2006-01-21 18:48:59Z sweavo $ save recursing \"$hash);\t\
+      \t\t\t\n\t\t\tNext.SaveScore(Hash,PRI);\n\t\t}\n\t}\n}\n\nfunction LoadScore(string\
+      \ Hash, TeamPlayerReplicationInfo PRI)\n{\n\tif (PlayerHash == Hash)\n\t{\n\t\
+      \tPRI.Score=Score;\n\t\tPRI.Deaths=Deaths;\n\t\tPRI.Kills=Kills;\n\t\tPRI.HeadCount=HeadCount;\t\
+      \t\n\t\t//log(\"$Id: ScoreHolder.uc 87 2006-01-21 18:48:59Z sweavo $ loaded\
+      \ score of \"$kills$\"+\"$headcount$\"-\"$deaths$\"=\"$score$\" for ID \"$Hash);\n\
+      \t}\n\telse\n\t{\n\t\tif (Next == None)\n\t\t{\n\t\t\t//log(\"$Id: ScoreHolder.uc\
+      \ 87 2006-01-21 18:48:59Z sweavo $ no saved score for \"$Hash);\t\t\t\t\n\t\t\
+      }\n\t\telse\n\t\t{\n\t\t\t//log(\"$Id: ScoreHolder.uc 87 2006-01-21 18:48:59Z\
+      \ sweavo $ load recursing \"$Hash);\t\t\t\t\n\t\t\tNext.LoadScore(Hash,PRI);\n\
+      \t\t}\n\t}\n}\n\ndefaultproperties\n{\n\tbHidden=true\n}\n\t\t\n</uscript>\n\
+      \nRecursively, if the ScoreHolder.PlayerID matches the stats id then it sets\
+      \ the score, kills, deaths, and headcount; else it recurses on its Next.  If\
+      \ Next is nothing then it simply returns without loading anything into the PRI.\n\
+      \nSavescore recurses in the same manner except if the Next==Nothing then it\
+      \ spawns a new ScoreHolder and sets its PlayerID to the passed-in Stats ID,\
+      \ then when it recurses one more time it will match, and save the score in that\
+      \ slot.  By recursing one more time we keep all the actual save logic in one\
+      \ place.  The recursion only happens when someone quits the game so it's hardly\
+      \ going to being the server to its knees :-)\n\nSince the ScoreHolders are all\
+      \ actors, they are destroyed at level end.\n\nThere may be a bug in the load:\
+      \ I don't know whether there are other reasons for a PRI to be created?  If\
+      \ this happens the player's score will be loaded from the buffer (if present\
+      \ - i.e. if the player has quit at any stage).  I can't imagine that PRIs ''are''\
+      \ created at any time other than player joining the server, but hey.\n\nHere's\
+      \ the source (and makefile, if you use cygwin): http://www.soycarretero.com/misc/utmods/MutYouDontQuitThatEasy_87_src.tgz"
+  properties: []
+  revId: 32991
+name: "Legacy:Sweavo/MutYouDontQuitThatEasy"
+revision:
+  revid: 32991
+  parentid: 7871
+  user: "Sweavo"
+  timestamp: 1221145903.000000000
+  comment: "domain changed"
+timestamp: 1669083387.500256000

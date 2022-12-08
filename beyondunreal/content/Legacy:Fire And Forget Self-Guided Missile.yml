@@ -1,0 +1,326 @@
+---
+parse:
+  title: "Legacy:Fire And Forget Self-Guided Missile"
+  text:
+    text: "<p>This tutorial describes an implementation of self-guided missile.</p>\n\
+      <p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n\
+      </div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#Note\"><span\
+      \ class=\"tocnumber\">1</span> <span class=\"toctext\">Note</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-2\"><a href=\"#What_we_will_do\"><span class=\"\
+      tocnumber\">2</span> <span class=\"toctext\">What we will do</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-3\"><a href=\"#Implementation_overview\"><span\
+      \ class=\"tocnumber\">3</span> <span class=\"toctext\">Implementation overview</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-4\"><a href=\"#Code_and_comments\"><span class=\"\
+      tocnumber\">4</span> <span class=\"toctext\">Code and comments</span></a></li>\n\
+      </ul>\n</div>\n<p></p>\n<h2><span class=\"mw-headline\" id=\"Note\">Note</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Fire_And_Forget_Self-Guided_Missile?section=1\" title=\"\
+      Edit section: Note\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>This is not a complete mutator. This example assumes that you should implement\
+      \ your own class (probably derived from RocketProj) and insert the code below\
+      \ in it. For details on how implement the complete mutator, see <a href=\"/Legacy:Weapon_Mutator_Tutorial\"\
+      \ title=\"Legacy:Weapon Mutator Tutorial\">Weapon Mutator Tutorial</a> for example.</p>\n\
+      <h2><span class=\"mw-headline\" id=\"What_we_will_do\">What we will do</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Fire_And_Forget_Self-Guided_Missile?section=2\" title=\"\
+      Edit section: What we will do\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>We will implement a 'fire-and-forget' missile. Original\
+      \ UT2004 rocket launcher may fire with player-guided missile, i.e. player (bot\
+      \ or human) should select the target and 'point' to it with crosshair before\
+      \ launching the missile. Our missile will be self-guied - it will pick the target\
+      \ and adjust the trajectory without any player intervention.</p>\n<h2><span\
+      \ class=\"mw-headline\" id=\"Implementation_overview\">Implementation overview</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Fire_And_Forget_Self-Guided_Missile?section=3\" title=\"\
+      Edit section: Implementation overview\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>Our missile will 'think' at each game tick. This means\
+      \ that the logic and algorithms should be very fast. On the other side, we would\
+      \ like to get a quite 'intelligent' and physicaly realistic missile. To achieve\
+      \ this, we will guide with the following assumptions:</p>\n<ol>\n<li>Flying\
+      \ missile observes the semisphere in front of itself .</li>\n<li>Missile treats\
+      \ all targets as motionless and doesn't try to predict the target location in\
+      \ the near future.</li>\n<li>Missile should't adjust it's trajectory too much\
+      \ at once. For example, it shouldn't turn the direction with 90 (and even 10\
+      \ or 5) degrees during one tick - it should do a few tens small adjustments\
+      \ with 0.5 degree each instead. This gives a smooth, arch-like and realistic\
+      \ resulting trajectory.</li>\n</ol>\n<h2><span class=\"mw-headline\" id=\"Code_and_comments\"\
+      >Code and comments</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Fire_And_Forget_Self-Guided_Missile?section=4\"\
+      \ title=\"Edit section: Code and comments\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>The following two new variables controls the behaviour\
+      \ of missile:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">var</span> <span class=\"kw5\">float</span> MaxAngleDelta;</pre></div>\n\
+      </div>\n<p>This is a maximum angle (in radians) to rotate the direction vector\
+      \ at each tick. For example, if V1 = Normal(Vector(Rotation)) at tick N and\
+      \ V2 = Normal(Vector(Rotation)) at tick N+1, then Acos(Normal(V1) Dot Normal(V2))\
+      \ &lt;= MaxAngleDelta. Let's set it to 0.0015. This means that if missile speed\
+      \ is 1000 UUs/second and one game tick takes 0.01 second, it will require at\
+      \ least 104 ticks to turn the direction on 90 degrees. This is pleasantly smooth\
+      \ on my taste.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">var</span> <span class=\"kw5\">float</span> MaxTargetRadius;</pre></div>\n\
+      </div>\n<p>This is a 'radius of visibility' (in UUs) - our missile M will 'see'\
+      \ the target T if VSize(T.Location - M.Location) &lt;= MaxTargetRadius. Let's\
+      \ set it to 10000. On the most of maps, this means the distance 'from missile\
+      \ to the end of the world'. It's large, really.</p>\n<p><b>End of well-documented\
+      \ stuff</b></p>\n<p>This is a function which observes the semi-sphere in front\
+      \ of the flying missile and picks the target which may be reached with the best\
+      \ probability.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">simulated</span> <span class=\"kw1\">function</span> <span class=\"kw9\"\
+      >Pawn</span> PickTarget<span class=\"br0\">(</span><span class=\"kw5\">float</span>\
+      \ DeltaTime, <span class=\"kw1\">out</span> <span class=\"kw5\">float</span>\
+      \ OutDistance, <span class=\"kw1\">out</span> <span class=\"kw5\">float</span>\
+      \ OutAngle<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n    <span\
+      \ class=\"kw1\">local</span> <span class=\"kw9\">Pawn</span> Candidate, ReachableTarget,\
+      \ UnreachableTarget;\n    <span class=\"kw1\">local</span> <span class=\"kw5\"\
+      >vector</span> direction, V;\n    <span class=\"kw1\">local</span> <span class=\"\
+      kw5\">float</span> D, distance, angle;\n \n    Candidate <span class=\"sy0\"\
+      >=</span> <span class=\"kw5\">None</span>;\n    ReachableTarget <span class=\"\
+      sy0\">=</span> <span class=\"kw5\">None</span>;\n    UnreachableTarget <span\
+      \ class=\"sy0\">=</span> <span class=\"kw5\">None</span>;\n    OutDistance <span\
+      \ class=\"sy0\">=</span> <span class=\"nu0\">0.0</span>;\n    OutAngle <span\
+      \ class=\"sy0\">=</span> <span class=\"nu0\">0.0</span>;\n    direction <span\
+      \ class=\"sy0\">=</span> <span class=\"kw3\">Normal</span><span class=\"br0\"\
+      >(</span><span class=\"kw5\">Vector</span><span class=\"br0\">(</span><span\
+      \ class=\"kw7\">Rotation</span><span class=\"br0\">)</span><span class=\"br0\"\
+      >)</span>;\n    D <span class=\"sy0\">=</span> <span class=\"sy0\">-</span>\
+      \ <span class=\"br0\">(</span>direction dot <span class=\"kw7\">Location</span><span\
+      \ class=\"br0\">)</span>;\n \n    <span class=\"kw2\">foreach</span> <span class=\"\
+      kw2\">VisibleCollidingActors</span><span class=\"br0\">(</span><span class=\"\
+      kw1\">class</span><span class=\"st0\">'Pawn'</span>, Candidate, MaxTargetRadius<span\
+      \ class=\"br0\">)</span>\n    <span class=\"br0\">{</span>\n       <span class=\"\
+      co1\">// Skip myself and dying pawns</span>\n       <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span><span class=\"br0\">(</span>Candidate <span class=\"\
+      sy0\">==</span> <span class=\"kw7\">Instigator</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">||</span> <span class=\"br0\">(</span>Candidate.<span\
+      \ class=\"kw3\">IsInState</span><span class=\"br0\">(</span><span class=\"st0\"\
+      >'Dying'</span><span class=\"br0\">)</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span>\n          <span class=\"kw2\">continue</span>;\n \n\
+      \       <span class=\"co1\">// Skip teammates in team games</span>\n       <span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"kw7\">Level</span>.<span\
+      \ class=\"kw7\">Game</span>.<span class=\"me0\">bTeamGame</span> <span class=\"\
+      sy0\">&amp;&amp;</span> <span class=\"br0\">(</span><span class=\"kw7\">Instigator</span>.<span\
+      \ class=\"me0\">GetTeamNum</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">==</span> Candidate.<span class=\"me0\">GetTeamNum</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span>\n          <span class=\"kw2\">continue</span>;\n \n\
+      \       <span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      br0\">(</span>direction dot Candidate.<span class=\"kw7\">Location</span> <span\
+      \ class=\"sy0\">+</span> D<span class=\"br0\">)</span> <span class=\"sy0\">&gt;</span>\
+      \ <span class=\"nu0\">0.0</span><span class=\"br0\">)</span>\n       <span class=\"\
+      br0\">{</span>\n          <span class=\"co1\">// Candidate is in front semisphere\
+      \ of the missile</span>\n          V <span class=\"sy0\">=</span> Candidate.<span\
+      \ class=\"kw7\">Location</span> <span class=\"sy0\">-</span> <span class=\"\
+      kw7\">Location</span>;\n          distance <span class=\"sy0\">=</span> <span\
+      \ class=\"kw3\">VSize</span><span class=\"br0\">(</span>V<span class=\"br0\"\
+      >)</span>;\n          angle <span class=\"sy0\">=</span> <span class=\"kw3\"\
+      >Acos</span><span class=\"br0\">(</span>direction dot <span class=\"kw3\">Normal</span><span\
+      \ class=\"br0\">(</span>V<span class=\"br0\">)</span><span class=\"br0\">)</span>;\n\
+      \          <span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      br0\">(</span><span class=\"br0\">(</span>distance <span class=\"sy0\">/</span>\
+      \ Speed<span class=\"br0\">)</span> <span class=\"sy0\">/</span> DeltaTime<span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">*</span> MaxAngleDelta <span class=\"\
+      sy0\">&gt;=</span> angle<span class=\"br0\">)</span>\n          <span class=\"\
+      br0\">{</span>\n             <span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span><span class=\"br0\">(</span>ReachableTarget <span class=\"sy0\">==</span>\
+      \ <span class=\"kw5\">None</span><span class=\"br0\">)</span> <span class=\"\
+      sy0\">||</span> <span class=\"br0\">(</span>distance <span class=\"sy0\">&lt;</span>\
+      \ OutDistance<span class=\"br0\">)</span><span class=\"br0\">)</span>\n    \
+      \         <span class=\"br0\">{</span>\n                ReachableTarget <span\
+      \ class=\"sy0\">=</span> Candidate;\n                OutDistance <span class=\"\
+      sy0\">=</span> distance;\n                OutAngle <span class=\"sy0\">=</span>\
+      \ angle;\n             <span class=\"br0\">}</span>\n          <span class=\"\
+      br0\">}</span>\n          <span class=\"kw2\">else</span>\n          <span class=\"\
+      br0\">{</span>  \n             <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span><span class=\"br0\">(</span>UnreachableTarget <span class=\"sy0\"\
+      >==</span> <span class=\"kw5\">None</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">||</span> <span class=\"br0\">(</span>angle <span class=\"sy0\"\
+      >&lt;</span> OutAngle<span class=\"br0\">)</span><span class=\"br0\">)</span>\n\
+      \             <span class=\"br0\">{</span>  \n                UnreachableTarget\
+      \ <span class=\"sy0\">=</span> Candidate;\n                OutDistance <span\
+      \ class=\"sy0\">=</span> distance;\n                OutAngle <span class=\"\
+      sy0\">=</span> angle;\n             <span class=\"br0\">}</span>\n         \
+      \ <span class=\"br0\">}</span>\n       <span class=\"br0\">}</span>\n    <span\
+      \ class=\"br0\">}</span>\n \n    <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span>ReachableTarget <span class=\"sy0\">!=</span> <span class=\"kw5\"\
+      >None</span><span class=\"br0\">)</span>\n       <span class=\"kw2\">return</span>\
+      \ ReachableTarget;\n    <span class=\"kw2\">return</span> UnreachableTarget;\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>This is a function which\
+      \ is called each game tick and adjusts the missile's trajectory in attempt to\
+      \ reach the picked target.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">simulated</span> <span class=\"kw1\">function</span> <span class=\"kw4\"\
+      >Tick</span><span class=\"br0\">(</span><span class=\"kw5\">float</span> DeltaTime<span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n    <span class=\"kw1\"\
+      >local</span> <span class=\"kw9\">Pawn</span> Target;\n    <span class=\"kw1\"\
+      >local</span> <span class=\"kw5\">float</span> angle, distance, lambda;\n \n\
+      \    Target <span class=\"sy0\">=</span> PickTarget<span class=\"br0\">(</span>DeltaTime,\
+      \ distance, angle<span class=\"br0\">)</span>;\n    <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span><span class=\"br0\">(</span>Target <span class=\"\
+      sy0\">==</span> <span class=\"kw5\">None</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">||</span> <span class=\"br0\">(</span>angle <span class=\"\
+      sy0\">==</span> <span class=\"nu0\">0.0</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span>\n       <span class=\"kw2\">return</span>;\n \n   \
+      \ <span class=\"kw2\">if</span> <span class=\"br0\">(</span>angle <span class=\"\
+      sy0\">&lt;=</span> MaxAngleDelta<span class=\"br0\">)</span>\n       <span class=\"\
+      kw7\">Velocity</span> <span class=\"sy0\">=</span> <span class=\"kw3\">VSize</span><span\
+      \ class=\"br0\">(</span><span class=\"kw7\">Velocity</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">*</span> <span class=\"kw3\">Normal</span><span\
+      \ class=\"br0\">(</span>Target.<span class=\"kw7\">Location</span> <span class=\"\
+      sy0\">-</span> <span class=\"kw7\">Location</span><span class=\"br0\">)</span>;\n\
+      \    <span class=\"kw2\">else</span>\n    <span class=\"br0\">{</span>\n   \
+      \    lambda <span class=\"sy0\">=</span> MaxAngleDelta <span class=\"sy0\">/</span>\
+      \ <span class=\"br0\">(</span>angle <span class=\"sy0\">-</span> MaxAngleDelta<span\
+      \ class=\"br0\">)</span>;\n       <span class=\"kw7\">Velocity</span> <span\
+      \ class=\"sy0\">=</span> <span class=\"kw3\">Normal</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">(</span><span class=\"br0\">(</span><span class=\"\
+      kw3\">Normal</span><span class=\"br0\">(</span><span class=\"kw5\">Vector</span><span\
+      \ class=\"br0\">(</span><span class=\"kw7\">Rotation</span><span class=\"br0\"\
+      >)</span><span class=\"br0\">)</span> <span class=\"sy0\">*</span> distance\
+      \ <span class=\"sy0\">+</span> <span class=\"kw7\">Location</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">+</span>\n                lambda <span class=\"\
+      sy0\">*</span> Target.<span class=\"kw7\">Location</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">*</span> <span class=\"br0\">(</span><span class=\"\
+      nu0\">1.0</span> <span class=\"sy0\">/</span> <span class=\"br0\">(</span><span\
+      \ class=\"nu0\">1.0</span> <span class=\"sy0\">+</span> lambda<span class=\"\
+      br0\">)</span><span class=\"br0\">)</span> <span class=\"sy0\">-</span> <span\
+      \ class=\"kw7\">Location</span><span class=\"br0\">)</span> <span class=\"sy0\"\
+      >*</span> <span class=\"kw3\">VSize</span><span class=\"br0\">(</span><span\
+      \ class=\"kw7\">Velocity</span><span class=\"br0\">)</span>;\n    <span class=\"\
+      br0\">}</span>\n    Speed <span class=\"sy0\">=</span> <span class=\"kw3\">VSize</span><span\
+      \ class=\"br0\">(</span><span class=\"kw7\">Velocity</span><span class=\"br0\"\
+      >)</span>;\n    <span class=\"kw4\">SetRotation</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw5\">rotator</span><span class=\"br0\">(</span><span class=\"kw7\"\
+      >Velocity</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n\n<!-- \nNewPP limit report\n\
+      CPU time usage: 0.076 seconds\nReal time usage: 0.078 seconds\nPreprocessor\
+      \ visited node count: 27/1000000\nPreprocessor generated node count: 100/1000000\n\
+      Post‐expand include size: 0/2097152 bytes\nTemplate argument size: 0/2097152\
+      \ bytes\nHighest expansion depth: 2/40\nExpensive parser function count: 0/100\n\
+      -->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n100.00%\
+      \    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:1289-0!*!0!!en!*!*\
+      \ and timestamp 20221118014844 and revision id 3293\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Weapon Mutator Tutorial"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Note"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Fire_And_Forget_Self-Guided_Missile"
+    byteoffset: 67
+    anchor: "Note"
+  - toclevel: 1
+    level: "2"
+    line: "What we will do"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Fire_And_Forget_Self-Guided_Missile"
+    byteoffset: 367
+    anchor: "What_we_will_do"
+  - toclevel: 1
+    level: "2"
+    line: "Implementation overview"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:Fire_And_Forget_Self-Guided_Missile"
+    byteoffset: 736
+    anchor: "Implementation_overview"
+  - toclevel: 1
+    level: "2"
+    line: "Code and comments"
+    number: "4"
+    index: "4"
+    fromtitle: "Legacy:Fire_And_Forget_Self-Guided_Missile"
+    byteoffset: 1500
+    anchor: "Code_and_comments"
+  displaytitle: "Legacy:Fire And Forget Self-Guided Missile"
+  iwlinks: []
+  wikitext:
+    text: "This tutorial describes an implementation of self-guided missile.\n\n==Note==\n\
+      \nThis is not a complete mutator. This example assumes that you should implement\
+      \ your own class (probably derived from RocketProj) and insert the code below\
+      \ in it. For details on how implement the complete mutator, see [[Legacy:Weapon\
+      \ Mutator Tutorial|Weapon Mutator Tutorial]] for example.\n\n==What we will\
+      \ do==\n\nWe will implement a 'fire-and-forget' missile. Original UT2004 rocket\
+      \ launcher may fire with player-guided missile, i.e. player (bot or human) should\
+      \ select the target and 'point' to it with crosshair before launching the missile.\
+      \ Our missile will be self-guied - it will pick the target and adjust the trajectory\
+      \ without any player intervention.\n\n==Implementation overview==\n\nOur missile\
+      \ will 'think' at each game tick. This means that the logic and algorithms should\
+      \ be very fast. On the other side, we would like to get a quite 'intelligent'\
+      \ and physicaly realistic missile. To achieve this, we will guide with the following\
+      \ assumptions:\n\n# Flying missile observes the semisphere in front of itself\
+      \ .\n# Missile treats all targets as motionless and doesn't try to predict the\
+      \ target location in the near future.\n# Missile should't adjust it's trajectory\
+      \ too much at once. For example, it shouldn't turn the direction with 90 (and\
+      \ even 10 or 5) degrees during one tick - it should do a few tens small adjustments\
+      \ with 0.5 degree each instead. This gives a smooth, arch-like and realistic\
+      \ resulting trajectory.\n\n==Code and comments==\n\nThe following two new variables\
+      \ controls the behaviour of missile:\n\n<uscript>\nvar float MaxAngleDelta;\n\
+      </uscript>\n\nThis is a maximum angle (in radians) to rotate the direction vector\
+      \ at each tick. For example, if V1 = Normal(Vector(Rotation)) at tick N and\
+      \ V2 = Normal(Vector(Rotation)) at tick N+1, then Acos(Normal(V1) Dot Normal(V2))\
+      \ <= MaxAngleDelta. Let's set it to 0.0015. This means that if missile speed\
+      \ is 1000 UUs/second and one game tick takes 0.01 second, it will require at\
+      \ least 104 ticks to turn the direction on 90 degrees. This is pleasantly smooth\
+      \ on my taste.\n\n<uscript>\nvar float MaxTargetRadius;\n</uscript>\n\nThis\
+      \ is a 'radius of visibility' (in UUs) - our missile M will 'see' the target\
+      \ T if VSize(T.Location - M.Location) <= MaxTargetRadius. Let's set it to 10000.\
+      \ On the most of maps, this means the distance 'from missile to the end of the\
+      \ world'. It's large, really.\n\n<b>End of well-documented stuff</b>\n\nThis\
+      \ is a function which observes the semi-sphere in front of the flying missile\
+      \ and picks the target which may be reached with the best probability.\n\n<uscript>\n\
+      simulated function Pawn PickTarget(float DeltaTime, out float OutDistance, out\
+      \ float OutAngle)\n{\n    local Pawn Candidate, ReachableTarget, UnreachableTarget;\n\
+      \    local vector direction, V;\n    local float D, distance, angle;\n\n   \
+      \ Candidate = None;\n    ReachableTarget = None;\n    UnreachableTarget = None;\n\
+      \    OutDistance = 0.0;\n    OutAngle = 0.0;\n    direction = Normal(Vector(Rotation));\n\
+      \    D = - (direction dot Location);\n\n    foreach VisibleCollidingActors(class'Pawn',\
+      \ Candidate, MaxTargetRadius)\n    {\n       // Skip myself and dying pawns\n\
+      \       if ((Candidate == Instigator) || (Candidate.IsInState('Dying')))\n \
+      \         continue;\n\n       // Skip teammates in team games\n       if (Level.Game.bTeamGame\
+      \ && (Instigator.GetTeamNum() == Candidate.GetTeamNum()))\n          continue;\n\
+      \n       if ((direction dot Candidate.Location + D) > 0.0)\n       {\n     \
+      \     // Candidate is in front semisphere of the missile\n          V = Candidate.Location\
+      \ - Location;\n          distance = VSize(V);\n          angle = Acos(direction\
+      \ dot Normal(V));\n          if (((distance / Speed) / DeltaTime) * MaxAngleDelta\
+      \ >= angle)\n          {\n             if ((ReachableTarget == None) || (distance\
+      \ < OutDistance))\n             {\n                ReachableTarget = Candidate;\n\
+      \                OutDistance = distance;\n                OutAngle = angle;\n\
+      \             }\n          }\n          else\n          {  \n             if\
+      \ ((UnreachableTarget == None) || (angle < OutAngle))\n             {  \n  \
+      \              UnreachableTarget = Candidate;\n                OutDistance =\
+      \ distance;\n                OutAngle = angle;\n             }\n          }\n\
+      \       }\n    }\n    \n    if (ReachableTarget != None)\n       return ReachableTarget;\n\
+      \    return UnreachableTarget;\n}\n</uscript>\n\nThis is a function which is\
+      \ called each game tick and adjusts the missile's trajectory in attempt to reach\
+      \ the picked target.\n\n<uscript>\nsimulated function Tick(float DeltaTime)\n\
+      {\n    local Pawn Target;\n    local float angle, distance, lambda;\n\n    Target\
+      \ = PickTarget(DeltaTime, distance, angle);\n    if ((Target == None) || (angle\
+      \ == 0.0))\n       return;\n\n    if (angle <= MaxAngleDelta)\n       Velocity\
+      \ = VSize(Velocity) * Normal(Target.Location - Location);\n    else\n    {\n\
+      \       lambda = MaxAngleDelta / (angle - MaxAngleDelta);\n       Velocity =\
+      \ Normal(((Normal(Vector(Rotation)) * distance + Location) +\n             \
+      \   lambda * Target.Location) * (1.0 / (1.0 + lambda)) - Location) * VSize(Velocity);\n\
+      \    }\n    Speed = VSize(Velocity);\n    SetRotation (rotator(Velocity));\n\
+      }\n</uscript>"
+  properties: []
+  revId: 3293
+name: "Legacy:Fire And Forget Self-Guided Missile"
+revision:
+  revid: 3293
+  parentid: 3295
+  user: "Wormbo"
+  timestamp: 1153205566.000000000
+  comment: "reverted"
+timestamp: 1668764265.070813000

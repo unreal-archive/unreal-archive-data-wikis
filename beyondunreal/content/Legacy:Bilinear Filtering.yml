@@ -1,0 +1,280 @@
+---
+parse:
+  title: "Legacy:Bilinear Filtering"
+  text:
+    text: "<h2><span class=\"mw-headline\" id=\"What_is_.22filtering.22_anyway.3F\"\
+      >What is \"filtering\" anyway?</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Bilinear_Filtering?section=1\"\
+      \ title=\"Edit section: What is &quot;filtering&quot; anyway?\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>When an image is\
+      \ transformed (scaled, rotated, etc.) you often face the problem that there\
+      \ is simply not enough data to assign values to all pixels. If an image's height\
+      \ and width are doubled, you are increasing the number of pixels by a factor\
+      \ of four. You can assign data to a quarter of those pixels 100% reliably, but\
+      \ you need to guess, or <b>interpolate</b> values for all the pixels in between.\
+      \ The simplest way is just to use the value of the nearest known pixel. This\
+      \ is known as <i>point</i> or <i>nearest neighbour</i> interpolation, and can\
+      \ result in a blocky, unappealing image to look at and - in the case of a size\
+      \ reduction - can even cause large, noticable gaps in lines.</p>\n<p>Bilinear\
+      \ interpolation is a way of guessing pixel values in order to create a smoother\
+      \ image.</p>\n<table>\n<tr>\n<td></td>\n<td>\n<div class=\"center\">\n<div class=\"\
+      floatnone\"><a href=\"/File:Legacy_texture_filter_example_small.png\" class=\"\
+      image\" title=\"No filter\"><img alt=\"No filter\" src=\"/w/images/Legacy_texture_filter_example_small.png\"\
+      \ width=\"96\" height=\"96\" /></a></div>\n</div>\n</td>\n<td>\n<div class=\"\
+      center\">\n<div class=\"floatnone\"><a href=\"/File:Legacy_texture_filter_example_point.png\"\
+      \ class=\"image\" title=\"3x Scale Point filter\"><img alt=\"3x Scale Point\
+      \ filter\" src=\"/w/images/Legacy_texture_filter_example_point.png\" width=\"\
+      288\" height=\"288\" /></a></div>\n</div>\n</td>\n<td>\n<div class=\"center\"\
+      >\n<div class=\"floatnone\"><a href=\"/File:Legacy_texture_filter_example_bilinear.png\"\
+      \ class=\"image\" title=\"3x Scale Bilinear filter\"><img alt=\"3x Scale Bilinear\
+      \ filter\" src=\"/w/images/Legacy_texture_filter_example_bilinear.png\" width=\"\
+      288\" height=\"288\" /></a></div>\n</div>\n</td>\n</tr>\n</table>\n<h2><span\
+      \ class=\"mw-headline\" id=\"So_what_uses_bilinear_filtering.3F\">So what uses\
+      \ bilinear filtering?</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Bilinear_Filtering?section=2\" title=\"Edit\
+      \ section: So what uses bilinear filtering?\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>In games, bilinear filtering is primarily used to\
+      \ apply a texture to a surface. As you look around the world, the 2D shape of\
+      \ the surface is altered (vertices further away from the viewpoint appear closer\
+      \ together), and the texture must be transformed to fit the new shape. If you've\
+      \ played older shooters (i.e. Doom) you can see how aliased and pixelated the\
+      \ texture looks when using point filtering for this process.</p>\n<p>Bilinear\
+      \ filtering will make these textures look smoother and more convincing. However,\
+      \ on a surface that extends into the distance, the texture can get less and\
+      \ less clear as it gets further from the viewpoint. This is where the mipmapping\
+      \ technique comes in to play - by creating several smaller, clear versions of\
+      \ the same texture, you can apply the larger versions close to the viewpoint\
+      \ and the smaller versions further away to result in an overall sharper texture\
+      \ application.</p>\n<p>However even this has its drawbacks: Now that we're applying\
+      \ multiple textures to one surface and filtering them separately, there is often\
+      \ noticable lines where there is a change in mip level. These lines look VERY\
+      \ unrealistic when you move, as they maintain a constant distance from the viewpoint\
+      \ (thus you have lines which appear to move as you move). This is where <a href=\"\
+      /Legacy:Trilinear_Filtering\" title=\"Legacy:Trilinear Filtering\">Trilinear\
+      \ Filtering</a> comes into play, by adding a third linear filter between the\
+      \ mipmap levels, these lines are eliminated.</p>\n<p>There is another type of\
+      \ filtering, called <a href=\"/edit/Legacy:Anisotropic_Filtering?redlink=1\"\
+      \ class=\"new\" title=\"Legacy:Anisotropic Filtering (page does not exist)\"\
+      >Anisotropic Filtering</a>, which works WITH bilinear/trilinear filtering to\
+      \ make far away textures appear *very* clear.</p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"The_math_behind_bilinear_interpolation\">The math behind bilinear interpolation</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Bilinear_Filtering?section=3\" title=\"Edit section: The\
+      \ math behind bilinear interpolation\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>The general idea when interpolating bilinearly is\
+      \ that the colour of an unknown pixel should be spaced proportionally between\
+      \ the colour values of the pixels around it. Therefore if an unknown pixel is\
+      \ halfway between two known pixels, its colour value should be halfway between\
+      \ their values. If the unknown pixel is closer to one of the known pixels, it\
+      \ should be closer to that pixel's colour.</p>\n<p>More specifically, if the\
+      \ known pixels have values V1 and V2, and the distances from the unknown pixels\
+      \ are D1 and D2, the unknown pixel should have the value:</p>\n<div dir=\"ltr\"\
+      \ class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\">V <span class=\"sy0\">=</span> <span class=\"br0\">(</span>V1\
+      \ <span class=\"sy0\">*</span> D2 <span class=\"sy0\">+</span> V2 <span class=\"\
+      sy0\">*</span> D1<span class=\"br0\">)</span> <span class=\"sy0\">/</span> <span\
+      \ class=\"br0\">(</span>D1 <span class=\"sy0\">+</span> D2<span class=\"br0\"\
+      >)</span></pre></div>\n</div>\n<p>This equation will work for interpolating\
+      \ along a line, and is called <i>linear interpolation</i> However, it is a bit\
+      \ more complicated for images, as they are comprised of horizontal <b>and</b>\
+      \ vertical lines. We must use a combination of 2 linear filters - horizontal\
+      \ and vertical - to create the desired effect. This results in a <i>bilinear\
+      \ interpolation</i>.</p>\n<p>When interpolating bilinearly, four reference pixels\
+      \ are required. The pixel we are trying to determine the value of will lie somewhere\
+      \ in the square defined by those reference pixels. Say we are trying to find\
+      \ the value of pixel at (X0, Y0), with our 4 reference pixels being at (x1,\
+      \ y1), (x2, y1), (x1, y2), (x2, y2). If those pixels have values of V11, V12,\
+      \ V21, and V22, we will start by interpolating horizontally between the 2 horizontal\
+      \ pairs of pixels.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\">V1 <span class=\"\
+      sy0\">=</span> <span class=\"br0\">(</span>V11 <span class=\"sy0\">*</span>\
+      \ dx2 <span class=\"sy0\">+</span> V21 <span class=\"sy0\">*</span> dx1<span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">/</span> <span class=\"br0\">(</span>dx1\
+      \ <span class=\"sy0\">+</span> dx2<span class=\"br0\">)</span>\nV2 <span class=\"\
+      sy0\">=</span> <span class=\"br0\">(</span>V12 <span class=\"sy0\">*</span>\
+      \ dx2 <span class=\"sy0\">+</span> V22 <span class=\"sy0\">*</span> dx1<span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">/</span> <span class=\"br0\">(</span>dx1\
+      \ <span class=\"sy0\">+</span> dx2<span class=\"br0\">)</span></pre></div>\n\
+      </div>\n<p>We will then interpolate these new values vertically to get our known\
+      \ value.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n\
+      <div class=\"uscript source-uscript\">\n<pre class=\"de1\">V <span class=\"\
+      sy0\">=</span> <span class=\"br0\">[</span><span class=\"br0\">(</span>V11 <span\
+      \ class=\"sy0\">*</span> dx2 <span class=\"sy0\">+</span> V21 <span class=\"\
+      sy0\">*</span> dx1<span class=\"br0\">)</span> <span class=\"sy0\">/</span>\
+      \ <span class=\"br0\">(</span>dx1 <span class=\"sy0\">+</span> dx2<span class=\"\
+      br0\">)</span> <span class=\"sy0\">*</span> dy2 <span class=\"sy0\">+</span>\
+      \ <span class=\"br0\">(</span>V12 <span class=\"sy0\">*</span> dx2 <span class=\"\
+      sy0\">+</span> V22 <span class=\"sy0\">*</span> dx1<span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">/</span> <span class=\"br0\">(</span>dx1 <span class=\"\
+      sy0\">+</span> dx2<span class=\"br0\">)</span> <span class=\"sy0\">*</span>\
+      \ dy1<span class=\"br0\">)</span><span class=\"br0\">]</span> <span class=\"\
+      sy0\">/</span> <span class=\"br0\">(</span>dy1 <span class=\"sy0\">+</span>\
+      \ dy2<span class=\"br0\">)</span>\n \n  <span class=\"sy0\">=</span> <span class=\"\
+      br0\">(</span>V11 <span class=\"sy0\">*</span> dx2 <span class=\"sy0\">*</span>\
+      \ dy2 <span class=\"sy0\">+</span> V21 <span class=\"sy0\">*</span> dx1 <span\
+      \ class=\"sy0\">*</span> dy2 <span class=\"sy0\">+</span> V12 <span class=\"\
+      sy0\">*</span> dx2 <span class=\"sy0\">*</span> dy1 <span class=\"sy0\">+</span>\
+      \ V22 <span class=\"sy0\">*</span> dx1 <span class=\"sy0\">*</span> dy1<span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">/</span> <span class=\"br0\">(</span>dx1\
+      \ <span class=\"sy0\">+</span> dx2<span class=\"br0\">)</span> <span class=\"\
+      sy0\">/</span> <span class=\"br0\">(</span>dy1 <span class=\"sy0\">+</span>\
+      \ dy2<span class=\"br0\">)</span></pre></div>\n</div>\n<p>Now since all our\
+      \ reference pixels are adjacent to each other, dx1 + dx2 = 1, and dy1 + dy2\
+      \ = 1. Substitute:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\">V <span class=\"\
+      sy0\">=</span> V11 <span class=\"sy0\">*</span> dx2 <span class=\"sy0\">*</span>\
+      \ dy2 <span class=\"sy0\">+</span> V21 <span class=\"sy0\">*</span> dx1 <span\
+      \ class=\"sy0\">*</span> dy2 <span class=\"sy0\">+</span> V12 <span class=\"\
+      sy0\">*</span> dx2 <span class=\"sy0\">*</span> dy1 <span class=\"sy0\">+</span>\
+      \ V22 <span class=\"sy0\">*</span> dx1 <span class=\"sy0\">*</span> dy1</pre></div>\n\
+      </div>\n<hr />\n<p><b>Draconx:</b> I'm not very good at explaining myself when\
+      \ it comes to equations. I also don't think I formatted this particularly well.\
+      \ Perhaps someone could clean this up a bit?&#160;:P</p>\n<p><b>Foxpaw:</b>\
+      \ Err, isn't the title of this page extremely misleading? Bilinear filtering\
+      \ is one method by which different mipmaps are interpolated between when a frame\
+      \ is rendered, not the method by which the mipmaps are generated.</p>\n<p>Bilinear\
+      \ interpolation would be a much more accurate name for this page.</p>\n<p><b>Draconx:</b>\
+      \ I added a thing about bilinear filtering's application in games. A bilinear\
+      \ filter is simply a transformation that uses bilinear interpolation, but it\
+      \ is not technically a requirement for mipmapping, nor is mipmapping a requirement\
+      \ for bilinear filtering of textures onto a surface. And interpolating BETWEEN\
+      \ the mipmaps is a function of <a href=\"/Legacy:Trilinear_Filtering\" title=\"\
+      Legacy:Trilinear Filtering\">Trilinear Filtering</a> - which mipmaps are required\
+      \ for. Trilinear filtering is simply bilinearly filtered mipmaps with linear\
+      \ interpolation between them.</p>\n\n<!-- \nNewPP limit report\nCPU time usage:\
+      \ 0.128 seconds\nReal time usage: 0.154 seconds\nPreprocessor visited node count:\
+      \ 22/1000000\nPreprocessor generated node count: 96/1000000\nPost‐expand include\
+      \ size: 0/2097152 bytes\nTemplate argument size: 0/2097152 bytes\nHighest expansion\
+      \ depth: 2/40\nExpensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion\
+      \ expansion time report (%,ms,calls,template)\n100.00%    0.000      1 - -total\n\
+      -->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:656-0!*!0!!*!5!*\
+      \ and timestamp 20221118014421 and revision id 1935\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: false
+    name: "Legacy:Anisotropic Filtering"
+  - ns: 100
+    exists: true
+    name: "Legacy:Trilinear Filtering"
+  templates: []
+  images:
+  - "Legacy_texture_filter_example_bilinear.png"
+  - "Legacy_texture_filter_example_small.png"
+  - "Legacy_texture_filter_example_point.png"
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "What is \"filtering\" anyway?"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Bilinear_Filtering"
+    byteoffset: 0
+    anchor: "What_is_.22filtering.22_anyway.3F"
+  - toclevel: 1
+    level: "2"
+    line: "So what uses bilinear filtering?"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Bilinear_Filtering"
+    byteoffset: 1067
+    anchor: "So_what_uses_bilinear_filtering.3F"
+  - toclevel: 1
+    level: "2"
+    line: "The math behind bilinear interpolation"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:Bilinear_Filtering"
+    byteoffset: 2734
+    anchor: "The_math_behind_bilinear_interpolation"
+  displaytitle: "Legacy:Bilinear Filtering"
+  iwlinks: []
+  wikitext:
+    text: "==What is \"filtering\" anyway?==\n\nWhen an image is transformed (scaled,\
+      \ rotated, etc.) you often face the problem that there is simply not enough\
+      \ data to assign values to all pixels.  If an image's height and width are doubled,\
+      \ you are increasing the number of pixels by a factor of four.  You can assign\
+      \ data to a quarter of those pixels 100% reliably, but you need to guess, or\
+      \ '''interpolate''' values for all the pixels in between.  The simplest way\
+      \ is just to use the value of the nearest known pixel.  This is known as ''point''\
+      \ or ''nearest neighbour'' interpolation, and can result in a blocky, unappealing\
+      \ image to look at and - in the case of a size reduction - can even cause large,\
+      \ noticable gaps in lines.\n\nBilinear interpolation is a way of guessing pixel\
+      \ values in order to create a smoother image.\n\n{|\n\n|-\n|\n|\n[[Image:Legacy_texture_filter_example_small.png|center|No\
+      \ filter]]\n\n|\n[[Image:Legacy_texture_filter_example_point.png|center|3x Scale\
+      \ Point filter]]\n\n|\n[[Image:Legacy_texture_filter_example_bilinear.png|center|3x\
+      \ Scale Bilinear filter]]\n\n|}\n\n==So what uses bilinear filtering?==\n\n\
+      In games, bilinear filtering is primarily used to apply a texture to a surface.\
+      \  As you look around the world, the 2D shape of the surface is altered (vertices\
+      \ further away from the viewpoint appear closer together), and the texture must\
+      \ be transformed to fit the new shape.  If you've played older shooters (i.e.\
+      \ Doom) you can see how aliased and pixelated the texture looks when using point\
+      \ filtering for this process.\n\nBilinear filtering will make these textures\
+      \ look smoother and more convincing.  However, on a surface that extends into\
+      \ the distance, the texture can get less and less clear as it gets further from\
+      \ the viewpoint.  This is where the mipmapping technique comes in to play -\
+      \ by creating several smaller, clear versions of the same texture, you can apply\
+      \ the larger versions close to the viewpoint and the smaller versions further\
+      \ away to result in an overall sharper texture application.\n\nHowever even\
+      \ this has its drawbacks:  Now that we're applying multiple textures to one\
+      \ surface and filtering them separately, there is often noticable lines where\
+      \ there is a change in mip level.  These lines look VERY unrealistic when you\
+      \ move, as they maintain a constant distance from the viewpoint (thus you have\
+      \ lines which appear to move as you move).  This is where [[Legacy:Trilinear\
+      \ Filtering|Trilinear Filtering]] comes into play, by adding a third linear\
+      \ filter between the mipmap levels, these lines are eliminated.\n\nThere is\
+      \ another type of filtering, called [[Legacy:Anisotropic Filtering|Anisotropic\
+      \ Filtering]], which works WITH bilinear/trilinear filtering to make far away\
+      \ textures appear *very* clear.\n\n==The math behind bilinear interpolation==\n\
+      \nThe general idea when interpolating bilinearly is that the colour of an unknown\
+      \ pixel should be spaced proportionally between the colour values of the pixels\
+      \ around it. Therefore if an unknown pixel is halfway between two known pixels,\
+      \ its colour value should be halfway between their values.  If the unknown pixel\
+      \ is closer to one of the known pixels, it should be closer to that pixel's\
+      \ colour.\n\nMore specifically, if the known pixels have values V1 and V2, and\
+      \ the distances from the unknown pixels are D1 and D2, the unknown pixel should\
+      \ have the value:\n\n<uscript>V = (V1 * D2 + V2 * D1) / (D1 + D2)</uscript>\n\
+      \nThis equation will work for interpolating along a line, and is called ''linear\
+      \ interpolation''  However, it is a bit more complicated for images, as they\
+      \ are comprised of horizontal '''and''' vertical lines.  We must use a combination\
+      \ of 2 linear filters - horizontal and vertical - to create the desired effect.\
+      \  This results in a ''bilinear interpolation''.\n\nWhen interpolating bilinearly,\
+      \ four reference pixels are required.  The pixel we are trying to determine\
+      \ the value of will lie somewhere in the square defined by those reference pixels.\
+      \  Say we are trying to find the value of pixel at (X0, Y0), with our 4 reference\
+      \ pixels being at (x1, y1), (x2, y1), (x1, y2), (x2, y2).  If those pixels have\
+      \ values of V11, V12, V21, and V22, we will start by interpolating horizontally\
+      \ between the 2 horizontal pairs of pixels.\n\n<uscript>V1 = (V11 * dx2 + V21\
+      \ * dx1) / (dx1 + dx2)\nV2 = (V12 * dx2 + V22 * dx1) / (dx1 + dx2)</uscript>\n\
+      \nWe will then interpolate these new values vertically to get our known value.\n\
+      \n<uscript>V = [(V11 * dx2 + V21 * dx1) / (dx1 + dx2) * dy2 + (V12 * dx2 + V22\
+      \ * dx1) / (dx1 + dx2) * dy1)] / (dy1 + dy2)\n\n  = (V11 * dx2 * dy2 + V21 *\
+      \ dx1 * dy2 + V12 * dx2 * dy1 + V22 * dx1 * dy1) / (dx1 + dx2) / (dy1 + dy2)</uscript>\n\
+      \nNow since all our reference pixels are adjacent to each other, dx1 + dx2 =\
+      \ 1, and dy1 + dy2 = 1.  Substitute:\n\n<uscript>V = V11 * dx2 * dy2 + V21 *\
+      \ dx1 * dy2 + V12 * dx2 * dy1 + V22 * dx1 * dy1</uscript>\n\n----\n\n'''Draconx:'''\
+      \ I'm not very good at explaining myself when it comes to equations.  I also\
+      \ don't think I formatted this particularly well.  Perhaps someone could clean\
+      \ this up a bit? :P\n\n'''Foxpaw:''' Err, isn't the title of this page extremely\
+      \ misleading? Bilinear filtering is one method by which different mipmaps are\
+      \ interpolated between when a frame is rendered, not the method by which the\
+      \ mipmaps are generated.\n\nBilinear interpolation would be a much more accurate\
+      \ name for this page.\n\n'''Draconx:''' I added a thing about bilinear filtering's\
+      \ application in games.  A bilinear filter is simply a transformation that uses\
+      \ bilinear interpolation, but it is not technically a requirement for mipmapping,\
+      \ nor is mipmapping a requirement for bilinear filtering of textures onto a\
+      \ surface.  And interpolating BETWEEN the mipmaps is a function of [[Legacy:Trilinear\
+      \ Filtering|Trilinear Filtering]] - which mipmaps are required for.  Trilinear\
+      \ filtering is simply bilinearly filtered mipmaps with linear interpolation\
+      \ between them."
+  properties: []
+  revId: 1935
+name: "Legacy:Bilinear Filtering"
+revision:
+  revid: 1935
+  parentid: 1936
+  user: "Draconx"
+  timestamp: 1109891899.000000000
+  comment: "*"
+timestamp: 1668764971.282254000

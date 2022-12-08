@@ -1,0 +1,799 @@
+---
+parse:
+  title: "User:Wormbo/Vauss Cannon (UT2004)"
+  text:
+    text: "<p>The goal of this tutorial is to create a rapid-fire instant-hit weapon\
+      \ for <a href=\"/UT2004\" title=\"UT2004\" class=\"mw-redirect\">UT2004</a>.\
+      \ Primary fire will be a standard Minigun-style mode with high fire rate and\
+      \ quite some spread, while the secondary mode will fire explosive rounds with\
+      \ lower fire rate and spread.</p>\n<p>Unlike the UT2004 <a href=\"/UE2:Minigun_(UT2004)\"\
+      \ title=\"UE2:Minigun (UT2004)\">Minigun</a>, this weapon will immediately start\
+      \ firing while winding up. The dynamic nature of the wind-up/down behavior will\
+      \ require an unusual handling of fire modes.</p>\n<p>The Vauss Cannon will use\
+      \ the standard UT2004 Minigun visuals with custom firing sounds. Feel free to\
+      \ customize the visuals as well, but this tutorial makes some assumptions based\
+      \ on details of the Minigun's 1st person mesh.</p>\n<p></p>\n<div id=\"toc\"\
+      \ class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n</div>\n<ul>\n<li\
+      \ class=\"toclevel-1 tocsection-1\"><a href=\"#Project_setup\"><span class=\"\
+      tocnumber\">1</span> <span class=\"toctext\">Project setup</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-2\"><a href=\"#Getting_started\"><span class=\"\
+      tocnumber\">2</span> <span class=\"toctext\">Getting started</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-3\"><a href=\"#Implementing_fire_modes\"><span\
+      \ class=\"tocnumber\">3</span> <span class=\"toctext\">Implementing fire modes</span></a>\n\
+      <ul>\n<li class=\"toclevel-2 tocsection-4\"><a href=\"#Primary_fire_mode\"><span\
+      \ class=\"tocnumber\">3.1</span> <span class=\"toctext\">Primary fire mode</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-5\"><a href=\"#Secondary_fire_mode\"><span\
+      \ class=\"tocnumber\">3.2</span> <span class=\"toctext\">Secondary fire mode</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-6\"><a href=\"#Fixing_the_radius_damage\"\
+      ><span class=\"tocnumber\">3.3</span> <span class=\"toctext\">Fixing the radius\
+      \ damage</span></a></li>\n</ul>\n</li>\n</ul>\n</div>\n<p></p>\n<h2><span class=\"\
+      mw-headline\" id=\"Project_setup\">Project setup</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/User:Wormbo/Vauss_Cannon_(UT2004)?section=1\"\
+      \ title=\"Edit section: Project setup\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>First you need to set up your <a href=\"/UnrealScript\"\
+      \ title=\"UnrealScript\">UnrealScript</a> project. Personally I prefer just\
+      \ <a href=\"/edit/Creating_classes?redlink=1\" class=\"new\" title=\"Creating\
+      \ classes (page does not exist)\">creating classes</a> with <a href=\"/UnCodeX\"\
+      \ title=\"UnCodeX\">UnCodeX</a>, which automatically creates the <a href=\"\
+      /edit/Project_directory?redlink=1\" class=\"new\" title=\"Project directory\
+      \ (page does not exist)\">project directory</a> if you specify a new package\
+      \ name. To compile my projects I use <a href=\"/edit/UMake?redlink=1\" class=\"\
+      new\" title=\"UMake (page does not exist)\">UMake</a>, which stores its settings\
+      \ in the file make.ini in the project directory and can be configured as the\
+      \ default compiler in UnCodeX. You can use any UnrealScript programming environment\
+      \ you want, but I strongly recommend against using <a href=\"/UnrealEd\" title=\"\
+      UnrealEd\" class=\"mw-redirect\">UnrealEd</a> because this tutorial is going\
+      \ to work with <a href=\"/Defaultproperties\" title=\"Defaultproperties\">defaultproperties</a>\
+      \ which are not editable in UnrealEd.</p>\n<p>For this tutorial, the project\
+      \ directory (and thus the package to compile) is assumed to be called <b>VaussCannonTutorial</b>\
+      \ and since this is supposed to become a simple weapon mutator, it resides directly\
+      \ in the UT2004 directory. The custom sounds we will use in this tutorial are\
+      \ already set up in the sound package <a rel=\"nofollow\" class=\"external text\"\
+      \ href=\"http://www.koehler-homepage.de/Wormbo/downloads/VaussFireSounds.zip\"\
+      >VaussFireSounds.uax</a>, which should be placed in the project directory as\
+      \ it will be imported into our project package later.</p>\n<h2><span class=\"\
+      mw-headline\" id=\"Getting_started\">Getting started</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/User:Wormbo/Vauss_Cannon_(UT2004)?section=2\"\
+      \ title=\"Edit section: Getting started\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>UT2004 weapons consist of different parts. The most\
+      \ important part is the <a href=\"/UE2:Weapon_(UT2004)\" title=\"UE2:Weapon\
+      \ (UT2004)\">Weapon</a> subclass, which often implements the overall behavior\
+      \ of the weapon and also acts as mediator between the player and other parts\
+      \ of the weapon. Let's start by creating the new Weapon subclass <b>VaussCannon</b>\
+      \ and filling in some basic information about the weapon we are going to create.</p>\n\
+      <p>Any potential comments aside, the only line of code in the new class should\
+      \ be:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div\
+      \ class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\"\
+      >class</span> VaussCannon <span class=\"kw1\">extends</span> <span class=\"\
+      kw9\">Weapon</span>;</pre></div>\n</div>\n<p>We will use custom sounds, so let's\
+      \ load those first:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      co2\">#exec obj load file=VaussFireSounds.uax package=VaussCannonTutorial</span></pre></div>\n\
+      </div>\n<p>This loads our custom sound package into the package we will be compiling.\
+      \ The part after #exec is actually a console command that will be executed when\
+      \ the VaussCannon.uc file is parsed for the first time. Any resources in VaussFireSounds.uax\
+      \ are loaded and will be available during the entire compiler run. Any other\
+      \ classes we compile will be able to reference these resources in code and <a\
+      \ href=\"/Defaultproperties\" title=\"Defaultproperties\">defaultproperties</a>\
+      \ as well.</p>\n<p>Speaking of defaultproperties, let's fill in some default\
+      \ values as well:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">defaultproperties</span>\n<span class=\"br0\">{</span>\n  ItemName <span\
+      \ class=\"sy0\">=</span> <span class=\"st0\">\"Vauss Cannon\"</span>\n  Description\
+      \ <span class=\"sy0\">=</span> <span class=\"st0\">\"...\"</span> <span class=\"\
+      co1\">// be creative here, the Vauss Cannon's basic functionality was explained\
+      \ at the start of the tutorial</span>\n \n  <span class=\"co1\">// the following\
+      \ properties were all copied from the Minigun class:</span>\n  HighDetailOverlay<span\
+      \ class=\"sy0\">=</span><span class=\"kw5\">Material</span><span class=\"st0\"\
+      >'UT2004Weapons.WeaponSpecMap2'</span>\n  IconMaterial<span class=\"sy0\">=</span><span\
+      \ class=\"kw5\">Material</span><span class=\"st0\">'HudContent.Generic.HUD'</span>\n\
+      \  IconCoords<span class=\"sy0\">=</span><span class=\"br0\">(</span>X1<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">246</span>,Y1<span class=\"sy0\"\
+      >=</span><span class=\"nu0\">80</span>,X2<span class=\"sy0\">=</span><span class=\"\
+      nu0\">332</span>,Y2<span class=\"sy0\">=</span><span class=\"nu0\">106</span><span\
+      \ class=\"br0\">)</span>\n  InventoryGroup<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">6</span>\n  <span class=\"kw5\">Mesh</span><span class=\"sy0\"\
+      >=</span><span class=\"kw5\">mesh</span><span class=\"st0\">'Weapons.Minigun_1st'</span>\n\
+      \  BobDamping<span class=\"sy0\">=</span><span class=\"nu0\">2.25</span>\n \
+      \ EffectOffset<span class=\"sy0\">=</span><span class=\"br0\">(</span>X<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">100.0</span>,Y<span class=\"sy0\"\
+      >=</span><span class=\"nu0\">18.0</span>,Z<span class=\"sy0\">=-</span><span\
+      \ class=\"nu0\">16.0</span><span class=\"br0\">)</span>\n  DisplayFOV<span class=\"\
+      sy0\">=</span><span class=\"nu0\">60</span>\n  PutDownAnim<span class=\"sy0\"\
+      >=</span>PutDown\n  <span class=\"kw7\">DrawScale</span><span class=\"sy0\"\
+      >=</span><span class=\"nu0\">0.4</span>\n  PlayerViewOffset<span class=\"sy0\"\
+      >=</span><span class=\"br0\">(</span>X<span class=\"sy0\">=</span><span class=\"\
+      nu0\">2</span>,Y<span class=\"sy0\">=-</span><span class=\"nu0\">1</span>,Z<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0</span><span class=\"br0\">)</span>\n\
+      \  SmallViewOffset<span class=\"sy0\">=</span><span class=\"br0\">(</span>X<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">8</span>,Y<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">1</span>,Z<span class=\"sy0\">=-</span><span class=\"nu0\">2</span><span\
+      \ class=\"br0\">)</span>\n  PlayerViewPivot<span class=\"sy0\">=</span><span\
+      \ class=\"br0\">(</span>Pitch<span class=\"sy0\">=</span><span class=\"nu0\"\
+      >0</span>,Roll<span class=\"sy0\">=</span><span class=\"nu0\">0</span>,Yaw<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">500</span><span class=\"br0\">)</span>\n\
+      \  AttachmentClass<span class=\"sy0\">=</span><span class=\"kw1\">class</span><span\
+      \ class=\"st0\">'MinigunAttachment'</span>\n  <span class=\"kw7\">SoundRadius</span><span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">400.0</span>\n  SelectSound<span\
+      \ class=\"sy0\">=</span><span class=\"kw5\">Sound</span><span class=\"st0\"\
+      >'WeaponSounds.Minigun.SwitchToMinigun'</span>\n  SelectForce<span class=\"\
+      sy0\">=</span><span class=\"st0\">\"SwitchToMiniGun\"</span>\n  AIRating<span\
+      \ class=\"sy0\">=+</span><span class=\"nu0\">0.71</span>\n  CurrentRating<span\
+      \ class=\"sy0\">=+</span><span class=\"nu0\">0.71</span>\n  HudColor<span class=\"\
+      sy0\">=</span><span class=\"br0\">(</span>r<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">255</span>,g<span class=\"sy0\">=</span><span class=\"nu0\"\
+      >255</span>,b<span class=\"sy0\">=</span><span class=\"nu0\">255</span>,a<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">255</span><span class=\"br0\">)</span>\n\
+      \  CustomCrosshair<span class=\"sy0\">=</span><span class=\"nu0\">12</span>\n\
+      \  CustomCrosshairTextureName<span class=\"sy0\">=</span><span class=\"st0\"\
+      >\"Crosshairs.Hud.Crosshair_Circle1\"</span>\n  CustomCrosshairColor<span class=\"\
+      sy0\">=</span><span class=\"br0\">(</span>r<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">255</span>,g<span class=\"sy0\">=</span><span class=\"nu0\"\
+      >255</span>,b<span class=\"sy0\">=</span><span class=\"nu0\">255</span>,a<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">255</span><span class=\"br0\">)</span>\n\
+      \  Priority<span class=\"sy0\">=</span><span class=\"nu0\">9</span>\n  CenteredOffsetY<span\
+      \ class=\"sy0\">=-</span><span class=\"nu0\">6.0</span>\n  CenteredYaw<span\
+      \ class=\"sy0\">=-</span><span class=\"nu0\">500</span>\n  CenteredRoll<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>These properties already mentions another part of all UT2004 weapons,\
+      \ the <a href=\"/UE2:WeaponAttachment_(UT2004)\" title=\"UE2:WeaponAttachment\
+      \ (UT2004)\">WeaponAttachment</a>. That's the mesh attached to the player model.\
+      \ We will just reuse the Minigun attachment here as it already does what we\
+      \ want. It is responsible for spawning tracer effects, ejected shells and impact\
+      \ sparks. For the alternate fire mode it even spawns a small explosion effect.</p>\n\
+      <h2><span class=\"mw-headline\" id=\"Implementing_fire_modes\">Implementing\
+      \ fire modes</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/User:Wormbo/Vauss_Cannon_(UT2004)?section=3\" title=\"\
+      Edit section: Implementing fire modes\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>Right now there's not much we can do with our weapon.\
+      \ We could get it into the game via the Arena mutator, but it wouldn't do anything\
+      \ yet.</p>\n<p>In order to make our weapon shoot, we need to add fire mode classes.\
+      \ More precisely, we need to create one or two subclasses of <a href=\"/UE2:WeaponFire_(UT2004)\"\
+      \ title=\"UE2:WeaponFire (UT2004)\">WeaponFire</a> and use it/them as the fire\
+      \ mode class(es) of the VaussCannon class. The Vauss Cannon is an instant-hit\
+      \ weapon with two similar firing modes. After a look at the WeaponFire class\
+      \ hierarchy, the most obvious choice is subclassing <a href=\"/UE2:InstantFire_(UT2004)\"\
+      \ title=\"UE2:InstantFire (UT2004)\">InstantFire</a>. We could also subclass\
+      \ <a href=\"/UE2:MinigunFire_(UT2004)\" title=\"UE2:MinigunFire (UT2004)\">MinigunFire</a>,\
+      \ but we will see later that the Vauss Cannon fire modes are more than a bit\
+      \ different from those of the Minigun.</p>\n<p>Let's call our primary fire mode\
+      \ class <b>VaussCannonFire</b>:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">class</span> VaussCannonFire <span class=\"kw1\">extends</span>\
+      \ InstantFire;</pre></div>\n</div>\n<p>...and our secondary fire mode class\
+      \ <b>VaussCannonAltFire</b>:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">class</span> VaussCannonAltFire <span class=\"kw1\">extends</span>\
+      \ VaussCannonFire;</pre></div>\n</div>\n<p>Since the fire modes will be very\
+      \ similar, it makes sense to extend one from the other. And since the secondary\
+      \ mode has splash damage, we'll extend it from the non-splash damage primary\
+      \ mode and add the splash damage handling here later.</p>\n<p>Very important,\
+      \ to tell our weapon to use these new fire mode classes, we need to add the\
+      \ relevant values to the VaussCannon's <a href=\"/Defaultproperties\" title=\"\
+      Defaultproperties\">defaultproperties</a> block:</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\">  FireModeClass<span class=\"br0\">[</span><span class=\"\
+      nu0\">0</span><span class=\"br0\">]</span> <span class=\"sy0\">=</span> <span\
+      \ class=\"kw1\">class</span><span class=\"st0\">'VaussCannonFire'</span>\n \
+      \ FireModeClass<span class=\"br0\">[</span><span class=\"nu0\">1</span><span\
+      \ class=\"br0\">]</span> <span class=\"sy0\">=</span> <span class=\"kw1\">class</span><span\
+      \ class=\"st0\">'VaussCannonAltFire'</span></pre></div>\n</div>\n<h3><span class=\"\
+      mw-headline\" id=\"Primary_fire_mode\">Primary fire mode</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/User:Wormbo/Vauss_Cannon_(UT2004)?section=4\"\
+      \ title=\"Edit section: Primary fire mode\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>For now we will only work on the primary fire mode.\
+      \ Changes we do here will be inherited by the secondary fire mode class because\
+      \ it extends the primary fire mode class.</p>\n<p>Before we start adding default\
+      \ values and code, let's see what InstantFire and its parent class WeaponFire\
+      \ already provide. InstantFire defines a trace range of 10000<a href=\"/UU\"\
+      \ title=\"UU\" class=\"mw-redirect\">UU</a> and all the logic required to perform\
+      \ a hit trace and apply damage. The WeaponFire class defines the standard logic\
+      \ for dealing with relevant player input (pressing fire(alt fire button), with\
+      \ some of the logic residing in native code. There are also AI recommendations\
+      \ and a few predefined animation names. Neither of these classes define a default\
+      \ type or amount of damage, so let's do that first.</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw1\">defaultproperties</span>\n<span class=\"\
+      br0\">{</span>\n  DamageMin  <span class=\"sy0\">=</span> <span class=\"nu0\"\
+      >5</span>\n  DamageMax  <span class=\"sy0\">=</span> <span class=\"nu0\">6</span>\n\
+      \  <span class=\"kw9\">DamageType</span> <span class=\"sy0\">=</span> <span\
+      \ class=\"kw1\">class</span><span class=\"st0\">'DamTypeMinigunBullet'</span>\n\
+      \  Momentum   <span class=\"sy0\">=</span> <span class=\"nu0\">1000.0</span>\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>Another thing we need to\
+      \ define is the amount and type of ammo our weapon uses. This is also done in\
+      \ the defaultproperties block of the fire mode classes, so add the following\
+      \ lines to it:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\">  AmmoClass <span\
+      \ class=\"sy0\">=</span> <span class=\"kw1\">class</span><span class=\"st0\"\
+      >'MinigunAmmo'</span>\n  AmmoPerFire <span class=\"sy0\">=</span> <span class=\"\
+      nu0\">1</span></pre></div>\n</div>\n<p>These two lines mean the Vauss Cannon\
+      \ uses the same ammo type as the Minigun and requires one ammo unit per shot.</p>\n\
+      <p>At this point you can compile and test the current state of the Vauss Cannon\
+      \ using the Arena mutator. You will notice that it will shoot and do damage,\
+      \ but it's almost completely silent and the fire rate is far too low. It does\
+      \ spawn tracers and impact effects, though. These are created by the <a href=\"\
+      /UE2:MinigunAttachment_(UT2004)\" title=\"UE2:MinigunAttachment (UT2004)\">MinigunAttachment</a>\
+      \ class we defined as the VaussCannon's <i>AttachmentClass</i>.</p>\n<p>To add\
+      \ a firing sound, simply add the following line to the VuassCannonFire defaults:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\">  FireSound <span class=\"sy0\">=</span>\
+      \ <span class=\"kw5\">Sound</span><span class=\"st0\">'VaussFireSound'</span></pre></div>\n\
+      </div>\n<p>The firing rate is defined by the time between shots, so a rate of\
+      \ e.g. 20 shots per second would require the following default value:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\">  FireRate <span class=\"sy0\">=</span>\
+      \ <span class=\"nu0\">0.05</span></pre></div>\n</div>\n<p>If you test again,\
+      \ you'll hear a nice machinegun sound and see the corresponding fire effects,\
+      \ including the damage opponents take. However, the shots are still spot-on.\
+      \ A machine gun with this firing rate would be expected to be quite inaccurate,\
+      \ and if we look at the <a href=\"/UE2:MinigunFire_(UT2004)\" title=\"UE2:MinigunFire\
+      \ (UT2004)\">MinigunFire</a> class, we can see a default value for the property\
+      \ <a href=\"/UE2:WeaponFire_(UT2004)#Spread\" title=\"UE2:WeaponFire (UT2004)\"\
+      >Spread</a>, which defines a relative spread angle for instant-hit modes. A\
+      \ spread of 0.08 is used by the Minigun primary fire and that value should be\
+      \ good for the Vauss Cannon primary fire as well.</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\">  Spread <span class=\"sy0\">=</span> <span class=\"nu0\"\
+      >0.08</span></pre></div>\n</div>\n<p>That should be enough for the first implementation\
+      \ pass on the primary fire mode, so let's move on to the secondary mode.</p>\n\
+      <h3><span class=\"mw-headline\" id=\"Secondary_fire_mode\">Secondary fire mode</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/User:Wormbo/Vauss_Cannon_(UT2004)?section=5\" title=\"Edit section:\
+      \ Secondary fire mode\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>The secondary fire mode of the Vauss Cannon is supposed to have a lower firing\
+      \ rate (and thus less spread), but do more damage, including some splash damage.\
+      \ To make it more obvious, we will also assign a slightly different firing sound.\
+      \ Five shots per second should be ok for this mode, so add the following lines\
+      \ to the <b>VaussCannonAltFire</b> class:</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">defaultproperties</span>\n<span class=\"br0\">{</span>\n\
+      \  FireSound <span class=\"sy0\">=</span> <span class=\"kw5\">Sound</span><span\
+      \ class=\"st0\">'VaussAltFireSound'</span>\n  FireRate  <span class=\"sy0\"\
+      >=</span> <span class=\"nu0\">0.2</span>\n  Spread    <span class=\"sy0\">=</span>\
+      \ <span class=\"nu0\">0.03</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>At the lower firing rate and with the inherited damage values, the\
+      \ secondary mode is seriously underpowered. Let's override the inherited values\
+      \ with the following new defaults:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      >  DamageMin  <span class=\"sy0\">=</span> <span class=\"nu0\">13</span>\n \
+      \ DamageMax  <span class=\"sy0\">=</span> <span class=\"nu0\">15</span>\n  <span\
+      \ class=\"kw9\">DamageType</span> <span class=\"sy0\">=</span> <span class=\"\
+      kw1\">class</span><span class=\"st0\">'DamTypeMinigunAlt'</span>\n  Momentum\
+      \   <span class=\"sy0\">=</span> <span class=\"nu0\">10000.0</span></pre></div>\n\
+      </div>\n<p>Now the secondary mode fires 5 shots per second, each doing 13 to\
+      \ 15 damage. That's an average damage output of about 5*(13+15)/2=70. The primary\
+      \ mode does about 20*(5+6)/2=110 damage, but only at closer range, because at\
+      \ greater distance not all shots will hit the target. The damage output per\
+      \ second may be a bit lower for secondary mode, but the damage output per ammo\
+      \ is more than twice as high as the primary mode's. That means, if the player\
+      \ only used the secondary mode, he would be able to save a lot of ammo at the\
+      \ expense of some damage per second. To counter this, we should increase the\
+      \ ammo usage of the secondary mode a bit:</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\">  AmmoPerFire <span class=\"sy0\">=</span> <span class=\"nu0\">2</span></pre></div>\n\
+      </div>\n<p>Now the secondary mode will consume 2/0.2=10 ammo units per second,\
+      \ while the primary mode consumes 1/0.5=20 ammo units per second.</p>\n<p>One\
+      \ problem caused by an ammo amount greater than 1 is that the weapon may stop\
+      \ firing in this mode if less than the required ammo amount is left, but it\
+      \ won't switch away automatically. This also happened with the Linkgun secondary\
+      \ mode before Epic worked around it in a patch by adding the following code\
+      \ to the alt fire mode, which we will also do in our VaussCannonAltFire class:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">function</span>\
+      \ <span class=\"kw5\">bool</span> AllowFire<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw2\"\
+      >return</span> <span class=\"kw9\">Weapon</span>.<span class=\"me0\">AmmoAmount</span><span\
+      \ class=\"br0\">(</span>ThisModeNum<span class=\"br0\">)</span> <span class=\"\
+      sy0\">&gt;=</span> <span class=\"nu0\">1</span>;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p><b>ThisModeNum</b> is a variable defined in the WeaponFire class\
+      \ that is initialized with the actual mode number for this fire mode by the\
+      \ weapon when creating the fire mode instance. <b>Weapon</b> also is a variable\
+      \ defined by the WeaponFire and initialized by the weapon. The <b>AmmoAmount</b>\
+      \ function of the weapon returns the current ammo amount for the specified fire\
+      \ mode. Usually this will be the same value for both fire modes, but some weapons\
+      \ like the Assault Rifle keep two different ammo values for primary and secondary\
+      \ mode.</p>\n<p>So now the secondary Vauss Cannon fire mode already does more\
+      \ damage at a lower fire rate and uses more ammo per shot, but it doesn't have\
+      \ splash damage yet. We will have to override the logic that finds hit targets\
+      \ and applies damage. The function responsible for this part is <a href=\"/UE2:InstantFire_(UT2004)#DoTrace\"\
+      \ title=\"UE2:InstantFire (UT2004)\">InstantFire.DoTrace</a>(). If you look\
+      \ at its source code (and I strongly recommend doing so!), you will see it was\
+      \ written to handle reflecting off the Shieldgun shield if the fire mode supports\
+      \ it.</p>\n<p>We only need to replace the call to <code>Other.<a href=\"/UE2:Actor_events_(UT2004)#TakeDamage\"\
+      \ title=\"UE2:Actor events (UT2004)\">TakeDamage</a>(...)</code>, but it's burried\
+      \ deep inside this function. There's no way to replace only that single line,\
+      \ so we need to override and reimplement the entire DoTrace() function. Our\
+      \ weapon does not support reflection, so we can leave out the corresponding\
+      \ code. Of course you can also copy/paste the InstantFire.DoTrace() function\
+      \ entirely and only replace the <i>TakeDamage</i> line in a similar way as the\
+      \ following code does. First we will introduce a new property for our fire mode\
+      \ class. Add the following variable declaration below the class declaration,\
+      \ but above the first function:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">var</span> <span class=\"kw5\">float</span> DamageRadius;</pre></div>\n\
+      </div>\n<p>...and give it a meaningful value in the defaultproperties block:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\">  DamageDarius <span class=\"sy0\">=</span>\
+      \ <span class=\"nu0\">10.0</span></pre></div>\n</div>\n<p>Now we can replace\
+      \ the simple TakeDamage() call with something that causes radius damage. The\
+      \ most obvious candidate here is the <a href=\"/UE2:Actor_instance_functions_(UT2004)#HurtRadius\"\
+      \ title=\"UE2:Actor instance functions (UT2004)\">Actor.HurtRadius</a>() function,\
+      \ which already implements radius damage with linear falloff from the center.\
+      \ In UT2004 the WeaponFire classes do not extend Actor, so we need to get hold\
+      \ of an actor to call HurtRadius(). This actor should be owned by the player\
+      \ as otherwise the player might not be credited for kills. We are lucky here,\
+      \ as the weapon itself extends Actor &gt;&gt; Inventory &gt;&gt; Weapon and\
+      \ therefore inherits the HurtRadius() function:</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw1\">function</span> DoTrace<span class=\"\
+      br0\">(</span><span class=\"kw5\">vector</span> Start, <span class=\"kw5\">rotator</span>\
+      \ Dir<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"\
+      kw1\">local</span> <span class=\"kw5\">vector</span> X, End, HitLocation, HitNormal;\n\
+      \  <span class=\"kw1\">local</span> <span class=\"kw9\">Actor</span> Other;\n\
+      \  <span class=\"kw1\">local</span> <span class=\"kw5\">float</span> DamageAmount;\n\
+      \ \n  X <span class=\"sy0\">=</span> <span class=\"kw5\">vector</span><span\
+      \ class=\"br0\">(</span>Dir<span class=\"br0\">)</span>;\n  End <span class=\"\
+      sy0\">=</span> Start <span class=\"sy0\">+</span> MaxRange<span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span> <span class=\"sy0\">*</span> X;\n \n \
+      \ Other <span class=\"sy0\">=</span> <span class=\"kw9\">Weapon</span>.<span\
+      \ class=\"kw4\">Trace</span><span class=\"br0\">(</span>HitLocation, HitNormal,\
+      \ End, Start, <span class=\"kw6\">true</span><span class=\"br0\">)</span>;\n\
+      \ \n  <span class=\"kw2\">if</span> <span class=\"br0\">(</span>Other <span\
+      \ class=\"sy0\">!=</span> <span class=\"kw5\">None</span> <span class=\"sy0\"\
+      >&amp;&amp;</span> Other <span class=\"sy0\">!=</span> <span class=\"kw7\">Instigator</span><span\
+      \ class=\"br0\">)</span> <span class=\"br0\">{</span>\n    DamageAmount <span\
+      \ class=\"sy0\">=</span> <span class=\"kw3\">RandRange</span><span class=\"\
+      br0\">(</span>DamageMin, DamageMax<span class=\"br0\">)</span> <span class=\"\
+      sy0\">*</span> DamageAtten;\n    <span class=\"kw9\">Weapon</span>.<span class=\"\
+      kw4\">HurtRadius</span><span class=\"br0\">(</span>DamageAmount, DamageRadius,\
+      \ <span class=\"kw9\">DamageType</span>, Momentum, HitLocation<span class=\"\
+      br0\">)</span>;\n    <span class=\"kw9\">WeaponAttachment</span><span class=\"\
+      br0\">(</span><span class=\"kw9\">Weapon</span>.<span class=\"me0\">ThirdPersonActor</span><span\
+      \ class=\"br0\">)</span>.<span class=\"me0\">UpdateHit</span><span class=\"\
+      br0\">(</span>Other, HitLocation, HitNormal<span class=\"br0\">)</span>;\n \
+      \ <span class=\"br0\">}</span>\n  <span class=\"kw2\">else</span> <span class=\"\
+      br0\">{</span>\n    HitNormal <span class=\"sy0\">=</span> <span class=\"kw3\"\
+      >vect</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>,<span class=\"\
+      nu0\">0</span>,<span class=\"nu0\">0</span><span class=\"br0\">)</span>;\n \
+      \   HitLocation <span class=\"sy0\">=</span> End;\n    <span class=\"kw9\">WeaponAttachment</span><span\
+      \ class=\"br0\">(</span><span class=\"kw9\">Weapon</span>.<span class=\"me0\"\
+      >ThirdPersonActor</span><span class=\"br0\">)</span>.<span class=\"me0\">UpdateHit</span><span\
+      \ class=\"br0\">(</span>Other, HitLocation, HitNormal<span class=\"br0\">)</span>;\n\
+      \  <span class=\"br0\">}</span>\n  SpawnBeamEffect<span class=\"br0\">(</span>Start,\
+      \ Dir, HitLocation, HitNormal, <span class=\"nu0\">0</span><span class=\"br0\"\
+      >)</span>;\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>So far so good,\
+      \ but when testing the secondary mode, you'll notice it neither damages enemies\
+      \ nor yourself if you shoot at some nearby object. This is not really a problem\
+      \ with our code, but one with the HurtRadius() function. It uses <a href=\"\
+      /UE2:Actor_(UT2004)#_VisibleCollidingActors\" title=\"UE2:Actor (UT2004)\">VisibleCollidingActors</a>\
+      \ and passes the DamageRadius directly. That iterator function, however, only\
+      \ looks for actors whose center is within the specified radius. At only 10UU\
+      \ radius, this will work for almost no actor in the game.</p>\n<h3><span class=\"\
+      mw-headline\" id=\"Fixing_the_radius_damage\">Fixing the radius damage</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/User:Wormbo/Vauss_Cannon_(UT2004)?section=6\" title=\"Edit section:\
+      \ Fixing the radius damage\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>We will have to write a custom radius damage function\
+      \ that finds all actors <i>overlapping</i> the damage radius, even if their\
+      \ center is outside the radius. Also, the actor actually hit should take full\
+      \ damage. This is important for vehicles, which use complex collision. Also,\
+      \ unlike the HurtRadius() function that bases the damage amount on the distance\
+      \ from the actor center minus the actor's <a href=\"/UE2:Actor_properties_(UT2004)#CollisionRadius\"\
+      \ title=\"UE2:Actor properties (UT2004)\">CollisionRadius</a>, our function\
+      \ should take the actual distance from the collision cylinder. With a radius\
+      \ as small as the one we use and a <a href=\"/UE2:Actor_properties_(UT2004)#CollisionHeight\"\
+      \ title=\"UE2:Actor properties (UT2004)\">CollisionHeight</a> much greater than\
+      \ the CollisionRadius, hitting players at the feed or the head would otherwise\
+      \ do no damage.</p>\n<p>What we need is a function that calculates a point's\
+      \ distance from a cylinder's surface. Player collision cylinders are always\
+      \ upright, so the problem can be split into calculating a height difference\
+      \ and finding the distance of a point from a circle. The following function\
+      \ will first find the horizontal and vertical distances and then calculate the\
+      \ actual distance from these components:</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">function</span> <span class=\"kw5\">float</span> DistToCylinder<span\
+      \ class=\"br0\">(</span><span class=\"kw5\">vector</span> CenterDist, <span\
+      \ class=\"kw5\">float</span> HalfHeight, <span class=\"kw5\">float</span> Radius<span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n  CenterDist.<span class=\"\
+      me0\">X</span> <span class=\"sy0\">=</span> <span class=\"kw3\">VSize</span><span\
+      \ class=\"br0\">(</span><span class=\"kw3\">vect</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">1</span>,<span class=\"nu0\">1</span>,<span class=\"nu0\">0</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">*</span> CenterDist<span class=\"\
+      br0\">)</span> <span class=\"sy0\">-</span> Radius;\n  <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span>CenterDist.<span class=\"me0\">X</span> <span\
+      \ class=\"sy0\">&lt;</span> <span class=\"nu0\">0</span><span class=\"br0\"\
+      >)</span>\n    CenterDist.<span class=\"me0\">X</span> <span class=\"sy0\">=</span>\
+      \ <span class=\"nu0\">0</span>;\n \n  CenterDist.<span class=\"me0\">Y</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>;\n \n  <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>CenterDist.<span class=\"me0\">Z</span>\
+      \ <span class=\"sy0\">&lt;</span> <span class=\"nu0\">0</span><span class=\"\
+      br0\">)</span>\n    CenterDist.<span class=\"me0\">Z</span> <span class=\"sy0\"\
+      >*=</span> <span class=\"sy0\">-</span><span class=\"nu0\">1</span>;\n \n  CenterDist.<span\
+      \ class=\"me0\">Z</span> <span class=\"sy0\">-=</span> HalfHeight;\n  <span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span>CenterDist.<span class=\"\
+      me0\">Z</span> <span class=\"sy0\">&lt;</span> <span class=\"nu0\">0</span><span\
+      \ class=\"br0\">)</span>\n    CenterDist.<span class=\"me0\">Z</span> <span\
+      \ class=\"sy0\">=</span> <span class=\"nu0\">0</span>;\n \n  <span class=\"\
+      kw2\">return</span> <span class=\"kw3\">VSize</span><span class=\"br0\">(</span>CenterDist<span\
+      \ class=\"br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <p>We will use this in our custom radius damage function to calculate the distance\
+      \ of players from the hit location.</p>\n<p>The new radius damage function needs\
+      \ to know three things:</p>\n<ol>\n<li>who/what was hit,</li>\n<li>where was\
+      \ the hit and</li>\n<li>what's the shot direction.</li>\n</ol>\n<p>These need\
+      \ to be passed as parameters, everything else is available as class-global variables.</p>\n\
+      <p><br /></p>\n<table style=\"\" class=\"metadata plainlinks ambox ambox-content\"\
+      >\n<tr>\n<td class=\"ambox-image\"></td>\n<td class=\"ambox-text\">The following\
+      \ things need to be done on this page or in this section:<br />\n<ul>\n<li>explain\
+      \ ExtendedHurtRadius()</li>\n<li>create custom damage types</li>\n<li>create\
+      \ custom ammo type</li>\n<li>move fire code to weapon class for wind-up/down</li>\n\
+      <li>create pickup class</li>\n<li>create mutator</li>\n</ul>\n</td>\n</tr>\n\
+      </table>\n\n<!-- \nNewPP limit report\nCPU time usage: 0.283 seconds\nReal time\
+      \ usage: 0.300 seconds\nPreprocessor visited node count: 218/1000000\nPreprocessor\
+      \ generated node count: 610/1000000\nPost‐expand include size: 1181/2097152\
+      \ bytes\nTemplate argument size: 608/2097152 bytes\nHighest expansion depth:\
+      \ 5/40\nExpensive parser function count: 1/100\n-->\n\n<!-- \nTransclusion expansion\
+      \ time report (%,ms,calls,template)\n100.00%   10.712      1 - -total\n100.00%\
+      \   10.712      1 - Template:Todo\n 67.13%    7.191      1 - Template:Ambox\n\
+      -->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:24190-0!*!0!!en!*!*\
+      \ and timestamp 20221117234255 and revision id 34556\n -->\n"
+  categories:
+  - sortkey: "Vauss Cannon"
+    name: "Programming_tutorials"
+  - sortkey: "Wormbo/Vauss Cannon (UT2004)"
+    name: "Pages_needing_cleanup"
+  links:
+  - ns: 104
+    exists: true
+    name: "UE2:WeaponAttachment (UT2004)"
+  - ns: 104
+    exists: true
+    name: "UE2:MinigunAttachment (UT2004)"
+  - ns: 104
+    exists: true
+    name: "UE2:Actor (UT2004)"
+  - ns: 104
+    exists: true
+    name: "UE2:Weapon (UT2004)"
+  - ns: 3
+    exists: false
+    name: "User talk:Wormbo/Vauss Cannon (UT2004)"
+  - ns: 0
+    exists: false
+    name: "Project directory"
+  - ns: 104
+    exists: true
+    name: "UE2:Actor instance functions (UT2004)"
+  - ns: 104
+    exists: true
+    name: "UE2:WeaponFire (UT2004)"
+  - ns: 0
+    exists: false
+    name: "UMake"
+  - ns: 104
+    exists: true
+    name: "UE2:Actor properties (UT2004)"
+  - ns: 0
+    exists: true
+    name: "UnrealScript"
+  - ns: 104
+    exists: true
+    name: "UE2:MinigunFire (UT2004)"
+  - ns: 0
+    exists: true
+    name: "UnCodeX"
+  - ns: 0
+    exists: true
+    name: "UnrealEd"
+  - ns: 0
+    exists: true
+    name: "Defaultproperties"
+  - ns: 0
+    exists: true
+    name: "UU"
+  - ns: 0
+    exists: false
+    name: "Creating classes"
+  - ns: 104
+    exists: true
+    name: "UE2:Minigun (UT2004)"
+  - ns: 104
+    exists: true
+    name: "UE2:InstantFire (UT2004)"
+  - ns: 0
+    exists: true
+    name: "UT2004"
+  - ns: 104
+    exists: true
+    name: "UE2:Actor events (UT2004)"
+  templates:
+  - ns: 10
+    exists: true
+    name: "Template:Todo"
+  - ns: 10
+    exists: true
+    name: "Template:Ambox"
+  images: []
+  externallinks:
+  - "http://www.koehler-homepage.de/Wormbo/downloads/VaussFireSounds.zip"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Project setup"
+    number: "1"
+    index: "1"
+    fromtitle: "User:Wormbo/Vauss_Cannon_(UT2004)"
+    byteoffset: 702
+    anchor: "Project_setup"
+  - toclevel: 1
+    level: "2"
+    line: "Getting started"
+    number: "2"
+    index: "2"
+    fromtitle: "User:Wormbo/Vauss_Cannon_(UT2004)"
+    byteoffset: 1831
+    anchor: "Getting_started"
+  - toclevel: 1
+    level: "2"
+    line: "Implementing fire modes"
+    number: "3"
+    index: "3"
+    fromtitle: "User:Wormbo/Vauss_Cannon_(UT2004)"
+    byteoffset: 4551
+    anchor: "Implementing_fire_modes"
+  - toclevel: 2
+    level: "3"
+    line: "Primary fire mode"
+    number: "3.1"
+    index: "4"
+    fromtitle: "User:Wormbo/Vauss_Cannon_(UT2004)"
+    byteoffset: 6105
+    anchor: "Primary_fire_mode"
+  - toclevel: 2
+    level: "3"
+    line: "Secondary fire mode"
+    number: "3.2"
+    index: "5"
+    fromtitle: "User:Wormbo/Vauss_Cannon_(UT2004)"
+    byteoffset: 8868
+    anchor: "Secondary_fire_mode"
+  - toclevel: 2
+    level: "3"
+    line: "Fixing the radius damage"
+    number: "3.3"
+    index: "6"
+    fromtitle: "User:Wormbo/Vauss_Cannon_(UT2004)"
+    byteoffset: 14776
+    anchor: "Fixing_the_radius_damage"
+  displaytitle: "User:Wormbo/Vauss Cannon (UT2004)"
+  iwlinks: []
+  wikitext:
+    text: "The goal of this tutorial is to create a rapid-fire instant-hit weapon\
+      \ for [[UT2004]]. Primary fire will be a standard Minigun-style mode with high\
+      \ fire rate and quite some spread, while the secondary mode will fire explosive\
+      \ rounds with lower fire rate and spread.\n\nUnlike the UT2004 [[UE2:Minigun\
+      \ (UT2004)|Minigun]], this weapon will immediately start firing while winding\
+      \ up. The dynamic nature of the wind-up/down behavior will require an unusual\
+      \ handling of fire modes.\n\nThe Vauss Cannon will use the standard UT2004 Minigun\
+      \ visuals with custom firing sounds. Feel free to customize the visuals as well,\
+      \ but this tutorial makes some assumptions based on details of the Minigun's\
+      \ 1st person mesh.\n\n==Project setup==\nFirst you need to set up your [[UnrealScript]]\
+      \ project. Personally I prefer just [[creating classes]] with [[UnCodeX]], which\
+      \ automatically creates the [[project directory]] if you specify a new package\
+      \ name. To compile my projects I use [[UMake]], which stores its settings in\
+      \ the file make.ini in the project directory and can be configured as the default\
+      \ compiler in UnCodeX. You can use any UnrealScript programming environment\
+      \ you want, but I strongly recommend against using [[UnrealEd]] because this\
+      \ tutorial is going to work with [[defaultproperties]] which are not editable\
+      \ in UnrealEd.\n\nFor this tutorial, the project directory (and thus the package\
+      \ to compile) is assumed to be called '''VaussCannonTutorial''' and since this\
+      \ is supposed to become a simple weapon mutator, it resides directly in the\
+      \ UT2004 directory. The custom sounds we will use in this tutorial are already\
+      \ set up in the sound package [http://www.koehler-homepage.de/Wormbo/downloads/VaussFireSounds.zip\
+      \ VaussFireSounds.uax], which should be placed in the project directory as it\
+      \ will be imported into our project package later.\n\n==Getting started==\n\
+      UT2004 weapons consist of different parts. The most important part is the [[UE2:Weapon\
+      \ (UT2004)|Weapon]] subclass, which often implements the overall behavior of\
+      \ the weapon and also acts as mediator between the player and other parts of\
+      \ the weapon. Let's start by creating the new Weapon subclass '''VaussCannon'''\
+      \ and filling in some basic information about the weapon we are going to create.\n\
+      \nAny potential comments aside, the only line of code in the new class should\
+      \ be:\n<uscript>\nclass VaussCannon extends Weapon;\n</uscript>\n\nWe will use\
+      \ custom sounds, so let's load those first:\n<uscript>\n#exec obj load file=VaussFireSounds.uax\
+      \ package=VaussCannonTutorial\n</uscript>\nThis loads our custom sound package\
+      \ into the package we will be compiling. The part after #exec is actually a\
+      \ console command that will be executed when the VaussCannon.uc file is parsed\
+      \ for the first time. Any resources in VaussFireSounds.uax are loaded and will\
+      \ be available during the entire compiler run. Any other classes we compile\
+      \ will be able to reference these resources in code and [[defaultproperties]]\
+      \ as well.\n\nSpeaking of defaultproperties, let's fill in some default values\
+      \ as well:\n<uscript>\ndefaultproperties\n{\n  ItemName = \"Vauss Cannon\"\n\
+      \  Description = \"...\" // be creative here, the Vauss Cannon's basic functionality\
+      \ was explained at the start of the tutorial\n\n  // the following properties\
+      \ were all copied from the Minigun class:\n  HighDetailOverlay=Material'UT2004Weapons.WeaponSpecMap2'\n\
+      \  IconMaterial=Material'HudContent.Generic.HUD'\n  IconCoords=(X1=246,Y1=80,X2=332,Y2=106)\n\
+      \  InventoryGroup=6\n  Mesh=mesh'Weapons.Minigun_1st'\n  BobDamping=2.25\n \
+      \ EffectOffset=(X=100.0,Y=18.0,Z=-16.0)\n  DisplayFOV=60\n  PutDownAnim=PutDown\n\
+      \  DrawScale=0.4\n  PlayerViewOffset=(X=2,Y=-1,Z=0)\n  SmallViewOffset=(X=8,Y=1,Z=-2)\n\
+      \  PlayerViewPivot=(Pitch=0,Roll=0,Yaw=500)\n  AttachmentClass=class'MinigunAttachment'\n\
+      \  SoundRadius=400.0\n  SelectSound=Sound'WeaponSounds.Minigun.SwitchToMinigun'\n\
+      \  SelectForce=\"SwitchToMiniGun\"\n  AIRating=+0.71\n  CurrentRating=+0.71\n\
+      \  HudColor=(r=255,g=255,b=255,a=255)\n  CustomCrosshair=12\n  CustomCrosshairTextureName=\"\
+      Crosshairs.Hud.Crosshair_Circle1\"\n  CustomCrosshairColor=(r=255,g=255,b=255,a=255)\n\
+      \  Priority=9\n  CenteredOffsetY=-6.0\n  CenteredYaw=-500\n  CenteredRoll=0\n\
+      }\n</uscript>\nThese properties already mentions another part of all UT2004\
+      \ weapons, the [[UE2:WeaponAttachment (UT2004)|WeaponAttachment]]. That's the\
+      \ mesh attached to the player model. We will just reuse the Minigun attachment\
+      \ here as it already does what we want. It is responsible for spawning tracer\
+      \ effects, ejected shells and impact sparks. For the alternate fire mode it\
+      \ even spawns a small explosion effect.\n\n==Implementing fire modes==\nRight\
+      \ now there's not much we can do with our weapon. We could get it into the game\
+      \ via the Arena mutator, but it wouldn't do anything yet.\n\nIn order to make\
+      \ our weapon shoot, we need to add fire mode classes. More precisely, we need\
+      \ to create one or two subclasses of [[UE2:WeaponFire (UT2004)|WeaponFire]]\
+      \ and use it/them as the fire mode class(es) of the VaussCannon class. The Vauss\
+      \ Cannon is an instant-hit weapon with two similar firing modes. After a look\
+      \ at the WeaponFire class hierarchy, the most obvious choice is subclassing\
+      \ [[UE2:InstantFire (UT2004)|InstantFire]]. We could also subclass [[UE2:MinigunFire\
+      \ (UT2004)|MinigunFire]], but we will see later that the Vauss Cannon fire modes\
+      \ are more than a bit different from those of the Minigun.\n\nLet's call our\
+      \ primary fire mode class '''VaussCannonFire''':\n<uscript>\nclass VaussCannonFire\
+      \ extends InstantFire;\n</uscript>\n...and our secondary fire mode class '''VaussCannonAltFire''':\n\
+      <uscript>\nclass VaussCannonAltFire extends VaussCannonFire;\n</uscript>\nSince\
+      \ the fire modes will be very similar, it makes sense to extend one from the\
+      \ other. And since the secondary mode has splash damage, we'll extend it from\
+      \ the non-splash damage primary mode and add the splash damage handling here\
+      \ later.\n\nVery important, to tell our weapon to use these new fire mode classes,\
+      \ we need to add the relevant values to the VaussCannon's [[defaultproperties]]\
+      \ block:\n<uscript>\n  FireModeClass[0] = class'VaussCannonFire'\n  FireModeClass[1]\
+      \ = class'VaussCannonAltFire'\n</uscript>\n\n===Primary fire mode===\nFor now\
+      \ we will only work on the primary fire mode. Changes we do here will be inherited\
+      \ by the secondary fire mode class because it extends the primary fire mode\
+      \ class.\n\nBefore we start adding default values and code, let's see what InstantFire\
+      \ and its parent class WeaponFire already provide. InstantFire defines a trace\
+      \ range of 10000[[UU]] and all the logic required to perform a hit trace and\
+      \ apply damage. The WeaponFire class defines the standard logic for dealing\
+      \ with relevant player input (pressing fire(alt fire button), with some of the\
+      \ logic residing in native code. There are also AI recommendations and a few\
+      \ predefined animation names. Neither of these classes define a default type\
+      \ or amount of damage, so let's do that first.\n<uscript>\ndefaultproperties\n\
+      {\n  DamageMin  = 5\n  DamageMax  = 6\n  DamageType = class'DamTypeMinigunBullet'\n\
+      \  Momentum   = 1000.0\n}\n</uscript>\nAnother thing we need to define is the\
+      \ amount and type of ammo our weapon uses. This is also done in the defaultproperties\
+      \ block of the fire mode classes, so add the following lines to it:\n<uscript>\n\
+      \  AmmoClass = class'MinigunAmmo'\n  AmmoPerFire = 1\n</uscript>\nThese two\
+      \ lines mean the Vauss Cannon uses the same ammo type as the Minigun and requires\
+      \ one ammo unit per shot.\n\nAt this point you can compile and test the current\
+      \ state of the Vauss Cannon using the Arena mutator. You will notice that it\
+      \ will shoot and do damage, but it's almost completely silent and the fire rate\
+      \ is far too low. It does spawn tracers and impact effects, though. These are\
+      \ created by the [[UE2:MinigunAttachment (UT2004)|MinigunAttachment]] class\
+      \ we defined as the VaussCannon's ''AttachmentClass''.\n\nTo add a firing sound,\
+      \ simply add the following line to the VuassCannonFire defaults:\n<uscript>\n\
+      \  FireSound = Sound'VaussFireSound'\n</uscript>\nThe firing rate is defined\
+      \ by the time between shots, so a rate of e.g. 20 shots per second would require\
+      \ the following default value:\n<uscript>\n  FireRate = 0.05\n</uscript>\nIf\
+      \ you test again, you'll hear a nice machinegun sound and see the corresponding\
+      \ fire effects, including the damage opponents take. However, the shots are\
+      \ still spot-on. A machine gun with this firing rate would be expected to be\
+      \ quite inaccurate, and if we look at the [[UE2:MinigunFire (UT2004)|MinigunFire]]\
+      \ class, we can see a default value for the property [[UE2:WeaponFire (UT2004)#Spread|Spread]],\
+      \ which defines a relative spread angle for instant-hit modes. A spread of 0.08\
+      \ is used by the Minigun primary fire and that value should be good for the\
+      \ Vauss Cannon primary fire as well.\n<uscript>\n  Spread = 0.08\n</uscript>\n\
+      That should be enough for the first implementation pass on the primary fire\
+      \ mode, so let's move on to the secondary mode.\n\n===Secondary fire mode===\n\
+      The secondary fire mode of the Vauss Cannon is supposed to have a lower firing\
+      \ rate (and thus less spread), but do more damage, including some splash damage.\
+      \ To make it more obvious, we will also assign a slightly different firing sound.\
+      \ Five shots per second should be ok for this mode, so add the following lines\
+      \ to the '''VaussCannonAltFire''' class:\n<uscript>\ndefaultproperties\n{\n\
+      \  FireSound = Sound'VaussAltFireSound'\n  FireRate  = 0.2\n  Spread    = 0.03\n\
+      }\n</uscript>\nAt the lower firing rate and with the inherited damage values,\
+      \ the secondary mode is seriously underpowered. Let's override the inherited\
+      \ values with the following new defaults:\n<uscript>\n  DamageMin  = 13\n  DamageMax\
+      \  = 15\n  DamageType = class'DamTypeMinigunAlt'\n  Momentum   = 10000.0\n</uscript>\n\
+      Now the secondary mode fires 5 shots per second, each doing 13 to 15 damage.\
+      \ That's an average damage output of about 5*(13+15)/2=70. The primary mode\
+      \ does about 20*(5+6)/2=110 damage, but only at closer range, because at greater\
+      \ distance not all shots will hit the target. The damage output per second may\
+      \ be a bit lower for secondary mode, but the damage output per ammo is more\
+      \ than twice as high as the primary mode's. That means, if the player only used\
+      \ the secondary mode, he would be able to save a lot of ammo at the expense\
+      \ of some damage per second. To counter this, we should increase the ammo usage\
+      \ of the secondary mode a bit:\n<uscript>\n  AmmoPerFire = 2\n</uscript>\nNow\
+      \ the secondary mode will consume 2/0.2=10 ammo units per second, while the\
+      \ primary mode consumes 1/0.5=20 ammo units per second.\n\nOne problem caused\
+      \ by an ammo amount greater than 1 is that the weapon may stop firing in this\
+      \ mode if less than the required ammo amount is left, but it won't switch away\
+      \ automatically. This also happened with the Linkgun secondary mode before Epic\
+      \ worked around it in a patch by adding the following code to the alt fire mode,\
+      \ which we will also do in our VaussCannonAltFire class:\n<uscript>\nfunction\
+      \ bool AllowFire()\n{\n  return Weapon.AmmoAmount(ThisModeNum) >= 1;\n}\n</uscript>\n\
+      '''ThisModeNum''' is a variable defined in the WeaponFire class that is initialized\
+      \ with the actual mode number for this fire mode by the weapon when creating\
+      \ the fire mode instance. '''Weapon''' also is a variable defined by the WeaponFire\
+      \ and initialized by the weapon. The '''AmmoAmount''' function of the weapon\
+      \ returns the current ammo amount for the specified fire mode. Usually this\
+      \ will be the same value for both fire modes, but some weapons like the Assault\
+      \ Rifle keep two different ammo values for primary and secondary mode.\n\nSo\
+      \ now the secondary Vauss Cannon fire mode already does more damage at a lower\
+      \ fire rate and uses more ammo per shot, but it doesn't have splash damage yet.\
+      \ We will have to override the logic that finds hit targets and applies damage.\
+      \ The function responsible for this part is [[UE2:InstantFire (UT2004)#DoTrace|InstantFire.DoTrace]]().\
+      \ If you look at its source code (and I strongly recommend doing so!), you will\
+      \ see it was written to handle reflecting off the Shieldgun shield if the fire\
+      \ mode supports it.\n\nWe only need to replace the call to <code>Other.[[UE2:Actor\
+      \ events (UT2004)#TakeDamage|TakeDamage]](...)</code>, but it's burried deep\
+      \ inside this function. There's no way to replace only that single line, so\
+      \ we need to override and reimplement the entire DoTrace() function. Our weapon\
+      \ does not support reflection, so we can leave out the corresponding code. Of\
+      \ course you can also copy/paste the InstantFire.DoTrace() function entirely\
+      \ and only replace the ''TakeDamage'' line in a similar way as the following\
+      \ code does. First we will introduce a new property for our fire mode class.\
+      \ Add the following variable declaration below the class declaration, but above\
+      \ the first function:\n<uscript>\nvar float DamageRadius;\n</uscript>\n...and\
+      \ give it a meaningful value in the defaultproperties block:\n<uscript>\n  DamageDarius\
+      \ = 10.0\n</uscript>\nNow we can replace the simple TakeDamage() call with something\
+      \ that causes radius damage. The most obvious candidate here is the [[UE2:Actor\
+      \ instance functions (UT2004)#HurtRadius|Actor.HurtRadius]]() function, which\
+      \ already implements radius damage with linear falloff from the center. In UT2004\
+      \ the WeaponFire classes do not extend Actor, so we need to get hold of an actor\
+      \ to call HurtRadius(). This actor should be owned by the player as otherwise\
+      \ the player might not be credited for kills. We are lucky here, as the weapon\
+      \ itself extends Actor >> Inventory >> Weapon and therefore inherits the HurtRadius()\
+      \ function:\n<uscript>\nfunction DoTrace(vector Start, rotator Dir)\n{\n  local\
+      \ vector X, End, HitLocation, HitNormal;\n  local Actor Other;\n  local float\
+      \ DamageAmount;\n  \n  X = vector(Dir);\n  End = Start + MaxRange() * X;\n \
+      \ \n  Other = Weapon.Trace(HitLocation, HitNormal, End, Start, true);\n  \n\
+      \  if (Other != None && Other != Instigator) {\n    DamageAmount = RandRange(DamageMin,\
+      \ DamageMax) * DamageAtten;\n    Weapon.HurtRadius(DamageAmount, DamageRadius,\
+      \ DamageType, Momentum, HitLocation);\n    WeaponAttachment(Weapon.ThirdPersonActor).UpdateHit(Other,\
+      \ HitLocation, HitNormal);\n  }\n  else {\n    HitNormal = vect(0,0,0);\n  \
+      \  HitLocation = End;\n    WeaponAttachment(Weapon.ThirdPersonActor).UpdateHit(Other,\
+      \ HitLocation, HitNormal);\n  }\n  SpawnBeamEffect(Start, Dir, HitLocation,\
+      \ HitNormal, 0);\n}\n</uscript>\nSo far so good, but when testing the secondary\
+      \ mode, you'll notice it neither damages enemies nor yourself if you shoot at\
+      \ some nearby object. This is not really a problem with our code, but one with\
+      \ the HurtRadius() function. It uses [[UE2:Actor (UT2004)# VisibleCollidingActors|VisibleCollidingActors]]\
+      \ and passes the DamageRadius directly. That iterator function, however, only\
+      \ looks for actors whose center is within the specified radius. At only 10UU\
+      \ radius, this will work for almost no actor in the game.\n\n===Fixing the radius\
+      \ damage===\nWe will have to write a custom radius damage function that finds\
+      \ all actors ''overlapping'' the damage radius, even if their center is outside\
+      \ the radius. Also, the actor actually hit should take full damage. This is\
+      \ important for vehicles, which use complex collision. Also, unlike the HurtRadius()\
+      \ function that bases the damage amount on the distance from the actor center\
+      \ minus the actor's [[UE2:Actor properties (UT2004)#CollisionRadius|CollisionRadius]],\
+      \ our function should take the actual distance from the collision cylinder.\
+      \ With a radius as small as the one we use and a [[UE2:Actor properties (UT2004)#CollisionHeight|CollisionHeight]]\
+      \ much greater than the CollisionRadius, hitting players at the feed or the\
+      \ head would otherwise do no damage.\n\nWhat we need is a function that calculates\
+      \ a point's distance from a cylinder's surface. Player collision cylinders are\
+      \ always upright, so the problem can be split into calculating a height difference\
+      \ and finding the distance of a point from a circle. The following function\
+      \ will first find the horizontal and vertical distances and then calculate the\
+      \ actual distance from these components:\n<uscript>\nfunction float DistToCylinder(vector\
+      \ CenterDist, float HalfHeight, float Radius)\n{\n  CenterDist.X = VSize(vect(1,1,0)\
+      \ * CenterDist) - Radius;\n  if (CenterDist.X < 0)\n    CenterDist.X = 0;\n\
+      \  \n  CenterDist.Y = 0;\n  \n  if (CenterDist.Z < 0)\n    CenterDist.Z *= -1;\n\
+      \  \n  CenterDist.Z -= HalfHeight;\n  if (CenterDist.Z < 0)\n    CenterDist.Z\
+      \ = 0;\n  \n  return VSize(CenterDist);\n}\n</uscript>\nWe will use this in\
+      \ our custom radius damage function to calculate the distance of players from\
+      \ the hit location.\n\nThe new radius damage function needs to know three things:\n\
+      # who/what was hit,\n# where was the hit and\n# what's the shot direction.\n\
+      These need to be passed as parameters, everything else is available as class-global\
+      \ variables.\n\n\n{{todo|\n* explain ExtendedHurtRadius()\n* create custom damage\
+      \ types\n* create custom ammo type\n* move fire code to weapon class for wind-up/down\n\
+      * create pickup class\n* create mutator\n}}\n\n\n[[Category:Programming tutorials|Vauss\
+      \ Cannon]]"
+  properties: []
+  revId: 34556
+name: "User:Wormbo/Vauss Cannon (UT2004)"
+revision:
+  revid: 34556
+  parentid: 34551
+  user: "Wormbo"
+  timestamp: 1248630603.000000000
+  comment: "/* Implementing fire modes */ second pass - damage types up to and excluding\
+    \ proper radius damage for alt fire"
+timestamp: 1668760982.656700000

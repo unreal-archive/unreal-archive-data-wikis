@@ -1,0 +1,556 @@
+---
+parse:
+  title: "Legacy:Chain Of Events At Level Startup"
+  text:
+    text: "<p>This page describes what happens right after a level was loaded. It\
+      \ lists the startup engine events and the UnrealScript functions subsequently\
+      \ called by those events and gives a short description how these events and\
+      \ functions could be used.</p>\n<p>Actors that were created because they are\
+      \ listed in the ServerActors list of a server's <a href=\"/Legacy:INI_File\"\
+      \ title=\"Legacy:INI File\">INI file</a> also use the chain of events described\
+      \ on this page. Other actors spawned during this chain of events (e.g. <a href=\"\
+      /Legacy:Mutator\" title=\"Legacy:Mutator\">Mutators</a> or <a href=\"/Legacy:GameRules\"\
+      \ title=\"Legacy:GameRules\">GameRules</a>) use the <a href=\"/Legacy:Chain_Of_Events_When_Spawning_Actors\"\
+      \ title=\"Legacy:Chain Of Events When Spawning Actors\">chain of events when\
+      \ spawning actors</a> and are not included here (unless UnrealEngine1 is used)\
+      \ except for the last event in this list.</p>\n<p><i>This whole page is based\
+      \ on a snippet of native UT2004 code posted on the UT2003Mods mailing list.\
+      \ Most parts will be similar in older engine versions, but there might be important\
+      \ differences in the functions called by these events.</i></p>\n<p></p>\n<div\
+      \ id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n</div>\n\
+      <ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#Chain_Of_Events\"><span\
+      \ class=\"tocnumber\">1</span> <span class=\"toctext\">Chain Of Events</span></a>\n\
+      <ul>\n<li class=\"toclevel-2 tocsection-2\"><a href=\"#GameInfo.InitGame.28.29\"\
+      ><span class=\"tocnumber\">1.1</span> <span class=\"toctext\">GameInfo.InitGame()</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-3\"><a href=\"#GameInfo.SetGrammar.28.29_.28UT2004.29\"\
+      ><span class=\"tocnumber\">1.2</span> <span class=\"toctext\">GameInfo.SetGrammar()\
+      \ <i>(UT2004)</i></span></a></li>\n<li class=\"toclevel-2 tocsection-4\"><a\
+      \ href=\"#Actor.PreBeginPlay.28.29\"><span class=\"tocnumber\">1.3</span> <span\
+      \ class=\"toctext\">Actor.PreBeginPlay()</span></a>\n<ul>\n<li class=\"toclevel-3\
+      \ tocsection-5\"><a href=\"#...in_UT2003\"><span class=\"tocnumber\">1.3.1</span>\
+      \ <span class=\"toctext\">...in UT2003</span></a></li>\n<li class=\"toclevel-3\
+      \ tocsection-6\"><a href=\"#...in_UT\"><span class=\"tocnumber\">1.3.2</span>\
+      \ <span class=\"toctext\">...in UT</span></a></li>\n</ul>\n</li>\n<li class=\"\
+      toclevel-2 tocsection-7\"><a href=\"#Actor.BeginPlay.28.29\"><span class=\"\
+      tocnumber\">1.4</span> <span class=\"toctext\">Actor.BeginPlay()</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-8\"><a href=\"#Actor_Zones\"><span class=\"\
+      tocnumber\">1.5</span> <span class=\"toctext\">Actor Zones</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-9\"><a href=\"#Actor_Volumes\"><span class=\"\
+      tocnumber\">1.6</span> <span class=\"toctext\">Actor Volumes</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-10\"><a href=\"#Actor.PostBeginPlay.28.29\"\
+      ><span class=\"tocnumber\">1.7</span> <span class=\"toctext\">Actor.PostBeginPlay()</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-11\"><a href=\"#Actor.PostNetBeginPlay.28.29\"\
+      ><span class=\"tocnumber\">1.8</span> <span class=\"toctext\">Actor.PostNetBeginPlay()</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-12\"><a href=\"#Actor.SetInitialState.28.29\"\
+      ><span class=\"tocnumber\">1.9</span> <span class=\"toctext\">Actor.SetInitialState()</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-13\"><a href=\"#Actor_Bases\"><span class=\"\
+      tocnumber\">1.10</span> <span class=\"toctext\">Actor Bases</span></a></li>\n\
+      </ul>\n</li>\n<li class=\"toclevel-1 tocsection-14\"><a href=\"#Related_Topics\"\
+      ><span class=\"tocnumber\">2</span> <span class=\"toctext\">Related Topics</span></a></li>\n\
+      </ul>\n</div>\n<p></p>\n<h2><span class=\"mw-headline\" id=\"Chain_Of_Events\"\
+      >Chain Of Events</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Chain_Of_Events_At_Level_Startup?section=1\"\
+      \ title=\"Edit section: Chain Of Events\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>These are the events directly called from native code.\
+      \ See the sections below for more details about functions called by these events.</p>\n\
+      <p>Here \"all actors\" means all actors that were placed in the map by the mapper\
+      \ or were created as ServerActors. Actors that have been created with the Spawn()\
+      \ function or that have received a Destroy() call are excluded from this chain\
+      \ of events.</p>\n<ol>\n<li>the <a href=\"/Legacy:GameInfo\" title=\"Legacy:GameInfo\"\
+      >GameInfo</a>'s InitGame() event is called</li>\n<li>the <a href=\"/Legacy:GameInfo\"\
+      \ title=\"Legacy:GameInfo\">GameInfo</a>'s SetGrammar() event is called <i>(UT2004)</i></li>\n\
+      <li>all <a href=\"/Legacy:Actor\" title=\"Legacy:Actor\">Actors</a>' PreBeginPlay()\
+      \ events are called</li>\n<li>all <a href=\"/Legacy:Actor\" title=\"Legacy:Actor\"\
+      >Actors</a>' BeginPlay() events are called</li>\n<li>all <a href=\"/Legacy:Actor\"\
+      \ title=\"Legacy:Actor\">Actors</a>' zones are set</li>\n<li>all <a href=\"\
+      /Legacy:Actor\" title=\"Legacy:Actor\">Actors</a>' volumes are set</li>\n<li>all\
+      \ <a href=\"/Legacy:Actor\" title=\"Legacy:Actor\">Actors</a>' PostBeginPlay()\
+      \ events are called</li>\n<li>all <a href=\"/Legacy:Actor\" title=\"Legacy:Actor\"\
+      >Actors</a>' PostNetBeginPlay() events are called</li>\n<li>all <a href=\"/Legacy:Actor\"\
+      \ title=\"Legacy:Actor\">Actors</a>' SetInitialState() events are called</li>\n\
+      <li>all <a href=\"/Legacy:Actor\" title=\"Legacy:Actor\">Actors</a> either with\
+      \ bShouldBaseAtStartup=True and Physics set to PHYS_None or PHYS_Rotating or\
+      \ with an AttachTag get their base set</li>\n</ol>\n<p>After all this players\
+      \ can start joining. This is especially also true for single player/instant\
+      \ action mode and means that the <a href=\"/Legacy:Chain_Of_Events_When_A_Player_Logs_In\"\
+      \ title=\"Legacy:Chain Of Events When A Player Logs In\">chain of events when\
+      \ a player logs in</a> is only executed after these events.</p>\n<h3><span class=\"\
+      mw-headline\" id=\"GameInfo.InitGame.28.29\">GameInfo.InitGame()</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Chain_Of_Events_At_Level_Startup?section=2\" title=\"\
+      Edit section: GameInfo.InitGame()\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>This initializes the GameInfo. At this point all the\
+      \ mapper-placed actors already exist, they just didn't get any of their initialization\
+      \ functions called yet.</p>\n<ol>\n<li>The <a href=\"/Legacy:GameProfile\" title=\"\
+      Legacy:GameProfile\">GameProfile</a> class specified in the \"SaveGame\" parameter\
+      \ is loaded and initialized. (if specified)</li>\n<li>The GameSpeed is set according\
+      \ to the \"GameSpeed\" parameter. (SetGameSpeed(), if specified)</li>\n<li>The\
+      \ base mutator is added via AddMutator().<br />\n<b>Note:</b> Any actors spawned\
+      \ before this or during the base mutator's initialization (see <a href=\"/Legacy:Chain_Of_Events_When_Spawning_Actors\"\
+      \ title=\"Legacy:Chain Of Events When Spawning Actors\">Chain Of Events When\
+      \ Spawning Actors</a>) must have <tt>bGameRelevant=True</tt> set or they will\
+      \ cause an <a href=\"/Legacy:Accessed_None\" title=\"Legacy:Accessed None\"\
+      \ class=\"mw-redirect\">Accessed None</a> when trying to call the base mutator's\
+      \ CheckRelevance() function and as a result of this destroy themselves.</li>\n\
+      <li>The BroadcastHandlerClass is spawned.</li>\n<li>The AccessControl class\
+      \ is spawned. Either the class specified in the \"AccessControl\" parameter\
+      \ will be used or the AccessControlClass. If neither of those are set, Engine.<a\
+      \ href=\"/Legacy:AccessControl\" title=\"Legacy:AccessControl\">AccessControl</a>\
+      \ is used.</li>\n<li>All <a href=\"/Legacy:GameRules\" title=\"Legacy:GameRules\"\
+      >GameRules</a> specified in the \"GameRules\" parameter will be spawned.</li>\n\
+      <li>All <a href=\"/Legacy:Mutator\" title=\"Legacy:Mutator\">Mutators</a> specified\
+      \ in the \"Mutator\" parameter will be added via AddMutator().<br />\nAddMutator()\
+      \ only adds a mutator if its GroupName is an empty string or is not the same\
+      \ as the GroupName of any other mutator (including the base mutator) already\
+      \ added. The mutator's <tt>bUserAdded</tt> variable is set to False for the\
+      \ base mutator and to True for all mutators added via the \"Mutator\" parameter.</li>\n\
+      </ol>\n<p>For subclasses of <a href=\"/Legacy:DeathMatch\" title=\"Legacy:DeathMatch\"\
+      >DeathMatch</a> InitGame() looks for a <a href=\"/Legacy:LevelGameRules\" title=\"\
+      Legacy:LevelGameRules\">LevelGameRules</a> actor before going though the things\
+      \ described above. The first <a href=\"/Legacy:LevelGameRules\" title=\"Legacy:LevelGameRules\"\
+      >LevelGameRules</a> actor found will receive an UpdateGame() call.</p>\n<p>InitGame()\
+      \ also reads some other parameters specified in the level URL, but these mostly\
+      \ don't call any important functions.</p>\n<h3><span class=\"mw-headline\" id=\"\
+      GameInfo.SetGrammar.28.29_.28UT2004.29\">GameInfo.SetGrammar() <i>(UT2004)</i></span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Chain_Of_Events_At_Level_Startup?section=3\" title=\"\
+      Edit section: GameInfo.SetGrammar() (UT2004)\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>This loads the appropriate speech recognition grammar\
+      \ file.</p>\n<p><i>(no additional information about this so far)</i></p>\n<h3><span\
+      \ class=\"mw-headline\" id=\"Actor.PreBeginPlay.28.29\">Actor.PreBeginPlay()</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Chain_Of_Events_At_Level_Startup?section=4\" title=\"\
+      Edit section: Actor.PreBeginPlay()\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<h4><span class=\"mw-headline\" id=\"...in_UT2003\">...in\
+      \ UT2003</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Chain_Of_Events_At_Level_Startup?section=5\"\
+      \ title=\"Edit section: ...in UT2003\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h4>\n<p>If the actor has <tt>bGameRelevant == False</tt> and\
+      \ this event is not executed on a client, the game's base <a href=\"/Legacy:Mutator\"\
+      \ title=\"Legacy:Mutator\">mutator</a>'s CheckRelevance() function is called.</p>\n\
+      <p>CheckRelevance() first calls the base mutator's AlwaysRelevant() function\
+      \ which recursively calls the other mutators' AlwaysRelevant() functions. If\
+      \ this function returns True the actor is considered game relevant and CheckRelevance()\
+      \ returns True resulting in the Actor continuing to exist.</p>\n<p>If AlwaysRelevant()\
+      \ returns False, the base mutator's IsRelevant() function is called. This function\
+      \ calls the mutator's CheckReplacement() function and returns its result if\
+      \ it's False. Otherwise IsRelevant() returns the result of the next mutator's\
+      \ IsRelevant() function.</p>\n<p>Finally the result of the base mutator's IsRelevant()\
+      \ function is returned by CheckRelevance() and again, if that result is True\
+      \ the actor will continue to exist, otherwise it will destroy itself.</p>\n\
+      <h4><span class=\"mw-headline\" id=\"...in_UT\">...in UT</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Chain_Of_Events_At_Level_Startup?section=6\"\
+      \ title=\"Edit section: ...in UT\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h4>\n<p>If the actor has <tt>bGameRelevant == False</tt> and\
+      \ this event is not executed on a client, the <a href=\"/Legacy:GameInfo\" title=\"\
+      Legacy:GameInfo\">GameInfo</a>'s IsRelevant() function is called.</p>\n<p>IsRelevant()\
+      \ first calls the base mutator's AlwaysRelevant() function which recursively\
+      \ calls the other mutators' AlwaysRelevant() functions. If this function returns\
+      \ True the actor is concidered game relevant and GameInfo.IsRelevant() returns\
+      \ True resulting in the Actor continuing to exist.</p>\n<p>If AlwaysRelevant()\
+      \ returns False, the base <a href=\"/Legacy:Mutator\" title=\"Legacy:Mutator\"\
+      >mutator</a>'s IsRelevant() function is called. This function calls the mutator's\
+      \ CheckReplacement() function and returns its result if it's False. Otherwise\
+      \ IsRelevant() returns the result of the next mutator's IsRelevant() function.</p>\n\
+      <p>If the base mutator's IsRelevant() function returns False the GameInfo's\
+      \ IsRelevant() function also returns False and the actor destroys itself. Otherwise\
+      \ if the bSuperRelevant property is set to 1 GameInfo.IsRelevant() returns True\
+      \ resulting in the Actor continuing to exist.</p>\n<p>If the base mutator's\
+      \ IsRelevant() function returns True but the bSuperRelevant property is not\
+      \ set to 1 the GameInfo's IsRelevant() function checks whether the actor may\
+      \ appear in the current difficulty level, if it's a \"monster\" (a non-player\
+      \ <a href=\"/Legacy:Pawn_(UT)\" title=\"Legacy:Pawn (UT)\">Pawn (UT)</a>) and\
+      \ if there's a random chance for the actor to not appear in the game (<tt>OddsOfAppearing</tt>).\
+      \ The GameInfo.IsRelevant() function will also update the number of secret goals,\
+      \ item goals and kill goals before returning True and allowing the actor to\
+      \ exist.</p>\n<h3><span class=\"mw-headline\" id=\"Actor.BeginPlay.28.29\">Actor.BeginPlay()</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Chain_Of_Events_At_Level_Startup?section=7\" title=\"\
+      Edit section: Actor.BeginPlay()\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>This event is called after an Actor is considered\
+      \ \"relevant\" for this game, i.e. no <a href=\"/Legacy:Mutator\" title=\"Legacy:Mutator\"\
+      >Mutator</a> wanted to get rid of it.</p>\n<p>Most actors don't use this event,\
+      \ but if you're looking for an event that is called before the actor is initialized,\
+      \ but after the mutator checks are done, then this is the place for you.</p>\n\
+      <h3><span class=\"mw-headline\" id=\"Actor_Zones\">Actor Zones</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Chain_Of_Events_At_Level_Startup?section=8\"\
+      \ title=\"Edit section: Actor Zones\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>At this point the <a href=\"/Legacy:Actor\" title=\"\
+      Legacy:Actor\">Actor</a>.Region.Zone value becomes valid. This event also causes\
+      \ the ZoneChange() event to be called.</p>\n<h3><span class=\"mw-headline\"\
+      \ id=\"Actor_Volumes\">Actor Volumes</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Chain_Of_Events_At_Level_Startup?section=9\"\
+      \ title=\"Edit section: Actor Volumes\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>At this point the <a href=\"/Legacy:Actor\" title=\"\
+      Legacy:Actor\">Actor</a>.PhysicsVolume value becomes valid. This event also\
+      \ causes the PhysicsVolumeChange() event to be called.</p>\n<h3><span class=\"\
+      mw-headline\" id=\"Actor.PostBeginPlay.28.29\">Actor.PostBeginPlay()</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Chain_Of_Events_At_Level_Startup?section=10\" title=\"\
+      Edit section: Actor.PostBeginPlay()\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Most actors use PostBeginPlay() to initialize their\
+      \ UnrealScript values. The actor's PhysicsVolume and Zone are valid but the\
+      \ actor is not yet in any state.</p>\n<h3><span class=\"mw-headline\" id=\"\
+      Actor.PostNetBeginPlay.28.29\">Actor.PostNetBeginPlay()</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Chain_Of_Events_At_Level_Startup?section=11\"\
+      \ title=\"Edit section: Actor.PostNetBeginPlay()\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>PostNetBeginPlay() is called directly after PostBeginPlay()\
+      \ on the server. On clients it will be called when the initial replication is\
+      \ completed.</p>\n<h3><span class=\"mw-headline\" id=\"Actor.SetInitialState.28.29\"\
+      >Actor.SetInitialState()</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Chain_Of_Events_At_Level_Startup?section=12\"\
+      \ title=\"Edit section: Actor.SetInitialState()\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>At this point the actor is concidered \"initialized\"\
+      \ by the engine (bScriptInitialized is set to True in this event) and the actor's\
+      \ initial state is set. If the <a href=\"/Legacy:InitialState\" title=\"Legacy:InitialState\"\
+      >InitialState</a> property is set, it will be used, otherwise the actor goes\
+      \ to its auto state. Since SetInitialState() is a <a href=\"/Legacy:Simulated_Function\"\
+      \ title=\"Legacy:Simulated Function\">simulated function</a> by default this\
+      \ happens on server and clients.</p>\n<p>This event uses GotoState to change\
+      \ the state, so during its executing the initial state's BeginState() event\
+      \ is called. The state's state code will however not yet start executing at\
+      \ this point. This will happen after all the events described on this page have\
+      \ finished doing their work.</p>\n<h3><span class=\"mw-headline\" id=\"Actor_Bases\"\
+      >Actor Bases</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Chain_Of_Events_At_Level_Startup?section=13\"\
+      \ title=\"Edit section: Actor Bases\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Actors with an AttachTag other than <tt>None</tt>\
+      \ are attached to the first actor with a matching <a href=\"/Legacy:Tag\" title=\"\
+      Legacy:Tag\">Tag</a> or name via <code>SetBase(theMatchingActor)</code>. Actors\
+      \ with <tt>bCollideWorld = true</tt> and <tt>bShouldBaseAtStartup = true</tt>\
+      \ which use either PHYS_None or PHYS_Rotating try to find a suiting base as\
+      \ well. The AttachTag is evaluated first and if set bShouldBaseAtStartup is\
+      \ ignored, whether or not the AttachTag matches anything.</p>\n<p>In both cases\
+      \ when a base is set the actor's BaseChange() event will be called. Note that\
+      \ this final step of startup initialization also includes actors that were <code>Spawn()</code>ed\
+      \ during any of the previous initialization steps.</p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Related_Topics\">Related Topics</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Chain_Of_Events_At_Level_Startup?section=14\"\
+      \ title=\"Edit section: Related Topics\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<ul>\n<li><a href=\"/Legacy:UnrealScript\" title=\"Legacy:UnrealScript\"\
+      >UnrealScript</a></li>\n<li><a href=\"/Legacy:Chain_Of_Events_When_Spawning_Actors\"\
+      \ title=\"Legacy:Chain Of Events When Spawning Actors\">Chain Of Events When\
+      \ Spawning Actors</a></li>\n<li><a href=\"/Legacy:Chain_Of_Events_When_A_Player_Logs_In\"\
+      \ title=\"Legacy:Chain Of Events When A Player Logs In\">Chain Of Events When\
+      \ A Player Logs In</a></li>\n<li><a href=\"/Legacy:Creating_Actors_And_Objects\"\
+      \ title=\"Legacy:Creating Actors And Objects\">Creating Actors And Objects</a></li>\n\
+      </ul>\n\n<!-- \nNewPP limit report\nCPU time usage: 0.055 seconds\nReal time\
+      \ usage: 0.056 seconds\nPreprocessor visited node count: 57/1000000\nPreprocessor\
+      \ generated node count: 64/1000000\nPost‐expand include size: 0/2097152 bytes\n\
+      Template argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive\
+      \ parser function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report\
+      \ (%,ms,calls,template)\n100.00%    0.000      1 - -total\n-->\n\n<!-- Saved\
+      \ in parser cache with key wiki:pcache:idhash:843-0!*!0!!en!*!* and timestamp\
+      \ 20221118003125 and revision id 2355\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:GameRules"
+  - ns: 100
+    exists: true
+    name: "Legacy:AccessControl"
+  - ns: 100
+    exists: true
+    name: "Legacy:Accessed None"
+  - ns: 100
+    exists: true
+    name: "Legacy:LevelGameRules"
+  - ns: 100
+    exists: true
+    name: "Legacy:Creating Actors And Objects"
+  - ns: 100
+    exists: true
+    name: "Legacy:UnrealScript"
+  - ns: 100
+    exists: true
+    name: "Legacy:Chain Of Events When Spawning Actors"
+  - ns: 100
+    exists: true
+    name: "Legacy:DeathMatch"
+  - ns: 100
+    exists: true
+    name: "Legacy:InitialState"
+  - ns: 100
+    exists: true
+    name: "Legacy:Actor"
+  - ns: 100
+    exists: true
+    name: "Legacy:GameProfile"
+  - ns: 100
+    exists: true
+    name: "Legacy:Pawn (UT)"
+  - ns: 100
+    exists: true
+    name: "Legacy:Tag"
+  - ns: 100
+    exists: true
+    name: "Legacy:Simulated Function"
+  - ns: 100
+    exists: true
+    name: "Legacy:Chain Of Events When A Player Logs In"
+  - ns: 100
+    exists: true
+    name: "Legacy:Mutator"
+  - ns: 100
+    exists: true
+    name: "Legacy:INI File"
+  - ns: 100
+    exists: true
+    name: "Legacy:GameInfo"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Chain Of Events"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Chain_Of_Events_At_Level_Startup"
+    byteoffset: 962
+    anchor: "Chain_Of_Events"
+  - toclevel: 2
+    level: "3"
+    line: "GameInfo.InitGame()"
+    number: "1.1"
+    index: "2"
+    fromtitle: "Legacy:Chain_Of_Events_At_Level_Startup"
+    byteoffset: 2332
+    anchor: "GameInfo.InitGame.28.29"
+  - toclevel: 2
+    level: "3"
+    line: "GameInfo.SetGrammar() <i>(UT2004)</i>"
+    number: "1.2"
+    index: "3"
+    fromtitle: "Legacy:Chain_Of_Events_At_Level_Startup"
+    byteoffset: 4353
+    anchor: "GameInfo.SetGrammar.28.29_.28UT2004.29"
+  - toclevel: 2
+    level: "3"
+    line: "Actor.PreBeginPlay()"
+    number: "1.3"
+    index: "4"
+    fromtitle: "Legacy:Chain_Of_Events_At_Level_Startup"
+    byteoffset: 4507
+    anchor: "Actor.PreBeginPlay.28.29"
+  - toclevel: 3
+    level: "4"
+    line: "...in UT2003"
+    number: "1.3.1"
+    index: "5"
+    fromtitle: "Legacy:Chain_Of_Events_At_Level_Startup"
+    byteoffset: 4535
+    anchor: "...in_UT2003"
+  - toclevel: 3
+    level: "4"
+    line: "...in UT"
+    number: "1.3.2"
+    index: "6"
+    fromtitle: "Legacy:Chain_Of_Events_At_Level_Startup"
+    byteoffset: 5499
+    anchor: "...in_UT"
+  - toclevel: 2
+    level: "3"
+    line: "Actor.BeginPlay()"
+    number: "1.4"
+    index: "7"
+    fromtitle: "Legacy:Chain_Of_Events_At_Level_Startup"
+    byteoffset: 7083
+    anchor: "Actor.BeginPlay.28.29"
+  - toclevel: 2
+    level: "3"
+    line: "Actor Zones"
+    number: "1.5"
+    index: "8"
+    fromtitle: "Legacy:Chain_Of_Events_At_Level_Startup"
+    byteoffset: 7434
+    anchor: "Actor_Zones"
+  - toclevel: 2
+    level: "3"
+    line: "Actor Volumes"
+    number: "1.6"
+    index: "9"
+    fromtitle: "Legacy:Chain_Of_Events_At_Level_Startup"
+    byteoffset: 7588
+    anchor: "Actor_Volumes"
+  - toclevel: 2
+    level: "3"
+    line: "Actor.PostBeginPlay()"
+    number: "1.7"
+    index: "10"
+    fromtitle: "Legacy:Chain_Of_Events_At_Level_Startup"
+    byteoffset: 7755
+    anchor: "Actor.PostBeginPlay.28.29"
+  - toclevel: 2
+    level: "3"
+    line: "Actor.PostNetBeginPlay()"
+    number: "1.8"
+    index: "11"
+    fromtitle: "Legacy:Chain_Of_Events_At_Level_Startup"
+    byteoffset: 7942
+    anchor: "Actor.PostNetBeginPlay.28.29"
+  - toclevel: 2
+    level: "3"
+    line: "Actor.SetInitialState()"
+    number: "1.9"
+    index: "12"
+    fromtitle: "Legacy:Chain_Of_Events_At_Level_Startup"
+    byteoffset: 8122
+    anchor: "Actor.SetInitialState.28.29"
+  - toclevel: 2
+    level: "3"
+    line: "Actor Bases"
+    number: "1.10"
+    index: "13"
+    fromtitle: "Legacy:Chain_Of_Events_At_Level_Startup"
+    byteoffset: 8845
+    anchor: "Actor_Bases"
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "2"
+    index: "14"
+    fromtitle: "Legacy:Chain_Of_Events_At_Level_Startup"
+    byteoffset: 9558
+    anchor: "Related_Topics"
+  displaytitle: "Legacy:Chain Of Events At Level Startup"
+  iwlinks: []
+  wikitext:
+    text: "This page describes what happens right after a level was loaded. It lists\
+      \ the startup engine events and the UnrealScript functions subsequently called\
+      \ by those events and gives a short description how these events and functions\
+      \ could be used.\n\nActors that were created because they are listed in the\
+      \ ServerActors list of a server's [[Legacy:INI File|INI file]] also use the\
+      \ chain of events described on this page. Other actors spawned during this chain\
+      \ of events (e.g. [[Legacy:Mutator|Mutator]]s or [[Legacy:GameRules|GameRules]])\
+      \ use the [[Legacy:Chain Of Events When Spawning Actors|chain of events when\
+      \ spawning actors]] and are not included here (unless UnrealEngine1 is used)\
+      \ except for the last event in this list.\n\n''This whole page is based on a\
+      \ snippet of native UT2004 code posted on the UT2003Mods mailing list. Most\
+      \ parts will be similar in older engine versions, but there might be important\
+      \ differences in the functions called by these events.''\n\n==Chain Of Events==\n\
+      \nThese are the events directly called from native code. See the sections below\
+      \ for more details about functions called by these events.\n\nHere \"all actors\"\
+      \ means all actors that were placed in the map by the mapper or were created\
+      \ as ServerActors. Actors that have been created with the Spawn() function or\
+      \ that have received a Destroy() call are excluded from this chain of events.\n\
+      # the [[Legacy:GameInfo|GameInfo]]'s InitGame() event is called\n# the [[Legacy:GameInfo|GameInfo]]'s\
+      \ SetGrammar() event is called ''(UT2004)''\n# all [[Legacy:Actor|Actor]]s'\
+      \ PreBeginPlay() events are called\n# all [[Legacy:Actor|Actor]]s' BeginPlay()\
+      \ events are called\n# all [[Legacy:Actor|Actor]]s' zones are set\n# all [[Legacy:Actor|Actor]]s'\
+      \ volumes are set\n# all [[Legacy:Actor|Actor]]s' PostBeginPlay() events are\
+      \ called\n# all [[Legacy:Actor|Actor]]s' PostNetBeginPlay() events are called\n\
+      # all [[Legacy:Actor|Actor]]s' SetInitialState() events are called\n# all [[Legacy:Actor|Actor]]s\
+      \ either with bShouldBaseAtStartup=True and Physics set to PHYS_None or PHYS_Rotating\
+      \ or with an AttachTag get their base set\n\nAfter all this players can start\
+      \ joining. This is especially also true for single player/instant action mode\
+      \ and means that the [[Legacy:Chain Of Events When A Player Logs In|chain of\
+      \ events when a player logs in]] is only executed after these events.\n\n===GameInfo.InitGame()===\n\
+      \nThis initializes the GameInfo. At this point all the mapper-placed actors\
+      \ already exist, they just didn't get any of their initialization functions\
+      \ called yet.\n# The [[Legacy:GameProfile|GameProfile]] class specified in the\
+      \ \"SaveGame\" parameter is loaded and initialized. (if specified)\n# The GameSpeed\
+      \ is set according to the \"GameSpeed\" parameter. (SetGameSpeed(), if specified)\n\
+      # The base mutator is added via AddMutator().<br />'''Note:''' Any actors spawned\
+      \ before this or during the base mutator's initialization (see [[Legacy:Chain\
+      \ Of Events When Spawning Actors|Chain Of Events When Spawning Actors]]) must\
+      \ have <tt>bGameRelevant=True</tt> set or they will cause an [[Legacy:Accessed\
+      \ None|Accessed None]] when trying to call the base mutator's CheckRelevance()\
+      \ function and as a result of this destroy themselves.\n# The BroadcastHandlerClass\
+      \ is spawned.\n# The AccessControl class is spawned. Either the class specified\
+      \ in the \"AccessControl\" parameter will be used or the AccessControlClass.\
+      \ If neither of those are set, Engine.[[Legacy:AccessControl|AccessControl]]\
+      \ is used.\n# All [[Legacy:GameRules|GameRules]] specified in the \"GameRules\"\
+      \ parameter will be spawned.\n# All [[Legacy:Mutator|Mutator]]s specified in\
+      \ the \"Mutator\" parameter will be added via AddMutator().<br />AddMutator()\
+      \ only adds a mutator if its GroupName is an empty string or is not the same\
+      \ as the GroupName of any other mutator (including the base mutator) already\
+      \ added. The mutator's <tt>bUserAdded</tt> variable is set to False for the\
+      \ base mutator and to True for all mutators added via the \"Mutator\" parameter.\n\
+      \nFor subclasses of [[Legacy:DeathMatch|DeathMatch]] InitGame() looks for a\
+      \ [[Legacy:LevelGameRules|LevelGameRules]] actor before going though the things\
+      \ described above. The first [[Legacy:LevelGameRules|LevelGameRules]] actor\
+      \ found will receive an UpdateGame() call.\n\nInitGame() also reads some other\
+      \ parameters specified in the level URL, but these mostly don't call any important\
+      \ functions.\n\n===GameInfo.SetGrammar() ''(UT2004)''===\n\nThis loads the appropriate\
+      \ speech recognition grammar file.\n\n''(no additional information about this\
+      \ so far)''\n\n===Actor.PreBeginPlay()===\n\n====...in UT2003====\n\nIf the\
+      \ actor has <tt>bGameRelevant == False</tt> and this event is not executed on\
+      \ a client, the game's base [[Legacy:Mutator|mutator]]'s CheckRelevance() function\
+      \ is called.\n\nCheckRelevance() first calls the base mutator's AlwaysRelevant()\
+      \ function which recursively calls the other mutators' AlwaysRelevant() functions.\
+      \ If this function returns True the actor is considered game relevant and CheckRelevance()\
+      \ returns True resulting in the Actor continuing to exist.\n\nIf AlwaysRelevant()\
+      \ returns False, the base mutator's IsRelevant() function is called. This function\
+      \ calls the mutator's CheckReplacement() function and returns its result if\
+      \ it's False. Otherwise IsRelevant() returns the result of the next mutator's\
+      \ IsRelevant() function.\n\nFinally the result of the base mutator's IsRelevant()\
+      \ function is returned by CheckRelevance() and again, if that result is True\
+      \ the actor will continue to exist, otherwise it will destroy itself.\n\n====...in\
+      \ UT====\n\nIf the actor has <tt>bGameRelevant == False</tt> and this event\
+      \ is not executed on a client, the [[Legacy:GameInfo|GameInfo]]'s IsRelevant()\
+      \ function is called.\n\nIsRelevant() first calls the base mutator's AlwaysRelevant()\
+      \ function which recursively calls the other mutators' AlwaysRelevant() functions.\
+      \ If this function returns True the actor is concidered game relevant and GameInfo.IsRelevant()\
+      \ returns True resulting in the Actor continuing to exist.\n\nIf AlwaysRelevant()\
+      \ returns False, the base [[Legacy:Mutator|mutator]]'s IsRelevant() function\
+      \ is called. This function calls the mutator's CheckReplacement() function and\
+      \ returns its result if it's False. Otherwise IsRelevant() returns the result\
+      \ of the next mutator's IsRelevant() function.\n\nIf the base mutator's IsRelevant()\
+      \ function returns False the GameInfo's IsRelevant() function also returns False\
+      \ and the actor destroys itself. Otherwise if the bSuperRelevant property is\
+      \ set to 1 GameInfo.IsRelevant() returns True resulting in the Actor continuing\
+      \ to exist.\n\nIf the base mutator's IsRelevant() function returns True but\
+      \ the bSuperRelevant property is not set to 1 the GameInfo's IsRelevant() function\
+      \ checks whether the actor may appear in the current difficulty level, if it's\
+      \ a \"monster\" (a non-player [[Legacy:Pawn (UT)|Pawn (UT)]]) and if there's\
+      \ a random chance for the actor to not appear in the game (<tt>OddsOfAppearing</tt>).\
+      \ The GameInfo.IsRelevant() function will also update the number of secret goals,\
+      \ item goals and kill goals before returning True and allowing the actor to\
+      \ exist.\n\n===Actor.BeginPlay()===\n\nThis event is called after an Actor is\
+      \ considered \"relevant\" for this game, i.e. no [[Legacy:Mutator|Mutator]]\
+      \ wanted to get rid of it.\n\nMost actors don't use this event, but if you're\
+      \ looking for an event that is called before the actor is initialized, but after\
+      \ the mutator checks are done, then this is the place for you.\n\n===Actor Zones===\n\
+      \nAt this point the [[Legacy:Actor|Actor]].Region.Zone value becomes valid.\
+      \ This event also causes the ZoneChange() event to be called.\n\n===Actor Volumes===\n\
+      \nAt this point the [[Legacy:Actor|Actor]].PhysicsVolume value becomes valid.\
+      \ This event also causes the PhysicsVolumeChange() event to be called.\n\n===Actor.PostBeginPlay()===\n\
+      \nMost actors use PostBeginPlay() to initialize their UnrealScript values. The\
+      \ actor's PhysicsVolume and Zone are valid but the actor is not yet in any state.\n\
+      \n===Actor.PostNetBeginPlay()===\n\nPostNetBeginPlay() is called directly after\
+      \ PostBeginPlay() on the server. On clients it will be called when the initial\
+      \ replication is completed.\n\n===Actor.SetInitialState()===\n\nAt this point\
+      \ the actor is concidered \"initialized\" by the engine (bScriptInitialized\
+      \ is set to True in this event) and the actor's initial state is set. If the\
+      \ [[Legacy:InitialState|InitialState]] property is set, it will be used, otherwise\
+      \ the actor goes to its auto state. Since SetInitialState() is a [[Legacy:Simulated\
+      \ Function|simulated function]] by default this happens on server and clients.\n\
+      \nThis event uses GotoState to change the state, so during its executing the\
+      \ initial state's BeginState() event is called. The state's state code will\
+      \ however not yet start executing at this point. This will happen after all\
+      \ the events described on this page have finished doing their work.\n\n===Actor\
+      \ Bases===\n\nActors with an AttachTag other than <tt>None</tt> are attached\
+      \ to the first actor with a matching [[Legacy:Tag|Tag]] or name via <code>SetBase(theMatchingActor)</code>.\
+      \ Actors with <tt>bCollideWorld = true</tt> and <tt>bShouldBaseAtStartup = true</tt>\
+      \ which use either PHYS_None or PHYS_Rotating try to find a suiting base as\
+      \ well. The AttachTag is evaluated first and if set bShouldBaseAtStartup  is\
+      \ ignored, whether or not the AttachTag matches anything.\n\nIn both cases when\
+      \ a base is set the actor's BaseChange() event will be called. Note that this\
+      \ final step of startup initialization also includes actors that were <code>Spawn()</code>ed\
+      \ during any of the previous initialization steps.\n\n==Related Topics==\n*\
+      \ [[Legacy:UnrealScript|UnrealScript]]\n* [[Legacy:Chain Of Events When Spawning\
+      \ Actors|Chain Of Events When Spawning Actors]]\n* [[Legacy:Chain Of Events\
+      \ When A Player Logs In|Chain Of Events When A Player Logs In]]\n* [[Legacy:Creating\
+      \ Actors And Objects|Creating Actors And Objects]]"
+  properties: []
+  revId: 2355
+name: "Legacy:Chain Of Events At Level Startup"
+revision:
+  revid: 2355
+  parentid: 2356
+  user: "Wormbo"
+  timestamp: 1151485026.000000000
+  comment: "some clarifications"
+timestamp: 1668763327.977803000

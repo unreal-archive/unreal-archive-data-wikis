@@ -1,0 +1,685 @@
+---
+parse:
+  title: "Legacy:Static Mesh"
+  text:
+    text: "<p>In UnrealEngine2 (<a href=\"/Legacy:UT2003\" title=\"Legacy:UT2003\"\
+      \ class=\"mw-redirect\">UT2003</a> and later), <b>static meshes</b> were introduced.\
+      \ These basically form a second level of map architecture, on top of <a href=\"\
+      /Legacy:BSP\" title=\"Legacy:BSP\">BSP</a>.</p>\n<p>\"Static\" in \"static mesh\"\
+      \ doesn't mean \"doesn't move\" – it can be moved, rotated, retextured and scaled\
+      \ (even disproportionally) <i>in realtime</i>. The \"static\" only refers to\
+      \ the fact that it can't be <i>animated</i>, that is, the relative positions\
+      \ of the vertices are fixed. Hence, static meshes are useful for displaying\
+      \ pieces of architecture that don't move at all or might move as a whole, but\
+      \ they're no good for displaying players, whose bodies need to bend and change\
+      \ shape.</p>\n<p>Static meshes are cached into video memory, and so can be displayed\
+      \ many times with little extra overhead. Static meshes are a list of vertices\
+      \ stored <i>once</i> in the video memory (as opposed to \"once per frame\"),\
+      \ so drawing many copies of one static mesh is a relatively simple operation.\
+      \ When the static mesh is to be displayed on the screen, the engine only has\
+      \ to tell the video card <i>where</i> (and at which size, rotation, and with\
+      \ which textures) to do it.</p>\n<p>Static meshes are a type of <a href=\"/Legacy:Unreal_Resource\"\
+      \ title=\"Legacy:Unreal Resource\">unreal resource</a>, just like <a href=\"\
+      /Legacy:Texture\" title=\"Legacy:Texture\">Textures</a> or <a href=\"/Legacy:Sound\"\
+      \ title=\"Legacy:Sound\">Sounds</a>. They are stored in <a href=\"/Legacy:Package\"\
+      \ title=\"Legacy:Package\">packages</a>, and references to them are placed in\
+      \ maps. They are used for several different purposes:</p>\n<ul>\n<li>to create\
+      \ non-BSP map geometry; the so-called \"Hardware Brush\". It is this that allows\
+      \ UT2003 to have much higher <a href=\"/Legacy:Polycount\" title=\"Legacy:Polycount\"\
+      >polycount</a> than the previous <a href=\"/Legacy:UT\" title=\"Legacy:UT\"\
+      \ class=\"mw-redirect\">UT</a>. Some mappers use these almost entirely after\
+      \ simple subtractive brushes. The <a href=\"/Legacy:StaticMeshActor\" title=\"\
+      Legacy:StaticMeshActor\">StaticMeshActor</a> holds a reference to the static\
+      \ mesh resource. In a way, this is a special kind of Decoration which is completely\
+      \ lifeless.</li>\n<li><a href=\"/Legacy:Mover\" title=\"Legacy:Mover\">Movers</a>\
+      \ display a static mesh (this is changed from <a href=\"/Legacy:UT\" title=\"\
+      Legacy:UT\" class=\"mw-redirect\">UT</a>, where they were a special type of\
+      \ <a href=\"/Legacy:Brush\" title=\"Legacy:Brush\">Brush</a>. Movers can no\
+      \ longer be created directly from the <a href=\"/Legacy:Red_Builder_Brush\"\
+      \ title=\"Legacy:Red Builder Brush\">red builder brush</a>: a static mesh must\
+      \ be made first.)</li>\n<li><a href=\"/Legacy:Decoration\" title=\"Legacy:Decoration\"\
+      >Decorations</a>, pickups and other actors can use a static mesh when their\
+      \ Display -&gt; DrawType property is set to DT_StaticMesh.</li>\n<li><a href=\"\
+      /Legacy:Vehicles\" title=\"Legacy:Vehicles\">Vehicles</a></li>\n</ul>\n<p>In\
+      \ fact, any <a href=\"/Legacy:Actor\" title=\"Legacy:Actor\">Actor</a> can be\
+      \ set to display a Static Mesh, just as any actor can be given a sprite icon\
+      \ (such as classes like <a href=\"/Legacy:Trigger\" title=\"Legacy:Trigger\"\
+      >Trigger</a> have by default): set Display -&gt; DrawType = <tt>DT_StaticMesh</tt>,\
+      \ and <a href=\"/Legacy:Set_The_Resource_Property\" title=\"Legacy:Set The Resource\
+      \ Property\">Set The Resource Property</a> Display -&gt; StaticMesh. The static\
+      \ meshes used to build geometry are just actors which do nothing apart from\
+      \ display the mesh</p>\n<p>There is a difference to be made between \"static\
+      \ mesh resources\", as seen in the browser, which are stored like textures;\
+      \ and \"static mesh actors\" which are placed into a map. Don't confuse meshes\
+      \ with actors. A mesh (static or otherwise) is just the visual representation\
+      \ of an actor. For instance, weapon pickups display a static mesh in UT2003\
+      \ as long as they're just waiting to be picked up over their spawn point.</p>\n\
+      <p>There is no Level of Detail optimizing on static meshes or procedural static\
+      \ meshes (<a href=\"/edit/Legacy:Xprocmesh?redlink=1\" class=\"new\" title=\"\
+      Legacy:Xprocmesh (page does not exist)\">Xprocmesh</a> and <a href=\"/Legacy:FluidSurfaceInfo\"\
+      \ title=\"Legacy:FluidSurfaceInfo\">FluidSurfaceInfo</a>), meaning the full\
+      \ poly count of the mesh is rendered if it is not occluded via <a href=\"/Legacy:Antiportal\"\
+      \ title=\"Legacy:Antiportal\">antiportals</a> or <a href=\"/Legacy:Zoning\"\
+      \ title=\"Legacy:Zoning\">zoning</a>.</p>\n<p></p>\n<div id=\"toc\" class=\"\
+      toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n</div>\n<ul>\n<li class=\"\
+      toclevel-1 tocsection-1\"><a href=\"#Texturing\"><span class=\"tocnumber\">1</span>\
+      \ <span class=\"toctext\">Texturing</span></a></li>\n<li class=\"toclevel-1\
+      \ tocsection-2\"><a href=\"#Collision\"><span class=\"tocnumber\">2</span> <span\
+      \ class=\"toctext\">Collision</span></a>\n<ul>\n<li class=\"toclevel-2 tocsection-3\"\
+      ><a href=\"#Collision_.22Bugs.22\"><span class=\"tocnumber\">2.1</span> <span\
+      \ class=\"toctext\">Collision \"Bugs\"</span></a></li>\n</ul>\n</li>\n<li class=\"\
+      toclevel-1 tocsection-4\"><a href=\"#Changes_from_UT\"><span class=\"tocnumber\"\
+      >3</span> <span class=\"toctext\">Changes from UT</span></a></li>\n<li class=\"\
+      toclevel-1 tocsection-5\"><a href=\"#The_StaticMesh_class\"><span class=\"tocnumber\"\
+      >4</span> <span class=\"toctext\">The StaticMesh class</span></a></li>\n<li\
+      \ class=\"toclevel-1 tocsection-6\"><a href=\"#Static_Mesh_FAQ\"><span class=\"\
+      tocnumber\">5</span> <span class=\"toctext\">Static Mesh FAQ</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-7\"><a href=\"#External_Links\"><span class=\"\
+      tocnumber\">6</span> <span class=\"toctext\">External Links</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-8\"><a href=\"#Related_Topics\"><span class=\"\
+      tocnumber\">7</span> <span class=\"toctext\">Related Topics</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-9\"><a href=\"#Discussion\"><span class=\"\
+      tocnumber\">8</span> <span class=\"toctext\">Discussion</span></a></li>\n</ul>\n\
+      </div>\n<p></p>\n<h2><span class=\"mw-headline\" id=\"Texturing\">Texturing</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Static_Mesh?section=1\" title=\"Edit section: Texturing\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>Static\
+      \ mesh resources hold information about how they are textured. However, an actor\
+      \ that dislays a static mesh can override these textures with the Display -&gt;\
+      \ Skins array and Display -&gt; UV2Texture.</p>\n<p><a href=\"/Legacy:Dynamicly_Accessing_Original_Static_Mesh_Textures\"\
+      \ title=\"Legacy:Dynamicly Accessing Original Static Mesh Textures\">Dynamicly\
+      \ accessing original Static Mesh textures</a> requires difficult code but is\
+      \ possible, this allows you to effectively simulate Alpha/Translucent Styles\
+      \ which are not normally possible with static meshes.</p>\n<h2><span class=\"\
+      mw-headline\" id=\"Collision\">Collision</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Static_Mesh?section=2\"\
+      \ title=\"Edit section: Collision\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>The way I'm reading <a href=\"http://udn.epicgames.com/Two/CollisionTutorial\"\
+      \ class=\"extiw\" title=\"udn2:CollisionTutorial\">udn2:CollisionTutorial</a>,\
+      \ there are 3 ways a Static Mesh can block:</p>\n<ul>\n<li>per poly collision\
+      \ – the individual polys of the mesh collide with actors, set for each material\
+      \ group, but its slow &amp; sticky for complex meshes, because sometimes collision\
+      \ calculation for thousands of polys take place.</li>\n<li>none at all – use\
+      \ a separate <a href=\"/Legacy:BlockingVolume\" title=\"Legacy:BlockingVolume\"\
+      >BlockingVolume</a>, or a second static mesh set to invisible (eg DM-FLux2:\
+      \ the ice caves don't block, and a mesh of the same shape but with fewer triangles\
+      \ blocks, set to Advanced -&gt; bHidden)</li>\n<li><a href=\"/edit/Legacy:Collision_Model?redlink=1\"\
+      \ class=\"new\" title=\"Legacy:Collision Model (page does not exist)\">Collision\
+      \ Models</a> – which is a bit like giving the SM a permanently built-in blocking\
+      \ volume, and \"more effecient memory-wise than blocking volumes\" (UDN)</li>\n\
+      </ul>\n<h3><span class=\"mw-headline\" id=\"Collision_.22Bugs.22\">Collision\
+      \ \"Bugs\"</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Static_Mesh?section=3\" title=\"Edit section:\
+      \ Collision &quot;Bugs&quot;\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>I (Zxanphorian) found, that if you convert your map\
+      \ from UT2003 to UT2004, you might encounter spaces where you stick on some\
+      \ of the static meshes if you rotated/scaled them. Try anything you can to fix\
+      \ it, like aligning it to the grid, tweak the scaling/rotation, or even change\
+      \ the map layout. If all else fails, you can remove these snagging areas as\
+      \ follows:</p>\n<ol>\n<li>Convert the existing static mesh into another static\
+      \ mesh, merely duplicating it.</li>\n<li>On the existing staticmeshactor, set\
+      \ it to the newly created static mesh.</li>\n<li>Change the scaling of it to\
+      \ X=1, Y=1, Z=1</li>\n<li>Change the rotation of it to X=0, Y=0, Z=0</li>\n\
+      <li>If you did it correctly, you have now fixed the snagging points!&#160;;)</li>\n\
+      </ol>\n<p>This is one of the many undiscovered ways to fix the static mesh snagging\
+      \ problem.</p>\n<p>This is an example of a snagging static mesh, and if you\
+      \ followed the preceding steps, it will now not snag you:</p>\n<div dir=\"ltr\"\
+      \ class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw2\">Begin</span> Map\n<span class=\"kw2\"\
+      >Begin</span> <span class=\"kw9\">Actor</span> <span class=\"kw1\">Class</span><span\
+      \ class=\"sy0\">=</span>StaticMeshActor <span class=\"kw5\">Name</span><span\
+      \ class=\"sy0\">=</span>StaticMeshActor298\n    <span class=\"kw5\">StaticMesh</span><span\
+      \ class=\"sy0\">=</span><span class=\"kw5\">StaticMesh</span><span class=\"\
+      st0\">'SC_Volcano_M.Walkway2'</span>\n    <span class=\"kw7\">Level</span><span\
+      \ class=\"sy0\">=</span>LevelInfo<span class=\"st0\">'myLevel.LevelInfo0'</span>\n\
+      \    <span class=\"kw7\">Tag</span><span class=\"sy0\">=</span><span class=\"\
+      st0\">\"StaticMeshActor\"</span>\n    <span class=\"kw7\">Location</span><span\
+      \ class=\"sy0\">=</span><span class=\"br0\">(</span>X<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0</span>,Y<span class=\"sy0\">=</span><span class=\"nu0\">0</span>,Z<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0</span><span class=\"br0\">)</span>\n\
+      \    <span class=\"kw7\">Rotation</span><span class=\"sy0\">=</span><span class=\"\
+      br0\">(</span>Yaw<span class=\"sy0\">=</span><span class=\"nu0\">1536</span>,Roll<span\
+      \ class=\"sy0\">=-</span><span class=\"nu0\">3072</span><span class=\"br0\"\
+      >)</span>\n    StaticMeshInstance<span class=\"sy0\">=</span>StaticMeshInstance<span\
+      \ class=\"st0\">'myLevel.StaticMeshInstance551'</span>\n    <span class=\"kw7\"\
+      >DrawScale3D</span><span class=\"sy0\">=</span><span class=\"br0\">(</span>X<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0.375000</span>,Y<span class=\"\
+      sy0\">=</span><span class=\"nu0\">0.375000</span>,Z<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">0.250000</span><span class=\"br0\">)</span>\n    <span class=\"\
+      kw7\">Skins</span><span class=\"br0\">(</span><span class=\"nu0\">0</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">=</span><span class=\"kw5\">Texture</span><span\
+      \ class=\"st0\">'ArboreaTerrain.ground.flr02ar'</span>\n    <span class=\"kw7\"\
+      >Skins</span><span class=\"br0\">(</span><span class=\"nu0\">1</span><span class=\"\
+      br0\">)</span><span class=\"sy0\">=</span><span class=\"kw5\">Texture</span><span\
+      \ class=\"st0\">'ArboreaTerrain.ground.flr02ar'</span>\n    bSelected<span class=\"\
+      sy0\">=</span><span class=\"kw6\">True</span>\nEnd <span class=\"kw9\">Actor</span>\n\
+      <span class=\"kw2\">Begin</span> Surface\nEnd Surface\nEnd Map</pre></div>\n\
+      </div>\n<hr />\n<p><b>DeepQantas:</b> Be aware that the simple collision models\
+      \ do not save Surface Type or <a href=\"/Legacy:Material\" title=\"Legacy:Material\"\
+      >Material</a> information. This is an issue if you need to have metal footsteps,\
+      \ or maybe arrows that stick to wooden surfaces. Per poly collision handles\
+      \ these cases perfectly, while with simple collision you need to find a workaround.\
+      \ Otherwise you'll be stuck with generic footstep sounds. (PS. Please prove\
+      \ me wrong)</p>\n<p><b>JCBDigger:</b> The collision properties are set in the\
+      \ static mesh and cause UT2004 to crash if you try to change them from within\
+      \ UnrealScript. This may be obvious to some but I spent most of the weekend\
+      \ trying to add Karma collision to block vehicles to existing static meshes\
+      \ from with UnrealScript and failed. If anyone knows better please tell me.</p>\n\
+      <h2><span class=\"mw-headline\" id=\"Changes_from_UT\">Changes from UT</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Static_Mesh?section=4\" title=\"Edit section: Changes\
+      \ from UT\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>In UT, there was one type of mesh. Decorations that didn't move were just\
+      \ meshes that happened to only have one frame. Collision on these meshes were\
+      \ ALWAYS a simple cylinder collision model.</p>\n<p>In <a href=\"/Legacy:UT2003\"\
+      \ title=\"Legacy:UT2003\" class=\"mw-redirect\">UT2003</a>, static meshes are\
+      \ differentiated from animated meshes:</p>\n<table class=\"wikitable\">\n<tr>\n\
+      <td style=\"text-align: center\"><b>Type</b></td>\n<td style=\"text-align: center\"\
+      ><b>Directory</b></td>\n<td style=\"text-align: center\"><b>Package Extension</b></td>\n\
+      <td style=\"text-align: center\">[[UnrealEd Interface</td>\n<td><b>Browser</b>]]</td>\n\
+      </tr>\n<tr>\n<td>Static Mesh</td>\n<td>/StaticMeshes</td>\n<td style=\"text-align:\
+      \ center\">.usx</td>\n<td><a href=\"/Legacy:Static_Mesh_Browser\" title=\"Legacy:Static\
+      \ Mesh Browser\">Static Mesh Browser</a></td>\n</tr>\n<tr>\n<td>Mesh</td>\n\
+      <td>/System</td>\n<td style=\"text-align: center\">.u</td>\n<td><a href=\"/Legacy:Mesh_Browser\"\
+      \ title=\"Legacy:Mesh Browser\">Mesh Browser</a></td>\n</tr>\n<tr>\n<td>Character\
+      \ Animations</td>\n<td>/Animations</td>\n<td style=\"text-align: center\">.ukx</td>\n\
+      <td><a href=\"/Legacy:Animation_Browser\" title=\"Legacy:Animation Browser\"\
+      >Animation Browser</a></td>\n</tr>\n</table>\n<p><br />\nNote: For UT2004 the\
+      \ reference to a Mesh being <b>*.u</b> is not accurate since this type is an\
+      \ UnrealScript compiled code package however \"vertex meshes\" are fused to\
+      \ the package via importing at compile-time.</p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"The_StaticMesh_class\">The StaticMesh class</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Static_Mesh?section=5\"\
+      \ title=\"Edit section: The StaticMesh class\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>Static meshes are completely different from the animated\
+      \ meshes used in UT, even if those only had one anim sequence with one frame.\
+      \ Meshes and static meshes only have as much in common as meshes and brushes,\
+      \ as you can see in this part of the <a href=\"/Legacy:UT2003\" title=\"Legacy:UT2003\"\
+      \ class=\"mw-redirect\">UT2003</a> class tree:</p>\n<pre><a href=\"/Legacy:Object\"\
+      \ title=\"Legacy:Object\">Object</a>\n +- ...\n +- Primitive\n |   +- ConvexVolume\
+      \         <i>(the actual shape of an <a href=\"/Legacy:Antiportal\" title=\"\
+      Legacy:Antiportal\">Antiportal</a> actor)</i>\n |   +- FluidSurfacePrimitive\n\
+      \ |   +- <a href=\"/Legacy:Mesh\" title=\"Legacy:Mesh\">Mesh</a>           \
+      \      <i>(meshes without LOD information, e.g. some UT decorations)</i>\n |\
+      \   |   +- <b>LodMesh</b>          <i>(meshes with LOD information, e.g. most\
+      \ UT player models)</i>\n |   |       +- <b>SkeletalMesh</b> <i>(e.g. some UT\
+      \ and all UT2k3 player meshes)</i>\n |   |       +- VertMesh\n |   +- MeshInstance\
+      \         <i>(?)</i>\n |   |   +- LodMeshInstance\n |   |       +- SkeletalMeshInstance\n\
+      \ |   |       +- VertMeshInstance\n |   +- Model                <i>(an actual\
+      \ brush in the map)</i>\n |   +- ProjectorPrimitive\n |   +- <b>StaticMesh</b>\n\
+      \ |   +- TerainPrimitive\n +- ...\n +- StaticMeshInstance       <i>(Contains\
+      \ per-instance static mesh data, like static lighting data.)</i>\n +- ...\n\
+      </pre>\n<h2><span class=\"mw-headline\" id=\"Static_Mesh_FAQ\">Static Mesh FAQ</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Static_Mesh?section=6\" title=\"Edit section: Static Mesh\
+      \ FAQ\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <dl>\n<dt>What's the difference between a Static Mesh and a...&#160;</dt>\n\
+      <dd></dd>\n</dl>\n<dl>\n<dt>hardware brush&#160;</dt>\n<dd>\n<dl>\n<dt>None,\
+      \ they are the same.</dt>\n<dt><a href=\"/Legacy:Decoration\" title=\"Legacy:Decoration\"\
+      >Decoration</a> actor&#160;</dt>\n<dd>A Decoration actor is more than a piece\
+      \ of world geometry – it can have behaviour (code) associated with it as well.\
+      \ The <i>shape</i> or <i>manifestation</i> of the decoration <i>could</i> be\
+      \ a static mesh.</dd>\n</dl>\n</dd>\n</dl>\n<dl>\n<dt>normal brush&#160;</dt>\n\
+      <dd>\n<dl>\n<dt>A normal <a href=\"/Legacy:Brush\" title=\"Legacy:Brush\">brush</a>\
+      \ and be added or subtracted from the world. It may be <a href=\"/Legacy:Semisolid\"\
+      \ title=\"Legacy:Semisolid\">semisolid</a> or <a href=\"/Legacy:Nonsolid\" title=\"\
+      Legacy:Nonsolid\">nonsolid</a>. Static meshes however can only ever be added\
+      \ to the world. Solid brushes always cause collisions to occur based upon their\
+      \ geometry. Static meshes on the other hand can be given <a href=\"/edit/Legacy:Collision_Model?redlink=1\"\
+      \ class=\"new\" title=\"Legacy:Collision Model (page does not exist)\">Collision\
+      \ Models</a> that are distinct to their shape (generally the collision boundary\
+      \ of a static mesh is simpler than the mesh itself for performance and gameplay\
+      \ reasons).</dt>\n</dl>\n</dd>\n</dl>\n<dl>\n<dt><a href=\"/Legacy:Mover\" title=\"\
+      Legacy:Mover\">Mover</a>&#160;</dt>\n<dd>\n<dl>\n<dt>A mover is a particular\
+      \ type of Actor that can move around the map in response to events. In UT2003,\
+      \ a mover's geometry is taken from a static mesh, so it's just one more of many\
+      \ actor types that display them, with DrawType = <tt>DT_StaticMesh</tt>. In\
+      \ Unreal and UT, movers were a type of moving brush, with DrawType = <tt>DT_Brush</tt></dt>\n\
+      </dl>\n</dd>\n</dl>\n<dl>\n<dt>a \"regular\" mesh?&#160;</dt>\n<dd>\n<dl>\n\
+      <dt>A mesh like in UT,they can be vertex animated.</dt>\n</dl>\n</dd>\n</dl>\n\
+      <dl>\n<dt>Procedural Mesh&#160;</dt>\n<dd>\n<dl>\n<dt>A static mesh whose vertices\
+      \ can be animated by means of UnrealScript. (<b>Foxpaw:</b> I think this might\
+      \ be a regular mesh who's vertices can be animated through UnrealScript.. it\
+      \ seems awfully hard on the video card to attempt to animate a static mesh.)</dt>\n\
+      </dl>\n</dd>\n</dl>\n<h2><span class=\"mw-headline\" id=\"External_Links\">External\
+      \ Links</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Static_Mesh?section=7\" title=\"Edit section:\
+      \ External Links\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <ul>\n<li><a href=\"http://udn.epicgames.com/Two/LevelOptimization\" class=\"\
+      extiw\" title=\"udn2:LevelOptimization\">udn2:LevelOptimization</a> - How to\
+      \ optimize.</li>\n<li><a href=\"http://udn.epicgames.com/Two/HardwareBrush\"\
+      \ class=\"extiw\" title=\"udn2:HardwareBrush\">udn2:HardwareBrush</a> - General\
+      \ information on hardware brushes. //Page Not Found</li>\n<li><a href=\"http://udn.epicgames.com/Two/StaticMeshesTutorial\"\
+      \ class=\"extiw\" title=\"udn2:StaticMeshesTutorial\">udn2:StaticMeshesTutorial</a>\
+      \ - Tutorial on Static Meshes / hardware brush .</li>\n<li><a href=\"http://udn.epicgames.com/Two/NoLodOnHardwareBrushes\"\
+      \ class=\"extiw\" title=\"udn2:NoLodOnHardwareBrushes\">udn2:NoLodOnHardwareBrushes</a>\
+      \ - No LOD is possible on static meshes.</li>\n<li><a href=\"http://udn.epicgames.com/Two/ConvertingBspBrushesIsSuboptimal\"\
+      \ class=\"extiw\" title=\"udn2:ConvertingBspBrushesIsSuboptimal\">udn2:ConvertingBspBrushesIsSuboptimal</a>\
+      \ - Why converting BSP brushes to StaticMeshes is a bad idea.</li>\n</ul>\n\
+      <h2><span class=\"mw-headline\" id=\"Related_Topics\">Related Topics</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Static_Mesh?section=8\" title=\"Edit section: Related\
+      \ Topics\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <ul>\n<li><a href=\"/Legacy:UT2003\" title=\"Legacy:UT2003\" class=\"mw-redirect\"\
+      >UT2003</a></li>\n<li><a href=\"/Legacy:Building_With_Static_Meshes\" title=\"\
+      Legacy:Building With Static Meshes\">Building With Static Meshes</a></li>\n\
+      <li><a href=\"/Legacy:Hardware_Brush\" title=\"Legacy:Hardware Brush\">Hardware_Brush</a>\
+      \ - General information on hardware brushes.</li>\n<li><a href=\"/Legacy:Static_Mesh_Package\"\
+      \ title=\"Legacy:Static Mesh Package\">Static Mesh Package</a> – listing of\
+      \ the default SM packages</li>\n<li><a href=\"/Legacy:Static_Mesh_Browser\"\
+      \ title=\"Legacy:Static Mesh Browser\">Static Mesh Browser</a></li>\n<li><a\
+      \ href=\"/Legacy:Static_Mesh_Modeling\" title=\"Legacy:Static Mesh Modeling\"\
+      >Static Mesh Modeling</a></li>\n</ul>\n<h2><span class=\"mw-headline\" id=\"\
+      Discussion\">Discussion</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Static_Mesh?section=9\"\
+      \ title=\"Edit section: Discussion\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p><b>SuperApe:</b> This should be a class page (as well).</p>\n\
+      <p><b>Tarquin:</b> No, because that would be StaticMeshActor and StaticMesh\
+      \ without spaces.</p>\n<hr />\n<p><a href=\"/Category:Legacy_Mapping\" title=\"\
+      Category:Legacy Mapping\">Category:Legacy Mapping</a></p>\n<p><a href=\"/Category:Legacy_Class_(UT2003)\"\
+      \ title=\"Category:Legacy Class (UT2003)\">Category:Legacy Class (UT2003)</a></p>\n\
+      <p><a href=\"/Category:Legacy_Class_(UT2004)\" title=\"Category:Legacy Class\
+      \ (UT2004)\">Category:Legacy Class (UT2004)</a></p>\n<p><a href=\"/Category:Legacy_To_Do\"\
+      \ title=\"Category:Legacy To Do\">Category:Legacy To Do</a> – Needs to be class\
+      \ page.</p>\n\n<!-- \nNewPP limit report\nCPU time usage: 0.090 seconds\nReal\
+      \ time usage: 0.191 seconds\nPreprocessor visited node count: 48/1000000\nPreprocessor\
+      \ generated node count: 92/1000000\nPost‐expand include size: 44/2097152 bytes\n\
+      Template argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive\
+      \ parser function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report\
+      \ (%,ms,calls,template)\n100.00%    0.000      1 - -total\n-->\n\n<!-- Saved\
+      \ in parser cache with key wiki:pcache:idhash:2791-0!*!0!!en!*!* and timestamp\
+      \ 20221118001220 and revision id 7482\n -->\n"
+  categories:
+  - sortkey: "Static Mesh"
+    name: "Legacy_To_Do"
+  - sortkey: "Static Mesh"
+    name: "Legacy_Class_(UT2003)"
+  - sortkey: "Static Mesh"
+    name: "Legacy_Class_(UT2004)"
+  - sortkey: "Static Mesh"
+    name: "Legacy_Mapping"
+  links:
+  - ns: 14
+    exists: true
+    name: "Category:Legacy To Do"
+  - ns: 100
+    exists: true
+    name: "Legacy:UT2003"
+  - ns: 100
+    exists: true
+    name: "Legacy:Vehicles"
+  - ns: 100
+    exists: true
+    name: "Legacy:Nonsolid"
+  - ns: 100
+    exists: true
+    name: "Legacy:BlockingVolume"
+  - ns: 100
+    exists: true
+    name: "Legacy:Sound"
+  - ns: 100
+    exists: true
+    name: "Legacy:Mesh Browser"
+  - ns: 100
+    exists: true
+    name: "Legacy:Building With Static Meshes"
+  - ns: 100
+    exists: true
+    name: "Legacy:Texture"
+  - ns: 100
+    exists: true
+    name: "Legacy:Actor"
+  - ns: 100
+    exists: true
+    name: "Legacy:Hardware Brush"
+  - ns: 100
+    exists: true
+    name: "Legacy:BSP"
+  - ns: 100
+    exists: true
+    name: "Legacy:Decoration"
+  - ns: 100
+    exists: true
+    name: "Legacy:Trigger"
+  - ns: 100
+    exists: true
+    name: "Legacy:Mesh"
+  - ns: 100
+    exists: true
+    name: "Legacy:Package"
+  - ns: 14
+    exists: true
+    name: "Category:Legacy Class (UT2003)"
+  - ns: 100
+    exists: true
+    name: "Legacy:Static Mesh Package"
+  - ns: 100
+    exists: true
+    name: "Legacy:Animation Browser"
+  - ns: 100
+    exists: true
+    name: "Legacy:Polycount"
+  - ns: 100
+    exists: true
+    name: "Legacy:Semisolid"
+  - ns: 100
+    exists: true
+    name: "Legacy:Static Mesh Modeling"
+  - ns: 100
+    exists: true
+    name: "Legacy:Material"
+  - ns: 14
+    exists: true
+    name: "Category:Legacy Mapping"
+  - ns: 100
+    exists: true
+    name: "Legacy:StaticMeshActor"
+  - ns: 100
+    exists: true
+    name: "Legacy:Zoning"
+  - ns: 100
+    exists: true
+    name: "Legacy:Set The Resource Property"
+  - ns: 100
+    exists: true
+    name: "Legacy:Antiportal"
+  - ns: 100
+    exists: true
+    name: "Legacy:Unreal Resource"
+  - ns: 100
+    exists: true
+    name: "Legacy:FluidSurfaceInfo"
+  - ns: 100
+    exists: false
+    name: "Legacy:Collision Model"
+  - ns: 100
+    exists: false
+    name: "Legacy:Xprocmesh"
+  - ns: 100
+    exists: true
+    name: "Legacy:UT"
+  - ns: 100
+    exists: true
+    name: "Legacy:Dynamicly Accessing Original Static Mesh Textures"
+  - ns: 100
+    exists: true
+    name: "Legacy:Mover"
+  - ns: 100
+    exists: true
+    name: "Legacy:Brush"
+  - ns: 100
+    exists: true
+    name: "Legacy:Red Builder Brush"
+  - ns: 14
+    exists: true
+    name: "Category:Legacy Class (UT2004)"
+  - ns: 100
+    exists: true
+    name: "Legacy:Object"
+  - ns: 100
+    exists: true
+    name: "Legacy:Static Mesh Browser"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Texturing"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Static_Mesh"
+    byteoffset: 3455
+    anchor: "Texturing"
+  - toclevel: 1
+    level: "2"
+    line: "Collision"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Static_Mesh"
+    byteoffset: 3942
+    anchor: "Collision"
+  - toclevel: 2
+    level: "3"
+    line: "Collision \"Bugs\""
+    number: "2.1"
+    index: "3"
+    fromtitle: "Legacy:Static_Mesh"
+    byteoffset: 4719
+    anchor: "Collision_.22Bugs.22"
+  - toclevel: 1
+    level: "2"
+    line: "Changes from UT"
+    number: "3"
+    index: "4"
+    fromtitle: "Legacy:Static_Mesh"
+    byteoffset: 6966
+    anchor: "Changes_from_UT"
+  - toclevel: 1
+    level: "2"
+    line: "The StaticMesh class"
+    number: "4"
+    index: "5"
+    fromtitle: "Legacy:Static_Mesh"
+    byteoffset: 8054
+    anchor: "The_StaticMesh_class"
+  - toclevel: 1
+    level: "2"
+    line: "Static Mesh FAQ"
+    number: "5"
+    index: "6"
+    fromtitle: "Legacy:Static_Mesh"
+    byteoffset: 9258
+    anchor: "Static_Mesh_FAQ"
+  - toclevel: 1
+    level: "2"
+    line: "External Links"
+    number: "6"
+    index: "7"
+    fromtitle: "Legacy:Static_Mesh"
+    byteoffset: 10894
+    anchor: "External_Links"
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "7"
+    index: "8"
+    fromtitle: "Legacy:Static_Mesh"
+    byteoffset: 11303
+    anchor: "Related_Topics"
+  - toclevel: 1
+    level: "2"
+    line: "Discussion"
+    number: "8"
+    index: "9"
+    fromtitle: "Legacy:Static_Mesh"
+    byteoffset: 11712
+    anchor: "Discussion"
+  displaytitle: "Legacy:Static Mesh"
+  iwlinks:
+  - prefix: "udn2"
+    url: "http://udn.epicgames.com/Two/NoLodOnHardwareBrushes"
+    name: "udn2:NoLodOnHardwareBrushes"
+  - prefix: "udn2"
+    url: "http://udn.epicgames.com/Two/ConvertingBspBrushesIsSuboptimal"
+    name: "udn2:ConvertingBspBrushesIsSuboptimal"
+  - prefix: "udn2"
+    url: "http://udn.epicgames.com/Two/HardwareBrush"
+    name: "udn2:HardwareBrush"
+  - prefix: "udn2"
+    url: "http://udn.epicgames.com/Two/LevelOptimization"
+    name: "udn2:LevelOptimization"
+  - prefix: "udn2"
+    url: "http://udn.epicgames.com/Two/CollisionTutorial"
+    name: "udn2:CollisionTutorial"
+  - prefix: "udn2"
+    url: "http://udn.epicgames.com/Two/StaticMeshesTutorial"
+    name: "udn2:StaticMeshesTutorial"
+  wikitext:
+    text: "In UnrealEngine2 ([[Legacy:UT2003|UT2003]] and later), '''static meshes'''\
+      \ were introduced. These basically form a second level of map architecture,\
+      \ on top of [[Legacy:BSP|BSP]].\n\n\"Static\" in \"static mesh\" doesn't mean\
+      \ \"doesn't move\" &ndash; it can be moved, rotated, retextured and scaled (even\
+      \ disproportionally) ''in realtime''.  The \"static\" only refers to the fact\
+      \ that it can't be ''animated'', that is, the relative positions of the vertices\
+      \ are fixed. Hence, static meshes are useful for displaying pieces of architecture\
+      \ that don't move at all or might move as a whole, but they're no good for displaying\
+      \ players, whose bodies need to bend and change shape.\n\nStatic meshes are\
+      \ cached into video memory, and so can be displayed many times with little extra\
+      \ overhead.  Static meshes are a list of vertices stored ''once'' in the video\
+      \ memory (as opposed to \"once per frame\"), so drawing many copies of one static\
+      \ mesh is a relatively simple operation. When the static mesh is to be displayed\
+      \ on the screen, the engine only has to tell the video card ''where'' (and at\
+      \ which size, rotation, and with which textures) to do it.\n\nStatic meshes\
+      \ are a type of [[Legacy:Unreal Resource|unreal resource]], just like [[Legacy:Texture|Texture]]s\
+      \ or [[Legacy:Sound|Sound]]s. They are stored in [[Legacy:Package|package]]s,\
+      \ and references to them are placed in maps. They are used for several different\
+      \ purposes:\n\n* to create non-BSP map geometry; the so-called \"Hardware Brush\"\
+      . It is this that allows UT2003 to have much higher [[Legacy:Polycount|polycount]]\
+      \ than the previous [[Legacy:UT|UT]]. Some mappers use these almost entirely\
+      \ after simple subtractive brushes. The [[Legacy:StaticMeshActor|StaticMeshActor]]\
+      \ holds a reference to the static mesh resource. In a way, this is a special\
+      \ kind of Decoration which is completely lifeless.\n* [[Legacy:Mover|Movers]]\
+      \ display a static mesh (this is changed from [[Legacy:UT|UT]], where they were\
+      \ a special type of [[Legacy:Brush|Brush]]. Movers can no longer be created\
+      \ directly from the [[Legacy:Red Builder Brush|red builder brush]]: a static\
+      \ mesh must be made first.)\n* [[Legacy:Decoration|Decoration]]s, pickups and\
+      \ other actors can use a static mesh when their Display -> DrawType property\
+      \ is set to DT_StaticMesh.\n* [[Legacy:Vehicles|Vehicles]]\n\nIn fact, any [[Legacy:Actor|Actor]]\
+      \ can be set to display a Static Mesh, just as any actor can be given a sprite\
+      \ icon (such as classes like [[Legacy:Trigger|Trigger]] have by default): set\
+      \ Display -> DrawType = <tt>DT_StaticMesh</tt>, and [[Legacy:Set The Resource\
+      \ Property|Set The Resource Property]] Display -> StaticMesh. The static meshes\
+      \ used to build geometry are just actors which do nothing apart from display\
+      \ the mesh\n\nThere is a difference to be made between \"static mesh resources\"\
+      , as seen in the browser, which are stored like textures; and \"static mesh\
+      \ actors\" which are placed into a map. Don't confuse meshes with actors.  A\
+      \ mesh (static or otherwise) is just the visual representation of an actor.\
+      \  For instance, weapon pickups display a static mesh in UT2003 as long as they're\
+      \ just waiting to be picked up over their spawn point.\n\nThere is no Level\
+      \ of Detail optimizing on static meshes or procedural static meshes ([[Legacy:Xprocmesh|Xprocmesh]]\
+      \ and [[Legacy:FluidSurfaceInfo|FluidSurfaceInfo]]), meaning the full poly count\
+      \ of the mesh is rendered if it is not occluded via [[Legacy:Antiportal|antiportal]]s\
+      \ or [[Legacy:Zoning|zoning]].\n\n==Texturing ==\n\nStatic mesh resources hold\
+      \ information about how they are textured. However, an actor that dislays a\
+      \ static mesh can override these textures with the Display -> Skins array and\
+      \ Display -> UV2Texture.\n\n[[Legacy:Dynamicly Accessing Original Static Mesh\
+      \ Textures|Dynamicly accessing original Static Mesh textures]] requires difficult\
+      \ code but is possible, this allows you to effectively simulate Alpha/Translucent\
+      \ Styles which are not normally possible with static meshes.\n\n==Collision\
+      \ ==\n\nThe way I'm reading [[udn2:CollisionTutorial]], there are 3 ways a Static\
+      \ Mesh can block:\n\n* per poly collision &ndash; the individual polys of the\
+      \ mesh collide with actors, set for each material group, but its slow & sticky\
+      \ for complex meshes, because sometimes collision calculation for thousands\
+      \ of polys take place.\n* none at all &ndash; use a separate [[Legacy:BlockingVolume|BlockingVolume]],\
+      \ or a second static mesh set to invisible (eg DM-FLux2: the ice caves don't\
+      \ block, and a mesh of the same shape but with fewer triangles blocks, set to\
+      \ Advanced -> bHidden)\n* [[Legacy:Collision Model|Collision Model]]s &ndash;\
+      \ which is a bit like giving the SM a permanently built-in blocking volume,\
+      \ and \"more effecient memory-wise than blocking volumes\" (UDN)\n\n===Collision\
+      \ \"Bugs\"===\n\nI (Zxanphorian) found, that if you convert your map from UT2003\
+      \ to UT2004, you might encounter spaces where you stick on some of the static\
+      \ meshes if you rotated/scaled them. Try anything you can to fix it, like aligning\
+      \ it to the grid, tweak the scaling/rotation, or even change the map layout.\
+      \ If all else fails, you can remove these snagging areas as follows:\n#Convert\
+      \ the existing static mesh into another static mesh, merely duplicating it.\n\
+      #On the existing staticmeshactor, set it to the newly created static mesh.\n\
+      #Change the scaling of it to X=1, Y=1, Z=1\n#Change the rotation of it to X=0,\
+      \ Y=0, Z=0\n#If you did it correctly, you have now fixed the snagging points!\
+      \ ;)\n\nThis is one of the many undiscovered ways to fix the static mesh snagging\
+      \ problem.\n\nThis is an example of a snagging static mesh, and if you followed\
+      \ the preceding steps, it will now not snag you:\n\n<uscript>\nBegin Map\nBegin\
+      \ Actor Class=StaticMeshActor Name=StaticMeshActor298\n    StaticMesh=StaticMesh'SC_Volcano_M.Walkway2'\n\
+      \    Level=LevelInfo'myLevel.LevelInfo0'\n    Tag=\"StaticMeshActor\"\n    Location=(X=0,Y=0,Z=0)\n\
+      \    Rotation=(Yaw=1536,Roll=-3072)\n    StaticMeshInstance=StaticMeshInstance'myLevel.StaticMeshInstance551'\n\
+      \    DrawScale3D=(X=0.375000,Y=0.375000,Z=0.250000)\n    Skins(0)=Texture'ArboreaTerrain.ground.flr02ar'\n\
+      \    Skins(1)=Texture'ArboreaTerrain.ground.flr02ar'\n    bSelected=True\nEnd\
+      \ Actor\nBegin Surface\nEnd Surface\nEnd Map\n</uscript>\n\n----\n\n'''DeepQantas:'''\
+      \ Be aware that the simple collision models do not save Surface Type or [[Legacy:Material|Material]]\
+      \ information. This is an issue if you need to have metal footsteps, or maybe\
+      \ arrows that stick to wooden surfaces. Per poly collision handles these cases\
+      \ perfectly, while with simple collision you need to find a workaround. Otherwise\
+      \ you'll be stuck with generic footstep sounds. (PS. Please prove me wrong)\n\
+      \n'''JCBDigger:''' The collision properties are set in the static mesh and cause\
+      \ UT2004 to crash if you try to change them from within UnrealScript.  This\
+      \ may be obvious to some but I spent most of the weekend trying to add Karma\
+      \ collision to block vehicles to existing static meshes from with UnrealScript\
+      \ and failed.  If anyone knows better please tell me.\n\n==Changes from UT ==\n\
+      \nIn UT, there was one type of mesh. Decorations that didn't move were just\
+      \ meshes that happened to only have one frame. Collision on these meshes were\
+      \ ALWAYS a simple cylinder collision model.\n\nIn [[Legacy:UT2003|UT2003]],\
+      \ static meshes are differentiated from animated meshes: \n\n{| class=\"wikitable\"\
+      \n\n|-\n| style=\"text-align: center\" |<b>Type</b>\n| style=\"text-align: center\"\
+      \ |<b>Directory</b>\n| style=\"text-align: center\" |<b>Package Extension</b>\n\
+      | style=\"text-align: center\" |[[UnrealEd Interface\n|<b>Browser</b>]] \n|-\n\
+      |Static Mesh\n|/StaticMeshes\n| style=\"text-align: center\" |.usx\n|[[Legacy:Static\
+      \ Mesh Browser|Static Mesh Browser]]\n|-\n|Mesh\n|/System\n| style=\"text-align:\
+      \ center\" |.u\n|[[Legacy:Mesh Browser|Mesh Browser]]\n|-\n|Character Animations\n\
+      |/Animations\n| style=\"text-align: center\" |.ukx\n|[[Legacy:Animation Browser|Animation\
+      \ Browser]] \n|}\n \n\nNote: For UT2004 the reference to a Mesh being ''' *.u\
+      \ ''' is not accurate since this type is an UnrealScript compiled code package\
+      \ however \"vertex meshes\" are fused to the package via importing at compile-time.\n\
+      \n==The StaticMesh class ==\n\nStatic meshes are completely different from the\
+      \ animated meshes used in UT, even if those only had one anim sequence with\
+      \ one frame. Meshes and static meshes only have as much in common as meshes\
+      \ and brushes, as you can see in this part of the [[Legacy:UT2003|UT2003]] class\
+      \ tree:\n [[Legacy:Object|Object]]\n  +- ...\n  +- Primitive\n  |   +- ConvexVolume\
+      \         ''(the actual shape of an [[Legacy:Antiportal|Antiportal]] actor)\n\
+      \  |   +- FluidSurfacePrimitive\n  |   +- [[Legacy:Mesh|Mesh]]             \
+      \    ''(meshes without LOD information, e.g. some UT decorations)''\n  |   |\
+      \   +- '''LodMesh'''          ''(meshes with LOD information, e.g. most UT player\
+      \ models)''\n  |   |       +- '''SkeletalMesh''' ''(e.g. some UT and all UT2k3\
+      \ player meshes)''\n  |   |       +- VertMesh\n  |   +- MeshInstance       \
+      \  ''(?)''\n  |   |   +- LodMeshInstance\n  |   |       +- SkeletalMeshInstance\n\
+      \  |   |       +- VertMeshInstance\n  |   +- Model                ''(an actual\
+      \ brush in the map)''\n  |   +- ProjectorPrimitive\n  |   +- '''StaticMesh'''\n\
+      \  |   +- TerainPrimitive\n  +- ...\n  +- StaticMeshInstance       ''(Contains\
+      \ per-instance static mesh data, like static lighting data.)''\n  +- ...\n\n\
+      ==Static Mesh FAQ ==\n;What's the difference between a Static Mesh and a...\
+      \ :\n;; hardware brush : None, they are the same. \n;; [[Legacy:Decoration|Decoration]]\
+      \ actor : A Decoration actor is more than a piece of world geometry &ndash;\
+      \ it can have behaviour (code) associated with it as well.  The ''shape'' or\
+      \ ''manifestation'' of the decoration ''could'' be a static mesh.\n\n;; normal\
+      \ brush : A normal [[Legacy:Brush|brush]] and be added or subtracted from the\
+      \ world.  It may be [[Legacy:Semisolid|semisolid]] or [[Legacy:Nonsolid|nonsolid]].\
+      \  Static meshes however can only ever be added to the world.  Solid brushes\
+      \ always cause collisions to occur based upon their geometry.  Static meshes\
+      \ on the other hand can be given [[Legacy:Collision Model|Collision Model]]s\
+      \ that are distinct to their shape (generally the collision boundary of a static\
+      \ mesh is simpler than the mesh itself for performance and gameplay reasons).\n\
+      \n;; [[Legacy:Mover|Mover]] : A mover is a particular type of Actor that can\
+      \ move around the map in response to events. In UT2003, a mover's geometry is\
+      \ taken from a static mesh, so it's just one more of many actor types that display\
+      \ them, with DrawType = <tt>DT_StaticMesh</tt>. In Unreal and UT, movers were\
+      \ a type of moving brush, with DrawType = <tt>DT_Brush</tt>\n\n;; a \"regular\"\
+      \ mesh? :A mesh like in UT,they can be vertex animated.\n\n;; Procedural Mesh\
+      \ : A static mesh whose vertices can be animated by means of UnrealScript. ('''Foxpaw:'''\
+      \ I think this might be a regular mesh who's vertices can be animated through\
+      \ UnrealScript.. it seems awfully hard on the video card to attempt to animate\
+      \ a static mesh.)\n\n==External Links==\n* [[udn2:LevelOptimization]] - How\
+      \ to optimize.\n* [[udn2:HardwareBrush]] - General information on hardware brushes.\
+      \ //Page Not Found\n* [[udn2:StaticMeshesTutorial]] - Tutorial on Static Meshes\
+      \ / hardware brush .\n* [[udn2:NoLodOnHardwareBrushes]] - No LOD is possible\
+      \ on static meshes.\n* [[udn2:ConvertingBspBrushesIsSuboptimal]] - Why converting\
+      \ BSP brushes to StaticMeshes is a bad idea.\n\n==Related Topics==\n \n* [[Legacy:UT2003|UT2003]]\n\
+      * [[Legacy:Building With Static Meshes|Building With Static Meshes]]\n* [[Legacy:Hardware_Brush|Hardware_Brush]]\
+      \ - General information on hardware brushes.\n* [[Legacy:Static Mesh Package|Static\
+      \ Mesh Package]] &ndash; listing of the default SM packages \n* [[Legacy:Static\
+      \ Mesh Browser|Static Mesh Browser]]\n* [[Legacy:Static Mesh Modeling|Static\
+      \ Mesh Modeling]]\n\n==Discussion==\n\n'''SuperApe:''' This should be a class\
+      \ page (as well).\n\n'''Tarquin:''' No, because that would be StaticMeshActor\
+      \ and StaticMesh without spaces. \n\n----\n\n[[:Category:Legacy Mapping]]\n\n\
+      [[:Category:Legacy Class (UT2003)]]\n\n[[:Category:Legacy Class (UT2004)]]\n\
+      \n[[:Category:Legacy To Do]] &ndash; Needs to be class page.\n[[Category:Legacy\
+      \ Mapping|{{PAGENAME}}]]\n[[Category:Legacy Class (UT2003)|{{PAGENAME}}]]\n\
+      [[Category:Legacy Class (UT2004)|{{PAGENAME}}]]\n[[Category:Legacy To Do|{{PAGENAME}}]]"
+  properties: []
+  revId: 7482
+name: "Legacy:Static Mesh"
+revision:
+  revid: 7482
+  parentid: 7483
+  user: "89.122.244.15"
+  timestamp: 1199484341.000000000
+  comment: "fixed the nonsense typos"
+timestamp: 1668752965.319911000

@@ -1,0 +1,202 @@
+---
+parse:
+  title: "Legacy:TournamentHealth/Script"
+  text:
+    text: "<p><i><b>UT2003, Build 2225</b></i></p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">class</span> TournamentHealth <span class=\"kw1\"\
+      >extends</span> <span class=\"kw9\">TournamentPickUp</span>\n\t<span class=\"\
+      kw1\">abstract</span>;\n \n<span class=\"kw1\">var</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span> <span class=\"kw5\">int</span> HealingAmount;\n\
+      <span class=\"kw1\">var</span><span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span> <span class=\"kw5\">bool</span> bSuperHeal;\n \n<span class=\"coMULTI\"\
+      >/* DetourWeight()\nvalue of this path to take a quick detour (usually 0, used\
+      \ when on route to distant objective, but want to grab inventory for example)\n\
+      */</span>\n<span class=\"kw1\">function</span> <span class=\"kw5\">float</span>\
+      \ DetourWeight<span class=\"br0\">(</span><span class=\"kw9\">Pawn</span> Other,<span\
+      \ class=\"kw5\">float</span> PathWeight<span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n\t<span class=\"kw1\">local</span> <span class=\"kw5\">int</span>\
+      \ Heal;\n \n\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span> <span\
+      \ class=\"kw9\">AIController</span><span class=\"br0\">(</span>Other.<span class=\"\
+      kw9\">Controller</span><span class=\"br0\">)</span>.<span class=\"me0\">PriorityObjective</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"br0\">(</span>Other.<span class=\"me0\">Health</span> <span\
+      \ class=\"sy0\">&gt;</span> <span class=\"nu0\">65</span><span class=\"br0\"\
+      >)</span> <span class=\"br0\">)</span>\n\t\t<span class=\"kw2\">return</span>\
+      \ <span class=\"nu0\">0</span>;\n\tHeal <span class=\"sy0\">=</span> <span class=\"\
+      kw3\">Min</span><span class=\"br0\">(</span>GetHealMax<span class=\"br0\">(</span>Other<span\
+      \ class=\"br0\">)</span>,Other.<span class=\"me0\">Health</span> <span class=\"\
+      sy0\">+</span> HealingAmount<span class=\"br0\">)</span> <span class=\"sy0\"\
+      >-</span> Other.<span class=\"me0\">Health</span>;\n\t<span class=\"kw2\">return</span>\
+      \ <span class=\"br0\">(</span><span class=\"nu0\">0.02</span> <span class=\"\
+      sy0\">*</span> Heal <span class=\"sy0\">*</span> MaxDesireability<span class=\"\
+      br0\">)</span><span class=\"sy0\">/</span>PathWeight;\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"kw1\">event</span> <span class=\"kw5\">float</span> BotDesireability<span\
+      \ class=\"br0\">(</span><span class=\"kw9\">Pawn</span> <span class=\"kw9\"\
+      >Bot</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span\
+      \ class=\"kw1\">local</span> <span class=\"kw5\">float</span> desire;\n\t<span\
+      \ class=\"kw1\">local</span> <span class=\"kw5\">int</span> HealMax;\n \n\t\
+      HealMax <span class=\"sy0\">=</span> GetHealMax<span class=\"br0\">(</span><span\
+      \ class=\"kw9\">Bot</span><span class=\"br0\">)</span>;\n\tdesire <span class=\"\
+      sy0\">=</span> <span class=\"kw3\">Min</span><span class=\"br0\">(</span>HealingAmount,\
+      \ HealMax <span class=\"sy0\">-</span> <span class=\"kw9\">Bot</span>.<span\
+      \ class=\"me0\">Health</span><span class=\"br0\">)</span>;\n \n\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw9\">Bot</span>.<span class=\"kw9\">Weapon</span> <span class=\"\
+      sy0\">!=</span> <span class=\"kw5\">None</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span><span class=\"\
+      kw9\">Bot</span>.<span class=\"kw9\">Weapon</span>.<span class=\"me0\">AIRating</span>\
+      \ <span class=\"sy0\">&gt;</span> <span class=\"nu0\">0.5</span><span class=\"\
+      br0\">)</span> <span class=\"br0\">)</span>\n\t\tdesire <span class=\"sy0\"\
+      >*=</span> <span class=\"nu0\">1.7</span>;\n\t<span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span> bSuperHeal <span class=\"sy0\">||</span> <span\
+      \ class=\"br0\">(</span><span class=\"kw9\">Bot</span>.<span class=\"me0\">Health</span>\
+      \ <span class=\"sy0\">&lt;</span> <span class=\"nu0\">45</span><span class=\"\
+      br0\">)</span> <span class=\"br0\">)</span>\n\t\t<span class=\"kw2\">return</span>\
+      \ <span class=\"br0\">(</span> <span class=\"kw3\">FMin</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">0.03</span> <span class=\"sy0\">*</span> desire,\
+      \ <span class=\"nu0\">2.2</span><span class=\"br0\">)</span> <span class=\"\
+      br0\">)</span>;\n\t<span class=\"kw2\">else</span>\n\t<span class=\"br0\">{</span>\n\
+      \t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span> desire <span\
+      \ class=\"sy0\">&gt;</span> <span class=\"nu0\">6</span> <span class=\"br0\"\
+      >)</span>\n\t\t\tdesire <span class=\"sy0\">=</span> <span class=\"kw3\">FMax</span><span\
+      \ class=\"br0\">(</span>desire,<span class=\"nu0\">25</span><span class=\"br0\"\
+      >)</span>;\n\t\t<span class=\"kw2\">else</span> <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span> <span class=\"kw9\">Bot</span>.<span class=\"\
+      kw9\">Controller</span>.<span class=\"me0\">bHuntPlayer</span> <span class=\"\
+      br0\">)</span>\n\t\t\t<span class=\"kw2\">return</span> <span class=\"nu0\"\
+      >0</span>;\n\t\t<span class=\"kw2\">return</span> <span class=\"br0\">(</span>\
+      \ <span class=\"kw3\">FMin</span><span class=\"br0\">(</span><span class=\"\
+      nu0\">0.017</span> <span class=\"sy0\">*</span> desire, <span class=\"nu0\"\
+      >2.0</span><span class=\"br0\">)</span> <span class=\"br0\">)</span>; \n\t<span\
+      \ class=\"br0\">}</span>\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\"\
+      >static</span> <span class=\"kw1\">function</span> <span class=\"kw5\">string</span>\
+      \ GetLocalString<span class=\"br0\">(</span>\n\t<span class=\"kw1\">optional</span>\
+      \ <span class=\"kw5\">int</span> <span class=\"kw2\">Switch</span>,\n\t<span\
+      \ class=\"kw1\">optional</span> PlayerReplicationInfo RelatedPRI_1, \n\t<span\
+      \ class=\"kw1\">optional</span> PlayerReplicationInfo RelatedPRI_2\n\t<span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw2\"\
+      >return</span> <span class=\"kw1\">Default</span>.<span class=\"me0\">PickupMessage</span><span\
+      \ class=\"sy0\">$</span>Default.<span class=\"me0\">HealingAmount</span>;\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">function</span> <span class=\"\
+      kw5\">int</span> GetHealMax<span class=\"br0\">(</span><span class=\"kw9\">Pawn</span>\
+      \ P<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"\
+      kw1\">local</span> <span class=\"kw5\">int</span> HealMax;\n \n\tHealMax <span\
+      \ class=\"sy0\">=</span> P.<span class=\"me0\">HealthMax</span>;\n\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>bSuperHeal<span class=\"br0\">)</span>\
+      \ \n\t    HealMax <span class=\"sy0\">=</span> <span class=\"kw3\">Min</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">199</span>, HealMax <span class=\"\
+      sy0\">*</span> <span class=\"nu0\">2.0</span><span class=\"br0\">)</span>;\n\
+      \t<span class=\"kw2\">return</span> HealMax;\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"kw1\">auto</span> <span class=\"kw1\">state</span> <span class=\"\
+      kw9\">Pickup</span>\n<span class=\"br0\">{</span>\t\n\t<span class=\"kw1\">function</span>\
+      \ <span class=\"kw4\">Touch</span><span class=\"br0\">(</span> <span class=\"\
+      kw9\">actor</span> Other <span class=\"br0\">)</span>\n\t<span class=\"br0\"\
+      >{</span>\n\t\t<span class=\"kw1\">local</span> <span class=\"kw9\">Pawn</span>\
+      \ P;\n \n\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span> ValidTouch<span\
+      \ class=\"br0\">(</span>Other<span class=\"br0\">)</span> <span class=\"br0\"\
+      >)</span> \n\t\t<span class=\"br0\">{</span>\n\t\t    P <span class=\"sy0\"\
+      >=</span> <span class=\"kw9\">Pawn</span><span class=\"br0\">(</span>Other<span\
+      \ class=\"br0\">)</span>;\n                    <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span>P.<span class=\"me0\">GiveHealth</span><span class=\"\
+      br0\">(</span>HealingAmount, GetHealMax<span class=\"br0\">(</span>P<span class=\"\
+      br0\">)</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\n   \
+      \                 <span class=\"br0\">{</span>\n\t\t        AnnouncePickup<span\
+      \ class=\"br0\">(</span>P<span class=\"br0\">)</span>;\n                   \
+      \     SetRespawn<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \                    <span class=\"br0\">}</span>\n\t\t<span class=\"br0\">}</span>\n\
+      \t<span class=\"br0\">}</span>\n<span class=\"br0\">}</span>\n \n<span class=\"\
+      kw1\">defaultproperties</span>\n<span class=\"br0\">{</span>\n     HealingAmount<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">20</span>                      \
+      \          <span class=\"co1\">// The amount of healing done.</span>\n     PickupMessage<span\
+      \ class=\"sy0\">=</span><span class=\"st0\">\"You picked up a Health Pack +\"\
+      </span>   <span class=\"co1\">// The on-screen message.</span>\n     RespawnTime<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">30.000000</span>               \
+      \            <span class=\"co1\">// How long it takes for the object to respawn.</span>\n\
+      \     MaxDesireability<span class=\"sy0\">=</span><span class=\"nu0\">0.700000</span>\n\
+      \     <span class=\"kw7\">RemoteRole</span><span class=\"sy0\">=</span><span\
+      \ class=\"kw7\">ROLE_DumbProxy</span>\n     AmbientGlow<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">255</span>\n     <span class=\"kw7\">CollisionRadius</span><span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">32.000000</span>\n     <span class=\"\
+      kw7\">CollisionHeight</span><span class=\"sy0\">=</span><span class=\"nu0\"\
+      >23.000000</span>\n     <span class=\"kw7\">Mass</span><span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">10.000000</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<h2><span class=\"mw-headline\" id=\"Related_Topics\">Related Topics</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:TournamentHealth/Script?section=1\" title=\"Edit section:\
+      \ Related Topics\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <ul>\n<li><a href=\"/Legacy:UnrealScript\" title=\"Legacy:UnrealScript\">UnrealScript</a></li>\n\
+      <li><a href=\"/Legacy:UnrealScript_Lessons\" title=\"Legacy:UnrealScript Lessons\"\
+      >UnrealScript Lessons</a></li>\n</ul>\n<hr />\n<!-- \nNewPP limit report\nCPU\
+      \ time usage: 0.048 seconds\nReal time usage: 0.119 seconds\nPreprocessor visited\
+      \ node count: 12/1000000\nPreprocessor generated node count: 28/1000000\nPost‐\
+      expand include size: 0/2097152 bytes\nTemplate argument size: 0/2097152 bytes\n\
+      Highest expansion depth: 2/40\nExpensive parser function count: 0/100\n-->\n\
+      \n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n100.00% \
+      \   0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:3198-0!*!0!*!*!*!*\
+      \ and timestamp 20221118194248 and revision id 8336\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:UnrealScript Lessons"
+  - ns: 100
+    exists: true
+    name: "Legacy:UnrealScript"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:TournamentHealth/Script"
+    byteoffset: 2240
+    anchor: "Related_Topics"
+  displaytitle: "Legacy:TournamentHealth/Script"
+  iwlinks: []
+  wikitext:
+    text: "'''''UT2003, Build 2225'''\n\n<uscript>\nclass TournamentHealth extends\
+      \ TournamentPickUp\n\tabstract;\n\nvar() int HealingAmount;\nvar() bool bSuperHeal;\n\
+      \n/* DetourWeight()\nvalue of this path to take a quick detour (usually 0, used\
+      \ when on route to distant objective, but want to grab inventory for example)\n\
+      */\nfunction float DetourWeight(Pawn Other,float PathWeight)\n{\n\tlocal int\
+      \ Heal;\n\t\n\tif ( AIController(Other.Controller).PriorityObjective() && (Other.Health\
+      \ > 65) )\n\t\treturn 0;\n\tHeal = Min(GetHealMax(Other),Other.Health + HealingAmount)\
+      \ - Other.Health;\n\treturn (0.02 * Heal * MaxDesireability)/PathWeight;\n}\n\
+      \nevent float BotDesireability(Pawn Bot)\n{\n\tlocal float desire;\n\tlocal\
+      \ int HealMax;\n\n\tHealMax = GetHealMax(Bot);\n\tdesire = Min(HealingAmount,\
+      \ HealMax - Bot.Health);\n\n\tif ( (Bot.Weapon != None) && (Bot.Weapon.AIRating\
+      \ > 0.5) )\n\t\tdesire *= 1.7;\n\tif ( bSuperHeal || (Bot.Health < 45) )\n\t\
+      \treturn ( FMin(0.03 * desire, 2.2) );\n\telse\n\t{\n\t\tif ( desire > 6 )\n\
+      \t\t\tdesire = FMax(desire,25);\n\t\telse if ( Bot.Controller.bHuntPlayer )\n\
+      \t\t\treturn 0;\n\t\treturn ( FMin(0.017 * desire, 2.0) ); \n\t}\n}\n\nstatic\
+      \ function string GetLocalString(\n\toptional int Switch,\n\toptional PlayerReplicationInfo\
+      \ RelatedPRI_1, \n\toptional PlayerReplicationInfo RelatedPRI_2\n\t)\n{\n\t\
+      return Default.PickupMessage$Default.HealingAmount;\n}\n\nfunction int GetHealMax(Pawn\
+      \ P)\n{\n\tlocal int HealMax;\n\t\n\tHealMax = P.HealthMax;\n\tif (bSuperHeal)\
+      \ \n\t    HealMax = Min(199, HealMax * 2.0);\n\treturn HealMax;\n}\n\nauto state\
+      \ Pickup\n{\t\n\tfunction Touch( actor Other )\n\t{\n\t\tlocal Pawn P;\n\t\t\
+      \t\n\t\tif ( ValidTouch(Other) ) \n\t\t{\n\t\t    P = Pawn(Other);\n       \
+      \             if (P.GiveHealth(HealingAmount, GetHealMax(P)))\n            \
+      \        {\n\t\t        AnnouncePickup(P);\n                        SetRespawn();\n\
+      \                    }\n\t\t}\n\t}\n}\n\ndefaultproperties\n{\n     HealingAmount=20\
+      \                                // The amount of healing done.\n     PickupMessage=\"\
+      You picked up a Health Pack +\"   // The on-screen message.\n     RespawnTime=30.000000\
+      \                           // How long it takes for the object to respawn.\n\
+      \     MaxDesireability=0.700000\n     RemoteRole=ROLE_DumbProxy\n     AmbientGlow=255\n\
+      \     CollisionRadius=32.000000\n     CollisionHeight=23.000000\n     Mass=10.000000\n\
+      }\n</uscript>\n\n==Related Topics==\n* [[Legacy:UnrealScript|UnrealScript]]\n\
+      * [[Legacy:UnrealScript Lessons|UnrealScript Lessons]]\n\n----"
+  properties: []
+  revId: 8336
+name: "Legacy:TournamentHealth/Script"
+revision:
+  revid: 8336
+  parentid: 8337
+  user: "SuperApe"
+  timestamp: 1136343682.000000000
+  comment: "*"
+timestamp: 1668800348.653086000

@@ -1,0 +1,453 @@
+---
+parse:
+  title: "Legacy:WebDownload"
+  text:
+    text: "<p>Sometimes you want to have your mod download something from a website\
+      \ to be used in game or something like that. Unreal gives you the ability to\
+      \ do that using a [TCPLink] class.</p>\n<p>This document will describe how you\
+      \ can implement a basic HTTP client.</p>\n<p><b>Note:</b> You might want to\
+      \ take a look at <a href=\"/Legacy:LibHTTP\" title=\"Legacy:LibHTTP\">LibHTTP</a>,\
+      \ it's a general purpose library which contains a better HTTP client.</p>\n\
+      <p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n\
+      </div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#HTTP\"><span\
+      \ class=\"tocnumber\">1</span> <span class=\"toctext\">HTTP</span></a>\n<ul>\n\
+      <li class=\"toclevel-2 tocsection-2\"><a href=\"#HTTP_Requests\"><span class=\"\
+      tocnumber\">1.1</span> <span class=\"toctext\">HTTP Requests</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-3\"><a href=\"#HTTP_replies\"><span class=\"\
+      tocnumber\">1.2</span> <span class=\"toctext\">HTTP replies</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-4\"><a href=\"#Note_about_new_lines\"><span\
+      \ class=\"tocnumber\">1.3</span> <span class=\"toctext\">Note about new lines</span></a></li>\n\
+      </ul>\n</li>\n<li class=\"toclevel-1 tocsection-5\"><a href=\"#The_Code\"><span\
+      \ class=\"tocnumber\">2</span> <span class=\"toctext\">The Code</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-6\"><a href=\"#Documents\"><span class=\"\
+      tocnumber\">3</span> <span class=\"toctext\">Documents</span></a></li>\n</ul>\n\
+      </div>\n<p></p>\n<h2><span class=\"mw-headline\" id=\"HTTP\">HTTP</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:WebDownload?section=1\" title=\"Edit section: HTTP\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>This document is\
+      \ focused on using <a rel=\"nofollow\" class=\"external text\" href=\"http://www.rfc-editor.org/rfc/rfc1945.txt\"\
+      >HTTP/1.0</a> to retreive information, ofcourse it's possible to use any other\
+      \ protocol like <a rel=\"nofollow\" class=\"external text\" href=\"http://www.rfc-editor.org/rfc/rfc959.txt\"\
+      >FTP</a>, <a rel=\"nofollow\" class=\"external text\" href=\"http://www.rfc-editor.org/rfc/rfc865.txt\"\
+      >QOTD (TCP)</a>, etc. But you have to find out how to do that yourself, FTP\
+      \ requires a lot more work than HTTP does.</p>\n<h3><span class=\"mw-headline\"\
+      \ id=\"HTTP_Requests\">HTTP Requests</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:WebDownload?section=2\"\
+      \ title=\"Edit section: HTTP Requests\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>First some information about a HTTP requests works.</p>\n\
+      <p>To get a file from a webserver you have send a query like this (without the\
+      \ line numbers ofcourse):</p>\n<pre>001  GET /wiki/Recent_Changed HTTP/1.0\n\
+      002  Host: wiki.beyondunreal.com\n003  Connection: close\n004  User-agent: UT2003-webdownload\
+      \ (version 100; UT2003 version 2136; <a rel=\"nofollow\" class=\"external free\"\
+      \ href=\"http://wiki.beyondunreal.com/WebDownload\">http://wiki.beyondunreal.com/WebDownload</a>)\n\
+      005\n</pre>\n<p>First of the most important part of the query is line 001, this\
+      \ will request the document from the server. The location has to be the absolute\
+      \ path to the file, it may not contain spaces, to use spaces you have to URL\
+      \ escape them (%20 is a space), read the <a rel=\"nofollow\" class=\"external\
+      \ text\" href=\"http://www.rfc-editor.org/rfc/rfc1945.txt\">RFC</a> for more\
+      \ details.</p>\n<p>I use a HTTP/1.0 request because HTTP/1.1 will introduce\
+      \ some extra difficulties.</p>\n<p>Another very important part of the request\
+      \ is line 002, this will define the host you want to connect to. You will connect\
+      \ on IP to the server, but you have to identify the server name you want to\
+      \ retreive files from. This is important because a lot of servers perform Virtual\
+      \ Hosting allowing diffirent servers on the same IP address.</p>\n<p>Line 003\
+      \ isn't realy that important since the default action of HTTP/1.0 is to close\
+      \ the connection, but better safe then sorry.</p>\n<p>Line 004 is just usefull\
+      \ to identify the client, this string has to have the format of \"client-name\
+      \ (extra info; extra info; ...)\"</p>\n<h3><span class=\"mw-headline\" id=\"\
+      HTTP_replies\">HTTP replies</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:WebDownload?section=3\"\
+      \ title=\"Edit section: HTTP replies\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>After the HTTP request the server will reply with\
+      \ a HTTP reply and the requested document.</p>\n<p>Here's an example HTTP reply\
+      \ (ignore the line numbers):</p>\n<pre>001  HTTP/1.1 200 OK\n002  Date: Thu,\
+      \ 21 Nov 2002 20:57:34 GMT\n003  Server: Apache/1.3.27 (Unix) AuthMySQL/2.20\
+      \ mod_gzip/1.3.19.1a PHP/4.2.3\n004  Connection: close\n005\n006  ... document\
+      \ data ...\n007  ... document data ...\n...\n</pre>\n<p>From the above example\
+      \ only line 001 is intresting. Note that the server replies with a HTTP/1.1\
+      \ reply, this doesn't matter much at this point, HTTP/1.1 and HTTP/1.0 are only\
+      \ important in the request. The code after HTTP/1.1 tells us what the server\
+      \ thought of our request. If the code is 200 everything is ok and the requested\
+      \ document is attachted in the reply. If the code is 404 it means that the page\
+      \ could not be found, check the RFC for the other codes.</p>\n<p>A empty line\
+      \ (line 005 is the example) is the devider between the HTTP header and the document\
+      \ data.</p>\n<h3><span class=\"mw-headline\" id=\"Note_about_new_lines\">Note\
+      \ about new lines</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:WebDownload?section=4\" title=\"Edit section:\
+      \ Note about new lines\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>UNIX systems only use a newline character ('\\n' or hex 0x0a) to identify\
+      \ a new line. Windows will use the combo carriage return + newline ('\\r\\n'\
+      \ , '\\r' has hex value 0x0d). It's best to split lines on the newline and ignore\
+      \ the carriage return if it's there.</p>\n<h2><span class=\"mw-headline\" id=\"\
+      The_Code\">The Code</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:WebDownload?section=5\" title=\"Edit section:\
+      \ The Code\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">class</span> WebDownload\
+      \ <span class=\"kw1\">extends</span> TCPLink <span class=\"kw1\">config</span>;\n\
+      \ \n<span class=\"kw1\">var</span> <span class=\"kw1\">config</span> <span class=\"\
+      kw5\">string</span> sHostname;\n<span class=\"kw1\">var</span> <span class=\"\
+      kw1\">config</span> <span class=\"kw5\">int</span> iPort;\n<span class=\"kw1\"\
+      >var</span> <span class=\"kw1\">config</span> <span class=\"kw5\">string</span>\
+      \ sRequest;\n \n<span class=\"kw1\">var</span> <span class=\"kw1\">private</span>\
+      \ <span class=\"kw5\">string</span> buffer;</pre></div>\n</div>\n<p>Well this\
+      \ is pretty much the default stuff, you have to decide for yourself how to use\
+      \ this class, the way I used it was from another class that provided the config\
+      \ options.</p>\n<p><i>sHostname</i> should contain the hostname and only the\
+      \ hostname, for example: sHostname = \"wiki.beyondunreal.com\";</p>\n<p><i>iPort</i>\
+      \ needs to be the port the webserver runs on, usualy 80</p>\n<p><i>sRequest</i>\
+      \ needs to be the absolute url of the document on that server, for example:\
+      \ sRequest = \"/wiki/Recent_Changes\";</p>\n<p><i>buffer</i> is the private\
+      \ variable that will contain the data retreived from the server.</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">function</span> StartDownload <span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \  Resolve<span class=\"br0\">(</span>sHostname<span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>This is where we start,\
+      \ we first have to resolve the hostname, when the hostname resolves we will\
+      \ get a event. <i>StartDownload</i> has to be called from somewhere...</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">event</span> ResolveFailed<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \  <span class=\"kw3\">log</span><span class=\"br0\">(</span><span class=\"\
+      st0\">\"Error, resolve failed\"</span><span class=\"br0\">)</span>;\n<span class=\"\
+      br0\">}</span>\n \n<span class=\"kw1\">event</span> Resolved<span class=\"br0\"\
+      >(</span> IpAddr Addr <span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \  Addr.<span class=\"me0\">Port</span> <span class=\"sy0\">=</span> iPort;\n\
+      \  BindPort<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n  ReceiveMode\
+      \ <span class=\"sy0\">=</span> RMODE_Event;\n  LinkMode <span class=\"sy0\"\
+      >=</span> MODE_Line;\n  Open<span class=\"br0\">(</span>Addr<span class=\"br0\"\
+      >)</span>;  \n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>When the\
+      \ resolve fails we will receive a <i>ResolveFailed</i> event, you may want to\
+      \ do some stuff there</p>\n<p>When the resolve is successfull we will get the\
+      \ event <i>Resolved</i>, from this point we will open the connection to the\
+      \ server.</p>\n<p><i>Addr</i> will contain the IP that has been resolved, we\
+      \ fill in the Port that we want to connect to, for HTTP is is 80 by default.\
+      \ Now we have to bind a local port, usualy you only bind a port when you want\
+      \ to listen to connections, but in the Unreal engine this is used to create\
+      \ a socket. Unreal can receive data via two ways, the first is by trying to\
+      \ read from the port, the other is by waiting for an event when there is data\
+      \ to be received. Ofcourse we want to receive events, thus we set the <i>ReceiveMode'\
+      \ to</i> RMODE_Event<i>. After that we set the</i> LinkMode <i>to</i> MODE_Line\
+      \ <i>this will mean we will receive</i> ReceivedLine <i>events.</i></p>\n<p>Now\
+      \ we will Open the connection to the remote server. When the open succeeds we\
+      \ will get <i>Opened</i> event.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">event</span> Opened<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n  buffer <span class=\"sy0\">=</span>\
+      \ <span class=\"st0\">\"\"</span>;\n  SendText<span class=\"br0\">(</span><span\
+      \ class=\"st0\">\"GET \"</span><span class=\"sy0\">$</span>sRequest<span class=\"\
+      sy0\">$</span><span class=\"st0\">\" HTTP/1.0\"</span><span class=\"br0\">)</span>;\n\
+      \  SendText<span class=\"br0\">(</span><span class=\"st0\">\"Host: \"</span><span\
+      \ class=\"sy0\">$</span>sHostname<span class=\"br0\">)</span>;\n  SendText<span\
+      \ class=\"br0\">(</span><span class=\"st0\">\"Connection: close\"</span><span\
+      \ class=\"br0\">)</span>;\n  SendText<span class=\"br0\">(</span><span class=\"\
+      st0\">\"User-agent: UT2003-webdownload (version 100; UT2003 version \"</span><span\
+      \ class=\"sy0\">$</span>Level.<span class=\"me0\">EngineVersion</span><span\
+      \ class=\"sy0\">$</span><span class=\"st0\">\"; http://wiki.beyondunreal.com/WebDownload)\"\
+      </span><span class=\"br0\">)</span>;\n  SendText<span class=\"br0\">(</span><span\
+      \ class=\"st0\">\"\"</span><span class=\"br0\">)</span>;\n<span class=\"br0\"\
+      >}</span></pre></div>\n</div>\n<p>When the connection is open we will send the\
+      \ HTTP request, be sure to finish with a empty line. <i>SendText</i> will automatically\
+      \ add the trailing newlines.</p>\n<p>Now we have sent the request we will get\
+      \ receive data from the Server.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">event</span> ReceivedLine<span class=\"br0\">(</span> <span\
+      \ class=\"kw5\">string</span> Line <span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n  buffer <span class=\"sy0\">=</span> buffer<span class=\"sy0\"\
+      >$</span>Line;\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>Just add\
+      \ the receiving data to the buffer, we don't want to process it yet, after the\
+      \ connection has closed we will do that.</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">event</span> Closed<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw1\"\
+      >local</span> array<span class=\"sy0\">&lt;</span>string<span class=\"sy0\"\
+      >&gt;</span> lines;\n  <span class=\"kw1\">local</span> <span class=\"kw5\"\
+      >string</span> header;\n  <span class=\"kw1\">local</span> <span class=\"kw5\"\
+      >int</span> i;\n \n  <span class=\"co1\">// split buff into header and doc</span>\n\
+      \  <span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      kw3\">divide</span><span class=\"br0\">(</span>buffer, <span class=\"kw3\">Chr</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">13</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">$</span>Chr<span class=\"br0\">(</span><span class=\"nu0\">10</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">$</span>Chr<span class=\"br0\">(</span><span\
+      \ class=\"nu0\">13</span><span class=\"br0\">)</span><span class=\"sy0\">$</span>Chr<span\
+      \ class=\"br0\">(</span><span class=\"nu0\">10</span><span class=\"br0\">)</span>,\
+      \ header, buffer<span class=\"br0\">)</span> <span class=\"sy0\">==</span> <span\
+      \ class=\"kw6\">false</span><span class=\"br0\">)</span> <span class=\"br0\"\
+      >{</span>\n    <span class=\"co1\">// error no valid data</span>\n    <span\
+      \ class=\"kw2\">return</span>;\n  <span class=\"br0\">}</span>;\n \n  <span\
+      \ class=\"co1\">// do some header parsing</span>\n  <span class=\"kw1\">class</span><span\
+      \ class=\"st0\">'wString'</span>.<span class=\"kw1\">static</span>.<span class=\"\
+      me0\">split2</span><span class=\"br0\">(</span>header, <span class=\"kw3\">chr</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">10</span><span class=\"br0\">)</span>,\
+      \ lines<span class=\"br0\">)</span>;  <span class=\"co1\">// split on newlines\
+      \ (may still contain carriage returns)</span>\n  <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span><span class=\"sy0\">!</span><span class=\"kw1\"\
+      >class</span><span class=\"st0\">'wString'</span>.<span class=\"kw1\">static</span>.<span\
+      \ class=\"me0\">MaskedCompare</span><span class=\"br0\">(</span>lines<span class=\"\
+      br0\">[</span><span class=\"nu0\">0</span><span class=\"br0\">]</span>, <span\
+      \ class=\"st0\">\"HTTP/1.? 200*\"</span>, <span class=\"kw6\">false</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n  <span class=\"br0\"\
+      >{</span>\n    <span class=\"co1\">// error no valid data</span>\n    <span\
+      \ class=\"kw2\">return</span>;\n  <span class=\"br0\">}</span>\n  <span class=\"\
+      kw2\">for</span> <span class=\"br0\">(</span>i <span class=\"sy0\">=</span>\
+      \ <span class=\"nu0\">0</span>; i <span class=\"sy0\">&lt;</span> lines.<span\
+      \ class=\"me0\">length</span>; i<span class=\"sy0\">++</span><span class=\"\
+      br0\">)</span>\n  <span class=\"br0\">{</span>\n    <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span><span class=\"kw1\">class</span><span class=\"\
+      st0\">'wString'</span>.<span class=\"kw1\">static</span>.<span class=\"me0\"\
+      >MaskedCompare</span><span class=\"br0\">(</span>lines<span class=\"br0\">[</span>i<span\
+      \ class=\"br0\">]</span>, <span class=\"st0\">\"Content-Type: *\"</span>, <span\
+      \ class=\"kw6\">false</span><span class=\"br0\">)</span><span class=\"br0\"\
+      >)</span>\n    <span class=\"br0\">{</span>\n      <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span><span class=\"sy0\">!</span><span class=\"kw1\"\
+      >class</span><span class=\"st0\">'wString'</span>.<span class=\"kw1\">static</span>.<span\
+      \ class=\"me0\">MaskedCompare</span><span class=\"br0\">(</span>lines<span class=\"\
+      br0\">[</span>i<span class=\"br0\">]</span>, <span class=\"st0\">\"content-type:\
+      \ text/plain*\"</span>, <span class=\"kw6\">false</span><span class=\"br0\"\
+      >)</span><span class=\"br0\">)</span>\n      <span class=\"br0\">{</span>\n\
+      \        <span class=\"co1\">// only text/plain supported</span>\n        <span\
+      \ class=\"kw2\">return</span>;\n      <span class=\"br0\">}</span>\n    <span\
+      \ class=\"br0\">}</span>\n  <span class=\"br0\">}</span>\n \n  <span class=\"\
+      co1\">// data should be correct</span>\n  <span class=\"kw1\">class</span><span\
+      \ class=\"st0\">'wString'</span>.<span class=\"kw1\">static</span>.<span class=\"\
+      br0\">(</span>buffer, <span class=\"kw3\">chr</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">10</span><span class=\"br0\">)</span>, lines<span class=\"br0\"\
+      >)</span>;\n  <span class=\"kw2\">for</span> <span class=\"br0\">(</span>i <span\
+      \ class=\"sy0\">=</span> <span class=\"nu0\">0</span>; i <span class=\"sy0\"\
+      >&lt;</span> lines.<span class=\"me0\">length</span>; i<span class=\"sy0\">++</span><span\
+      \ class=\"br0\">)</span>\n  <span class=\"br0\">{</span>\n    <span class=\"\
+      co1\">// cut off CR</span>\n    <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span><span class=\"kw3\">InStr</span><span class=\"br0\">(</span>lines<span\
+      \ class=\"br0\">[</span>i<span class=\"br0\">]</span>, <span class=\"kw3\">Chr</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">13</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">&gt;</span> <span class=\"sy0\"\
+      >-</span><span class=\"nu0\">1</span><span class=\"br0\">)</span>\n    <span\
+      \ class=\"br0\">{</span>\n      lines<span class=\"br0\">[</span>i<span class=\"\
+      br0\">]</span> <span class=\"sy0\">=</span> <span class=\"kw3\">Left</span><span\
+      \ class=\"br0\">(</span>lines<span class=\"br0\">[</span>i<span class=\"br0\"\
+      >]</span>, <span class=\"kw3\">InStr</span><span class=\"br0\">(</span>lines<span\
+      \ class=\"br0\">[</span>i<span class=\"br0\">]</span>, <span class=\"kw3\">Chr</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">13</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>;\n    <span class=\"br0\"\
+      >}</span>\n    <span class=\"kw2\">if</span> <span class=\"br0\">(</span>lines<span\
+      \ class=\"br0\">[</span>i<span class=\"br0\">]</span> <span class=\"sy0\">!=</span>\
+      \ <span class=\"st0\">\"\"</span><span class=\"br0\">)</span>\n    <span class=\"\
+      br0\">{</span>\n      <span class=\"co1\">// add the line to something</span>\n\
+      \    <span class=\"br0\">}</span>\n  <span class=\"br0\">}</span>\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p>The event <i>closed</i> will be called\
+      \ when the connection gets close, since we specified <i>Connection: close</i>\
+      \ in the HTTP request the server will do it for us.</p>\n<p>The buffer will\
+      \ contain the HTTP reply and the data, you may want to check the HTTP reply\
+      \ for status codes, and possibly for a new Location.</p>\n<p>I've included an\
+      \ example on how to parse the data. It will first header the headers if the\
+      \ server returned a code 200, then it will check if the content type is text/plain.\
+      \ When these check out it will start to read data, since we split our data on\
+      \ a newline we have to check if there's a orphan carriage return, if so cut\
+      \ it off. If the resulting line is not empty we will use it.</p>\n<p>Notice\
+      \ that I've used the MaskedCompare from <a href=\"/Legacy:El_Muerte_TDS/WUtils\"\
+      \ title=\"Legacy:El Muerte TDS/WUtils\" class=\"mw-redirect\">wUtils</a>.</p>\n\
+      <p>Well this is all, for more information about HTTP request check the docs.</p>\n\
+      <h2><span class=\"mw-headline\" id=\"Documents\">Documents</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:WebDownload?section=6\"\
+      \ title=\"Edit section: Documents\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<ul>\n<li><a rel=\"nofollow\" class=\"external text\"\
+      \ href=\"http://www.rfc-editor.org/rfc/rfc1945.txt\">HTTP/1.0 RFC</a></li>\n\
+      <li><a rel=\"nofollow\" class=\"external text\" href=\"http://www.rfc-editor.org/rfc/rfc2616.txt\"\
+      >HTTP/1.1 RFC</a></li>\n</ul>\n\n<!-- \nNewPP limit report\nCPU time usage:\
+      \ 0.127 seconds\nReal time usage: 0.256 seconds\nPreprocessor visited node count:\
+      \ 77/1000000\nPreprocessor generated node count: 148/1000000\nPost‐expand include\
+      \ size: 0/2097152 bytes\nTemplate argument size: 0/2097152 bytes\nHighest expansion\
+      \ depth: 2/40\nExpensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion\
+      \ expansion time report (%,ms,calls,template)\n100.00%    0.000      1 - -total\n\
+      -->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:3739-0!*!0!!en!*!*\
+      \ and timestamp 20221118025126 and revision id 9493\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:El Muerte TDS/WUtils"
+  - ns: 100
+    exists: true
+    name: "Legacy:LibHTTP"
+  templates: []
+  images: []
+  externallinks:
+  - "http://www.rfc-editor.org/rfc/rfc2616.txt"
+  - "http://www.rfc-editor.org/rfc/rfc1945.txt"
+  - "http://www.rfc-editor.org/rfc/rfc959.txt"
+  - "http://wiki.beyondunreal.com/WebDownload"
+  - "http://www.rfc-editor.org/rfc/rfc865.txt"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "HTTP"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:WebDownload"
+    byteoffset: 393
+    anchor: "HTTP"
+  - toclevel: 2
+    level: "3"
+    line: "HTTP Requests"
+    number: "1.1"
+    index: "2"
+    fromtitle: "Legacy:WebDownload"
+    byteoffset: 774
+    anchor: "HTTP_Requests"
+  - toclevel: 2
+    level: "3"
+    line: "HTTP replies"
+    number: "1.2"
+    index: "3"
+    fromtitle: "Legacy:WebDownload"
+    byteoffset: 2174
+    anchor: "HTTP_replies"
+  - toclevel: 2
+    level: "3"
+    line: "Note about new lines"
+    number: "1.3"
+    index: "4"
+    fromtitle: "Legacy:WebDownload"
+    byteoffset: 3142
+    anchor: "Note_about_new_lines"
+  - toclevel: 1
+    level: "2"
+    line: "The Code"
+    number: "2"
+    index: "5"
+    fromtitle: "Legacy:WebDownload"
+    byteoffset: 3432
+    anchor: "The_Code"
+  - toclevel: 1
+    level: "2"
+    line: "Documents"
+    number: "3"
+    index: "6"
+    fromtitle: "Legacy:WebDownload"
+    byteoffset: 8400
+    anchor: "Documents"
+  displaytitle: "Legacy:WebDownload"
+  iwlinks: []
+  wikitext:
+    text: "Sometimes you want to have your mod download something from a website to\
+      \ be used in game or something like that. Unreal gives you the ability to do\
+      \ that using a [TCPLink] class.\n\nThis document will describe how you can implement\
+      \ a basic HTTP client.\n\n'''Note:''' You might want to take a look at [[Legacy:LibHTTP|LibHTTP]],\
+      \ it's a general purpose library which contains a better HTTP client.\n\n==HTTP\
+      \ ==\n\nThis document is focused on using [http://www.rfc-editor.org/rfc/rfc1945.txt\
+      \ HTTP/1.0] to retreive information, ofcourse it's possible to use any other\
+      \ protocol like [http://www.rfc-editor.org/rfc/rfc959.txt FTP], [http://www.rfc-editor.org/rfc/rfc865.txt\
+      \ QOTD (TCP)], etc. But you have to find out how to do that yourself, FTP requires\
+      \ a lot more work than HTTP does.\n\n===HTTP Requests ===\n\nFirst some information\
+      \ about a HTTP requests works.\n\nTo get a file from a webserver you have send\
+      \ a query like this (without the line numbers ofcourse):\n\n 001  GET /wiki/Recent_Changed\
+      \ HTTP/1.0\n 002  Host: wiki.beyondunreal.com\n 003  Connection: close\n 004\
+      \  User-agent: UT2003-webdownload (version 100; UT2003 version 2136; http://wiki.beyondunreal.com/WebDownload)\n\
+      \ 005\n\nFirst of the most important part of the query is line 001, this will\
+      \ request the document from the server. The location has to be the absolute\
+      \ path to the file, it may not contain spaces, to use spaces you have to URL\
+      \ escape them (%20 is a space), read the [http://www.rfc-editor.org/rfc/rfc1945.txt\
+      \ RFC] for more details.\n\nI use a HTTP/1.0 request because HTTP/1.1 will introduce\
+      \ some extra difficulties.\n\nAnother very important part of the request is\
+      \ line 002, this will define the host you want to connect to. You will connect\
+      \ on IP to the server, but you have to identify the server name you want to\
+      \ retreive files from. This is important because a lot of servers perform Virtual\
+      \ Hosting allowing diffirent servers on the same IP address.\n\nLine 003 isn't\
+      \ realy that important since the default action of HTTP/1.0 is to close the\
+      \ connection, but better safe then sorry.\n\nLine 004 is just usefull to identify\
+      \ the client, this string has to have the format of \"client-name (extra info;\
+      \ extra info; ...)\"\n\n===HTTP replies ===\n\nAfter the HTTP request the server\
+      \ will reply with a HTTP reply and the requested document.\n\nHere's an example\
+      \ HTTP reply (ignore the line numbers):\n\n 001  HTTP/1.1 200 OK\n 002  Date:\
+      \ Thu, 21 Nov 2002 20:57:34 GMT\n 003  Server: Apache/1.3.27 (Unix) AuthMySQL/2.20\
+      \ mod_gzip/1.3.19.1a PHP/4.2.3\n 004  Connection: close\n 005\n 006  ... document\
+      \ data ...\n 007  ... document data ...\n ...\n\nFrom the above example only\
+      \ line 001 is intresting. Note that the server replies with a HTTP/1.1 reply,\
+      \ this doesn't matter much at this point, HTTP/1.1 and HTTP/1.0 are only important\
+      \ in the request. The code after HTTP/1.1 tells us what the server thought of\
+      \ our request. If the code is 200 everything is ok and the requested document\
+      \ is attachted in the reply. If the code is 404 it means that the page could\
+      \ not be found, check the RFC for the other codes.\n\nA empty line (line 005\
+      \ is the example) is the devider between the HTTP header and the document data.\n\
+      \n===Note about new lines ===\n\nUNIX systems only use a newline character ('\\\
+      n' or hex 0x0a) to identify a new line. Windows will use the combo carriage\
+      \ return + newline ('\\r\\n' , '\\r' has hex value 0x0d). It's best to split\
+      \ lines on the newline and ignore the carriage return if it's there.\n\n==The\
+      \ Code ==\n\n<uscript>\nclass WebDownload extends TCPLink config;\n\nvar config\
+      \ string sHostname;\nvar config int iPort;\nvar config string sRequest;\n\n\
+      var private string buffer;\n</uscript>\n\nWell this is pretty much the default\
+      \ stuff, you have to decide for yourself how to use this class, the way I used\
+      \ it was from another class that provided the config options.\n\n''sHostname''\
+      \ should contain the hostname and only the hostname, for example: sHostname\
+      \ = \"wiki.beyondunreal.com\";\n\n''iPort'' needs to be the port the webserver\
+      \ runs on, usualy 80\n\n''sRequest'' needs to be the absolute url of the document\
+      \ on that server, for example: sRequest = \"/wiki/Recent_Changes\";\n\n''buffer''\
+      \ is the private variable that will contain the data retreived from the server.\n\
+      \n<uscript>\nfunction StartDownload ()\n{\n  Resolve(sHostname);\n}\n</uscript>\n\
+      \nThis is where we start, we first have to resolve the hostname, when the hostname\
+      \ resolves we will get a event. ''StartDownload'' has to be called from somewhere...\n\
+      \n<uscript>\nevent ResolveFailed()\n{\n  log(\"Error, resolve failed\");\n}\n\
+      \nevent Resolved( IpAddr Addr )\n{\n  Addr.Port = iPort;\n  BindPort();\n  ReceiveMode\
+      \ = RMODE_Event;\n  LinkMode = MODE_Line;\n  Open(Addr);  \n}\n</uscript>\n\n\
+      When the resolve fails we will receive a ''ResolveFailed'' event, you may want\
+      \ to do some stuff there\n\nWhen the resolve is successfull we will get the\
+      \ event ''Resolved'', from this point we will open the connection to the server.\n\
+      \n''Addr'' will contain the IP that has been resolved, we fill in the Port that\
+      \ we want to connect to, for HTTP is is 80 by default. Now we have to bind a\
+      \ local port, usualy you only bind a port when you want to listen to connections,\
+      \ but in the Unreal engine this is used to create a socket. Unreal can receive\
+      \ data via two ways, the first is by trying to read from the port, the other\
+      \ is by waiting for an event when there is data to be received. Ofcourse we\
+      \ want to receive events, thus we set the ''ReceiveMode' to ''RMODE_Event''.\
+      \ After that we set the ''LinkMode'' to ''MODE_Line'' this will mean we will\
+      \ receive ''ReceivedLine'' events.\n\nNow we will Open the connection to the\
+      \ remote server. When the open succeeds we will get ''Opened'' event.\n\n<uscript>\n\
+      event Opened()\n{\n  buffer = \"\";\n  SendText(\"GET \"$sRequest$\" HTTP/1.0\"\
+      );\n  SendText(\"Host: \"$sHostname);\n  SendText(\"Connection: close\");\n\
+      \  SendText(\"User-agent: UT2003-webdownload (version 100; UT2003 version \"\
+      $Level.EngineVersion$\"; http://wiki.beyondunreal.com/WebDownload)\");\n  SendText(\"\
+      \");\n}\n</uscript>\n\nWhen the connection is open we will send the HTTP request,\
+      \ be sure to finish with a empty line. ''SendText'' will automatically add the\
+      \ trailing newlines.\n\nNow we have sent the request we will get receive data\
+      \ from the Server.\n\n<uscript>\nevent ReceivedLine( string Line )\n{\n  buffer\
+      \ = buffer$Line;\n}\n</uscript>\n\nJust add the receiving data to the buffer,\
+      \ we don't want to process it yet, after the connection has closed we will do\
+      \ that.\n\n<uscript>\nevent Closed()\n{\n  local array<string> lines;\n  local\
+      \ string header;\n  local int i;\n  \n  // split buff into header and doc\n\
+      \  if (divide(buffer, Chr(13)$Chr(10)$Chr(13)$Chr(10), header, buffer) == false)\
+      \ {\n    // error no valid data\n    return;\n  };\n  \n  // do some header\
+      \ parsing\n  class'wString'.static.split2(header, chr(10), lines);  // split\
+      \ on newlines (may still contain carriage returns)\n  if (!class'wString'.static.MaskedCompare(lines[0],\
+      \ \"HTTP/1.? 200*\", false))\n  {\n    // error no valid data\n    return;\n\
+      \  }\n  for (i = 0; i < lines.length; i++)\n  {\n    if (class'wString'.static.MaskedCompare(lines[i],\
+      \ \"Content-Type: *\", false))\n    {\n      if (!class'wString'.static.MaskedCompare(lines[i],\
+      \ \"content-type: text/plain*\", false))\n      {\n        // only text/plain\
+      \ supported\n        return;\n      }\n    }\n  }\n\n  // data should be correct\n\
+      \  class'wString'.static.(buffer, chr(10), lines);\n  for (i = 0; i < lines.length;\
+      \ i++)\n  {\n    // cut off CR\n    if (InStr(lines[i], Chr(13)) > -1)\n   \
+      \ {\n      lines[i] = Left(lines[i], InStr(lines[i], Chr(13)));\n    }\n   \
+      \ if (lines[i] != \"\")\n    {\n      // add the line to something\n    }\n\
+      \  }\n}\n</uscript>\n\nThe event ''closed'' will be called when the connection\
+      \ gets close, since we specified ''Connection: close'' in the HTTP request the\
+      \ server will do it for us.\n\nThe buffer will contain the HTTP reply and the\
+      \ data, you may want to check the HTTP reply for status codes, and possibly\
+      \ for a new Location.\n\nI've included an example on how to parse the data.\
+      \ It will first header the headers if the server returned a code 200, then it\
+      \ will check if the content type is text/plain. When these check out it will\
+      \ start to read data, since we split our data on a newline we have to check\
+      \ if there's a orphan carriage return, if so cut it off. If the resulting line\
+      \ is not empty we will use it.\n\nNotice that I've used the MaskedCompare from\
+      \ [[Legacy:El_Muerte_TDS/WUtils|wUtils]].\n\nWell this is all, for more information\
+      \ about HTTP request check the docs.\n\n==Documents ==\n* [http://www.rfc-editor.org/rfc/rfc1945.txt\
+      \ HTTP/1.0 RFC]\n* [http://www.rfc-editor.org/rfc/rfc2616.txt HTTP/1.1 RFC]"
+  properties: []
+  revId: 9493
+name: "Legacy:WebDownload"
+revision:
+  revid: 9493
+  parentid: 9494
+  user: "Wormbo"
+  timestamp: 1122719161.000000000
+  comment: "reverted"
+timestamp: 1668764876.266644000

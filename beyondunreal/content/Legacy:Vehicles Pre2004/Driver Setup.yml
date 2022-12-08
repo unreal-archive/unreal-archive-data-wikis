@@ -1,0 +1,1017 @@
+---
+parse:
+  title: "Legacy:Vehicles Pre2004/Driver Setup"
+  text:
+    text: "<h3><span class=\"mw-headline\" id=\"Setting_up_the_driver_position.2Fanimation.\"\
+      >Setting up the driver position/animation.</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Vehicles_Pre2004/Driver_Setup?section=1\"\
+      \ title=\"Edit section: Setting up the driver position/animation.\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h3>\n<p>For an alternate\
+      \ driver setup position code, please go to <a href=\"/edit/Legacy:Vehicles_Pre2004/Driver_Setup_Alternative?redlink=1\"\
+      \ class=\"new\" title=\"Legacy:Vehicles Pre2004/Driver Setup Alternative (page\
+      \ does not exist)\">Legacy:Vehicles Pre2004/Driver Setup Alternative</a></p>\n\
+      <p>First of all, when you have any vehicle, you might want to have the driver\
+      \ visible. To make sure he's visible, use this variable in your vehicle class'\
+      \ <code>DefaultProperties</code>:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      >bDrawDriverInTP<span class=\"sy0\">=</span><span class=\"kw6\">True</span></pre></div>\n\
+      </div>\n<p>Then, you have to set his position. Use a vector for this. In the\
+      \ same <code>DefaultProperties</code> code, use:</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\">DrivePos<span class=\"sy0\">=</span><span class=\"br0\">(</span>X<span\
+      \ class=\"sy0\">=-</span><span class=\"nu0\">18.0</span>,Y<span class=\"sy0\"\
+      >=-</span><span class=\"nu0\">10.0</span>,Z<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">99.000000</span><span class=\"br0\">)</span></pre></div>\n</div>\n\
+      <p>Of course, replace the position values by the values you want to use. Although\
+      \ positioning in your modeling application of preference and grabbing the coordinates\
+      \ from there might help, nothing beats testing the position in game, so be sure\
+      \ to test. This is the position of the root bone of your player's skeleton.</p>\n\
+      <p>Third, and most important in some cases: the above code is enough to have\
+      \ your driver/player sitting nice on a certain position, but depending on your\
+      \ vehicle, the default position is not really what you want. You'll notice,\
+      \ perhaps, that your vehicle class' superclass have a variable that defines\
+      \ the animation (position) that's used to set the driving position. This variable\
+      \ is also stored in the <code>DefaultProperties</code> block, and you can easily\
+      \ add it to your own vehicle and change it to whatever you like. This is the\
+      \ default code:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\">DriveAnim<span\
+      \ class=\"sy0\">=</span><span class=\"st0\">\"Vehicle_Driving\"</span></pre></div>\n\
+      </div>\n<p>So you can change the value between quotes to the name of the animation\
+      \ (position) you want to use. This can be easily found on UnrealEd, on the animations\
+      \ browser; just select the mesh you'll be using (for example, MercFemaleA) and\
+      \ the list of available animations and poses will be shown on the left side\
+      \ list.</p>\n<p>However, on most cases, this won't suffice since there isn't\
+      \ much to work with. If you need a pose that shows your player riding a bike\
+      \ with his legs a bit more apart, you'll have to make the pose yourself. In\
+      \ this case, there are two alternatives you can work with.</p>\n<p>The first\
+      \ one is to create a customized animation (pose) for the player bones; you can\
+      \ then paste then on UnrealEd and append them to the mesh you'll be using. This\
+      \ can be applied to your own customized character meshes, but I don't know how\
+      \ you can apply them to the built-in character meshes and still use them as\
+      \ pure packages without replicating the whole stuff. <i>(I'd appreciate if anyone\
+      \ would shed a light on this)</i></p>\n<p>The second one, which is easy and\
+      \ hard at the same time, is to apply rotation to the right bones to get your\
+      \ model on the position you want it to be. Easy, because you just need a bit\
+      \ of easily modifiable code; and hard, because you'll have to enter the rotating\
+      \ values all by yourself, and this may take a bit of testing to get it right.\
+      \ This is the case I'll be talking about here, since I've dealt with it for\
+      \ a while (<a rel=\"nofollow\" class=\"external text\" href=\"http://www.ataricommunity.com/forums/showthread.php?s=&amp;threadid=369795\"\
+      >story here</a>) and I think there's something I can share.</p>\n<p>You need\
+      \ to know, then, that all your player bones can be changed - rotated, scaled\
+      \ - by using simple commands. <a rel=\"nofollow\" class=\"external text\" href=\"\
+      http://udn.epicgames.com/Two/SkelAnim2\">This page on UDN</a> goes into great\
+      \ detail into that and talks about the command you have to use to deal with\
+      \ bone rotation: <code>SetBoneRotation()</code>. You just need them to check\
+      \ the <a href=\"/Legacy:Bone_Names\" title=\"Legacy:Bone Names\">Bone Names</a>\
+      \ list and you're ready to go.</p>\n<p>Here's what the code has to do: when\
+      \ the driver enters the vehicle, change his animation (position) to the default\
+      \ \"Vehicle_Driving\" position (already done by the vehicle classes). Work from\
+      \ that and rotate some bones until you reach the desired position. Then, wait\
+      \ until he leaves the car; when he does that, reset the bones to the correct\
+      \ rotation.</p>\n<p>This is accomplished by using the <code>KDriverEnter()</code>\
+      \ and <code>KDriverLeave()</code> functions present in vehicle classes. But\
+      \ first of all, let's working with setting the player position. Let's suppose\
+      \ I made a lot of playtesting, and then I already had the code to <b>reset to\
+      \ my driving position</b>. This is it then:</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">function</span> SetDriverPositionReset<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span> <span class=\"br0\">{</span>\n  \
+      \  Driver.<span class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Bip01 Neck'</span>, <span class=\"kw3\">rot</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span\
+      \ class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 Neck1'</span>, <span class=\"\
+      kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\">)</span>,\
+      \ <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n    Driver.<span\
+      \ class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span class=\"\
+      st0\">'Dummy07'</span>, <span class=\"kw3\">rot</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">0</span>, <span class=\"nu0\">0</span>, <span class=\"nu0\"\
+      >0</span><span class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span class=\"\
+      br0\">)</span>;\n \n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 L Clavicle'</span>, <span\
+      \ class=\"kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>,\
+      \ <span class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\"\
+      >)</span>, <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n   \
+      \ Driver.<span class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Dummy03'</span>, <span class=\"kw3\">rot</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span\
+      \ class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 L Finger1'</span>, <span\
+      \ class=\"kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>,\
+      \ <span class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\"\
+      >)</span>, <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n   \
+      \ Driver.<span class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Bip01 L Finger11'</span>, <span class=\"kw3\">rot</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>,\
+      \ <span class=\"nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\"\
+      >1.0</span><span class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 L Finger12'</span>, <span\
+      \ class=\"kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>,\
+      \ <span class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\"\
+      >)</span>, <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n   \
+      \ Driver.<span class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Dummy04'</span>, <span class=\"kw3\">rot</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span\
+      \ class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bone_L_shoulder'</span>, <span\
+      \ class=\"kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>,\
+      \ <span class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\"\
+      >)</span>, <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n   \
+      \ Driver.<span class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Dummy08'</span>, <span class=\"kw3\">rot</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span\
+      \ class=\"br0\">)</span>;\n \n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 R Clavicle'</span>, <span\
+      \ class=\"kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>,\
+      \ <span class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\"\
+      >)</span>, <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n   \
+      \ Driver.<span class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Dummy01'</span>, <span class=\"kw3\">rot</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span\
+      \ class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 R Finger1'</span>, <span\
+      \ class=\"kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>,\
+      \ <span class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\"\
+      >)</span>, <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n   \
+      \ Driver.<span class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Bip01 R Finger11'</span>, <span class=\"kw3\">rot</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>,\
+      \ <span class=\"nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\"\
+      >1.0</span><span class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 R Finger12'</span>, <span\
+      \ class=\"kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>,\
+      \ <span class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\"\
+      >)</span>, <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n   \
+      \ Driver.<span class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Dummy02'</span>, <span class=\"kw3\">rot</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span\
+      \ class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bone_R_shoulder'</span>, <span\
+      \ class=\"kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>,\
+      \ <span class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\"\
+      >)</span>, <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n   \
+      \ Driver.<span class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Dummy09'</span>, <span class=\"kw3\">rot</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span\
+      \ class=\"br0\">)</span>;\n \n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Dummy06'</span>, <span class=\"\
+      kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\">)</span>,\
+      \ <span class=\"nu0\">1</span><span class=\"br0\">)</span>;\n    Driver.<span\
+      \ class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span class=\"\
+      st0\">'Dummy05'</span>, <span class=\"kw3\">rot</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">0</span>, <span class=\"nu0\">0</span>, <span class=\"nu0\"\
+      >0</span><span class=\"br0\">)</span>, <span class=\"nu0\">1</span><span class=\"\
+      br0\">)</span>;\n \n    <span class=\"co1\">// Pelvis --------------------------------------------------</span>\n\
+      \    Driver.<span class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Bip01'</span>, <span class=\"kw3\">rot</span><span class=\"\
+      br0\">(</span><span class=\"sy0\">-</span><span class=\"nu0\">1000</span>, <span\
+      \ class=\"nu0\">13000</span>, <span class=\"nu0\">0</span><span class=\"br0\"\
+      >)</span>, <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n   \
+      \ Driver.<span class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Bip01 Pelvis'</span>, <span class=\"kw3\">rot</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">2000</span>,\
+      \ <span class=\"nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\"\
+      >1.0</span><span class=\"br0\">)</span>;\n \n    <span class=\"co1\">// Head\
+      \ ----------------------------------------------------</span>\n    Driver.<span\
+      \ class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span class=\"\
+      st0\">'Bip01 Head'</span>, <span class=\"kw3\">rot</span><span class=\"br0\"\
+      >(</span><span class=\"sy0\">-</span><span class=\"nu0\">3000</span>, <span\
+      \ class=\"nu0\">0</span>, <span class=\"sy0\">-</span><span class=\"nu0\">8000</span><span\
+      \ class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span class=\"br0\"\
+      >)</span>;\n \n    <span class=\"co1\">// Spine ---------------------------------------------------</span>\n\
+      \    Driver.<span class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Bip01 Spine'</span>, <span class=\"kw3\">rot</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">6000</span>,\
+      \ <span class=\"sy0\">-</span><span class=\"nu0\">1000</span><span class=\"\
+      br0\">)</span>, <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n\
+      \    Driver.<span class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Bip01 Spine1'</span>, <span class=\"kw3\">rot</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>, <span\
+      \ class=\"sy0\">-</span><span class=\"nu0\">1000</span><span class=\"br0\">)</span>,\
+      \ <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n    Driver.<span\
+      \ class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span class=\"\
+      st0\">'Bip01 Spine2'</span>, <span class=\"kw3\">rot</span><span class=\"br0\"\
+      >(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>, <span class=\"\
+      sy0\">-</span><span class=\"nu0\">1000</span><span class=\"br0\">)</span>, <span\
+      \ class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n \n    <span class=\"\
+      co1\">// Arms ----------------------------------------------------</span>\n\
+      \    Driver.<span class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Bip01 L UpperArm'</span>, <span class=\"kw3\">rot</span><span\
+      \ class=\"br0\">(</span><span class=\"sy0\">-</span><span class=\"nu0\">6000</span>,\
+      \ <span class=\"nu0\">9000</span>, <span class=\"nu0\">0</span><span class=\"\
+      br0\">)</span>, <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n\
+      \    Driver.<span class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Bip01 R UpperArm'</span>, <span class=\"kw3\">rot</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">6000</span>, <span class=\"nu0\"\
+      >9000</span>, <span class=\"nu0\">0</span><span class=\"br0\">)</span>, <span\
+      \ class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n    Driver.<span class=\"\
+      me0\">SetBoneRotation</span><span class=\"br0\">(</span><span class=\"st0\"\
+      >'Bip01 L Forearm'</span>, <span class=\"kw3\">rot</span><span class=\"br0\"\
+      >(</span><span class=\"sy0\">-</span><span class=\"nu0\">3000</span>, <span\
+      \ class=\"sy0\">-</span><span class=\"nu0\">4000</span>, <span class=\"nu0\"\
+      >0</span><span class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span class=\"\
+      br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 R Forearm'</span>, <span\
+      \ class=\"kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">3000</span>,\
+      \ <span class=\"sy0\">-</span><span class=\"nu0\">4000</span>, <span class=\"\
+      nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span\
+      \ class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 L Hand'</span>, <span class=\"\
+      kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>, <span\
+      \ class=\"sy0\">-</span><span class=\"nu0\">3500</span>, <span class=\"nu0\"\
+      >0</span><span class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span class=\"\
+      br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 R Hand'</span>, <span class=\"\
+      kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>, <span\
+      \ class=\"sy0\">-</span><span class=\"nu0\">3500</span>, <span class=\"nu0\"\
+      >0</span><span class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span class=\"\
+      br0\">)</span>;\n \n    <span class=\"co1\">// Fingers -------------------------------------------------</span>\n\
+      \    Driver.<span class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Bip01 L Finger0'</span>, <span class=\"kw3\">rot</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">0</span>, <span class=\"sy0\">-</span><span\
+      \ class=\"nu0\">10000</span>, <span class=\"nu0\">0</span><span class=\"br0\"\
+      >)</span>, <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n   \
+      \ Driver.<span class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Bip01 L Finger01'</span>, <span class=\"kw3\">rot</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">0</span>, <span class=\"sy0\">-</span><span\
+      \ class=\"nu0\">10000</span>, <span class=\"nu0\">0</span><span class=\"br0\"\
+      >)</span>, <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n   \
+      \ Driver.<span class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Bip01 L Finger02'</span>, <span class=\"kw3\">rot</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">0</span>, <span class=\"sy0\">-</span><span\
+      \ class=\"nu0\">10000</span>, <span class=\"nu0\">0</span><span class=\"br0\"\
+      >)</span>, <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n \n\
+      \    Driver.<span class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Bip01 R Finger0'</span>, <span class=\"kw3\">rot</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">0</span>, <span class=\"sy0\">-</span><span\
+      \ class=\"nu0\">10000</span>, <span class=\"nu0\">0</span><span class=\"br0\"\
+      >)</span>, <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n   \
+      \ Driver.<span class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Bip01 R Finger01'</span>, <span class=\"kw3\">rot</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">0</span>, <span class=\"sy0\">-</span><span\
+      \ class=\"nu0\">10000</span>, <span class=\"nu0\">0</span><span class=\"br0\"\
+      >)</span>, <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n   \
+      \ Driver.<span class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Bip01 R Finger02'</span>, <span class=\"kw3\">rot</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">0</span>, <span class=\"sy0\">-</span><span\
+      \ class=\"nu0\">10000</span>, <span class=\"nu0\">0</span><span class=\"br0\"\
+      >)</span>, <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n \n\
+      \    <span class=\"co1\">// Legs ----------------------------------------------------</span>\n\
+      \    Driver.<span class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Bip01 L Thigh'</span>, <span class=\"kw3\">rot</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">8500</span>, <span class=\"sy0\"\
+      >-</span><span class=\"nu0\">5200</span>, <span class=\"sy0\">-</span><span\
+      \ class=\"nu0\">3000</span><span class=\"br0\">)</span>, <span class=\"nu0\"\
+      >1.0</span><span class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 R Thigh'</span>, <span class=\"\
+      kw3\">rot</span><span class=\"br0\">(</span><span class=\"sy0\">-</span><span\
+      \ class=\"nu0\">8500</span>, <span class=\"sy0\">-</span><span class=\"nu0\"\
+      >5200</span>, <span class=\"sy0\">-</span><span class=\"nu0\">3000</span><span\
+      \ class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span class=\"br0\"\
+      >)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span class=\"\
+      br0\">(</span><span class=\"st0\">'Bip01 L Calf'</span>, <span class=\"kw3\"\
+      >rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>, <span class=\"\
+      sy0\">-</span><span class=\"nu0\">10000</span>, <span class=\"sy0\">-</span><span\
+      \ class=\"nu0\">8000</span><span class=\"br0\">)</span>, <span class=\"nu0\"\
+      >1.0</span><span class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 R Calf'</span>, <span class=\"\
+      kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>, <span\
+      \ class=\"sy0\">-</span><span class=\"nu0\">10000</span>, <span class=\"nu0\"\
+      >8000</span><span class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span\
+      \ class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 L Foot'</span>, <span class=\"\
+      kw3\">rot</span><span class=\"br0\">(</span><span class=\"sy0\">-</span><span\
+      \ class=\"nu0\">6000</span>, <span class=\"nu0\">15000</span>, <span class=\"\
+      nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span\
+      \ class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 R Foot'</span>, <span class=\"\
+      kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">5000</span>,\
+      \ <span class=\"nu0\">15000</span>, <span class=\"nu0\">0</span><span class=\"\
+      br0\">)</span>, <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n\
+      \    Driver.<span class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Bip01 L Toe0'</span>, <span class=\"kw3\">rot</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span\
+      \ class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 R Toe0'</span>, <span class=\"\
+      kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\">)</span>,\
+      \ <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p>YES, the code is big, but that's how\
+      \ it's meant to be - there are a lot of bones.</p>\n<p>Well, this is the function\
+      \ that will get the driver from the Vehicle_Driving position and set him on\
+      \ my desired position - on my case, riding side-first on a surfboard with his\
+      \ legs and arms apart. On simple modifications - for example, getting his knees\
+      \ bended or his hands far apart - the code would be really small – you just\
+      \ need to rotate the right bones. For clarification purposes, I've pasted even\
+      \ code that doesn't need to appear (the ones that use <code>rot(0,0,0)</code>\
+      \ as rotator modifiers) just so it's easy to change.</p>\n<p>Onto explaining\
+      \ the code: this code gets bone by bone and changes it rotation values by any\
+      \ value that's used on the rotator - the rot() constructor takes Pitch, Yaw\
+      \ and Roll as parameters. These values are related to the bone position, not\
+      \ the world position, so depending on the case, the pitch value will actually\
+      \ be rolling the limbs. So, like I said, be sure to test it a lot.</p>\n<p>Next,\
+      \ we need a function that'll get the driver back to the original position -\
+      \ or else he'll be all fuzzy when he leaves the vehicle. This function is easy,\
+      \ since we only need to set the rotation values back to 0. The code:</p>\n<div\
+      \ dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">function</span>\
+      \ SetDriverPositionOriginal<span class=\"br0\">(</span><span class=\"kw9\">Pawn</span>\
+      \ Driver<span class=\"br0\">)</span> <span class=\"br0\">{</span>\n    <span\
+      \ class=\"co1\">// After the player leaves the vehicle, resets its additional\
+      \ bone rotations or else he'll be all twisted</span>\n    <span class=\"co1\"\
+      >// Simply resets everything</span>\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 Neck'</span>, <span class=\"\
+      kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\">)</span>,\
+      \ <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n    Driver.<span\
+      \ class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span class=\"\
+      st0\">'Bip01 Neck1'</span>, <span class=\"kw3\">rot</span><span class=\"br0\"\
+      >(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>, <span class=\"\
+      nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span\
+      \ class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Dummy07'</span>, <span class=\"\
+      kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\">)</span>,\
+      \ <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n    Driver.<span\
+      \ class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span class=\"\
+      st0\">'Bip01 L Clavicle'</span>, <span class=\"kw3\">rot</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span\
+      \ class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Dummy03'</span>, <span class=\"\
+      kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\">)</span>,\
+      \ <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n    Driver.<span\
+      \ class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span class=\"\
+      st0\">'Bip01 L Finger1'</span>, <span class=\"kw3\">rot</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span\
+      \ class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 L Finger11'</span>, <span\
+      \ class=\"kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>,\
+      \ <span class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\"\
+      >)</span>, <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n   \
+      \ Driver.<span class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Bip01 L Finger12'</span>, <span class=\"kw3\">rot</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>,\
+      \ <span class=\"nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\"\
+      >1.0</span><span class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Dummy04'</span>, <span class=\"\
+      kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\">)</span>,\
+      \ <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n    Driver.<span\
+      \ class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span class=\"\
+      st0\">'Bone_L_shoulder'</span>, <span class=\"kw3\">rot</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span\
+      \ class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Dummy08'</span>, <span class=\"\
+      kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\">)</span>,\
+      \ <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n    Driver.<span\
+      \ class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span class=\"\
+      st0\">'Bip01 R Clavicle'</span>, <span class=\"kw3\">rot</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span\
+      \ class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Dummy01'</span>, <span class=\"\
+      kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\">)</span>,\
+      \ <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n    Driver.<span\
+      \ class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span class=\"\
+      st0\">'Bip01 R Finger1'</span>, <span class=\"kw3\">rot</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span\
+      \ class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 R Finger11'</span>, <span\
+      \ class=\"kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>,\
+      \ <span class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\"\
+      >)</span>, <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n   \
+      \ Driver.<span class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Bip01 R Finger12'</span>, <span class=\"kw3\">rot</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>,\
+      \ <span class=\"nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\"\
+      >1.0</span><span class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Dummy02'</span>, <span class=\"\
+      kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\">)</span>,\
+      \ <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n    Driver.<span\
+      \ class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span class=\"\
+      st0\">'Bone_R_shoulder'</span>, <span class=\"kw3\">rot</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span\
+      \ class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Dummy09'</span>, <span class=\"\
+      kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\">)</span>,\
+      \ <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n    Driver.<span\
+      \ class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span class=\"\
+      st0\">'Dummy06'</span>, <span class=\"kw3\">rot</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">0</span>, <span class=\"nu0\">0</span>, <span class=\"nu0\"\
+      >0</span><span class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span class=\"\
+      br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Dummy05'</span>, <span class=\"\
+      kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\">)</span>,\
+      \ <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n    Driver.<span\
+      \ class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span class=\"\
+      st0\">'Bip01'</span>, <span class=\"kw3\">rot</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">0</span>, <span class=\"nu0\">0</span>, <span class=\"nu0\"\
+      >0</span><span class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span class=\"\
+      br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 Pelvis'</span>, <span class=\"\
+      kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\">)</span>,\
+      \ <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n    Driver.<span\
+      \ class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span class=\"\
+      st0\">'Bip01 Head'</span>, <span class=\"kw3\">rot</span><span class=\"br0\"\
+      >(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>, <span class=\"\
+      nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span\
+      \ class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 Spine'</span>, <span class=\"\
+      kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\">)</span>,\
+      \ <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n    Driver.<span\
+      \ class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span class=\"\
+      st0\">'Bip01 Spine1'</span>, <span class=\"kw3\">rot</span><span class=\"br0\"\
+      >(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>, <span class=\"\
+      nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span\
+      \ class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 Spine2'</span>, <span class=\"\
+      kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\">)</span>,\
+      \ <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n    Driver.<span\
+      \ class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span class=\"\
+      st0\">'Bip01 L UpperArm'</span>, <span class=\"kw3\">rot</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span\
+      \ class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 R UpperArm'</span>, <span\
+      \ class=\"kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>,\
+      \ <span class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\"\
+      >)</span>, <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n   \
+      \ Driver.<span class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Bip01 L Forearm'</span>, <span class=\"kw3\">rot</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>,\
+      \ <span class=\"nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\"\
+      >1.0</span><span class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 R Forearm'</span>, <span\
+      \ class=\"kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>,\
+      \ <span class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\"\
+      >)</span>, <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n   \
+      \ Driver.<span class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Bip01 L Hand'</span>, <span class=\"kw3\">rot</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span\
+      \ class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 R Hand'</span>, <span class=\"\
+      kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\">)</span>,\
+      \ <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n    Driver.<span\
+      \ class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span class=\"\
+      st0\">'Bip01 L Finger0'</span>, <span class=\"kw3\">rot</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span\
+      \ class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 L Finger01'</span>, <span\
+      \ class=\"kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>,\
+      \ <span class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\"\
+      >)</span>, <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n   \
+      \ Driver.<span class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Bip01 L Finger02'</span>, <span class=\"kw3\">rot</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>,\
+      \ <span class=\"nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\"\
+      >1.0</span><span class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 R Finger0'</span>, <span\
+      \ class=\"kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>,\
+      \ <span class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\"\
+      >)</span>, <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n   \
+      \ Driver.<span class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Bip01 R Finger01'</span>, <span class=\"kw3\">rot</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>,\
+      \ <span class=\"nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\"\
+      >1.0</span><span class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 R Finger02'</span>, <span\
+      \ class=\"kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>,\
+      \ <span class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\"\
+      >)</span>, <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n   \
+      \ Driver.<span class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'Bip01 L Thigh'</span>, <span class=\"kw3\">rot</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>,\
+      \ <span class=\"nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\"\
+      >1.0</span><span class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 R Thigh'</span>, <span class=\"\
+      kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\">)</span>,\
+      \ <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n    Driver.<span\
+      \ class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span class=\"\
+      st0\">'Bip01 L Calf'</span>, <span class=\"kw3\">rot</span><span class=\"br0\"\
+      >(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>, <span class=\"\
+      nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span\
+      \ class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 R Calf'</span>, <span class=\"\
+      kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\">)</span>,\
+      \ <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n    Driver.<span\
+      \ class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span class=\"\
+      st0\">'Bip01 L Foot'</span>, <span class=\"kw3\">rot</span><span class=\"br0\"\
+      >(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>, <span class=\"\
+      nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span\
+      \ class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 R Foot'</span>, <span class=\"\
+      kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\">)</span>,\
+      \ <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n    Driver.<span\
+      \ class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span class=\"\
+      st0\">'Bip01 L Toe0'</span>, <span class=\"kw3\">rot</span><span class=\"br0\"\
+      >(</span><span class=\"nu0\">0</span>, <span class=\"nu0\">0</span>, <span class=\"\
+      nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\">1.0</span><span\
+      \ class=\"br0\">)</span>;\n    Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 R Toe0'</span>, <span class=\"\
+      kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\">)</span>,\
+      \ <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p><i>Of course, using an in-line created\
+      \ string array and setting all values to <code>rot(0,0,0)</code> on a for loop\
+      \ would be the right thing, but I don't know how to create an in-line array\
+      \ in UnrealScript <b>and</b> the first parameter (between single quotes) doesn't\
+      \ seem to be a string parameter. What gives? If someone could rewrite this in\
+      \ four lines (sans local var declarations) I'd be thankful.</i></p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"co1\">// After the player leaves the vehicle,\
+      \ resets its additional bone rotations or else he'll be all twisted</span>\n\
+      <span class=\"kw1\">function</span> SetDriverPositionOriginal<span class=\"\
+      br0\">(</span><span class=\"kw9\">Pawn</span> Driver<span class=\"br0\">)</span>\
+      \ <span class=\"br0\">{</span>\n    <span class=\"coMULTI\">/* Dynamic array\
+      \ of names\n     *  note: name uses ', string uses \"\n     *  note: dynamic\
+      \ arrays can't be replicated\n     */</span>\n    <span class=\"kw1\">local</span>\
+      \ array<span class=\"sy0\">&lt;</span>name<span class=\"sy0\">&gt;</span> BoneNames;\n\
+      \    <span class=\"co1\">// Other variables</span>\n    <span class=\"kw1\"\
+      >local</span> <span class=\"kw5\">rotator</span> ZeroRot;\n    <span class=\"\
+      kw1\">local</span> <span class=\"kw5\">int</span> i;\n \n    <span class=\"\
+      coMULTI\">/* This is a hack, read below.\n     * Also, string is split and concatenated\
+      \ with $\n     * to improve readability, for speed you'd probably\n     * want\
+      \ to go for one very long line\n     */</span>\n    <span class=\"kw3\">SetPropertyText</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">\"BoneNames\"</span>, <span class=\"\
+      st0\">\"(\"</span><span class=\"sy0\">$</span>\n        <span class=\"st0\"\
+      >\"'Bip01 Neck','Bip01 Neck1','Dummy07','Bip01 L Clavicle',\"</span><span class=\"\
+      sy0\">$</span>\n        <span class=\"st0\">\"'Dummy03','Bip01 L Finger1','Bip01\
+      \ L Finger11','Bip01 L Finger12','Dummy04',\"</span><span class=\"sy0\">$</span>\n\
+      \        <span class=\"st0\">\"'Bone_L_shoulder','Dummy08','Bip01 R Clavicle','Dummy01','Bip01\
+      \ R Finger1',\"</span><span class=\"sy0\">$</span>\n        <span class=\"st0\"\
+      >\"'Bip01 R Finger11','Bip01 R Finger12','Dummy02','Bone_R_shoulder','Dummy09',\"\
+      </span><span class=\"sy0\">$</span>\n        <span class=\"st0\">\"'Dummy06','Dummy05','Bip01','Bip01\
+      \ Pelvis','Bip01 Head','Bip01 Spine',\"</span><span class=\"sy0\">$</span>\n\
+      \        <span class=\"st0\">\"'Bip01 Spine1','Bip01 Spine2','Bip01 L UpperArm','Bip01\
+      \ R UpperArm','Bip01 L Forearm',\"</span><span class=\"sy0\">$</span>\n    \
+      \    <span class=\"st0\">\"'Bip01 R Forearm','Bip01 L Hand','Bip01 R Hand','Bip01\
+      \ L Finger0','Bip01 L Finger01',\"</span><span class=\"sy0\">$</span>\n    \
+      \    <span class=\"st0\">\"'Bip01 L Finger02','Bip01 R Finger0','Bip01 R Finger01','Bip01\
+      \ R Finger02',\"</span><span class=\"sy0\">$</span>\n        <span class=\"\
+      st0\">\"'Bip01 L Thigh','Bip01 R Thigh','Bip01 L Calf','Bip01 R Calf','Bip01\
+      \ L Foot',\"</span><span class=\"sy0\">$</span>\n        <span class=\"st0\"\
+      >\"'Bip01 R Foot','Bip01 L Toe0','Bip01 R Toe0'\"</span><span class=\"sy0\"\
+      >$</span>\n        <span class=\"st0\">\")\"</span><span class=\"br0\">)</span>;\n\
+      \    <span class=\"co1\">// Set ZeroRot to prevent repeated creation of the\
+      \ same rotator</span>\n    ZeroRot <span class=\"sy0\">=</span> <span class=\"\
+      kw3\">rot</span><span class=\"br0\">(</span><span class=\"nu0\">0</span>, <span\
+      \ class=\"nu0\">0</span>, <span class=\"nu0\">0</span><span class=\"br0\">)</span>;\n\
+      \ \n    <span class=\"co1\">// And finally, run through the loop resetting each\
+      \ bone (specified above)</span>\n    <span class=\"kw2\">for</span> <span class=\"\
+      br0\">(</span>i<span class=\"sy0\">=</span><span class=\"nu0\">0</span>; i<span\
+      \ class=\"sy0\">&lt;</span>BoneNames.<span class=\"me0\">Length</span>; i<span\
+      \ class=\"sy0\">++</span><span class=\"br0\">)</span>\n         Driver.<span\
+      \ class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span>BoneNames<span\
+      \ class=\"br0\">[</span>i<span class=\"br0\">]</span>, ZeroRot, <span class=\"\
+      nu0\">1.0</span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p><i>I'm not exactly sure that this is the best way to create an inline\
+      \ array, but its the best way I could think of at the moment. I would recommend\
+      \ not using SetPropertyText to change a name variable (or an array of names).\
+      \ See the \"String [...] to Name\" section of <a href=\"/Legacy:Typecasting\"\
+      \ title=\"Legacy:Typecasting\">Typecasting</a> for more information.</i></p>\n\
+      <p>This will do the same thing the previous function does, but it'll set the\
+      \ rotation values back to 0, that is, with no offsets - making it look like\
+      \ \"Vehicle_Driving\" again.</p>\n<p>Next, you have to call the functions on\
+      \ your vehicle code - just edit <code>KDriverEnter()</code> and <code>KDriverLeave()</code>\
+      \ and make it call the functions when needed. This is the code (supposing you\
+      \ don't already have these functions on your class, or that they're just general-purpose\
+      \ ones):</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n\
+      <div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\"\
+      >function</span> KDriverEnter <span class=\"br0\">(</span><span class=\"kw9\"\
+      >Pawn</span> P<span class=\"br0\">)</span> <span class=\"br0\">{</span>\n  \
+      \  <span class=\"kw6\">Super</span>.<span class=\"me0\">KDriverEnter</span><span\
+      \ class=\"br0\">(</span>P<span class=\"br0\">)</span>; <span class=\"co1\">//\
+      \ cals the normal function</span>\n    SetDriverPositionReset<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>; <span class=\"co1\">// resets the\
+      \ position to my driving position</span>\n<span class=\"br0\">}</span>\n<span\
+      \ class=\"kw1\">function</span> <span class=\"kw5\">bool</span> KDriverLeave\
+      \ <span class=\"br0\">(</span><span class=\"kw5\">bool</span> bForceLeave<span\
+      \ class=\"br0\">)</span> <span class=\"br0\">{</span>\n    <span class=\"kw1\"\
+      >local</span> <span class=\"kw9\">Pawn</span> tempDriver;\n    tempDriver <span\
+      \ class=\"sy0\">=</span> Driver; <span class=\"co1\">// use variable to hold\
+      \ Driver because Driver is destroyed after KDriverLeave</span>\n    <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span><span class=\"kw6\">Super</span>.<span\
+      \ class=\"me0\">KDriverLeave</span><span class=\"br0\">(</span>bForceLeave<span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span> <span class=\"br0\">{</span>\n\
+      \        SetDriverPositionOriginal<span class=\"br0\">(</span>tempDriver<span\
+      \ class=\"br0\">)</span>; <span class=\"co1\">// resets the position to the\
+      \ original position only if he could leave</span>\n        <span class=\"kw2\"\
+      >return</span> <span class=\"kw6\">true</span>;\n    <span class=\"br0\">}</span>\
+      \ <span class=\"kw2\">else</span> <span class=\"br0\">{</span>\n        <span\
+      \ class=\"kw2\">return</span> <span class=\"kw6\">false</span>;\n    <span class=\"\
+      br0\">}</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>That's\
+      \ pretty much it. Using similar code, you can work with your model's <code>Tick()</code>\
+      \ function to set your bone rotation to specific values - the Unreal Tournament\
+      \ 2004 code already does this, to set the rotation of the head bone to a given\
+      \ value to make the driver it look like the driver is looking at the side you're\
+      \ facing. But you can work with all bones, making him rotate his arms or legs\
+      \ too; In my Spaceboard's case, I made the code change lots of the player's\
+      \ bones, so it'd look like he was jugging his body to the sides or twisting\
+      \ it for balance. It's a pretty nice effect if you ask me. For reference, here's\
+      \ the <i>piece of code</i> I'm using inside my <code>Tick()</code> on my Spaceboard\
+      \ Class (it's based on the bone-updating code):</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\">    <span class=\"kw1\">local</span> <span class=\"kw5\"\
+      >float</span> tempYaw, tempRoll; <span class=\"co1\">// contador pra calcular\
+      \ a quantidade de rotacao que serah aplicada</span>\n    <span class=\"kw1\"\
+      >local</span> <span class=\"kw5\">rotator</span> rott; <span class=\"co1\">//\
+      \ rotacionador pra conter a nova rotacao</span>\n \n    <span class=\"kw6\"\
+      >Super</span>.<span class=\"kw4\">Tick</span> <span class=\"br0\">(</span>DeltaTime<span\
+      \ class=\"br0\">)</span>;\n \n    <span class=\"co1\">// (..do other stuff here..)</span>\n\
+      \ \n    <span class=\"kw2\">if</span> <span class=\"br0\">(</span> <span class=\"\
+      kw7\">Level</span>.<span class=\"me0\">NetMode</span> <span class=\"sy0\">!=</span>\
+      \ NM_DedicatedServer <span class=\"sy0\">&amp;&amp;</span> <span class=\"sy0\"\
+      >!</span>bDropDetail <span class=\"sy0\">&amp;&amp;</span> bAdjustDriversHead\
+      \ <span class=\"sy0\">&amp;&amp;</span> bDrawDriverinTP <span class=\"sy0\"\
+      >&amp;&amp;</span> <span class=\"br0\">(</span>Driver <span class=\"sy0\">!=</span>\
+      \ <span class=\"kw5\">None</span><span class=\"br0\">)</span> <span class=\"\
+      sy0\">&amp;&amp;</span> <span class=\"br0\">(</span>Driver.<span class=\"me0\"\
+      >HeadBone</span> <span class=\"sy0\">!=</span> <span class=\"st0\">''</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span> <span class=\"br0\">{</span>\n\
+      \        tempYaw <span class=\"sy0\">=</span> <span class=\"br0\">(</span>DriverViewYaw\
+      \ <span class=\"sy0\">-</span> Driver.<span class=\"kw7\">Rotation</span>.<span\
+      \ class=\"me0\">Yaw</span><span class=\"br0\">)</span> <span class=\"sy0\">&amp;</span>\
+      \ <span class=\"nu0\">65535</span>;\n        tempRoll <span class=\"sy0\">=</span>\
+      \ Driver.<span class=\"kw7\">Rotation</span>.<span class=\"me0\">Roll</span>\
+      \ <span class=\"sy0\">*</span> <span class=\"sy0\">-</span><span class=\"nu0\"\
+      >1</span>;\n        <span class=\"kw2\">if</span> <span class=\"br0\">(</span>tempYaw\
+      \ <span class=\"sy0\">&gt;</span> <span class=\"nu0\">32767</span><span class=\"\
+      br0\">)</span> tempYaw <span class=\"sy0\">=</span> <span class=\"br0\">(</span><span\
+      \ class=\"nu0\">65535</span> <span class=\"sy0\">-</span> tempYaw<span class=\"\
+      br0\">)</span><span class=\"sy0\">*-</span><span class=\"nu0\">1</span>;\n \n\
+      \        rott.<span class=\"me0\">Pitch</span> <span class=\"sy0\">=</span>\
+      \ <span class=\"sy0\">-</span><span class=\"nu0\">3000</span>;\n        rott.<span\
+      \ class=\"me0\">Roll</span> <span class=\"sy0\">=</span> <span class=\"br0\"\
+      >(</span>tempYaw<span class=\"sy0\">/</span><span class=\"nu0\">6</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">-</span><span class=\"nu0\">8000</span>;\
+      \ <span class=\"co1\">// -8000;</span>\n        rott.<span class=\"me0\">Yaw</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>;\n        Driver.<span\
+      \ class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span class=\"\
+      st0\">'Bip01 Head'</span>, rott, <span class=\"nu0\">1.0</span><span class=\"\
+      br0\">)</span>;\n        rott.<span class=\"me0\">Pitch</span> <span class=\"\
+      sy0\">=</span> <span class=\"nu0\">0</span>;\n        rott.<span class=\"me0\"\
+      >Roll</span> <span class=\"sy0\">=</span> <span class=\"br0\">(</span>tempYaw<span\
+      \ class=\"sy0\">/</span><span class=\"nu0\">6</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">-</span><span class=\"nu0\">1000</span>;\n        rott.<span\
+      \ class=\"me0\">Yaw</span> <span class=\"sy0\">=</span> <span class=\"br0\"\
+      >(</span>tempRoll<span class=\"sy0\">/</span><span class=\"nu0\">2</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">+</span> <span class=\"nu0\">6000</span>;\n\
+      \        Driver.<span class=\"me0\">SetBoneRotation</span><span class=\"br0\"\
+      >(</span><span class=\"st0\">'Bip01 Spine'</span>, rott, <span class=\"nu0\"\
+      >1.0</span><span class=\"br0\">)</span>;\n        rott.<span class=\"me0\">Pitch</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>;\n        rott.<span\
+      \ class=\"me0\">Roll</span> <span class=\"sy0\">=</span> <span class=\"br0\"\
+      >(</span>tempYaw<span class=\"sy0\">/</span><span class=\"nu0\">6</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">-</span><span class=\"nu0\">1000</span>;\n\
+      \        rott.<span class=\"me0\">Yaw</span> <span class=\"sy0\">=</span> tempRoll<span\
+      \ class=\"sy0\">/</span><span class=\"nu0\">2</span>;\n        Driver.<span\
+      \ class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span class=\"\
+      st0\">'Bip01 Spine1'</span>, rott, <span class=\"nu0\">1.0</span><span class=\"\
+      br0\">)</span>;\n        rott.<span class=\"me0\">Pitch</span> <span class=\"\
+      sy0\">=</span> <span class=\"nu0\">0</span>;\n        rott.<span class=\"me0\"\
+      >Roll</span> <span class=\"sy0\">=</span> <span class=\"br0\">(</span>tempYaw<span\
+      \ class=\"sy0\">/</span><span class=\"nu0\">6</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">-</span><span class=\"nu0\">1000</span>;\n        rott.<span\
+      \ class=\"me0\">Yaw</span> <span class=\"sy0\">=</span> tempRoll<span class=\"\
+      sy0\">/</span><span class=\"nu0\">2</span>;\n        Driver.<span class=\"me0\"\
+      >SetBoneRotation</span><span class=\"br0\">(</span><span class=\"st0\">'Bip01\
+      \ Spine2'</span>, rott, <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n\
+      \ \n        rott.<span class=\"me0\">Pitch</span> <span class=\"sy0\">=</span>\
+      \ <span class=\"nu0\">0</span>;\n        rott.<span class=\"me0\">Roll</span>\
+      \ <span class=\"sy0\">=</span> tempYaw<span class=\"sy0\">/</span><span class=\"\
+      nu0\">6</span>;\n        rott.<span class=\"me0\">Yaw</span> <span class=\"\
+      sy0\">=</span> <span class=\"br0\">(</span>tempYaw<span class=\"sy0\">/</span><span\
+      \ class=\"nu0\">6</span><span class=\"br0\">)</span><span class=\"sy0\">*-</span><span\
+      \ class=\"nu0\">1</span>;\n        Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 L Clavicle'</span>, rott,\
+      \ <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n        rott.<span\
+      \ class=\"me0\">Pitch</span> <span class=\"sy0\">=</span> <span class=\"nu0\"\
+      >0</span>;\n        rott.<span class=\"me0\">Roll</span> <span class=\"sy0\"\
+      >=</span> tempYaw<span class=\"sy0\">/</span><span class=\"nu0\">6</span>;\n\
+      \        rott.<span class=\"me0\">Yaw</span> <span class=\"sy0\">=</span> tempYaw<span\
+      \ class=\"sy0\">/</span><span class=\"nu0\">6</span>;\n        Driver.<span\
+      \ class=\"me0\">SetBoneRotation</span><span class=\"br0\">(</span><span class=\"\
+      st0\">'Bip01 R Clavicle'</span>, rott, <span class=\"nu0\">1.0</span><span class=\"\
+      br0\">)</span>;\n \n        rott.<span class=\"me0\">Pitch</span> <span class=\"\
+      sy0\">=</span> <span class=\"sy0\">-</span><span class=\"nu0\">6000</span>;\n\
+      \        rott.<span class=\"me0\">Roll</span> <span class=\"sy0\">=</span> <span\
+      \ class=\"nu0\">0</span>;\n        rott.<span class=\"me0\">Yaw</span> <span\
+      \ class=\"sy0\">=</span> <span class=\"nu0\">9000</span><span class=\"sy0\"\
+      >-</span>tempRoll;\n        Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 L UpperArm'</span>, rott,\
+      \ <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n        rott.<span\
+      \ class=\"me0\">Pitch</span> <span class=\"sy0\">=</span> <span class=\"nu0\"\
+      >6000</span>;\n        rott.<span class=\"me0\">Roll</span> <span class=\"sy0\"\
+      >=</span> <span class=\"nu0\">0</span>;\n        rott.<span class=\"me0\">Yaw</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">9000</span><span class=\"\
+      sy0\">-</span>tempRoll;\n        Driver.<span class=\"me0\">SetBoneRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Bip01 R UpperArm'</span>, rott,\
+      \ <span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n \n    <span\
+      \ class=\"br0\">}</span></pre></div>\n</div>\n<p>Easy and powerful.&#160;:D</p>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.284 seconds\nReal time usage:\
+      \ 1.104 seconds\nPreprocessor visited node count: 28/1000000\nPreprocessor generated\
+      \ node count: 184/1000000\nPost‐expand include size: 22/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:3624-0!*!0!*!*!*!* and timestamp 20221118154402 and revision\
+      \ id 9249\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: false
+    name: "Legacy:Vehicles Pre2004/Driver Setup Alternative"
+  - ns: 100
+    exists: true
+    name: "Legacy:Bone Names"
+  - ns: 100
+    exists: true
+    name: "Legacy:Typecasting"
+  templates: []
+  images: []
+  externallinks:
+  - "http://udn.epicgames.com/Two/SkelAnim2"
+  - "http://www.ataricommunity.com/forums/showthread.php?s=&threadid=369795"
+  sections:
+  - toclevel: 1
+    level: "3"
+    line: "Setting up the driver position/animation."
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Vehicles_Pre2004/Driver_Setup"
+    byteoffset: 0
+    anchor: "Setting_up_the_driver_position.2Fanimation."
+  displaytitle: "Legacy:Vehicles Pre2004/Driver Setup"
+  iwlinks: []
+  wikitext:
+    text: "===Setting up the driver position/animation.===\n\nFor an alternate driver\
+      \ setup position code, please go to [[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/Driver\
+      \ Setup Alternative]]\n\nFirst of all, when you have any vehicle, you might\
+      \ want to have the driver visible. To make sure he's visible, use this variable\
+      \ in your vehicle class' <code>DefaultProperties</code>:\n\n<uscript>bDrawDriverInTP=True</uscript>\n\
+      \nThen, you have to set his position. Use a vector for this. In the same <code>DefaultProperties</code>\
+      \ code, use:\n\n<uscript>DrivePos=(X=-18.0,Y=-10.0,Z=99.000000)</uscript>\n\n\
+      Of course, replace the position values by the values you want to use. Although\
+      \ positioning in your modeling application of preference and grabbing the coordinates\
+      \ from there might help, nothing beats testing the position in game, so be sure\
+      \ to test. This is the position of the root bone of your player's skeleton.\n\
+      \nThird, and most important in some cases: the above code is enough to have\
+      \ your driver/player sitting nice on a certain position, but depending on your\
+      \ vehicle, the default position is not really what you want. You'll notice,\
+      \ perhaps, that your vehicle class' superclass have a variable that defines\
+      \ the animation (position) that's used to set the driving position. This variable\
+      \ is also stored in the <code>DefaultProperties</code> block, and you can easily\
+      \ add it to your own vehicle and change it to whatever you like. This is the\
+      \ default code:\n\n<uscript>DriveAnim=\"Vehicle_Driving\"</uscript>\n\nSo you\
+      \ can change the value between quotes to the name of the animation (position)\
+      \ you want to use. This can be easily found on UnrealEd, on the animations browser;\
+      \ just select the mesh you'll be using (for example, MercFemaleA) and the list\
+      \ of available animations and poses will be shown on the left side list.\n\n\
+      However, on most cases, this won't suffice since there isn't much to work with.\
+      \ If you need a pose that shows your player riding a bike with his legs a bit\
+      \ more apart, you'll have to make the pose yourself. In this case, there are\
+      \ two alternatives you can work with.\n\nThe first one is to create a customized\
+      \ animation (pose) for the player bones; you can then paste then on UnrealEd\
+      \ and append them to the mesh you'll be using. This can be applied to your own\
+      \ customized character meshes, but I don't know how you can apply them to the\
+      \ built-in character meshes and still use them as pure packages without replicating\
+      \ the whole stuff. ''(I'd appreciate if anyone would shed a light on this)''\n\
+      \nThe second one, which is easy and hard at the same time, is to apply rotation\
+      \ to the right bones to get your model on the position you want it to be. Easy,\
+      \ because you just need a bit of easily modifiable code; and hard, because you'll\
+      \ have to enter the rotating values all by yourself, and this may take a bit\
+      \ of testing to get it right. This is the case I'll be talking about here, since\
+      \ I've dealt with it for a while ([http://www.ataricommunity.com/forums/showthread.php?s=&threadid=369795\
+      \ story here]) and I think there's something I can share.\n\nYou need to know,\
+      \ then, that all your player bones can be changed - rotated, scaled - by using\
+      \ simple commands. [http://udn.epicgames.com/Two/SkelAnim2 This page on UDN]\
+      \ goes into great detail into that and talks about the command you have to use\
+      \ to deal with bone rotation: <code>SetBoneRotation()</code>. You just need\
+      \ them to check the [[Legacy:Bone Names|Bone Names]] list and you're ready to\
+      \ go.\n\nHere's what the code has to do: when the driver enters the vehicle,\
+      \ change his animation (position) to the default \"Vehicle_Driving\" position\
+      \ (already done by the vehicle classes). Work from that and rotate some bones\
+      \ until you reach the desired position. Then, wait until he leaves the car;\
+      \ when he does that, reset the bones to the correct rotation.\n\nThis is accomplished\
+      \ by using the <code>KDriverEnter()</code> and <code>KDriverLeave()</code> functions\
+      \ present in vehicle classes. But first of all, let's working with setting the\
+      \ player position. Let's suppose I made a lot of playtesting, and then I already\
+      \ had the code to '''reset to my driving position'''. This is it then:\n\n<uscript>\n\
+      function SetDriverPositionReset() {\n    Driver.SetBoneRotation('Bip01 Neck',\
+      \ rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Bip01 Neck1', rot(0, 0, 0),\
+      \ 1.0);\n    Driver.SetBoneRotation('Dummy07', rot(0, 0, 0), 1.0);\n\n    Driver.SetBoneRotation('Bip01\
+      \ L Clavicle', rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Dummy03', rot(0,\
+      \ 0, 0), 1.0);\n    Driver.SetBoneRotation('Bip01 L Finger1', rot(0, 0, 0),\
+      \ 1.0);\n    Driver.SetBoneRotation('Bip01 L Finger11', rot(0, 0, 0), 1.0);\n\
+      \    Driver.SetBoneRotation('Bip01 L Finger12', rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Dummy04',\
+      \ rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Bone_L_shoulder', rot(0,\
+      \ 0, 0), 1.0);\n    Driver.SetBoneRotation('Dummy08', rot(0, 0, 0), 1.0);\n\n\
+      \    Driver.SetBoneRotation('Bip01 R Clavicle', rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Dummy01',\
+      \ rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Bip01 R Finger1', rot(0,\
+      \ 0, 0), 1.0);\n    Driver.SetBoneRotation('Bip01 R Finger11', rot(0, 0, 0),\
+      \ 1.0);\n    Driver.SetBoneRotation('Bip01 R Finger12', rot(0, 0, 0), 1.0);\n\
+      \    Driver.SetBoneRotation('Dummy02', rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Bone_R_shoulder',\
+      \ rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Dummy09', rot(0, 0, 0), 1.0);\n\
+      \n    Driver.SetBoneRotation('Dummy06', rot(0, 0, 0), 1);\n    Driver.SetBoneRotation('Dummy05',\
+      \ rot(0, 0, 0), 1);\n\n    // Pelvis --------------------------------------------------\n\
+      \    Driver.SetBoneRotation('Bip01', rot(-1000, 13000, 0), 1.0);\n    Driver.SetBoneRotation('Bip01\
+      \ Pelvis', rot(0, 2000, 0), 1.0);\n\n    // Head ----------------------------------------------------\n\
+      \    Driver.SetBoneRotation('Bip01 Head', rot(-3000, 0, -8000), 1.0);\n\n  \
+      \  // Spine ---------------------------------------------------\n    Driver.SetBoneRotation('Bip01\
+      \ Spine', rot(0, 6000, -1000), 1.0);\n    Driver.SetBoneRotation('Bip01 Spine1',\
+      \ rot(0, 0, -1000), 1.0);\n    Driver.SetBoneRotation('Bip01 Spine2', rot(0,\
+      \ 0, -1000), 1.0);\n\n    // Arms ----------------------------------------------------\n\
+      \    Driver.SetBoneRotation('Bip01 L UpperArm', rot(-6000, 9000, 0), 1.0);\n\
+      \    Driver.SetBoneRotation('Bip01 R UpperArm', rot(6000, 9000, 0), 1.0);\n\
+      \    Driver.SetBoneRotation('Bip01 L Forearm', rot(-3000, -4000, 0), 1.0);\n\
+      \    Driver.SetBoneRotation('Bip01 R Forearm', rot(3000, -4000, 0), 1.0);\n\
+      \    Driver.SetBoneRotation('Bip01 L Hand', rot(0, -3500, 0), 1.0);\n    Driver.SetBoneRotation('Bip01\
+      \ R Hand', rot(0, -3500, 0), 1.0);\n\n    // Fingers -------------------------------------------------\n\
+      \    Driver.SetBoneRotation('Bip01 L Finger0', rot(0, -10000, 0), 1.0);\n  \
+      \  Driver.SetBoneRotation('Bip01 L Finger01', rot(0, -10000, 0), 1.0);\n   \
+      \ Driver.SetBoneRotation('Bip01 L Finger02', rot(0, -10000, 0), 1.0);\n\n  \
+      \  Driver.SetBoneRotation('Bip01 R Finger0', rot(0, -10000, 0), 1.0);\n    Driver.SetBoneRotation('Bip01\
+      \ R Finger01', rot(0, -10000, 0), 1.0);\n    Driver.SetBoneRotation('Bip01 R\
+      \ Finger02', rot(0, -10000, 0), 1.0);\n\n    // Legs ----------------------------------------------------\n\
+      \    Driver.SetBoneRotation('Bip01 L Thigh', rot(8500, -5200, -3000), 1.0);\n\
+      \    Driver.SetBoneRotation('Bip01 R Thigh', rot(-8500, -5200, -3000), 1.0);\n\
+      \    Driver.SetBoneRotation('Bip01 L Calf', rot(0, -10000, -8000), 1.0);\n \
+      \   Driver.SetBoneRotation('Bip01 R Calf', rot(0, -10000, 8000), 1.0);\n   \
+      \ Driver.SetBoneRotation('Bip01 L Foot', rot(-6000, 15000, 0), 1.0);\n    Driver.SetBoneRotation('Bip01\
+      \ R Foot', rot(5000, 15000, 0), 1.0);\n    Driver.SetBoneRotation('Bip01 L Toe0',\
+      \ rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Bip01 R Toe0', rot(0, 0,\
+      \ 0), 1.0);\n}\n</uscript>\n\nYES, the code is big, but that's how it's meant\
+      \ to be - there are a lot of bones.\n\nWell, this is the function that will\
+      \ get the driver from the Vehicle_Driving position and set him on my desired\
+      \ position - on my case, riding side-first on a surfboard with his legs and\
+      \ arms apart. On simple modifications - for example, getting his knees bended\
+      \ or his hands far apart - the code would be really small &ndash; you just need\
+      \ to rotate the right bones. For clarification purposes, I've pasted even code\
+      \ that doesn't need to appear (the ones that use <code>rot(0,0,0)</code> as\
+      \ rotator modifiers) just so it's easy to change.\n\nOnto explaining the code:\
+      \ this code gets bone by bone and changes it rotation values by any value that's\
+      \ used on the rotator - the rot() constructor takes Pitch, Yaw and Roll as parameters.\
+      \ These values are related to the bone position, not the world position, so\
+      \ depending on the case, the pitch value will actually be rolling the limbs.\
+      \ So, like I said, be sure to test it a lot.\n\nNext, we need a function that'll\
+      \ get the driver back to the original position - or else he'll be all fuzzy\
+      \ when he leaves the vehicle. This function is easy, since we only need to set\
+      \ the rotation values back to 0. The code:\n\n<uscript>\nfunction SetDriverPositionOriginal(Pawn\
+      \ Driver) {\n    // After the player leaves the vehicle, resets its additional\
+      \ bone rotations or else he'll be all twisted\n    // Simply resets everything\n\
+      \    Driver.SetBoneRotation('Bip01 Neck', rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Bip01\
+      \ Neck1', rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Dummy07', rot(0,\
+      \ 0, 0), 1.0);\n    Driver.SetBoneRotation('Bip01 L Clavicle', rot(0, 0, 0),\
+      \ 1.0);\n    Driver.SetBoneRotation('Dummy03', rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Bip01\
+      \ L Finger1', rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Bip01 L Finger11',\
+      \ rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Bip01 L Finger12', rot(0,\
+      \ 0, 0), 1.0);\n    Driver.SetBoneRotation('Dummy04', rot(0, 0, 0), 1.0);\n\
+      \    Driver.SetBoneRotation('Bone_L_shoulder', rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Dummy08',\
+      \ rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Bip01 R Clavicle', rot(0,\
+      \ 0, 0), 1.0);\n    Driver.SetBoneRotation('Dummy01', rot(0, 0, 0), 1.0);\n\
+      \    Driver.SetBoneRotation('Bip01 R Finger1', rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Bip01\
+      \ R Finger11', rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Bip01 R Finger12',\
+      \ rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Dummy02', rot(0, 0, 0), 1.0);\n\
+      \    Driver.SetBoneRotation('Bone_R_shoulder', rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Dummy09',\
+      \ rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Dummy06', rot(0, 0, 0), 1.0);\n\
+      \    Driver.SetBoneRotation('Dummy05', rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Bip01',\
+      \ rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Bip01 Pelvis', rot(0, 0,\
+      \ 0), 1.0);\n    Driver.SetBoneRotation('Bip01 Head', rot(0, 0, 0), 1.0);\n\
+      \    Driver.SetBoneRotation('Bip01 Spine', rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Bip01\
+      \ Spine1', rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Bip01 Spine2', rot(0,\
+      \ 0, 0), 1.0);\n    Driver.SetBoneRotation('Bip01 L UpperArm', rot(0, 0, 0),\
+      \ 1.0);\n    Driver.SetBoneRotation('Bip01 R UpperArm', rot(0, 0, 0), 1.0);\n\
+      \    Driver.SetBoneRotation('Bip01 L Forearm', rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Bip01\
+      \ R Forearm', rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Bip01 L Hand',\
+      \ rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Bip01 R Hand', rot(0, 0,\
+      \ 0), 1.0);\n    Driver.SetBoneRotation('Bip01 L Finger0', rot(0, 0, 0), 1.0);\n\
+      \    Driver.SetBoneRotation('Bip01 L Finger01', rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Bip01\
+      \ L Finger02', rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Bip01 R Finger0',\
+      \ rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Bip01 R Finger01', rot(0,\
+      \ 0, 0), 1.0);\n    Driver.SetBoneRotation('Bip01 R Finger02', rot(0, 0, 0),\
+      \ 1.0);\n    Driver.SetBoneRotation('Bip01 L Thigh', rot(0, 0, 0), 1.0);\n \
+      \   Driver.SetBoneRotation('Bip01 R Thigh', rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Bip01\
+      \ L Calf', rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Bip01 R Calf', rot(0,\
+      \ 0, 0), 1.0);\n    Driver.SetBoneRotation('Bip01 L Foot', rot(0, 0, 0), 1.0);\n\
+      \    Driver.SetBoneRotation('Bip01 R Foot', rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Bip01\
+      \ L Toe0', rot(0, 0, 0), 1.0);\n    Driver.SetBoneRotation('Bip01 R Toe0', rot(0,\
+      \ 0, 0), 1.0);\n}\n</uscript>\n\n''Of course, using an in-line created string\
+      \ array and setting all values to <code>rot(0,0,0)</code> on a for loop would\
+      \ be the right thing, but I don't know how to create an in-line array in UnrealScript\
+      \ '''and''' the first parameter (between single quotes) doesn't seem to be a\
+      \ string parameter. What gives? If someone could rewrite this in four lines\
+      \ (sans local var declarations) I'd be thankful.''\n\n<uscript>\n// After the\
+      \ player leaves the vehicle, resets its additional bone rotations or else he'll\
+      \ be all twisted\nfunction SetDriverPositionOriginal(Pawn Driver) {\n    /*\
+      \ Dynamic array of names\n     *  note: name uses ', string uses \"\n     *\
+      \  note: dynamic arrays can't be replicated\n     */\n    local array<name>\
+      \ BoneNames;\n    // Other variables\n    local rotator ZeroRot;\n    local\
+      \ int i;\n    \n    /* This is a hack, read below.\n     * Also, string is split\
+      \ and concatenated with $\n     * to improve readability, for speed you'd probably\n\
+      \     * want to go for one very long line\n     */\n    SetPropertyText(\"BoneNames\"\
+      , \"(\"$\n        \"'Bip01 Neck','Bip01 Neck1','Dummy07','Bip01 L Clavicle',\"\
+      $\n        \"'Dummy03','Bip01 L Finger1','Bip01 L Finger11','Bip01 L Finger12','Dummy04',\"\
+      $\n        \"'Bone_L_shoulder','Dummy08','Bip01 R Clavicle','Dummy01','Bip01\
+      \ R Finger1',\"$\n        \"'Bip01 R Finger11','Bip01 R Finger12','Dummy02','Bone_R_shoulder','Dummy09',\"\
+      $\n        \"'Dummy06','Dummy05','Bip01','Bip01 Pelvis','Bip01 Head','Bip01\
+      \ Spine',\"$\n        \"'Bip01 Spine1','Bip01 Spine2','Bip01 L UpperArm','Bip01\
+      \ R UpperArm','Bip01 L Forearm',\"$\n        \"'Bip01 R Forearm','Bip01 L Hand','Bip01\
+      \ R Hand','Bip01 L Finger0','Bip01 L Finger01',\"$\n        \"'Bip01 L Finger02','Bip01\
+      \ R Finger0','Bip01 R Finger01','Bip01 R Finger02',\"$\n        \"'Bip01 L Thigh','Bip01\
+      \ R Thigh','Bip01 L Calf','Bip01 R Calf','Bip01 L Foot',\"$\n        \"'Bip01\
+      \ R Foot','Bip01 L Toe0','Bip01 R Toe0'\"$\n        \")\");\n    // Set ZeroRot\
+      \ to prevent repeated creation of the same rotator\n    ZeroRot = rot(0, 0,\
+      \ 0);\n\n    // And finally, run through the loop resetting each bone (specified\
+      \ above)\n    for (i=0; i<BoneNames.Length; i++)\n         Driver.SetBoneRotation(BoneNames[i],\
+      \ ZeroRot, 1.0);\n}\n</uscript>\n\n''I'm not exactly sure that this is the best\
+      \ way to create an inline array, but its the best way I could think of at the\
+      \ moment. I would recommend not using SetPropertyText to change a name variable\
+      \ (or an array of names). See the \"String [...] to Name\" section of [[Legacy:Typecasting|Typecasting]]\
+      \ for more information.''\n\nThis will do the same thing the previous function\
+      \ does, but it'll set the rotation values back to 0, that is, with no offsets\
+      \ - making it look like \"Vehicle_Driving\" again.\n\nNext, you have to call\
+      \ the functions on your vehicle code - just edit <code>KDriverEnter()</code>\
+      \ and <code>KDriverLeave()</code> and make it call the functions when needed.\
+      \ This is the code (supposing you don't already have these functions on your\
+      \ class, or that they're just general-purpose ones):\n\n<uscript>\nfunction\
+      \ KDriverEnter (Pawn P) {\n    Super.KDriverEnter(P); // cals the normal function\n\
+      \    SetDriverPositionReset(); // resets the position to my driving position\n\
+      }\nfunction bool KDriverLeave (bool bForceLeave) {\n    local Pawn tempDriver;\n\
+      \    tempDriver = Driver; // use variable to hold Driver because Driver is destroyed\
+      \ after KDriverLeave\n    if (Super.KDriverLeave(bForceLeave)) {\n        SetDriverPositionOriginal(tempDriver);\
+      \ // resets the position to the original position only if he could leave\n \
+      \       return true;\n    } else {\n        return false;\n    }\n}\n</uscript>\n\
+      \nThat's pretty much it. Using similar code, you can work with your model's\
+      \ <code>Tick()</code> function to set your bone rotation to specific values\
+      \ - the Unreal Tournament 2004 code already does this, to set the rotation of\
+      \ the head bone to a given value to make the driver it look like the driver\
+      \ is looking at the side you're facing. But you can work with all bones, making\
+      \ him rotate his arms or legs too; In my Spaceboard's case, I made the code\
+      \ change lots of the player's bones, so it'd look like he was jugging his body\
+      \ to the sides or twisting it for balance. It's a pretty nice effect if you\
+      \ ask me. For reference, here's the ''piece of code'' I'm using inside my <code>Tick()</code>\
+      \ on my Spaceboard Class (it's based on the bone-updating code):\n\n<uscript>\n\
+      \    local float tempYaw, tempRoll; // contador pra calcular a quantidade de\
+      \ rotacao que serah aplicada\n    local rotator rott; // rotacionador pra conter\
+      \ a nova rotacao\n\n    Super.Tick (DeltaTime);\n\n    // (..do other stuff\
+      \ here..)\n\n    if ( Level.NetMode != NM_DedicatedServer && !bDropDetail &&\
+      \ bAdjustDriversHead && bDrawDriverinTP && (Driver != None) && (Driver.HeadBone\
+      \ != '')) {\n        tempYaw = (DriverViewYaw - Driver.Rotation.Yaw) & 65535;\n\
+      \        tempRoll = Driver.Rotation.Roll * -1;\n        if (tempYaw > 32767)\
+      \ tempYaw = (65535 - tempYaw)*-1;\n\n        rott.Pitch = -3000;\n        rott.Roll\
+      \ = (tempYaw/6)-8000; // -8000;\n        rott.Yaw = 0;\n        Driver.SetBoneRotation('Bip01\
+      \ Head', rott, 1.0);\n        rott.Pitch = 0;\n        rott.Roll = (tempYaw/6)-1000;\n\
+      \        rott.Yaw = (tempRoll/2) + 6000;\n        Driver.SetBoneRotation('Bip01\
+      \ Spine', rott, 1.0);\n        rott.Pitch = 0;\n        rott.Roll = (tempYaw/6)-1000;\n\
+      \        rott.Yaw = tempRoll/2;\n        Driver.SetBoneRotation('Bip01 Spine1',\
+      \ rott, 1.0);\n        rott.Pitch = 0;\n        rott.Roll = (tempYaw/6)-1000;\n\
+      \        rott.Yaw = tempRoll/2;\n        Driver.SetBoneRotation('Bip01 Spine2',\
+      \ rott, 1.0);\n\n        rott.Pitch = 0;\n        rott.Roll = tempYaw/6;\n \
+      \       rott.Yaw = (tempYaw/6)*-1;\n        Driver.SetBoneRotation('Bip01 L\
+      \ Clavicle', rott, 1.0);\n        rott.Pitch = 0;\n        rott.Roll = tempYaw/6;\n\
+      \        rott.Yaw = tempYaw/6;\n        Driver.SetBoneRotation('Bip01 R Clavicle',\
+      \ rott, 1.0);\n\n        rott.Pitch = -6000;\n        rott.Roll = 0;\n     \
+      \   rott.Yaw = 9000-tempRoll;\n        Driver.SetBoneRotation('Bip01 L UpperArm',\
+      \ rott, 1.0);\n        rott.Pitch = 6000;\n        rott.Roll = 0;\n        rott.Yaw\
+      \ = 9000-tempRoll;\n        Driver.SetBoneRotation('Bip01 R UpperArm', rott,\
+      \ 1.0);\n\n    }\n</uscript>\n\nEasy and powerful. :D"
+  properties: []
+  revId: 9249
+name: "Legacy:Vehicles Pre2004/Driver Setup"
+revision:
+  revid: 9249
+  parentid: 0
+  user: "Dyn-62-56-58-176.dslaccess.co.uk"
+  timestamp: 1195303722.000000000
+  comment: "Moved"
+timestamp: 1668786167.625861000

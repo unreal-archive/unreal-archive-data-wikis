@@ -1,0 +1,353 @@
+---
+parse:
+  title: "Legacy:AssociativeArray/DataStructure"
+  text:
+    text: "<h2><span class=\"mw-headline\" id=\"Associative_Array_Data_Scructures\"\
+      >Associative Array Data Scructures</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:AssociativeArray/DataStructure?section=1\"\
+      \ title=\"Edit section: Associative Array Data Scructures\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<p>Associative arrays are implemented\
+      \ as an unbalance binary search tree (BST). Thus there is a node type and a\
+      \ tree type. Both are Unreal classes (having the nodes be objects makes it easy\
+      \ to declare new ones on the fly).</p>\n<h3><span class=\"mw-headline\" id=\"\
+      AssciativeArrrayNode\">AssciativeArrrayNode</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:AssociativeArray/DataStructure?section=2\"\
+      \ title=\"Edit section: AssciativeArrrayNode\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>A tree is built up of linked nodes. This is the node\
+      \ class with \"pointers\" at left and right subtrees as well as the parent node.</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">class</span> AssociativeArrayNode\n\
+      \    <span class=\"kw1\">extends</span> <span class=\"kw8\">Object</span>;\n\
+      <span class=\"coMULTI\">/* A binary search tree (BST) node. Nodes are ordered\
+      \ on their key; the\n   key must be a type that supports &lt; and ==. Associated\
+      \ with each key is a\n   value; value can be any arbitrary type that supports\
+      \ assignment.\n \n   This is really just a struct (no member functions). A class\
+      \ is used to\n   permit the new operator in UnrealScript to work correctly.\
+      \ \n*/</span>\n<span class=\"kw1\">var</span> <span class=\"kw5\">string</span>\
+      \ key;\n<span class=\"kw1\">var</span> <span class=\"kw5\">string</span> value;\n\
+      <span class=\"kw1\">var</span> AssociativeArrayNode left_child, right_child,\
+      \ parent;\n \n<span class=\"kw1\">defaultproperties</span> \n<span class=\"\
+      br0\">{</span>\n  parent<span class=\"sy0\">=</span><span class=\"kw5\">None</span>\n\
+      \  left_child<span class=\"sy0\">=</span><span class=\"kw5\">None</span>\n \
+      \ right_child<span class=\"sy0\">=</span><span class=\"kw5\">None</span>\n<span\
+      \ class=\"br0\">}</span></pre></div>\n</div>\n<h3><span class=\"mw-headline\"\
+      \ id=\"AssociativeArray\">AssociativeArray</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:AssociativeArray/DataStructure?section=3\"\
+      \ title=\"Edit section: AssociativeArray\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>This is the implementation of the BST.</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">class</span> AssociativeArray\n  \
+      \  <span class=\"kw1\">extends</span> <span class=\"kw8\">Object</span>;\n<span\
+      \ class=\"coMULTI\">/* Associative Array: Demonstration of operator overloading\
+      \ using UnrealScript.\n \n   Inspired by DynamicArray code on the BeyondUnreal\
+      \ Wiki:\n   http://wiki.beyondunreal.com/wiki/Dynamic_Array\n \n   Uses a simple\
+      \ binary tree to hold pairs of strings with other strings;\n   the key and data\
+      \ types could both be changed with little pain.\n*/</span>\n \n \n<span class=\"\
+      coMULTI\">/* Reference to the actual data structure. Under the hood, the associative\n\
+      \   array is a binary search tree (BST). Should search time prove a\n   limitation,\
+      \ this proof of concept could be augmented with a smarter data\n   structure\
+      \ (red-black tree, hash table, etc.).\n*/</span>\n<span class=\"kw1\">var</span>\
+      \ AssociativeArrayNode root;\n \n<span class=\"coMULTI\">/* Since end() returns\
+      \ an iterator with the same value every time, it should\n   be kept around after\
+      \ its first creation.\n*/</span>\n<span class=\"kw1\">var</span> <span class=\"\
+      kw1\">private</span> AssociativeArrayIterator end_;\n \n \n<span class=\"coMULTI\"\
+      >/* The number of elements in the associative array. This is a private field\
+      \ to\n   limit access to it to the getLength function. Performance could be\
+      \ enhanced\n   by making the member data publically visible if all clients of\
+      \ associative\n   array could be trusted not to change it.\n*/</span>\n<span\
+      \ class=\"kw1\">var</span> <span class=\"kw1\">private</span> <span class=\"\
+      kw5\">int</span> length;\n \n<span class=\"coMULTI\">/* return the number of\
+      \ elements in the associative array. */</span>\n<span class=\"kw1\">function</span>\
+      \ <span class=\"kw5\">int</span> getLength<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw2\"\
+      >return</span> length;\n<span class=\"br0\">}</span> <span class=\"co1\">//\
+      \ getLength</span>\n \n<span class=\"coMULTI\">/* insert a key/value pair into\
+      \ the associative array. */</span>\n<span class=\"kw1\">function</span> insert<span\
+      \ class=\"br0\">(</span><span class=\"kw1\">coerce</span> <span class=\"kw5\"\
+      >string</span> key, <span class=\"kw5\">string</span> value<span class=\"br0\"\
+      >)</span> \n<span class=\"br0\">{</span>\n  p_insert<span class=\"br0\">(</span>key,\
+      \ value, root<span class=\"br0\">)</span>;\n<span class=\"br0\">}</span> <span\
+      \ class=\"co1\">// insert</span>\n \n<span class=\"coMULTI\">/* return the value\
+      \ matching the given key, if one exists; returns \"\" and\n   leaves the associative\
+      \ array unchanged if there is no entry with the\n   given key. Since \"\" could\
+      \ be a legal value, use count to determine\n   whether or not a key is in the\
+      \ associative array.\n*/</span>\n<span class=\"kw1\">function</span> <span class=\"\
+      kw5\">string</span> lookup<span class=\"br0\">(</span><span class=\"kw1\">coerce</span>\
+      \ <span class=\"kw5\">string</span> key<span class=\"br0\">)</span> \n<span\
+      \ class=\"br0\">{</span>\n  <span class=\"kw1\">local</span> AssociativeArrayNode\
+      \ foundNode;\n  foundNode <span class=\"sy0\">=</span> p_lookup<span class=\"\
+      br0\">(</span>key, root<span class=\"br0\">)</span>;\n  <span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span>foundNode <span class=\"sy0\">!=</span>\
+      \ <span class=\"kw5\">None</span><span class=\"br0\">)</span> <span class=\"\
+      br0\">{</span>\n    <span class=\"kw2\">return</span> foundNode.<span class=\"\
+      me0\">value</span>;\n  <span class=\"br0\">}</span> <span class=\"kw2\">else</span>\
+      \ <span class=\"br0\">{</span>\n    <span class=\"kw2\">return</span> <span\
+      \ class=\"st0\">\"\"</span>;\n  <span class=\"br0\">}</span>\n<span class=\"\
+      br0\">}</span> <span class=\"co1\">// lookup</span>\n \n<span class=\"coMULTI\"\
+      >/* return the number of entries for the given key. Since the associative\n\
+      \   array is really a map, only 0 (no such entry) or 1 (an entry for the key)\n\
+      \   are valid return values. The name \"count\" comes from the C++ STL.\n*/</span>\n\
+      <span class=\"kw1\">function</span> <span class=\"kw5\">int</span> count<span\
+      \ class=\"br0\">(</span><span class=\"kw1\">coerce</span> <span class=\"kw5\"\
+      >string</span> key<span class=\"br0\">)</span> \n<span class=\"br0\">{</span>\n\
+      \  <span class=\"kw1\">local</span> AssociativeArrayNode foundNode;\n  foundNode\
+      \ <span class=\"sy0\">=</span> p_lookup<span class=\"br0\">(</span>key, root<span\
+      \ class=\"br0\">)</span>;\n  <span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span>foundNode <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span><span\
+      \ class=\"br0\">)</span> <span class=\"br0\">{</span>\n    <span class=\"kw2\"\
+      >return</span> <span class=\"nu0\">1</span>;\n  <span class=\"br0\">}</span>\
+      \ <span class=\"kw2\">else</span> <span class=\"br0\">{</span>\n    <span class=\"\
+      kw2\">return</span> <span class=\"nu0\">0</span>;\n  <span class=\"br0\">}</span>\n\
+      <span class=\"br0\">}</span> <span class=\"co1\">// count</span>\n \n<span class=\"\
+      coMULTI\">/* log the contents of the associative array. Useful for debugging.\n\
+      \ */</span>\n<span class=\"kw1\">function</span> show<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span> \n<span class=\"br0\">{</span>\n  p_show<span class=\"\
+      br0\">(</span>root<span class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\
+      \ <span class=\"co1\">// show</span>\n \n<span class=\"co1\">// -------------------------------------------------------------------------</span>\n\
+      <span class=\"co1\">// \"Iterator\" functions</span>\n<span class=\"co1\">//\
+      \ -------------------------------------------------------------------------</span>\n\
+      <span class=\"coMULTI\">/* UnrealScript iterators are native functions. Without\
+      \ access to the C++\n   portions of the engine, it is impossible to create new\
+      \ ones. As an\n   intermediary step, the following functions return beginning\
+      \ and ending\n   \"iterator\" values modeled on C++ iterators. begin() returns\
+      \ an iterator\n   \"pointing to\" the first element in the associative array.\
+      \ end() returns\n   one just past the end of all elements in the associative\
+      \ array.\n \n   This means, in a C++/STL-esque manner (and assuming appropriate\
+      \ operator\n   overloading), a loop across the whole array would look like this:\n\
+      \ \n   local AssociativeArrayIterator it;\n   for (it = someAA.begin(); it !=\
+      \ someAA.end(); ++it) {\n     // it.first() and it.second() refer to key and\
+      \ value of each pair in turn\n   }\n*/</span>\n<span class=\"coMULTI\">/* Returns\
+      \ an iterator for the first element of the associative array. */</span>\n<span\
+      \ class=\"kw1\">function</span> AssociativeArrayIterator <span class=\"kw2\"\
+      >begin</span><span class=\"br0\">(</span><span class=\"br0\">)</span> \n<span\
+      \ class=\"br0\">{</span>\n  <span class=\"kw1\">local</span> AssociativeArrayIterator\
+      \ retval;\n \n  retval <span class=\"sy0\">=</span> <span class=\"kw1\">new</span><span\
+      \ class=\"br0\">(</span><span class=\"kw5\">None</span><span class=\"br0\">)</span>\
+      \ <span class=\"kw1\">class</span><span class=\"st0\">'AssociativeArrayIterator'</span>;\n\
+      \  retval.<span class=\"me0\">init</span><span class=\"br0\">(</span><span class=\"\
+      kw6\">self</span><span class=\"br0\">)</span>;\n  <span class=\"kw2\">return</span>\
+      \ retval;\n<span class=\"br0\">}</span> <span class=\"co1\">// begin</span>\n\
+      \ \n<span class=\"coMULTI\">/* Returns an iterator just past the end of this\
+      \ associative array. */</span>\n<span class=\"kw1\">function</span> AssociativeArrayIterator\
+      \ end<span class=\"br0\">(</span><span class=\"br0\">)</span> \n<span class=\"\
+      br0\">{</span>\n  <span class=\"kw2\">if</span> <span class=\"br0\">(</span>end_\
+      \ <span class=\"sy0\">==</span> <span class=\"kw5\">None</span><span class=\"\
+      br0\">)</span> <span class=\"br0\">{</span>\n    end_ <span class=\"sy0\">=</span>\
+      \ <span class=\"kw1\">new</span><span class=\"br0\">(</span><span class=\"kw5\"\
+      >None</span><span class=\"br0\">)</span> <span class=\"kw1\">class</span><span\
+      \ class=\"st0\">'AssociativeArrayIterator'</span>;\n    end_.<span class=\"\
+      me0\">init</span><span class=\"br0\">(</span><span class=\"kw6\">self</span>,\
+      \ <span class=\"kw6\">true</span><span class=\"br0\">)</span>;\n  <span class=\"\
+      br0\">}</span>\n  <span class=\"kw2\">return</span> end_;\n<span class=\"br0\"\
+      >}</span> <span class=\"co1\">// end</span>\n \n<span class=\"co1\">// -------------------------------------------------------------------------</span>\n\
+      <span class=\"co1\">// Implementation functions</span>\n<span class=\"co1\"\
+      >// -------------------------------------------------------------------------</span>\n\
+      <span class=\"coMULTI\">/* Recursive implementations of binary search tree functions\
+      \ for inserting,\n   lookup, and printing. The \"p_\" prefix shows that they\
+      \ are protected\n   funcitons.\n*/</span>\n \n<span class=\"coMULTI\">/* insert\
+      \ key/value pair in the tree rooted at curr. */</span>\n<span class=\"kw1\"\
+      >protected</span> <span class=\"kw1\">function</span> p_insert<span class=\"\
+      br0\">(</span><span class=\"kw5\">string</span> key, <span class=\"kw5\">string</span>\
+      \ value,\n                            <span class=\"kw1\">out</span> AssociativeArrayNode\
+      \ curr<span class=\"br0\">)</span> \n<span class=\"br0\">{</span>\n  <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>curr <span class=\"sy0\">==</span>\
+      \ <span class=\"kw5\">None</span><span class=\"br0\">)</span> <span class=\"\
+      br0\">{</span>\n    curr <span class=\"sy0\">=</span> <span class=\"kw1\">new</span><span\
+      \ class=\"br0\">(</span><span class=\"kw5\">None</span><span class=\"br0\">)</span>\
+      \ <span class=\"kw1\">class</span><span class=\"st0\">'AssociativeArrayNode'</span>;\n\
+      \    curr.<span class=\"me0\">key</span> <span class=\"sy0\">=</span> key;\n\
+      \    curr.<span class=\"me0\">value</span> <span class=\"sy0\">=</span> value;\n\
+      \    length<span class=\"sy0\">++</span>;\n  <span class=\"br0\">}</span> <span\
+      \ class=\"kw2\">else</span> <span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span>key <span class=\"sy0\">&lt;</span> curr.<span class=\"me0\">key</span><span\
+      \ class=\"br0\">)</span> <span class=\"br0\">{</span>\n    p_insert<span class=\"\
+      br0\">(</span>key, value, curr.<span class=\"me0\">left_child</span><span class=\"\
+      br0\">)</span>;\n  <span class=\"br0\">}</span> <span class=\"kw2\">else</span>\
+      \ <span class=\"kw2\">if</span> <span class=\"br0\">(</span>key <span class=\"\
+      sy0\">&gt;</span> curr.<span class=\"me0\">key</span><span class=\"br0\">)</span>\
+      \ <span class=\"br0\">{</span>\n    p_insert<span class=\"br0\">(</span>key,\
+      \ value, curr.<span class=\"me0\">right_child</span><span class=\"br0\">)</span>;\n\
+      \  <span class=\"br0\">}</span> <span class=\"kw2\">else</span> <span class=\"\
+      br0\">{</span> <span class=\"co1\">// curr.key == key</span>\n    curr.<span\
+      \ class=\"me0\">value</span> <span class=\"sy0\">=</span> value;\n  <span class=\"\
+      br0\">}</span>\n<span class=\"br0\">}</span>\n \n<span class=\"coMULTI\">/*\
+      \ Return a reference to the node with the given key;\n   None if there isn't\
+      \ one. */</span>\n<span class=\"kw1\">protected</span> <span class=\"kw1\">function</span>\
+      \ AssociativeArrayNode p_lookup<span class=\"br0\">(</span><span class=\"kw5\"\
+      >string</span> key,\n                                                 AssociativeArrayNode\
+      \ curr<span class=\"br0\">)</span> \n<span class=\"br0\">{</span>\n  <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>curr <span class=\"sy0\">==</span>\
+      \ <span class=\"kw5\">None</span><span class=\"br0\">)</span> <span class=\"\
+      br0\">{</span>\n    <span class=\"kw2\">return</span> <span class=\"kw5\">None</span>;\n\
+      \  <span class=\"br0\">}</span> <span class=\"kw2\">else</span> <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>key <span class=\"sy0\">&lt;</span>\
+      \ curr.<span class=\"me0\">key</span><span class=\"br0\">)</span> <span class=\"\
+      br0\">{</span>\n    <span class=\"kw2\">return</span> p_lookup<span class=\"\
+      br0\">(</span>key, curr.<span class=\"me0\">left_child</span><span class=\"\
+      br0\">)</span>;\n  <span class=\"br0\">}</span> <span class=\"kw2\">else</span>\
+      \ <span class=\"kw2\">if</span> <span class=\"br0\">(</span>key <span class=\"\
+      sy0\">&gt;</span> curr.<span class=\"me0\">key</span><span class=\"br0\">)</span>\
+      \ <span class=\"br0\">{</span>\n    <span class=\"kw2\">return</span> p_lookup<span\
+      \ class=\"br0\">(</span>key, curr.<span class=\"me0\">right_child</span><span\
+      \ class=\"br0\">)</span>;\n  <span class=\"br0\">}</span> <span class=\"kw2\"\
+      >else</span> <span class=\"br0\">{</span>\n    <span class=\"kw2\">return</span>\
+      \ curr;\n  <span class=\"br0\">}</span>\n<span class=\"br0\">}</span>\n \n<span\
+      \ class=\"coMULTI\">/* In-order traversal of binary search tree calling log\
+      \ on each entry */</span>\n<span class=\"kw1\">protected</span> <span class=\"\
+      kw1\">function</span> p_show<span class=\"br0\">(</span>AssociativeArrayNode\
+      \ curr<span class=\"br0\">)</span> \n<span class=\"br0\">{</span>\n  <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>curr <span class=\"sy0\">!=</span>\
+      \ <span class=\"kw5\">None</span><span class=\"br0\">)</span> <span class=\"\
+      br0\">{</span>\n    p_show<span class=\"br0\">(</span>curr.<span class=\"me0\"\
+      >left_child</span><span class=\"br0\">)</span>;\n    <span class=\"kw3\">log</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">\"[\"</span><span class=\"sy0\"\
+      >$</span>curr.<span class=\"me0\">key</span><span class=\"sy0\">$</span><span\
+      \ class=\"st0\">\"] = \"</span><span class=\"sy0\">$</span>curr.<span class=\"\
+      me0\">value</span><span class=\"br0\">)</span>;\n    p_show<span class=\"br0\"\
+      >(</span>curr.<span class=\"me0\">right_child</span><span class=\"br0\">)</span>;\n\
+      \  <span class=\"br0\">}</span>\n<span class=\"br0\">}</span> <span class=\"\
+      co1\">// p_show</span>\n \n<span class=\"kw1\">defaultproperties</span> \n<span\
+      \ class=\"br0\">{</span>\n  root <span class=\"sy0\">=</span> <span class=\"\
+      kw5\">None</span>\n  length <span class=\"sy0\">=</span> <span class=\"nu0\"\
+      >0</span>\n<span class=\"br0\">}</span> <span class=\"co1\">// defaultproperties</span>\n\
+      <span class=\"co1\">// AssociativeArray</span></pre></div>\n</div>\n\n<!-- \n\
+      NewPP limit report\nCPU time usage: 0.089 seconds\nReal time usage: 0.143 seconds\n\
+      Preprocessor visited node count: 22/1000000\nPreprocessor generated node count:\
+      \ 56/1000000\nPost‐expand include size: 0/2097152 bytes\nTemplate argument size:\
+      \ 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser function\
+      \ count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:441-0!*!*!!*!*!* and timestamp 20221120163436 and revision\
+      \ id 1472\n -->\n"
+  categories: []
+  links: []
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Associative Array Data Scructures"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:AssociativeArray/DataStructure"
+    byteoffset: 0
+    anchor: "Associative_Array_Data_Scructures"
+  - toclevel: 2
+    level: "3"
+    line: "AssciativeArrrayNode"
+    number: "1.1"
+    index: "2"
+    fromtitle: "Legacy:AssociativeArray/DataStructure"
+    byteoffset: 260
+    anchor: "AssciativeArrrayNode"
+  - toclevel: 2
+    level: "3"
+    line: "AssociativeArray"
+    number: "1.2"
+    index: "3"
+    fromtitle: "Legacy:AssociativeArray/DataStructure"
+    byteoffset: 1012
+    anchor: "AssociativeArray"
+  displaytitle: "Legacy:AssociativeArray/DataStructure"
+  iwlinks: []
+  wikitext:
+    text: "==Associative Array Data Scructures==\n\nAssociative arrays are implemented\
+      \ as an unbalance binary search tree (BST). Thus there is a node type and a\
+      \ tree type. Both are Unreal classes (having the nodes be objects makes it easy\
+      \ to declare new ones on the fly).\n\n===AssciativeArrrayNode===\n\nA tree is\
+      \ built up of linked nodes. This is the node class with \"pointers\" at left\
+      \ and right subtrees as well as the parent node.\n\n<uscript>\nclass AssociativeArrayNode\n\
+      \    extends Object;\n/* A binary search tree (BST) node. Nodes are ordered\
+      \ on their key; the\n   key must be a type that supports < and ==. Associated\
+      \ with each key is a\n   value; value can be any arbitrary type that supports\
+      \ assignment.\n\n   This is really just a struct (no member functions). A class\
+      \ is used to\n   permit the new operator in UnrealScript to work correctly.\
+      \ \n*/\nvar string key;\nvar string value;\nvar AssociativeArrayNode left_child,\
+      \ right_child, parent;\n\ndefaultproperties \n{\n  parent=None\n  left_child=None\n\
+      \  right_child=None\n}\n</uscript>\n\n===AssociativeArray===\n\nThis is the\
+      \ implementation of the BST.\n\n<uscript>\nclass AssociativeArray\n    extends\
+      \ Object;\n/* Associative Array: Demonstration of operator overloading using\
+      \ UnrealScript.\n\n   Inspired by DynamicArray code on the BeyondUnreal Wiki:\n\
+      \   http://wiki.beyondunreal.com/wiki/Dynamic_Array\n\n   Uses a simple binary\
+      \ tree to hold pairs of strings with other strings;\n   the key and data types\
+      \ could both be changed with little pain.\n*/\n\n\n/* Reference to the actual\
+      \ data structure. Under the hood, the associative\n   array is a binary search\
+      \ tree (BST). Should search time prove a\n   limitation, this proof of concept\
+      \ could be augmented with a smarter data\n   structure (red-black tree, hash\
+      \ table, etc.).\n*/\nvar AssociativeArrayNode root;\n\n/* Since end() returns\
+      \ an iterator with the same value every time, it should\n   be kept around after\
+      \ its first creation.\n*/\nvar private AssociativeArrayIterator end_;\n\n\n\
+      /* The number of elements in the associative array. This is a private field\
+      \ to\n   limit access to it to the getLength function. Performance could be\
+      \ enhanced\n   by making the member data publically visible if all clients of\
+      \ associative\n   array could be trusted not to change it.\n*/\nvar private\
+      \ int length;\n\n/* return the number of elements in the associative array.\
+      \ */\nfunction int getLength()\n{\n  return length;\n} // getLength\n\n/* insert\
+      \ a key/value pair into the associative array. */\nfunction insert(coerce string\
+      \ key, string value) \n{\n  p_insert(key, value, root);\n} // insert\n\n/* return\
+      \ the value matching the given key, if one exists; returns \"\" and\n   leaves\
+      \ the associative array unchanged if there is no entry with the\n   given key.\
+      \ Since \"\" could be a legal value, use count to determine\n   whether or not\
+      \ a key is in the associative array.\n*/\nfunction string lookup(coerce string\
+      \ key) \n{\n  local AssociativeArrayNode foundNode;\n  foundNode = p_lookup(key,\
+      \ root);\n  if (foundNode != None) {\n    return foundNode.value;\n  } else\
+      \ {\n    return \"\";\n  }\n} // lookup\n\n/* return the number of entries for\
+      \ the given key. Since the associative\n   array is really a map, only 0 (no\
+      \ such entry) or 1 (an entry for the key)\n   are valid return values. The name\
+      \ \"count\" comes from the C++ STL.\n*/\nfunction int count(coerce string key)\
+      \ \n{\n  local AssociativeArrayNode foundNode;\n  foundNode = p_lookup(key,\
+      \ root);\n  if (foundNode != None) {\n    return 1;\n  } else {\n    return\
+      \ 0;\n  }\n} // count\n\n/* log the contents of the associative array. Useful\
+      \ for debugging.\n */\nfunction show() \n{\n  p_show(root);\n} // show\n\n//\
+      \ -------------------------------------------------------------------------\n\
+      // \"Iterator\" functions\n// -------------------------------------------------------------------------\n\
+      /* UnrealScript iterators are native functions. Without access to the C++\n\
+      \   portions of the engine, it is impossible to create new ones. As an\n   intermediary\
+      \ step, the following functions return beginning and ending\n   \"iterator\"\
+      \ values modeled on C++ iterators. begin() returns an iterator\n   \"pointing\
+      \ to\" the first element in the associative array. end() returns\n   one just\
+      \ past the end of all elements in the associative array.\n\n   This means, in\
+      \ a C++/STL-esque manner (and assuming appropriate operator\n   overloading),\
+      \ a loop across the whole array would look like this:\n\n   local AssociativeArrayIterator\
+      \ it;\n   for (it = someAA.begin(); it != someAA.end(); ++it) {\n     // it.first()\
+      \ and it.second() refer to key and value of each pair in turn\n   }\n*/\n/*\
+      \ Returns an iterator for the first element of the associative array. */\nfunction\
+      \ AssociativeArrayIterator begin() \n{\n  local AssociativeArrayIterator retval;\n\
+      \n  retval = new(None) class'AssociativeArrayIterator';\n  retval.init(self);\n\
+      \  return retval;\n} // begin\n\n/* Returns an iterator just past the end of\
+      \ this associative array. */\nfunction AssociativeArrayIterator end() \n{\n\
+      \  if (end_ == None) {\n    end_ = new(None) class'AssociativeArrayIterator';\n\
+      \    end_.init(self, true);\n  }\n  return end_;\n} // end\n\n// -------------------------------------------------------------------------\n\
+      // Implementation functions\n// -------------------------------------------------------------------------\n\
+      /* Recursive implementations of binary search tree functions for inserting,\n\
+      \   lookup, and printing. The \"p_\" prefix shows that they are protected\n\
+      \   funcitons.\n*/\n\n/* insert key/value pair in the tree rooted at curr. */\n\
+      protected function p_insert(string key, string value,\n                    \
+      \        out AssociativeArrayNode curr) \n{\n  if (curr == None) {\n    curr\
+      \ = new(None) class'AssociativeArrayNode';\n    curr.key = key;\n    curr.value\
+      \ = value;\n    length++;\n  } else if (key < curr.key) {\n    p_insert(key,\
+      \ value, curr.left_child);\n  } else if (key > curr.key) {\n    p_insert(key,\
+      \ value, curr.right_child);\n  } else { // curr.key == key\n    curr.value =\
+      \ value;\n  }\n}\n\n/* Return a reference to the node with the given key;\n\
+      \   None if there isn't one. */\nprotected function AssociativeArrayNode p_lookup(string\
+      \ key,\n                                                 AssociativeArrayNode\
+      \ curr) \n{\n  if (curr == None) {\n    return None;\n  } else if (key < curr.key)\
+      \ {\n    return p_lookup(key, curr.left_child);\n  } else if (key > curr.key)\
+      \ {\n    return p_lookup(key, curr.right_child);\n  } else {\n    return curr;\n\
+      \  }\n}\n\n/* In-order traversal of binary search tree calling log on each entry\
+      \ */\nprotected function p_show(AssociativeArrayNode curr) \n{\n  if (curr !=\
+      \ None) {\n    p_show(curr.left_child);\n    log(\"[\"$curr.key$\"] = \"$curr.value);\n\
+      \    p_show(curr.right_child);\n  }\n} // p_show\n\ndefaultproperties \n{\n\
+      \  root = None\n  length = 0\n} // defaultproperties\n// AssociativeArray\n\
+      </uscript>"
+  properties: []
+  revId: 1472
+name: "Legacy:AssociativeArray/DataStructure"
+revision:
+  revid: 1472
+  parentid: 0
+  user: "Bcladd"
+  timestamp: 1062636369.000000000
+  comment: "*"
+timestamp: 1668961810.274721000

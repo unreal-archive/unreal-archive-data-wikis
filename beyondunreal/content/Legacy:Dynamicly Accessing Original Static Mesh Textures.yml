@@ -1,0 +1,219 @@
+---
+parse:
+  title: "Legacy:Dynamicly Accessing Original Static Mesh Textures"
+  text:
+    text: "<p>There is a handy workaround I discovered which allows you to access\
+      \ the <b>Materials</b> array which is natively defined for Static mesh's, normally\
+      \ you can only access this via UnrealEd but by using the <i>GetPropertyText</i>\
+      \ function declared in Core.<a href=\"/Legacy:Object\" title=\"Legacy:Object\"\
+      >Object</a> I have managed to parse the original Materials array.</p>\n<p>You\
+      \ might think <b>why is this usefull?</b>, well...If a mesh has had it's textures\
+      \ applied during the modelling process then those textures are normally inaccessible\
+      \ in code during runtime. (i.e. you can't find out what texture's the mesh uses)</p>\n\
+      <p>In a lot of cases this is not a problem since you can manually define the\
+      \ textures in the Skins array but if you want to do DYNAMICALLY access the skins\
+      \ on a mesh (i.e. if you want to find what textures a Static mesh uses while\
+      \ ONLY having access to the StaticMesh object itself) then this code is neccessary.</p>\n\
+      <p>Being able to dynamically access the skins in this way allows you to do tricks\
+      \ such as <a href=\"/Legacy:Making_A_Static_Mesh_Translucent\" title=\"Legacy:Making\
+      \ A Static Mesh Translucent\">Making a Static mesh translucent</a> by creating\
+      \ <a href=\"/Legacy:Shader\" title=\"Legacy:Shader\">shaders</a> that use <a\
+      \ href=\"/Legacy:Modifier\" title=\"Legacy:Modifier\">modifiers</a> to make\
+      \ an alpha channel. (which is how this code originated, I created it just for\
+      \ that)</p>\n<p>Below is the code I have created which allows you to access\
+      \ the original materials.</p>\n<p><b>NOTE:</b>This is modified from my original\
+      \ code and I have not fully optimised it.</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">var</span> <span class=\"kw1\">class</span> sClassPlaceholder;\n\
+      \ \n<span class=\"co1\">// This function can be used to directly transfer to\
+      \ the Skins array in Engine.Actor</span>\n<span class=\"kw1\">simulated</span>\
+      \ <span class=\"kw1\">function</span> Array<span class=\"sy0\">&lt;</span>Material<span\
+      \ class=\"sy0\">&gt;</span> FindStaticMeshSkins<span class=\"br0\">(</span><span\
+      \ class=\"kw5\">staticmesh</span> SubjectMesh<span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n\t<span class=\"kw1\">local</span> <span class=\"\
+      kw5\">int</span> iPointer, i;\n\t<span class=\"kw1\">local</span> <span class=\"\
+      kw5\">string</span> sParseString, sTextureClass, sMaterialsPropText;\n\t<span\
+      \ class=\"kw1\">local</span> array<span class=\"sy0\">&lt;</span>Material<span\
+      \ class=\"sy0\">&gt;</span> Skin<span class=\"re1\">Array</span>&lt; SEMI &gt;\n\
+      \ \n\t<span class=\"co1\">// First of all obtain the string containing the list\
+      \ of the Materials on the Static mesh</span>\n\tsMaterialsPropText <span class=\"\
+      sy0\">=</span> SubjectMesh.<span class=\"kw3\">GetPropertyText</span><span class=\"\
+      br0\">(</span><span class=\"st0\">\"Materials\"</span><span class=\"br0\">)</span>;\n\
+      \ \n \n\t<span class=\"co1\">// This part of the function parses the string\
+      \ returned by GetPropertyText and returns the appropriate textures</span>\n\t\
+      iPointer <span class=\"sy0\">=</span> <span class=\"kw3\">InStr</span><span\
+      \ class=\"br0\">(</span>sMaterialsPropText, <span class=\"st0\">\",Material=\"\
+      </span><span class=\"br0\">)</span>;\n \n\t<span class=\"kw2\">while</span>\
+      \ <span class=\"br0\">(</span>iPointer <span class=\"sy0\">!=</span> <span class=\"\
+      sy0\">-</span><span class=\"nu0\">1</span> <span class=\"sy0\">&amp;&amp;</span>\
+      \ i <span class=\"sy0\">&lt;</span> <span class=\"nu0\">256</span><span class=\"\
+      br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t\tsParseString <span class=\"\
+      sy0\">=</span> <span class=\"kw3\">Mid</span><span class=\"br0\">(</span>sMaterialsPropText,\
+      \ iPointer <span class=\"sy0\">+</span> <span class=\"nu0\">10</span><span class=\"\
+      br0\">)</span>;\n \n\t\t<span class=\"co1\">// Check for a null-texture and\
+      \ if one is found then skip the current loop</span>\n\t\t<span class=\"co1\"\
+      >// NOTE: This includes the null value in the returned array, this is so it\
+      \ exactly mirror's the Materials array. (very important)</span>\n\t\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span><span class=\"kw3\">Left</span><span\
+      \ class=\"br0\">(</span>sParseString, <span class=\"nu0\">5</span><span class=\"\
+      br0\">)</span> ~<span class=\"sy0\">=</span> <span class=\"st0\">\"None)\"</span><span\
+      \ class=\"br0\">)</span>\n\t\t<span class=\"br0\">{</span>\n\t\t\tsMaterialsPropText\
+      \ <span class=\"sy0\">=</span> sParseString;\n\t\t\tGoto <span class=\"st0\"\
+      >'Skip'</span>;\n\t\t<span class=\"br0\">}</span>\n \n\t\tiPointer <span class=\"\
+      sy0\">=</span> <span class=\"kw3\">InStr</span><span class=\"br0\">(</span>sParseString,\
+      \ <span class=\"st0\">\"'\"</span><span class=\"br0\">)</span>;\n \n\t\tsTextureClass\
+      \ <span class=\"sy0\">=</span> <span class=\"kw3\">Left</span><span class=\"\
+      br0\">(</span>sParseString, iPointer<span class=\"br0\">)</span>;\n \n \n\t\t\
+      <span class=\"co1\">// I am not certain if this is needed since my original\
+      \ code was used for a slightly different purpose</span>\n\t\t<span class=\"\
+      kw3\">SetPropertyText</span><span class=\"br0\">(</span><span class=\"st0\"\
+      >\"sClassPlaceholder\"</span>, sTextureClass<span class=\"br0\">)</span>;\n\
+      \ \n \n\t\tsParseString <span class=\"sy0\">=</span> <span class=\"kw3\">Mid</span><span\
+      \ class=\"br0\">(</span>sMaterialsPropText, iPointer <span class=\"sy0\">+</span>\
+      \ <span class=\"nu0\">1</span><span class=\"br0\">)</span>;\n \n\t\tiPointer\
+      \ <span class=\"sy0\">=</span> <span class=\"kw3\">InStr</span><span class=\"\
+      br0\">(</span>sParseString, <span class=\"st0\">\"'\"</span><span class=\"br0\"\
+      >)</span>;\n \n\t\tsParseString <span class=\"sy0\">=</span> <span class=\"\
+      kw3\">Mid</span><span class=\"br0\">(</span>sParseString, iPointer <span class=\"\
+      sy0\">+</span> <span class=\"nu0\">1</span><span class=\"br0\">)</span>;\n \n\
+      \t\tiPointer <span class=\"sy0\">=</span> <span class=\"kw3\">InStr</span><span\
+      \ class=\"br0\">(</span>sParseString, <span class=\"st0\">\"'\"</span><span\
+      \ class=\"br0\">)</span>;\n \n \n\t\t<span class=\"co1\">// Cut off the parsed\
+      \ section of sMaterialsPropText so that it will go onto the next section during\
+      \ the next iteration. (otherwise infinite recursion)</span>\n\t\tsMaterialsPropText\
+      \ <span class=\"sy0\">=</span> <span class=\"kw3\">Mid</span><span class=\"\
+      br0\">(</span>sParseString, iPointer <span class=\"sy0\">+</span> <span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span>;\n \n\t\tsParseString <span class=\"\
+      sy0\">=</span> <span class=\"kw3\">Left</span><span class=\"br0\">(</span>sParseString,\
+      \ iPointer<span class=\"br0\">)</span>;\n \n \n\t\t<span class=\"co1\">// Create\
+      \ a reference to the Material used on the mesh</span>\n\t\tSkinArray<span class=\"\
+      br0\">[</span>i<span class=\"br0\">]</span> <span class=\"sy0\">=</span> <span\
+      \ class=\"kw5\">Material</span><span class=\"br0\">(</span><span class=\"kw3\"\
+      >DynamicLoadObject</span><span class=\"br0\">(</span>sParseString, sClassPlaceholder<span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>;\n \n\t\tSkip:\n \n\t\t\
+      iPointer <span class=\"sy0\">=</span> <span class=\"kw3\">InStr</span><span\
+      \ class=\"br0\">(</span>sMaterialsPropText, <span class=\"st0\">\",Material=\"\
+      </span><span class=\"br0\">)</span>;\n \n\t\ti<span class=\"sy0\">++</span>;\n\
+      \t<span class=\"br0\">}</span>\n \n\t<span class=\"co1\">// Return the completed\
+      \ list of skins</span>\n\t<span class=\"kw2\">Return</span> Skin<span class=\"\
+      re1\">Array</span>&lt; SEMI &gt;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<h2><span class=\"mw-headline\" id=\"Related_Topics\">Related Topics</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Dynamicly_Accessing_Original_Static_Mesh_Textures?section=1\"\
+      \ title=\"Edit section: Related Topics\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<ul>\n<li><a href=\"/Legacy:Static_Mesh\" title=\"Legacy:Static\
+      \ Mesh\">Static Mesh</a></li>\n<li><a href=\"/Legacy:Making_A_Static_Mesh_Translucent\"\
+      \ title=\"Legacy:Making A Static Mesh Translucent\">Making a Static mesh translucent</a></li>\n\
+      </ul>\n<h2><span class=\"mw-headline\" id=\"Comments\">Comments</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Dynamicly_Accessing_Original_Static_Mesh_Textures?section=2\"\
+      \ title=\"Edit section: Comments\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p><b>Shambler:</b> My explanations of some things here\
+      \ could be better, maybe someone could have a shot at making things a bit more\
+      \ clear..</p>\n\n<!-- \nNewPP limit report\nCPU time usage: 0.054 seconds\n\
+      Real time usage: 0.168 seconds\nPreprocessor visited node count: 16/1000000\n\
+      Preprocessor generated node count: 32/1000000\nPost‐expand include size: 0/2097152\
+      \ bytes\nTemplate argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\n\
+      Expensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion expansion\
+      \ time report (%,ms,calls,template)\n100.00%    0.000      1 - -total\n-->\n\
+      \n<!-- Saved in parser cache with key wiki:pcache:idhash:1071-0!*!0!!*!*!* and\
+      \ timestamp 20221118090250 and revision id 2847\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Shader"
+  - ns: 100
+    exists: true
+    name: "Legacy:Making A Static Mesh Translucent"
+  - ns: 100
+    exists: true
+    name: "Legacy:Object"
+  - ns: 100
+    exists: true
+    name: "Legacy:Modifier"
+  - ns: 100
+    exists: true
+    name: "Legacy:Static Mesh"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Dynamicly_Accessing_Original_Static_Mesh_Textures"
+    byteoffset: 3433
+    anchor: "Related_Topics"
+  - toclevel: 1
+    level: "2"
+    line: "Comments"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Dynamicly_Accessing_Original_Static_Mesh_Textures"
+    byteoffset: 3570
+    anchor: "Comments"
+  displaytitle: "Legacy:Dynamicly Accessing Original Static Mesh Textures"
+  iwlinks: []
+  wikitext:
+    text: "There is a handy workaround I discovered which allows you to access the\
+      \ '''Materials''' array which is natively defined for Static mesh's, normally\
+      \ you can only access this via UnrealEd but by using the ''GetPropertyText''\
+      \ function declared in Core.[[Legacy:Object|Object]] I have managed to parse\
+      \ the original Materials array.\n\nYou might think '''why is this usefull?''',\
+      \ well...If a mesh has had it's textures applied during the modelling process\
+      \ then those textures are normally inaccessible in code during runtime. (i.e.\
+      \ you can't find out what texture's the mesh uses)\n\nIn a lot of cases this\
+      \ is not a problem since you can manually define the textures in the Skins array\
+      \ but if you want to do DYNAMICALLY access the skins on a mesh (i.e. if you\
+      \ want to find what textures a Static mesh uses while ONLY having access to\
+      \ the StaticMesh object itself) then this code is neccessary.\n\nBeing able\
+      \ to dynamically access the skins in this way allows you to do tricks such as\
+      \ [[Legacy:Making A Static Mesh Translucent|Making a Static mesh translucent]]\
+      \ by creating [[Legacy:Shader|shader]]s that use [[Legacy:Modifier|modifier]]s\
+      \ to make an alpha channel. (which is how this code originated, I created it\
+      \ just for that)\n\nBelow is the code I have created which allows you to access\
+      \ the original materials.\n\n'''NOTE:'''This is modified from my original code\
+      \ and I have not fully optimised it.\n\n<uscript>\nvar class sClassPlaceholder;\n\
+      \n// This function can be used to directly transfer to the Skins array in Engine.Actor\n\
+      simulated function Array<Material> FindStaticMeshSkins(staticmesh SubjectMesh)\n\
+      {\n\tlocal int iPointer, i;\n\tlocal string sParseString, sTextureClass, sMaterialsPropText;\n\
+      \tlocal array<Material> SkinArray;\n\n\t// First of all obtain the string containing\
+      \ the list of the Materials on the Static mesh\n\tsMaterialsPropText = SubjectMesh.GetPropertyText(\"\
+      Materials\");\n\n\n\t// This part of the function parses the string returned\
+      \ by GetPropertyText and returns the appropriate textures\n\tiPointer = InStr(sMaterialsPropText,\
+      \ \",Material=\");\n\n\twhile (iPointer != -1 && i < 256)\n\t{\n\t\tsParseString\
+      \ = Mid(sMaterialsPropText, iPointer + 10);\n\n\t\t// Check for a null-texture\
+      \ and if one is found then skip the current loop\n\t\t// NOTE: This includes\
+      \ the null value in the returned array, this is so it exactly mirror's the Materials\
+      \ array. (very important)\n\t\tif (Left(sParseString, 5) ~= \"None)\")\n\t\t\
+      {\n\t\t\tsMaterialsPropText = sParseString;\n\t\t\tGoto 'Skip';\n\t\t}\n\n\t\
+      \tiPointer = InStr(sParseString, \"'\");\n\n\t\tsTextureClass = Left(sParseString,\
+      \ iPointer);\n\n\n\t\t// I am not certain if this is needed since my original\
+      \ code was used for a slightly different purpose\n\t\tSetPropertyText(\"sClassPlaceholder\"\
+      , sTextureClass);\n\n\n\t\tsParseString = Mid(sMaterialsPropText, iPointer +\
+      \ 1);\n\n\t\tiPointer = InStr(sParseString, \"'\");\n\n\t\tsParseString = Mid(sParseString,\
+      \ iPointer + 1);\n\n\t\tiPointer = InStr(sParseString, \"'\");\n\n\n\t\t// Cut\
+      \ off the parsed section of sMaterialsPropText so that it will go onto the next\
+      \ section during the next iteration. (otherwise infinite recursion)\n\t\tsMaterialsPropText\
+      \ = Mid(sParseString, iPointer + 1);\n\n\t\tsParseString = Left(sParseString,\
+      \ iPointer);\n\n\n\t\t// Create a reference to the Material used on the mesh\n\
+      \t\tSkinArray[i] = Material(DynamicLoadObject(sParseString, sClassPlaceholder));\n\
+      \n\t\tSkip:\n\n\t\tiPointer = InStr(sMaterialsPropText, \",Material=\");\n\n\
+      \t\ti++;\n\t}\n\n\t// Return the completed list of skins\n\tReturn SkinArray;\n\
+      }\n</uscript>\n\n==Related Topics ==\n* [[Legacy:Static Mesh|Static Mesh]]\n\
+      * [[Legacy:Making A Static Mesh Translucent|Making a Static mesh translucent]]\n\
+      \n==Comments==\n\n'''Shambler:''' My explanations of some things here could\
+      \ be better, maybe someone could have a shot at making things a bit more clear.."
+  properties: []
+  revId: 2847
+name: "Legacy:Dynamicly Accessing Original Static Mesh Textures"
+revision:
+  revid: 2847
+  parentid: 0
+  user: "Shambler"
+  timestamp: 1109851342.000000000
+  comment: "Minor layout change"
+timestamp: 1668762171.532609000

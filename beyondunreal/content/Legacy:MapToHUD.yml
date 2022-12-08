@@ -1,0 +1,666 @@
+---
+parse:
+  title: "Legacy:MapToHUD"
+  text:
+    text: "<p>The MapToHUD function calculates screen coordinates based on a directional\
+      \ vector, the view rotation, the FOV and the target <a href=\"/Legacy:Canvas\"\
+      \ title=\"Legacy:Canvas\">Canvas</a>.</p>\n<p><b>Note:</b> In <a href=\"/Legacy:UT2003\"\
+      \ title=\"Legacy:UT2003\" class=\"mw-redirect\">UT2003</a> you can and should\
+      \ use the WorldToScreen function of the Canvas or <a href=\"/Legacy:Interaction\"\
+      \ title=\"Legacy:Interaction\">Interaction</a> class.</p>\n<p></p>\n<div id=\"\
+      toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n</div>\n<ul>\n\
+      <li class=\"toclevel-1 tocsection-1\"><a href=\"#Parameters\"><span class=\"\
+      tocnumber\">1</span> <span class=\"toctext\">Parameters</span></a></li>\n<li\
+      \ class=\"toclevel-1 tocsection-2\"><a href=\"#Return_Value\"><span class=\"\
+      tocnumber\">2</span> <span class=\"toctext\">Return Value</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-3\"><a href=\"#Code\"><span class=\"tocnumber\"\
+      >3</span> <span class=\"toctext\">Code</span></a></li>\n<li class=\"toclevel-1\
+      \ tocsection-4\"><a href=\"#Example\"><span class=\"tocnumber\">4</span> <span\
+      \ class=\"toctext\">Example</span></a></li>\n<li class=\"toclevel-1 tocsection-5\"\
+      ><a href=\"#WorldToScreen\"><span class=\"tocnumber\">5</span> <span class=\"\
+      toctext\">WorldToScreen</span></a></li>\n<li class=\"toclevel-1 tocsection-6\"\
+      ><a href=\"#Alternate_version\"><span class=\"tocnumber\">6</span> <span class=\"\
+      toctext\">Alternate version</span></a></li>\n<li class=\"toclevel-1 tocsection-7\"\
+      ><a href=\"#Floating_Names\"><span class=\"tocnumber\">7</span> <span class=\"\
+      toctext\">Floating Names</span></a></li>\n<li class=\"toclevel-1 tocsection-8\"\
+      ><a href=\"#MouseTrace\"><span class=\"tocnumber\">8</span> <span class=\"toctext\"\
+      >MouseTrace</span></a></li>\n<li class=\"toclevel-1 tocsection-9\"><a href=\"\
+      #Related_Classes\"><span class=\"tocnumber\">9</span> <span class=\"toctext\"\
+      >Related Classes</span></a></li>\n<li class=\"toclevel-1 tocsection-10\"><a\
+      \ href=\"#Related_Topics\"><span class=\"tocnumber\">10</span> <span class=\"\
+      toctext\">Related Topics</span></a></li>\n</ul>\n</div>\n<p></p>\n<h2><span\
+      \ class=\"mw-headline\" id=\"Parameters\">Parameters</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:MapToHUD?section=1\"\
+      \ title=\"Edit section: Parameters\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<dl>\n<dt>out vector Result&#160;</dt>\n<dd>The X and\
+      \ Y components of this vector will contain the absolute canvas coordinates calculated\
+      \ by the function.</dd>\n<dt>rotator ViewRotation&#160;</dt>\n<dd>The rotation\
+      \ of the camera.</dd>\n<dt>float FOV&#160;</dt>\n<dd>The FOV of the camera.\
+      \ This value must be specified in degrees like the <a href=\"/Legacy:PlayerPawn\"\
+      \ title=\"Legacy:PlayerPawn\">PlayerPawn</a>'s FOVAngle property.</dd>\n<dt>vector\
+      \ TargetDir&#160;</dt>\n<dd>A vector pointing from the camera's location to\
+      \ the location which should be converted to screen coordinates. For <a href=\"\
+      /Legacy:PlayerPawn\" title=\"Legacy:PlayerPawn\">PlayerPawns</a> this is <code>PlayerPawn.Location\
+      \ + PlayerPawn.EyeHeight * vect(0,0,1)</code>.</dd>\n<dt><a href=\"/Legacy:Canvas\"\
+      \ title=\"Legacy:Canvas\">Canvas</a> Canvas&#160;</dt>\n<dd>The <a href=\"/Legacy:Canvas\"\
+      \ title=\"Legacy:Canvas\">Canvas</a> the coordinates are calculated for.</dd>\n\
+      </dl>\n<h2><span class=\"mw-headline\" id=\"Return_Value\">Return Value</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:MapToHUD?section=2\" title=\"Edit section: Return Value\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>The\
+      \ function returns whether the coordinates it calculated are on the screen or\
+      \ not. This is only reliable for FOV values less than 180°.</p>\n<h2><span class=\"\
+      mw-headline\" id=\"Code\">Code</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:MapToHUD?section=3\"\
+      \ title=\"Edit section: Code\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      coMULTI\">/********************************************************************************\n\
+      * Converts a given directional vector to canvas coordinates.               \
+      \     *\n* X and Y values of the returned vector contain absolute coordinates.\
+      \           *\n* The function returns, whether the target direction is visible\
+      \ for the player. *\n* Created by Wormbo                                   \
+      \                          *\n********************************************************************************/</span>\n\
+      <span class=\"kw1\">simulated</span> <span class=\"kw1\">function</span> <span\
+      \ class=\"kw5\">bool</span> MapToHUD<span class=\"br0\">(</span><span class=\"\
+      kw1\">out</span> <span class=\"kw5\">vector</span> Result, <span class=\"kw5\"\
+      >rotator</span> ViewRotation, <span class=\"kw5\">float</span> FOV, <span class=\"\
+      kw5\">vector</span> TargetDir, <span class=\"kw8\">Canvas</span> <span class=\"\
+      kw8\">Canvas</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \t<span class=\"kw1\">local</span> <span class=\"kw5\">float</span> TanFOVx,\
+      \ TanFOVy;\n\t<span class=\"kw1\">local</span> <span class=\"kw5\">float</span>\
+      \ TanX, TanY;\n\t<span class=\"kw1\">local</span> <span class=\"kw5\">float</span>\
+      \ dx, dy;\n\t<span class=\"kw1\">local</span> <span class=\"kw5\">vector</span>\
+      \ X, Y, Dir, XY;\n \n\tTanFOVx <span class=\"sy0\">=</span> <span class=\"kw3\"\
+      >Tan</span><span class=\"br0\">(</span>FOV <span class=\"sy0\">*</span> <span\
+      \ class=\"kw6\">Pi</span> <span class=\"sy0\">/</span> <span class=\"nu0\">360</span><span\
+      \ class=\"br0\">)</span>;\n\tTanFOVy <span class=\"sy0\">=</span> <span class=\"\
+      br0\">(</span><span class=\"kw8\">Canvas</span>.<span class=\"me0\">ClipY</span>\
+      \ <span class=\"sy0\">/</span> <span class=\"kw8\">Canvas</span>.<span class=\"\
+      me0\">ClipX</span><span class=\"br0\">)</span> <span class=\"sy0\">*</span>\
+      \ TanFOVx;\n\t<span class=\"kw3\">GetAxes</span><span class=\"br0\">(</span>ViewRotation,\
+      \ Dir, X, Y<span class=\"br0\">)</span>;\n \n\tDir <span class=\"sy0\">*=</span>\
+      \ TargetDir dot Dir;\n\tXY <span class=\"sy0\">=</span> TargetDir <span class=\"\
+      sy0\">-</span> Dir;\n\tdx <span class=\"sy0\">=</span> XY dot X;\n\tdy <span\
+      \ class=\"sy0\">=</span> XY dot Y;\n \n\tTanX <span class=\"sy0\">=</span> dx\
+      \ <span class=\"sy0\">/</span> <span class=\"kw3\">VSize</span><span class=\"\
+      br0\">(</span>dir<span class=\"br0\">)</span>;\n\tTanY <span class=\"sy0\">=</span>\
+      \ dy <span class=\"sy0\">/</span> <span class=\"kw3\">VSize</span><span class=\"\
+      br0\">(</span>dir<span class=\"br0\">)</span>;\n \n\tResult.<span class=\"me0\"\
+      >X</span> <span class=\"sy0\">=</span> <span class=\"kw8\">Canvas</span>.<span\
+      \ class=\"me0\">ClipX</span> <span class=\"sy0\">*</span> <span class=\"nu0\"\
+      >0.5</span> <span class=\"sy0\">*</span> <span class=\"br0\">(</span><span class=\"\
+      nu0\">1</span> <span class=\"sy0\">+</span> TanX <span class=\"sy0\">/</span>\
+      \ TanFOVx<span class=\"br0\">)</span>;\n\tResult.<span class=\"me0\">Y</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"kw8\">Canvas</span>.<span class=\"\
+      me0\">ClipY</span> <span class=\"sy0\">*</span> <span class=\"nu0\">0.5</span>\
+      \ <span class=\"sy0\">*</span> <span class=\"br0\">(</span><span class=\"nu0\"\
+      >1</span> <span class=\"sy0\">-</span> TanY <span class=\"sy0\">/</span> TanFOVy<span\
+      \ class=\"br0\">)</span>;\n \n\t<span class=\"kw2\">return</span> Dir dot <span\
+      \ class=\"kw5\">vector</span><span class=\"br0\">(</span>ViewRotation<span class=\"\
+      br0\">)</span> <span class=\"sy0\">&gt;</span> <span class=\"nu0\">0</span>\
+      \ <span class=\"sy0\">&amp;&amp;</span> Result.<span class=\"me0\">X</span>\
+      \ <span class=\"sy0\">==</span> <span class=\"kw3\">FClamp</span><span class=\"\
+      br0\">(</span>Result.<span class=\"me0\">X</span>, <span class=\"kw8\">Canvas</span>.<span\
+      \ class=\"me0\">OrgX</span>, <span class=\"kw8\">Canvas</span>.<span class=\"\
+      me0\">ClipX</span><span class=\"br0\">)</span>\n\t\t\t<span class=\"sy0\">&amp;&amp;</span>\
+      \ Result.<span class=\"me0\">Y</span> <span class=\"sy0\">==</span> <span class=\"\
+      kw3\">FClamp</span><span class=\"br0\">(</span>Result.<span class=\"me0\">Y</span>,\
+      \ <span class=\"kw8\">Canvas</span>.<span class=\"me0\">OrgY</span>, <span class=\"\
+      kw8\">Canvas</span>.<span class=\"me0\">ClipY</span><span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Example\">Example</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:MapToHUD?section=4\"\
+      \ title=\"Edit section: Example\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>In this example CurrentTarget is a targeted actor\
+      \ (e.g. another player) and Reticle is a <a href=\"/Legacy:Texture_(UT)\" title=\"\
+      Legacy:Texture (UT)\">Texture (UT)</a> which will be drawn with its center at\
+      \ the target's location. It will only be drawn when the target is on screen\
+      \ (return value of MapToHUD) and there's no level geometry between the point\
+      \ of vision and the target (FastTrace).</p>\n<p>Reticle.USize and .VSize are\
+      \ the width and height of the texture.</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">simulated</span> <span class=\"kw1\">function</span>\
+      \ PostRender<span class=\"br0\">(</span><span class=\"kw8\">canvas</span> <span\
+      \ class=\"kw8\">Canvas</span><span class=\"br0\">)</span>\n<span class=\"br0\"\
+      >{</span>\n\t<span class=\"kw1\">local</span> <span class=\"kw5\">vector</span>\
+      \ dir, POV, DrawPos;\n\t<span class=\"kw1\">local</span> PlayerPawn P;\n \n\t\
+      P <span class=\"sy0\">=</span> PlayerPawn<span class=\"br0\">(</span><span class=\"\
+      kw7\">Owner</span><span class=\"br0\">)</span>;\n\t<span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span> P <span class=\"sy0\">==</span> <span class=\"\
+      kw5\">None</span> <span class=\"sy0\">||</span> CurrentTarget <span class=\"\
+      sy0\">==</span> <span class=\"kw5\">None</span> <span class=\"br0\">)</span>\n\
+      \t\t<span class=\"kw2\">return</span>;\n \n\tPOV <span class=\"sy0\">=</span>\
+      \ <span class=\"kw7\">Owner</span>.<span class=\"kw7\">Location</span> <span\
+      \ class=\"sy0\">+</span> <span class=\"kw3\">vect</span><span class=\"br0\"\
+      >(</span><span class=\"nu0\">0</span>,<span class=\"nu0\">0</span>,<span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span> <span class=\"sy0\">*</span> P.<span\
+      \ class=\"me0\">EyeHeight</span>;\n\tDir <span class=\"sy0\">=</span> CurrentTarget.<span\
+      \ class=\"kw7\">Location</span> <span class=\"sy0\">-</span> POV; <span class=\"\
+      co1\">// direction to target</span>\n \n\t<span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span> MapToHUD<span class=\"br0\">(</span>DrawPos, P.<span\
+      \ class=\"me0\">ViewRotation</span>, P.<span class=\"me0\">FOVAngle</span>,\
+      \ Dir, <span class=\"kw8\">Canvas</span><span class=\"br0\">)</span>\n\t\t\t\
+      <span class=\"sy0\">&amp;&amp;</span> <span class=\"kw4\">FastTrace</span><span\
+      \ class=\"br0\">(</span>CurrentTarget.<span class=\"kw7\">Location</span>, POV<span\
+      \ class=\"br0\">)</span> <span class=\"br0\">)</span> <span class=\"br0\">{</span>\n\
+      \t\t<span class=\"kw8\">Canvas</span>.<span class=\"me0\">SetPos</span><span\
+      \ class=\"br0\">(</span>DrawPos.<span class=\"me0\">X</span> <span class=\"\
+      sy0\">-</span> Reticle.<span class=\"me0\">USize</span> <span class=\"sy0\"\
+      >*</span> <span class=\"nu0\">0.5</span>, DrawPos.<span class=\"me0\">Y</span>\
+      \ <span class=\"sy0\">-</span> Reticle.<span class=\"kw3\">VSize</span> <span\
+      \ class=\"sy0\">*</span> <span class=\"nu0\">0.5</span><span class=\"br0\">)</span>;\n\
+      \t\t<span class=\"kw8\">Canvas</span>.<span class=\"me0\">DrawIcon</span><span\
+      \ class=\"br0\">(</span>Reticle, <span class=\"nu0\">1.0</span><span class=\"\
+      br0\">)</span>;\n\t<span class=\"br0\">}</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<h2><span class=\"mw-headline\" id=\"WorldToScreen\">WorldToScreen</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:MapToHUD?section=5\" title=\"Edit section: WorldToScreen\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>The\
+      \ MapToHUD function can be used to create UT2003's WorldToScreen function for\
+      \ UT. (In case you prefer using that.)</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"coMULTI\">/********************************************************************************\n\
+      * Converts a given world location to canvas coordinates.                   \
+      \     *\n* X and Y values of the returned vector contain absolute coordinates.\
+      \           *\n* Created by Wormbo                                         \
+      \                    *\n********************************************************************************/</span>\n\
+      <span class=\"kw1\">simulated</span> <span class=\"kw1\">function</span> <span\
+      \ class=\"kw5\">vector</span> WorldToScreen<span class=\"br0\">(</span><span\
+      \ class=\"kw8\">Canvas</span> C, <span class=\"kw5\">vector</span> WorldLoc<span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw1\"\
+      >local</span> <span class=\"kw5\">vector</span> CamLoc, ScreenLoc;\n\t<span\
+      \ class=\"kw1\">local</span> <span class=\"kw5\">rotator</span> CamRot;\n\t\
+      <span class=\"kw1\">local</span> <span class=\"kw9\">Actor</span> Camera;\n\
+      \ \n\tC.<span class=\"me0\">ViewPort</span>.<span class=\"kw9\">Actor</span>.<span\
+      \ class=\"me0\">PlayerCalcView</span><span class=\"br0\">(</span>Camera, CamLoc,\
+      \ CamRot<span class=\"br0\">)</span>;\n\tMapToHUD<span class=\"br0\">(</span>ScreenLoc,\
+      \ CamRot, C.<span class=\"me0\">ViewPort</span>.<span class=\"kw9\">Actor</span>.<span\
+      \ class=\"me0\">FOVAngle</span>, <span class=\"kw3\">Normal</span><span class=\"\
+      br0\">(</span>WorldLoc <span class=\"sy0\">-</span> CamLoc<span class=\"br0\"\
+      >)</span>, C<span class=\"br0\">)</span>;\n \n\t<span class=\"kw2\">return</span>\
+      \ ScreenLoc;\n<span class=\"br0\">}</span></pre></div>\n</div>\n<h2><span class=\"\
+      mw-headline\" id=\"Alternate_version\">Alternate version</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:MapToHUD?section=6\"\
+      \ title=\"Edit section: Alternate version\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>Here's an alternate version that I cooked up for Esc.\
+      \ I put it in the base HUD class:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"co1\">// Created by M.C. Spanky, aka Martin C. Martin, for Esc\
+      \ (www.esconline.org)</span>\n \n<span class=\"kw1\">simulated</span> <span\
+      \ class=\"kw1\">static</span> <span class=\"kw1\">function</span> <span class=\"\
+      kw5\">bool</span> WorldToScreen<span class=\"br0\">(</span><span class=\"kw5\"\
+      >Vector</span> WorldLocation, <span class=\"kw9\">Pawn</span> ThePlayer, \n\
+      \     <span class=\"kw5\">float</span> ScreenWidth, <span class=\"kw5\">float</span>\
+      \ ScreenHeight, <span class=\"kw1\">out</span> <span class=\"kw5\">float</span>\
+      \ X, <span class=\"kw1\">out</span> <span class=\"kw5\">float</span> Y<span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n   <span class=\"kw1\"\
+      >local</span> <span class=\"kw5\">vector</span> EyePos, RelativeToPlayer;\n\
+      \   <span class=\"kw1\">local</span> <span class=\"kw5\">float</span> <span\
+      \ class=\"kw5\">Scale</span>;\n \n   EyePos <span class=\"sy0\">=</span> ThePlayer.<span\
+      \ class=\"kw7\">Location</span>;\n   EyePos.<span class=\"me0\">Z</span> <span\
+      \ class=\"sy0\">+=</span> ThePlayer.<span class=\"me0\">BaseEyeHeight</span>;\
+      \ <span class=\"co1\">// Maybe ThePlayer.EyeHeight instead?</span>\n \n   RelativeToPlayer\
+      \ <span class=\"sy0\">=</span> <span class=\"br0\">(</span>WorldLocation <span\
+      \ class=\"sy0\">-</span> EyePos<span class=\"br0\">)</span> <span class=\"sy0\"\
+      >&lt;&lt;</span> ThePlayer.<span class=\"me0\">ViewRotation</span>;\n \n   <span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span>RelativeToPlayer.<span\
+      \ class=\"me0\">X</span> <span class=\"sy0\">&lt;</span> <span class=\"nu0\"\
+      >0.01</span><span class=\"br0\">)</span>\n      <span class=\"kw2\">return</span>\
+      \ <span class=\"kw6\">false</span>;\n \n   <span class=\"kw5\">Scale</span>\
+      \ <span class=\"sy0\">=</span> <span class=\"br0\">(</span>ScreenWidth <span\
+      \ class=\"sy0\">/</span> <span class=\"nu0\">2</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">/</span> <span class=\"kw3\">Tan</span><span class=\"\
+      br0\">(</span>ThePlayer.<span class=\"me0\">FovAngle</span><span class=\"sy0\"\
+      >/</span><span class=\"nu0\">2</span><span class=\"sy0\">/</span><span class=\"\
+      nu0\">180</span><span class=\"sy0\">*</span><span class=\"kw6\">Pi</span><span\
+      \ class=\"br0\">)</span>;\n \n   X <span class=\"sy0\">=</span> RelativeToPlayer.<span\
+      \ class=\"me0\">Y</span> <span class=\"sy0\">/</span> RelativeToPlayer.<span\
+      \ class=\"me0\">X</span> <span class=\"sy0\">*</span> <span class=\"kw5\">Scale</span>\
+      \ <span class=\"sy0\">+</span> ScreenWidth <span class=\"sy0\">/</span> <span\
+      \ class=\"nu0\">2</span>;\n   Y <span class=\"sy0\">=</span> <span class=\"\
+      sy0\">-</span> RelativeToPlayer.<span class=\"me0\">Z</span> <span class=\"\
+      sy0\">/</span> RelativeToPlayer.<span class=\"me0\">X</span> <span class=\"\
+      sy0\">*</span> <span class=\"kw5\">Scale</span> <span class=\"sy0\">+</span>\
+      \ ScreenHeight <span class=\"sy0\">/</span> <span class=\"nu0\">2</span>;\n\
+      \ \n   <span class=\"kw2\">return</span> <span class=\"kw6\">true</span>;\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>To call it from the HUD,\
+      \ you could do something like this:</p>\n<p>local float X, Y;</p>\n<p>WorldToScreen(&lt;trace\
+      \ result&gt;, Pawn(Owner), Canvas.ClipX, Canvas.ClipY, X, Y);</p>\n<p>A couple\
+      \ notes:</p>\n<p>-It returns \"false\" if the WorldLocation is behind the player\
+      \ (or so close that we risk a division by zero.)-</p>\n<p>-This assumes that\
+      \ you're in first person view, i.e. not in a cut scene or bBehindView. It should\
+      \ be easy enough to find the \"true\" camera location &amp; rotation &amp; FOV\
+      \ in all cases, by looking at the player's ViewTarget. I'm unsure of the details,\
+      \ so I'll leave that to you.&#160;:)-</p>\n<p>-Canvas.Clip[XY] don't always\
+      \ equal the screen resolution, although they usually do, and I can't find a\
+      \ better pair of vars.-</p>\n<h2><span class=\"mw-headline\" id=\"Floating_Names\"\
+      >Floating Names</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:MapToHUD?section=7\" title=\"Edit section: Floating\
+      \ Names\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>Here's an example of how to use it, some really simple \"floating names\"\
+      \ code. Put this in your HUD:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"co1\">// Created by M.C. Spanky, aka Martin C. Martin, for Esc\
+      \ (www.esconline.org)</span>\n<span class=\"kw1\">simulated</span> <span class=\"\
+      kw1\">function</span> PostRender<span class=\"br0\">(</span> <span class=\"\
+      kw8\">canvas</span> <span class=\"kw8\">Canvas</span> <span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n   <span class=\"kw1\">local</span> <span class=\"\
+      kw9\">Pawn</span> thisPawn;\n   <span class=\"kw1\">local</span> <span class=\"\
+      kw5\">float</span> X, Y;\n   <span class=\"kw1\">local</span> <span class=\"\
+      kw5\">float</span> W, H;\n   <span class=\"kw1\">local</span> <span class=\"\
+      kw5\">bool</span> bOnScreen;\n   <span class=\"kw1\">local</span> <span class=\"\
+      kw5\">vector</span> worldPosition;\n \n   <span class=\"kw6\">Super</span>.<span\
+      \ class=\"me0\">PostRender</span><span class=\"br0\">(</span><span class=\"\
+      kw8\">Canvas</span><span class=\"br0\">)</span>;\n   <span class=\"kw2\">for</span>\
+      \ <span class=\"br0\">(</span>thisPawn <span class=\"sy0\">=</span> <span class=\"\
+      kw7\">Level</span>.<span class=\"me0\">PawnList</span>; thisPawn <span class=\"\
+      sy0\">!=</span> <span class=\"kw5\">None</span>; thisPawn <span class=\"sy0\"\
+      >=</span> thisPawn.<span class=\"me0\">NextPawn</span><span class=\"br0\">)</span>\
+      \ <span class=\"br0\">{</span>\n      worldPosition <span class=\"sy0\">=</span>\
+      \ thisPawn.<span class=\"kw7\">Location</span>;\n      worldPosition.<span class=\"\
+      me0\">Z</span> <span class=\"sy0\">+=</span> thisPawn.<span class=\"kw7\">CollisionHeight</span>;\n\
+      \      bOnScreen <span class=\"sy0\">=</span> WorldToScreen<span class=\"br0\"\
+      >(</span>worldPosition, <span class=\"kw9\">Pawn</span><span class=\"br0\">(</span><span\
+      \ class=\"kw7\">Owner</span><span class=\"br0\">)</span>, <span class=\"kw8\"\
+      >Canvas</span>.<span class=\"me0\">ClipX</span>, <span class=\"kw8\">Canvas</span>.<span\
+      \ class=\"me0\">ClipY</span>, X, Y<span class=\"br0\">)</span>;\n      <span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span>bOnScreen <span class=\"\
+      sy0\">&amp;&amp;</span> X <span class=\"sy0\">&gt;</span> <span class=\"nu0\"\
+      >0</span> <span class=\"sy0\">&amp;&amp;</span> X <span class=\"sy0\">&lt;</span>\
+      \ <span class=\"kw8\">Canvas</span>.<span class=\"me0\">ClipX</span> <span class=\"\
+      sy0\">&amp;&amp;</span> Y <span class=\"sy0\">&gt;</span> <span class=\"nu0\"\
+      >0</span> <span class=\"sy0\">&amp;&amp;</span> Y <span class=\"sy0\">&lt;</span>\
+      \ <span class=\"kw8\">Canvas</span>.<span class=\"me0\">ClipY</span><span class=\"\
+      br0\">)</span> <span class=\"br0\">{</span>\n         <span class=\"kw8\">Canvas</span>.<span\
+      \ class=\"me0\">SetPos</span><span class=\"br0\">(</span><span class=\"nu0\"\
+      >0</span>, <span class=\"nu0\">0</span><span class=\"br0\">)</span>;\n     \
+      \    <span class=\"kw8\">Canvas</span>.<span class=\"me0\">TextSize</span><span\
+      \ class=\"br0\">(</span>thisPawn.<span class=\"me0\">MenuName</span>, W, H<span\
+      \ class=\"br0\">)</span>;\n         <span class=\"kw8\">Canvas</span>.<span\
+      \ class=\"me0\">SetPos</span><span class=\"br0\">(</span>X <span class=\"sy0\"\
+      >-</span> W<span class=\"sy0\">/</span><span class=\"nu0\">2</span>, Y <span\
+      \ class=\"sy0\">-</span> H<span class=\"sy0\">/</span><span class=\"nu0\">2</span><span\
+      \ class=\"br0\">)</span>;\n         <span class=\"kw8\">Canvas</span>.<span\
+      \ class=\"me0\">DrawText</span><span class=\"br0\">(</span>thisPawn.<span class=\"\
+      me0\">MenuName</span>, <span class=\"kw6\">false</span><span class=\"br0\">)</span>;\n\
+      \      <span class=\"br0\">}</span>\n   <span class=\"br0\">}</span>\n<span\
+      \ class=\"br0\">}</span></pre></div>\n</div>\n<p>(If you already have a PostRender(),\
+      \ merge it with that.) Start a level and spawn some Kralls or Nalis or whatever\
+      \ puts a glide in your stride and a dip in your hip. The name will be in the\
+      \ right place no matter whether they're above you and looking up or below you\
+      \ and looking down. You'll even see your own name above you if you look up.&#160;:)</p>\n\
+      <p><b>Xian:</b> Thought I should mention that the above code would not work\
+      \ online as Level.PawnList is inaccessible client-side.</p>\n<h2><span class=\"\
+      mw-headline\" id=\"MouseTrace\">MouseTrace</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:MapToHUD?section=8\"\
+      \ title=\"Edit section: MouseTrace\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>Here's a function that goes the other way: given an\
+      \ X and Y on the screen, it figures out what direction in space this corresponds\
+      \ to, and does a trace to find the first actor along that direction. Esc uses\
+      \ this so that you can click on another player to select them. This one's written\
+      \ to be in PlayerPawn, but you could modify it to take the player as an arg,\
+      \ as above.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">simulated</span> <span class=\"kw1\">function</span> <span class=\"kw9\"\
+      >Actor</span> MouseTrace<span class=\"br0\">(</span><span class=\"kw5\">float</span>\
+      \ MouseX, <span class=\"kw5\">float</span> MouseY, <span class=\"kw5\">float</span>\
+      \ ScreenWidth, <span class=\"kw5\">float</span> ScreenHeight<span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n   <span class=\"kw1\">local</span>\
+      \ <span class=\"kw9\">Actor</span> Other;\n   <span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">vector</span> HitLocation, HitNormal, StartTrace, EndTrace;\n\
+      \   <span class=\"kw1\">local</span> <span class=\"kw5\">vector</span> MouseDirection;\n\
+      \ \n   <span class=\"co1\">// This is right, we divide by ScreenWidth/2 for\
+      \ both x and y.</span>\n   MouseDirection.<span class=\"me0\">X</span> <span\
+      \ class=\"sy0\">=</span> <span class=\"nu0\">1</span> <span class=\"sy0\">/</span>\
+      \ <span class=\"kw3\">tan</span><span class=\"br0\">(</span>FovAngle<span class=\"\
+      sy0\">/</span><span class=\"nu0\">2</span><span class=\"sy0\">/</span><span\
+      \ class=\"nu0\">180</span><span class=\"sy0\">*</span><span class=\"kw6\">Pi</span><span\
+      \ class=\"br0\">)</span>;\n   MouseDirection.<span class=\"me0\">Y</span> <span\
+      \ class=\"sy0\">=</span> <span class=\"br0\">(</span>MouseX <span class=\"sy0\"\
+      >-</span> ScreenWidth <span class=\"sy0\">/</span> <span class=\"nu0\">2</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">/</span> <span class=\"br0\">(</span>ScreenWidth\
+      \ <span class=\"sy0\">/</span> <span class=\"nu0\">2</span><span class=\"br0\"\
+      >)</span>;\n   MouseDirection.<span class=\"me0\">Z</span> <span class=\"sy0\"\
+      >=</span> <span class=\"sy0\">-</span><span class=\"br0\">(</span>MouseY <span\
+      \ class=\"sy0\">-</span> ScreenHeight <span class=\"sy0\">/</span> <span class=\"\
+      nu0\">2</span><span class=\"br0\">)</span> <span class=\"sy0\">/</span> <span\
+      \ class=\"br0\">(</span>ScreenWidth <span class=\"sy0\">/</span> <span class=\"\
+      nu0\">2</span><span class=\"br0\">)</span>;\n \n   MouseDirection <span class=\"\
+      sy0\">=</span> <span class=\"kw3\">Normal</span><span class=\"br0\">(</span>MouseDirection<span\
+      \ class=\"br0\">)</span>;\n \n   StartTrace <span class=\"sy0\">=</span> <span\
+      \ class=\"kw7\">Location</span>;\n   StartTrace.<span class=\"me0\">Z</span>\
+      \ <span class=\"sy0\">+=</span> BaseEyeHeight;\n \n   <span class=\"co1\">//\
+      \ Spawn( class'UnrealShare.FatRing',,,StartTrace + 500 *(MouseDirection &gt;&gt;\
+      \ ViewRotation) );</span>\n \n   EndTrace <span class=\"sy0\">=</span> StartTrace\
+      \ <span class=\"sy0\">+</span> <span class=\"br0\">(</span>MouseDirection <span\
+      \ class=\"sy0\">&gt;&gt;</span> ViewRotation<span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">*</span> <span class=\"nu0\">1000.0</span>;\n   Other <span\
+      \ class=\"sy0\">=</span> <span class=\"kw4\">Trace</span><span class=\"br0\"\
+      >(</span>HitLocation, HitNormal, EndTrace, StartTrace, <span class=\"kw6\">true</span><span\
+      \ class=\"br0\">)</span>;\n \n   <span class=\"kw2\">return</span> Other;\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>The UT2003 class <a href=\"\
+      /Legacy:Interaction\" title=\"Legacy:Interaction\">Interaction</a> comes with\
+      \ the functions ScreenToWorld and WorldToScreen. These functions are meant to\
+      \ do the above conversions.</p>\n<p><b>A word of warning, if you override the\
+      \ CalcPlayerView function and don't set ViewActor to something then the engine\
+      \ will crash when calling ScreenToWorld and WorldToScreen.</b></p>\n<p><b>Foxpaw:</b>\
+      \ I had a question but I realize now that this was a function you wrote yourself,\
+      \ not one that epic included.</p>\n<p><b>Wormbo:</b> To quote your original\
+      \ question:</p>\n<blockquote class=\"legacyquote\">\n<p>Why do you suppose epic\
+      \ used a different computation to align the targeting reticles on the redeemer\
+      \ view? I'm curious if this method might have a drawback that makes it unfeasable\
+      \ in that application?</p>\n</blockquote>\n<p>The method Epic used for the Redeemer\
+      \ was way too inaccurate for what I needed in Rockets UT, so I wrote MapToHUD.\
+      \ The only drawback of this function might be the difficult syntax, but I never\
+      \ saw any other accurate world -&gt; screen conversion before.</p>\n<p><b>Daid303:</b>\
+      \ I'm wondering, there are 2 totaly diffrent methodes used above here, but they\
+      \ both seem to give the same result. Is there a diffrence? in accuracy maybe,\
+      \ or speed?</p>\n<p><b>UArch</b> its a little unrelated but ive adapted the\
+      \ mousetrace function for another use, is there any way to have it trace out\
+      \ in a fisheye-style fov instead?&#160;:0</p>\n<p><b>Xian:</b> Although this\
+      \ is trivial, I was wondering... Isn't it better (optimization-wise) to do</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span><span class=\"kw4\">FastTrace</span><span class=\"br0\"\
+      >(</span>CurrentTarget.<span class=\"kw7\">Location</span>,POV<span class=\"\
+      br0\">)</span>\n         <span class=\"sy0\">&amp;&amp;</span> MapToHUD<span\
+      \ class=\"br0\">(</span>DrawPos,P.<span class=\"me0\">ViewRotation</span>,P.<span\
+      \ class=\"me0\">FOVAngle</span>,Dir,<span class=\"kw8\">Canvas</span><span class=\"\
+      br0\">)</span><span class=\"br0\">)</span></pre></div>\n</div>\n<p>instead of</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span> MapToHUD<span class=\"br0\">(</span>DrawPos, P.<span\
+      \ class=\"me0\">ViewRotation</span>, P.<span class=\"me0\">FOVAngle</span>,\
+      \ Dir, <span class=\"kw8\">Canvas</span><span class=\"br0\">)</span>\n     \
+      \       <span class=\"sy0\">&amp;&amp;</span> <span class=\"kw4\">FastTrace</span><span\
+      \ class=\"br0\">(</span>CurrentTarget.<span class=\"kw7\">Location</span>, POV<span\
+      \ class=\"br0\">)</span> <span class=\"br0\">)</span></pre></div>\n</div>\n\
+      <p>That way, the game will only calculate if the Target is in front of us, instead\
+      \ of bothering to do all the coord coversions/calculus and then saying \"ah\
+      \ nevermind, the dude isn't in front of us\".</p>\n<p><b>Wormbo:</b> (Fast)Tracing\
+      \ is an expensive operation. It really depends on whether FastTrace() is faster\
+      \ than MapToHud(), but I'm pretty sure it's not.</p>\n<p><b>Xian:</b> Ah, I\
+      \ see what you mean&#160;:) Thanks.</p>\n<h2><span class=\"mw-headline\" id=\"\
+      Related_Classes\">Related Classes</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:MapToHUD?section=9\"\
+      \ title=\"Edit section: Related Classes\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<ul>\n<li><a href=\"/Legacy:Canvas_(UT)\" title=\"Legacy:Canvas\
+      \ (UT)\">Canvas (UT)</a></li>\n<li><a href=\"/Legacy:PlayerPawn\" title=\"Legacy:PlayerPawn\"\
+      >PlayerPawn</a></li>\n<li><a href=\"/Legacy:Canvas\" title=\"Legacy:Canvas\"\
+      >Canvas</a> (UT2003)</li>\n</ul>\n<h2><span class=\"mw-headline\" id=\"Related_Topics\"\
+      >Related Topics</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:MapToHUD?section=10\" title=\"Edit section:\
+      \ Related Topics\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <ul>\n<li><a href=\"/Legacy:Open_Source\" title=\"Legacy:Open Source\">Open\
+      \ Source</a></li>\n</ul>\n\n<!-- \nNewPP limit report\nCPU time usage: 0.204\
+      \ seconds\nReal time usage: 0.358 seconds\nPreprocessor visited node count:\
+      \ 122/1000000\nPreprocessor generated node count: 257/1000000\nPost‐expand include\
+      \ size: 502/2097152 bytes\nTemplate argument size: 203/2097152 bytes\nHighest\
+      \ expansion depth: 3/40\nExpensive parser function count: 0/100\n-->\n\n<!--\
+      \ \nTransclusion expansion time report (%,ms,calls,template)\n100.00%    5.141\
+      \      1 - -total\n100.00%    5.141      1 - Template:Innerbox\n-->\n\n<!--\
+      \ Saved in parser cache with key wiki:pcache:idhash:2034-0!*!0!!en!*!* and timestamp\
+      \ 20221117213025 and revision id 4961\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Interaction"
+  - ns: 100
+    exists: true
+    name: "Legacy:PlayerPawn"
+  - ns: 100
+    exists: true
+    name: "Legacy:UT2003"
+  - ns: 100
+    exists: true
+    name: "Legacy:Canvas (UT)"
+  - ns: 100
+    exists: true
+    name: "Legacy:Canvas"
+  - ns: 100
+    exists: true
+    name: "Legacy:Texture (UT)"
+  - ns: 100
+    exists: true
+    name: "Legacy:Open Source"
+  templates:
+  - ns: 10
+    exists: true
+    name: "Template:Innerbox"
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Parameters"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:MapToHUD"
+    byteoffset: 302
+    anchor: "Parameters"
+  - toclevel: 1
+    level: "2"
+    line: "Return Value"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:MapToHUD"
+    byteoffset: 994
+    anchor: "Return_Value"
+  - toclevel: 1
+    level: "2"
+    line: "Code"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:MapToHUD"
+    byteoffset: 1152
+    anchor: "Code"
+  - toclevel: 1
+    level: "2"
+    line: "Example"
+    number: "4"
+    index: "4"
+    fromtitle: "Legacy:MapToHUD"
+    byteoffset: 2439
+    anchor: "Example"
+  - toclevel: 1
+    level: "2"
+    line: "WorldToScreen"
+    number: "5"
+    index: "5"
+    fromtitle: "Legacy:MapToHUD"
+    byteoffset: 3425
+    anchor: "WorldToScreen"
+  - toclevel: 1
+    level: "2"
+    line: "Alternate version"
+    number: "6"
+    index: "6"
+    fromtitle: "Legacy:MapToHUD"
+    byteoffset: 4310
+    anchor: "Alternate_version"
+  - toclevel: 1
+    level: "2"
+    line: "Floating Names"
+    number: "7"
+    index: "7"
+    fromtitle: "Legacy:MapToHUD"
+    byteoffset: 5909
+    anchor: "Floating_Names"
+  - toclevel: 1
+    level: "2"
+    line: "MouseTrace"
+    number: "8"
+    index: "8"
+    fromtitle: "Legacy:MapToHUD"
+    byteoffset: 7344
+    anchor: "MouseTrace"
+  - toclevel: 1
+    level: "2"
+    line: "Related Classes"
+    number: "9"
+    index: "9"
+    fromtitle: "Legacy:MapToHUD"
+    byteoffset: 10714
+    anchor: "Related_Classes"
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "10"
+    index: "10"
+    fromtitle: "Legacy:MapToHUD"
+    byteoffset: 10843
+    anchor: "Related_Topics"
+  displaytitle: "Legacy:MapToHUD"
+  iwlinks: []
+  wikitext:
+    text: "The MapToHUD function calculates screen coordinates based on a directional\
+      \ vector, the view rotation, the FOV and the target [[Legacy:Canvas|Canvas]].\n\
+      \n'''Note:''' In [[Legacy:UT2003|UT2003]] you can and should use the WorldToScreen\
+      \ function of the Canvas or [[Legacy:Interaction|Interaction]] class.\n\n==Parameters\
+      \ ==\n; out vector Result : The X and Y components of this vector will contain\
+      \ the absolute canvas coordinates calculated by the function.\n; rotator ViewRotation\
+      \ : The rotation of the camera.\n; float FOV : The FOV of the camera. This value\
+      \ must be specified in degrees like the [[Legacy:PlayerPawn|PlayerPawn]]'s FOVAngle\
+      \ property.\n; vector TargetDir : A vector pointing from the camera's location\
+      \ to the location which should be converted to screen coordinates. For [[Legacy:PlayerPawn|PlayerPawn]]s\
+      \ this is <code>PlayerPawn.Location + PlayerPawn.EyeHeight * vect(0,0,1)</code>.\n\
+      ; [[Legacy:Canvas|Canvas]] Canvas : The [[Legacy:Canvas|Canvas]] the coordinates\
+      \ are calculated for.\n\n==Return Value ==\n\nThe function returns whether the\
+      \ coordinates it calculated are on the screen or not. This is only reliable\
+      \ for FOV values less than 180°.\n\n==Code ==\n\n<uscript>\n/********************************************************************************\n\
+      * Converts a given directional vector to canvas coordinates.               \
+      \     *\n* X and Y values of the returned vector contain absolute coordinates.\
+      \           *\n* The function returns, whether the target direction is visible\
+      \ for the player. *\n* Created by Wormbo                                   \
+      \                          *\n********************************************************************************/\n\
+      simulated function bool MapToHUD(out vector Result, rotator ViewRotation, float\
+      \ FOV, vector TargetDir, Canvas Canvas)\n{\n\tlocal float TanFOVx, TanFOVy;\n\
+      \tlocal float TanX, TanY;\n\tlocal float dx, dy;\n\tlocal vector X, Y, Dir,\
+      \ XY;\n\t\n\tTanFOVx = Tan(FOV * Pi / 360);\n\tTanFOVy = (Canvas.ClipY / Canvas.ClipX)\
+      \ * TanFOVx;\n\tGetAxes(ViewRotation, Dir, X, Y);\n\t\n\tDir *= TargetDir dot\
+      \ Dir;\n\tXY = TargetDir - Dir;\n\tdx = XY dot X;\n\tdy = XY dot Y;\n\t\n\t\
+      TanX = dx / VSize(dir);\n\tTanY = dy / VSize(dir);\n\t\n\tResult.X = Canvas.ClipX\
+      \ * 0.5 * (1 + TanX / TanFOVx);\n\tResult.Y = Canvas.ClipY * 0.5 * (1 - TanY\
+      \ / TanFOVy);\n\t\n\treturn Dir dot vector(ViewRotation) > 0 && Result.X ==\
+      \ FClamp(Result.X, Canvas.OrgX, Canvas.ClipX)\n\t\t\t&& Result.Y == FClamp(Result.Y,\
+      \ Canvas.OrgY, Canvas.ClipY);\n}\n</uscript>\n\n==Example ==\n\nIn this example\
+      \ CurrentTarget is a targeted actor (e.g. another player) and Reticle is a [[Legacy:Texture\
+      \ (UT)|Texture (UT)]] which will be drawn with its center at the target's location.\
+      \ It will only be drawn when the target is on screen (return value of MapToHUD)\
+      \ and there's no level geometry between the point of vision and the target (FastTrace).\n\
+      \nReticle.USize and .VSize are the width and height of the texture.\n\n<uscript>\n\
+      simulated function PostRender(canvas Canvas)\n{\n\tlocal vector dir, POV, DrawPos;\n\
+      \tlocal PlayerPawn P;\n\t\n\tP = PlayerPawn(Owner);\n\tif ( P == None || CurrentTarget\
+      \ == None )\n\t\treturn;\n\t\n\tPOV = Owner.Location + vect(0,0,1) * P.EyeHeight;\n\
+      \tDir = CurrentTarget.Location - POV; // direction to target\n\t\n\tif ( MapToHUD(DrawPos,\
+      \ P.ViewRotation, P.FOVAngle, Dir, Canvas)\n\t\t\t&& FastTrace(CurrentTarget.Location,\
+      \ POV) ) {\n\t\tCanvas.SetPos(DrawPos.X - Reticle.USize * 0.5, DrawPos.Y - Reticle.VSize\
+      \ * 0.5);\n\t\tCanvas.DrawIcon(Reticle, 1.0);\n\t}\n}\n</uscript>\n\n==WorldToScreen==\n\
+      \nThe MapToHUD function can be used to create UT2003's WorldToScreen function\
+      \ for UT. (In case you prefer using that.)\n\n<uscript>\n/********************************************************************************\n\
+      * Converts a given world location to canvas coordinates.                   \
+      \     *\n* X and Y values of the returned vector contain absolute coordinates.\
+      \           *\n* Created by Wormbo                                         \
+      \                    *\n********************************************************************************/\n\
+      simulated function vector WorldToScreen(Canvas C, vector WorldLoc)\n{\n\tlocal\
+      \ vector CamLoc, ScreenLoc;\n\tlocal rotator CamRot;\n\tlocal Actor Camera;\n\
+      \t\n\tC.ViewPort.Actor.PlayerCalcView(Camera, CamLoc, CamRot);\n\tMapToHUD(ScreenLoc,\
+      \ CamRot, C.ViewPort.Actor.FOVAngle, Normal(WorldLoc - CamLoc), C);\n\t\n\t\
+      return ScreenLoc;\n}\n</uscript>\n\n==Alternate version==\n\nHere's an alternate\
+      \ version that I cooked up for Esc.  I put it in the base HUD class:\n\n<uscript>\n\
+      // Created by M.C. Spanky, aka Martin C. Martin, for Esc (www.esconline.org)\n\
+      \nsimulated static function bool WorldToScreen(Vector WorldLocation, Pawn ThePlayer,\
+      \ \n     float ScreenWidth, float ScreenHeight, out float X, out float Y)\n\
+      {\n   local vector EyePos, RelativeToPlayer;\n   local float Scale;\n\n   EyePos\
+      \ = ThePlayer.Location;\n   EyePos.Z += ThePlayer.BaseEyeHeight; // Maybe ThePlayer.EyeHeight\
+      \ instead?\n\n   RelativeToPlayer = (WorldLocation - EyePos) << ThePlayer.ViewRotation;\n\
+      \n   if (RelativeToPlayer.X < 0.01)\n      return false;\n\n   Scale = (ScreenWidth\
+      \ / 2) / Tan(ThePlayer.FovAngle/2/180*Pi);\n\n   X = RelativeToPlayer.Y / RelativeToPlayer.X\
+      \ * Scale + ScreenWidth / 2;\n   Y = - RelativeToPlayer.Z / RelativeToPlayer.X\
+      \ * Scale + ScreenHeight / 2;\n\n   return true;\n}\n</uscript>\n\nTo call it\
+      \ from the HUD, you could do something like this:\n\nlocal float X, Y;\n\nWorldToScreen(<trace\
+      \ result>, Pawn(Owner), Canvas.ClipX, Canvas.ClipY, X, Y);\n\nA couple notes:\n\
+      \n-It returns \"false\" if the WorldLocation is behind the player (or so close\
+      \ that we risk a division by zero.)-\n\n-This assumes that you're in first person\
+      \ view, i.e. not in a cut scene or bBehindView. It should be easy enough to\
+      \ find the \"true\" camera location & rotation & FOV in all cases, by looking\
+      \ at the player's ViewTarget. I'm unsure of the details, so I'll leave that\
+      \ to you. :)-\n\n-Canvas.Clip[XY] don't always equal the screen resolution,\
+      \ although they usually do, and I can't find a better pair of vars.-\n\n==Floating\
+      \ Names==\n\nHere's an example of how to use it, some really simple \"floating\
+      \ names\" code. Put this in your HUD:\n\n<uscript>\n// Created by M.C. Spanky,\
+      \ aka Martin C. Martin, for Esc (www.esconline.org)\nsimulated function PostRender(\
+      \ canvas Canvas )\n{\n   local Pawn thisPawn;\n   local float X, Y;\n   local\
+      \ float W, H;\n   local bool bOnScreen;\n   local vector worldPosition;\n\n\
+      \   Super.PostRender(Canvas);\n   for (thisPawn = Level.PawnList; thisPawn !=\
+      \ None; thisPawn = thisPawn.NextPawn) {\n      worldPosition = thisPawn.Location;\n\
+      \      worldPosition.Z += thisPawn.CollisionHeight;\n      bOnScreen = WorldToScreen(worldPosition,\
+      \ Pawn(Owner), Canvas.ClipX, Canvas.ClipY, X, Y);\n      if (bOnScreen && X\
+      \ > 0 && X < Canvas.ClipX && Y > 0 && Y < Canvas.ClipY) {\n         Canvas.SetPos(0,\
+      \ 0);\n         Canvas.TextSize(thisPawn.MenuName, W, H);\n         Canvas.SetPos(X\
+      \ - W/2, Y - H/2);\n         Canvas.DrawText(thisPawn.MenuName, false);\n  \
+      \    }\n   }\n}\n</uscript>\n\n(If you already have a PostRender(), merge it\
+      \ with that.) Start a level and spawn some Kralls or Nalis or whatever puts\
+      \ a glide in your stride and a dip in your hip. The name will be in the right\
+      \ place no matter whether they're above you and looking up or below you and\
+      \ looking down. You'll even see your own name above you if you look up. :)\n\
+      \n'''Xian:''' Thought I should mention that the above code would not work online\
+      \ as Level.PawnList is inaccessible client-side.\n\n==MouseTrace==\n\nHere's\
+      \ a function that goes the other way: given an X and Y on the screen, it figures\
+      \ out what direction in space this corresponds to, and does a trace to find\
+      \ the first actor along that direction. Esc uses this so that you can click\
+      \ on another player to select them. This one's written to be in PlayerPawn,\
+      \ but you could modify it to take the player as an arg, as above.\n\n<uscript>\n\
+      simulated function Actor MouseTrace(float MouseX, float MouseY, float ScreenWidth,\
+      \ float ScreenHeight)\n{\n   local Actor Other;\n   local vector HitLocation,\
+      \ HitNormal, StartTrace, EndTrace;\n   local vector MouseDirection;\n\n   //\
+      \ This is right, we divide by ScreenWidth/2 for both x and y.\n   MouseDirection.X\
+      \ = 1 / tan(FovAngle/2/180*Pi);\n   MouseDirection.Y = (MouseX - ScreenWidth\
+      \ / 2) / (ScreenWidth / 2);\n   MouseDirection.Z = -(MouseY - ScreenHeight /\
+      \ 2) / (ScreenWidth / 2);\n\n   MouseDirection = Normal(MouseDirection);\n\n\
+      \   StartTrace = Location;\n   StartTrace.Z += BaseEyeHeight;\n\n   // Spawn(\
+      \ class'UnrealShare.FatRing',,,StartTrace + 500 *(MouseDirection >> ViewRotation)\
+      \ );\n\n   EndTrace = StartTrace + (MouseDirection >> ViewRotation) * 1000.0;\n\
+      \   Other = Trace(HitLocation, HitNormal, EndTrace, StartTrace, true);\n\n \
+      \  return Other;\n}\n</uscript>\n\nThe UT2003 class [[Legacy:Interaction|Interaction]]\
+      \ comes with the functions ScreenToWorld and WorldToScreen. These functions\
+      \ are meant to do the above conversions.\n\n'''A word of warning, if you override\
+      \ the CalcPlayerView function and don't set ViewActor to something then the\
+      \ engine will crash when calling ScreenToWorld and WorldToScreen.'''\n\n'''Foxpaw:'''\
+      \ I had a question but I realize now that this was a function you wrote yourself,\
+      \ not one that epic included.\n\n'''Wormbo:''' To quote your original question:\n\
+      \n{{innerbox|Why do you suppose epic used a different computation to align the\
+      \ targeting reticles on the redeemer view? I'm curious if this method might\
+      \ have a drawback that makes it unfeasable in that application?\n\n}}\n\nThe\
+      \ method Epic used for the Redeemer was way too inaccurate for what I needed\
+      \ in Rockets UT, so I wrote MapToHUD. The only drawback of this function might\
+      \ be the difficult syntax, but I never saw any other accurate world -> screen\
+      \ conversion before.\n\n'''Daid303:''' I'm wondering, there are 2 totaly diffrent\
+      \ methodes used above here, but they both seem to give the same result. Is there\
+      \ a diffrence? in accuracy maybe, or speed?\n\n'''UArch''' its a little unrelated\
+      \ but ive adapted the mousetrace function for another use, is there any way\
+      \ to have it trace out in a fisheye-style fov instead? :0\n\n'''Xian:''' Although\
+      \ this is trivial, I was wondering... Isn't it better (optimization-wise) to\
+      \ do\n\n<uscript>if (FastTrace(CurrentTarget.Location,POV)\n         && MapToHUD(DrawPos,P.ViewRotation,P.FOVAngle,Dir,Canvas))</uscript>\n\
+      \ninstead of \n\n<uscript>if ( MapToHUD(DrawPos, P.ViewRotation, P.FOVAngle,\
+      \ Dir, Canvas)\n            && FastTrace(CurrentTarget.Location, POV) )</uscript>\n\
+      \nThat way, the game will only calculate if the Target is in front of us, instead\
+      \ of bothering to do all the coord coversions/calculus and then saying \"ah\
+      \ nevermind, the dude isn't in front of us\".\n\n'''Wormbo:''' (Fast)Tracing\
+      \ is an expensive operation. It really depends on whether FastTrace() is faster\
+      \ than MapToHud(), but I'm pretty sure it's not.\n\n'''Xian:''' Ah, I see what\
+      \ you mean :) Thanks.\n\n==Related Classes==\n* [[Legacy:Canvas (UT)|Canvas\
+      \ (UT)]]\n* [[Legacy:PlayerPawn|PlayerPawn]]\n* [[Legacy:Canvas|Canvas]] (UT2003)\n\
+      \n==Related Topics==\n* [[Legacy:Open Source|Open Source]]"
+  properties: []
+  revId: 4961
+name: "Legacy:MapToHUD"
+revision:
+  revid: 4961
+  parentid: 4962
+  user: "Xian"
+  timestamp: 1200828228.000000000
+  comment: "Level.PawnList used CS"
+timestamp: 1668764834.719279000

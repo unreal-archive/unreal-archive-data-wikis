@@ -1,0 +1,1018 @@
+---
+parse:
+  title: "Legacy:Playing Mesh Animations"
+  text:
+    text: "<p><i>I tried for nearly a month to figure out how to do this and finally\
+      \ came to the conclusion that there is no one tutorial out there that tells\
+      \ you how to get an Animated Static Mesh into the Unreal game. All of the information\
+      \ was scattered in bits and pieces here and there. I decided that instead of\
+      \ squirreling the information away and becoming highly in demand in the field\
+      \ of Unreal gaming development, like a sucker, I would just give it away on\
+      \ the Wiki, so other young punks can take advantage of all my heartache and\
+      \ hard work.</i></p>\n<p><b>Musicalglass</b>: The final tutorial you see here\
+      \ has been modified several times over. I came here with a roughly working solution\
+      \ based on what info I could find, and a lot of questions. Thanks largely to\
+      \ the contributions of Foxpaw and Chip, it has been synthesized into a new solution\
+      \ than the traditional method of extending a decoration or mover class, etc.\
+      \ thereby eliminating declaring a lot of unnecessary variables with each new\
+      \ actor.</p>\n<p><b>Solid Snake</b>: Well, your kind of missing the point of\
+      \ static meshes if your trying to animate them as such. The keyword is static.\
+      \ They don't change. Once you start animating things your changing the mesh\
+      \ as such...</p>\n<hr />\n<p>This tutorial deals specifically with getting an\
+      \ Animated SkeletalMesh to actually play in the game Unreal. I will also show\
+      \ you how to attach a trigger, and use a few different trigger conditions.</p>\n\
+      <p>As of this writing, in the current Editor (UT2003) it is impossible to get\
+      \ an animation into and have it play in the game. That is, not without getting\
+      \ your feet wet with Unreal Script.</p>\n<p></p>\n<div id=\"toc\" class=\"toc\"\
+      >\n<div id=\"toctitle\">\n<h2>Contents</h2>\n</div>\n<ul>\n<li class=\"toclevel-1\
+      \ tocsection-1\"><a href=\"#Prerequisites\"><span class=\"tocnumber\">1</span>\
+      \ <span class=\"toctext\">Prerequisites</span></a></li>\n<li class=\"toclevel-1\
+      \ tocsection-2\"><a href=\"#Compatible_Applications\"><span class=\"tocnumber\"\
+      >2</span> <span class=\"toctext\">Compatible Applications</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-3\"><a href=\"#The_Unreal_World_of_Scripting\"\
+      ><span class=\"tocnumber\">3</span> <span class=\"toctext\">The Unreal World\
+      \ of Scripting</span></a></li>\n<li class=\"toclevel-1 tocsection-4\"><a href=\"\
+      #Animated_Actor_Script\"><span class=\"tocnumber\">4</span> <span class=\"toctext\"\
+      >Animated Actor Script</span></a></li>\n<li class=\"toclevel-1 tocsection-5\"\
+      ><a href=\"#Exporting_with_ActorX\"><span class=\"tocnumber\">5</span> <span\
+      \ class=\"toctext\">Exporting with ActorX</span></a></li>\n<li class=\"toclevel-1\
+      \ tocsection-6\"><a href=\"#Assemble_in_the_Animation_Manager\"><span class=\"\
+      tocnumber\">6</span> <span class=\"toctext\">Assemble in the Animation Manager</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-7\"><a href=\"#Compile_Your_Script\"><span\
+      \ class=\"tocnumber\">7</span> <span class=\"toctext\">Compile Your Script</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-8\"><a href=\"#Placing_your_AnimatedActor\"\
+      ><span class=\"tocnumber\">8</span> <span class=\"toctext\">Placing your AnimatedActor</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-9\"><a href=\"#Subclassing_from_Unreal_Editor_-_Looping_Animation_Script\"\
+      ><span class=\"tocnumber\">9</span> <span class=\"toctext\">Subclassing from\
+      \ Unreal Editor - Looping Animation Script</span></a>\n<ul>\n<li class=\"toclevel-2\
+      \ tocsection-10\"><a href=\"#Adding_a_Trigger\"><span class=\"tocnumber\">9.1</span>\
+      \ <span class=\"toctext\">Adding a Trigger</span></a></li>\n<li class=\"toclevel-2\
+      \ tocsection-11\"><a href=\"#Trigger_On_.26_Off_.26_On...\"><span class=\"tocnumber\"\
+      >9.2</span> <span class=\"toctext\">Trigger On &amp; Off &amp; On...</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-12\"><a href=\"#Finish_Playing_First\"><span\
+      \ class=\"tocnumber\">9.3</span> <span class=\"toctext\">Finish Playing First</span></a></li>\n\
+      </ul>\n</li>\n<li class=\"toclevel-1 tocsection-13\"><a href=\"#Related_Topics\"\
+      ><span class=\"tocnumber\">10</span> <span class=\"toctext\">Related Topics</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-14\"><a href=\"#Discussion\"><span class=\"\
+      tocnumber\">11</span> <span class=\"toctext\">Discussion</span></a>\n<ul>\n\
+      <li class=\"toclevel-2 tocsection-15\"><a href=\"#Under_Development\"><span\
+      \ class=\"tocnumber\">11.1</span> <span class=\"toctext\">Under Development</span></a></li>\n\
+      </ul>\n</li>\n</ul>\n</div>\n<p></p>\n<h2><span class=\"mw-headline\" id=\"\
+      Prerequisites\">Prerequisites</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Playing_Mesh_Animations?section=1\"\
+      \ title=\"Edit section: Prerequisites\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>First we will assume a few things:</p>\n<ol>\n<li>You\
+      \ know what the <a href=\"/Legacy:Animation_Browser\" title=\"Legacy:Animation\
+      \ Browser\">Animation Browser</a> is, you've seen animations play in the window\
+      \ and can't figure out how to actually get one into your Map</li>\n<li>You've\
+      \ already worked with regular <a href=\"/Legacy:Static_Mesh\" title=\"Legacy:Static\
+      \ Mesh\">Static Meshes</a> and know how to apply Textures and get those into\
+      \ your Map OK</li>\n<li>You are familiar with a 3D application or are trying\
+      \ to learn how to use <a href=\"/Legacy:Maya\" title=\"Legacy:Maya\">Maya</a>\
+      \ PLE and have your own animation you would like to get into the game.</li>\n\
+      </ol>\n<p>We will not assume that you know how to extend Actor Classes or run\
+      \ a compiler from a command prompt or know much of anything about programming\
+      \ for that matter.</p>\n<h2><span class=\"mw-headline\" id=\"Compatible_Applications\"\
+      >Compatible Applications</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Playing_Mesh_Animations?section=2\"\
+      \ title=\"Edit section: Compatible Applications\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>Currently the only application which can export mesh\
+      \ animations compatible with Unreal is Milkshape, a little $25 3D application.\
+      \ Milkshape is also useful if you want to export any of the existing models\
+      \ that come with Unreal and convert to another format. Of note, it is also compatible\
+      \ with gMax files, the free version of 3DSMax.</p>\n<p>If you're using Max or\
+      \ Maya, you'll need the ActorX plugin.</p>\n<p>Users of Lightwave etc. would\
+      \ have to be able to export their models to one of the above formats.</p>\n\
+      <p><b>Can I do it for free?</b>: You may have noticed that Maya PLE comes on\
+      \ the discs with Unreal. If you're familiar with Photoshop LE, etc. you're probably\
+      \ thinking that this is some kind of stripped down light version of Maya. Actually\
+      \ it is the complete version of Maya in all repects identical to the full version\
+      \ costing thousands of dollars, except for a few minor things:</p>\n<ol>\n<li>You\
+      \ don't get a couple of extra features, such as hair and cloth simulation.</li>\n\
+      <li>Everything you try to output will have a very visible watermark over it,\
+      \ as well as everything you see in the viewports, preventing you from being\
+      \ able to take a screenshot of your work.</li>\n</ol>\n<p>However, everything\
+      \ you export to the game Unreal using the preloaded ActorX plugin will be perfectly\
+      \ usable. If you're considering a career in 3D, whether it be for games or movies\
+      \ or whatever, the industry will just as soon consider hiring someone with work\
+      \ which has a watermark all over it, if it's good modeling or animation.</p>\n\
+      <h2><span class=\"mw-headline\" id=\"The_Unreal_World_of_Scripting\">The Unreal\
+      \ World of Scripting</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Playing_Mesh_Animations?section=3\" title=\"\
+      Edit section: The Unreal World of Scripting\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>OK, ready to get your feet wet with some hardcore\
+      \ coding?</p>\n<p>Actually, we're going to let the folks at Epic provide most\
+      \ of our code for us, we just want to tack on a little extra. Traditionally,\
+      \ this has been acomplished by embedding links to all the model data using one\
+      \ of the extensions of the Actor class, such as a Decoration or Mover class.\
+      \ When I looked at the scripts for these methods it seemed that each class had\
+      \ a ton of extra varables associated with it which had nothing to do with the\
+      \ simple task of getting an animation to play. It occurred to me that a new\
+      \ extention to the Actor class specifically for various animation purposes would\
+      \ be useful. I suggested it on this Wiki and, with the help of Foxpaw and Chip\
+      \ have developed just that: an AnimatedActor class.</p>\n<p>So we're going to\
+      \ make a very simple script and then compile it.</p>\n<p>There are two methods\
+      \ to compile a script;</p>\n<ol>\n<li>the fairly simple method of compiling\
+      \ from the Unreal Editor</li>\n<li>the slightly more technical method of compiling\
+      \ using ucc make from the DOS command prompt.</li>\n</ol>\n<p>Unfortunately\
+      \ since we are declaring some new variables, we must use the second method first.\
+      \ However, in order to avoid having to recompile each time from the command\
+      \ prompt, in keeping with the spirit of Object Oriented Programming we will\
+      \ compile a script which does one thing: display a simple placebo static mesh\
+      \ animation, this will act as a placeholder which you can swap for any animation\
+      \ you want later. Once we have the simple dummy script, we can further extend\
+      \ that into new variations like TriggerAnimatedActor. These simple extensions\
+      \ can be quickly compiled from the Editor.</p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Animated_Actor_Script\">Animated Actor Script</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Playing_Mesh_Animations?section=4\"\
+      \ title=\"Edit section: Animated Actor Script\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>First, copy the following script, open up Notepad\
+      \ or your favorite <a href=\"/Legacy:Text_Editor\" title=\"Legacy:Text Editor\"\
+      >text editor</a> and paste:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">class</span> AnimatedActor <span class=\"kw1\">extends</span> <span class=\"\
+      kw9\">Actor</span>\n    <span class=\"kw1\">placeable</span>;\n \n<span class=\"\
+      co1\">// You can manually add a trigger state here for one time use or </span>\n\
+      <span class=\"co1\">//  extend this class with a library of various AnimatedActor\
+      \ triggers </span>\n \n<span class=\"kw1\">var</span><span class=\"br0\">(</span>InitialAnimation<span\
+      \ class=\"br0\">)</span> <span class=\"kw5\">name</span> AnimName; \n<span class=\"\
+      kw1\">var</span><span class=\"br0\">(</span>InitialAnimation<span class=\"br0\"\
+      >)</span> <span class=\"kw5\">float</span> AnimRate; \n<span class=\"kw1\">var</span>\
+      \ <span class=\"kw5\">bool</span> TogglePlay;\n \n <span class=\"kw1\">defaultproperties</span>\
+      \ \n <span class=\"br0\">{</span>\n     bStatic<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">False</span> \n     bNoDelete<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">True</span> \n     bStasis<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">False</span> \n \n     <span class=\"kw7\">DrawType</span><span\
+      \ class=\"sy0\">=</span><span class=\"kw7\">DT_Mesh</span> \n     <span class=\"\
+      kw5\">Mesh</span><span class=\"sy0\">=</span><span class=\"kw5\">SkeletalMesh</span><span\
+      \ class=\"st0\">'myRotatingCube.myCubeMesh'</span> \n \n     AnimName<span class=\"\
+      sy0\">=</span><span class=\"st0\">'AnimSeq'</span> \n     AnimRate<span class=\"\
+      sy0\">=</span><span class=\"nu0\">1</span> \n     TogglePlay<span class=\"sy0\"\
+      >=</span><span class=\"kw6\">True</span> \n <span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>You will save the file as a text file, only instead of the .txt extension,\
+      \ change it to .uc</p>\n<p>Do Save As, find your UT2003 folder on your hard\
+      \ drive and create a new folder in there called AnimatedActor. Inside that create\
+      \ 3 more folders called Classes, Models and Textures. Save as AnimatedActor.uc\
+      \ in YourHardDrive:/UT2003/AnimatedActor/Classes.</p>\n<p>We're just about ready\
+      \ to compile, but first we need to create the Animation Package and replace\
+      \ the PackageName.SkeletalMeshName. I could have just as easily typed that in\
+      \ there for you, but I wanted you to see the relationship to the Animation Browser.</p>\n\
+      <h2><span class=\"mw-headline\" id=\"Exporting_with_ActorX\">Exporting with\
+      \ ActorX</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Playing_Mesh_Animations?section=5\" title=\"\
+      Edit section: Exporting with ActorX\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>To begin with for the purpose of this tutorial, we\
+      \ will start with a very simple exported animation. This will be your dummy\
+      \ animation for the purpose of compiling a placeable mesh into your script.\
+      \ Make a quick 256 X 256 Texture in Photoshop or your favorite graphics app,\
+      \ something quick like a gradient or something, don't get all artsy on me, and\
+      \ save it as a .tga file in YourHardDrive:/UT2003/AnimatedActor/Textures. In\
+      \ your 3D application, first make a simple polygon cube, triangulate and texture\
+      \ your model and add a single bone skeleton. Set a keyframe on frame 0, go to\
+      \ frame 4, rotate it 360 degrees and set a keyframe. and you are ready for export.\
+      \ (Remember if your model consists of parts they must first be grouped, N/A\
+      \ here)</p>\n<p>Assuming you are using Max or Maya:</p>\n<p>In the 3D application's\
+      \ command line, type:</p>\n<pre>axmain\n</pre>\n<p>This brings up the ActorX\
+      \ window and you can export your model as myCubeMesh.PSK in YourHardDrive:/UT2003/AnimatedActor/Models.\
+      \ To export your animation, we'll set the File Name ( myCubeAnim ) the sequence\
+      \ name ( AnimSeq ) and the range ( 1-4 ) Note, we didn't include frame zero,\
+      \ as it is identical to frame 4. This is how to make a perfect looping animation.\
+      \ Click the Digest Animation button, open the animation manager, transfer it\
+      \ from the Animations to the Output Package folder and Save as myCubeAnim.PSA.</p>\n\
+      <h2><span class=\"mw-headline\" id=\"Assemble_in_the_Animation_Manager\">Assemble\
+      \ in the Animation Manager</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Playing_Mesh_Animations?section=6\"\
+      \ title=\"Edit section: Assemble in the Animation Manager\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<p>Now we will combine all the\
+      \ elements of our animation. Import your texture into the Texture Browser and\
+      \ save your texture package. Switch over to the Animation Browser and do File\
+      \ -&gt; Mesh Import. Open your myCubeMesh.PSK model.</p>\n<p>Let's call our\
+      \ Animation package RotatingCube. In the Mesh Properties down the right side,\
+      \ expand Skin -&gt; Material and click on (0) Some buttons appear. Click the\
+      \ Use button. If you don't see the Use button you may need to resize the window\
+      \ and everything in the Mesh tab will disappear. To get it back click on one\
+      \ of the other tabs and back again.</p>\n<p>Now do File -&gt; Animation Import\
+      \ and get your .PSA file into the same package.</p>\n<p>Do Edit -&gt; Link Up\
+      \ Animation and Mesh. Now if you expand Animation in the Mesh properties you\
+      \ should see the name of your animation.</p>\n<p>If it says None, you can make\
+      \ it pop in by going to File -&gt; Mesh import a second time, select the name\
+      \ of your file and click Cancel.</p>\n<p>Now that you have your texture and\
+      \ animation info associated with your Mesh you can save the animation package\
+      \ in Unreal's default Animation folder. Note in the Animation Browser window\
+      \ just above your model you can see the name of your package and mesh. It should\
+      \ read: RotatingCube.myCubeMesh. Now that we have a working animation and package\
+      \ name, we can use that as a temporary placeholder in our first script. So open\
+      \ up the script you created earlier, replace the PackageName and SkeletalMeshName\
+      \ with your own and save and you're ready to compile.</p>\n<h2><span class=\"\
+      mw-headline\" id=\"Compile_Your_Script\">Compile Your Script</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Playing_Mesh_Animations?section=7\"\
+      \ title=\"Edit section: Compile Your Script\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>OK, so far we've only spent something like an hour\
+      \ doing a simple thing like getting an animation into our map (or maybe weeks\
+      \ if it took you a while to locate this tutorial). Whatever! We're almost there.\
+      \ Our script is all ready to place in the game. We just need to compile it so\
+      \ Unreal can read it. Sounds intimidating if you're not a programmer but it's\
+      \ actually quite simple.</p>\n<p>First we need to tell the compiler what to\
+      \ compile, so with your text editor, Open UT2003/System/UT2003.ini. Scroll down\
+      \ to about line 350 or so and you see a list of package names to be compiled\
+      \ like this:</p>\n<p>EditPackages=Vehicles</p>\n<p>Underneath the last one in\
+      \ the list add a new line and insert your own edit package command to the list:</p>\n\
+      <p>EditPackages=Vehicles</p>\n<p>EditPackages=AnimatedActor</p>\n<p>Now save\
+      \ the file and go to your command prompt: On Windows, I believe you'll find\
+      \ that in your Start menu under Programs -&gt; Accessories.</p>\n<p>( I forget\
+      \ cause I moved mine long ago to the Start menu itself )</p>\n<p>In the command\
+      \ prompt enter:</p>\n<p>cd ut2003\\system (Note: backslash not forward slash)</p>\n\
+      <p>You should be taken to the Unreal system directory. Enter:</p>\n<p>ucc make</p>\n\
+      <p>Unreal should compile your script if all went well. If not you'll see an\
+      \ error in the command prompt window. If you do get an error and have to do\
+      \ something over, you may have to edit and save the UT2003.ini file again before\
+      \ compiling.</p>\n<h2><span class=\"mw-headline\" id=\"Placing_your_AnimatedActor\"\
+      >Placing your AnimatedActor</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Playing_Mesh_Animations?section=8\"\
+      \ title=\"Edit section: Placing your AnimatedActor\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<p>Open the Actor Class Browser:\
+      \ In the Actor Classes window do File -&gt; Open Package. You should find your\
+      \ newly compiled AnimatedActor.u Open it and expand the Actor hierarchy. You\
+      \ should now see your new AnimatedActor class in the list. Select it. Now you\
+      \ could right click in your map and select AnimatedActor and you should now\
+      \ be able to place your default cube into your map. Now that you have your AnimatedActor\
+      \ with a valid default Animation Package, you can open it up and swap out a\
+      \ different Animation Package by first placing it in the scene, then double\
+      \ click on it to open the AnimatedActor Properties, expand Display and update\
+      \ the SkeletalMesh.</p>\n<p>For extensibility, the AnimatedActor itself does\
+      \ not play the animation. In order to add more options to what you can do with\
+      \ the basic Actor you can now add extensions to the extension.</p>\n<h2><span\
+      \ class=\"mw-headline\" id=\"Subclassing_from_Unreal_Editor_-_Looping_Animation_Script\"\
+      >Subclassing from Unreal Editor - Looping Animation Script</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Playing_Mesh_Animations?section=9\"\
+      \ title=\"Edit section: Subclassing from Unreal Editor - Looping Animation Script\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>Copy\
+      \ the following script:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">class</span> LoopMovie <span class=\"kw1\">extends</span> AnimatedActor\n\
+      \    <span class=\"kw1\">placeable</span>;\n \n<span class=\"co1\">// ========================================</span>\n\
+      <span class=\"co1\">// This bit makes the Animation play automatically at startup</span>\n\
+      <span class=\"co1\">// ========================================</span>\n <span\
+      \ class=\"kw1\">simulated</span> <span class=\"kw1\">function</span> <span class=\"\
+      kw4\">PostBeginPlay</span><span class=\"br0\">(</span><span class=\"br0\">)</span>\
+      \ \n \n <span class=\"br0\">{</span> \n     <span class=\"kw4\">LoopAnim</span><span\
+      \ class=\"br0\">(</span> AnimName, AnimRate <span class=\"br0\">)</span>;\n\
+      \     <span class=\"kw6\">Super</span>.<span class=\"kw4\">PostBeginPlay</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n <span class=\"br0\"\
+      >}</span>\n<span class=\"co1\">// ========================================</span></pre></div>\n\
+      </div>\n<p>In the Actor Class Browser, right click on your AnimatedActor class\
+      \ and select New. Set the package to myLevel and the name to LoopMovie. Select\
+      \ the entire script and paste the new one. In the Script Editor window Do Tools\
+      \ -&gt; Compile Changed.</p>\n<p>That's it! Much simpler that the previous compiling\
+      \ method. You should now be able to add your newly compiled script to any map.\
+      \ When you start a new level it will not appear by default in the Actor Class\
+      \ browser. Simply import LoopMovie.u and it will automatically load the parent\
+      \ AnimatedActor class as well. Expand that, and you can have a whole list of\
+      \ subclasses.</p>\n<p>Now, <a href=\"/Legacy:Create_A_Room\" title=\"Legacy:Create\
+      \ A Room\">create a room</a> or open a map. Select LoopMovie from the Actor\
+      \ window and right click place in your scene. Your newly created default Skeletal\
+      \ Mesh Animation should pop into the scene. Double click on it to open it's\
+      \ properties. You will see in the LoopMovie Properties we have added a new category\
+      \ to Actor called InitialAnimation.</p>\n<p>Expand InitialAnimation and verify\
+      \ that the sequence name matches that of your animation (AnimSeq).</p>\n<p>You\
+      \ should now be able to play your map and see your movie play automatically.\
+      \ A pretty rapidly spinning cube. Go back to the editor and change the animation\
+      \ rate to a low number like 0.15. You should now have a much slower animation.\
+      \ Note how unreal interpolates the tweening instead of seeing a choppy 4 frame\
+      \ animation.</p>\n<p>Here's a few more subclasses of AnimatedActor you can add\
+      \ to your arsenal;</p>\n<h3><span class=\"mw-headline\" id=\"Adding_a_Trigger\"\
+      >Adding a Trigger</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Playing_Mesh_Animations?section=10\" title=\"\
+      Edit section: Adding a Trigger\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">class</span> TriggerMovieOn <span class=\"kw1\">extends</span> AnimatedActor\n\
+      \    <span class=\"kw1\">placeable</span>;\n \n<span class=\"co1\">// ========================================</span>\n\
+      <span class=\"co1\">// Trigger Animation On - Starts in the off state, then\
+      \ triggers on one time</span>\n<span class=\"co1\">// To make it on then off,\
+      \ swap the lines that say LoopAnim &amp; StopAnimating</span>\n<span class=\"\
+      co1\">// ========================================</span>\n<span class=\"kw1\"\
+      >simulated</span> <span class=\"kw1\">function</span> <span class=\"kw4\">PostBeginPlay</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      <span class=\"kw4\">StopAnimating</span><span class=\"br0\">(</span>  <span\
+      \ class=\"br0\">)</span>;\n     <span class=\"kw6\">Super</span>.<span class=\"\
+      kw4\">PostBeginPlay</span><span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">function</span> <span class=\"\
+      kw4\">Trigger</span><span class=\"br0\">(</span> <span class=\"kw9\">actor</span>\
+      \ Other, <span class=\"kw9\">pawn</span> EventInstigator <span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n     <span class=\"kw4\">LoopAnim</span><span\
+      \ class=\"br0\">(</span> AnimName, AnimRate <span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span>\n<span class=\"co1\">// ========================================</span></pre></div>\n\
+      </div>\n<p>In the Actor Class Browser, expand Trigger and select Trigger and\
+      \ add it to your scene. Open the Trigger properties and set the Event tag to\
+      \ TagName and the Tag to None. Open your animated mesh's properties and set\
+      \ the Tag to None and the Event to TagName.</p>\n<h3><span class=\"mw-headline\"\
+      \ id=\"Trigger_On_.26_Off_.26_On...\">Trigger On &amp; Off &amp; On...</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Playing_Mesh_Animations?section=11\" title=\"Edit section:\
+      \ Trigger On &amp; Off &amp; On...\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Here's a few more variations for trigger behaviour;</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">class</span> OnOffMovie\
+      \ <span class=\"kw1\">extends</span> AnimatedActor\n    <span class=\"kw1\"\
+      >placeable</span>;\n \n<span class=\"co1\">// ========================================</span>\n\
+      <span class=\"co1\">// Trigger Animation On &amp; Off &amp; On, etc....</span>\n\
+      <span class=\"co1\">// ========================================</span>\n<span\
+      \ class=\"co1\">// this section deativates the animation until triggered</span>\n\
+      <span class=\"co1\">// can be turned on &amp; off &amp; on, etc.</span>\n<span\
+      \ class=\"co1\">// once triggered off, it will stop immediately</span>\n<span\
+      \ class=\"co1\">// to make it start with the movie on, change TogglePlay=true\
+      \ to false in the default properties</span>\n \n<span class=\"kw1\">function</span>\
+      \ <span class=\"kw4\">Trigger</span><span class=\"br0\">(</span> <span class=\"\
+      kw9\">actor</span> Other, <span class=\"kw9\">pawn</span> EventInstigator <span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n<span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span>TogglePlay<span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n     <span class=\"kw4\">LoopAnim</span><span\
+      \ class=\"br0\">(</span> AnimName, AnimRate <span class=\"br0\">)</span>;\n\
+      \     TogglePlay<span class=\"sy0\">=</span><span class=\"kw6\">False</span>;\n\
+      <span class=\"br0\">}</span>\n<span class=\"kw2\">else</span>\n<span class=\"\
+      br0\">{</span>\n     <span class=\"kw4\">StopAnimating</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n     TogglePlay<span class=\"sy0\"\
+      >=</span><span class=\"kw6\">True</span>;\n<span class=\"br0\">}</span>\n<span\
+      \ class=\"br0\">}</span>\n<span class=\"co1\">// ========================================</span></pre></div>\n\
+      </div>\n<h3><span class=\"mw-headline\" id=\"Finish_Playing_First\">Finish Playing\
+      \ First</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Playing_Mesh_Animations?section=12\" title=\"\
+      Edit section: Finish Playing First\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">class</span> PlayAllMovie <span class=\"kw1\">extends</span> AnimatedActor\n\
+      \    <span class=\"kw1\">placeable</span>;\n<span class=\"co1\">// ========================================</span>\n\
+      <span class=\"co1\">// Trigger Animation on &amp; off - finish playing first</span>\n\
+      <span class=\"co1\">// ========================================</span>\n<span\
+      \ class=\"co1\">// this section deativates the animation until triggered</span>\n\
+      <span class=\"co1\">// can be turned on &amp; off &amp; on, etc.</span>\n<span\
+      \ class=\"co1\">// once triggered off, it will complete the animation before\
+      \ stopping</span>\n<span class=\"co1\">// to make it start with the movie on,\
+      \ change TogglePlay=true to false in the default properties</span>\n \n<span\
+      \ class=\"kw1\">function</span> <span class=\"kw4\">Trigger</span><span class=\"\
+      br0\">(</span> <span class=\"kw9\">actor</span> Other, <span class=\"kw9\">pawn</span>\
+      \ EventInstigator <span class=\"br0\">)</span>\n \n<span class=\"br0\">{</span>\
+      \ \n     <span class=\"kw2\">if</span> <span class=\"br0\">(</span>TogglePlay<span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n     <span class=\"\
+      kw4\">LoopAnim</span><span class=\"br0\">(</span> AnimName, AnimRate <span class=\"\
+      br0\">)</span>;\n     TogglePlay<span class=\"sy0\">=</span><span class=\"kw6\"\
+      >False</span>;\n<span class=\"br0\">}</span>\n<span class=\"kw2\">else</span>\n\
+      <span class=\"br0\">{</span> \n     <span class=\"kw4\">AnimStopLooping</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>; \n     TogglePlay<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">True</span>; \n<span class=\"br0\"\
+      >}</span> \n<span class=\"br0\">}</span>\n<span class=\"co1\">// ========================================</span></pre></div>\n\
+      </div>\n<p>Here's a small expansion on the idea, using Touch() to progressively\
+      \ speed up the animation:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      co1\">//=============================================================================</span>\n\
+      <span class=\"co1\">// Accelerate Animation</span>\n<span class=\"co1\">//=============================================================================</span>\n\
+      <span class=\"kw1\">class</span> AccelAnim <span class=\"kw1\">extends</span>\
+      \ AnimatedActor\n    <span class=\"kw1\">placeable</span>;\n \n<span class=\"\
+      kw1\">event</span> <span class=\"kw4\">Touch</span><span class=\"br0\">(</span>\
+      \ <span class=\"kw9\">Actor</span> Other <span class=\"br0\">)</span>\n<span\
+      \ class=\"br0\">{</span>\n     AnimRate <span class=\"sy0\">+=</span> <span\
+      \ class=\"nu0\">0.1</span>;\n     <span class=\"kw4\">LoopAnim</span><span class=\"\
+      br0\">(</span> AnimName, AnimRate <span class=\"br0\">)</span>;\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p>this is very bare-bones but illustrates\
+      \ how the anim rate can be changed by an event.</p>\n<p>Under Development -\
+      \ 12/01/03 ~~~ This is a work in progress. If any of you hardcore coders can\
+      \ come up with any more trigger variations or effects, that would be really\
+      \ cool.</p>\n<p>Please feel free to contact me at musicalglass@hotmail.com if\
+      \ you find any errors, or if you think there's not enough info in spots or too\
+      \ much which is already covered thoroughly elsewhere on the WIKI or even if\
+      \ you're the one person out there who actually found this info useful.</p>\n\
+      <h2><span class=\"mw-headline\" id=\"Related_Topics\">Related Topics</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Playing_Mesh_Animations?section=13\" title=\"Edit section:\
+      \ Related Topics\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <ul>\n<li><a href=\"/Legacy:Animation\" title=\"Legacy:Animation\">Animation</a></li>\n\
+      <li><a href=\"/Legacy:Mesh\" title=\"Legacy:Mesh\">Mesh</a></li>\n</ul>\n<h2><span\
+      \ class=\"mw-headline\" id=\"Discussion\">Discussion</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Playing_Mesh_Animations?section=14\"\
+      \ title=\"Edit section: Discussion\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<h3><span class=\"mw-headline\" id=\"Under_Development\"\
+      >Under Development</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Playing_Mesh_Animations?section=15\" title=\"\
+      Edit section: Under Development\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>I wanted to make a carousel animation which you can\
+      \ turn on and off with a trigger. Once triggered, it will slowly accelerate\
+      \ to a given speed, loop for a bit, then deccelerate. But if triggered a second\
+      \ time, it will go directly to deccelerate mode. Foxpaw has been helping with\
+      \ the development.</p>\n<p>Here is the current script:</p>\n<div dir=\"ltr\"\
+      \ class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">class</span> EaseInOut <span class=\"\
+      kw1\">extends</span> <span class=\"kw9\">Actor</span> <span class=\"kw1\">placeable</span>;\n\
+      \ \n<span class=\"kw1\">var</span><span class=\"br0\">(</span>EaseInOut<span\
+      \ class=\"br0\">)</span> <span class=\"kw5\">name</span> AnimName;\n<span class=\"\
+      kw1\">var</span> <span class=\"kw5\">float</span> AnimRate;\n \n<span class=\"\
+      kw1\">var</span><span class=\"br0\">(</span>EaseInOut<span class=\"br0\">)</span>\
+      \ <span class=\"kw5\">float</span> MaxAnimRate;\n<span class=\"kw1\">var</span><span\
+      \ class=\"br0\">(</span>EaseInOut<span class=\"br0\">)</span> <span class=\"\
+      kw5\">float</span> AccelerateRate;\n<span class=\"kw1\">var</span><span class=\"\
+      br0\">(</span>EaseInOut<span class=\"br0\">)</span> <span class=\"kw5\">float</span>\
+      \ DecelerateRate;\n \n<span class=\"kw1\">auto</span> <span class=\"kw1\">state</span>\
+      \ Off\n<span class=\"br0\">{</span>\n  <span class=\"kw1\">simulated</span>\
+      \ <span class=\"kw1\">function</span> <span class=\"kw4\">Tick</span><span class=\"\
+      br0\">(</span> <span class=\"kw5\">float</span> Delta <span class=\"br0\">)</span>\n\
+      \  <span class=\"br0\">{</span>\n     AnimRate <span class=\"sy0\">=</span>\
+      \ <span class=\"kw3\">FMax</span><span class=\"br0\">(</span>  AnimRate <span\
+      \ class=\"sy0\">-</span> <span class=\"br0\">(</span>Delta <span class=\"sy0\"\
+      >*</span> DecelerateRate<span class=\"br0\">)</span>, <span class=\"nu0\">0</span>\
+      \ <span class=\"br0\">)</span>;\n     <span class=\"kw4\">LoopAnim</span><span\
+      \ class=\"br0\">(</span> AnimName, AnimRate <span class=\"br0\">)</span>;\n\
+      \     Global.<span class=\"kw4\">Tick</span><span class=\"br0\">(</span> Delta\
+      \ <span class=\"br0\">)</span>;\n     <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span> AnimRate <span class=\"sy0\">&gt;</span> <span class=\"nu0\"\
+      >0</span> <span class=\"br0\">)</span>\n       <span class=\"kw7\">Level</span>.<span\
+      \ class=\"kw7\">Game</span>.<span class=\"me0\">Broadcast</span><span class=\"\
+      br0\">(</span> <span class=\"kw5\">None</span>, <span class=\"st0\">\"I'm off\
+      \ and my animrate is \"</span><span class=\"sy0\">$</span>AnimRate, <span class=\"\
+      st0\">'Say'</span> <span class=\"br0\">)</span>;\n  <span class=\"br0\">}</span>\n\
+      \ \n<span class=\"kw1\">simulated</span> <span class=\"kw1\">function</span>\
+      \ <span class=\"kw4\">Trigger</span><span class=\"br0\">(</span> <span class=\"\
+      kw9\">actor</span> Other, <span class=\"kw9\">pawn</span> EventInstigator <span\
+      \ class=\"br0\">)</span>\n \n  <span class=\"br0\">{</span>\n     <span class=\"\
+      kw7\">Level</span>.<span class=\"kw7\">Game</span>.<span class=\"me0\">Broadcast</span><span\
+      \ class=\"br0\">(</span> <span class=\"kw5\">None</span>, <span class=\"st0\"\
+      >\"I got triggered!\"</span>, <span class=\"st0\">'Say'</span> <span class=\"\
+      br0\">)</span>;\n \n      <span class=\"kw3\">GotoState</span><span class=\"\
+      br0\">(</span> <span class=\"st0\">'On'</span> <span class=\"br0\">)</span>;\n\
+      \  <span class=\"br0\">}</span>\n<span class=\"br0\">}</span>\n \n<span class=\"\
+      kw1\">state</span> On\n<span class=\"br0\">{</span>\n  <span class=\"kw1\">simulated</span>\
+      \ <span class=\"kw1\">function</span> <span class=\"kw4\">Tick</span><span class=\"\
+      br0\">(</span> <span class=\"kw5\">float</span> Delta <span class=\"br0\">)</span>\n\
+      \  <span class=\"br0\">{</span>\n     AnimRate <span class=\"sy0\">=</span>\
+      \ <span class=\"kw3\">FMax</span><span class=\"br0\">(</span> AnimRate <span\
+      \ class=\"sy0\">+</span> <span class=\"br0\">(</span>Delta <span class=\"sy0\"\
+      >*</span> AccelerateRate<span class=\"br0\">)</span>, MaxAnimRate <span class=\"\
+      br0\">)</span>;\n     Global.<span class=\"kw4\">Tick</span><span class=\"br0\"\
+      >(</span> Delta <span class=\"br0\">)</span>;\n     <span class=\"kw4\">LoopAnim</span><span\
+      \ class=\"br0\">(</span> AnimName, AnimRate <span class=\"br0\">)</span>;\n\
+      \     <span class=\"kw7\">Level</span>.<span class=\"kw7\">Game</span>.<span\
+      \ class=\"me0\">Broadcast</span><span class=\"br0\">(</span> <span class=\"\
+      kw5\">None</span>, <span class=\"st0\">\"I'm on and my animrate is \"</span><span\
+      \ class=\"sy0\">$</span>AnimRate, <span class=\"st0\">'Say'</span> <span class=\"\
+      br0\">)</span>;\n  <span class=\"br0\">}</span>\n \n  <span class=\"kw2\">Begin</span>:\n\
+      \    <span class=\"kw4\">Sleep</span><span class=\"br0\">(</span><span class=\"\
+      nu0\">5</span><span class=\"br0\">)</span>;\n    <span class=\"kw3\">GotoState</span><span\
+      \ class=\"br0\">(</span> <span class=\"st0\">'Off'</span> <span class=\"br0\"\
+      >)</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">defaultproperties</span>\n\
+      <span class=\"br0\">{</span>\n     bStatic<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">False</span> \n     bNoDelete<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">True</span> \n     bStasis<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">False</span>\n \n     <span class=\"kw7\">DrawType</span><span\
+      \ class=\"sy0\">=</span><span class=\"kw7\">DT_Mesh</span>\n     <span class=\"\
+      kw5\">Mesh</span><span class=\"sy0\">=</span><span class=\"kw5\">SkeletalMesh</span><span\
+      \ class=\"st0\">'PackageName.SkeletalMeshName'</span> \n \n     AnimName<span\
+      \ class=\"sy0\">=</span><span class=\"st0\">'AnimSeq'</span>\n     AnimRate<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0</span>\n \n     AccelerateRate<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0.5</span>\n     DecelerateRate<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0.5</span>\n     MaxAnimRate<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">1</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p><b>Musicalglass</b>: I changed MaxRotationRate to MaxAnimRate to\
+      \ get the script to compile. I noticed I was getting multiple trigger commands\
+      \ so I added a delay in the Trigger properties, which I have found useful for\
+      \ on / off scripts like this. I was getting \"I got triggered\" to the screen\
+      \ OK but no \"I'm on...\" so I removed if ( Other&#160;!= None &amp;&amp; Other.IsA(\
+      \ 'xPawn' ) ) reasoning that it must have been a part of another script you\
+      \ copied from as there are no xPawns involved here, and it worked perfectly.\
+      \ However, it may zero out on any frame. Once it has come to a complete stop,\
+      \ it snaps to frame 0 to prepare for the next Play command. It would be neccesary\
+      \ to make it so either it will always end on frame 4, or when triggered again\
+      \ will resume playing from the current frame. Also I wanted to add, If Triggered\
+      \ a second time Go To Deccelerate. If I want it to play music while turning\
+      \ that will probably have to go into the script as well.</p>\n<p>You were saying\
+      \ that using translation and rotation on a mesh was not a good idea because\
+      \ of the way the video card handles it. Since Movers use this method, would\
+      \ you say then that all movers are problematic and that the best way is always\
+      \ to use bones and animate in an external 3D app? Then using a mesh and scripting\
+      \ to do different effects with PHYS_Rotate etc. would not be a good idea for\
+      \ a scripting tutorial as I would be using a method which is not practical for\
+      \ everyday use, correct?</p>\n<p>Also, do you know if there's a way to attach\
+      \ additional objects to the bone of my skeletal mesh, so I can hang additional\
+      \ animated and non anim meshes to my carousel?</p>\n<p>I can't seem to get the\
+      \ Touch function to work. I can't find very many examples around. The Hello\
+      \ World tutorial shows you how to write to a log. It should work OK with a Actor\
+      \ class right? It has a default collision radius and everything.</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">class</span> TouchMovieOn <span class=\"\
+      kw1\">extends</span> AnimatedActor\n    <span class=\"kw1\">placeable</span>;\n\
+      \ \n<span class=\"kw1\">function</span> <span class=\"kw4\">PostBeginPlay</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      <span class=\"kw4\">StopAnimating</span><span class=\"br0\">(</span> <span class=\"\
+      br0\">)</span>;\n<span class=\"kw6\">Super</span>.<span class=\"kw4\">PostBeginPlay</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"kw1\">function</span> <span class=\"kw4\">Touch</span><span\
+      \ class=\"br0\">(</span> <span class=\"kw9\">actor</span> Other<span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n     <span class=\"kw4\">LoopAnim</span><span\
+      \ class=\"br0\">(</span> AnimName, AnimRate <span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>I also tried doing my own\
+      \ simple Hello world using the Message broadcast method desribed by Foxpaw for\
+      \ debugging:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">class</span> HelloWorld <span class=\"kw1\">extends</span> <span class=\"\
+      kw9\">Actor</span>\n\t<span class=\"kw1\">placeable</span>;\n<span class=\"\
+      kw1\">function</span> <span class=\"kw4\">Touch</span><span class=\"br0\">(</span>\
+      \ <span class=\"kw9\">actor</span> Other <span class=\"br0\">)</span>\n \n \
+      \ <span class=\"br0\">{</span>\n     <span class=\"kw7\">Level</span>.<span\
+      \ class=\"kw7\">Game</span>.<span class=\"me0\">Broadcast</span><span class=\"\
+      br0\">(</span> <span class=\"kw5\">None</span>, <span class=\"st0\">\"I've been\
+      \ touched!\"</span>, <span class=\"st0\">'Say'</span> <span class=\"br0\">)</span>;\n\
+      \  <span class=\"br0\">}</span></pre></div>\n</div>\n<p>Am I missing something?\
+      \ Does Broadcast only work in conjuction with another action?</p>\n<p>Also I\
+      \ was a bit confused about saving your script in myLevel. So that means that\
+      \ the file is saved with the map. So then each time somebody wants to create\
+      \ a new map with the same class they would reimport it into myLevel again or\
+      \ copy it out of the existing map?</p>\n<p><b>Foxpaw:</b> That should work,\
+      \ maybe the actor isn't getting the Touch() call. A fairly easy way to check\
+      \ if it is broadcasting right would be to stick something in PostBeginPlay()\
+      \ or maybe Tick - functions that are pretty much guaranteed to get called. ANd\
+      \ yes, the myLevel package works as you've described it.</p>\n<p><b>Musicalglass:</b>\
+      \ I was thinking about this problem with the carousel snapping to frame 1 on\
+      \ start. It would seem that what I need is a Pause and Resume feature. As there\
+      \ isn't one supplied I was thinking a possible way to create one would be instead\
+      \ of turning LoopAnim on and off you would freeze and unfreeze the frame rate\
+      \ and LoopAnim would always be true. So you would what, make it so once the\
+      \ frame rate reached zero it would go to sleep mode so it wouldn't eat up ticks,\
+      \ right? Would that work?</p>\n<p><b>Foxpaw:</b> If you are animating the carousel\
+      \ via LoopAnim, I think that should work. However, I wouldn't worry about it\
+      \ getting Ticks, because you can't really prevent it, (It still gets Ticked\
+      \ even while in a latent function like sleep) and also it doesn't really do\
+      \ any harm. If the tick function isn't doing anything, the overhead from the\
+      \ Tick call is very minimal.</p>\n<p><b>Clintonman:</b> I removed the 'Say'\
+      \ argument and the broadcast worked for me. With 'Say' it only showed in the\
+      \ console.</p>\n<pre>  Level.Game.Broadcast( None, \"I've been touched!\");\n\
+      </pre>\n<!-- \nNewPP limit report\nCPU time usage: 0.229 seconds\nReal time\
+      \ usage: 0.508 seconds\nPreprocessor visited node count: 124/1000000\nPreprocessor\
+      \ generated node count: 260/1000000\nPost‐expand include size: 46/2097152 bytes\n\
+      Template argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive\
+      \ parser function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report\
+      \ (%,ms,calls,template)\n100.00%    0.000      1 - -total\n-->\n\n<!-- Saved\
+      \ in parser cache with key wiki:pcache:idhash:2500-0!*!0!!en!*!* and timestamp\
+      \ 20221118020338 and revision id 5997\n -->\n"
+  categories:
+  - sortkey: "Playing Mesh Animations"
+    name: "Legacy_Tutorial"
+  - sortkey: "Playing Mesh Animations"
+    name: "Legacy_Mapping"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Create A Room"
+  - ns: 100
+    exists: true
+    name: "Legacy:Static Mesh"
+  - ns: 100
+    exists: true
+    name: "Legacy:Mesh"
+  - ns: 100
+    exists: true
+    name: "Legacy:Text Editor"
+  - ns: 100
+    exists: true
+    name: "Legacy:Animation"
+  - ns: 100
+    exists: true
+    name: "Legacy:Maya"
+  - ns: 100
+    exists: true
+    name: "Legacy:Animation Browser"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Prerequisites"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Playing_Mesh_Animations"
+    byteoffset: 1605
+    anchor: "Prerequisites"
+  - toclevel: 1
+    level: "2"
+    line: "Compatible Applications"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Playing_Mesh_Animations"
+    byteoffset: 2299
+    anchor: "Compatible_Applications"
+  - toclevel: 1
+    level: "2"
+    line: "The Unreal World of Scripting"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:Playing_Mesh_Animations"
+    byteoffset: 3800
+    anchor: "The_Unreal_World_of_Scripting"
+  - toclevel: 1
+    level: "2"
+    line: "Animated Actor Script"
+    number: "4"
+    index: "4"
+    fromtitle: "Legacy:Playing_Mesh_Animations"
+    byteoffset: 5474
+    anchor: "Animated_Actor_Script"
+  - toclevel: 1
+    level: "2"
+    line: "Exporting with ActorX"
+    number: "5"
+    index: "5"
+    fromtitle: "Legacy:Playing_Mesh_Animations"
+    byteoffset: 6760
+    anchor: "Exporting_with_ActorX"
+  - toclevel: 1
+    level: "2"
+    line: "Assemble in the Animation Manager"
+    number: "6"
+    index: "6"
+    fromtitle: "Legacy:Playing_Mesh_Animations"
+    byteoffset: 8136
+    anchor: "Assemble_in_the_Animation_Manager"
+  - toclevel: 1
+    level: "2"
+    line: "Compile Your Script"
+    number: "7"
+    index: "7"
+    fromtitle: "Legacy:Playing_Mesh_Animations"
+    byteoffset: 9664
+    anchor: "Compile_Your_Script"
+  - toclevel: 1
+    level: "2"
+    line: "Placing your AnimatedActor"
+    number: "8"
+    index: "8"
+    fromtitle: "Legacy:Playing_Mesh_Animations"
+    byteoffset: 11059
+    anchor: "Placing_your_AnimatedActor"
+  - toclevel: 1
+    level: "2"
+    line: "Subclassing from Unreal Editor - Looping Animation Script"
+    number: "9"
+    index: "9"
+    fromtitle: "Legacy:Playing_Mesh_Animations"
+    byteoffset: 11938
+    anchor: "Subclassing_from_Unreal_Editor_-_Looping_Animation_Script"
+  - toclevel: 2
+    level: "3"
+    line: "Adding a Trigger"
+    number: "9.1"
+    index: "10"
+    fromtitle: "Legacy:Playing_Mesh_Animations"
+    byteoffset: 13892
+    anchor: "Adding_a_Trigger"
+  - toclevel: 2
+    level: "3"
+    line: "Trigger On & Off & On..."
+    number: "9.2"
+    index: "11"
+    fromtitle: "Legacy:Playing_Mesh_Animations"
+    byteoffset: 14726
+    anchor: "Trigger_On_.26_Off_.26_On..."
+  - toclevel: 2
+    level: "3"
+    line: "Finish Playing First"
+    number: "9.3"
+    index: "12"
+    fromtitle: "Legacy:Playing_Mesh_Animations"
+    byteoffset: 15496
+    anchor: "Finish_Playing_First"
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "10"
+    index: "13"
+    fromtitle: "Legacy:Playing_Mesh_Animations"
+    byteoffset: 17245
+    anchor: "Related_Topics"
+  - toclevel: 1
+    level: "2"
+    line: "Discussion"
+    number: "11"
+    index: "14"
+    fromtitle: "Legacy:Playing_Mesh_Animations"
+    byteoffset: 17321
+    anchor: "Discussion"
+  - toclevel: 2
+    level: "3"
+    line: "Under Development"
+    number: "11.1"
+    index: "15"
+    fromtitle: "Legacy:Playing_Mesh_Animations"
+    byteoffset: 17337
+    anchor: "Under_Development"
+  displaytitle: "Legacy:Playing Mesh Animations"
+  iwlinks: []
+  wikitext:
+    text: "''I tried for nearly a month to figure out how to do this and finally came\
+      \ to the conclusion that there is no one tutorial out there that tells you how\
+      \ to get an Animated Static Mesh into the Unreal game. All of the information\
+      \ was scattered in bits and pieces here and there. I decided that instead of\
+      \ squirreling the information away and becoming highly in demand in the field\
+      \ of Unreal gaming development, like a sucker, I would just give it away on\
+      \ the Wiki, so other young punks can take advantage of all my heartache and\
+      \ hard work.''\n\n'''Musicalglass''': The final tutorial you see here has been\
+      \ modified several times over. I came here with a roughly working solution based\
+      \ on what info I could find, and a lot of questions. Thanks largely to the contributions\
+      \ of Foxpaw and Chip, it has been synthesized into a new solution than the traditional\
+      \ method of extending a decoration or mover class, etc.  thereby eliminating\
+      \ declaring a lot of unnecessary variables with each new actor.\n\n'''Solid\
+      \ Snake''': Well, your kind of missing the point of static meshes if your trying\
+      \ to animate them as such. The keyword is static. They don't change. Once you\
+      \ start animating things your changing the mesh as such...\n\n----\n\nThis tutorial\
+      \ deals specifically with getting an Animated SkeletalMesh to actually play\
+      \ in the game Unreal. I will also show you how to attach a trigger, and use\
+      \ a few different trigger conditions.\n\nAs of this writing, in the current\
+      \ Editor (UT2003) it is impossible to get an animation into and have it play\
+      \ in the game. That is, not without getting your feet wet with Unreal Script.\n\
+      \n==Prerequisites==\n\nFirst we will assume a few things:\n\n# You know what\
+      \ the [[Legacy:Animation Browser|Animation Browser]] is, you've seen animations\
+      \ play in the window and can't figure out how to actually get one into your\
+      \ Map \n# You've already worked with regular [[Legacy:Static Mesh|Static Mesh]]es\
+      \ and know how to apply Textures and get those into your Map OK \n# You are\
+      \ familiar with a 3D application or are trying to learn how to use [[Legacy:Maya|Maya]]\
+      \ PLE and have your own animation you would like to get into the game. \n\n\
+      We will not assume that you know how to extend Actor Classes or run a compiler\
+      \ from a command prompt or know much of anything about programming for that\
+      \ matter.\n\n==Compatible Applications==\n\nCurrently the only application which\
+      \ can export mesh animations compatible with Unreal is Milkshape, a little $25\
+      \ 3D application. Milkshape is also useful if you want to export any of the\
+      \ existing models that come with Unreal and convert to another format. Of note,\
+      \ it is also compatible with gMax files, the free version of 3DSMax.\n\nIf you're\
+      \ using Max or Maya, you'll need the ActorX plugin.\n\nUsers of Lightwave etc.\
+      \ would have to be able to export their models to one of the above formats.\n\
+      \n'''Can I do it for free?''': You may have noticed that Maya PLE comes on the\
+      \ discs with Unreal. If you're familiar with Photoshop LE, etc. you're probably\
+      \ thinking that this is some kind of stripped down light version of Maya. Actually\
+      \ it is the complete version of Maya in all repects identical to the full version\
+      \ costing thousands of dollars, except for a few minor things:\n# You don't\
+      \ get a couple of extra features, such as hair and cloth simulation.\n# Everything\
+      \ you try to output will have a very visible watermark over it, as well as everything\
+      \ you see in the viewports, preventing you from being able to take a screenshot\
+      \ of your work.\n\nHowever, everything you export to the game Unreal using the\
+      \ preloaded ActorX plugin will be perfectly usable. If you're considering a\
+      \ career in 3D, whether it be for games or movies or whatever, the industry\
+      \ will just as soon consider hiring someone with work which has a watermark\
+      \ all over it, if it's good modeling or animation.\n\n==The Unreal World of\
+      \ Scripting==\n\nOK, ready to get your feet wet with some hardcore coding?\n\
+      \nActually, we're going to let the folks at Epic provide most of our code for\
+      \ us, we just want to tack on a little extra. Traditionally, this has been acomplished\
+      \ by embedding links to all the model data using one of the extensions of the\
+      \ Actor class, such as a Decoration or Mover class. When I looked at the scripts\
+      \ for these methods it seemed that each class had a ton of extra varables associated\
+      \ with it which had nothing to do with the simple task of getting an animation\
+      \ to play. It occurred to me that a new extention to the Actor class specifically\
+      \ for various animation purposes would be useful. I suggested it on this Wiki\
+      \ and, with the help of Foxpaw and Chip have developed just that: an AnimatedActor\
+      \ class.\n\nSo we're going to make a very simple script and then compile it.\n\
+      \nThere are two methods to compile a script; \n# the fairly simple method of\
+      \ compiling from the Unreal Editor\n# the slightly more technical method of\
+      \ compiling using ucc make from the DOS command prompt.\n\nUnfortunately since\
+      \ we are declaring some new variables, we must use the second method first.\
+      \ However, in order to avoid having to recompile each time from the command\
+      \ prompt, in keeping with the spirit of Object Oriented Programming we will\
+      \ compile a script which does one thing: display a simple placebo static mesh\
+      \ animation, this will act as a placeholder which you can swap for any animation\
+      \ you want later. Once we have the simple dummy script, we can further extend\
+      \ that into new variations like TriggerAnimatedActor. These simple extensions\
+      \ can be quickly compiled from the Editor.\n\n==Animated Actor Script==\n\n\
+      First, copy the following script, open up Notepad or your favorite [[Legacy:Text\
+      \ Editor|text editor]] and paste:\n\n<uscript>\n\nclass AnimatedActor extends\
+      \ Actor\n    placeable;\n\n// You can manually add a trigger state here for\
+      \ one time use or \n//  extend this class with a library of various AnimatedActor\
+      \ triggers \n\nvar(InitialAnimation) name AnimName; \nvar(InitialAnimation)\
+      \ float AnimRate; \nvar bool TogglePlay;\n\n defaultproperties \n {\n     bStatic=False\
+      \ \n     bNoDelete=True \n     bStasis=False \n\n     DrawType=DT_Mesh \n  \
+      \   Mesh=SkeletalMesh'myRotatingCube.myCubeMesh' \n\n     AnimName='AnimSeq'\
+      \ \n     AnimRate=1 \n     TogglePlay=True \n }\n\n</uscript>\n\nYou will save\
+      \ the file as a text file, only instead of the .txt extension, change it to\
+      \ .uc\n\nDo Save As, find your UT2003 folder on your hard drive and create a\
+      \ new folder in there called AnimatedActor. Inside that create 3 more  folders\
+      \ called Classes, Models and Textures. Save as AnimatedActor.uc in YourHardDrive:/UT2003/AnimatedActor/Classes.\
+      \ \n\nWe're just about ready to compile, but first we need to create the Animation\
+      \ Package and replace the PackageName.SkeletalMeshName. I could have just as\
+      \ easily typed that in there for you, but I wanted you to see the relationship\
+      \ to the Animation Browser.\n\n==Exporting with ActorX ==\n\nTo begin with for\
+      \ the purpose of this tutorial, we will start with a very simple exported animation.\
+      \ This will be your dummy animation for the purpose of compiling a placeable\
+      \ mesh into your script. Make a quick 256 X 256 Texture in Photoshop or your\
+      \ favorite graphics app, something quick like a gradient or something, don't\
+      \ get all artsy on me, and save it as a .tga file in YourHardDrive:/UT2003/AnimatedActor/Textures.\
+      \ In your 3D application, first make a simple polygon cube, triangulate and\
+      \ texture your model and add a single bone skeleton. Set a keyframe on frame\
+      \ 0, go to frame 4, rotate it 360 degrees and set a keyframe. and you are ready\
+      \ for export. (Remember if your model consists of parts they must first be grouped,\
+      \ N/A here)\n\nAssuming you are using Max or Maya:\n\nIn the 3D application's\
+      \ command line, type:\n\n axmain\n\nThis brings up the ActorX window and you\
+      \ can export your model as myCubeMesh.PSK in YourHardDrive:/UT2003/AnimatedActor/Models.\
+      \ To export your animation, we'll set the File Name ( myCubeAnim ) the sequence\
+      \ name ( AnimSeq ) and the range ( 1-4 ) Note, we didn't include frame zero,\
+      \ as it is identical to frame 4. This is how to make a perfect looping animation.\
+      \ Click the Digest Animation button, open the animation manager, transfer it\
+      \ from the Animations to the Output Package folder and Save as myCubeAnim.PSA.\n\
+      \n==Assemble in the Animation Manager==\n\nNow we will combine all the elements\
+      \ of our animation. Import your texture into the Texture Browser and save your\
+      \ texture package. Switch over to the Animation Browser and do File -> Mesh\
+      \ Import. Open your myCubeMesh.PSK model. \n\nLet's call our Animation package\
+      \ RotatingCube. In the Mesh Properties down the right side, expand Skin -> Material\
+      \ and click on (0) Some buttons appear. Click the Use button. If you don't see\
+      \ the Use button you may need to resize the window and everything in the Mesh\
+      \ tab will disappear. To get it back click on one of the other tabs and back\
+      \ again. \n\nNow do File -> Animation Import and get your .PSA file into the\
+      \ same package. \n\nDo Edit -> Link Up Animation and Mesh. Now if you expand\
+      \ Animation in the Mesh properties you should see the name of your animation.\
+      \ \n\nIf it says None, you can make it pop in by going to File -> Mesh import\
+      \ a second time, select the name of your file and click Cancel. \n\nNow that\
+      \ you have your texture and animation info associated with your Mesh you can\
+      \ save the animation package in Unreal's default Animation folder. Note in the\
+      \ Animation Browser window just above your model you can see the name of your\
+      \ package and mesh. It should read: RotatingCube.myCubeMesh. Now that we have\
+      \ a working animation and package name, we can use that as a temporary placeholder\
+      \ in our first script. So open up the script you created earlier, replace the\
+      \ PackageName and SkeletalMeshName with your own and save and you're ready to\
+      \ compile.\n\n==Compile Your Script ==\n\nOK, so far we've only spent something\
+      \ like an hour doing a simple thing like getting an animation into our map (or\
+      \ maybe weeks if it took you a while to locate this tutorial). Whatever! We're\
+      \ almost there. Our script is all ready to place in the game. We just need to\
+      \ compile it so Unreal can read it. Sounds intimidating if you're not a programmer\
+      \ but it's actually quite simple.\n\nFirst we need to tell the compiler what\
+      \ to compile, so with your text editor, Open UT2003/System/UT2003.ini. Scroll\
+      \ down to about line 350 or so and you see a list of package names to be compiled\
+      \ like this:\n\nEditPackages=Vehicles\n\nUnderneath the last one in the list\
+      \ add a new line and insert your own edit package command to the list:\n\nEditPackages=Vehicles\n\
+      \nEditPackages=AnimatedActor\n\nNow save the file and go to your command prompt:\
+      \ On Windows, I believe you'll find that in your Start menu under Programs ->\
+      \ Accessories.\n\n( I forget cause I moved mine long ago to the Start menu itself\
+      \ ) \n\nIn the command prompt enter:\n\ncd ut2003\\system (Note: backslash not\
+      \ forward slash)\n\nYou should be taken to the Unreal system directory. Enter:\n\
+      \nucc make\n\nUnreal should compile your script if all went well. If not you'll\
+      \ see an error in the command prompt window. If you do get an error and have\
+      \ to do something over, you may have to edit and save the UT2003.ini file again\
+      \ before compiling.\n\n==Placing your AnimatedActor==\n\nOpen the Actor Class\
+      \ Browser: In the Actor Classes window do File -> Open Package. You should find\
+      \ your newly compiled AnimatedActor.u Open it and expand the Actor hierarchy.\
+      \ You should now see your new AnimatedActor class in the list. Select it. Now\
+      \ you could right click in your map and select AnimatedActor and you should\
+      \ now be able to place your default cube into your map. Now that you have your\
+      \ AnimatedActor with a valid default Animation Package, you can open it up and\
+      \ swap out a different Animation Package by first placing it in the scene, then\
+      \ double click on it to open the AnimatedActor Properties, expand Display and\
+      \ update the SkeletalMesh.\n\nFor extensibility, the AnimatedActor itself does\
+      \ not play the animation. In order to add more options to what you can do with\
+      \ the basic Actor you can now add extensions to the extension.\n\n==Subclassing\
+      \ from Unreal Editor - Looping Animation Script==\n\nCopy the following script:\n\
+      \n<uscript>\n\nclass LoopMovie extends AnimatedActor\n    placeable;\n\n// ========================================\n\
+      // This bit makes the Animation play automatically at startup\n// ========================================\n\
+      \ simulated function PostBeginPlay() \n\n { \n     LoopAnim( AnimName, AnimRate\
+      \ );\n     Super.PostBeginPlay();\n }\n// ========================================\
+      \ \n\n</uscript>\n\nIn the Actor Class Browser, right click on your AnimatedActor\
+      \ class and select New. Set the package to myLevel and the name to LoopMovie.\
+      \ Select the entire script and paste the new one. In the Script Editor window\
+      \ Do Tools -> Compile Changed.\n\nThat's it! Much simpler that the previous\
+      \ compiling method. You should now be able to add your newly compiled script\
+      \ to any map. When you start a new level it will not appear by default in the\
+      \ Actor Class browser. Simply import LoopMovie.u and it will automatically load\
+      \ the parent AnimatedActor class as well. Expand that, and you can have a whole\
+      \ list of subclasses.\n\nNow, [[Legacy:Create A Room|create a room]] or open\
+      \ a map. Select LoopMovie from the Actor window and right click place in your\
+      \ scene. Your newly created default Skeletal Mesh Animation should pop into\
+      \ the scene. Double click on it to open it's properties. You will see in the\
+      \ LoopMovie Properties we have added a new category to Actor called InitialAnimation.\
+      \ \n\nExpand InitialAnimation and verify that the sequence name matches that\
+      \ of your animation (AnimSeq). \n\nYou should now be able to play your map and\
+      \ see your movie play automatically. A pretty rapidly spinning cube. Go back\
+      \ to the editor and change the animation rate to a low number like 0.15. You\
+      \ should now have a much slower animation. Note how unreal interpolates the\
+      \ tweening instead of seeing a choppy 4 frame animation. \n\nHere's a few more\
+      \ subclasses of AnimatedActor you can add to your arsenal;\n\n===Adding a Trigger\
+      \ ===\n\n<uscript>\n\nclass TriggerMovieOn extends AnimatedActor\n    placeable;\n\
+      \n// ========================================\n// Trigger Animation On - Starts\
+      \ in the off state, then triggers on one time\n// To make it on then off, swap\
+      \ the lines that say LoopAnim & StopAnimating\n// ========================================\n\
+      simulated function PostBeginPlay()\n{\nStopAnimating(  );\n     Super.PostBeginPlay();\n\
+      }\n\nfunction Trigger( actor Other, pawn EventInstigator )\n{\n     LoopAnim(\
+      \ AnimName, AnimRate );\n}\n// ======================================== \n\n\
+      </uscript>\n\nIn the Actor Class Browser, expand Trigger and select Trigger\
+      \ and add it to your scene. Open the Trigger properties and set the Event tag\
+      \ to TagName and the Tag to None. Open your animated mesh's properties and set\
+      \ the Tag to None and the Event to TagName.\n\n===Trigger On & Off & On...===\n\
+      \nHere's a few more variations for trigger behaviour;\n\n<uscript>\n\nclass\
+      \ OnOffMovie extends AnimatedActor\n    placeable;\n\n// ========================================\n\
+      // Trigger Animation On & Off & On, etc....\n// ========================================\n\
+      // this section deativates the animation until triggered\n// can be turned on\
+      \ & off & on, etc.\n// once triggered off, it will stop immediately\n// to make\
+      \ it start with the movie on, change TogglePlay=true to false in the default\
+      \ properties\n\nfunction Trigger( actor Other, pawn EventInstigator )\n{\nif\
+      \ (TogglePlay)\n{\n     LoopAnim( AnimName, AnimRate );\n     TogglePlay=False;\n\
+      }\nelse\n{\n     StopAnimating();\n     TogglePlay=True;\n}\n}\n// ========================================\n\
+      </uscript>\n\n===Finish Playing First===\n\n<uscript>\nclass PlayAllMovie extends\
+      \ AnimatedActor\n    placeable;\n// ========================================\n\
+      // Trigger Animation on & off - finish playing first\n// ========================================\n\
+      // this section deativates the animation until triggered\n// can be turned on\
+      \ & off & on, etc.\n// once triggered off, it will complete the animation before\
+      \ stopping\n// to make it start with the movie on, change TogglePlay=true to\
+      \ false in the default properties\n\nfunction Trigger( actor Other, pawn EventInstigator\
+      \ )\n\n{ \n     if (TogglePlay)\n{\n     LoopAnim( AnimName, AnimRate );\n \
+      \    TogglePlay=False;\n}\nelse\n{ \n     AnimStopLooping(); \n     TogglePlay=True;\
+      \ \n} \n}\n// ========================================\n</uscript>\n\nHere's\
+      \ a small expansion on the idea, using Touch() to progressively speed up the\
+      \ animation:\n\n<uscript>\n//=============================================================================\n\
+      // Accelerate Animation\n//=============================================================================\n\
+      class AccelAnim extends AnimatedActor\n    placeable;\n\nevent Touch( Actor\
+      \ Other )\n{\n     AnimRate += 0.1;\n     LoopAnim( AnimName, AnimRate );\n\
+      }\n\n</uscript>\n\nthis is very bare-bones but illustrates how the anim rate\
+      \ can be changed by an event.\n\nUnder Development - 12/01/03 ~~~ This is a\
+      \ work in progress. If any of you hardcore coders can come up with any more\
+      \ trigger variations or effects, that would be really cool.\n\nPlease feel free\
+      \ to contact me at musicalglass@hotmail.com if you find any errors, or if you\
+      \ think there's not enough info in spots or too much which is already covered\
+      \ thoroughly elsewhere on the WIKI or even if you're the one person out there\
+      \ who actually found this info useful. \n\n==Related Topics==\n* [[Legacy:Animation|Animation]]\n\
+      * [[Legacy:Mesh|Mesh]]\n\n==Discussion==\n\n===Under Development===\n\nI wanted\
+      \ to make a carousel animation which you can turn on and off with a trigger.\
+      \ Once triggered, it will slowly accelerate to a given speed, loop for a bit,\
+      \ then deccelerate. But if triggered a second time, it will go directly to deccelerate\
+      \ mode. Foxpaw has been helping with the development.\n\nHere is the current\
+      \ script:\n\n<uscript>\nclass EaseInOut extends Actor placeable;\n\nvar(EaseInOut)\
+      \ name AnimName;\nvar float AnimRate;\n\nvar(EaseInOut) float MaxAnimRate;\n\
+      var(EaseInOut) float AccelerateRate;\nvar(EaseInOut) float DecelerateRate;\n\
+      \nauto state Off\n{\n  simulated function Tick( float Delta )\n  {\n     AnimRate\
+      \ = FMax(  AnimRate - (Delta * DecelerateRate), 0 );\n     LoopAnim( AnimName,\
+      \ AnimRate );\n     Global.Tick( Delta );\n     if ( AnimRate > 0 )\n      \
+      \ Level.Game.Broadcast( None, \"I'm off and my animrate is \"$AnimRate, 'Say'\
+      \ );\n  }\n\nsimulated function Trigger( actor Other, pawn EventInstigator )\n\
+      \n  {\n     Level.Game.Broadcast( None, \"I got triggered!\", 'Say' );\n\n \
+      \     GotoState( 'On' );\n  }\n}\n\nstate On\n{\n  simulated function Tick(\
+      \ float Delta )\n  {\n     AnimRate = FMax( AnimRate + (Delta * AccelerateRate),\
+      \ MaxAnimRate );\n     Global.Tick( Delta );\n     LoopAnim( AnimName, AnimRate\
+      \ );\n     Level.Game.Broadcast( None, \"I'm on and my animrate is \"$AnimRate,\
+      \ 'Say' );\n  }\n\n  Begin:\n    Sleep(5);\n    GotoState( 'Off' );\n}\n\ndefaultproperties\n\
+      {\n     bStatic=False \n     bNoDelete=True \n     bStasis=False\n\n     DrawType=DT_Mesh\n\
+      \     Mesh=SkeletalMesh'PackageName.SkeletalMeshName' \n\n     AnimName='AnimSeq'\n\
+      \     AnimRate=0\n\n     AccelerateRate=0.5\n     DecelerateRate=0.5\n     MaxAnimRate=1\n\
+      }\n\n</uscript>\n\n'''Musicalglass''': I changed MaxRotationRate to MaxAnimRate\
+      \ to get the script to compile. I noticed I was getting multiple trigger commands\
+      \ so I added a delay in the Trigger properties, which I have found useful for\
+      \ on / off scripts like this. I was getting \"I got triggered\" to the screen\
+      \ OK but no \"I'm on...\" so I removed  if ( Other != None && Other.IsA( 'xPawn'\
+      \ ) ) reasoning that it must have been a part of another script you copied from\
+      \ as there are no xPawns involved here, and it worked perfectly. However, it\
+      \ may zero out on any frame. Once it has come to a complete stop, it snaps to\
+      \ frame 0 to prepare for the next Play command. It would be neccesary to make\
+      \ it so either it will always end on frame 4, or when triggered again will resume\
+      \ playing from the current frame. Also I wanted to add, If Triggered a second\
+      \ time Go To Deccelerate. If I want it to play music while turning that will\
+      \ probably have to go into the script as well.\n\nYou were saying that using\
+      \ translation and rotation on a mesh was not a good idea because of the way\
+      \ the video card handles it. Since Movers use this method, would you say then\
+      \ that all movers are problematic and that the best way is always to use bones\
+      \ and animate in an external 3D app? Then using a mesh and scripting to do different\
+      \ effects with PHYS_Rotate etc. would not be a good idea for a scripting tutorial\
+      \ as I would be using a method which is not practical for everyday use, correct?\n\
+      \nAlso, do you know if there's a way to attach additional objects to the bone\
+      \ of my skeletal mesh, so I can hang additional animated and non anim meshes\
+      \ to my carousel?\n\nI can't seem to get the Touch function to work. I can't\
+      \ find very many examples around. The Hello World tutorial shows you how to\
+      \ write to a log. It should work OK with a Actor class right? It has a default\
+      \ collision radius and everything.\n\n<uscript>\nclass TouchMovieOn extends\
+      \ AnimatedActor\n    placeable;\n\nfunction PostBeginPlay()\n{\nStopAnimating(\
+      \ );\nSuper.PostBeginPlay();\n}\n\nfunction Touch( actor Other)\n{\n     LoopAnim(\
+      \ AnimName, AnimRate );\n}\n\n</uscript>\n\nI also tried doing my own simple\
+      \ Hello world using the Message broadcast method desribed by Foxpaw for debugging:\n\
+      \n<uscript>\nclass HelloWorld extends Actor\n\tplaceable;\nfunction Touch( actor\
+      \ Other )\n\n  {\n     Level.Game.Broadcast( None, \"I've been touched!\", 'Say'\
+      \ );\n  }\n\n</uscript>\n\nAm I missing something? Does Broadcast only work\
+      \ in conjuction with another action?\n\nAlso I was a bit confused about saving\
+      \ your script in myLevel. So that means that the file is saved with the map.\
+      \ So then each time somebody wants to create a new map with the same class they\
+      \ would reimport it into myLevel again or copy it out of the existing map?\n\
+      \n'''Foxpaw:''' That should work, maybe the actor isn't getting the Touch()\
+      \ call. A fairly easy way to check if it is broadcasting right would be to stick\
+      \ something in PostBeginPlay() or maybe Tick - functions that are pretty much\
+      \ guaranteed to get called. ANd yes, the myLevel package works as you've described\
+      \ it.\n\n'''Musicalglass:''' I was thinking about this problem with the carousel\
+      \ snapping to frame 1 on start. It would seem that what I need is a Pause and\
+      \ Resume feature.  As there isn't one supplied I was thinking a possible way\
+      \ to create one would be instead of turning LoopAnim on and off you would freeze\
+      \ and unfreeze the frame rate and LoopAnim would always be true. So you would\
+      \ what, make it so once the frame rate reached zero it would go to sleep mode\
+      \ so it wouldn't eat up ticks, right? Would that work?\n\n'''Foxpaw:''' If you\
+      \ are animating the carousel via LoopAnim, I think that should work. However,\
+      \ I wouldn't worry about it getting Ticks, because you can't really prevent\
+      \ it, (It still gets Ticked even while in a latent function like sleep) and\
+      \ also it doesn't really do any harm. If the tick function isn't doing anything,\
+      \ the overhead from the Tick call is very minimal.\n\n'''Clintonman:''' I removed\
+      \ the 'Say' argument and the broadcast worked for me.  With 'Say' it only showed\
+      \ in the console.\n   Level.Game.Broadcast( None, \"I've been touched!\"); \
+      \  \n\n[[Category:Legacy Tutorial|{{PAGENAME}}]]\n[[Category:Legacy Mapping|{{PAGENAME}}]]"
+  properties: []
+  revId: 5997
+name: "Legacy:Playing Mesh Animations"
+revision:
+  revid: 5997
+  parentid: 5998
+  user: "EricBlade"
+  timestamp: 1144395266.000000000
+  comment: "*"
+timestamp: 1668788114.343850000

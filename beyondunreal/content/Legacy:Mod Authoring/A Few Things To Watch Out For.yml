@@ -1,0 +1,630 @@
+---
+parse:
+  title: "Legacy:Mod Authoring/A Few Things To Watch Out For"
+  text:
+    text: "<p>This is where I'm going to put all the information that I wish someone\
+      \ had told me when I started writing mods for Unreal. A lot of this information\
+      \ may not be relevant to you until you have more experience with the engine.\
+      \ I spent a lot of time out on my front porch with a buddy (Sel Tremble) talking\
+      \ about things like <a href=\"/Legacy:Replication\" title=\"Legacy:Replication\"\
+      >replication</a> trying to figure out exactly how it all worked. That was definitely\
+      \ one of the most satisfying things I have ever done. Cracking open a new game\
+      \ can be a very cool experience, but also a very frustrating one. Here I'll\
+      \ give you a couple pointers to ease your exploration.</p>\n<p></p>\n<div id=\"\
+      toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n</div>\n<ul>\n\
+      <li class=\"toclevel-1 tocsection-1\"><a href=\"#Accessed_Nones\"><span class=\"\
+      tocnumber\">1</span> <span class=\"toctext\">Accessed Nones</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-2\"><a href=\"#Dangerous_Iterators\"><span\
+      \ class=\"tocnumber\">2</span> <span class=\"toctext\">Dangerous Iterators</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-3\"><a href=\"#The_Foibles_of_Tracing\"><span\
+      \ class=\"tocnumber\">3</span> <span class=\"toctext\">The Foibles of Tracing</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-4\"><a href=\"#Decrypting_Replication\"><span\
+      \ class=\"tocnumber\">4</span> <span class=\"toctext\">Decrypting Replication</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-5\"><a href=\"#Don.27t_use_UnrealEd\"><span\
+      \ class=\"tocnumber\">5</span> <span class=\"toctext\">Don't use UnrealEd</span></a></li>\n\
+      </ul>\n</div>\n<p></p>\n<h3><span class=\"mw-headline\" id=\"Accessed_Nones\"\
+      >Accessed Nones</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Mod_Authoring/A_Few_Things_To_Watch_Out_For?section=1\"\
+      \ title=\"Edit section: Accessed Nones\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Sooner or later these will start showing up in your\
+      \ log files. UnrealScript treats <i>Accessed None</i>s as warnings but you should\
+      \ treat them as errors. <i>Accessed None</i>s are easy to fix and always signal\
+      \ that something is wrong with your code. If you are familiar with C++ or Java,\
+      \ it's easy to figure out what an Accessed None is. I'll briefly explain them\
+      \ to people who aren't so familiar.</p>\n<p>UnrealScript is an object oriented\
+      \ programming language. When you write a program in UnrealScript, you define\
+      \ a set of behavior for these objects to obey and how they will interact. An\
+      \ object has a set of properties: member variables and member functions. In\
+      \ order to access an object property, you need a reference to that object. Let's\
+      \ look at some sample code:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">class</span> MyObject <span class=\"kw1\">extends</span> <span class=\"\
+      kw9\">Info</span>;\n \n<span class=\"kw1\">var</span> PlayerReplicationInfo\
+      \ PlayerInfo;\n \n<span class=\"kw1\">function</span> PlayerReplicationInfo\
+      \ TestFunction<span class=\"br0\">(</span><span class=\"br0\">)</span>\n<span\
+      \ class=\"br0\">{</span>\n\t<span class=\"kw2\">return</span> PlayerInfo;\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>Here we have a simple object\
+      \ called <code>MyObject</code> that is a subclass of <a href=\"/Legacy:Info_(UT)\"\
+      \ title=\"Legacy:Info (UT)\">Info (UT)</a>. It has two properties: a variable\
+      \ called PlayerInfo and a function called TestFunction. You might want to interact\
+      \ with this object from inside your mod. Let's say you have a reference to a\
+      \ MyObject inside your mod and you want to get some information from inside\
+      \ the PlayerInfo property. You might write code that looks like this:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">class</span> MyMod\
+      \ <span class=\"kw1\">extends</span> TournamentGameInfo;\n \n<span class=\"\
+      kw1\">function</span> <span class=\"kw5\">string</span> GetPlayerName<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t\
+      <span class=\"kw1\">local</span> MyObject Object1;\n\t<span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">string</span> PlayerName;\n \n\tObject1 <span class=\"\
+      sy0\">=</span> GetMyObject<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \tPlayerName <span class=\"sy0\">=</span> Object1.<span class=\"me0\">PlayerInfo</span>.<span\
+      \ class=\"me0\">PlayerName</span>;\n\t<span class=\"kw3\">Log</span><span class=\"\
+      br0\">(</span><span class=\"st0\">\"The player's name is\"</span><span class=\"\
+      sy0\">@</span>PlayerName<span class=\"br0\">)</span>;\t\n<span class=\"br0\"\
+      >}</span></pre></div>\n</div>\n<p>In this example we call a function called\
+      \ <code>GetMyObject()</code> to get a reference to a MyObject. We then access\
+      \ that reference to resolve PlayerInfo (<code>Object1.PlayerInfo</code>) and\
+      \ then access the PlayerInfo reference to resolve PlayerName (<code>PlayerInfo.PlayerName</code>).\
+      \ But what if there isn't a MyObject available, or a bug in <code>GetMyObject()</code>\
+      \ causes it to fail to return a MyObject? In that case, the function would return\
+      \ <i>None</i>. <i>None</i> is an empty reference... a lot like a NULL pointer\
+      \ in C++.</p>\n<p>If, in our example, <code>GetMyObject()</code> returns None,\
+      \ then the variable Object1 is assigned None. In the next line, we try and access\
+      \ Object1 to resolve the PlayerInfo reference. Uh oh... Object1 is <i>None</i>...\
+      \ it doesn't refer to anything. We can't access it, so the Unreal engine logs\
+      \ a warning saying the code broke: \"Accessed None in MyMod.GetPlayerName!\"\
+      </p>\n<p>Its very easy to avoid buggy code like this. Just add a couple checks\
+      \ to your code and define special behavior in the case of a mistake:</p>\n<div\
+      \ dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">class</span> MyMod\
+      \ <span class=\"kw1\">extends</span> TournamentGameInfo;\n \n<span class=\"\
+      kw1\">function</span> <span class=\"kw5\">string</span> GetPlayerName<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t\
+      <span class=\"kw1\">local</span> MyObject Object1;\n\t<span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">string</span> PlayerName;\n \n\tObject1 <span class=\"\
+      sy0\">=</span> GetMyObject<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \t<span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"br0\"\
+      >(</span>Object1 <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"\
+      br0\">(</span>Object1.<span class=\"me0\">PlayerInfo</span> <span class=\"sy0\"\
+      >!=</span> <span class=\"kw5\">None</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span>\n\t\tPlayerName <span class=\"sy0\">=</span> Object1.<span\
+      \ class=\"me0\">PlayerInfo</span>.<span class=\"me0\">PlayerName</span>;\n\t\
+      <span class=\"kw2\">else</span>\n\t\tPlayerName <span class=\"sy0\">=</span>\
+      \ <span class=\"st0\">\"Unknown\"</span>;\n\t<span class=\"kw3\">Log</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">\"The player's name is\"</span><span\
+      \ class=\"sy0\">@</span>PlayerName<span class=\"br0\">)</span>;\t\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p>Now we are checking to see if Object1\
+      \ is none and then checking to see if the PlayerInfo reference is none. <code>if</code>\
+      \ statements in UnrealScript use short circuit logic. That is, <code>if</code>\
+      \ statements are evaluated from left to right. As soon as the code encounters\
+      \ a statement that negates the <code>if</code>, it stops evaluating. That means\
+      \ that if Object1 is <i>None</i>, the code will never evaluate the <code>(Object1.PlayerInfo&#160;!=\
+      \ None)</code> statement. It knows that it doesn't matter what the rest of the\
+      \ statement says, the first part is false so the entire statement is false.</p>\n\
+      <p><i>Accessed None</i>s can be especially dangerous in time critical functions\
+      \ like Timer and Tick. It takes a lot of time to write out an error message\
+      \ to the log and if your code is dumping 3000 error messages a second it can\
+      \ really kill performance (not to mention disk space).</p>\n<h3><span class=\"\
+      mw-headline\" id=\"Dangerous_Iterators\">Dangerous Iterators</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Mod_Authoring/A_Few_Things_To_Watch_Out_For?section=2\"\
+      \ title=\"Edit section: Dangerous Iterators\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>UnrealScript implements a very useful programming\
+      \ tool called <a href=\"/Legacy:UnrealScript_Language_Reference/Advanced_Language_Features\"\
+      \ title=\"Legacy:UnrealScript Language Reference/Advanced Language Features\"\
+      >iterators</a>. An iterator is a datatype that encapsulates a list. (UnrealScript\
+      \ only supports list iterators, our next language will support user defined\
+      \ iterators). You can get an iterator and loop on it, performing an operation\
+      \ on every object inside the iterator. Here is an example:</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">local</span> <span class=\"kw9\">Ammo</span>\
+      \ A;\n<span class=\"kw2\">foreach</span> <span class=\"kw2\">AllActors</span><span\
+      \ class=\"br0\">(</span><span class=\"kw1\">class</span><span class=\"st0\"\
+      >'Ammo'</span>, A<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \tA.<span class=\"me0\">AmmoAmount</span> <span class=\"sy0\">=</span> <span\
+      \ class=\"nu0\">999</span>;\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <p>In this example we are using the AllActors function to get an actor list\
+      \ iterator. We then use the foreach iterator loop to perform some behavior on\
+      \ every object the AllActors function returns. AllActors takes the class of\
+      \ the type of actor you want and a variable to put it in. AllActors will search\
+      \ through <b>every actor in the current game</b> for the objects you want. Here\
+      \ we are saying \"Set the AmmoAmount of every actor in the game to 999.\" Sounds\
+      \ pretty cool, but lets think about it. We are searching through a list of hundreds\
+      \ of Actors for a small few. This isn't exactly a fast operation.</p>\n<p>Iterators\
+      \ can be extremely useful if used carefully. Because they tend to be slow, you'll\
+      \ want to avoid performing iterations faster than a couple times a second. Never\
+      \ perform an AllActors iteration inside of Tick() and never perform AllActors\
+      \ iterations inside of other loops. (Okay, so saying <i>never</i> is a little\
+      \ strict. Let's say... <i>use your best judgement</i>...)</p>\n<p>The most common\
+      \ type of AllActors search you'll work with will probably be a search for all\
+      \ of the <a href=\"/Legacy:PlayerReplicationInfo\" title=\"Legacy:PlayerReplicationInfo\"\
+      >PlayerReplicationInfo</a> actors. PlayerReplicationInfo contains important\
+      \ information about Players that the server sends to each client. It allows\
+      \ each client to have an idea of the status of other players without sending\
+      \ too much information. Its used to show the scores on the scoreboard and other\
+      \ common things.</p>\n<p>Usually, there will only be a handful of PlayerReplicationInfo\
+      \ actors in the global actor list. It doesn't really make sense to do a time\
+      \ consuming search for so few results. In order to simplify this common iteration,\
+      \ we've added a PRI array to GameReplicationInfo. Every tenth of a second, the\
+      \ PRIArray is updated to contain the current set of PlayerReplicationInfos.\
+      \ You can then do your operation of the PRIArray without having to do an AllActors\
+      \ call.</p>\n<p>Other iterators are also available. Look in the <a href=\"/Legacy:Actor\"\
+      \ title=\"Legacy:Actor\">Actor</a> class definition for information. They do\
+      \ exactly what they sound like: TouchingActors returns touching actors, RadiusActors\
+      \ returns all the actors in the given radius, etc. Intelligent use of these\
+      \ iterators will help you keep your code fast.</p>\n<h3><span class=\"mw-headline\"\
+      \ id=\"The_Foibles_of_Tracing\">The Foibles of Tracing</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Mod_Authoring/A_Few_Things_To_Watch_Out_For?section=3\"\
+      \ title=\"Edit section: The Foibles of Tracing\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Wahaha. I just wanted to use the word foible.</p>\n\
+      <p>Because the Unreal engine does not use a potentially visible set, if you\
+      \ want to find something in the world in a spacial sense, you'll need to perform\
+      \ a trace. Most of the time you'll have a good idea of where you are tracing,\
+      \ you just want to know whats on the other end of the line. Other times, you'll\
+      \ use a series of traces to get an idea of what surrounds the object in question.</p>\n\
+      <p>My first advice is to avoid traces wherever possible. Think very hard about\
+      \ what you are using the trace for and try to come up with an alternate way\
+      \ of doing it. Traces are expensive operations that can introduce subtle slowdowns\
+      \ into your mod. You might have a player doing a couple traces every tick and\
+      \ during your testing everything is fine. What you don't realize, is that as\
+      \ soon as you are playing online with 15 of your buddies, those traces start\
+      \ to add up.</p>\n<p>If you have to perform traces, limit their size. Shorter\
+      \ traces are faster than long traces. If you are designing a new Shotgun weapon\
+      \ for UT, for example, you might want to perform 12 traces when the weapon is\
+      \ fired to figure out the scatter of the gun. 12 traces is perfectly reasonable....\
+      \ it's not like the player is going to be firing his shotgun 30 times a second.\
+      \ However, those 12 traces could get expensive if your mod uses large open levels.\
+      \ Its highly unlikely your shotgun is going to be very useful as a long-range\
+      \ weapon, so you might as well cut off its range at a certain point. It saves\
+      \ the engine from having to trace from one end of the map to the other in the\
+      \ worst case.</p>\n<p>Using traces is ultimately a judgment call. It really\
+      \ only becomes a big problem when you perform a lot of traces in a single frame.\
+      \ Nonetheless, it's definitely something to keep your eyes on. <i>Always think\
+      \ about the performance implications of code you write.</i></p>\n<h3><span class=\"\
+      mw-headline\" id=\"Decrypting_Replication\">Decrypting Replication</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Mod_Authoring/A_Few_Things_To_Watch_Out_For?section=4\"\
+      \ title=\"Edit section: Decrypting Replication\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Understanding <a href=\"/Legacy:Replication\" title=\"\
+      Legacy:Replication\">replication</a> is one of the most difficult aspects of\
+      \ writing a mod, but its utterly necessary if you plan on doing any netplay\
+      \ at all. Unfortunately, Tim's replication docs are not easy to understand and\
+      \ make some assumptions about the reader's knowledge that you may not possess.\
+      \ I'll try to point out the things that I learned only through trial and error.</p>\n\
+      <p><b>Simulated</b> functions are called on both the client and the server.\
+      \ <b>But only if called from a simulated function.</b> As soon as a function\
+      \ call breaks the simulation chain, the simulation stops. Be very aware of what\
+      \ you are simulating and what you are doing in simulated functions. <b>Never\
+      \ add a function modifier like simulated just because you saw it in the Unreal\
+      \ source code somewhere else.</b> Understand why you are adding it, know what\
+      \ it does. You can't possibly expect to write quality mods if you don't know\
+      \ what your code is doing.</p>\n<p>Because a simulated function is called on\
+      \ both the client and the server you have to be particularly aware of what data\
+      \ you are accessing. Some object references that are available on the server\
+      \ might not be available on the client. For example, every <a href=\"/Legacy:Actor\"\
+      \ title=\"Legacy:Actor\">Actor</a> has a reference to the current level. Inside\
+      \ the level reference is a reference to the current game. You might write code\
+      \ that looks like this:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">simulated</span> <span class=\"kw1\">function</span> <span class=\"kw5\"\
+      >bool</span> CheckTeamGame<span class=\"br0\">(</span><span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n\t<span class=\"kw2\">return</span> <span class=\"\
+      kw7\">Level</span>.<span class=\"kw7\">Game</span>.<span class=\"me0\">bTeamGame</span>\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>This is a simple simulated\
+      \ function that returns true or false depending on whether or not the current\
+      \ game is a team game. It does this by checking the bTeamGame property of the\
+      \ current level's <a href=\"/Legacy:GameInfo_(UT)\" title=\"Legacy:GameInfo\
+      \ (UT)\">GameInfo (UT)</a> reference. What's wrong with this picture?</p>\n\
+      <p>The Game property of the Level reference is only valid on the server. The\
+      \ client doesn't know anything about the server's game object so the client\
+      \ will log an <i>Accessed None</i>. Yuck!</p>\n<p>If you open up the script\
+      \ for <a href=\"/Legacy:LevelInfo\" title=\"Legacy:LevelInfo\">LevelInfo</a>,\
+      \ you can find a section that looks like this:</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"co1\">//-----------------------------------------------------------------------------</span>\n\
+      <span class=\"co1\">// Network replication.</span>\n \n<span class=\"kw1\">replication</span>\n\
+      <span class=\"br0\">{</span>\n\t<span class=\"kw1\">reliable</span> <span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span> <span class=\"kw7\">Role</span><span\
+      \ class=\"sy0\">==</span><span class=\"kw7\">ROLE_Authority</span> <span class=\"\
+      br0\">)</span>\n\t\tPauser, TimeDilation, bNoCheating, bAllowFOV;\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p>The replication block is a special statement\
+      \ that tells the Unreal engine how to deal with the properties of this object.\
+      \ Lets look at it closely.</p>\n<p>First, we have a replication condition: <code>reliable\
+      \ if( Role == ROLE_Authority)</code>. The first part of the condition will either\
+      \ be reliable or unreliable. If it says reliable, that means the engine will\
+      \ make sure the replicated information gets to each client safely. Because of\
+      \ the way the UDP protocol works, its possible for packets to get lost in transmission.\
+      \ Unreliable replication won't check to see if the packet arrived safely. Reliable\
+      \ replication has a slightly higher network overhead than unreliable replication.</p>\n\
+      <p>The second part of the condition <code>(Role == ROLE_Authority)</code> tells\
+      \ the engine when to send the data. In this situation we are going to send the\
+      \ data whenever the current LevelInfo object is an Authority. To really decypher\
+      \ what this means you have to understand the specific role of the object in\
+      \ question. With a LevelInfo, the server is going to maintain the authoritative\
+      \ version of the object. The server tells the clients how the level is behaving,\
+      \ not the other way around. For our example replication block, this means that\
+      \ the data will be sent from the server to each client.</p>\n<p>The other common\
+      \ type of condition is <code>(Role &lt; ROLE_Authority)</code>. This means that\
+      \ the engine should send the data when the current object is not an authority.\
+      \ Or rather, that the client should tell the server the correct information.</p>\n\
+      <p>Finally, we see four variables listed beneath the condition. These are the\
+      \ variables that the statement applies to. In this situation, we have a statement\
+      \ saying, \"If we are the server and the client has an outdated copy of these\
+      \ variables, then send to the client new information about Pauser, TimeDilation,\
+      \ bNoCheating, and bAllowFOV. Always make sure the data arrives safely.\"</p>\n\
+      <p>The replication statement doesn't cover the rest of the variables in the\
+      \ LevelInfo. This can mean two things. Either the information is filled in by\
+      \ the client in C++ (in the case of TimeSeconds) or the information is never\
+      \ updated on the client and is completely unreliable (in the case of Game).</p>\n\
+      <p>You don't have access to the C++ code, but you can make a couple inferences\
+      \ about an object's properties to help you determine whether or not a class\
+      \ has non-replicated properties that are filled in my C++. Look at the class\
+      \ declaration for LevelInfo:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">class</span> LevelInfo <span class=\"kw1\">extends</span>\
+      \ ZoneInfo\n  <span class=\"kw1\">native</span>;</pre></div>\n</div>\n<p>Native\
+      \ means \"This object is declared in C++ and in UnrealScript.\" Native classes\
+      \ probably have behavior in C++ that you can't see. Only a few special classes\
+      \ are native.</p>\n<p>Finally, watch out for classes that say <code>nativereplication</code>\
+      \ in the class declaration. This means that the <code>replication</code> block\
+      \ inside UnrealScript doesn't do anything and that replication is entirely defined\
+      \ in C++. Some network heavy objects use native replication to help with network\
+      \ performance.</p>\n<p>So now you have an idea of how to avoid problems with\
+      \ simulated functions. Now lets look at replicated functions.</p>\n<p>A replicated\
+      \ function is a function that is called from the client or the server but executed\
+      \ on the other side. An example of a replicated function is the <code>Say</code>\
+      \ function. When you hit the T key to talk to everyone in a game, you are actually\
+      \ executing the Say function along with whatever you said. The client takes\
+      \ the function and its parameters and sends it to the server for execution.\
+      \ The server then broadcasts your message to all the other clients.</p>\n<p>Replicated\
+      \ functions are very easy to use if you remember one thing: They can't return\
+      \ a value. A replicated function is transmitted over the network to the other\
+      \ side... that takes time (approximately equal to your ping). If replicated\
+      \ functions were blocking (i.e.: they waited for a return value) network communication\
+      \ would halt.</p>\n<p>This is obvious for anyone who thinks about it, but when\
+      \ you are working on your mod you might not think about it. Replicated functions\
+      \ return immediately. Use them to trigger behavior on the client (like special\
+      \ effects) or send a message (a weapon fire message to the server).</p>\n<p>Finally,\
+      \ replicated functions are restricted to only a few classes. A function call\
+      \ on an actor can only be replicated to the player who owns that actor. A function\
+      \ call can only be replicated to one actor (the player who owns it); they cannot\
+      \ be multicast. You might use them with weapons or inventory items you make\
+      \ (where the function is replicated to the player who owns the item).</p>\n\
+      <p>Okay, so that should help you get into replication... let's move on.</p>\n\
+      <h3><span class=\"mw-headline\" id=\"Don.27t_use_UnrealEd\">Don't use UnrealEd</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Mod_Authoring/A_Few_Things_To_Watch_Out_For?section=5\"\
+      \ title=\"Edit section: Don't use UnrealEd\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>UnrealEd is a great editor for developing levels,\
+      \ but probably not the best place to work on code. This is a judgment call.\
+      \ I use Microsoft Developer Studio as my editor and <code>ucc make</code> to\
+      \ compile the package files. I find the Find In Files option in Dev Studio to\
+      \ be very useful and the editor to be very powerful.</p>\n<p>In addition, UnrealEd\
+      \ hides the default properties blocks of source files, making them only accessible\
+      \ through the Show Defaults option. This just sucks! To export the script files\
+      \ to disk, go to the script browser and hit the \"Export All\" button. The files\
+      \ will be exported to their package directories ready for you to browse.</p>\n\
+      <p>If UnrealEd crashes with a DLL or OCX error of some sort, go to unreal.epicgames.com\
+      \ and click on Downloads. Download the latest Unreal Editor Fix. The current\
+      \ fix level is 4.</p>\n<hr />\n<p>Prev Page: <a href=\"/Legacy:Mod_Authoring/The_Three_Mod_Types\"\
+      \ title=\"Legacy:Mod Authoring/The Three Mod Types\">Legacy:Mod Authoring/The\
+      \ Three Mod Types</a> – <b>Section 4 of 12</b> – Next Page: <a href=\"/Legacy:Mod_Authoring/Setting_Up_Your_Project\"\
+      \ title=\"Legacy:Mod Authoring/Setting Up Your Project\">Legacy:Mod Authoring/Setting\
+      \ Up Your Project</a></p>\n\n<!-- \nNewPP limit report\nCPU time usage: 0.162\
+      \ seconds\nReal time usage: 0.646 seconds\nPreprocessor visited node count:\
+      \ 86/1000000\nPreprocessor generated node count: 196/1000000\nPost‐expand include\
+      \ size: 38/2097152 bytes\nTemplate argument size: 0/2097152 bytes\nHighest expansion\
+      \ depth: 2/40\nExpensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion\
+      \ expansion time report (%,ms,calls,template)\n100.00%    0.000      1 - -total\n\
+      -->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:1790-0!*!0!!en!*!*\
+      \ and timestamp 20221118155541 and revision id 4391\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:PlayerReplicationInfo"
+  - ns: 100
+    exists: true
+    name: "Legacy:Replication"
+  - ns: 100
+    exists: true
+    name: "Legacy:GameInfo (UT)"
+  - ns: 100
+    exists: true
+    name: "Legacy:UnrealScript Language Reference/Advanced Language Features"
+  - ns: 100
+    exists: true
+    name: "Legacy:Actor"
+  - ns: 100
+    exists: true
+    name: "Legacy:Mod Authoring/The Three Mod Types"
+  - ns: 100
+    exists: true
+    name: "Legacy:LevelInfo"
+  - ns: 100
+    exists: true
+    name: "Legacy:Info (UT)"
+  - ns: 100
+    exists: true
+    name: "Legacy:Mod Authoring/Setting Up Your Project"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "3"
+    line: "Accessed Nones"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Mod_Authoring/A_Few_Things_To_Watch_Out_For"
+    byteoffset: 629
+    anchor: "Accessed_Nones"
+  - toclevel: 1
+    level: "3"
+    line: "Dangerous Iterators"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Mod_Authoring/A_Few_Things_To_Watch_Out_For"
+    byteoffset: 4550
+    anchor: "Dangerous_Iterators"
+  - toclevel: 1
+    level: "3"
+    line: "The Foibles of Tracing"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:Mod_Authoring/A_Few_Things_To_Watch_Out_For"
+    byteoffset: 7284
+    anchor: "The_Foibles_of_Tracing"
+  - toclevel: 1
+    level: "3"
+    line: "Decrypting Replication"
+    number: "4"
+    index: "4"
+    fromtitle: "Legacy:Mod_Authoring/A_Few_Things_To_Watch_Out_For"
+    byteoffset: 9178
+    anchor: "Decrypting_Replication"
+  - toclevel: 1
+    level: "3"
+    line: "Don't use UnrealEd"
+    number: "5"
+    index: "5"
+    fromtitle: "Legacy:Mod_Authoring/A_Few_Things_To_Watch_Out_For"
+    byteoffset: 16149
+    anchor: "Don.27t_use_UnrealEd"
+  displaytitle: "Legacy:Mod Authoring/A Few Things To Watch Out For"
+  iwlinks: []
+  wikitext:
+    text: "This is where I'm going to put all the information that I wish someone\
+      \ had told me when I started writing mods for Unreal. A lot of this information\
+      \ may not be relevant to you until you have more experience with the engine.\
+      \ I spent a lot of time out on my front porch with a buddy (Sel Tremble) talking\
+      \ about things like [[Legacy:Replication|replication]] trying to figure out\
+      \ exactly how it all worked. That was definitely one of the most satisfying\
+      \ things I have ever done. Cracking open a new game can be a very cool experience,\
+      \ but also a very frustrating one. Here I'll give you a couple pointers to ease\
+      \ your exploration.\n\n===Accessed Nones ===\n\nSooner or later these will start\
+      \ showing up in your log files. UnrealScript treats ''Accessed None''s as warnings\
+      \ but you should treat them as errors. ''Accessed None''s are easy to fix and\
+      \ always signal that something is wrong with your code. If you are familiar\
+      \ with C++ or Java, it's easy to figure out what an Accessed None is. I'll briefly\
+      \ explain them to people who aren't so familiar.\n\nUnrealScript is an object\
+      \ oriented programming language. When you write a program in UnrealScript, you\
+      \ define a set of behavior for these objects to obey and how they will interact.\
+      \ An object has a set of properties: member variables and member functions.\
+      \ In order to access an object property, you need a reference to that object.\
+      \ Let's look at some sample code:\n\n<uscript>\nclass MyObject extends Info;\n\
+      \nvar PlayerReplicationInfo PlayerInfo;\n\nfunction PlayerReplicationInfo TestFunction()\n\
+      {\n\treturn PlayerInfo;\n}\n</uscript>\n\nHere we have a simple object called\
+      \ <code>MyObject</code> that is a subclass of [[Legacy:Info (UT)|Info (UT)]].\
+      \ It has two properties: a variable called PlayerInfo and a function called\
+      \ TestFunction. You might want to interact with this object from inside your\
+      \ mod. Let's say you have a reference to a MyObject inside your mod and you\
+      \ want to get some information from inside the PlayerInfo property. You might\
+      \ write code that looks like this:\n\n<uscript>\nclass MyMod extends TournamentGameInfo;\n\
+      \nfunction string GetPlayerName()\n{\n\tlocal MyObject Object1;\n\tlocal string\
+      \ PlayerName;\n\n\tObject1 = GetMyObject();\n\tPlayerName = Object1.PlayerInfo.PlayerName;\n\
+      \tLog(\"The player's name is\"@PlayerName);\t\n}\n</uscript>\n\nIn this example\
+      \ we call a function called <code>GetMyObject()</code> to get a reference to\
+      \ a MyObject. We then access that reference to resolve PlayerInfo (<code>Object1.PlayerInfo</code>)\
+      \ and then access the PlayerInfo reference to resolve PlayerName (<code>PlayerInfo.PlayerName</code>).\
+      \ But what if there isn't a MyObject available, or a bug in <code>GetMyObject()</code>\
+      \ causes it to fail to return a MyObject? In that case, the function would return\
+      \ ''None''. ''None'' is an empty reference... a lot like a NULL pointer in C++.\n\
+      \nIf, in our example, <code>GetMyObject()</code> returns None, then the variable\
+      \ Object1 is assigned None. In the next line, we try and access Object1 to resolve\
+      \ the PlayerInfo reference. Uh oh... Object1 is ''None''... it doesn't refer\
+      \ to anything. We can't access it, so the Unreal engine logs a warning saying\
+      \ the code broke: \"Accessed None in MyMod.GetPlayerName!\"\n\nIts very easy\
+      \ to avoid buggy code like this. Just add a couple checks to your code and define\
+      \ special behavior in the case of a mistake:\n\n<uscript>\nclass MyMod extends\
+      \ TournamentGameInfo;\n\nfunction string GetPlayerName()\n{\n\tlocal MyObject\
+      \ Object1;\n\tlocal string PlayerName;\n\n\tObject1 = GetMyObject();\n\tif ((Object1\
+      \ != None) && (Object1.PlayerInfo != None))\n\t\tPlayerName = Object1.PlayerInfo.PlayerName;\n\
+      \telse\n\t\tPlayerName = \"Unknown\";\n\tLog(\"The player's name is\"@PlayerName);\t\
+      \n}\n</uscript>\n\nNow we are checking to see if Object1 is none and then checking\
+      \ to see if the PlayerInfo reference is none. <code>if</code> statements in\
+      \ UnrealScript use short circuit logic. That is, <code>if</code> statements\
+      \ are evaluated from left to right. As soon as the code encounters a statement\
+      \ that negates the <code>if</code>, it stops evaluating. That means that if\
+      \ Object1 is ''None'', the code will never evaluate the <code>(Object1.PlayerInfo\
+      \ != None)</code> statement. It knows that it doesn't matter what the rest of\
+      \ the statement says, the first part is false so the entire statement is false.\
+      \ \n\n''Accessed None''s can be especially dangerous in time critical functions\
+      \ like Timer and Tick. It takes a lot of time to write out an error message\
+      \ to the log and if your code is dumping 3000 error messages a second it can\
+      \ really kill performance (not to mention disk space). \n\n===Dangerous Iterators\
+      \ ===\n\nUnrealScript implements a very useful programming tool called [[Legacy:UnrealScript\
+      \ Language Reference/Advanced Language Features|iterators]]. An iterator is\
+      \ a datatype that encapsulates a list. (UnrealScript only supports list iterators,\
+      \ our next language will support user defined iterators). You can get an iterator\
+      \ and loop on it, performing an operation on every object inside the iterator.\
+      \ Here is an example:\n\n<uscript>\nlocal Ammo A;\nforeach AllActors(class'Ammo',\
+      \ A)\n{\n\tA.AmmoAmount = 999;\n}\n</uscript>\n\nIn this example we are using\
+      \ the AllActors function to get an actor list iterator. We then use the foreach\
+      \ iterator loop to perform some behavior on every object the AllActors function\
+      \ returns. AllActors takes the class of the type of actor you want and a variable\
+      \ to put it in. AllActors will search through '''every actor in the current\
+      \ game''' for the objects you want. Here we are saying \"Set the AmmoAmount\
+      \ of every actor in the game to 999.\" Sounds pretty cool, but lets think about\
+      \ it. We are searching through a list of hundreds of Actors for a small few.\
+      \ This isn't exactly a fast operation.\n\nIterators can be extremely useful\
+      \ if used carefully. Because they tend to be slow, you'll want to avoid performing\
+      \ iterations faster than a couple times a second. Never perform an AllActors\
+      \ iteration inside of Tick() and never perform AllActors iterations inside of\
+      \ other loops. (Okay, so saying ''never'' is a little strict. Let's say... ''use\
+      \ your best judgement''...)\n\nThe most common type of AllActors search you'll\
+      \ work with will probably be a search for all of the [[Legacy:PlayerReplicationInfo|PlayerReplicationInfo]]\
+      \ actors. PlayerReplicationInfo contains important information about Players\
+      \ that the server sends to each client. It allows each client to have an idea\
+      \ of the status of other players without sending too much information. Its used\
+      \ to show the scores on the scoreboard and other common things.\n\nUsually,\
+      \ there will only be a handful of PlayerReplicationInfo actors in the global\
+      \ actor list. It doesn't really make sense to do a time consuming search for\
+      \ so few results. In order to simplify this common iteration, we've added a\
+      \ PRI array to GameReplicationInfo. Every tenth of a second, the PRIArray is\
+      \ updated to contain the current set of PlayerReplicationInfos. You can then\
+      \ do your operation of the PRIArray without having to do an AllActors call.\n\
+      \nOther iterators are also available. Look in the [[Legacy:Actor|Actor]] class\
+      \ definition for information. They do exactly what they sound like: TouchingActors\
+      \ returns touching actors, RadiusActors returns all the actors in the given\
+      \ radius, etc. Intelligent use of these iterators will help you keep your code\
+      \ fast.\n\n===The Foibles of Tracing ===\n\nWahaha. I just wanted to use the\
+      \ word foible.\n\nBecause the Unreal engine does not use a potentially visible\
+      \ set, if you want to find something in the world in a spacial sense, you'll\
+      \ need to perform a trace. Most of the time you'll have a good idea of where\
+      \ you are tracing, you just want to know whats on the other end of the line.\
+      \ Other times, you'll use a series of traces to get an idea of what surrounds\
+      \ the object in question.\n\nMy first advice is to avoid traces wherever possible.\
+      \ Think very hard about what you are using the trace for and try to come up\
+      \ with an alternate way of doing it. Traces are expensive operations that can\
+      \ introduce subtle slowdowns into your mod. You might have a player doing a\
+      \ couple traces every tick and during your testing everything is fine. What\
+      \ you don't realize, is that as soon as you are playing online with 15 of your\
+      \ buddies, those traces start to add up. \n\nIf you have to perform traces,\
+      \ limit their size. Shorter traces are faster than long traces. If you are designing\
+      \ a new Shotgun weapon for UT, for example, you might want to perform 12 traces\
+      \ when the weapon is fired to figure out the scatter of the gun. 12 traces is\
+      \ perfectly reasonable.... it's not like the player is going to be firing his\
+      \ shotgun 30 times a second. However, those 12 traces could get expensive if\
+      \ your mod uses large open levels. Its highly unlikely your shotgun is going\
+      \ to be very useful as a long-range weapon, so you might as well cut off its\
+      \ range at a certain point. It saves the engine from having to trace from one\
+      \ end of the map to the other in the worst case.\n\nUsing traces is ultimately\
+      \ a judgment call. It really only becomes a big problem when you perform a lot\
+      \ of traces in a single frame. Nonetheless, it's definitely something to keep\
+      \ your eyes on. ''Always think about the performance implications of code you\
+      \ write.''\n\n===Decrypting Replication ===\n\nUnderstanding [[Legacy:Replication|replication]]\
+      \ is one of the most difficult aspects of writing a mod, but its utterly necessary\
+      \ if you plan on doing any netplay at all. Unfortunately, Tim's replication\
+      \ docs are not easy to understand and make some assumptions about the reader's\
+      \ knowledge that you may not possess. I'll try to point out the things that\
+      \ I learned only through trial and error.\n\n'''Simulated''' functions are called\
+      \ on both the client and the server. '''But only if called from a simulated\
+      \ function.''' As soon as a function call breaks the simulation chain, the simulation\
+      \ stops. Be very aware of what you are simulating and what you are doing in\
+      \ simulated functions. '''Never add a function modifier like simulated just\
+      \ because you saw it in the Unreal source code somewhere else.''' Understand\
+      \ why you are adding it, know what it does. You can't possibly expect to write\
+      \ quality mods if you don't know what your code is doing.\n\nBecause a simulated\
+      \ function is called on both the client and the server you have to be particularly\
+      \ aware of what data you are accessing. Some object references that are available\
+      \ on the server might not be available on the client. For example, every [[Legacy:Actor|Actor]]\
+      \ has a reference to the current level. Inside the level reference is a reference\
+      \ to the current game. You might write code that looks like this:\n\n<uscript>\n\
+      simulated function bool CheckTeamGame()\n{\n\treturn Level.Game.bTeamGame\n\
+      }\n</uscript>\n\nThis is a simple simulated function that returns true or false\
+      \ depending on whether or not the current game is a team game. It does this\
+      \ by checking the bTeamGame property of the current level's [[Legacy:GameInfo\
+      \ (UT)|GameInfo (UT)]] reference. What's wrong with this picture?\n\nThe Game\
+      \ property of the Level reference is only valid on the server. The client doesn't\
+      \ know anything about the server's game object so the client will log an ''Accessed\
+      \ None''. Yuck!\n\nIf you open up the script for [[Legacy:LevelInfo|LevelInfo]],\
+      \ you can find a section that looks like this:\n\n<uscript>\n//-----------------------------------------------------------------------------\n\
+      // Network replication.\n\nreplication\n{\n\treliable if( Role==ROLE_Authority\
+      \ )\n\t\tPauser, TimeDilation, bNoCheating, bAllowFOV;\n}\n</uscript>\n\nThe\
+      \ replication block is a special statement that tells the Unreal engine how\
+      \ to deal with the properties of this object. Lets look at it closely.\n\nFirst,\
+      \ we have a replication condition: <code>reliable if( Role == ROLE_Authority)</code>.\
+      \ The first part of the condition will either be reliable or unreliable. If\
+      \ it says reliable, that means the engine will make sure the replicated information\
+      \ gets to each client safely. Because of the way the UDP protocol works, its\
+      \ possible for packets to get lost in transmission. Unreliable replication won't\
+      \ check to see if the packet arrived safely. Reliable replication has a slightly\
+      \ higher network overhead than unreliable replication.\n\nThe second part of\
+      \ the condition <code>(Role == ROLE_Authority)</code> tells the engine when\
+      \ to send the data. In this situation we are going to send the data whenever\
+      \ the current LevelInfo object is an Authority. To really decypher what this\
+      \ means you have to understand the specific role of the object in question.\
+      \ With a LevelInfo, the server is going to maintain the authoritative version\
+      \ of the object. The server tells the clients how the level is behaving, not\
+      \ the other way around. For our example replication block, this means that the\
+      \ data will be sent from the server to each client. \n\nThe other common type\
+      \ of condition is <code>(Role < ROLE_Authority)</code>. This means that the\
+      \ engine should send the data when the current object is not an authority. Or\
+      \ rather, that the client should tell the server the correct information.\n\n\
+      Finally, we see four variables listed beneath the condition. These are the variables\
+      \ that the statement applies to. In this situation, we have a statement saying,\
+      \ \"If we are the server and the client has an outdated copy of these variables,\
+      \ then send to the client new information about Pauser, TimeDilation, bNoCheating,\
+      \ and bAllowFOV. Always make sure the data arrives safely.\"\n\nThe replication\
+      \ statement doesn't cover the rest of the variables in the LevelInfo. This can\
+      \ mean two things. Either the information is filled in by the client in C++\
+      \ (in the case of TimeSeconds) or the information is never updated on the client\
+      \ and is completely unreliable (in the case of Game).\n\nYou don't have access\
+      \ to the C++ code, but you can make a couple inferences about an object's properties\
+      \ to help you determine whether or not a class has non-replicated properties\
+      \ that are filled in my C++. Look at the class declaration for LevelInfo:\n\n\
+      <uscript>\nclass LevelInfo extends ZoneInfo\n  native;\n</uscript>\n\nNative\
+      \ means \"This object is declared in C++ and in UnrealScript.\" Native classes\
+      \ probably have behavior in C++ that you can't see. Only a few special classes\
+      \ are native.\n\nFinally, watch out for classes that say <code>nativereplication</code>\
+      \ in the class declaration. This means that the <code>replication</code> block\
+      \ inside UnrealScript doesn't do anything and that replication is entirely defined\
+      \ in C++. Some network heavy objects use native replication to help with network\
+      \ performance. \n\nSo now you have an idea of how to avoid problems with simulated\
+      \ functions. Now lets look at replicated functions. \n\nA replicated function\
+      \ is a function that is called from the client or the server but executed on\
+      \ the other side. An example of a replicated function is the <code>Say</code>\
+      \ function. When you hit the T key to talk to everyone in a game, you are actually\
+      \ executing the Say function along with whatever you said. The client takes\
+      \ the function and its parameters and sends it to the server for execution.\
+      \ The server then broadcasts your message to all the other clients. \n\nReplicated\
+      \ functions are very easy to use if you remember one thing: They can't return\
+      \ a value. A replicated function is transmitted over the network to the other\
+      \ side... that takes time (approximately equal to your ping). If replicated\
+      \ functions were blocking (i.e.: they waited for a return value) network communication\
+      \ would halt.\n\nThis is obvious for anyone who thinks about it, but when you\
+      \ are working on your mod you might not think about it. Replicated functions\
+      \ return immediately. Use them to trigger behavior on the client (like special\
+      \ effects) or send a message (a weapon fire message to the server). \n\nFinally,\
+      \ replicated functions are restricted to only a few classes. A function call\
+      \ on an actor can only be replicated to the player who owns that actor. A function\
+      \ call can only be replicated to one actor (the player who owns it); they cannot\
+      \ be multicast. You might use them with weapons or inventory items you make\
+      \ (where the function is replicated to the player who owns the item).\n\nOkay,\
+      \ so that should help you get into replication... let's move on. \n\n===Don't\
+      \ use UnrealEd ===\n\nUnrealEd is a great editor for developing levels, but\
+      \ probably not the best place to work on code. This is a judgment call. I use\
+      \ Microsoft Developer Studio as my editor and <code>ucc make</code> to compile\
+      \ the package files. I find the Find In Files option in Dev Studio to be very\
+      \ useful and the editor to be very powerful.\n\nIn addition, UnrealEd hides\
+      \ the default properties blocks of source files, making them only accessible\
+      \ through the Show Defaults option. This just sucks! To export the script files\
+      \ to disk, go to the script browser and hit the \"Export All\" button. The files\
+      \ will be exported to their package directories ready for you to browse.\n\n\
+      If UnrealEd crashes with a DLL or OCX error of some sort, go to unreal.epicgames.com\
+      \ and click on Downloads. Download the latest Unreal Editor Fix. The current\
+      \ fix level is 4.\n\n----\n\nPrev Page: [[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/The\
+      \ Three Mod Types]] &ndash; '''Section 4 of 12''' &ndash; Next Page: [[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/Setting\
+      \ Up Your Project]]"
+  properties: []
+  revId: 4391
+name: "Legacy:Mod Authoring/A Few Things To Watch Out For"
+revision:
+  revid: 4391
+  parentid: 4393
+  user: "Alien8"
+  timestamp: 1053398657.000000000
+  comment: "*Replaced all instances of 'expands' with 'extends'"
+timestamp: 1668786866.171068000

@@ -1,0 +1,196 @@
+---
+parse:
+  title: "Legacy:Quaternion Rotation"
+  text:
+    text: "<p>If you want to know what <a href=\"/Legacy:Quaternion\" title=\"Legacy:Quaternion\"\
+      >quaternions</a> are and what they are good or, please read the appropriate\
+      \ page first.</p>\n<p>This page will simply describe how to use a <a href=\"\
+      /Legacy:Quaternion\" title=\"Legacy:Quaternion\">quaternion</a> to calculate\
+      \ the player's rotation. This could be very useful for spaceships and to avoid\
+      \ gimbal lock.</p>\n<h3><span class=\"mw-headline\" id=\"Rotation_Maths\">Rotation\
+      \ Maths</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Quaternion_Rotation?section=1\" title=\"Edit\
+      \ section: Rotation Maths\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>First, a global <a href=\"/Legacy:Quaternion\" title=\"Legacy:Quaternion\"\
+      >quaternion</a> var (quat) has to be declared for the player, let's call it\
+      \ \"QuatRotation\". This should be initialised to a straight rotation, I did\
+      \ it like this:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\">QuatRotation <span\
+      \ class=\"sy0\">=</span> <span class=\"kw3\">QuatFromAxisAndAngle</span><span\
+      \ class=\"br0\">(</span> <span class=\"kw3\">Vect</span><span class=\"br0\"\
+      >(</span><span class=\"nu0\">1</span>,<span class=\"nu0\">0</span>,<span class=\"\
+      nu0\">0</span><span class=\"br0\">)</span>, <span class=\"nu0\">0.0</span> <span\
+      \ class=\"br0\">)</span>;</pre></div>\n</div>\n<p>Note that because the angle\
+      \ is zero, the quaternion will be the same regardless of what vector we supply\
+      \ as the axis. For this reason, there is no point in setting the starting quat's\
+      \ axis to the vector rotation of the player.</p>\n<p>In UpdateRotation(), the\
+      \ rotations about the different axis can be done like this:</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"co1\">// Roll</span>\nRotQuat <span class=\"\
+      sy0\">=</span> <span class=\"kw3\">QuatFromAxisAndAngle</span><span class=\"\
+      br0\">(</span> <span class=\"kw3\">vect</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">1</span>,<span class=\"nu0\">0</span>,<span class=\"nu0\">0</span><span\
+      \ class=\"br0\">)</span>, DeltaTime <span class=\"sy0\">*</span> Amount <span\
+      \ class=\"br0\">)</span>;\nQuatRotation <span class=\"sy0\">=</span> <span class=\"\
+      kw3\">QuatProduct</span><span class=\"br0\">(</span>QuatRotation, RotQuat<span\
+      \ class=\"br0\">)</span>;\n \n<span class=\"co1\">// Yaw</span>\nRotQuat <span\
+      \ class=\"sy0\">=</span> <span class=\"kw3\">QuatFromAxisAndAngle</span><span\
+      \ class=\"br0\">(</span> <span class=\"kw3\">vect</span><span class=\"br0\"\
+      >(</span><span class=\"nu0\">0</span>,<span class=\"nu0\">0</span>,<span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span>, DeltaTime <span class=\"sy0\">*</span>\
+      \ Amount <span class=\"br0\">)</span>;\nQuatRotation <span class=\"sy0\">=</span>\
+      \ <span class=\"kw3\">QuatProduct</span><span class=\"br0\">(</span>QuatRotation,\
+      \ RotQuat<span class=\"br0\">)</span>;\n \n<span class=\"co1\">// Pitch</span>\n\
+      RotQuat <span class=\"sy0\">=</span> <span class=\"kw3\">QuatFromAxisAndAngle</span><span\
+      \ class=\"br0\">(</span> <span class=\"kw3\">vect</span><span class=\"br0\"\
+      >(</span><span class=\"nu0\">0</span>,<span class=\"nu0\">1</span>,<span class=\"\
+      nu0\">0</span><span class=\"br0\">)</span>, DeltaTime <span class=\"sy0\">*</span>\
+      \ Amount <span class=\"br0\">)</span>;\nQuatRotation <span class=\"sy0\">=</span>\
+      \ <span class=\"kw3\">QuatProduct</span><span class=\"br0\">(</span>QuatRotation,\
+      \ RotQuat<span class=\"br0\">)</span>;</pre></div>\n</div>\n<p>Where Amount\
+      \ is the amount we want to turn among the certain axis. So we simply create\
+      \ a new rotation quaternion for each rotation and then apply this rotation to\
+      \ our rotation quaternion. I don't know if this is the best way to do it, but\
+      \ it works.</p>\n<h3><span class=\"mw-headline\" id=\"Converting_the_quaternion_to_a_rotator\"\
+      >Converting the quaternion to a rotator</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Quaternion_Rotation?section=2\"\
+      \ title=\"Edit section: Converting the quaternion to a rotator\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h3>\n<p>Finally we have\
+      \ to convert the quaternion to a rotator, so we can set the rotation with SetRotation().\
+      \ This turned out to be more tricky than I hoped. However, this function that\
+      \ I found on the net for another language (unfortunately I can't remember where\
+      \ I found it) finally did the job:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">function</span> <span class=\"kw5\">Rotator</span> <span\
+      \ class=\"kw3\">QuatToRotator</span><span class=\"br0\">(</span><span class=\"\
+      kw5\">quat</span> Q<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \    <span class=\"kw1\">local</span> <span class=\"kw5\">float</span> sqx,\
+      \ sqy, sqz, sqw;\n    <span class=\"kw1\">local</span> <span class=\"kw5\">Rotator</span>\
+      \ <span class=\"kw5\">Rotator</span>;\n \n    sqx <span class=\"sy0\">=</span>\
+      \ Q.<span class=\"me0\">X</span><span class=\"sy0\">*</span>Q.<span class=\"\
+      me0\">X</span>;\n    sqy <span class=\"sy0\">=</span> Q.<span class=\"me0\"\
+      >Y</span><span class=\"sy0\">*</span>Q.<span class=\"me0\">Y</span>;\n    sqz\
+      \ <span class=\"sy0\">=</span> Q.<span class=\"me0\">Z</span><span class=\"\
+      sy0\">*</span>Q.<span class=\"me0\">Z</span>;\n    sqw <span class=\"sy0\">=</span>\
+      \ Q.<span class=\"me0\">W</span><span class=\"sy0\">*</span>Q.<span class=\"\
+      me0\">W</span>;\n \n    <span class=\"kw5\">Rotator</span>.<span class=\"me0\"\
+      >Yaw</span> <span class=\"sy0\">=</span> <span class=\"kw3\">atan</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">2.0</span> <span class=\"sy0\">*</span>\
+      \ <span class=\"br0\">(</span>Q.<span class=\"me0\">X</span><span class=\"sy0\"\
+      >*</span>Q.<span class=\"me0\">Y</span> <span class=\"sy0\">+</span> Q.<span\
+      \ class=\"me0\">Z</span><span class=\"sy0\">*</span>Q.<span class=\"me0\">W</span><span\
+      \ class=\"br0\">)</span>, <span class=\"br0\">(</span>sqx <span class=\"sy0\"\
+      >-</span> sqy <span class=\"sy0\">-</span> sqz <span class=\"sy0\">+</span>\
+      \ sqw<span class=\"br0\">)</span><span class=\"br0\">)</span> <span class=\"\
+      sy0\">*</span> <span class=\"nu0\">10430.3783505</span>; \n    <span class=\"\
+      kw5\">Rotator</span>.<span class=\"me0\">Roll</span> <span class=\"sy0\">=</span>\
+      \ <span class=\"kw3\">atan</span><span class=\"br0\">(</span><span class=\"\
+      nu0\">2.0</span> <span class=\"sy0\">*</span> <span class=\"br0\">(</span>Q.<span\
+      \ class=\"me0\">Y</span><span class=\"sy0\">*</span>Q.<span class=\"me0\">Z</span>\
+      \ <span class=\"sy0\">+</span> Q.<span class=\"me0\">X</span><span class=\"\
+      sy0\">*</span>Q.<span class=\"me0\">W</span><span class=\"br0\">)</span>,<span\
+      \ class=\"br0\">(</span><span class=\"sy0\">-</span>sqx <span class=\"sy0\"\
+      >-</span> sqy <span class=\"sy0\">+</span> sqz <span class=\"sy0\">+</span>\
+      \ sqw<span class=\"br0\">)</span><span class=\"br0\">)</span> <span class=\"\
+      sy0\">*</span> <span class=\"sy0\">-</span><span class=\"nu0\">10430.3783505</span>;\n\
+      \    <span class=\"kw5\">Rotator</span>.<span class=\"me0\">Pitch</span> <span\
+      \ class=\"sy0\">=</span> <span class=\"kw3\">asin</span><span class=\"br0\"\
+      >(</span><span class=\"sy0\">-</span><span class=\"nu0\">2.0</span> <span class=\"\
+      sy0\">*</span> <span class=\"br0\">(</span>Q.<span class=\"me0\">X</span><span\
+      \ class=\"sy0\">*</span>Q.<span class=\"me0\">Z</span> <span class=\"sy0\">-</span>\
+      \ Q.<span class=\"me0\">Y</span><span class=\"sy0\">*</span>Q.<span class=\"\
+      me0\">W</span><span class=\"br0\">)</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">*</span> <span class=\"sy0\">-</span><span class=\"nu0\">10430.3783505</span>;\n\
+      \ \n    <span class=\"kw2\">return</span> <span class=\"kw5\">Rotator</span>;\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>\"10430.3783505\" is simply\
+      \ the value to convert the resulting radians to URot units. This function has\
+      \ one major flaw though. Whenever I look straight up or down, it \"flickers\"\
+      . This doesn't happen often, but it can happen. So if everyone knows a better\
+      \ way, feel free to fix or replace the above code.</p>\n<p><b>Matariel:</b>\
+      \ in UT2004 QuatToRotator and back as well as QuatSlerp are handled natively\
+      \ so you wont have to worry about that. Ut2003 though, Im afraid no such luck&#160;:/</p>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.081 seconds\nReal time usage:\
+      \ 0.083 seconds\nPreprocessor visited node count: 28/1000000\nPreprocessor generated\
+      \ node count: 72/1000000\nPost‐expand include size: 0/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:2570-0!*!0!!*!*!* and timestamp 20221118155114 and revision\
+      \ id 6136\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Quaternion"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "3"
+    line: "Rotation Maths"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Quaternion_Rotation"
+    byteoffset: 313
+    anchor: "Rotation_Maths"
+  - toclevel: 1
+    level: "3"
+    line: "Converting the quaternion to a rotator"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Quaternion_Rotation"
+    byteoffset: 1578
+    anchor: "Converting_the_quaternion_to_a_rotator"
+  displaytitle: "Legacy:Quaternion Rotation"
+  iwlinks: []
+  wikitext:
+    text: "If you want to know what [[Legacy:Quaternion|quaternion]]s are and what\
+      \ they are good or, please read the appropriate page first.\n\nThis page will\
+      \ simply describe how to use a [[Legacy:Quaternion|quaternion]] to calculate\
+      \ the player's rotation. This could be very useful for spaceships and to avoid\
+      \ gimbal lock. \n\n===Rotation Maths ===\n\nFirst, a global [[Legacy:Quaternion|quaternion]]\
+      \ var (quat) has to be declared for the player, let's call it \"QuatRotation\"\
+      . This should be initialised to a straight rotation, I did it like this:\n\n\
+      <uscript>QuatRotation = QuatFromAxisAndAngle( Vect(1,0,0), 0.0 );</uscript>\n\
+      \nNote that because the angle is zero, the quaternion will be the same regardless\
+      \ of what vector we supply as the axis. For this reason, there is no point in\
+      \ setting the starting quat's axis to the vector rotation of the player.\n\n\
+      In UpdateRotation(), the rotations about the different axis can be done like\
+      \ this:\n\n<uscript>\n// Roll\nRotQuat = QuatFromAxisAndAngle( vect(1,0,0),\
+      \ DeltaTime * Amount );\nQuatRotation = QuatProduct(QuatRotation, RotQuat);\n\
+      \n// Yaw\nRotQuat = QuatFromAxisAndAngle( vect(0,0,1), DeltaTime * Amount );\n\
+      QuatRotation = QuatProduct(QuatRotation, RotQuat);\n    \n// Pitch\nRotQuat\
+      \ = QuatFromAxisAndAngle( vect(0,1,0), DeltaTime * Amount );\nQuatRotation =\
+      \ QuatProduct(QuatRotation, RotQuat);\n</uscript>\n\nWhere Amount is the amount\
+      \ we want to turn among the certain axis. So we simply create a new rotation\
+      \ quaternion for each rotation and then apply this rotation to our rotation\
+      \ quaternion. I don't know if this is the best way to do it, but it works.\n\
+      \n===Converting the quaternion to a rotator ===\n\nFinally we have to convert\
+      \ the quaternion to a rotator, so we can set the rotation with SetRotation().\
+      \ This turned out to be more tricky than I hoped. However, this function that\
+      \ I found on the net for another language (unfortunately I can't remember where\
+      \ I found it) finally did the job:\n\n<uscript>\nfunction Rotator QuatToRotator(quat\
+      \ Q)\n{\n    local float sqx, sqy, sqz, sqw;\n    local Rotator Rotator;\n \
+      \   \n    sqx = Q.X*Q.X;\n    sqy = Q.Y*Q.Y;\n    sqz = Q.Z*Q.Z;\n    sqw =\
+      \ Q.W*Q.W;\n\n    Rotator.Yaw = atan(2.0 * (Q.X*Q.Y + Q.Z*Q.W), (sqx - sqy -\
+      \ sqz + sqw)) * 10430.3783505; \n    Rotator.Roll = atan(2.0 * (Q.Y*Q.Z + Q.X*Q.W),(-sqx\
+      \ - sqy + sqz + sqw)) * -10430.3783505;\n    Rotator.Pitch = asin(-2.0 * (Q.X*Q.Z\
+      \ - Q.Y*Q.W)) * -10430.3783505;\n    \n    return Rotator;\n}\n</uscript>\n\n\
+      \"10430.3783505\" is simply the value to convert the resulting radians to URot\
+      \ units. This function has one major flaw though. Whenever I look straight up\
+      \ or down, it \"flickers\". This doesn't happen often, but it can happen. So\
+      \ if everyone knows a better way, feel free to fix or replace the above code.\
+      \ \n\n'''Matariel:''' in UT2004 QuatToRotator and back as well as QuatSlerp\
+      \ are handled natively so you wont have to worry about that. Ut2003 though,\
+      \ Im afraid no such luck :/"
+  properties: []
+  revId: 6136
+name: "Legacy:Quaternion Rotation"
+revision:
+  revid: 6136
+  parentid: 6137
+  user: "Matariel"
+  timestamp: 1153601773.000000000
+  comment: "*"
+timestamp: 1668786597.876342000

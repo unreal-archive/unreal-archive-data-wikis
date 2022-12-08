@@ -1,0 +1,293 @@
+---
+parse:
+  title: "Legacy:Package File Format/Data Details"
+  text:
+    text: "<p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n\
+      </div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#Data_details\"\
+      ><span class=\"tocnumber\">1</span> <span class=\"toctext\">Data details</span></a>\n\
+      <ul>\n<li class=\"toclevel-2 tocsection-2\"><a href=\"#Integer_values\"><span\
+      \ class=\"tocnumber\">1.1</span> <span class=\"toctext\">Integer values</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-3\"><a href=\"#Index.2FCompactIndex_values\"\
+      ><span class=\"tocnumber\">1.2</span> <span class=\"toctext\">Index/CompactIndex\
+      \ values</span></a></li>\n<li class=\"toclevel-2 tocsection-4\"><a href=\"#Name_values\"\
+      ><span class=\"tocnumber\">1.3</span> <span class=\"toctext\">Name values</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-5\"><a href=\"#Object_References\"><span class=\"\
+      tocnumber\">1.4</span> <span class=\"toctext\">Object References</span></a></li>\n\
+      </ul>\n</li>\n<li class=\"toclevel-1 tocsection-6\"><a href=\"#Comments.2FDiscussion\"\
+      ><span class=\"tocnumber\">2</span> <span class=\"toctext\">Comments/Discussion</span></a></li>\n\
+      </ul>\n</div>\n<p></p>\n<h2><span class=\"mw-headline\" id=\"Data_details\"\
+      >Data details</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Package_File_Format/Data_Details?section=1\"\
+      \ title=\"Edit section: Data details\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<h3><span class=\"mw-headline\" id=\"Integer_values\"\
+      >Integer values</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Package_File_Format/Data_Details?section=2\"\
+      \ title=\"Edit section: Integer values\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Integers are stored in low-endian byte order (that\
+      \ means, the least significant byte comes first; the standard byte order for\
+      \ Intel processors: see <a href=\"http://en.wikipedia.org/wiki/Endianness\"\
+      \ class=\"extiw\" title=\"wikipedia:Endianness\">Wikipedia:Endianness</a>).</p>\n\
+      <h3><span class=\"mw-headline\" id=\"Index.2FCompactIndex_values\">Index/CompactIndex\
+      \ values</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Package_File_Format/Data_Details?section=3\"\
+      \ title=\"Edit section: Index/CompactIndex values\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Index values are signed integers stored in a compact\
+      \ format, occupying one to five bytes. In the <i>first byte</i>,</p>\n<ul>\n\
+      <li>the most significant bit <b>(bit 7)</b> specifies the sign of the integer\
+      \ value;</li>\n<li>the second-most significant bit <b>(bit 6)</b> is set if\
+      \ the value is continued in the next byte;</li>\n<li>and the six remaining bits\
+      \ <b>(bits 5 to 0)</b> are the six least significant bits of the resultant integer\
+      \ value.</li>\n</ul>\n<p>Each of the three <i>following bytes</i> (if applicable\
+      \ according to <b>bit 6</b> of the <i>first byte</i>) contributes seven more\
+      \ bits to the final integer value (<b>bits 6 to 0</b> of each byte), while its\
+      \ most significant bit <b>(bit 7)</b> is set if another byte must be read to\
+      \ continue the value. The <i>fifth byte</i> contributes full eight bits to the\
+      \ value. No more than five bytes are read for a compact index value.</p>\n<p>The\
+      \ following chart demonstrates how compact index values are stored. The <i>Range</i>\
+      \ column specifies the range of values that can be stored with the given representation.\
+      \ <b>s</b> is the signum bit, and <b>x</b> are data bits.</p>\n<pre>       \
+      \    Byte  0         1         2         3         4\n   Range   Bit   76543210\
+      \  76543210  76543210  76543210  76543210\n   \n    6 bit        s0xxxxxx\n\
+      \   13 bit        s1xxxxxx  0xxxxxxx\n   20 bit        s1xxxxxx  1xxxxxxx  0xxxxxxx\n\
+      \   27 bit        s1xxxxxx  1xxxxxxx  1xxxxxxx  0xxxxxxx\n   35 bit        s1xxxxxx\
+      \  1xxxxxxx  1xxxxxxx  1xxxxxxx  xxxxxxxx\n</pre>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"co1\">// Sample C# code (can be easily ported\
+      \ to C/C++/VB/etc.)</span>\n \n<span class=\"co1\">/// &lt;summary&gt;Reads\
+      \ a compact integer from the FileReader.</span>\n<span class=\"co1\">/// Bytes\
+      \ read differs, so do not make assumptions about</span>\n<span class=\"co1\"\
+      >/// physical data being read from the stream. (If you have</span>\n<span class=\"\
+      co1\">/// to, get the difference of FileReader.BaseStream.Position</span>\n\
+      <span class=\"co1\">/// before and after this is executed.)&lt;/summary&gt;</span>\n\
+      <span class=\"co1\">/// &lt;returns&gt;An \"uncompacted\" signed integer.&lt;/returns&gt;</span>\n\
+      <span class=\"co1\">/// &lt;remarks&gt;FileReader is a System.IO.BinaryReader\
+      \ mapped</span>\n<span class=\"co1\">/// to a file. Also, there may be better\
+      \ ways to implement</span>\n<span class=\"co1\">/// this, but this is fast,\
+      \ and it works.&lt;/remarks&gt;</span>\n<span class=\"kw1\">private</span> <span\
+      \ class=\"kw5\">int</span> ReadCompactInteger<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw5\"\
+      >int</span> output <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>;\n\
+      \t<span class=\"kw5\">bool</span> signed <span class=\"sy0\">=</span> <span\
+      \ class=\"kw6\">false</span>;\n\t<span class=\"kw2\">for</span><span class=\"\
+      br0\">(</span><span class=\"kw5\">int</span> i <span class=\"sy0\">=</span>\
+      \ <span class=\"nu0\">0</span>; i <span class=\"sy0\">&lt;</span> <span class=\"\
+      nu0\">5</span>; i<span class=\"sy0\">++</span><span class=\"br0\">)</span>\n\
+      \t<span class=\"br0\">{</span>\n\t\t<span class=\"kw5\">byte</span> x <span\
+      \ class=\"sy0\">=</span> FileReader.<span class=\"me0\">ReadByte</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n\t\t<span class=\"co1\"\
+      >// First byte</span>\n\t\t<span class=\"kw2\">if</span><span class=\"br0\"\
+      >(</span>i <span class=\"sy0\">==</span> <span class=\"nu0\">0</span><span class=\"\
+      br0\">)</span>\n\t\t<span class=\"br0\">{</span>\n\t\t\t<span class=\"co1\"\
+      >// Bit: X0000000</span>\n\t\t\t<span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span><span class=\"br0\">(</span>x <span class=\"sy0\">&amp;</span>\
+      \ 0x80<span class=\"br0\">)</span> <span class=\"sy0\">&gt;</span> <span class=\"\
+      nu0\">0</span><span class=\"br0\">)</span>\n\t\t\t\tsigned <span class=\"sy0\"\
+      >=</span> <span class=\"kw6\">true</span>;\n\t\t\t<span class=\"co1\">// Bits:\
+      \ 00XXXXXX</span>\n\t\t\toutput <span class=\"sy0\">|=</span> <span class=\"\
+      br0\">(</span>x <span class=\"sy0\">&amp;</span> 0x3F<span class=\"br0\">)</span>;\n\
+      \t\t\t<span class=\"co1\">// Bit: 0X000000</span>\n\t\t\t<span class=\"kw2\"\
+      >if</span><span class=\"br0\">(</span><span class=\"br0\">(</span>x <span class=\"\
+      sy0\">&amp;</span> 0x40<span class=\"br0\">)</span> <span class=\"sy0\">==</span>\
+      \ <span class=\"nu0\">0</span><span class=\"br0\">)</span>\n\t\t\t\t<span class=\"\
+      kw2\">break</span>;\n\t\t<span class=\"br0\">}</span>\n\t\t<span class=\"co1\"\
+      >// Last byte</span>\n\t\t<span class=\"kw2\">else</span> <span class=\"kw2\"\
+      >if</span><span class=\"br0\">(</span>i <span class=\"sy0\">==</span> <span\
+      \ class=\"nu0\">4</span><span class=\"br0\">)</span>\n\t\t<span class=\"br0\"\
+      >{</span>\n\t\t\t<span class=\"co1\">// Bits: 000XXXXX -- the 0 bits are ignored</span>\n\
+      \t\t\t<span class=\"co1\">// (hits the 32 bit boundary)</span>\n\t\t\toutput\
+      \ <span class=\"sy0\">|=</span> <span class=\"br0\">(</span>x <span class=\"\
+      sy0\">&amp;</span> 0x1F<span class=\"br0\">)</span> <span class=\"sy0\">&lt;&lt;</span>\
+      \ <span class=\"br0\">(</span><span class=\"nu0\">6</span> <span class=\"sy0\"\
+      >+</span> <span class=\"br0\">(</span><span class=\"nu0\">3</span> <span class=\"\
+      sy0\">*</span> <span class=\"nu0\">7</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span>;\n\t\t<span class=\"br0\">}</span>\n\t\t<span class=\"\
+      co1\">// Middle bytes</span>\n\t\t<span class=\"kw2\">else</span>\n\t\t<span\
+      \ class=\"br0\">{</span>\n\t\t\t<span class=\"co1\">// Bits: 0XXXXXXX</span>\n\
+      \t\t\toutput <span class=\"sy0\">|=</span> <span class=\"br0\">(</span>x <span\
+      \ class=\"sy0\">&amp;</span> 0x7F<span class=\"br0\">)</span> <span class=\"\
+      sy0\">&lt;&lt;</span> <span class=\"br0\">(</span><span class=\"nu0\">6</span>\
+      \ <span class=\"sy0\">+</span> <span class=\"br0\">(</span><span class=\"br0\"\
+      >(</span>i <span class=\"sy0\">-</span> <span class=\"nu0\">1</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">*</span> <span class=\"nu0\">7</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>;\n\t\t\t<span class=\"\
+      co1\">// Bit: X0000000</span>\n\t\t\t<span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span><span class=\"br0\">(</span>x <span class=\"sy0\">&amp;</span>\
+      \ 0x80<span class=\"br0\">)</span> <span class=\"sy0\">==</span> <span class=\"\
+      nu0\">0</span><span class=\"br0\">)</span>\n\t\t\t\t<span class=\"kw2\">break</span>;\n\
+      \t\t<span class=\"br0\">}</span>\n\t<span class=\"br0\">}</span>\n\t<span class=\"\
+      co1\">// multiply by negative one here, since the first 6+ bits could be 0</span>\n\
+      \t<span class=\"kw2\">if</span><span class=\"br0\">(</span>signed<span class=\"\
+      br0\">)</span>\n\t\toutput <span class=\"sy0\">*=</span> <span class=\"sy0\"\
+      >-</span><span class=\"nu0\">1</span>;\n\t<span class=\"kw2\">return</span><span\
+      \ class=\"br0\">(</span>output<span class=\"br0\">)</span>;\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<h3><span class=\"mw-headline\" id=\"Name_values\"\
+      >Name values</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Package_File_Format/Data_Details?section=4\"\
+      \ title=\"Edit section: Name values\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>The Name type is a simple string type. The format\
+      \ does, although, differ between the package versions.</p>\n<p>Older package\
+      \ versions (&lt;64, original Unreal engine) store the Name type as a zero-terminated\
+      \ ASCII string; \"UT2k3\", for example would be stored as: \"U\" \"T\" \"2\"\
+      \ \"k\" \"3\" 0x00</p>\n<p>Newer packages (&gt;=64, UT engine) prepend the length\
+      \ of the string plus the trailing zero. Again, \"UT2k3\" would be now stored\
+      \ as: 0x06 \"U\" \"T\" \"2\" \"k\" \"3\" 0x00</p>\n<h3><span class=\"mw-headline\"\
+      \ id=\"Object_References\">Object References</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Package_File_Format/Data_Details?section=5\"\
+      \ title=\"Edit section: Object References\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>The last custom type which can be found within package\
+      \ files is the ObjectReference. ObjectReferences can be imagined as pointers.\
+      \ Technically, they are stored as CompactIndices. Depending on their value,\
+      \ however, they can point to different objects.</p>\n<table class=\"wikitable\"\
+      >\n<tr>\n<td style=\"text-align: center\"><b>Value</b></td>\n<td style=\"text-align:\
+      \ center\"><b>Type</b></td>\n<td style=\"text-align: center\"><b>Pointer-Value</b></td>\n\
+      </tr>\n<tr>\n<td style=\"text-align: center\">&lt; 0</td>\n<td>pointer to an\
+      \ entry of the ImportTable</td>\n<td style=\"text-align: center\">entry-id =\
+      \ -value - 1</td>\n</tr>\n<tr>\n<td style=\"text-align: center\">= 0</td>\n\
+      <td>pointer to NULL</td>\n<td style=\"text-align: center\">NULL</td>\n</tr>\n\
+      <tr>\n<td style=\"text-align: center\">&gt; 0</td>\n<td>pointer to an entry\
+      \ in the ExportTable</td>\n<td style=\"text-align: center\">entry-id = value\
+      \ - 1</td>\n</tr>\n</table>\n<h2><span class=\"mw-headline\" id=\"Comments.2FDiscussion\"\
+      >Comments/Discussion</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Package_File_Format/Data_Details?section=6\"\
+      \ title=\"Edit section: Comments/Discussion\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p><b>Death Pax:</b> Unreal 1 v222 or later uses the\
+      \ newer package format... v222 has a package version of 65</p>\n\n<!-- \nNewPP\
+      \ limit report\nCPU time usage: 0.061 seconds\nReal time usage: 0.199 seconds\n\
+      Preprocessor visited node count: 31/1000000\nPreprocessor generated node count:\
+      \ 48/1000000\nPost‐expand include size: 0/2097152 bytes\nTemplate argument size:\
+      \ 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser function\
+      \ count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:2428-0!*!*!!en!*!* and timestamp 20221118123854 and revision\
+      \ id 5824\n -->\n"
+  categories: []
+  links: []
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Data details"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Package_File_Format/Data_Details"
+    byteoffset: 0
+    anchor: "Data_details"
+  - toclevel: 2
+    level: "3"
+    line: "Integer values"
+    number: "1.1"
+    index: "2"
+    fromtitle: "Legacy:Package_File_Format/Data_Details"
+    byteoffset: 19
+    anchor: "Integer_values"
+  - toclevel: 2
+    level: "3"
+    line: "Index/CompactIndex values"
+    number: "1.2"
+    index: "3"
+    fromtitle: "Legacy:Package_File_Format/Data_Details"
+    byteoffset: 218
+    anchor: "Index.2FCompactIndex_values"
+  - toclevel: 2
+    level: "3"
+    line: "Name values"
+    number: "1.3"
+    index: "4"
+    fromtitle: "Legacy:Package_File_Format/Data_Details"
+    byteoffset: 3047
+    anchor: "Name_values"
+  - toclevel: 2
+    level: "3"
+    line: "Object References"
+    number: "1.4"
+    index: "5"
+    fromtitle: "Legacy:Package_File_Format/Data_Details"
+    byteoffset: 3507
+    anchor: "Object_References"
+  - toclevel: 1
+    level: "2"
+    line: "Comments/Discussion"
+    number: "2"
+    index: "6"
+    fromtitle: "Legacy:Package_File_Format/Data_Details"
+    byteoffset: 4299
+    anchor: "Comments.2FDiscussion"
+  displaytitle: "Legacy:Package File Format/Data Details"
+  iwlinks:
+  - prefix: "wikipedia"
+    url: "http://en.wikipedia.org/wiki/Endianness"
+    name: "wikipedia:Endianness"
+  wikitext:
+    text: "==Data details ==\n\n===Integer values ===\n\nIntegers are stored in low-endian\
+      \ byte order (that means, the least significant byte comes first; the standard\
+      \ byte order for Intel processors: see [[Wikipedia:Endianness]]).\n\n===Index/CompactIndex\
+      \ values ===\n\nIndex values are signed integers stored in a compact format,\
+      \ occupying one to five bytes.  In the ''first byte'',\n\n* the most significant\
+      \ bit '''(bit 7)''' specifies the sign of the integer value;\n* the second-most\
+      \ significant bit '''(bit 6)''' is set if the value is continued in the next\
+      \ byte;\n* and the six remaining bits '''(bits 5 to 0)''' are the six least\
+      \ significant bits of the resultant integer value.\n\nEach of the three ''following\
+      \ bytes'' (if applicable according to '''bit 6''' of the ''first byte'') contributes\
+      \ seven more bits to the final integer value ('''bits 6 to 0''' of each byte),\
+      \ while its most significant bit '''(bit 7)''' is set if another byte must be\
+      \ read to continue the value.  The ''fifth byte'' contributes full eight bits\
+      \ to the value.  No more than five bytes are read for a compact index value.\n\
+      \nThe following chart demonstrates how compact index values are stored.  The\
+      \ ''Range'' column specifies the range of values that can be stored with the\
+      \ given representation.  '''s''' is the signum bit, and '''x''' are data bits.\n\
+      \n            Byte  0         1         2         3         4\n    Range   Bit\
+      \   76543210  76543210  76543210  76543210  76543210\n    \n     6 bit     \
+      \   s0xxxxxx\n    13 bit        s1xxxxxx  0xxxxxxx\n    20 bit        s1xxxxxx\
+      \  1xxxxxxx  0xxxxxxx\n    27 bit        s1xxxxxx  1xxxxxxx  1xxxxxxx  0xxxxxxx\n\
+      \    35 bit        s1xxxxxx  1xxxxxxx  1xxxxxxx  1xxxxxxx  xxxxxxxx\n\n<uscript>\n\
+      // Sample C# code (can be easily ported to C/C++/VB/etc.)\n\n/// <summary>Reads\
+      \ a compact integer from the FileReader.\n/// Bytes read differs, so do not\
+      \ make assumptions about\n/// physical data being read from the stream. (If\
+      \ you have\n/// to, get the difference of FileReader.BaseStream.Position\n///\
+      \ before and after this is executed.)</summary>\n/// <returns>An \"uncompacted\"\
+      \ signed integer.</returns>\n/// <remarks>FileReader is a System.IO.BinaryReader\
+      \ mapped\n/// to a file. Also, there may be better ways to implement\n/// this,\
+      \ but this is fast, and it works.</remarks>\nprivate int ReadCompactInteger()\n\
+      {\n\tint output = 0;\n\tbool signed = false;\n\tfor(int i = 0; i < 5; i++)\n\
+      \t{\n\t\tbyte x = FileReader.ReadByte();\n\t\t// First byte\n\t\tif(i == 0)\n\
+      \t\t{\n\t\t\t// Bit: X0000000\n\t\t\tif((x & 0x80) > 0)\n\t\t\t\tsigned = true;\n\
+      \t\t\t// Bits: 00XXXXXX\n\t\t\toutput |= (x & 0x3F);\n\t\t\t// Bit: 0X000000\n\
+      \t\t\tif((x & 0x40) == 0)\n\t\t\t\tbreak;\n\t\t}\n\t\t// Last byte\n\t\telse\
+      \ if(i == 4)\n\t\t{\n\t\t\t// Bits: 000XXXXX -- the 0 bits are ignored\n\t\t\
+      \t// (hits the 32 bit boundary)\n\t\t\toutput |= (x & 0x1F) << (6 + (3 * 7));\n\
+      \t\t}\n\t\t// Middle bytes\n\t\telse\n\t\t{\n\t\t\t// Bits: 0XXXXXXX\n\t\t\t\
+      output |= (x & 0x7F) << (6 + ((i - 1) * 7));\n\t\t\t// Bit: X0000000\n\t\t\t\
+      if((x & 0x80) == 0)\n\t\t\t\tbreak;\n\t\t}\n\t}\n\t// multiply by negative one\
+      \ here, since the first 6+ bits could be 0\n\tif(signed)\n\t\toutput *= -1;\n\
+      \treturn(output);\n}\n</uscript>\n\n===Name values ===\n\nThe Name type is a\
+      \ simple string type. The format does, although, differ between the package\
+      \ versions. \n\nOlder package versions (<64, original Unreal engine) store the\
+      \ Name type as a zero-terminated ASCII string; \"UT2k3\", for example would\
+      \ be stored as: \"U\" \"T\" \"2\" \"k\" \"3\" 0x00\n\nNewer packages (>=64,\
+      \ UT engine) prepend the length of the string plus the trailing zero. Again,\
+      \ \"UT2k3\" would be now stored as: 0x06 \"U\" \"T\" \"2\" \"k\" \"3\" 0x00\n\
+      \n===Object References ===\n\nThe last custom type which can be found within\
+      \ package files is the ObjectReference. ObjectReferences can be imagined as\
+      \ pointers. Technically, they are stored as CompactIndices. Depending on their\
+      \ value, however, they can point to different objects. \n\n{| class=\"wikitable\"\
+      \n\n|-\n| style=\"text-align: center\" |'''Value'''\n| style=\"text-align: center\"\
+      \ |'''Type'''\n| style=\"text-align: center\" |'''Pointer-Value'''  \n|-\n|\
+      \ style=\"text-align: center\" |< 0\n|pointer to an entry of the ImportTable\n\
+      | style=\"text-align: center\" |entry-id = -value - 1 \n|-\n| style=\"text-align:\
+      \ center\" |= 0\n|pointer to NULL\n| style=\"text-align: center\" |NULL \n|-\n\
+      | style=\"text-align: center\" |> 0\n|pointer to an entry in the ExportTable\n\
+      | style=\"text-align: center\" |entry-id = value - 1 \n|}\n\n==Comments/Discussion\
+      \ ==\n\n'''Death Pax:''' Unreal 1 v222 or later uses the newer package format...\
+      \ v222 has a package version of 65"
+  properties: []
+  revId: 5824
+name: "Legacy:Package File Format/Data Details"
+revision:
+  revid: 5824
+  parentid: 5825
+  user: "Death Pax"
+  timestamp: 1183761780.000000000
+  comment: "*"
+timestamp: 1668775135.163540000

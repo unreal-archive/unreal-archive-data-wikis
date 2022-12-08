@@ -1,0 +1,615 @@
+---
+parse:
+  title: "Legacy:Bot Vision"
+  text:
+    text: "<p>Bots can snipe through pea-soup fog...</p>\n<p><b>EntropicLqd:</b> I\
+      \ have a problem - my bots can snipe me from a mile away in dense fog. This\
+      \ is somewhat unfair since I can't actually see them (nor they me). I've tried\
+      \ reducing the bot's sight radius but that has had no effect. Anyone have any\
+      \ other thoughts on making the bots only able to see very close targets? I've\
+      \ included the code (from my mutator subclass) I'm using to adjust the sight\
+      \ radius below.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">function</span> ModifyPlayer<span class=\"br0\">(</span> <span class=\"\
+      kw9\">Pawn</span> Other <span class=\"br0\">)</span> <span class=\"br0\">{</span>\n\
+      \t<span class=\"kw2\">if</span> <span class=\"br0\">(</span> Other.<span class=\"\
+      kw9\">Controller</span> <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span>\
+      \ <span class=\"br0\">)</span>\t<span class=\"br0\">{</span>\n\t\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span> Other.<span class=\"kw9\">Controller</span>.<span\
+      \ class=\"me0\">bIsPlayer</span> <span class=\"sy0\">&amp;&amp;</span> <span\
+      \ class=\"sy0\">!</span>Other.<span class=\"me0\">IsHumanControlled</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"br0\">)</span>\
+      \ <span class=\"br0\">{</span>\n\t\t\t<span class=\"kw3\">Log</span><span class=\"\
+      br0\">(</span><span class=\"st0\">\"Sight radius adjusted\"</span><span class=\"\
+      br0\">)</span>;\n<span class=\"co1\">// repEndDist is the end distance of the\
+      \ fog</span>\n\t\t\tOther.<span class=\"me0\">SightRadius</span> <span class=\"\
+      sy0\">=</span> repEndDist <span class=\"sy0\">/</span> <span class=\"nu0\">8</span>;\n\
+      \t\t<span class=\"br0\">}</span>\n\t<span class=\"br0\">}</span>\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<dl>\n<dd><b>I'm still stuck on this one.</b></dd>\n\
+      </dl>\n<p><b>ZxAnPhOrIaN:</b> I need that code for my level, wich uses dense\
+      \ fog.</p>\n<p><b>EntropicLqd:</b> The SightRadius is reset within the function\
+      \ Bot.ResetSkill(). This in turn is called from Bot.Possess(), Bot.InitialiseSkill(),\
+      \ and Bot.Restart(). My guess is that the SightRadius value is being reset to\
+      \ it's original value after the ModifyPlayer() function is called. I'll have\
+      \ a go at proving that tonight if I get time.</p>\n<dl>\n<dd>What are the implicatons\
+      \ of changing the <i>Bot.Default.SightRadius</i> value within the mutator? Will\
+      \ it screw up subsequent normal games or will the value be reset with each new\
+      \ game?</dd>\n</dl>\n<p><b>Mychaeel:</b> In Unreal Tournament changes to a class's\
+      \ default properties persisted over level switches. I'm not so sure about that\
+      \ in UT2003 – it would be worth finding out for sure.</p>\n<p><b>EntropicLqd:</b>\
+      \ In UT2003 changes to a class's default properties persist not only over level\
+      \ changes, but also for the life of that instance of UT2003 - the value is not\
+      \ reset until you quit and re-load UT2003. Not only that but the SightRadius\
+      \ has bugger all effect on how far the bots can see to attack things - irrespective\
+      \ of what the code claims. I suspect the real problem lies within the AI attack\
+      \ code being able to pick out targets that the bot's <i>can't see</i> as it\
+      \ were.</p>\n<p><b>Foxpaw:</b> You could make a mutator that would subclass\
+      \ the bots - not the most compatible solution but maybe someone could find a\
+      \ better way. What you really want to do is to modify the Controller's PickTarget\
+      \ function... but you can't do that because it's native and final. So modify\
+      \ whatever calls it. Picktarget can take an argument that gives a maximum range\
+      \ for selecting a target. I'm not sure where it's called from. You could maybe\
+      \ call PickTarget every X amount of time (much more frequently than the bot's\
+      \ normally would) though that would not be very elegant. If you could find when\
+      \ the function is called you could maybe modify that function to pass an arbitrary\
+      \ maximum range to target people through the fog.</p>\n<p></p>\n<div id=\"toc\"\
+      \ class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n</div>\n<ul>\n<li\
+      \ class=\"toclevel-1 tocsection-1\"><a href=\"#Bot_Vision_-_Better_than_X-Ray\"\
+      ><span class=\"tocnumber\">1</span> <span class=\"toctext\">Bot Vision - Better\
+      \ than X-Ray</span></a>\n<ul>\n<li class=\"toclevel-2 tocsection-2\"><a href=\"\
+      #Finding_Objects_and_General_Navigation\"><span class=\"tocnumber\">1.1</span>\
+      \ <span class=\"toctext\">Finding Objects and General Navigation</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-3\"><a href=\"#Seeing_Enemies_and_Shooting_at_Them\"\
+      ><span class=\"tocnumber\">1.2</span> <span class=\"toctext\">Seeing Enemies\
+      \ and Shooting at Them</span></a></li>\n</ul>\n</li>\n<li class=\"toclevel-1\
+      \ tocsection-4\"><a href=\"#The_SightRadius_variable_and_its_effect_within_the_game:\"\
+      ><span class=\"tocnumber\">2</span> <span class=\"toctext\">The SightRadius\
+      \ variable and its effect within the game:</span></a>\n<ul>\n<li class=\"toclevel-2\
+      \ tocsection-5\"><a href=\"#The_Problem:\"><span class=\"tocnumber\">2.1</span>\
+      \ <span class=\"toctext\">The Problem:</span></a></li>\n<li class=\"toclevel-2\
+      \ tocsection-6\"><a href=\"#Solutions:\"><span class=\"tocnumber\">2.2</span>\
+      \ <span class=\"toctext\">Solutions:</span></a></li>\n</ul>\n</li>\n<li class=\"\
+      toclevel-1 tocsection-7\"><a href=\"#SeePlayer_function\"><span class=\"tocnumber\"\
+      >3</span> <span class=\"toctext\">SeePlayer function</span></a></li>\n<li class=\"\
+      toclevel-1 tocsection-8\"><a href=\"#Discussion\"><span class=\"tocnumber\"\
+      >4</span> <span class=\"toctext\">Discussion</span></a></li>\n</ul>\n</div>\n\
+      <p></p>\n<h2><span class=\"mw-headline\" id=\"Bot_Vision_-_Better_than_X-Ray\"\
+      >Bot Vision - Better than X-Ray</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Bot_Vision?section=1\"\
+      \ title=\"Edit section: Bot Vision - Better than X-Ray\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<p>If you've ever spent any time\
+      \ attempting to make a mod that restricts the distance players can see, or their\
+      \ peripheral vision then you'll know that getting the Bots to behave in a believable\
+      \ manner is hard. This page will describe my on-going thoughts and musings on\
+      \ how to get things working in the manner you wish.</p>\n<h3><span class=\"\
+      mw-headline\" id=\"Finding_Objects_and_General_Navigation\">Finding Objects\
+      \ and General Navigation</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Bot_Vision?section=2\"\
+      \ title=\"Edit section: Finding Objects and General Navigation\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h3>\n<p>Now, in general\
+      \ a Bot's view of the world is a network of nodes. Some of the paths between\
+      \ the nodes are \"more expensive\" than others, and a Bot will generally try\
+      \ and take the easiest path to wherever it is trying to get to. Generally, this\
+      \ may be armour, health, a weapon, or another pick up. Left to it's own devices\
+      \ a Bot will quite happily run around a level collecting stuff. The Bot knows\
+      \ where everything on the level is - because it can navigate through the network\
+      \ of nodes to find any object in the level. Remember, the nodes are placed on\
+      \ the level as <a href=\"/Legacy:PathNode\" title=\"Legacy:PathNode\">PathNode</a>\
+      \ objects, Inventory items, and other such stuff.</p>\n<p>When a Bot has decided\
+      \ to go somewhere it stores information about it's route through the level in\
+      \ its Controller. This makes sense - the controller is responsible to directing\
+      \ the Bot, and the pawn (representing the Bot in game) is responsible for the\
+      \ animation. This distinction is more or less true. I'm not convinced that it\
+      \ is as cut and dried as that. It's best to think of the Controller as the Bot's\
+      \ brain, and the Pawn as the Bot's representation in the world.</p>\n<p>The\
+      \ Controller class has some useful attributes to support this navigation, reproduced\
+      \ below for your pleasure and enjoyment.</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">var</span> <span class=\"kw9\">Actor</span>     RouteCache<span\
+      \ class=\"br0\">[</span><span class=\"nu0\">16</span><span class=\"br0\">]</span>;\
+      \ <span class=\"co1\">// A cache of pathnodes the Bot needs to travel along\
+      \ to reach its goal?</span>\n<span class=\"kw1\">var</span> <span class=\"br0\"\
+      >[</span><span class=\"br0\">[</span><span class=\"kw8\">ReachSpec</span><span\
+      \ class=\"br0\">]</span><span class=\"br0\">]</span> CurrentPath;\n<span class=\"\
+      kw1\">var</span> <span class=\"kw5\">vector</span>    CurrentPathDir; <span\
+      \ class=\"co1\">// Direction the bot needs to travel to remain on it's \"path\"\
+      </span>\n<span class=\"kw1\">var</span> <span class=\"kw9\">Actor</span>   \
+      \  RouteGoal;      <span class=\"co1\">// final destination for current route</span>\n\
+      <span class=\"kw1\">var</span> <span class=\"kw5\">float</span>     RouteDist;\
+      \      <span class=\"co1\">// total distance for current route</span>\n<span\
+      \ class=\"kw1\">var</span> <span class=\"kw5\">float</span>     LastRouteFind;\
+      \  <span class=\"co1\">// time at which last route finding occured</span>\n\
+      \ \n<span class=\"co1\">// Some useful functions for Bot navigation are:</span>\n\
+      <span class=\"co1\">//Navigation functions - return the next path toward the\
+      \ goal</span>\n<span class=\"kw1\">native</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">518</span><span class=\"br0\">)</span> <span class=\"kw1\">final</span>\
+      \ <span class=\"kw1\">function</span> <span class=\"kw9\">Actor</span> FindPathTo<span\
+      \ class=\"br0\">(</span><span class=\"kw5\">vector</span> aPoint<span class=\"\
+      br0\">)</span>;\n<span class=\"kw1\">native</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">517</span><span class=\"br0\">)</span> <span class=\"kw1\">final</span>\
+      \ <span class=\"kw1\">function</span> <span class=\"kw9\">Actor</span> FindPathToward<span\
+      \ class=\"br0\">(</span><span class=\"kw9\">actor</span> anActor, <span class=\"\
+      kw1\">optional</span> <span class=\"kw5\">bool</span> bWeightDetours<span class=\"\
+      br0\">)</span>;\n<span class=\"kw1\">native</span> <span class=\"kw1\">final</span>\
+      \ <span class=\"kw1\">function</span> <span class=\"kw9\">Actor</span> FindPathToIntercept<span\
+      \ class=\"br0\">(</span><span class=\"kw9\">Pawn</span> P, <span class=\"kw9\"\
+      >Actor</span> RouteGoal, <span class=\"kw1\">optional</span> <span class=\"\
+      kw5\">bool</span> bWeightDetours<span class=\"br0\">)</span>;\n<span class=\"\
+      kw1\">native</span> <span class=\"kw1\">final</span> <span class=\"kw1\">function</span>\
+      \ <span class=\"kw9\">Actor</span> FindPathTowardNearest<span class=\"br0\"\
+      >(</span>class<span class=\"sy0\">&lt;</span>NavigationPoint<span class=\"sy0\"\
+      >&gt;</span> GoalClass, <span class=\"kw1\">optional</span> <span class=\"kw5\"\
+      >bool</span> bWeightDetours<span class=\"br0\">)</span>;\n<span class=\"kw1\"\
+      >native</span><span class=\"br0\">(</span><span class=\"nu0\">525</span><span\
+      \ class=\"br0\">)</span> <span class=\"kw1\">final</span> <span class=\"kw1\"\
+      >function</span> <span class=\"kw9\">NavigationPoint</span> FindRandomDest<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;</pre></div>\n</div>\n\
+      <h3><span class=\"mw-headline\" id=\"Seeing_Enemies_and_Shooting_at_Them\">Seeing\
+      \ Enemies and Shooting at Them</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Bot_Vision?section=3\"\
+      \ title=\"Edit section: Seeing Enemies and Shooting at Them\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h3>\n<p>So, how do Bots\
+      \ see other players? Well, there are a few functions and attributes that would\
+      \ appear to affect this part of the Bot's behaviour. In my experience none of\
+      \ them seem to work well in low visibility conditions. I've listed all the ones\
+      \ I can find below.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      co1\">// From the Controller class</span>\n<span class=\"kw5\">float</span>\
+      \ FovAngle; <span class=\"co1\">// The Field of View from the player's (human\
+      \ or bot) point of view</span>\n \n<span class=\"co1\">// Enemy information</span>\n\
+      <span class=\"kw1\">var</span> <span class=\"kw9\">Pawn</span>   Enemy;    \
+      \     <span class=\"co1\">// A reference to the current Enemy of the bot</span>\n\
+      <span class=\"kw1\">var</span> <span class=\"kw9\">Actor</span>  Target;\n<span\
+      \ class=\"kw1\">var</span> <span class=\"kw5\">vector</span> LastSeenPos;  \
+      \ <span class=\"co1\">// enemy position when I last saw enemy (auto updated\
+      \ if EnemyNotVisible() enabled)</span>\n<span class=\"kw1\">var</span> <span\
+      \ class=\"kw5\">vector</span> LastSeeingPos; <span class=\"co1\">// position\
+      \ where I last saw enemy (auto updated if EnemyNotVisible enabled)</span>\n\
+      <span class=\"kw1\">var</span> <span class=\"kw5\">float</span>  LastSeenTime;\n\
+      \ \n<span class=\"co1\">// LineOfSightTo() returns true if any of several points\
+      \ of Other is visible (origin, top, bottom)</span>\n<span class=\"kw1\">native</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">514</span><span class=\"br0\">)</span>\
+      \ <span class=\"kw1\">final</span> <span class=\"kw1\">function</span> <span\
+      \ class=\"kw5\">bool</span> LineOfSightTo<span class=\"br0\">(</span><span class=\"\
+      kw9\">actor</span> Other<span class=\"br0\">)</span>;\n \n<span class=\"co1\"\
+      >// CanSee() similar to line of sight, but also takes into account Pawn's peripheral\
+      \ (how big is that?) vision</span>\n<span class=\"kw1\">native</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">533</span><span class=\"br0\">)</span> <span\
+      \ class=\"kw1\">final</span> <span class=\"kw1\">function</span> <span class=\"\
+      kw5\">bool</span> CanSee<span class=\"br0\">(</span><span class=\"kw9\">Pawn</span>\
+      \ Other<span class=\"br0\">)</span>; \n \n<span class=\"kw1\">function</span>\
+      \ <span class=\"kw5\">bool</span> WouldReactToSeeing<span class=\"br0\">(</span><span\
+      \ class=\"kw9\">Pawn</span> Seen<span class=\"br0\">)</span>\n<span class=\"\
+      kw1\">event</span> HearNoise<span class=\"br0\">(</span> <span class=\"kw5\"\
+      >float</span> Loudness, <span class=\"kw9\">Actor</span> NoiseMaker<span class=\"\
+      br0\">)</span>;\n<span class=\"kw1\">event</span> SeePlayer<span class=\"br0\"\
+      >(</span> <span class=\"kw9\">Pawn</span> Seen <span class=\"br0\">)</span>;\t\
+      <span class=\"co1\">// called when a player (bIsPlayer==true) pawn is seen</span>\n\
+      <span class=\"kw1\">event</span> SeeMonster<span class=\"br0\">(</span> <span\
+      \ class=\"kw9\">Pawn</span> Seen <span class=\"br0\">)</span>;\t<span class=\"\
+      co1\">// called when a non-player (bIsPlayer==false) pawn is seen</span>\n<span\
+      \ class=\"kw1\">event</span> EnemyNotVisible<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n \n \n<span class=\"co1\">// From the ScriptedController\
+      \ class</span>\n<span class=\"kw1\">function</span> <span class=\"kw5\">bool</span>\
+      \ CheckIfNearPlayer<span class=\"br0\">(</span><span class=\"kw5\">float</span>\
+      \ Distance<span class=\"br0\">)</span>;\n \n \n<span class=\"co1\">// From the\
+      \ Bot class</span>\n<span class=\"co1\">// Calls the CanAttack() function of\
+      \ the current weapon to see if Other is in range</span>\n<span class=\"kw1\"\
+      >function</span> <span class=\"kw5\">bool</span> CanAttack<span class=\"br0\"\
+      >(</span><span class=\"kw9\">Actor</span> Other<span class=\"br0\">)</span>;\n\
+      \ \n<span class=\"kw1\">event</span> SeePlayer<span class=\"br0\">(</span><span\
+      \ class=\"kw9\">Pawn</span> SeenPlayer<span class=\"br0\">)</span>; <span class=\"\
+      co1\">// Called when a player has been seen</span>\n<span class=\"kw1\">function</span>\
+      \ SetPeripheralVision<span class=\"br0\">(</span><span class=\"br0\">)</span>;\
+      \ <span class=\"co1\">// Set's the peripheral vision of a Bot based on skill</span>\n\
+      \ \n<span class=\"co1\">// SetAlertness()</span>\n<span class=\"co1\">// Change\
+      \ creature's alertness, and appropriately modify attributes used by engine for</span>\n\
+      <span class=\"co1\">// determining seeing and hearing.  SeePlayer() is affected\
+      \ by PeripheralVision, and</span>\n<span class=\"co1\">// also by SightRadius\
+      \ and the target's visibility HearNoise() is affected by HearingThreshold</span>\n\
+      <span class=\"kw1\">function</span> SetAlertness<span class=\"br0\">(</span><span\
+      \ class=\"kw5\">float</span> NewAlertness<span class=\"br0\">)</span>;\n \n\
+      <span class=\"co1\">// Attempts to determine if Bot has line of sight to Target\
+      \ deltatime from now.</span>\n<span class=\"kw1\">function</span> <span class=\"\
+      kw5\">bool</span> CheckFutureSight<span class=\"br0\">(</span><span class=\"\
+      kw5\">float</span> deltatime<span class=\"br0\">)</span>;</pre></div>\n</div>\n\
+      <p>Irritatingly the control for the Bot's \"sight\" does not solely rest with\
+      \ the Controller. There are some attributes of the <a href=\"/Legacy:Pawn\"\
+      \ title=\"Legacy:Pawn\">Pawn</a> class that have an impact. The most obvious\
+      \ one of these is <b>SightRadius</b>, which is allegdly the Bot's maximum seeing\
+      \ distance. However, as I have proved conclusively the Bot's maximum seeing\
+      \ distance&#160;!= the Bot's attacking distance.</p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"The_SightRadius_variable_and_its_effect_within_the_game:\">The SightRadius\
+      \ variable and its effect within the game:</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Bot_Vision?section=4\"\
+      \ title=\"Edit section: The SightRadius variable and its effect within the game:\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>I've\
+      \ experimented a lot with AI and this SightRadius variable while developing\
+      \ AI for CasterMod. I found out, that the suggestions on this page are not completely\
+      \ right about this variable and the AI function. <b>THE SIGHTRADIUS VARIABLE\
+      \ DOES DETERMINE HOW FAR A BOT CAN SEE OPPONENTS.</b></p>\n<h3><span class=\"\
+      mw-headline\" id=\"The_Problem:\">The Problem:</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Bot_Vision?section=5\"\
+      \ title=\"Edit section: The Problem:\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>The real problem here is that, once it has an enemy\
+      \ assigned, it tries to attack if possible. There are as mentioned above a load\
+      \ of functions to tell the bot what it can see. Three of them are of major importance.\
+      \ These are <b>LineOfSightTo()</b>, <b>CanSee()</b> and <b>SeePlayer()</b>.</p>\n\
+      <ul>\n<li><b>LineOfSightTo()</b>\n<ul>\n<li>LineOfSightTo() sais whether anything\
+      \ (solid as world geometry) blocks the direct view to the enemy. It does not\
+      \ consider FOV or SightRadius of the bot.</li>\n</ul>\n</li>\n<li><b>CanSee()</b>\n\
+      <ul>\n<li>CanSee() goes a step further. It checks the LineOfSightTo() and then\
+      \ checks whether the enemy is in the bots FOV. It still does not use the SightRadius\
+      \ for calculation.</li>\n</ul>\n</li>\n<li><b>SeePlayer()</b>\n<ul>\n<li>Now\
+      \ in contrast to the two functions above SeePlayer() takes everything , means\
+      \ LineOfSight, FOV and SightRadius into account, but as you can see it is not\
+      \ a boolean function, but an event called natively. What it does is to assign\
+      \ an enemy it sees just now. This can also be done by HearNoise() without being\
+      \ able to see the enemy or by getting hit by an enemy. After that assignment\
+      \ of an enemy the bot only uses LineOfSight() and CanSee() to check whether\
+      \ it can still see the enemy. That is the main problem.</li>\n</ul>\n</li>\n\
+      </ul>\n<h3><span class=\"mw-headline\" id=\"Solutions:\">Solutions:</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Bot_Vision?section=6\" title=\"Edit section: Solutions:\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n<p>I worked\
+      \ out some solutions which I currently implement into CasterMod. For one thing\
+      \ enemies should only be assigned if the bot does see them, so if it hears a\
+      \ noise it should not take on the enemy that produced it, but instead turn to\
+      \ the source of the noise. If it can now properly see the enemy SeePlayer()\
+      \ gets called by the engine. Problem 1 solved.</p>\n<p>Now to keep the bot from\
+      \ shooting at enemies it can't see we have to create a new function for check\
+      \ if it can see them properly. My experiments with this variable and the SeePlayer()\
+      \ function had the following result. SightRadius is the maximum range a bot\
+      \ can see some player with the Visibility==128 (default). So it can see someone\
+      \ with Visibility==255 almost twice as wide.</p>\n<p>This results in a simple\
+      \ UScript function for the check:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">function</span> <span class=\"kw5\">bool</span> IsVisibleToMe<span\
+      \ class=\"br0\">(</span><span class=\"kw9\">Pawn</span> ThisPawn<span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n      <span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">float</span> Distance;         <span class=\"co1\">//Distance\
+      \ between my pawn and pawn in question</span>\n      <span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">float</span> VisFactor;        <span class=\"co1\">//converted\
+      \ visibility of enemy in float ranging from 0-2</span>\n \n      <span class=\"\
+      kw2\">If</span> <span class=\"br0\">(</span><span class=\"sy0\">!</span>CanSee<span\
+      \ class=\"br0\">(</span>ThisPawn<span class=\"br0\">)</span><span class=\"br0\"\
+      >)</span>        <span class=\"co1\">//view blocked or looking in other direction</span>\n\
+      \             <span class=\"kw2\">return</span> <span class=\"kw6\">false</span>;\n\
+      \ \n      Distance <span class=\"sy0\">=</span> <span class=\"kw3\">VSize</span><span\
+      \ class=\"br0\">(</span>ThisPawn.<span class=\"kw7\">Location</span> <span class=\"\
+      sy0\">-</span> <span class=\"kw9\">Pawn</span>.<span class=\"kw7\">Location</span><span\
+      \ class=\"br0\">)</span>;\n      VisFactor <span class=\"sy0\">=</span> ThisPawn.<span\
+      \ class=\"me0\">Visibility</span> <span class=\"sy0\">/</span> <span class=\"\
+      nu0\">128</span>;\n \n      <span class=\"kw2\">If</span> <span class=\"br0\"\
+      >(</span> <span class=\"br0\">(</span>Distance<span class=\"sy0\">/</span>VisFactor<span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">&lt;=</span> <span class=\"kw9\"\
+      >Pawn</span>.<span class=\"me0\">SightRadius</span><span class=\"br0\">)</span>\
+      \ <span class=\"co1\">//can see enemy</span>\n             <span class=\"kw2\"\
+      >return</span> <span class=\"kw6\">true</span>;\n      <span class=\"kw2\">return</span>\
+      \ <span class=\"kw6\">false</span>;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>Now you'd have to replace the CanSee() and LineOfSightTo() calls\
+      \ everywhere you feel it's necessary with this function, e.g. before shooting\
+      \ someone. Notice that you may have to go very deeply into the bot code in order\
+      \ to do this.</p>\n<p>Then you'd have to change SightRadius accordingly to the\
+      \ conditions in the Zone the bot is in. If there's distance fog in closer range\
+      \ then SightRadius, set SightRadius to fog distance. Anyway, you should change\
+      \ the default SightRadius value from 12000 to sth., well, about 3000-4000. This\
+      \ is about as far away as you could usually notice an opponent in game as a\
+      \ human being without sniperrifle. Hope this contribution helped you understanding\
+      \ how bot vision basically works in Ut200x.:)</p>\n<p><i>(by Hazard.ep)</i></p>\n\
+      <p><b>ZxAnPhOrIaN:</b> Is sight radius how far the bot can see weapons, powerups,\
+      \ triggers, etc?</p>\n<p><b>Wormbo:</b> It would be possible to reset the bot's\
+      \ target to None from an external actor if the distance to the enemy gets too\
+      \ big. The Tick function might be handy (and hacky&#160;;)) here.</p>\n<p><b>UArch</b>\
+      \ would be intresting to expand this and add light/shadow detection into it,\
+      \ could be useful for stealth based games (like thievery for ut), i created\
+      \ a small mutator which adjusts pawns visibility so you can be stealthy in unreal/ut\
+      \ against the monsters (fun in coop)</p>\n<h2><span class=\"mw-headline\" id=\"\
+      SeePlayer_function\">SeePlayer function</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Bot_Vision?section=7\"\
+      \ title=\"Edit section: SeePlayer function\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>This function is called by the engine on the AI when\
+      \ it can see a pawn where bIsPlayer == true. It is not called every tick, but\
+      \ instead at a rate based on the visibility of the pawn being seen and the distance\
+      \ between the AI and the pawn compared to the sightradius value of the AI's\
+      \ pawn. This is not a steady rate, but a rather sporadic one, especially near\
+      \ the lower threshold (I'm not sure how this rate is calculated).</p>\n<p>There\
+      \ is a simple threshold to this function. It is only called if the distance/sighradius\
+      \ &lt;= visibility/128. This means that by changing the visibility of a pawn\
+      \ the range at which the AI can see it can be decreased or increased.</p>\n\
+      <p>i.e. if a pawn's visibility is 64, it can only be seen when closer than half\
+      \ the AI's sightradius.</p>\n<h2><span class=\"mw-headline\" id=\"Discussion\"\
+      >Discussion</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Bot_Vision?section=8\" title=\"Edit section:\
+      \ Discussion\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p><b>SuperApe:</b> This page looks to be exclusively related to modding with\
+      \ bots in mind. I do not think this should be refactored into the bot navigation\
+      \ family of pages. This should be linked by and grouped with Mod-related pages\
+      \ only.</p>\n<hr />\n<p><a href=\"/Category:Legacy_Journal\" title=\"Category:Legacy\
+      \ Journal\">Category:Legacy Journal</a></p>\n<p><a href=\"/Category:Legacy_Refactor_Me\"\
+      \ title=\"Category:Legacy Refactor Me\">Category:Legacy Refactor Me</a> – Find\
+      \ a place for this in terms of Modding for bots.</p>\n\n<!-- \nNewPP limit report\n\
+      CPU time usage: 0.133 seconds\nReal time usage: 0.135 seconds\nPreprocessor\
+      \ visited node count: 69/1000000\nPreprocessor generated node count: 132/1000000\n\
+      Post‐expand include size: 20/2097152 bytes\nTemplate argument size: 0/2097152\
+      \ bytes\nHighest expansion depth: 2/40\nExpensive parser function count: 0/100\n\
+      -->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n100.00%\
+      \    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:584-0!*!0!!en!*!*\
+      \ and timestamp 20221118024746 and revision id 1778\n -->\n"
+  categories:
+  - sortkey: "Bot Vision"
+    name: "Legacy_Journal"
+  - sortkey: "Bot Vision"
+    name: "Legacy_Refactor_Me"
+  links:
+  - ns: 14
+    exists: true
+    name: "Category:Legacy Refactor Me"
+  - ns: 14
+    exists: true
+    name: "Category:Legacy Journal"
+  - ns: 100
+    exists: true
+    name: "Legacy:PathNode"
+  - ns: 100
+    exists: true
+    name: "Legacy:Pawn"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Bot Vision - Better than X-Ray"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Bot_Vision"
+    byteoffset: 2802
+    anchor: "Bot_Vision_-_Better_than_X-Ray"
+  - toclevel: 2
+    level: "3"
+    line: "Finding Objects and General Navigation"
+    number: "1.1"
+    index: "2"
+    fromtitle: "Legacy:Bot_Vision"
+    byteoffset: 3159
+    anchor: "Finding_Objects_and_General_Navigation"
+  - toclevel: 2
+    level: "3"
+    line: "Seeing Enemies and Shooting at Them"
+    number: "1.2"
+    index: "3"
+    fromtitle: "Legacy:Bot_Vision"
+    byteoffset: 5458
+    anchor: "Seeing_Enemies_and_Shooting_at_Them"
+  - toclevel: 1
+    level: "2"
+    line: "The SightRadius variable and its effect within the game:"
+    number: "2"
+    index: "4"
+    fromtitle: "Legacy:Bot_Vision"
+    byteoffset: 8118
+    anchor: "The_SightRadius_variable_and_its_effect_within_the_game:"
+  - toclevel: 2
+    level: "3"
+    line: "The Problem:"
+    number: "2.1"
+    index: "5"
+    fromtitle: "Legacy:Bot_Vision"
+    byteoffset: 8472
+    anchor: "The_Problem:"
+  - toclevel: 2
+    level: "3"
+    line: "Solutions:"
+    number: "2.2"
+    index: "6"
+    fromtitle: "Legacy:Bot_Vision"
+    byteoffset: 9681
+    anchor: "Solutions:"
+  - toclevel: 1
+    level: "2"
+    line: "SeePlayer function"
+    number: "3"
+    index: "7"
+    fromtitle: "Legacy:Bot_Vision"
+    byteoffset: 12382
+    anchor: "SeePlayer_function"
+  - toclevel: 1
+    level: "2"
+    line: "Discussion"
+    number: "4"
+    index: "8"
+    fromtitle: "Legacy:Bot_Vision"
+    byteoffset: 13166
+    anchor: "Discussion"
+  displaytitle: "Legacy:Bot Vision"
+  iwlinks: []
+  wikitext:
+    text: "Bots can snipe through pea-soup fog... \n\n'''EntropicLqd:''' I have a\
+      \ problem - my bots can snipe me from a mile away in dense fog.  This is somewhat\
+      \ unfair since I can't actually see them (nor they me).  I've tried reducing\
+      \ the bot's sight radius but that has had no effect.  Anyone have any other\
+      \ thoughts on making the bots only able to see very close targets?  I've included\
+      \ the code (from my mutator subclass) I'm using to adjust the sight radius below.\n\
+      \n<uscript>\nfunction ModifyPlayer( Pawn Other ) {\n\tif ( Other.Controller\
+      \ != None )\t{\n\t\tif ( Other.Controller.bIsPlayer && !Other.IsHumanControlled()\
+      \ ) {\n\t\t\tLog(\"Sight radius adjusted\");\n// repEndDist is the end distance\
+      \ of the fog\n\t\t\tOther.SightRadius = repEndDist / 8;\n\t\t}\n\t}\n}\n</uscript>\n\
+      : '''I'm still stuck on this one.'''\n\n'''ZxAnPhOrIaN:''' I need that code\
+      \ for my level, wich uses dense fog.\n\n'''EntropicLqd:''' The SightRadius is\
+      \ reset within the function Bot.ResetSkill().  This in turn is called from Bot.Possess(),\
+      \ Bot.InitialiseSkill(), and Bot.Restart().  My guess is that the SightRadius\
+      \ value is being reset to it's original value after the ModifyPlayer() function\
+      \ is called.  I'll have a go at proving that tonight if I get time.\n: What\
+      \ are the implicatons of changing the ''Bot.Default.SightRadius'' value within\
+      \ the mutator?  Will it screw up subsequent normal games or will the value be\
+      \ reset with each new game?\n\n'''Mychaeel:''' In Unreal Tournament changes\
+      \ to a class's default properties persisted over level switches.  I'm not so\
+      \ sure about that in UT2003 &ndash; it would be worth finding out for sure.\n\
+      \n'''EntropicLqd:''' In UT2003 changes to a class's default properties persist\
+      \ not only over level changes, but also for the life of that instance of UT2003\
+      \ - the value is not reset until you quit and re-load UT2003.  Not only that\
+      \ but the SightRadius has bugger all effect on how far the bots can see to attack\
+      \ things - irrespective of what the code claims.  I suspect the real problem\
+      \ lies within the AI attack code being able to pick out targets that the bot's\
+      \ ''can't see'' as it were.\n\n'''Foxpaw:''' You could make a mutator that would\
+      \ subclass the bots - not the most compatible solution but maybe someone could\
+      \ find a better way. What you really want to do is to modify the Controller's\
+      \ PickTarget function... but you can't do that because it's native and final.\
+      \ So modify whatever calls it. Picktarget can take an argument that gives a\
+      \ maximum range for selecting a target. I'm not sure where it's called from.\
+      \ You could maybe call PickTarget every X amount of time (much more frequently\
+      \ than the bot's normally would) though that would not be very elegant. If you\
+      \ could find when the function is called you could maybe modify that function\
+      \ to pass an arbitrary maximum range to target people through the fog.\n\n==Bot\
+      \ Vision - Better than X-Ray ==\n\nIf you've ever spent any time attempting\
+      \ to make a mod that restricts the distance players can see, or their peripheral\
+      \ vision then you'll know that getting the Bots to behave in a believable manner\
+      \ is hard.  This page will describe my on-going thoughts and musings on how\
+      \ to get things working in the manner you wish.\n\n===Finding Objects and General\
+      \ Navigation ===\n\nNow, in general a Bot's view of the world is a network of\
+      \ nodes.  Some of the paths between the nodes are \"more expensive\" than others,\
+      \ and a Bot will generally try and take the easiest path to wherever it is trying\
+      \ to get to.  Generally, this may be armour, health, a weapon, or another pick\
+      \ up.  Left to it's own devices a Bot will quite happily run around a level\
+      \ collecting stuff.  The Bot knows where everything on the level is - because\
+      \ it can navigate through the network of nodes to find any object in the level.\
+      \  Remember, the nodes are placed on the level as [[Legacy:PathNode|PathNode]]\
+      \ objects, Inventory items, and other such stuff.\n\nWhen a Bot has decided\
+      \ to go somewhere it stores information about it's route through the level in\
+      \ its Controller.  This makes sense - the controller is responsible to directing\
+      \ the Bot, and the pawn (representing the Bot in game) is responsible for the\
+      \ animation.  This distinction is more or less true.  I'm not convinced that\
+      \ it is as cut and dried as that.  It's best to think of the Controller as the\
+      \ Bot's brain, and the Pawn as the Bot's representation in the world.\n\nThe\
+      \ Controller class has some useful attributes to support this navigation, reproduced\
+      \ below for your pleasure and enjoyment.\n\n<uscript>\nvar Actor     RouteCache[16];\
+      \ // A cache of pathnodes the Bot needs to travel along to reach its goal?\n\
+      var [[ReachSpec]] CurrentPath;\nvar vector    CurrentPathDir; // Direction the\
+      \ bot needs to travel to remain on it's \"path\"\nvar Actor     RouteGoal; \
+      \     // final destination for current route\nvar float     RouteDist;     \
+      \ // total distance for current route\nvar float     LastRouteFind;  // time\
+      \ at which last route finding occured\n\n// Some useful functions for Bot navigation\
+      \ are:\n//Navigation functions - return the next path toward the goal\nnative(518)\
+      \ final function Actor FindPathTo(vector aPoint);\nnative(517) final function\
+      \ Actor FindPathToward(actor anActor, optional bool bWeightDetours);\nnative\
+      \ final function Actor FindPathToIntercept(Pawn P, Actor RouteGoal, optional\
+      \ bool bWeightDetours);\nnative final function Actor FindPathTowardNearest(class<NavigationPoint>\
+      \ GoalClass, optional bool bWeightDetours);\nnative(525) final function NavigationPoint\
+      \ FindRandomDest();\n</uscript>\n\n===Seeing Enemies and Shooting at Them ===\n\
+      \nSo, how do Bots see other players?  Well, there are a few functions and attributes\
+      \ that would appear to affect this part of the Bot's behaviour.  In my experience\
+      \ none of them seem to work well in low visibility conditions.  I've listed\
+      \ all the ones I can find below.\n\n<uscript>\n// From the Controller class\n\
+      float FovAngle; // The Field of View from the player's (human or bot) point\
+      \ of view\n\n// Enemy information\nvar Pawn   Enemy;         // A reference\
+      \ to the current Enemy of the bot\nvar Actor  Target;\nvar vector LastSeenPos;\
+      \   // enemy position when I last saw enemy (auto updated if EnemyNotVisible()\
+      \ enabled)\nvar vector LastSeeingPos; // position where I last saw enemy (auto\
+      \ updated if EnemyNotVisible enabled)\nvar float  LastSeenTime;\n\n// LineOfSightTo()\
+      \ returns true if any of several points of Other is visible (origin, top, bottom)\n\
+      native(514) final function bool LineOfSightTo(actor Other);\n\n// CanSee() similar\
+      \ to line of sight, but also takes into account Pawn's peripheral (how big is\
+      \ that?) vision\nnative(533) final function bool CanSee(Pawn Other); \n\nfunction\
+      \ bool WouldReactToSeeing(Pawn Seen)\nevent HearNoise( float Loudness, Actor\
+      \ NoiseMaker);\nevent SeePlayer( Pawn Seen );\t// called when a player (bIsPlayer==true)\
+      \ pawn is seen\nevent SeeMonster( Pawn Seen );\t// called when a non-player\
+      \ (bIsPlayer==false) pawn is seen\nevent EnemyNotVisible();\n\n\n// From the\
+      \ ScriptedController class\nfunction bool CheckIfNearPlayer(float Distance);\n\
+      \n\n// From the Bot class\n// Calls the CanAttack() function of the current\
+      \ weapon to see if Other is in range\nfunction bool CanAttack(Actor Other);\n\
+      \nevent SeePlayer(Pawn SeenPlayer); // Called when a player has been seen\n\
+      function SetPeripheralVision(); // Set's the peripheral vision of a Bot based\
+      \ on skill\n\n// SetAlertness()\n// Change creature's alertness, and appropriately\
+      \ modify attributes used by engine for\n// determining seeing and hearing. \
+      \ SeePlayer() is affected by PeripheralVision, and\n// also by SightRadius and\
+      \ the target's visibility HearNoise() is affected by HearingThreshold\nfunction\
+      \ SetAlertness(float NewAlertness);\n\n// Attempts to determine if Bot has line\
+      \ of sight to Target deltatime from now.\nfunction bool CheckFutureSight(float\
+      \ deltatime);\n</uscript>\n\nIrritatingly the control for the Bot's \"sight\"\
+      \ does not solely rest with the Controller.  There are some attributes of the\
+      \ [[Legacy:Pawn|Pawn]] class that have an impact.  The most obvious one of these\
+      \ is '''SightRadius''', which is allegdly the Bot's maximum seeing distance.\
+      \  However, as I have proved conclusively the Bot's maximum seeing distance\
+      \ != the Bot's attacking distance.\n\n==The SightRadius variable and its effect\
+      \ within the game: ==\n\nI've experimented a lot with AI and this SightRadius\
+      \ variable while developing AI for CasterMod. I found out, that the suggestions\
+      \ on this page are not completely right about this variable and the AI function.\
+      \ '''THE SIGHTRADIUS VARIABLE DOES DETERMINE HOW FAR A BOT CAN SEE OPPONENTS.\
+      \ '''\n\n===The Problem:===\n\nThe real problem here is that, once it has an\
+      \ enemy assigned, it tries to attack if possible. There are as mentioned above\
+      \ a load of functions to tell the bot what it can see. Three of them are of\
+      \ major importance. These are '''LineOfSightTo()''', '''CanSee()''' and '''SeePlayer()'''.\n\
+      *'''LineOfSightTo()''' \n**LineOfSightTo() sais whether anything (solid as world\
+      \ geometry) blocks the direct view to the enemy. It does not consider FOV or\
+      \ SightRadius of the bot. \n*'''CanSee()'''\n**CanSee() goes a step further.\
+      \ It checks the LineOfSightTo() and then checks whether the enemy is in the\
+      \ bots FOV. It still does not use the SightRadius for calculation. \n*'''SeePlayer()'''\n\
+      **Now in contrast to the two functions above SeePlayer() takes everything ,\
+      \ means LineOfSight, FOV and SightRadius into account, but as you can see it\
+      \ is not a boolean function, but an event called natively. What it does is to\
+      \ assign an enemy it sees just now. This can also be done by HearNoise() without\
+      \ being able to see the enemy or by getting hit by an enemy. After that assignment\
+      \ of an enemy the bot only uses LineOfSight() and CanSee() to check whether\
+      \ it can still see the enemy. That is the main problem.\n\n===Solutions:===\n\
+      \nI worked out some solutions which I currently implement into CasterMod. For\
+      \ one thing enemies should only be assigned if the bot does see them, so if\
+      \ it hears a noise it should not take on the enemy that produced it, but instead\
+      \ turn to the source of the noise. If it can now properly see the enemy SeePlayer()\
+      \ gets called by the engine. Problem 1 solved.\n\nNow to keep the bot from shooting\
+      \ at enemies it can't see we have to create a new function for check if it can\
+      \ see them properly. My experiments with this variable and the SeePlayer() function\
+      \ had the following result. SightRadius is the maximum range a bot can see some\
+      \ player with the Visibility==128 (default). So it can see someone with Visibility==255\
+      \ almost twice as wide. \n\nThis results in a simple UScript function for the\
+      \ check:\n\n<uscript>\nfunction bool IsVisibleToMe(Pawn ThisPawn)\n{\n     \
+      \ local float Distance;         //Distance between my pawn and pawn in question\n\
+      \      local float VisFactor;        //converted visibility of enemy in float\
+      \ ranging from 0-2\n\n      If (!CanSee(ThisPawn))        //view blocked or\
+      \ looking in other direction\n             return false;\n\n      Distance =\
+      \ VSize(ThisPawn.Location - Pawn.Location);\n      VisFactor = ThisPawn.Visibility\
+      \ / 128;\n\n      If ( (Distance/VisFactor) <= Pawn.SightRadius) //can see enemy\n\
+      \             return true;\n      return false;\n}\n</uscript>\n\nNow you'd\
+      \ have to replace the CanSee() and LineOfSightTo() calls everywhere you feel\
+      \ it's necessary with this function, e.g. before shooting someone. Notice that\
+      \ you may have to go very deeply into the bot code in order to do this.\n\n\
+      Then you'd have to change SightRadius accordingly to the conditions in the Zone\
+      \ the bot is in. If there's distance fog in closer range then SightRadius, set\
+      \ SightRadius to fog distance. Anyway, you should change the default SightRadius\
+      \ value from 12000 to sth., well, about 3000-4000. This is about as far away\
+      \ as you could usually notice an opponent in game as a human being without sniperrifle.\
+      \ Hope this contribution helped you understanding how bot vision basically works\
+      \ in Ut200x.:)\n\n<i>(by Hazard.ep)</i>\n\n'''ZxAnPhOrIaN:''' Is sight radius\
+      \ how far the bot can see weapons, powerups, triggers, etc?\n\n'''Wormbo:'''\
+      \ It would be possible to reset the bot's target to None from an external actor\
+      \ if the distance to the enemy gets too big. The Tick function might be handy\
+      \ (and hacky ;)) here.\n\n'''UArch''' would be intresting to expand this and\
+      \ add light/shadow detection into it, could be useful for stealth based games\
+      \ (like thievery for ut), i created a small mutator which adjusts pawns visibility\
+      \ so you can be stealthy in unreal/ut against the monsters (fun in coop)\n\n\
+      ==SeePlayer function ==\n\nThis function is called by the engine on the AI when\
+      \ it can see a pawn where bIsPlayer == true. It is not called every tick, but\
+      \ instead at a rate based on the visibility of the pawn being seen and the distance\
+      \ between the AI and the pawn compared to the sightradius value of the AI's\
+      \ pawn. This is not a steady rate, but a rather sporadic one, especially near\
+      \ the lower threshold (I'm not sure how this rate is calculated).\n\nThere is\
+      \ a simple threshold to this function. It is only called if the distance/sighradius\
+      \ <= visibility/128. This means that by changing the visibility of a pawn the\
+      \ range at which the AI can see it can be decreased or increased. \n\ni.e. if\
+      \ a pawn's visibility is 64, it can only be seen when closer than half the AI's\
+      \ sightradius.\n\n==Discussion==\n\n'''SuperApe:''' This page looks to be exclusively\
+      \ related to modding with bots in mind.  I do not think this should be refactored\
+      \ into the bot navigation family of pages.  This should be linked by and grouped\
+      \ with Mod-related pages only.\n\n----\n\n[[:Category:Legacy Journal]]\n\n[[:Category:Legacy\
+      \ Refactor Me]] &ndash; Find a place for this in terms of Modding for bots.\n\
+      [[Category:Legacy Journal|{{PAGENAME}}]]\n[[Category:Legacy Refactor Me|{{PAGENAME}}]]"
+  properties: []
+  revId: 1778
+name: "Legacy:Bot Vision"
+revision:
+  revid: 1778
+  parentid: 1779
+  user: "Sweavo"
+  timestamp: 1195404900.000000000
+  comment: "*"
+timestamp: 1668763897.090381000

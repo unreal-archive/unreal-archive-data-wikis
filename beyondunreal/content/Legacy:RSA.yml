@@ -1,0 +1,646 @@
+---
+parse:
+  title: "Legacy:RSA"
+  text:
+    text: "<p>R.S.A. stands for Rivest, Shamir and Adleman - the three cryptographers\
+      \ who invented this public key cryptosystem.</p>\n<p>For information about RSA\
+      \ encryption see <a href=\"http://en.wikipedia.org/wiki/RSA\" class=\"extiw\"\
+      \ title=\"wikipedia:RSA\">Wikipedia:RSA</a> and the related documents section\
+      \ below.</p>\n<p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\"\
+      >\n<h2>Contents</h2>\n</div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a\
+      \ href=\"#Code\"><span class=\"tocnumber\">1</span> <span class=\"toctext\"\
+      >Code</span></a>\n<ul>\n<li class=\"toclevel-2 tocsection-2\"><a href=\"#PowerMod\"\
+      ><span class=\"tocnumber\">1.1</span> <span class=\"toctext\">PowerMod</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-3\"><a href=\"#RSAGCD\"><span class=\"tocnumber\"\
+      >1.2</span> <span class=\"toctext\">_RSAGCD</span></a></li>\n<li class=\"toclevel-2\
+      \ tocsection-4\"><a href=\"#RSAEncodeKeygen\"><span class=\"tocnumber\">1.3</span>\
+      \ <span class=\"toctext\">RSAEncodeKeygen</span></a></li>\n<li class=\"toclevel-2\
+      \ tocsection-5\"><a href=\"#RSADecodeKeygen\"><span class=\"tocnumber\">1.4</span>\
+      \ <span class=\"toctext\">RSADecodeKeygen</span></a></li>\n<li class=\"toclevel-2\
+      \ tocsection-6\"><a href=\"#NumBits\"><span class=\"tocnumber\">1.5</span> <span\
+      \ class=\"toctext\">NumBits</span></a></li>\n<li class=\"toclevel-2 tocsection-7\"\
+      ><a href=\"#RSAEncodeStream\"><span class=\"tocnumber\">1.6</span> <span class=\"\
+      toctext\">RSAEncodeStream</span></a></li>\n<li class=\"toclevel-2 tocsection-8\"\
+      ><a href=\"#RSADecodeStream\"><span class=\"tocnumber\">1.7</span> <span class=\"\
+      toctext\">RSADecodeStream</span></a></li>\n</ul>\n</li>\n<li class=\"toclevel-1\
+      \ tocsection-9\"><a href=\"#Example_usage\"><span class=\"tocnumber\">2</span>\
+      \ <span class=\"toctext\">Example usage</span></a></li>\n<li class=\"toclevel-1\
+      \ tocsection-10\"><a href=\"#Comments\"><span class=\"tocnumber\">3</span> <span\
+      \ class=\"toctext\">Comments</span></a></li>\n<li class=\"toclevel-1 tocsection-11\"\
+      ><a href=\"#Related_documents\"><span class=\"tocnumber\">4</span> <span class=\"\
+      toctext\">Related documents</span></a></li>\n<li class=\"toclevel-1 tocsection-12\"\
+      ><a href=\"#Related_Topics\"><span class=\"tocnumber\">5</span> <span class=\"\
+      toctext\">Related Topics</span></a></li>\n</ul>\n</div>\n<p></p>\n<h2><span\
+      \ class=\"mw-headline\" id=\"Code\">Code</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:RSA?section=1\"\
+      \ title=\"Edit section: Code\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>This code uses integers, integers are 32bit in UnrealScript.\
+      \ Because of this the encryption as shown in the document isn't very secure.\
+      \ The improved code can have encryption up to 23bit, the previous implementation\
+      \ was limited to 13bits.</p>\n<p>Using floats is not an option because they\
+      \ will lose signification at a certain point.</p>\n<p>This code can be used\
+      \ under the terms of the <a rel=\"nofollow\" class=\"external text\" href=\"\
+      http://www.opensource.org/licenses/zlib-license.php\">ZLib/LibPNG</a> license:</p>\n\
+      <pre>\nCopyright (c) 2004 Michiel Hendriks &amp; UnrealWiki Contributers\nhttp://wiki.beyondunreal.com/edit/Legacy:RSA\n\
+      \nThis software is provided 'as-is', without any express or implied\nwarranty.\
+      \ In no event will the authors be held liable for any damages\narising from\
+      \ the use of this software.\n\nPermission is granted to anyone to use this software\
+      \ for any purpose,\nincluding commercial applications, and to alter it and redistribute\
+      \ it\nfreely, subject to the following restrictions:\n\n    1. The origin of\
+      \ this software must not be misrepresented; you must not\n    claim that you\
+      \ wrote the original software. If you use this software\n    in a product, an\
+      \ acknowledgment in the product documentation would be\n    appreciated but\
+      \ is not required.\n\n    2. Altered source versions must be plainly marked\
+      \ as such, and must not be\n    misrepresented as being the original software.\n\
+      \n    3. This notice may not be removed or altered from any source\n    distribution.\n\
+      </pre>\n<h3><span class=\"mw-headline\" id=\"PowerMod\">PowerMod</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:RSA?section=2\" title=\"Edit section: PowerMod\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h3>\n<p>Support function\
+      \ to calculate <code>b^e mod m</code>. Because float signification you can't\
+      \ just use <code>C**D%N</code></p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">static</span> <span class=\"kw1\">final</span> <span class=\"\
+      kw1\">function</span> <span class=\"kw5\">int</span> PowerMod<span class=\"\
+      br0\">(</span><span class=\"kw5\">int</span> C, <span class=\"kw5\">int</span>\
+      \ D, <span class=\"kw5\">int</span> N<span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n    <span class=\"kw1\">local</span> <span class=\"kw5\">int</span>\
+      \ p;\n    c <span class=\"sy0\">=</span> mod<span class=\"br0\">(</span>c, n<span\
+      \ class=\"br0\">)</span>;\n    <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span>c <span class=\"sy0\">&lt;</span> <span class=\"nu0\">0</span><span\
+      \ class=\"br0\">)</span> c <span class=\"sy0\">+=</span> n;\n    p <span class=\"\
+      sy0\">=</span> <span class=\"nu0\">1</span>;\n    <span class=\"kw2\">while</span>\
+      \ <span class=\"br0\">(</span>d <span class=\"sy0\">&gt;=</span> <span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span>\n    <span class=\"br0\">{</span>\n\
+      \        <span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      br0\">(</span>d <span class=\"sy0\">&amp;</span> <span class=\"nu0\">1</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">==</span> <span class=\"nu0\">1</span><span\
+      \ class=\"br0\">)</span> p <span class=\"sy0\">=</span> mulmod<span class=\"\
+      br0\">(</span>c, p, n<span class=\"br0\">)</span>;\n        c <span class=\"\
+      sy0\">=</span> mulmod<span class=\"br0\">(</span>c, c, n<span class=\"br0\"\
+      >)</span>;\n        d <span class=\"sy0\">=</span> d <span class=\"sy0\">/</span>\
+      \ <span class=\"nu0\">2</span>;\n    <span class=\"br0\">}</span>\n    <span\
+      \ class=\"kw2\">return</span> p;\n<span class=\"br0\">}</span>\n \n<span class=\"\
+      kw1\">static</span> <span class=\"kw1\">final</span> <span class=\"kw1\">function</span>\
+      \ <span class=\"kw5\">int</span> mulmod<span class=\"br0\">(</span><span class=\"\
+      kw5\">int</span> C, <span class=\"kw5\">int</span> D, <span class=\"kw5\">int</span>\
+      \ N<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n    <span class=\"\
+      kw1\">local</span> <span class=\"kw5\">int</span> p;\n    c <span class=\"sy0\"\
+      >=</span> mod<span class=\"br0\">(</span>c, n<span class=\"br0\">)</span>;\n\
+      \    <span class=\"kw2\">if</span> <span class=\"br0\">(</span>c <span class=\"\
+      sy0\">&lt;</span> <span class=\"nu0\">0</span><span class=\"br0\">)</span> c\
+      \ <span class=\"sy0\">+=</span> n;\n    p <span class=\"sy0\">=</span> <span\
+      \ class=\"nu0\">0</span>;\n    <span class=\"kw2\">while</span> <span class=\"\
+      br0\">(</span>d <span class=\"sy0\">&gt;=</span> <span class=\"nu0\">1</span><span\
+      \ class=\"br0\">)</span>\n    <span class=\"br0\">{</span>\n        <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span><span class=\"br0\">(</span>d <span\
+      \ class=\"sy0\">&amp;</span> <span class=\"nu0\">1</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">==</span> <span class=\"nu0\">1</span><span class=\"\
+      br0\">)</span> p <span class=\"sy0\">=</span> mod<span class=\"br0\">(</span>c\
+      \ <span class=\"sy0\">+</span> p, n<span class=\"br0\">)</span>;\n        c\
+      \ <span class=\"sy0\">=</span> mod<span class=\"br0\">(</span>c <span class=\"\
+      sy0\">*</span> <span class=\"nu0\">2</span>, n<span class=\"br0\">)</span>;\n\
+      \        d <span class=\"sy0\">=</span> d <span class=\"sy0\">/</span> <span\
+      \ class=\"nu0\">2</span>;\n    <span class=\"br0\">}</span>\n    <span class=\"\
+      kw2\">return</span> p;\n<span class=\"br0\">}</span>\n \n<span class=\"coMULTI\"\
+      >/**\n * int precision modulo function.\n * Like the % operator, this function\
+      \ returns a negative result for negative a.\n */</span>\n<span class=\"kw1\"\
+      >static</span> <span class=\"kw1\">final</span> <span class=\"kw1\">function</span>\
+      \ <span class=\"kw5\">int</span> mod<span class=\"br0\">(</span><span class=\"\
+      kw5\">int</span> a, <span class=\"kw5\">int</span> n<span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n    <span class=\"kw2\">return</span> a <span\
+      \ class=\"sy0\">-</span> <span class=\"br0\">(</span>a <span class=\"sy0\">/</span>\
+      \ n<span class=\"br0\">)</span> <span class=\"sy0\">*</span> n;\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<h3><span class=\"mw-headline\" id=\"RSAGCD\"\
+      >_RSAGCD</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:RSA?section=3\" title=\"Edit section: RSAGCD\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n<p>A private\
+      \ function to calculate the Greatest Common Divider, this is use to calculate\
+      \ the encryption key</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">static</span> <span class=\"kw1\">final</span> <span class=\"kw1\">private</span>\
+      \ <span class=\"kw1\">function</span> <span class=\"kw5\">int</span> _RSAGCD<span\
+      \ class=\"br0\">(</span><span class=\"kw5\">int</span> e, <span class=\"kw5\"\
+      >int</span> PHI<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \    <span class=\"kw1\">local</span> <span class=\"kw5\">int</span> great,\
+      \ a;\n    <span class=\"kw2\">if</span> <span class=\"br0\">(</span>e <span\
+      \ class=\"sy0\">&gt;</span> PHI<span class=\"br0\">)</span>\n    <span class=\"\
+      br0\">{</span>\n        <span class=\"kw2\">while</span> <span class=\"br0\"\
+      >(</span>mod<span class=\"br0\">(</span>e, PHI<span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">!=</span> <span class=\"nu0\">0</span><span class=\"br0\">)</span>\n\
+      \        <span class=\"br0\">{</span>\n            a <span class=\"sy0\">=</span>\
+      \ mod<span class=\"br0\">(</span>e, PHI<span class=\"br0\">)</span>;\n     \
+      \       e <span class=\"sy0\">=</span> PHI;\n            PHI <span class=\"\
+      sy0\">=</span> a;\n        <span class=\"br0\">}</span>\n        great <span\
+      \ class=\"sy0\">=</span> PHI;\n    <span class=\"br0\">}</span>\n    <span class=\"\
+      kw2\">else</span> <span class=\"br0\">{</span>\n        <span class=\"kw2\"\
+      >while</span> <span class=\"br0\">(</span>mod<span class=\"br0\">(</span>PHI,\
+      \ e<span class=\"br0\">)</span> <span class=\"sy0\">!=</span> <span class=\"\
+      nu0\">0</span><span class=\"br0\">)</span>\n        <span class=\"br0\">{</span>\n\
+      \            a <span class=\"sy0\">=</span> mod<span class=\"br0\">(</span>PHI,\
+      \ e<span class=\"br0\">)</span>;\n            PHI <span class=\"sy0\">=</span>\
+      \ e;\n            e <span class=\"sy0\">=</span> a;\n        <span class=\"\
+      br0\">}</span>\n        great <span class=\"sy0\">=</span> e;\n    <span class=\"\
+      br0\">}</span>\n    <span class=\"kw2\">return</span> great;\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<h3><span class=\"mw-headline\" id=\"RSAEncodeKeygen\"\
+      >RSAEncodeKeygen</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:RSA?section=4\" title=\"Edit section: RSAEncodeKeygen\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n<p>This\
+      \ method will calculate the encryption key E from the prime numbers you supply.</p>\n\
+      <p>P and Q have to be prime and unequal. N=P*Q and must be large enough to contain\
+      \ all possible values you need to encrypt..</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">static</span> <span class=\"kw1\">final</span> <span\
+      \ class=\"kw1\">function</span> <span class=\"kw5\">int</span> RSAPublicKeygen<span\
+      \ class=\"br0\">(</span><span class=\"kw5\">int</span> p, <span class=\"kw5\"\
+      >int</span> q<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n  \
+      \  <span class=\"kw1\">local</span> <span class=\"kw5\">int</span> PHI, E, great;\n\
+      \    PHI <span class=\"sy0\">=</span> <span class=\"br0\">(</span>p<span class=\"\
+      sy0\">-</span><span class=\"nu0\">1</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">*</span><span class=\"br0\">(</span>q<span class=\"sy0\">-</span><span\
+      \ class=\"nu0\">1</span><span class=\"br0\">)</span>;\n    great <span class=\"\
+      sy0\">=</span> <span class=\"nu0\">0</span>;\n    E <span class=\"sy0\">=</span>\
+      \ <span class=\"nu0\">2</span>;\n    <span class=\"kw2\">while</span> <span\
+      \ class=\"br0\">(</span>great <span class=\"sy0\">!=</span> <span class=\"nu0\"\
+      >1</span><span class=\"br0\">)</span>\n    <span class=\"br0\">{</span>\n  \
+      \      E<span class=\"sy0\">++</span>;\n        great <span class=\"sy0\">=</span>\
+      \ _RSAGCD<span class=\"br0\">(</span>E, PHI<span class=\"br0\">)</span>;\n \
+      \   <span class=\"br0\">}</span>\n    <span class=\"kw2\">return</span> E;\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<h3><span class=\"mw-headline\"\
+      \ id=\"RSADecodeKeygen\">RSADecodeKeygen</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:RSA?section=5\"\
+      \ title=\"Edit section: RSADecodeKeygen\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>This will calculate the decrypt key D for the corresponding\
+      \ encrypt key</p>\n<p>Use the same P and Q as you did with the encrypt key</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">static</span> <span\
+      \ class=\"kw1\">final</span> <span class=\"kw1\">function</span> <span class=\"\
+      kw5\">int</span> RSAPrivateKeygen<span class=\"br0\">(</span><span class=\"\
+      kw5\">int</span> E, <span class=\"kw5\">int</span> p, <span class=\"kw5\">int</span>\
+      \ q<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n    <span class=\"\
+      kw1\">local</span> <span class=\"kw5\">int</span> PHI, u1, u2, u3, v1, v2, v3,\
+      \ t1, t2, t3, z;\n    PHI <span class=\"sy0\">=</span> <span class=\"br0\">(</span>p<span\
+      \ class=\"sy0\">-</span><span class=\"nu0\">1</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">*</span><span class=\"br0\">(</span>q<span class=\"sy0\">-</span><span\
+      \ class=\"nu0\">1</span><span class=\"br0\">)</span>;\n    u1 <span class=\"\
+      sy0\">=</span> <span class=\"nu0\">1</span>;\n    u2 <span class=\"sy0\">=</span>\
+      \ <span class=\"nu0\">0</span>;\n    u3 <span class=\"sy0\">=</span> PHI;\n\
+      \    v1 <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>;\n    v2 <span\
+      \ class=\"sy0\">=</span> <span class=\"nu0\">1</span>;\n    v3 <span class=\"\
+      sy0\">=</span> E;\n    <span class=\"kw2\">while</span> <span class=\"br0\"\
+      >(</span>v3 <span class=\"sy0\">!=</span> <span class=\"nu0\">0</span><span\
+      \ class=\"br0\">)</span>\n    <span class=\"br0\">{</span>\n        z <span\
+      \ class=\"sy0\">=</span> u3<span class=\"sy0\">/</span>v3;\n        t1 <span\
+      \ class=\"sy0\">=</span> u1<span class=\"sy0\">-</span>z<span class=\"sy0\"\
+      >*</span>v1;\n        t2 <span class=\"sy0\">=</span> u2<span class=\"sy0\"\
+      >-</span>z<span class=\"sy0\">*</span>v2;\n        t3 <span class=\"sy0\">=</span>\
+      \ u3<span class=\"sy0\">-</span>z<span class=\"sy0\">*</span>v3;\n        u1\
+      \ <span class=\"sy0\">=</span> v1;\n        u2 <span class=\"sy0\">=</span>\
+      \ v2;\n        u3 <span class=\"sy0\">=</span> v3;\n        v1 <span class=\"\
+      sy0\">=</span> t1;\n        v2 <span class=\"sy0\">=</span> t2;\n        v3\
+      \ <span class=\"sy0\">=</span> t3;\n    <span class=\"br0\">}</span>\n    <span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span>u2 <span class=\"sy0\"\
+      >&lt;</span> <span class=\"nu0\">0</span><span class=\"br0\">)</span>\n    <span\
+      \ class=\"br0\">{</span>\n        <span class=\"kw2\">return</span> u2 <span\
+      \ class=\"sy0\">+</span> PHI;\n    <span class=\"br0\">}</span>\n    <span class=\"\
+      kw2\">else</span> <span class=\"br0\">{</span>\n        <span class=\"kw2\"\
+      >return</span> u2;\n    <span class=\"br0\">}</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<h3><span class=\"mw-headline\" id=\"NumBits\">NumBits</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:RSA?section=6\"\
+      \ title=\"Edit section: NumBits\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>This will return the number of bits used in an integer.</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">static</span> <span\
+      \ class=\"kw1\">final</span> <span class=\"kw1\">function</span> <span class=\"\
+      kw5\">int</span> NumBits<span class=\"br0\">(</span><span class=\"kw5\">int</span>\
+      \ sample<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n    <span\
+      \ class=\"kw1\">local</span> <span class=\"kw5\">int</span> bits;\n    bits\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>;\n    <span class=\"\
+      kw2\">while</span> <span class=\"br0\">(</span>sample <span class=\"sy0\">&gt;</span>\
+      \ <span class=\"nu0\">0</span><span class=\"br0\">)</span>\n    <span class=\"\
+      br0\">{</span>\n        sample <span class=\"sy0\">=</span> sample <span class=\"\
+      sy0\">&gt;&gt;&gt;</span> <span class=\"nu0\">1</span>;\n        bits<span class=\"\
+      sy0\">++</span>;\n    <span class=\"br0\">}</span>\n    <span class=\"kw2\"\
+      >return</span> bits;\n<span class=\"br0\">}</span></pre></div>\n</div>\n<h3><span\
+      \ class=\"mw-headline\" id=\"RSAEncodeStream\">RSAEncodeStream</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:RSA?section=7\"\
+      \ title=\"Edit section: RSAEncodeStream\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>This will encode the string using the keys E and N\
+      \ <code>(=P*Q)</code>. the output will be stored in the int array data2.</p>\n\
+      <p>It will automactially adjust to window size according to the size of N. When\
+      \ N is more than 15 bits two characters will put in a single integer.</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">static</span> <span\
+      \ class=\"kw1\">final</span> <span class=\"kw1\">function</span> RSAEncodeStream<span\
+      \ class=\"br0\">(</span><span class=\"kw1\">coerce</span> <span class=\"kw5\"\
+      >string</span> data, <span class=\"kw5\">int</span> E, <span class=\"kw5\">int</span>\
+      \ N, <span class=\"kw1\">out</span> array<span class=\"sy0\">&lt;</span>int<span\
+      \ class=\"sy0\">&gt;</span> data2<span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n    <span class=\"kw1\">local</span> <span class=\"kw5\">int</span>\
+      \ i, c, window, j;\n    window <span class=\"sy0\">=</span> NumBits<span class=\"\
+      br0\">(</span>N<span class=\"br0\">)</span><span class=\"sy0\">/</span><span\
+      \ class=\"nu0\">8</span>;\n    <span class=\"kw2\">for</span> <span class=\"\
+      br0\">(</span>i <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>; i\
+      \ <span class=\"sy0\">&lt;</span> <span class=\"kw3\">len</span><span class=\"\
+      br0\">(</span>data<span class=\"br0\">)</span>; i <span class=\"sy0\">=</span>\
+      \ i<span class=\"sy0\">+</span>window<span class=\"br0\">)</span>\n    <span\
+      \ class=\"br0\">{</span>\n        c <span class=\"sy0\">=</span> <span class=\"\
+      nu0\">0</span>;\n        <span class=\"kw2\">for</span> <span class=\"br0\"\
+      >(</span>j <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>; j <span\
+      \ class=\"sy0\">&lt;</span> window; j<span class=\"sy0\">++</span><span class=\"\
+      br0\">)</span>\n        <span class=\"br0\">{</span>\n            c <span class=\"\
+      sy0\">+=</span> <span class=\"kw3\">Asc</span><span class=\"br0\">(</span><span\
+      \ class=\"kw3\">Mid</span><span class=\"br0\">(</span>data,i<span class=\"sy0\"\
+      >+</span>j,<span class=\"nu0\">1</span><span class=\"br0\">)</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">&lt;&lt;</span> <span class=\"br0\">(</span>window<span\
+      \ class=\"sy0\">-</span>j<span class=\"sy0\">-</span><span class=\"nu0\">1</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">*</span><span class=\"nu0\">8</span>;\n\
+      \        <span class=\"br0\">}</span>\n        data2<span class=\"br0\">[</span>data2.<span\
+      \ class=\"me0\">length</span><span class=\"br0\">]</span> <span class=\"sy0\"\
+      >=</span> PowerMod<span class=\"br0\">(</span>c,E,N<span class=\"br0\">)</span>;\n\
+      \    <span class=\"br0\">}</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<h3><span class=\"mw-headline\" id=\"RSADecodeStream\">RSADecodeStream</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:RSA?section=8\" title=\"Edit section: RSADecodeStream\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n<p>This\
+      \ will decrypt the array data to the correct string value.</p>\n<p>It will automactially\
+      \ adjust to window size according to the size of N.</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw1\">static</span> <span class=\"kw1\">final</span>\
+      \ <span class=\"kw1\">function</span> <span class=\"kw5\">string</span> RSADecodeStream<span\
+      \ class=\"br0\">(</span>array<span class=\"sy0\">&lt;</span>int<span class=\"\
+      sy0\">&gt;</span> data, <span class=\"kw5\">int</span> D, <span class=\"kw5\"\
+      >int</span> N<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n  \
+      \  <span class=\"kw1\">local</span> <span class=\"kw5\">int</span> i, c, window;\n\
+      \    <span class=\"kw1\">local</span> <span class=\"kw5\">string</span> result;\n\
+      \    window <span class=\"sy0\">=</span> NumBits<span class=\"br0\">(</span>N<span\
+      \ class=\"br0\">)</span><span class=\"sy0\">/</span><span class=\"nu0\">8</span>;\n\
+      \    <span class=\"kw2\">for</span> <span class=\"br0\">(</span>i <span class=\"\
+      sy0\">=</span> <span class=\"nu0\">0</span>; i <span class=\"sy0\">&lt;</span>\
+      \ data.<span class=\"me0\">length</span>; i<span class=\"sy0\">++</span><span\
+      \ class=\"br0\">)</span>\n    <span class=\"br0\">{</span>\n        c <span\
+      \ class=\"sy0\">=</span> PowerMod<span class=\"br0\">(</span>data<span class=\"\
+      br0\">[</span>i<span class=\"br0\">]</span>,D,N<span class=\"br0\">)</span>;\n\
+      \        <span class=\"kw2\">if</span> <span class=\"br0\">(</span>window <span\
+      \ class=\"sy0\">&gt;</span> <span class=\"nu0\">3</span><span class=\"br0\"\
+      >)</span> result <span class=\"sy0\">$=</span> <span class=\"kw3\">chr</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">(</span>c <span class=\"sy0\">&amp;</span>\
+      \ 0xff000000<span class=\"br0\">)</span> <span class=\"sy0\">&gt;&gt;</span>\
+      \ <span class=\"nu0\">24</span><span class=\"br0\">)</span>;\n        <span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span>window <span class=\"\
+      sy0\">&gt;</span> <span class=\"nu0\">2</span><span class=\"br0\">)</span> result\
+      \ <span class=\"sy0\">$=</span> <span class=\"kw3\">chr</span><span class=\"\
+      br0\">(</span><span class=\"br0\">(</span>c <span class=\"sy0\">&amp;</span>\
+      \ 0x00ff0000<span class=\"br0\">)</span> <span class=\"sy0\">&gt;&gt;</span>\
+      \ <span class=\"nu0\">16</span><span class=\"br0\">)</span>;\n        <span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span>window <span class=\"\
+      sy0\">&gt;</span> <span class=\"nu0\">1</span><span class=\"br0\">)</span> result\
+      \ <span class=\"sy0\">$=</span> <span class=\"kw3\">chr</span><span class=\"\
+      br0\">(</span><span class=\"br0\">(</span>c <span class=\"sy0\">&amp;</span>\
+      \ 0x0000ff00<span class=\"br0\">)</span> <span class=\"sy0\">&gt;&gt;</span>\
+      \ <span class=\"nu0\">8</span><span class=\"br0\">)</span>;\n        result\
+      \ <span class=\"sy0\">$=</span> <span class=\"kw3\">chr</span><span class=\"\
+      br0\">(</span><span class=\"br0\">(</span>c <span class=\"sy0\">&amp;</span>\
+      \ 0x000000ff<span class=\"br0\">)</span><span class=\"br0\">)</span>;\n    <span\
+      \ class=\"br0\">}</span>\n    <span class=\"kw2\">return</span> result;\n<span\
+      \ class=\"br0\">}</span></pre></div>\n</div>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Example_usage\">Example usage</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:RSA?section=9\"\
+      \ title=\"Edit section: Example usage\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>Here's an example that creates the keys, encrypts\
+      \ and decrypts and checks if they're equal. It will also print the encrypted\
+      \ data.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div\
+      \ class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\"\
+      >function</span> <span class=\"kw5\">bool</span> EncTest<span class=\"br0\"\
+      >(</span><span class=\"kw5\">int</span> p, <span class=\"kw5\">int</span> q,\
+      \ <span class=\"kw5\">string</span> testData<span class=\"br0\">)</span>\n<span\
+      \ class=\"br0\">{</span>\n    <span class=\"kw1\">local</span> <span class=\"\
+      kw5\">string</span> s2;\n    <span class=\"kw1\">local</span> <span class=\"\
+      kw5\">int</span> n,e,d;\n    <span class=\"kw1\">local</span> array<span class=\"\
+      sy0\">&lt;</span>int<span class=\"sy0\">&gt;</span> ia;\n \n    n <span class=\"\
+      sy0\">=</span> p<span class=\"sy0\">*</span>q;\n \n    <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span>NumBits<span class=\"br0\">(</span>N<span class=\"\
+      br0\">)</span> <span class=\"sy0\">&lt;</span> <span class=\"nu0\">8</span><span\
+      \ class=\"br0\">)</span>\n    <span class=\"br0\">{</span>\n        <span class=\"\
+      kw3\">warn</span><span class=\"br0\">(</span><span class=\"st0\">\"Not enough\
+      \ bits for encrypting the data\"</span><span class=\"br0\">)</span>;\n     \
+      \   <span class=\"kw2\">return</span> <span class=\"kw6\">false</span>;\n  \
+      \  <span class=\"br0\">}</span>\n \n    e <span class=\"sy0\">=</span> RSAEncodeKeygen<span\
+      \ class=\"br0\">(</span>p, q<span class=\"br0\">)</span>;\n    d <span class=\"\
+      sy0\">=</span> RSADecodeKeygen<span class=\"br0\">(</span>e, p, q<span class=\"\
+      br0\">)</span>;\n \n    <span class=\"kw3\">log</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">\"p=\"</span><span class=\"sy0\">$</span>p<span class=\"sy0\"\
+      >@</span><span class=\"st0\">\"q=\"</span><span class=\"sy0\">$</span>q<span\
+      \ class=\"sy0\">@</span><span class=\"st0\">\"n=\"</span><span class=\"sy0\"\
+      >$</span>n<span class=\"sy0\">@</span><span class=\"st0\">\"e=\"</span><span\
+      \ class=\"sy0\">$</span>e<span class=\"sy0\">@</span><span class=\"st0\">\"\
+      d=\"</span><span class=\"sy0\">$</span>d<span class=\"sy0\">@</span><span class=\"\
+      st0\">\"bits=\"</span><span class=\"sy0\">$</span>NumBits<span class=\"br0\"\
+      >(</span>N<span class=\"br0\">)</span><span class=\"br0\">)</span>;\n \n   \
+      \ <span class=\"kw3\">log</span><span class=\"br0\">(</span><span class=\"st0\"\
+      >\"Source:\"</span><span class=\"sy0\">$</span>chr<span class=\"br0\">(</span><span\
+      \ class=\"nu0\">9</span><span class=\"br0\">)</span><span class=\"sy0\">$</span>chr<span\
+      \ class=\"br0\">(</span><span class=\"nu0\">9</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">@</span>testData<span class=\"br0\">)</span>;\n    RSAEncodeStream<span\
+      \ class=\"br0\">(</span>testData, e, n, ia<span class=\"br0\">)</span>;\n  \
+      \  <span class=\"kw3\">log</span><span class=\"br0\">(</span><span class=\"\
+      st0\">\"Encrypted:\"</span><span class=\"sy0\">$</span>chr<span class=\"br0\"\
+      >(</span><span class=\"nu0\">9</span><span class=\"br0\">)</span><span class=\"\
+      sy0\">@</span>printByteArray<span class=\"br0\">(</span>ia<span class=\"br0\"\
+      >)</span><span class=\"br0\">)</span>;\n    s2 <span class=\"sy0\">=</span>\
+      \ RSADecodeStream<span class=\"br0\">(</span>ia, d, n<span class=\"br0\">)</span>;\n\
+      \    <span class=\"kw3\">log</span><span class=\"br0\">(</span><span class=\"\
+      st0\">\"Decrypted:\"</span><span class=\"sy0\">$</span>chr<span class=\"br0\"\
+      >(</span><span class=\"nu0\">9</span><span class=\"br0\">)</span><span class=\"\
+      sy0\">@</span>s2<span class=\"br0\">)</span>;\n \n    <span class=\"kw2\">return</span>\
+      \ s2 <span class=\"sy0\">==</span> testData;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>When called with <code>EncTest(2851, 2927, \"012345 hello world\"\
+      )</code> it will output:</p>\n<pre>p=2851 q=2927 n=8344877 e=13 d=2565877 bits=23\n\
+      Source:          012345 hello world\nEncrypted:       001075070001d062007efb6800542d6800471922003fc53e00692eae005a3a310074b044\n\
+      Decrypted:       012345 hello world\n</pre>\n<p>Note that I left in the values\
+      \ of <code>p</code> and <code>q</code> in the above example. You should remove\
+      \ the usage of <code>p</code> and <code>q</code> when you no longer need them.\
+      \ When you have decided what <code>p</code> and <code>q</code> to use calculate\
+      \ the <code>n</code>, <code>e</code> and <code>d</code> values and use them\
+      \ in the rest of your code.</p>\n<h2><span class=\"mw-headline\" id=\"Comments\"\
+      >Comments</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:RSA?section=10\" title=\"Edit section: Comments\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n<p><b>Sixpack_Shambler:</b>\
+      \ Hmmmm....I've tried this code out and when I decrypt a string I don't even\
+      \ have to use the decrypt string to decrypt it, I just converted every signgle\
+      \ byte in the encrypted array to big string and it came out as EXACTLY the same\
+      \ string as what I put in&#160;:/</p>\n<p><b>El Muerte:</b> then you didn't\
+      \ pick correct prime numbers. I've improved the implementation, it can now encrypt\
+      \ up to 23bits, thus allowing a window size of 2 bytes.</p>\n<p><b>UsAaR33:</b>\
+      \ Do you think it would be possible to perhaps rewrite some math algorithms?\
+      \ With structures and some funky overloading, you could probably use much higher\
+      \ bit encryption. Right now, you can factor out the private key in seconds...</p>\n\
+      <p><b>El Muerte:</b> both me and PJMODOS once started on an BigInt implementation,\
+      \ but neither of use ever finished it (at least not ebough to have all required\
+      \ operators). But it should be possible to create a BigInt type, but it won't\
+      \ be as nice\\fast as a C or Pascal implementation (w.r.t. normal execution\
+      \ time in unrealscript).</p>\n<h2><span class=\"mw-headline\" id=\"Related_documents\"\
+      >Related documents</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:RSA?section=11\" title=\"Edit section: Related\
+      \ documents\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <ul>\n<li><a rel=\"nofollow\" class=\"external free\" href=\"http://pajhome.org.uk/crypt/rsa\"\
+      >http://pajhome.org.uk/crypt/rsa</a></li>\n<li><a rel=\"nofollow\" class=\"\
+      external free\" href=\"http://www.di-mgt.com.au/rsa_alg.html\">http://www.di-mgt.com.au/rsa_alg.html</a></li>\n\
+      </ul>\n<h2><span class=\"mw-headline\" id=\"Related_Topics\">Related Topics</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:RSA?section=12\" title=\"Edit section: Related Topics\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n<ul>\n\
+      <li><a href=\"/Legacy:Open_Source\" title=\"Legacy:Open Source\">Open Source</a></li>\n\
+      <li><a href=\"/Legacy:WUtils\" title=\"Legacy:WUtils\">WUtils</a></li>\n</ul>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.208 seconds\nReal time usage:\
+      \ 0.317 seconds\nPreprocessor visited node count: 129/1000000\nPreprocessor\
+      \ generated node count: 240/1000000\nPost‐expand include size: 3/2097152 bytes\n\
+      Template argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive\
+      \ parser function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report\
+      \ (%,ms,calls,template)\n100.00%    0.000      1 - -total\n-->\n\n<!-- Saved\
+      \ in parser cache with key wiki:pcache:idhash:2614-0!*!0!!en!*!* and timestamp\
+      \ 20221118025056 and revision id 40304\n -->\n"
+  categories:
+  - sortkey: "RSA"
+    name: "Legacy_Algorithm"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:WUtils"
+  - ns: 100
+    exists: true
+    name: "Legacy:Open Source"
+  templates: []
+  images: []
+  externallinks:
+  - "http://www.di-mgt.com.au/rsa_alg.html"
+  - "http://www.opensource.org/licenses/zlib-license.php"
+  - "http://pajhome.org.uk/crypt/rsa"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Code"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:RSA"
+    byteoffset: 219
+    anchor: "Code"
+  - toclevel: 2
+    level: "3"
+    line: "PowerMod"
+    number: "1.1"
+    index: "2"
+    fromtitle: "Legacy:RSA"
+    byteoffset: 1639
+    anchor: "PowerMod"
+  - toclevel: 2
+    level: "3"
+    line: "_RSAGCD"
+    number: "1.2"
+    index: "3"
+    fromtitle: "Legacy:RSA"
+    byteoffset: 2533
+    anchor: "RSAGCD"
+  - toclevel: 2
+    level: "3"
+    line: "RSAEncodeKeygen"
+    number: "1.3"
+    index: "4"
+    fromtitle: "Legacy:RSA"
+    byteoffset: 3112
+    anchor: "RSAEncodeKeygen"
+  - toclevel: 2
+    level: "3"
+    line: "RSADecodeKeygen"
+    number: "1.4"
+    index: "5"
+    fromtitle: "Legacy:RSA"
+    byteoffset: 3597
+    anchor: "RSADecodeKeygen"
+  - toclevel: 2
+    level: "3"
+    line: "NumBits"
+    number: "1.5"
+    index: "6"
+    fromtitle: "Legacy:RSA"
+    byteoffset: 4300
+    anchor: "NumBits"
+  - toclevel: 2
+    level: "3"
+    line: "RSAEncodeStream"
+    number: "1.6"
+    index: "7"
+    fromtitle: "Legacy:RSA"
+    byteoffset: 4578
+    anchor: "RSAEncodeStream"
+  - toclevel: 2
+    level: "3"
+    line: "RSADecodeStream"
+    number: "1.7"
+    index: "8"
+    fromtitle: "Legacy:RSA"
+    byteoffset: 5281
+    anchor: "RSADecodeStream"
+  - toclevel: 1
+    level: "2"
+    line: "Example usage"
+    number: "2"
+    index: "9"
+    fromtitle: "Legacy:RSA"
+    byteoffset: 5955
+    anchor: "Example_usage"
+  - toclevel: 1
+    level: "2"
+    line: "Comments"
+    number: "3"
+    index: "10"
+    fromtitle: "Legacy:RSA"
+    byteoffset: 7410
+    anchor: "Comments"
+  - toclevel: 1
+    level: "2"
+    line: "Related documents"
+    number: "4"
+    index: "11"
+    fromtitle: "Legacy:RSA"
+    byteoffset: 8453
+    anchor: "Related_documents"
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "5"
+    index: "12"
+    fromtitle: "Legacy:RSA"
+    byteoffset: 8550
+    anchor: "Related_Topics"
+  displaytitle: "Legacy:RSA"
+  iwlinks:
+  - prefix: "wikipedia"
+    url: "http://en.wikipedia.org/wiki/RSA"
+    name: "wikipedia:RSA"
+  wikitext:
+    text: "R.S.A. stands for Rivest, Shamir and Adleman - the three cryptographers\
+      \ who invented this public key cryptosystem. \n\nFor information about RSA encryption\
+      \ see  [[Wikipedia:RSA]] and the related documents section below.\n\n==Code==\n\
+      \nThis code uses integers, integers are 32bit in UnrealScript. Because of this\
+      \ the encryption as shown in the document isn't very secure. The improved code\
+      \ can have encryption up to 23bit, the previous implementation was limited to\
+      \ 13bits.\n\nUsing floats is not an option because they will lose signification\
+      \ at a certain point.\n\nThis code can be used under the terms of the [http://www.opensource.org/licenses/zlib-license.php\
+      \ ZLib/LibPNG] license:\n\n<pre>\nCopyright (c) 2004 Michiel Hendriks & UnrealWiki\
+      \ Contributers\nhttp://wiki.beyondunreal.com/edit/Legacy:RSA\n\nThis software\
+      \ is provided 'as-is', without any express or implied\nwarranty. In no event\
+      \ will the authors be held liable for any damages\narising from the use of this\
+      \ software.\n\nPermission is granted to anyone to use this software for any\
+      \ purpose,\nincluding commercial applications, and to alter it and redistribute\
+      \ it\nfreely, subject to the following restrictions:\n\n    1. The origin of\
+      \ this software must not be misrepresented; you must not\n    claim that you\
+      \ wrote the original software. If you use this software\n    in a product, an\
+      \ acknowledgment in the product documentation would be\n    appreciated but\
+      \ is not required.\n\n    2. Altered source versions must be plainly marked\
+      \ as such, and must not be\n    misrepresented as being the original software.\n\
+      \n    3. This notice may not be removed or altered from any source\n    distribution.\n\
+      </pre>\n\n===PowerMod===\n\nSupport function to calculate <code>b^e mod m</code>.\
+      \ Because float signification you can't just use <code>C**D%N</code>\n\n<uscript>\n\
+      static final function int PowerMod(int C, int D, int N)\n{\n    local int p;\n\
+      \    c = mod(c, n);\n    if (c < 0) c += n;\n    p = 1;\n    while (d >= 1)\n\
+      \    {\n        if ((d & 1) == 1) p = mulmod(c, p, n);\n        c = mulmod(c,\
+      \ c, n);\n        d = d / 2;\n    }\n    return p;\n}\n\nstatic final function\
+      \ int mulmod(int C, int D, int N)\n{\n    local int p;\n    c = mod(c, n);\n\
+      \    if (c < 0) c += n;\n    p = 0;\n    while (d >= 1)\n    {\n        if ((d\
+      \ & 1) == 1) p = mod(c + p, n);\n        c = mod(c * 2, n);\n        d = d /\
+      \ 2;\n    }\n    return p;\n}\n\n/**\n * int precision modulo function.\n *\
+      \ Like the % operator, this function returns a negative result for negative\
+      \ a.\n */\nstatic final function int mod(int a, int n)\n{\n    return a - (a\
+      \ / n) * n;\n}\n</uscript>\n\n===_RSAGCD===\n\nA private function to calculate\
+      \ the Greatest Common Divider, this is use to calculate the encryption key\n\
+      \n<uscript>\nstatic final private function int _RSAGCD(int e, int PHI)\n{\n\
+      \    local int great, a;\n    if (e > PHI)\n    {\n        while (mod(e, PHI)\
+      \ != 0)\n        {\n            a = mod(e, PHI);\n            e = PHI;\n   \
+      \         PHI = a;\n        }\n        great = PHI;\n    }\n    else {\n   \
+      \     while (mod(PHI, e) != 0)\n        {\n            a = mod(PHI, e);\n  \
+      \          PHI = e;\n            e = a;\n        }\n        great = e;\n   \
+      \ }\n    return great;\n}\n</uscript>\n\n===RSAEncodeKeygen===\n\nThis method\
+      \ will calculate the encryption key E from the prime numbers you supply.\n\n\
+      P and Q have to be prime and unequal. N=P*Q and must be large enough to contain\
+      \ all possible values you need to encrypt..\n\n<uscript>\nstatic final function\
+      \ int RSAPublicKeygen(int p, int q)\n{\n    local int PHI, E, great;\n    PHI\
+      \ = (p-1)*(q-1);\n    great = 0;\n    E = 2;\n    while (great != 1)\n    {\n\
+      \        E++;\n        great = _RSAGCD(E, PHI);\n    }\n    return E;\n}\n</uscript>\n\
+      \n===RSADecodeKeygen===\n\nThis will calculate the decrypt key D for the corresponding\
+      \ encrypt key\n\nUse the same P and Q as you did with the encrypt key\n\n<uscript>\n\
+      static final function int RSAPrivateKeygen(int E, int p, int q)\n{\n    local\
+      \ int PHI, u1, u2, u3, v1, v2, v3, t1, t2, t3, z;\n    PHI = (p-1)*(q-1);\n\
+      \    u1 = 1;\n    u2 = 0;\n    u3 = PHI;\n    v1 = 0;\n    v2 = 1;\n    v3 =\
+      \ E;\n    while (v3 != 0)\n    {\n        z = u3/v3;\n        t1 = u1-z*v1;\n\
+      \        t2 = u2-z*v2;\n        t3 = u3-z*v3;\n        u1 = v1;\n        u2\
+      \ = v2;\n        u3 = v3;\n        v1 = t1;\n        v2 = t2;\n        v3 =\
+      \ t3;\n    }\n    if (u2 < 0)\n    {\n        return u2 + PHI;\n    }\n    else\
+      \ {\n        return u2;\n    }\n}\n</uscript>\n\n===NumBits===\n\nThis will\
+      \ return the number of bits used in an integer. \n\n<uscript>\nstatic final\
+      \ function int NumBits(int sample)\n{\n    local int bits;\n    bits = 0;\n\
+      \    while (sample > 0)\n    {\n        sample = sample >>> 1;\n        bits++;\n\
+      \    }\n    return bits;\n}\n</uscript>\n\n===RSAEncodeStream===\n\nThis will\
+      \ encode the string using the keys E and N <code>(=P*Q)</code>. the output will\
+      \ be stored in the int array data2.\n\nIt will automactially adjust to window\
+      \ size according to the size of N. When N is more than 15 bits two characters\
+      \ will put in a single integer.\n\n<uscript>\nstatic final function RSAEncodeStream(coerce\
+      \ string data, int E, int N, out array<int> data2)\n{\n    local int i, c, window,\
+      \ j;\n    window = NumBits(N)/8;\n    for (i = 0; i < len(data); i = i+window)\n\
+      \    {\n        c = 0;\n        for (j = 0; j < window; j++)\n        {\n  \
+      \          c += Asc(Mid(data,i+j,1)) << (window-j-1)*8;\n        }\n       \
+      \ data2[data2.length] = PowerMod(c,E,N);\n    }\n}\n</uscript>\n\n===RSADecodeStream===\n\
+      \nThis will decrypt the array data to the correct string value.\n\nIt will automactially\
+      \ adjust to window size according to the size of N.\n\n<uscript>\nstatic final\
+      \ function string RSADecodeStream(array<int> data, int D, int N)\n{\n    local\
+      \ int i, c, window;\n    local string result;\n    window = NumBits(N)/8;\n\
+      \    for (i = 0; i < data.length; i++)\n    {\n        c = PowerMod(data[i],D,N);\n\
+      \        if (window > 3) result $= chr((c & 0xff000000) >> 24);\n        if\
+      \ (window > 2) result $= chr((c & 0x00ff0000) >> 16);\n        if (window >\
+      \ 1) result $= chr((c & 0x0000ff00) >> 8);\n        result $= chr((c & 0x000000ff));\n\
+      \    }\n    return result;\n}\n</uscript>\n\n==Example usage==\n\nHere's an\
+      \ example that creates the keys, encrypts and decrypts and checks if they're\
+      \ equal. It will also print the encrypted data.\n\n<uscript>\nfunction bool\
+      \ EncTest(int p, int q, string testData)\n{\n    local string s2;\n    local\
+      \ int n,e,d;\n    local array<int> ia;\n\n    n = p*q;\n\n    if (NumBits(N)\
+      \ < 8)\n    {\n        warn(\"Not enough bits for encrypting the data\");\n\
+      \        return false;\n    }\n\n    e = RSAEncodeKeygen(p, q);\n    d = RSADecodeKeygen(e,\
+      \ p, q);\n\n    log(\"p=\"$p@\"q=\"$q@\"n=\"$n@\"e=\"$e@\"d=\"$d@\"bits=\"$NumBits(N));\n\
+      \n    log(\"Source:\"$chr(9)$chr(9)@testData);\n    RSAEncodeStream(testData,\
+      \ e, n, ia);\n    log(\"Encrypted:\"$chr(9)@printByteArray(ia));\n    s2 = RSADecodeStream(ia,\
+      \ d, n);\n    log(\"Decrypted:\"$chr(9)@s2);\n\n    return s2 == testData;\n\
+      }\n</uscript>\n\nWhen called with <code>EncTest(2851, 2927, \"012345 hello world\"\
+      )</code> it will output:\n p=2851 q=2927 n=8344877 e=13 d=2565877 bits=23\n\
+      \ Source:          012345 hello world\n Encrypted:       001075070001d062007efb6800542d6800471922003fc53e00692eae005a3a310074b044\n\
+      \ Decrypted:       012345 hello world\n\nNote that I left in the values of <code>p</code>\
+      \ and <code>q</code> in the above example. You should remove the usage of <code>p</code>\
+      \ and <code>q</code> when you no longer need them. When you have decided what\
+      \ <code>p</code> and <code>q</code> to use calculate the <code>n</code>, <code>e</code>\
+      \ and <code>d</code> values and use them in the rest of your code.\n\n==Comments==\n\
+      \n'''Sixpack_Shambler:''' Hmmmm....I've tried this code out and when I decrypt\
+      \ a string I don't even have to use the decrypt string to decrypt it, I just\
+      \ converted every signgle byte in the encrypted array to big string and it came\
+      \ out as EXACTLY the same string as what I put in :/\n\n'''El Muerte:''' then\
+      \ you didn't pick correct prime numbers. I've improved the implementation, it\
+      \ can now encrypt up to 23bits, thus allowing a window size of 2 bytes.\n\n\
+      '''UsAaR33:''' Do you think it would be possible to perhaps rewrite some math\
+      \ algorithms?  With structures and some funky overloading, you could probably\
+      \ use much higher bit encryption.  Right now, you can factor out the private\
+      \ key in seconds...\n\n'''El Muerte:''' both me and PJMODOS once started on\
+      \ an BigInt implementation, but neither of use ever finished it (at least not\
+      \ ebough to have all required operators). But it should be possible to create\
+      \ a BigInt type, but it won't be as nice\\fast as a C or Pascal implementation\
+      \ (w.r.t. normal execution time in unrealscript).\n\n==Related documents==\n\
+      * http://pajhome.org.uk/crypt/rsa\n* http://www.di-mgt.com.au/rsa_alg.html\n\
+      \n==Related Topics==\n* [[Legacy:Open Source|Open Source]]\n* [[Legacy:WUtils|WUtils]]\n\
+      \n[[Category:Legacy Algorithm|{{PAGENAME}}]]"
+  properties: []
+  revId: 40304
+name: "Legacy:RSA"
+revision:
+  revid: 40304
+  parentid: 40303
+  user: "Elmuerte"
+  timestamp: 1259243055.000000000
+  comment: "/* Code */"
+timestamp: 1668764890.813010000

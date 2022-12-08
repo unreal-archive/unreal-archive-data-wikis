@@ -1,0 +1,232 @@
+---
+parse:
+  title: "Legacy:QueryHandler"
+  text:
+    text: "<p>UT2003's WebAdmin has been build <a href=\"/edit/Legacy:Modular_mod?redlink=1\"\
+      \ class=\"new\" title=\"Legacy:Modular mod (page does not exist)\">modular</a>,\
+      \ you can add new pages by writing your own QueryHandler and insert it into\
+      \ the WebAdmin (this feature only works for UT2003 builds higher then 2136 or\
+      \ when using <a href=\"/Legacy:Evolution\" title=\"Legacy:Evolution\">Evolution</a>'s\
+      \ fixed WebAdmin).</p>\n<p>This document will describe how to write your own\
+      \ QueryHandler and how to add it to the WebAdmin.</p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Configuration\">Configuration</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:QueryHandler?section=1\"\
+      \ title=\"Edit section: Configuration\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>This is a bit tricky, to add an extra QueryHandler\
+      \ you <i>must</i> repeat the default QueryHandlers or else they won't be loaded.</p>\n\
+      <p>To add a extra QueryHandler to the WebAdmin you have to add the following\
+      \ lines to the server configuration:</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"br0\">[</span>xWebAdmin.<span class=\"me0\">UTServerAdmin</span><span\
+      \ class=\"br0\">]</span>\nQueryHandlerClasses<span class=\"sy0\">=</span>xWebAdmin.<span\
+      \ class=\"me0\">xWebQueryCurrent</span>  <span class=\"co1\">// one of the default\
+      \ QueryHandlers</span>\nQueryHandlerClasses<span class=\"sy0\">=</span>xWebAdmin.<span\
+      \ class=\"me0\">xWebQueryDefaults</span> <span class=\"co1\">// one of the default\
+      \ QueryHandlers</span>\nQueryHandlerClasses<span class=\"sy0\">=</span>xWebAdmin.<span\
+      \ class=\"me0\">xWebQueryAdmins</span>   <span class=\"co1\">// one of the default\
+      \ QueryHandlers</span>\n \nQueryHandlerClasses<span class=\"sy0\">=</span>MyPackage.<span\
+      \ class=\"me0\">MyQueryHandler</span>    <span class=\"co1\">// your new QueryHandler</span></pre></div>\n\
+      </div>\n<h2><span class=\"mw-headline\" id=\"MyQueryHandler\">MyQueryHandler</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:QueryHandler?section=2\" title=\"Edit section: MyQueryHandler\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>To\
+      \ create a new QueryHandler you have to extend the class xWebQueryHandler</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">class</span> MyQueryHandler\
+      \ <span class=\"kw1\">extends</span> xWebQueryHandler;\n \n<span class=\"kw1\"\
+      >var</span> <span class=\"kw5\">string</span> SettingsPage;\n<span class=\"\
+      kw1\">var</span> <span class=\"kw5\">string</span> AboutPage;\n \n<span class=\"\
+      kw1\">function</span> <span class=\"kw5\">bool</span> Init<span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n  <span\
+      \ class=\"kw6\">Super</span>.<span class=\"me0\">Init</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>;\n  <span class=\"kw3\">log</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">\"MyQueryHandler loaded\"</span><span\
+      \ class=\"br0\">)</span>;\n  <span class=\"kw2\">return</span> <span class=\"\
+      kw6\">true</span>;\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>The\
+      \ method Init() is loaded when this page is loaded, if you need some things\
+      \ to be loaded or found you should do it here.</p>\n<p>SettingsPage and AboutPage\
+      \ variables are use to identify the pages this query handler will handler. There's\
+      \ an additional variable defined in xWebQueryHandler, DefaultPage, this is the\
+      \ initial page the WebAdmin will link to the the links page.</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">function</span> <span class=\"kw5\"\
+      >bool</span> Query<span class=\"br0\">(</span><span class=\"kw8\">WebRequest</span>\
+      \ Request, <span class=\"kw8\">WebResponse</span> Response<span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw2\">switch</span>\
+      \ <span class=\"br0\">(</span><span class=\"kw3\">Mid</span><span class=\"br0\"\
+      >(</span>Request.<span class=\"me0\">URI</span>, <span class=\"nu0\">1</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n  <span class=\"br0\"\
+      >{</span>\n    <span class=\"kw2\">case</span> DefaultPage:  RequestDefault<span\
+      \ class=\"br0\">(</span>Request, Response<span class=\"br0\">)</span>; <span\
+      \ class=\"kw2\">return</span> <span class=\"kw6\">true</span>;\n    <span class=\"\
+      kw2\">case</span> SettingsPage: RequestSettings<span class=\"br0\">(</span>Request,\
+      \ Response<span class=\"br0\">)</span>; <span class=\"kw2\">return</span> <span\
+      \ class=\"kw6\">true</span>;\n    <span class=\"kw2\">case</span> AboutPage:\
+      \    RequestAbout<span class=\"br0\">(</span>Request, Response<span class=\"\
+      br0\">)</span>; <span class=\"kw2\">return</span> <span class=\"kw6\">true</span>;\n\
+      \  <span class=\"br0\">}</span>\n  <span class=\"kw2\">return</span> <span class=\"\
+      kw6\">false</span>;\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>The\
+      \ query event of the QueryHandler works about the same as for with the <a href=\"\
+      /Legacy:WebApplication\" title=\"Legacy:WebApplication\">WebApplication</a>\
+      \ with a few diffirences:</p>\n<ul>\n<li>It has a return value, if the page\
+      \ belongs to this query handler it should return true, otherwise return false</li>\n\
+      <li>You should not return a 404 error when you can't handle the page, the WebAdmin\
+      \ will to it for you.</li>\n</ul>\n<p>The methods RequestDefault, RequestSettings\
+      \ and RequestAbout handle the request page. Check <a href=\"/Legacy:Creating_A_WebApplication\"\
+      \ title=\"Legacy:Creating A WebApplication\">Creating A WebApplication</a> on\
+      \ how to write such methods.</p>\n<p>The DefaultPage is opened in a frame that\
+      \ can not scroll, so it's best that the DefaultPages creates another frameset\
+      \ with frames where it will open the actual pages. So you can create a menu\
+      \ like system on the left side like with the default WebAdmin pages</p>\n<div\
+      \ dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">defaultproperties</span>\
+      \ \n<span class=\"br0\">{</span>\n  DefaultPage<span class=\"sy0\">=</span><span\
+      \ class=\"st0\">\"MyQueryHandler\"</span>\n  SettingsPage<span class=\"sy0\"\
+      >=</span><span class=\"st0\">\"MyQueryHandler_Settings\"</span>\n  AboutPage<span\
+      \ class=\"sy0\">=</span><span class=\"st0\">\"MyQueryHandler_About\"</span>\n\
+      \ \n  Title<span class=\"sy0\">=</span><span class=\"st0\">\"MyQueryHandler\"\
+      </span>\n  NeededPrivs<span class=\"sy0\">=</span><span class=\"st0\">\"\"</span>\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>These settings are pretty\
+      \ important. The above three settings define the names of the pages that this\
+      \ QueryHandler handles. It's very imporant that you use unique names for every\
+      \ page because you can obscure an other page if you use the same name.</p>\n\
+      <p>The <i>Title</i> value is used as the title of the link that will be visible\
+      \ in the WebAdmin. <i>NeededPrivs</i> is a string with AdminControlIni privilege\
+      \ codes needed to use this page.</p>\n<div class=\"center\">\n<div class=\"\
+      floatnone\"><a href=\"/File:Legacy_QueryHandler.png\" class=\"image\"><img alt=\"\
+      Legacy QueryHandler.png\" src=\"/w/images/Legacy_QueryHandler.png\" width=\"\
+      584\" height=\"173\" /></a></div>\n</div>\n<p>Your new QueryHandler will be\
+      \ visible in the QueryHandler links as seen above.</p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Related_documens\">Related documens</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:QueryHandler?section=3\"\
+      \ title=\"Edit section: Related documens\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<ul>\n<li><a href=\"/Legacy:Modular_Mod\" title=\"Legacy:Modular\
+      \ Mod\">Modular_Mod</a></li>\n<li><a href=\"/Legacy:Sessions\" title=\"Legacy:Sessions\"\
+      >Sessions</a></li>\n<li><a href=\"/Legacy:UTServerAdmin\" title=\"Legacy:UTServerAdmin\"\
+      >UTServerAdmin</a></li>\n<li><a href=\"/Legacy:WebApplication\" title=\"Legacy:WebApplication\"\
+      >WebApplication</a></li>\n<li><a href=\"/Legacy:WebServer\" title=\"Legacy:WebServer\"\
+      >WebServer</a></li>\n</ul>\n\n<!-- \nNewPP limit report\nCPU time usage: 0.134\
+      \ seconds\nReal time usage: 0.293 seconds\nPreprocessor visited node count:\
+      \ 47/1000000\nPreprocessor generated node count: 96/1000000\nPost‐expand include\
+      \ size: 0/2097152 bytes\nTemplate argument size: 0/2097152 bytes\nHighest expansion\
+      \ depth: 2/40\nExpensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion\
+      \ expansion time report (%,ms,calls,template)\n100.00%    0.000      1 - -total\n\
+      -->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:2569-0!*!0!!*!5!*\
+      \ and timestamp 20221118083557 and revision id 6134\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:WebApplication"
+  - ns: 100
+    exists: true
+    name: "Legacy:Evolution"
+  - ns: 100
+    exists: true
+    name: "Legacy:Sessions"
+  - ns: 100
+    exists: false
+    name: "Legacy:Modular mod"
+  - ns: 100
+    exists: true
+    name: "Legacy:UTServerAdmin"
+  - ns: 100
+    exists: true
+    name: "Legacy:Creating A WebApplication"
+  - ns: 100
+    exists: true
+    name: "Legacy:Modular Mod"
+  - ns: 100
+    exists: true
+    name: "Legacy:WebServer"
+  templates: []
+  images:
+  - "Legacy_QueryHandler.png"
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Configuration"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:QueryHandler"
+    byteoffset: 376
+    anchor: "Configuration"
+  - toclevel: 1
+    level: "2"
+    line: "MyQueryHandler"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:QueryHandler"
+    byteoffset: 1008
+    anchor: "MyQueryHandler"
+  - toclevel: 1
+    level: "2"
+    line: "Related documens"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:QueryHandler"
+    byteoffset: 3584
+    anchor: "Related_documens"
+  displaytitle: "Legacy:QueryHandler"
+  iwlinks: []
+  wikitext:
+    text: "UT2003's WebAdmin has been build [[Legacy:Modular_mod|modular]], you can\
+      \ add new pages by writing your own QueryHandler and insert it into the WebAdmin\
+      \ (this feature only works for UT2003 builds higher then 2136 or when using\
+      \ [[Legacy:Evolution|Evolution]]'s fixed WebAdmin).\n\nThis document will describe\
+      \ how to write your own QueryHandler and how to add it to the WebAdmin.\n\n\
+      ==Configuration ==\n\nThis is a bit tricky, to add an extra QueryHandler you\
+      \ ''must'' repeat the default QueryHandlers or else they won't be loaded.\n\n\
+      To add a extra QueryHandler to the WebAdmin you have to add the following lines\
+      \ to the server configuration:\n\n<uscript>\n[xWebAdmin.UTServerAdmin]\nQueryHandlerClasses=xWebAdmin.xWebQueryCurrent\
+      \  // one of the default QueryHandlers\nQueryHandlerClasses=xWebAdmin.xWebQueryDefaults\
+      \ // one of the default QueryHandlers\nQueryHandlerClasses=xWebAdmin.xWebQueryAdmins\
+      \   // one of the default QueryHandlers\n\nQueryHandlerClasses=MyPackage.MyQueryHandler\
+      \    // your new QueryHandler\n</uscript>\n\n==MyQueryHandler ==\n\nTo create\
+      \ a new QueryHandler you have to extend the class xWebQueryHandler\n\n<uscript>\n\
+      class MyQueryHandler extends xWebQueryHandler;\n\nvar string SettingsPage;\n\
+      var string AboutPage;\n\nfunction bool Init()\n{\n  Super.Init();\n  log(\"\
+      MyQueryHandler loaded\");\n  return true;\n}\n</uscript>\n\nThe method Init()\
+      \ is loaded when this page is loaded, if you need some things to be loaded or\
+      \ found you should do it here.\n\nSettingsPage and AboutPage variables are use\
+      \ to identify the pages this query handler will handler. There's an additional\
+      \ variable defined in xWebQueryHandler, DefaultPage, this is the initial page\
+      \ the WebAdmin will link to the the links page.\n\n<uscript>\nfunction bool\
+      \ Query(WebRequest Request, WebResponse Response)\n{\n  switch (Mid(Request.URI,\
+      \ 1))\n  {\n    case DefaultPage:  RequestDefault(Request, Response); return\
+      \ true;\n    case SettingsPage: RequestSettings(Request, Response); return true;\n\
+      \    case AboutPage:    RequestAbout(Request, Response); return true;\n  }\n\
+      \  return false;\n}\n</uscript>\n\nThe query event of the QueryHandler works\
+      \ about the same as for with the [[Legacy:WebApplication|WebApplication]] with\
+      \ a few diffirences:\n* It has a return value, if the page belongs to this query\
+      \ handler it should return true, otherwise return false\n* You should not return\
+      \ a 404 error when you can't handle the page, the WebAdmin will to it for you.\n\
+      \nThe methods RequestDefault, RequestSettings and RequestAbout handle the request\
+      \ page. Check [[Legacy:Creating A WebApplication|Creating A WebApplication]]\
+      \ on how to write such methods.\n\nThe DefaultPage is opened in a frame that\
+      \ can not scroll, so it's best that the DefaultPages creates another frameset\
+      \ with frames where it will open the actual pages. So you can create a menu\
+      \ like system on the left side like with the default WebAdmin pages\n\n<uscript>\n\
+      defaultproperties \n{\n  DefaultPage=\"MyQueryHandler\"\n  SettingsPage=\"MyQueryHandler_Settings\"\
+      \n  AboutPage=\"MyQueryHandler_About\"\n \n  Title=\"MyQueryHandler\"\n  NeededPrivs=\"\
+      \"\n}\n</uscript>\n\nThese settings are pretty important. The above three settings\
+      \ define the names of the pages that this QueryHandler handles. It's very imporant\
+      \ that you use unique names for every page because you can obscure an other\
+      \ page if you use the same name. \n\nThe ''Title'' value is used as the title\
+      \ of the link that will be visible in the WebAdmin. ''NeededPrivs'' is a string\
+      \ with AdminControlIni privilege codes needed to use this page.\n\n[[Image:Legacy_QueryHandler.png|center|]]\n\
+      \nYour new QueryHandler will be visible in the QueryHandler links as seen above.\n\
+      \n==Related documens ==\n* [[Legacy:Modular_Mod|Modular_Mod]]\n* [[Legacy:Sessions|Sessions]]\n\
+      * [[Legacy:UTServerAdmin|UTServerAdmin]]\n* [[Legacy:WebApplication|WebApplication]]\n\
+      * [[Legacy:WebServer|WebServer]]"
+  properties: []
+  revId: 6134
+name: "Legacy:QueryHandler"
+revision:
+  revid: 6134
+  parentid: 6135
+  user: "Wormbo"
+  timestamp: 1157625421.000000000
+  comment: "fixed the INI example, the class'...' syntax is not valid here"
+timestamp: 1668787169.431579000

@@ -1,0 +1,676 @@
+---
+parse:
+  title: "Legacy:UScriptAnimPawn"
+  text:
+    text: "<h3><span class=\"mw-headline\" id=\"UScript_Controlled_Animation_Pawn\"\
+      >UScript Controlled Animation Pawn</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:UScriptAnimPawn?section=1\"\
+      \ title=\"Edit section: UScript Controlled Animation Pawn\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h3>\n<p>For those interested in creating\
+      \ <a href=\"/Legacy:Pawn\" title=\"Legacy:Pawn\">pawns</a> whose animations\
+      \ are controlled through UScript instead of native code, the following code\
+      \ will provide a base from which you can edit. It is simply the native animation\
+      \ source code rewritten in UScript (c++ source available in the 3186 uscript\
+      \ source). The following code behaves almost exactly the same as the native\
+      \ code (slight difference in rotation yaw, will edit once tracked down). It\
+      \ would probably be beneficial to performance to place the call to UpdateMovementAnimation\
+      \ function in the AnimEnd event as it was back in original UT. -Meowcat</p>\n\
+      <p>[Edit 12 June 2014] Some minor code fixes/optimizations added in the select\
+      \ function -Meowcat</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">class</span> UScriptAnimPawn <span class=\"kw1\">extends</span> SomeOtherPawn<span\
+      \ class=\"re0\">Class</span>&lt; SEMI &gt;<span class=\"co1\">// SomeOtherPawnClass\
+      \ will typically be xPawn</span>\n \n<span class=\"co1\">// added to get around\
+      \ the const values normally set by the native code</span>\n<span class=\"kw1\"\
+      >var</span> <span class=\"kw5\">bool</span> bFootTurning; \n<span class=\"kw1\"\
+      >var</span> <span class=\"kw5\">bool</span> bFootStill;\n<span class=\"kw1\"\
+      >var</span> <span class=\"kw5\">int</span>  iFootRot;\n<span class=\"kw1\">var</span>\
+      \ <span class=\"kw5\">int</span>  iTurnDir;\n<span class=\"kw1\">var</span>\
+      \ <span class=\"kw5\">int</span> SmoothViewPitch, SmoothViewYaw;<span class=\"\
+      co1\">// These two are only needed if this code is for UT2003, UT2004 pawn code\
+      \ already has them</span>\n \n<span class=\"kw1\">simulated</span> <span class=\"\
+      kw1\">function</span> <span class=\"kw4\">Tick</span><span class=\"br0\">(</span><span\
+      \ class=\"kw5\">float</span> DeltaTime<span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n      <span class=\"kw2\">if</span><span class=\"br0\">(</span><span\
+      \ class=\"sy0\">!</span>bPhysicsAnimUpdate<span class=\"br0\">)</span> UpdateMovementAnimation<span\
+      \ class=\"br0\">(</span>DeltaTime<span class=\"br0\">)</span>;<span class=\"\
+      co1\">//added to allow switching between native and scripted animation</span>\n\
+      \      <span class=\"kw6\">super</span>.<span class=\"kw4\">tick</span><span\
+      \ class=\"br0\">(</span>deltatime<span class=\"br0\">)</span>;\n<span class=\"\
+      br0\">}</span>\n \n<span class=\"co1\">// Epic C++ animation code converted\
+      \ to uscript, with slight optimization</span>\n \n<span class=\"kw1\">simulated</span>\
+      \ <span class=\"kw1\">function</span> UpdateMovementAnimation<span class=\"\
+      br0\">(</span> <span class=\"kw5\">FLOAT</span> DeltaSeconds <span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n    <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span> <span class=\"kw7\">Level</span>.<span class=\"\
+      me0\">NetMode</span> <span class=\"sy0\">==</span> NM_DedicatedServer <span\
+      \ class=\"br0\">)</span>\n\t\t<span class=\"kw2\">return</span>;\n    <span\
+      \ class=\"kw2\">if</span><span class=\"br0\">(</span> bPlayedDeath <span class=\"\
+      br0\">)</span>\n        <span class=\"kw2\">return</span>;\n \n    <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span><span class=\"kw7\">Level</span>.<span\
+      \ class=\"me0\">TimeSeconds</span> <span class=\"sy0\">-</span> LastRenderTime\
+      \ <span class=\"sy0\">&gt;</span> <span class=\"nu0\">1.0</span><span class=\"\
+      br0\">)</span>\n    <span class=\"br0\">{</span>\n        iFootRot <span class=\"\
+      sy0\">=</span> <span class=\"kw7\">Rotation</span>.<span class=\"me0\">Yaw</span>;\n\
+      \        bFootTurning <span class=\"sy0\">=</span> <span class=\"kw6\">false</span>;\n\
+      \        bFootStill <span class=\"sy0\">=</span> <span class=\"kw6\">false</span>;\n\
+      \        <span class=\"kw2\">return</span>;\n    <span class=\"br0\">}</span>\n\
+      \ \n    BaseEyeHeight <span class=\"sy0\">=</span> <span class=\"kw1\">Default</span>.<span\
+      \ class=\"me0\">BaseEyeHeight</span>;\n \n    <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span> bIsIdle <span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"kw7\">Physics</span> <span class=\"sy0\">!=</span> OldPhysics\
+      \ <span class=\"br0\">)</span>\n    <span class=\"br0\">{</span>\n        bWaitForAnim\
+      \ <span class=\"sy0\">=</span> <span class=\"kw6\">false</span>;\n    <span\
+      \ class=\"br0\">}</span>\n \n    <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span> <span class=\"sy0\">!</span>bWaitForAnim <span class=\"br0\"\
+      >)</span>\n    <span class=\"br0\">{</span>\n        <span class=\"co1\">//\
+      \ This first option should be selected most often</span>\n        <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span> <span class=\"kw7\">Physics</span>\
+      \ <span class=\"sy0\">==</span> <span class=\"kw7\">PHYS_Walking</span> <span\
+      \ class=\"sy0\">||</span> <span class=\"kw7\">Physics</span> <span class=\"\
+      sy0\">==</span> <span class=\"kw7\">PHYS_Ladder</span> <span class=\"br0\">)</span>\n\
+      \        <span class=\"br0\">{</span>\n            UpdateOnGround<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n        <span class=\"br0\">}</span>\n\
+      \        <span class=\"co1\">//next most likely physics state for most maps\
+      \ (I'd assume...)</span>\n        <span class=\"kw2\">else</span> <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span> <span class=\"kw7\">Physics</span>\
+      \ <span class=\"sy0\">==</span> <span class=\"kw7\">PHYS_Falling</span> <span\
+      \ class=\"sy0\">||</span> <span class=\"kw7\">Physics</span> <span class=\"\
+      sy0\">==</span> <span class=\"kw7\">PHYS_Flying</span> <span class=\"br0\">)</span>\n\
+      \        <span class=\"br0\">{</span>\n            BaseEyeHeight <span class=\"\
+      sy0\">*=</span> 0.7f;\n            UpdateInAir<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n        <span class=\"br0\">}</span>\n        <span\
+      \ class=\"co1\">// Probably the least likely state... unless you break out PHYS_Ladder\
+      \ and PHYS_Flying separately</span>\n        <span class=\"kw2\">else</span>\
+      \ <span class=\"kw2\">if</span> <span class=\"br0\">(</span> <span class=\"\
+      kw7\">Physics</span> <span class=\"sy0\">==</span> <span class=\"kw7\">PHYS_Swimming</span>\
+      \ <span class=\"br0\">)</span>\n\t<span class=\"br0\">{</span>\n           \
+      \ BaseEyeHeight <span class=\"sy0\">*=</span> 0.7f;\n            UpdateSwimming<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n\t<span class=\"br0\"\
+      >}</span>\n \n    <span class=\"br0\">}</span>\n\t<span class=\"kw2\">else</span>\
+      \ <span class=\"kw2\">if</span> <span class=\"br0\">(</span> <span class=\"\
+      sy0\">!</span><span class=\"kw4\">IsAnimating</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span> <span class=\"br0\">)</span>\n\
+      \t\tbWaitForAnim <span class=\"sy0\">=</span> <span class=\"kw6\">false</span>;\n\
+      \ \n    <span class=\"kw2\">if</span> <span class=\"br0\">(</span> <span class=\"\
+      kw7\">Physics</span> <span class=\"sy0\">!=</span> <span class=\"kw7\">PHYS_Walking</span>\
+      \ <span class=\"br0\">)</span>\n        bIsIdle <span class=\"sy0\">=</span>\
+      \ <span class=\"kw6\">false</span>;\n \n    OldPhysics <span class=\"sy0\">=</span>\
+      \ <span class=\"kw7\">Physics</span>;<span class=\"co1\">// OldPhysics is not\
+      \ const and can be changed in UScript</span>\n    <span class=\"co1\">//OldVelocity\
+      \ = Velocity;// is a const, may be used in the ModifyVelocity function!! </span>\n\
+      \ \n    <span class=\"kw2\">if</span> <span class=\"br0\">(</span>bDoTorsoTwist<span\
+      \ class=\"br0\">)</span>\n        UpdateTwistLook<span class=\"br0\">(</span>\
+      \ DeltaSeconds <span class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"kw1\">simulated</span> <span class=\"kw1\">function</span>\
+      \ UpdateSwimming<span class=\"br0\">(</span><span class=\"br0\">)</span>\n<span\
+      \ class=\"br0\">{</span>\n    <span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span> <span class=\"br0\">(</span><span class=\"kw7\">Velocity</span>.<span\
+      \ class=\"me0\">X</span><span class=\"sy0\">*</span><span class=\"kw7\">Velocity</span>.<span\
+      \ class=\"me0\">X</span> <span class=\"sy0\">+</span> <span class=\"kw7\">Velocity</span>.<span\
+      \ class=\"me0\">Y</span><span class=\"sy0\">*</span><span class=\"kw7\">Velocity</span>.<span\
+      \ class=\"me0\">Y</span><span class=\"br0\">)</span> <span class=\"sy0\">&lt;</span>\
+      \ 2500.0f <span class=\"br0\">)</span>\n        <span class=\"kw4\">PlayAnim</span><span\
+      \ class=\"br0\">(</span>IdleSwimAnim, 1.0f, 0.1f, <span class=\"nu0\">0</span><span\
+      \ class=\"br0\">)</span>;\n    <span class=\"kw2\">else</span>\n\t    <span\
+      \ class=\"kw4\">PlayAnim</span><span class=\"br0\">(</span>SwimAnims<span class=\"\
+      br0\">[</span>Get4WayDirection<span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span><span class=\"br0\">]</span>, 1.0f, 0.1f, <span class=\"nu0\">0</span><span\
+      \ class=\"br0\">)</span>;\n        <span class=\"co1\">//PlayAnim(0, SwimAnims[Get4WayDirection()],\
+      \ 1.0f, 0.1f, true);// native anim call</span>\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"kw1\">simulated</span> <span class=\"kw1\">function</span>\
+      \ UpdateInAir<span class=\"br0\">(</span><span class=\"br0\">)</span>\n<span\
+      \ class=\"br0\">{</span>\n   <span class=\"kw1\">local</span> <span class=\"\
+      kw5\">Name</span> NewAnim;\n   <span class=\"kw1\">local</span>  <span class=\"\
+      kw5\">bool</span> bUp, bDodge;\n   <span class=\"kw1\">local</span>  <span class=\"\
+      kw5\">float</span> DodgeSpeedThresh;\n   <span class=\"kw1\">local</span> <span\
+      \ class=\"kw5\">int</span> Dir;\n   <span class=\"kw1\">local</span>  <span\
+      \ class=\"kw5\">float</span> XYVelocitySquared;\n \n    XYVelocitySquared <span\
+      \ class=\"sy0\">=</span> <span class=\"br0\">(</span><span class=\"kw7\">Velocity</span>.<span\
+      \ class=\"me0\">X</span><span class=\"sy0\">*</span><span class=\"kw7\">Velocity</span>.<span\
+      \ class=\"me0\">X</span><span class=\"br0\">)</span><span class=\"sy0\">+</span><span\
+      \ class=\"br0\">(</span><span class=\"kw7\">Velocity</span>.<span class=\"me0\"\
+      >Y</span><span class=\"sy0\">*</span><span class=\"kw7\">Velocity</span>.<span\
+      \ class=\"me0\">Y</span><span class=\"br0\">)</span>;\n \n    bDodge <span class=\"\
+      sy0\">=</span> <span class=\"kw6\">false</span>;\n    <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span> OldPhysics <span class=\"sy0\">==</span> <span\
+      \ class=\"kw7\">PHYS_Walking</span> <span class=\"br0\">)</span>\n    <span\
+      \ class=\"br0\">{</span>\n        DodgeSpeedThresh <span class=\"sy0\">=</span>\
+      \ <span class=\"br0\">(</span><span class=\"br0\">(</span>GroundSpeed<span class=\"\
+      sy0\">*</span>DodgeSpeedFactor<span class=\"br0\">)</span> <span class=\"sy0\"\
+      >+</span> GroundSpeed<span class=\"br0\">)</span> <span class=\"sy0\">*</span>\
+      \ 0.5f;\n        <span class=\"kw2\">if</span> <span class=\"br0\">(</span>\
+      \ XYVelocitySquared <span class=\"sy0\">&gt;</span> DodgeSpeedThresh<span class=\"\
+      sy0\">*</span>DodgeSpeedThresh <span class=\"br0\">)</span>\n        <span class=\"\
+      br0\">{</span>\n            bDodge <span class=\"sy0\">=</span> <span class=\"\
+      kw6\">true</span>;\n        <span class=\"br0\">}</span>\n    <span class=\"\
+      br0\">}</span>\n \n    bUp <span class=\"sy0\">=</span> <span class=\"br0\"\
+      >(</span><span class=\"kw7\">Velocity</span>.<span class=\"me0\">Z</span> <span\
+      \ class=\"sy0\">&gt;=</span> 0.0f<span class=\"br0\">)</span>;\n \n    <span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span>XYVelocitySquared <span\
+      \ class=\"sy0\">&gt;=</span> 20000.0f<span class=\"br0\">)</span>\n    <span\
+      \ class=\"br0\">{</span>\n        Dir <span class=\"sy0\">=</span> Get4WayDirection<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n \n        <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>bDodge<span class=\"br0\">)</span>\n\
+      \        <span class=\"br0\">{</span>\n            NewAnim <span class=\"sy0\"\
+      >=</span> DodgeAnims<span class=\"br0\">[</span>Dir<span class=\"br0\">]</span>;\n\
+      \            bWaitForAnim <span class=\"sy0\">=</span> <span class=\"kw6\">true</span>;\n\
+      \        <span class=\"br0\">}</span>\n        <span class=\"kw2\">else</span>\
+      \ <span class=\"kw2\">if</span> <span class=\"br0\">(</span>bUp<span class=\"\
+      br0\">)</span>\n        <span class=\"br0\">{</span>\n            NewAnim <span\
+      \ class=\"sy0\">=</span> TakeoffAnims<span class=\"br0\">[</span>Dir<span class=\"\
+      br0\">]</span>;\n        <span class=\"br0\">}</span>\n        <span class=\"\
+      kw2\">else</span>\n        <span class=\"br0\">{</span>\n            NewAnim\
+      \ <span class=\"sy0\">=</span> AirAnims<span class=\"br0\">[</span>Dir<span\
+      \ class=\"br0\">]</span>;\n        <span class=\"br0\">}</span>\n    <span class=\"\
+      br0\">}</span>\n    <span class=\"kw2\">else</span>\n    <span class=\"br0\"\
+      >{</span>\n        <span class=\"kw2\">if</span> <span class=\"br0\">(</span>bUp<span\
+      \ class=\"br0\">)</span>\n        <span class=\"br0\">{</span>\n           \
+      \ NewAnim <span class=\"sy0\">=</span> TakeoffStillAnim;\n        <span class=\"\
+      br0\">}</span>\n        <span class=\"kw2\">else</span>\n \n        <span class=\"\
+      br0\">{</span>\n            NewAnim <span class=\"sy0\">=</span> AirStillAnim;\n\
+      \        <span class=\"br0\">}</span>\n    <span class=\"br0\">}</span>\n \n\
+      \t<span class=\"kw2\">if</span> <span class=\"br0\">(</span> NewAnim <span class=\"\
+      sy0\">!=</span> GetAnimSequence<span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span> <span class=\"br0\">)</span>\n    <span class=\"br0\">{</span>\n \
+      \   <span class=\"co1\">// have not quite added this yet.  Will edit later -meowcat\t\
+      \t</span>\n    <span class=\"co1\">//if ( PhysicsVolume-&gt;Gravity.Z &gt; 0.8f\
+      \ * (Cast&lt;APhysicsVolume&gt;(PhysicsVolume-&gt;GetClass()-&gt;GetDefaultActor()))-&gt;Gravity.Z\
+      \ )</span>\n    \t<span class=\"co1\">//\tPlayAnim(0, NewAnim, 0.5f, 0.2f, false);\
+      \ // native anim call</span>\n\t\t<span class=\"co1\">//else</span>\n    \t\t\
+      <span class=\"kw4\">PlayAnim</span><span class=\"br0\">(</span>NewAnim, <span\
+      \ class=\"nu0\">1.0</span>, TweenTime, <span class=\"nu0\">0</span><span class=\"\
+      br0\">)</span>; <span class=\"co1\">//loopanim looks bad here....</span>\n \
+      \   \t\t<span class=\"co1\">//LoopAnim(NewAnim, 1.0f, 0.1f, 0);</span>\n   \
+      \         <span class=\"co1\">//PlayAnim(0, NewAnim, 1.0f, 0.1f, false); //\
+      \ native anim call</span>\n    <span class=\"br0\">}</span>\n<span class=\"\
+      br0\">}</span>\n \n<span class=\"kw1\">simulated</span> <span class=\"kw1\"\
+      >function</span> UpdateOnGround<span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n    <span class=\"co1\">// just landed</span>\n\
+      \    <span class=\"kw2\">if</span> <span class=\"br0\">(</span> OldPhysics <span\
+      \ class=\"sy0\">==</span> <span class=\"kw7\">PHYS_Falling</span> <span class=\"\
+      sy0\">||</span> OldPhysics <span class=\"sy0\">==</span> <span class=\"kw7\"\
+      >PHYS_Flying</span> <span class=\"br0\">)</span>\n    <span class=\"br0\">{</span>\n\
+      \        PlayLand<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \    <span class=\"br0\">}</span>\n    <span class=\"co1\">// standing still</span>\n\
+      \    <span class=\"kw2\">else</span> <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span> <span class=\"kw3\">Vsize</span><span class=\"br0\">(</span><span\
+      \ class=\"kw7\">Velocity</span><span class=\"sy0\">*</span><span class=\"kw7\"\
+      >Velocity</span><span class=\"br0\">)</span> <span class=\"sy0\">&lt;</span>\
+      \ 2500.0f  <span class=\"br0\">)</span>  <span class=\"coMULTI\">/*&amp;&amp;\
+      \ Acceleration.SizeSquared() &lt; 0.01f*/</span>\n    <span class=\"br0\">{</span>\n\
+      \        <span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      sy0\">!</span>bIsIdle <span class=\"sy0\">||</span> bFootTurning <span class=\"\
+      sy0\">||</span> bIsCrouched <span class=\"sy0\">!=</span> bWasCrouched<span\
+      \ class=\"br0\">)</span>\n        <span class=\"br0\">{</span>\n           \
+      \ IdleTime <span class=\"sy0\">=</span> <span class=\"kw7\">Level</span>.<span\
+      \ class=\"me0\">TimeSeconds</span>;\n            PlayIdle<span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>;\n        <span class=\"br0\">}</span>\n\
+      \        PlayIdle<span class=\"br0\">(</span><span class=\"br0\">)</span>;<span\
+      \ class=\"co1\">// added this playIdle to force the code to update whatever\
+      \ animation was playing, otherwise the turning anim could potentially continue\
+      \ to loop</span>\n        bWasCrouched <span class=\"sy0\">=</span> bIsCrouched;\n\
+      \        bIsIdle <span class=\"sy0\">=</span> <span class=\"kw6\">true</span>;\n\
+      \    <span class=\"br0\">}</span>\n    <span class=\"co1\">// running</span>\n\
+      \    <span class=\"kw2\">else</span>\n    <span class=\"br0\">{</span>\n   \
+      \     <span class=\"kw2\">if</span> <span class=\"br0\">(</span> bIsIdle  <span\
+      \ class=\"br0\">)</span>\n            bWaitForAnim <span class=\"sy0\">=</span>\
+      \ <span class=\"kw6\">false</span>;\n \n        PlayRunning<span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>;\n        bIsIdle <span class=\"sy0\"\
+      >=</span> <span class=\"kw6\">false</span>;\n    <span class=\"br0\">}</span>\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">simulated</span> <span\
+      \ class=\"kw1\">function</span> PlayIdle<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n    <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span>bFootTurning<span class=\"br0\">)</span>\n   \
+      \ <span class=\"br0\">{</span>\n        <span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span>iTurnDir <span class=\"sy0\">==</span> <span class=\"\
+      nu0\">1</span><span class=\"br0\">)</span>\n        <span class=\"br0\">{</span>\n\
+      \            <span class=\"kw2\">if</span> <span class=\"br0\">(</span>bIsCrouched<span\
+      \ class=\"br0\">)</span>\n                <span class=\"kw4\">LoopAnim</span><span\
+      \ class=\"br0\">(</span>CrouchTurnRightAnim, 1.0f, 0.1f, <span class=\"nu0\"\
+      >0</span><span class=\"br0\">)</span>;\n            <span class=\"kw2\">else</span>\n\
+      \    \t\t    <span class=\"kw4\">LoopAnim</span><span class=\"br0\">(</span>TurnRightAnim,\
+      \ 1.0f, 0.1f, <span class=\"nu0\">0</span><span class=\"br0\">)</span>;\n  \
+      \      <span class=\"br0\">}</span>\n        <span class=\"kw2\">else</span>\n\
+      \        <span class=\"br0\">{</span>\n            <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span>bIsCrouched<span class=\"br0\">)</span>\n    \t\
+      \t    <span class=\"kw4\">LoopAnim</span><span class=\"br0\">(</span>CrouchTurnLeftAnim,\
+      \ 1.0f, 0.1f, <span class=\"nu0\">0</span><span class=\"br0\">)</span>;\n  \
+      \          <span class=\"kw2\">else</span>\n        \t    <span class=\"kw4\"\
+      >LoopAnim</span><span class=\"br0\">(</span>TurnLeftAnim, 1.0f, 0.1f, <span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span>;\n        <span class=\"\
+      br0\">}</span>\n    <span class=\"br0\">}</span>\n    <span class=\"kw2\">else</span>\n\
+      \    <span class=\"br0\">{</span>\n        <span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span>bIsCrouched<span class=\"br0\">)</span>\n        <span\
+      \ class=\"br0\">{</span>\n            <span class=\"kw4\">LoopAnim</span><span\
+      \ class=\"br0\">(</span>IdleCrouchAnim, 1.0f, 0.1f, <span class=\"nu0\">0</span><span\
+      \ class=\"br0\">)</span>;\n        <span class=\"br0\">}</span>\n        <span\
+      \ class=\"kw2\">else</span>\n        <span class=\"br0\">{</span>\n\t    <span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"kw9\">PlayerController</span><span\
+      \ class=\"br0\">(</span><span class=\"kw9\">controller</span><span class=\"\
+      br0\">)</span><span class=\"sy0\">!=</span><span class=\"kw5\">none</span> <span\
+      \ class=\"sy0\">&amp;&amp;</span>  <span class=\"kw9\">PlayerController</span><span\
+      \ class=\"br0\">(</span><span class=\"kw9\">controller</span><span class=\"\
+      br0\">)</span>.<span class=\"me0\">bIsTyping</span> <span class=\"br0\">)</span>\n\
+      \t            <span class=\"kw4\">PlayAnim</span><span class=\"br0\">(</span>IdleRestAnim,\
+      \ 1.0f, 0.2f, <span class=\"nu0\">0</span><span class=\"br0\">)</span>;\n  \
+      \          <span class=\"kw2\">else</span> <span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span> <span class=\"br0\">(</span><span class=\"kw7\">Level</span>.<span\
+      \ class=\"me0\">TimeSeconds</span> <span class=\"sy0\">-</span> IdleTime <span\
+      \ class=\"sy0\">&lt;</span> 5.0f<span class=\"br0\">)</span> <span class=\"\
+      sy0\">&amp;&amp;</span> IdleWeaponAnim <span class=\"sy0\">!=</span> <span class=\"\
+      st0\">''</span><span class=\"br0\">)</span>\n            <span class=\"br0\"\
+      >{</span>\n                <span class=\"kw4\">LoopAnim</span><span class=\"\
+      br0\">(</span>IdleWeaponAnim, 1.0f, 0.25f, <span class=\"nu0\">0</span><span\
+      \ class=\"br0\">)</span>;\n            <span class=\"br0\">}</span>\n      \
+      \      <span class=\"kw2\">else</span>\n            <span class=\"br0\">{</span>\n\
+      \t            <span class=\"kw4\">LoopAnim</span><span class=\"br0\">(</span>IdleRestAnim,\
+      \ 1.0f, 0.25f, <span class=\"nu0\">0</span><span class=\"br0\">)</span>;\n \
+      \           <span class=\"br0\">}</span>\n        <span class=\"br0\">}</span>\n\
+      \    <span class=\"br0\">}</span>\n<span class=\"br0\">}</span>\n \n<span class=\"\
+      kw1\">simulated</span> <span class=\"kw1\">function</span> PlayRunning<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \    <span class=\"kw1\">local</span> <span class=\"kw5\">Name</span> NewAnim;\n\
+      \    <span class=\"kw1\">local</span> <span class=\"kw5\">int</span> NewAnimDir;\n\
+      \    <span class=\"kw1\">local</span> <span class=\"kw5\">float</span> AnimSpeed;\n\
+      \ \n    NewAnimDir <span class=\"sy0\">=</span> Get4WayDirection<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n \n    AnimSpeed <span class=\"\
+      sy0\">=</span> 1.1f <span class=\"sy0\">*</span> <span class=\"kw1\">Default</span>.<span\
+      \ class=\"me0\">GroundSpeed</span>;\n    <span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span>bIsCrouched<span class=\"br0\">)</span>\n    <span class=\"\
+      br0\">{</span>\n        NewAnim <span class=\"sy0\">=</span> CrouchAnims<span\
+      \ class=\"br0\">[</span>NewAnimDir<span class=\"br0\">]</span>;\n        AnimSpeed\
+      \ <span class=\"sy0\">*=</span> CrouchedPct;\n    <span class=\"br0\">}</span>\n\
+      \    <span class=\"kw2\">else</span> <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span>bIsWalking<span class=\"br0\">)</span>\n    <span class=\"br0\"\
+      >{</span>\n        NewAnim <span class=\"sy0\">=</span> WalkAnims<span class=\"\
+      br0\">[</span>NewAnimDir<span class=\"br0\">]</span>;\n        AnimSpeed <span\
+      \ class=\"sy0\">*=</span> WalkingPct;\n    <span class=\"br0\">}</span>\n  \
+      \  <span class=\"kw2\">else</span>\n    <span class=\"br0\">{</span>\n     \
+      \   NewAnim <span class=\"sy0\">=</span> MovementAnims<span class=\"br0\">[</span>NewAnimDir<span\
+      \ class=\"br0\">]</span>;\n    <span class=\"br0\">}</span>\n    <span class=\"\
+      kw4\">LoopAnim</span><span class=\"br0\">(</span>NewAnim, <span class=\"br0\"\
+      >(</span><span class=\"kw3\">Vsize</span><span class=\"br0\">(</span><span class=\"\
+      kw7\">Velocity</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">/</span> AnimSpeed, 0.1f, <span class=\"nu0\">0</span><span\
+      \ class=\"br0\">)</span>;\n    <span class=\"co1\">//PlayAnim(0, NewAnim, Velocity.Size()\
+      \ / AnimSpeed, 0.1f, true); // native anim call</span>\n<span class=\"br0\"\
+      >}</span>\n \n<span class=\"kw1\">simulated</span> <span class=\"kw1\">function</span>\
+      \ PlayLand<span class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n    <span class=\"kw2\">if</span> <span class=\"br0\">(</span><span\
+      \ class=\"sy0\">!</span>bIsCrouched<span class=\"br0\">)</span>\n    <span class=\"\
+      br0\">{</span>\n        <span class=\"kw4\">PlayAnim</span><span class=\"br0\"\
+      >(</span>LandAnims<span class=\"br0\">[</span>Get4WayDirection<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">]</span>, 1.0f,\
+      \ 0.1f, <span class=\"nu0\">0</span><span class=\"br0\">)</span>;\n        bWaitForAnim\
+      \ <span class=\"sy0\">=</span> <span class=\"kw6\">true</span>;\n    <span class=\"\
+      br0\">}</span>\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">simulated</span>\
+      \ <span class=\"kw1\">function</span> UpdateTwistLook<span class=\"br0\">(</span>\
+      \ <span class=\"kw5\">float</span> DeltaTime <span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n    <span class=\"kw1\">local</span> <span class=\"\
+      kw5\">int</span> look, Update, UpdateB, PitchDiff, t, YawDiff;\n \n    <span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span> <span class=\"sy0\">!</span>bDoTorsoTwist\
+      \ <span class=\"sy0\">||</span> <span class=\"br0\">(</span><span class=\"kw7\"\
+      >Level</span>.<span class=\"me0\">TimeSeconds</span> <span class=\"sy0\">-</span>\
+      \ LastRenderTime <span class=\"sy0\">&gt;</span> 0.5f<span class=\"br0\">)</span>\
+      \ <span class=\"br0\">)</span>\n    <span class=\"br0\">{</span>\n\t\tSmoothViewPitch\
+      \ <span class=\"sy0\">=</span> ViewPitch;\n\t\tSmoothViewYaw <span class=\"\
+      sy0\">=</span> <span class=\"kw7\">Rotation</span>.<span class=\"me0\">Yaw</span>;\n\
+      \        iFootRot <span class=\"sy0\">=</span> <span class=\"kw7\">Rotation</span>.<span\
+      \ class=\"me0\">Yaw</span>;\n        bFootTurning <span class=\"sy0\">=</span>\
+      \ <span class=\"kw6\">false</span>;\n        bFootStill <span class=\"sy0\"\
+      >=</span> <span class=\"kw6\">false</span>;\n    <span class=\"br0\">}</span>\n\
+      \    <span class=\"kw2\">else</span>\n    <span class=\"br0\">{</span>\n \t\t\
+      YawDiff <span class=\"sy0\">=</span> <span class=\"br0\">(</span><span class=\"\
+      kw7\">Rotation</span>.<span class=\"me0\">Yaw</span> <span class=\"sy0\">-</span>\
+      \ SmoothViewYaw<span class=\"br0\">)</span> <span class=\"sy0\">&amp;</span>\
+      \ <span class=\"nu0\">65535</span>;\n\t\t<span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span> YawDiff <span class=\"sy0\">!=</span> <span class=\"\
+      nu0\">0</span> <span class=\"br0\">)</span>\n\t\t<span class=\"br0\">{</span>\n\
+      \t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span> YawDiff <span\
+      \ class=\"sy0\">&gt;</span> <span class=\"nu0\">32768</span> <span class=\"\
+      br0\">)</span>\n\t\t\t\tYawDiff <span class=\"sy0\">-=</span> <span class=\"\
+      nu0\">65536</span>;\n \n\t\t\tUpdate <span class=\"sy0\">=</span> <span class=\"\
+      kw5\">int</span><span class=\"br0\">(</span>YawDiff <span class=\"sy0\">*</span>\
+      \ <span class=\"nu0\">15</span>.<span class=\"me0\">f</span> <span class=\"\
+      sy0\">*</span> DeltaTime<span class=\"br0\">)</span>;\n\t\t\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span> Update <span class=\"sy0\">==</span>\
+      \ <span class=\"nu0\">0</span> <span class=\"br0\">)</span><span class=\"br0\"\
+      >{</span>\n\t\t\t\t<span class=\"co1\">//Update = (YawDiff &gt; 0) ? 1 : -1;</span>\n\
+      \t\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>YawDiff<span\
+      \ class=\"sy0\">&gt;</span><span class=\"nu0\">0</span><span class=\"br0\">)</span>\
+      \ Update<span class=\"sy0\">=</span><span class=\"nu0\">1</span>;\n\t\t\t\t\
+      <span class=\"kw2\">else</span> Update<span class=\"sy0\">=</span> <span class=\"\
+      sy0\">-</span><span class=\"nu0\">1</span>;\n\t\t\t<span class=\"br0\">}</span>\n\
+      \t\t\tSmoothViewYaw <span class=\"sy0\">=</span> <span class=\"br0\">(</span>SmoothViewYaw\
+      \ <span class=\"sy0\">+</span> Update<span class=\"br0\">)</span> <span class=\"\
+      sy0\">&amp;</span> <span class=\"nu0\">65535</span>;\n\t\t<span class=\"br0\"\
+      >}</span>\n\t\tt <span class=\"sy0\">=</span> <span class=\"br0\">(</span>SmoothViewYaw\
+      \ <span class=\"sy0\">-</span> iFootRot<span class=\"br0\">)</span> <span class=\"\
+      sy0\">&amp;</span> <span class=\"nu0\">65535</span>;\n        <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>t <span class=\"sy0\">&gt;</span>\
+      \ <span class=\"nu0\">32768</span><span class=\"br0\">)</span>\n\t\t\tt <span\
+      \ class=\"sy0\">-=</span> <span class=\"nu0\">65536</span>;\n \n        <span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">(</span><span class=\"kw7\">Velocity</span>.<span class=\"me0\"\
+      >X</span> <span class=\"sy0\">*</span> <span class=\"kw7\">Velocity</span>.<span\
+      \ class=\"me0\">X</span><span class=\"br0\">)</span> <span class=\"sy0\">+</span>\
+      \ <span class=\"br0\">(</span><span class=\"kw7\">Velocity</span>.<span class=\"\
+      me0\">Y</span> <span class=\"sy0\">*</span> <span class=\"kw7\">Velocity</span>.<span\
+      \ class=\"me0\">Y</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">&lt;</span> <span class=\"nu0\">1000</span> <span class=\"\
+      sy0\">&amp;&amp;</span> <span class=\"kw7\">Physics</span> <span class=\"sy0\"\
+      >==</span> <span class=\"kw7\">PHYS_Walking</span><span class=\"br0\">)</span>\n\
+      \        <span class=\"br0\">{</span>\n            <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span><span class=\"sy0\">!</span>bFootStill<span class=\"\
+      br0\">)</span>\n            <span class=\"br0\">{</span>\n                bFootStill\
+      \ <span class=\"sy0\">=</span> <span class=\"kw6\">true</span>;\n\t\t\t\tSmoothViewYaw\
+      \ <span class=\"sy0\">=</span> <span class=\"kw7\">Rotation</span>.<span class=\"\
+      me0\">Yaw</span>;\n                iFootRot <span class=\"sy0\">=</span> <span\
+      \ class=\"kw7\">Rotation</span>.<span class=\"me0\">Yaw</span>;\n\t\t\t\tt <span\
+      \ class=\"sy0\">=</span> <span class=\"nu0\">0</span>;\n            <span class=\"\
+      br0\">}</span>\n        <span class=\"br0\">}</span>\n        <span class=\"\
+      kw2\">else</span>\n        <span class=\"br0\">{</span>\n            <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>bFootStill<span class=\"br0\">)</span>\n\
+      \            <span class=\"br0\">{</span>\n                bFootStill <span\
+      \ class=\"sy0\">=</span> <span class=\"kw6\">false</span>;\n               \
+      \ bFootTurning <span class=\"sy0\">=</span> <span class=\"kw6\">true</span>;\n\
+      \            <span class=\"br0\">}</span>\n        <span class=\"br0\">}</span>\n\
+      \ \n        <span class=\"kw2\">if</span> <span class=\"br0\">(</span>bFootTurning<span\
+      \ class=\"br0\">)</span>\n        <span class=\"br0\">{</span>\n           <span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span>t <span class=\"sy0\"\
+      >&gt;</span> <span class=\"nu0\">12000</span><span class=\"br0\">)</span>\n\
+      \            <span class=\"br0\">{</span>\n                iFootRot <span class=\"\
+      sy0\">=</span> SmoothViewYaw <span class=\"sy0\">-</span> <span class=\"nu0\"\
+      >12000</span>;\n                t <span class=\"sy0\">=</span> <span class=\"\
+      nu0\">12000</span>;\n            <span class=\"br0\">}</span>\n            <span\
+      \ class=\"kw2\">else</span> <span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span>t <span class=\"sy0\">&gt;</span> <span class=\"nu0\">2048</span><span\
+      \ class=\"br0\">)</span>\n            <span class=\"br0\">{</span>\n       \
+      \         iFootRot <span class=\"sy0\">+=</span> <span class=\"nu0\">16384</span><span\
+      \ class=\"sy0\">*</span>DeltaTime;\n            <span class=\"br0\">}</span>\n\
+      \            <span class=\"kw2\">else</span> <span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span>t <span class=\"sy0\">&lt;</span> <span class=\"sy0\"\
+      >-</span><span class=\"nu0\">12000</span><span class=\"br0\">)</span>\n    \
+      \        <span class=\"br0\">{</span>\n                iFootRot <span class=\"\
+      sy0\">=</span> SmoothViewYaw <span class=\"sy0\">+</span> <span class=\"nu0\"\
+      >12000</span>;\n                t <span class=\"sy0\">=</span> <span class=\"\
+      sy0\">-</span><span class=\"nu0\">12000</span>;\n            <span class=\"\
+      br0\">}</span>\n            <span class=\"kw2\">else</span> <span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span>t <span class=\"sy0\">&lt;</span> <span\
+      \ class=\"sy0\">-</span><span class=\"nu0\">2048</span><span class=\"br0\">)</span>\n\
+      \            <span class=\"br0\">{</span>\n                iFootRot <span class=\"\
+      sy0\">-=</span> <span class=\"nu0\">16384</span><span class=\"sy0\">*</span>DeltaTime;\n\
+      \            <span class=\"br0\">}</span>\n            <span class=\"kw2\">else</span>\n\
+      \            <span class=\"br0\">{</span>\n                <span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span><span class=\"sy0\">!</span>bFootStill<span\
+      \ class=\"br0\">)</span>\n                    t <span class=\"sy0\">=</span>\
+      \ <span class=\"nu0\">0</span>;\n                bFootTurning <span class=\"\
+      sy0\">=</span> <span class=\"kw6\">false</span>;\n            <span class=\"\
+      br0\">}</span>\n            iFootRot <span class=\"sy0\">=</span> iFootRot <span\
+      \ class=\"sy0\">&amp;</span> <span class=\"nu0\">65535</span>;\n        <span\
+      \ class=\"br0\">}</span>\n        <span class=\"kw2\">else</span> <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>bFootStill<span class=\"br0\">)</span>\n\
+      \        <span class=\"br0\">{</span>\n            <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span>t <span class=\"sy0\">&gt;</span> <span class=\"\
+      nu0\">10923</span><span class=\"br0\">)</span>\n            <span class=\"br0\"\
+      >{</span>\n                iTurnDir <span class=\"sy0\">=</span> <span class=\"\
+      nu0\">1</span>;\n                bFootTurning <span class=\"sy0\">=</span> <span\
+      \ class=\"kw6\">true</span>;\n            <span class=\"br0\">}</span>\n   \
+      \         <span class=\"kw2\">else</span> <span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span>t <span class=\"sy0\">&lt;</span> <span class=\"sy0\"\
+      >-</span><span class=\"nu0\">10923</span><span class=\"br0\">)</span>\n    \
+      \        <span class=\"br0\">{</span>\n                iTurnDir <span class=\"\
+      sy0\">=</span> <span class=\"sy0\">-</span><span class=\"nu0\">1</span>;\n \
+      \               bFootTurning <span class=\"sy0\">=</span> <span class=\"kw6\"\
+      >true</span>;\n            <span class=\"br0\">}</span>\n        <span class=\"\
+      br0\">}</span>\n        <span class=\"kw2\">else</span>\n        <span class=\"\
+      br0\">{</span>\n            t <span class=\"sy0\">=</span> <span class=\"nu0\"\
+      >0</span>;\n        <span class=\"br0\">}</span>\n\t\tPitchDiff <span class=\"\
+      sy0\">=</span> <span class=\"br0\">(</span><span class=\"nu0\">256</span><span\
+      \ class=\"sy0\">*</span>ViewPitch <span class=\"sy0\">-</span> SmoothViewPitch<span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">&amp;</span> <span class=\"nu0\"\
+      >65535</span>;\n\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>\
+      \ PitchDiff <span class=\"sy0\">!=</span> <span class=\"nu0\">0</span> <span\
+      \ class=\"br0\">)</span>\n\t\t<span class=\"br0\">{</span>\n\t\t\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span> PitchDiff <span class=\"sy0\">&gt;</span>\
+      \ <span class=\"nu0\">32768</span> <span class=\"br0\">)</span>\n\t\t\t\tPitchDiff\
+      \ <span class=\"sy0\">-=</span> <span class=\"nu0\">65536</span>;\n \n\t\t\t\
+      UpdateB <span class=\"sy0\">=</span> <span class=\"kw5\">int</span><span class=\"\
+      br0\">(</span>PitchDiff <span class=\"sy0\">*</span> <span class=\"nu0\">5</span>.<span\
+      \ class=\"me0\">f</span> <span class=\"sy0\">*</span> DeltaTime<span class=\"\
+      br0\">)</span>;\n\t\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>\
+      \ UpdateB <span class=\"sy0\">==</span> <span class=\"nu0\">0</span> <span class=\"\
+      br0\">)</span><span class=\"br0\">{</span>\n\t\t\t\t<span class=\"co1\">//Update\
+      \ = (PitchDiff &gt; 0) ? 1 : -1;</span>\n\t\t\t\t<span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span>PitchDiff<span class=\"sy0\">&gt;</span><span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span> UpdateB<span class=\"sy0\"\
+      >=</span><span class=\"nu0\">1</span>;\n\t\t\t\t<span class=\"kw2\">else</span>\
+      \ UpdateB<span class=\"sy0\">=</span> <span class=\"sy0\">-</span><span class=\"\
+      nu0\">1</span>;\n\t\t\t<span class=\"br0\">}</span>\n\t\t\tSmoothViewPitch <span\
+      \ class=\"sy0\">=</span> <span class=\"br0\">(</span>SmoothViewPitch <span class=\"\
+      sy0\">+</span> UpdateB<span class=\"br0\">)</span> <span class=\"sy0\">&amp;</span>\
+      \ <span class=\"nu0\">65535</span>;\n\t\t<span class=\"br0\">}</span>\n\t\t\
+      look <span class=\"sy0\">=</span> SmoothViewPitch;\n        <span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span>look <span class=\"sy0\">&gt;</span>\
+      \ <span class=\"nu0\">32768</span><span class=\"br0\">)</span>\n\t\t\tlook <span\
+      \ class=\"sy0\">-=</span> <span class=\"nu0\">65536</span>;\n        <span class=\"\
+      co1\">//call this native function to actually update the pawn's torso twist</span>\n\
+      \        SetTwistLook<span class=\"br0\">(</span>t, look<span class=\"br0\"\
+      >)</span>;\n        <span class=\"co1\">//td_SetTwistLook(t, look);// or call\
+      \ an edited version of the settwistlook so that you can alter how the rotation\
+      \ is applied</span>\n    <span class=\"br0\">}</span>\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"kw1\">simulated</span> <span class=\"kw1\">function</span>\
+      \ td_SetTwistLook<span class=\"br0\">(</span> <span class=\"kw5\">int</span>\
+      \ twist, <span class=\"kw5\">int</span> look<span class=\"br0\">)</span>\n<span\
+      \ class=\"br0\">{</span>\n    <span class=\"kw1\">local</span> <span class=\"\
+      kw5\">rotator</span> r;\n    <span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span><span class=\"sy0\">!</span>bDoTorsoTwist<span class=\"br0\">)</span>\n\
+      \        <span class=\"kw2\">return</span>;\n \n\tr.<span class=\"me0\">Yaw</span><span\
+      \ class=\"sy0\">=-</span>twist <span class=\"sy0\">+</span> SmoothViewYaw <span\
+      \ class=\"sy0\">-</span> <span class=\"kw7\">Rotation</span>.<span class=\"\
+      me0\">Yaw</span>;\n    SetBoneRotation<span class=\"br0\">(</span>RootBone,\
+      \ r, <span class=\"nu0\">0</span>, 1.0f<span class=\"br0\">)</span>;\n \n  \
+      \  r.<span class=\"me0\">Yaw</span> <span class=\"sy0\">=</span> <span class=\"\
+      sy0\">-</span>twist <span class=\"sy0\">/</span> <span class=\"nu0\">3</span>;\n\
+      \    r.<span class=\"me0\">Pitch</span> <span class=\"sy0\">=</span> <span class=\"\
+      nu0\">0</span>;\n    r.<span class=\"me0\">Roll</span> <span class=\"sy0\">=</span>\
+      \ look <span class=\"sy0\">/</span> <span class=\"nu0\">4</span>;\n    SetBoneDirection<span\
+      \ class=\"br0\">(</span>HeadBone, r, <span class=\"kw3\">Vect</span><span class=\"\
+      br0\">(</span>0.0f,0.0f,0.0f<span class=\"br0\">)</span>, 1.0f, <span class=\"\
+      nu0\">0</span><span class=\"br0\">)</span>;\n    SetBoneDirection<span class=\"\
+      br0\">(</span>SpineBone1, r, <span class=\"kw3\">Vect</span><span class=\"br0\"\
+      >(</span>0.0f,0.0f,0.0f<span class=\"br0\">)</span>, 1.0f, <span class=\"nu0\"\
+      >0</span><span class=\"br0\">)</span>;\n    SetBoneDirection<span class=\"br0\"\
+      >(</span>SpineBone2, r, <span class=\"kw3\">Vect</span><span class=\"br0\">(</span>0.0f,0.0f,0.0f<span\
+      \ class=\"br0\">)</span>, 1.0f, <span class=\"nu0\">0</span><span class=\"br0\"\
+      >)</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">defaultproperties</span>\n\
+      <span class=\"br0\">{</span>\n    bDoTorsoTwist<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">true</span>\n    bPhysicsAnimUpdate<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">false</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.153 seconds\nReal time usage:\
+      \ 0.550 seconds\nPreprocessor visited node count: 5/1000000\nPreprocessor generated\
+      \ node count: 28/1000000\nPost‐expand include size: 0/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:3425-0!*!0!*!*!*!* and timestamp 20221118154254 and revision\
+      \ id 45996\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Pawn"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "3"
+    line: "UScript Controlled Animation Pawn"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:UScriptAnimPawn"
+    byteoffset: 0
+    anchor: "UScript_Controlled_Animation_Pawn"
+  displaytitle: "Legacy:UScriptAnimPawn"
+  iwlinks: []
+  wikitext:
+    text: "===UScript Controlled Animation Pawn===\n\nFor those interested in creating\
+      \ [[Legacy:Pawn|pawn]]s whose animations are controlled through UScript instead\
+      \ of native code, the following code will provide a base from which you can\
+      \ edit.  It is simply the native animation source code rewritten in UScript\
+      \ (c++ source available in the 3186 uscript source).  The following code behaves\
+      \ almost exactly the same as the native code (slight difference in rotation\
+      \ yaw, will edit once tracked down).  It would probably be beneficial to performance\
+      \ to place the call to UpdateMovementAnimation function in the AnimEnd event\
+      \ as it was back in original UT.  -Meowcat\n\n[Edit 12 June 2014] Some minor\
+      \ code fixes/optimizations added in the select function -Meowcat\n<uscript>\n\
+      class UScriptAnimPawn extends SomeOtherPawnClass;// SomeOtherPawnClass will\
+      \ typically be xPawn\n\n// added to get around the const values normally set\
+      \ by the native code\nvar bool bFootTurning; \nvar bool bFootStill;\nvar int\
+      \  iFootRot;\nvar int  iTurnDir;\nvar int SmoothViewPitch, SmoothViewYaw;//\
+      \ These two are only needed if this code is for UT2003, UT2004 pawn code already\
+      \ has them\n\nsimulated function Tick(float DeltaTime)\n{\n      if(!bPhysicsAnimUpdate)\
+      \ UpdateMovementAnimation(DeltaTime);//added to allow switching between native\
+      \ and scripted animation\n      super.tick(deltatime);\n}\n\n// Epic C++ animation\
+      \ code converted to uscript, with slight optimization\n\nsimulated function\
+      \ UpdateMovementAnimation( FLOAT DeltaSeconds )\n{\n    if ( Level.NetMode ==\
+      \ NM_DedicatedServer )\n\t\treturn;\n    if( bPlayedDeath )\n        return;\n\
+      \n    if (Level.TimeSeconds - LastRenderTime > 1.0)\n    {\n        iFootRot\
+      \ = Rotation.Yaw;\n        bFootTurning = false;\n        bFootStill = false;\n\
+      \        return;\n    }\n\n    BaseEyeHeight = Default.BaseEyeHeight;\n\n  \
+      \  if ( bIsIdle && Physics != OldPhysics )\n    {\n        bWaitForAnim = false;\n\
+      \    }\n\n    if ( !bWaitForAnim )\n    {\n        // This first option should\
+      \ be selected most often\n        if ( Physics == PHYS_Walking || Physics ==\
+      \ PHYS_Ladder )\n        {\n            UpdateOnGround();\n        }\n     \
+      \   //next most likely physics state for most maps (I'd assume...)\n       \
+      \ else if ( Physics == PHYS_Falling || Physics == PHYS_Flying )\n        {\n\
+      \            BaseEyeHeight *= 0.7f;\n            UpdateInAir();\n        }\n\
+      \        // Probably the least likely state... unless you break out PHYS_Ladder\
+      \ and PHYS_Flying separately\n        else if ( Physics == PHYS_Swimming )\n\
+      \t{\n            BaseEyeHeight *= 0.7f;\n            UpdateSwimming();\n\t}\n\
+      \n    }\n\telse if ( !IsAnimating(0) )\n\t\tbWaitForAnim = false;\n\n    if\
+      \ ( Physics != PHYS_Walking )\n        bIsIdle = false;\n\n    OldPhysics =\
+      \ Physics;// OldPhysics is not const and can be changed in UScript\n    //OldVelocity\
+      \ = Velocity;// is a const, may be used in the ModifyVelocity function!! \n\n\
+      \    if (bDoTorsoTwist)\n        UpdateTwistLook( DeltaSeconds );\n}\n\nsimulated\
+      \ function UpdateSwimming()\n{\n    if ( (Velocity.X*Velocity.X + Velocity.Y*Velocity.Y)\
+      \ < 2500.0f )\n        PlayAnim(IdleSwimAnim, 1.0f, 0.1f, 0);\n    else\n\t\
+      \    PlayAnim(SwimAnims[Get4WayDirection()], 1.0f, 0.1f, 0);\n        //PlayAnim(0,\
+      \ SwimAnims[Get4WayDirection()], 1.0f, 0.1f, true);// native anim call\n}\n\n\
+      simulated function UpdateInAir()\n{\n   local Name NewAnim;\n   local  bool\
+      \ bUp, bDodge;\n   local  float DodgeSpeedThresh;\n   local int Dir;\n   local\
+      \  float XYVelocitySquared;\n\n    XYVelocitySquared = (Velocity.X*Velocity.X)+(Velocity.Y*Velocity.Y);\n\
+      \n    bDodge = false;\n    if ( OldPhysics == PHYS_Walking )\n    {\n      \
+      \  DodgeSpeedThresh = ((GroundSpeed*DodgeSpeedFactor) + GroundSpeed) * 0.5f;\n\
+      \        if ( XYVelocitySquared > DodgeSpeedThresh*DodgeSpeedThresh )\n    \
+      \    {\n            bDodge = true;\n        }\n    }\n\n    bUp = (Velocity.Z\
+      \ >= 0.0f);\n\n    if (XYVelocitySquared >= 20000.0f)\n    {\n        Dir =\
+      \ Get4WayDirection();\n\n        if (bDodge)\n        {\n            NewAnim\
+      \ = DodgeAnims[Dir];\n            bWaitForAnim = true;\n        }\n        else\
+      \ if (bUp)\n        {\n            NewAnim = TakeoffAnims[Dir];\n        }\n\
+      \        else\n        {\n            NewAnim = AirAnims[Dir];\n        }\n\
+      \    }\n    else\n    {\n        if (bUp)\n        {\n            NewAnim =\
+      \ TakeoffStillAnim;\n        }\n        else\n\n        {\n            NewAnim\
+      \ = AirStillAnim;\n        }\n    }\n\n\tif ( NewAnim != GetAnimSequence() )\n\
+      \    {\n    // have not quite added this yet.  Will edit later -meowcat\t\t\n\
+      \    //if ( PhysicsVolume->Gravity.Z > 0.8f * (Cast<APhysicsVolume>(PhysicsVolume->GetClass()->GetDefaultActor()))->Gravity.Z\
+      \ )\n    \t//\tPlayAnim(0, NewAnim, 0.5f, 0.2f, false); // native anim call\n\
+      \t\t//else\n    \t\tPlayAnim(NewAnim, 1.0, TweenTime, 0); //loopanim looks bad\
+      \ here....\n    \t\t//LoopAnim(NewAnim, 1.0f, 0.1f, 0);\n            //PlayAnim(0,\
+      \ NewAnim, 1.0f, 0.1f, false); // native anim call\n    }\n}\n\nsimulated function\
+      \ UpdateOnGround()\n{\n    // just landed\n    if ( OldPhysics == PHYS_Falling\
+      \ || OldPhysics == PHYS_Flying )\n    {\n        PlayLand();\n    }\n    //\
+      \ standing still\n    else if ( Vsize(Velocity*Velocity) < 2500.0f  )  /*&&\
+      \ Acceleration.SizeSquared() < 0.01f*/\n    {\n        if (!bIsIdle || bFootTurning\
+      \ || bIsCrouched != bWasCrouched)\n        {\n            IdleTime = Level.TimeSeconds;\n\
+      \            PlayIdle();\n        }\n        PlayIdle();// added this playIdle\
+      \ to force the code to update whatever animation was playing, otherwise the\
+      \ turning anim could potentially continue to loop\n        bWasCrouched = bIsCrouched;\n\
+      \        bIsIdle = true;\n    }\n    // running\n    else\n    {\n        if\
+      \ ( bIsIdle  )\n            bWaitForAnim = false;\n\n        PlayRunning();\n\
+      \        bIsIdle = false;\n    }\n}\n\nsimulated function PlayIdle()\n{\n  \
+      \  if (bFootTurning)\n    {\n        if (iTurnDir == 1)\n        {\n       \
+      \     if (bIsCrouched)\n                LoopAnim(CrouchTurnRightAnim, 1.0f,\
+      \ 0.1f, 0);\n            else\n    \t\t    LoopAnim(TurnRightAnim, 1.0f, 0.1f,\
+      \ 0);\n        }\n        else\n        {\n            if (bIsCrouched)\n  \
+      \  \t\t    LoopAnim(CrouchTurnLeftAnim, 1.0f, 0.1f, 0);\n            else\n\
+      \        \t    LoopAnim(TurnLeftAnim, 1.0f, 0.1f, 0);\n        }\n    }\n  \
+      \  else\n    {\n        if (bIsCrouched)\n        {\n            LoopAnim(IdleCrouchAnim,\
+      \ 1.0f, 0.1f, 0);\n        }\n        else\n        {\n\t    if (PlayerController(controller)!=none\
+      \ &&  PlayerController(controller).bIsTyping )\n\t            PlayAnim(IdleRestAnim,\
+      \ 1.0f, 0.2f, 0);\n            else if ( (Level.TimeSeconds - IdleTime < 5.0f)\
+      \ && IdleWeaponAnim != '')\n            {\n                LoopAnim(IdleWeaponAnim,\
+      \ 1.0f, 0.25f, 0);\n            }\n            else\n            {\n\t     \
+      \       LoopAnim(IdleRestAnim, 1.0f, 0.25f, 0);\n            }\n        }\n\
+      \    }\n}\n\nsimulated function PlayRunning()\n{\n    local Name NewAnim;\n\
+      \    local int NewAnimDir;\n    local float AnimSpeed;\n\n    NewAnimDir = Get4WayDirection();\n\
+      \n    AnimSpeed = 1.1f * Default.GroundSpeed;\n    if (bIsCrouched)\n    {\n\
+      \        NewAnim = CrouchAnims[NewAnimDir];\n        AnimSpeed *= CrouchedPct;\n\
+      \    }\n    else if (bIsWalking)\n    {\n        NewAnim = WalkAnims[NewAnimDir];\n\
+      \        AnimSpeed *= WalkingPct;\n    }\n    else\n    {\n        NewAnim =\
+      \ MovementAnims[NewAnimDir];\n    }\n    LoopAnim(NewAnim, (Vsize(Velocity))\
+      \ / AnimSpeed, 0.1f, 0);\n    //PlayAnim(0, NewAnim, Velocity.Size() / AnimSpeed,\
+      \ 0.1f, true); // native anim call\n}\n\nsimulated function PlayLand()\n{\n\
+      \    if (!bIsCrouched)\n    {\n        PlayAnim(LandAnims[Get4WayDirection()],\
+      \ 1.0f, 0.1f, 0);\n        bWaitForAnim = true;\n    }\n}\n\nsimulated function\
+      \ UpdateTwistLook( float DeltaTime )\n{\n    local int look, Update, UpdateB,\
+      \ PitchDiff, t, YawDiff;\n\n    if ( !bDoTorsoTwist || (Level.TimeSeconds -\
+      \ LastRenderTime > 0.5f) )\n    {\n\t\tSmoothViewPitch = ViewPitch;\n\t\tSmoothViewYaw\
+      \ = Rotation.Yaw;\n        iFootRot = Rotation.Yaw;\n        bFootTurning =\
+      \ false;\n        bFootStill = false;\n    }\n    else\n    {\n \t\tYawDiff\
+      \ = (Rotation.Yaw - SmoothViewYaw) & 65535;\n\t\tif ( YawDiff != 0 )\n\t\t{\n\
+      \t\t\tif ( YawDiff > 32768 )\n\t\t\t\tYawDiff -= 65536;\n\n\t\t\tUpdate = int(YawDiff\
+      \ * 15.f * DeltaTime);\n\t\t\tif ( Update == 0 ){\n\t\t\t\t//Update = (YawDiff\
+      \ > 0) ? 1 : -1;\n\t\t\t\tif (YawDiff>0) Update=1;\n\t\t\t\telse Update= -1;\n\
+      \t\t\t}\n\t\t\tSmoothViewYaw = (SmoothViewYaw + Update) & 65535;\n\t\t}\n\t\t\
+      t = (SmoothViewYaw - iFootRot) & 65535;\n        if (t > 32768)\n\t\t\tt -=\
+      \ 65536;\n\n        if (((Velocity.X * Velocity.X) + (Velocity.Y * Velocity.Y))\
+      \ < 1000 && Physics == PHYS_Walking)\n        {\n            if (!bFootStill)\n\
+      \            {\n                bFootStill = true;\n\t\t\t\tSmoothViewYaw =\
+      \ Rotation.Yaw;\n                iFootRot = Rotation.Yaw;\n\t\t\t\tt = 0;\n\
+      \            }\n        }\n        else\n        {\n            if (bFootStill)\n\
+      \            {\n                bFootStill = false;\n                bFootTurning\
+      \ = true;\n            }\n        }\n\n        if (bFootTurning)\n        {\n\
+      \           if (t > 12000)\n            {\n                iFootRot = SmoothViewYaw\
+      \ - 12000;\n                t = 12000;\n            }\n            else if (t\
+      \ > 2048)\n            {\n                iFootRot += 16384*DeltaTime;\n   \
+      \         }\n            else if (t < -12000)\n            {\n             \
+      \   iFootRot = SmoothViewYaw + 12000;\n                t = -12000;\n       \
+      \     }\n            else if (t < -2048)\n            {\n                iFootRot\
+      \ -= 16384*DeltaTime;\n            }\n            else\n            {\n    \
+      \            if (!bFootStill)\n                    t = 0;\n                bFootTurning\
+      \ = false;\n            }\n            iFootRot = iFootRot & 65535;\n      \
+      \  }\n        else if (bFootStill)\n        {\n            if (t > 10923)\n\
+      \            {\n                iTurnDir = 1;\n                bFootTurning\
+      \ = true;\n            }\n            else if (t < -10923)\n            {\n\
+      \                iTurnDir = -1;\n                bFootTurning = true;\n    \
+      \        }\n        }\n        else\n        {\n            t = 0;\n       \
+      \ }\n\t\tPitchDiff = (256*ViewPitch - SmoothViewPitch) & 65535;\n\t\tif ( PitchDiff\
+      \ != 0 )\n\t\t{\n\t\t\tif ( PitchDiff > 32768 )\n\t\t\t\tPitchDiff -= 65536;\n\
+      \n\t\t\tUpdateB = int(PitchDiff * 5.f * DeltaTime);\n\t\t\tif ( UpdateB == 0\
+      \ ){\n\t\t\t\t//Update = (PitchDiff > 0) ? 1 : -1;\n\t\t\t\tif (PitchDiff>0)\
+      \ UpdateB=1;\n\t\t\t\telse UpdateB= -1;\n\t\t\t}\n\t\t\tSmoothViewPitch = (SmoothViewPitch\
+      \ + UpdateB) & 65535;\n\t\t}\n\t\tlook = SmoothViewPitch;\n        if (look\
+      \ > 32768)\n\t\t\tlook -= 65536;\n        //call this native function to actually\
+      \ update the pawn's torso twist\n        SetTwistLook(t, look);\n        //td_SetTwistLook(t,\
+      \ look);// or call an edited version of the settwistlook so that you can alter\
+      \ how the rotation is applied\n    }\n}\n\nsimulated function td_SetTwistLook(\
+      \ int twist, int look)\n{\n    local rotator r;\n    if (!bDoTorsoTwist)\n \
+      \       return;\n\n\tr.Yaw=-twist + SmoothViewYaw - Rotation.Yaw;\n    SetBoneRotation(RootBone,\
+      \ r, 0, 1.0f);\n\n    r.Yaw = -twist / 3;\n    r.Pitch = 0;\n    r.Roll = look\
+      \ / 4;\n    SetBoneDirection(HeadBone, r, Vect(0.0f,0.0f,0.0f), 1.0f, 0);\n\
+      \    SetBoneDirection(SpineBone1, r, Vect(0.0f,0.0f,0.0f), 1.0f, 0);\n    SetBoneDirection(SpineBone2,\
+      \ r, Vect(0.0f,0.0f,0.0f), 1.0f, 0);\n}\n\ndefaultproperties\n{\n    bDoTorsoTwist=true\n\
+      \    bPhysicsAnimUpdate=false\n}\n\n</uscript>"
+  properties: []
+  revId: 45996
+name: "Legacy:UScriptAnimPawn"
+revision:
+  revid: 45996
+  parentid: 8818
+  user: "Meowcat"
+  timestamp: 1402624641.000000000
+  comment: ""
+timestamp: 1668786099.261726000

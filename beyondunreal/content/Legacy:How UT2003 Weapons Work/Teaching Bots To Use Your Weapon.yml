@@ -1,0 +1,342 @@
+---
+parse:
+  title: "Legacy:How UT2003 Weapons Work/Teaching Bots To Use Your Weapon"
+  text:
+    text: "<p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n\
+      </div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#Overview\"><span\
+      \ class=\"tocnumber\">1</span> <span class=\"toctext\">Overview</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-2\"><a href=\"#Bot_variables\"><span class=\"\
+      tocnumber\">2</span> <span class=\"toctext\">Bot variables</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-3\"><a href=\"#Weapon_Functions\"><span class=\"\
+      tocnumber\">3</span> <span class=\"toctext\">Weapon Functions</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-4\"><a href=\"#Comments\"><span class=\"tocnumber\"\
+      >4</span> <span class=\"toctext\">Comments</span></a></li>\n</ul>\n</div>\n\
+      <p></p>\n<h2><span class=\"mw-headline\" id=\"Overview\">Overview</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:How_UT2003_Weapons_Work/Teaching_Bots_To_Use_Your_Weapon?section=1\"\
+      \ title=\"Edit section: Overview\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>Bots don't understand the most obvious thing about\
+      \ your weapon. I don't care if it's just another machinegun or yet another shotgun.\
+      \ The truth is, it might as well be a stick of wood for all they care. Fortunatly,\
+      \ the bot does know how to pull a trigger, so it can handle that. Unfortunatly,\
+      \ it doesn't know what the trigger does or whether your superdoopershotgun is\
+      \ better than the wet noodle it can also choose from. Even if it can make a\
+      \ choice, there's probably more than one way to use your weapon, assuming there's\
+      \ an alt-fire function. This all means we're going to have to do a little work\
+      \ to make the weapon bot-friendly.</p>\n<p>First, in any function you've got\
+      \ to get a handle for a bot. This is done like this:</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw1\">local</span> <span class=\"kw9\">Bot</span>\
+      \ B;\n \nB <span class=\"sy0\">=</span> <span class=\"kw9\">Bot</span><span\
+      \ class=\"br0\">(</span><span class=\"kw7\">Instigator</span>.<span class=\"\
+      kw9\">Controller</span><span class=\"br0\">)</span>;</pre></div>\n</div>\n<p>And\
+      \ then running off and doing whatever we're going to do with it. I'm using examples\
+      \ from my work on the <a href=\"/Legacy:Mod_Ideas/Semigib_Onslaught\" title=\"\
+      Legacy:Mod Ideas/Semigib Onslaught\">Mod_Ideas/Semigib_Onslaught</a> mutator</p>\n\
+      <h2><span class=\"mw-headline\" id=\"Bot_variables\">Bot variables</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:How_UT2003_Weapons_Work/Teaching_Bots_To_Use_Your_Weapon?section=2\"\
+      \ title=\"Edit section: Bot variables\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<dl>\n<dt>Pawn Enemy&#160;</dt>\n<dd>The pawn the bot\
+      \ is hunting/fighting with (not used normally since Target is the real meat)</dd>\n\
+      <dt>Actor Target&#160;</dt>\n<dd>Whatever the bot is shooting at</dd>\n<dt>bool\
+      \ bFire&#160;</dt>\n<dd>1 if the primary fire mode is selected</dd>\n<dt>bool\
+      \ bAltFire&#160;</dt>\n<dd>1 if the alt-fire mode is selected</dd>\n</dl>\n\
+      <h2><span class=\"mw-headline\" id=\"Weapon_Functions\">Weapon Functions</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:How_UT2003_Weapons_Work/Teaching_Bots_To_Use_Your_Weapon?section=3\"\
+      \ title=\"Edit section: Weapon Functions\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<dl>\n<dt>function float RangedAttackTime()&#160;</dt>\n\
+      <dd>Time for the bot to wait between attacks.</dd>\n<dt>function bool RecommendRangedAttack()&#160;</dt>\n\
+      <dd>Unknown, What is defined as \"Ranged\" in the UT engine? This is false by\
+      \ default, and ranged weapons don't seem to be bothered by this.</dd>\n<dt>function\
+      \ bool RecommendLongRangedAttack()&#160;</dt>\n<dd>Unknown, What is defined\
+      \ as \"Long Ranged\" in the UT engine? This is false by default, and ranged\
+      \ weapons don't seem to be bothered by this.</dd>\n<dt>function bool FocusOnLeader(bool\
+      \ bLeaderFiring)&#160;</dt>\n<dd>return true if the bot should focus on the\
+      \ leader of it's Squad. The best example of this is the Link Gun.</dd>\n<dt>function\
+      \ bool SplashDamage()&#160;</dt>\n<dd>return true if weapon effect has splash\
+      \ damage (if significant), used by bot to avoid hurting self. It should be based\
+      \ on current firing Mode if active</dd>\n<dt>function bool RecommendSplashDamage()&#160;</dt>\n\
+      <dd>return true if weapon should be fired to take advantage of splash damage.\
+      \ For example, rockets should be fired at enemy feet</dd>\n<dt>function float\
+      \ GetDamageRadius()&#160;</dt>\n<dd>return the damage radius of the splash damage.</dd>\n\
+      <dt>function float RefireRate()&#160;</dt>\n<dd>Repeater weapons like minigun\
+      \ should be 0.99, other weapons based on likelihood of firing again right away</dd>\n\
+      <dt>function bool FireOnRelease()&#160;</dt>\n<dd>tells AI that it needs to\
+      \ release the fire button for this weapon to do anything</dd>\n<dt>function\
+      \ byte BestMode()&#160;</dt>\n<dd>choose between regular or alt-fire, 0 is regular,\
+      \ 1 is alt-fire.</dd>\n</dl>\n<p>Note: This is for the Instagib Linkgun. The\
+      \ primary fire is only useful for other xPawns, and thus the secondary fire\
+      \ is chosen if the bot is targeting a xPawn. Of course, the primary fire doesn't\
+      \ help teammates, so the check for teams had to be added as well</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">function</span> <span class=\"kw5\"\
+      >byte</span> BestMode<span class=\"br0\">(</span><span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n\t<span class=\"kw1\">local</span> <span class=\"\
+      kw9\">bot</span> B;\n \n\tB <span class=\"sy0\">=</span> <span class=\"kw9\"\
+      >Bot</span><span class=\"br0\">(</span><span class=\"kw7\">Instigator</span>.<span\
+      \ class=\"kw9\">Controller</span><span class=\"br0\">)</span>;\n\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span><span class=\"br0\">(</span> B <span\
+      \ class=\"sy0\">==</span> <span class=\"kw5\">None</span> <span class=\"br0\"\
+      >)</span> <span class=\"sy0\">||</span> <span class=\"br0\">(</span><span class=\"\
+      br0\">(</span><span class=\"kw9\">xPawn</span><span class=\"br0\">(</span>B.<span\
+      \ class=\"me0\">Target</span><span class=\"br0\">)</span> <span class=\"sy0\"\
+      >!=</span> <span class=\"kw5\">none</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span><span class=\"\
+      kw9\">xPawn</span><span class=\"br0\">(</span>B.<span class=\"me0\">Target</span><span\
+      \ class=\"br0\">)</span>.<span class=\"me0\">PlayerReplicationInfo</span>.<span\
+      \ class=\"me0\">Team</span> <span class=\"sy0\">!=</span> <span class=\"kw7\"\
+      >Instigator</span>.<span class=\"kw9\">Controller</span>.<span class=\"kw9\"\
+      >Pawn</span>.<span class=\"me0\">PlayerReplicationInfo</span>.<span class=\"\
+      me0\">Team</span><span class=\"br0\">)</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span>\n\t\t<span class=\"kw2\">return</span> <span class=\"\
+      nu0\">0</span>;\n \n\t<span class=\"kw2\">return</span> <span class=\"nu0\"\
+      >1</span>;\n<span class=\"br0\">}</span></pre></div>\n</div>\n<dl>\n<dt>function\
+      \ bool BotFire(bool bFinished, optional name FiringMode)&#160;</dt>\n<dd>called\
+      \ by NPC firing weapon. Weapon chooses appropriate firing Mode to use (typically\
+      \ no change) bFinished should only be true if called from the Finished() function\
+      \ FiringMode can be passed in to specify a firing Mode (used by scripted sequences)</dd>\n\
+      <dt>simulated function float RateSelf()&#160;</dt>\n<dd>need to figure out modified\
+      \ rating based on enemy/tactical situation. The range is -2 to 2, the higher\
+      \ the better.</dd>\n<dt>function float GetAIRating()&#160;</dt>\n<dd>Returns\
+      \ the AI Rating for the weapon ranged from -2.0 to 2.0. This is the real meat\
+      \ of the rating system. It's what is used, along with a bot's personal opinion\
+      \ of the weapon (this is where the \"favorite weapon\" comes into play) comes\
+      \ into effect and is actually used when the bot trys to descide which weapon\
+      \ to bring up.</dd>\n</dl>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">function</span> <span class=\"kw5\">float</span> GetAIRating<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n \n\
+      \    <span class=\"kw1\">local</span> <span class=\"kw9\">Bot</span> B;\n \n\
+      \tB <span class=\"sy0\">=</span> <span class=\"kw9\">Bot</span><span class=\"\
+      br0\">(</span><span class=\"kw7\">Instigator</span>.<span class=\"kw9\">Controller</span><span\
+      \ class=\"br0\">)</span>;\n\t<span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span>B <span class=\"sy0\">==</span> <span class=\"kw5\">None</span><span\
+      \ class=\"br0\">)</span>\n\t\t<span class=\"kw2\">return</span> AIRating;\n\
+      \ \n    <span class=\"kw2\">if</span> <span class=\"br0\">(</span> <span class=\"\
+      br0\">(</span>B.<span class=\"me0\">Enemy</span> <span class=\"sy0\">==</span>\
+      \ <span class=\"kw5\">None</span><span class=\"br0\">)</span> <span class=\"\
+      sy0\">&amp;&amp;</span> <span class=\"br0\">(</span>B.<span class=\"me0\">Target</span>\
+      \ <span class=\"sy0\">==</span> <span class=\"kw5\">none</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span>AmmoCharge<span\
+      \ class=\"br0\">[</span><span class=\"nu0\">0</span><span class=\"br0\">]</span>\
+      \ <span class=\"sy0\">&gt;=</span> FireMode<span class=\"br0\">[</span><span\
+      \ class=\"nu0\">0</span><span class=\"br0\">]</span>.<span class=\"me0\">AmmoClass</span>.<span\
+      \ class=\"kw1\">default</span>.<span class=\"me0\">AmmoAmount</span><span class=\"\
+      br0\">)</span><span class=\"br0\">)</span>\n       <span class=\"kw2\">return</span>\
+      \ <span class=\"sy0\">-</span><span class=\"nu0\">2.0</span>;\n \n\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span><span class=\"kw9\">xPawn</span><span\
+      \ class=\"br0\">(</span>B.<span class=\"me0\">Target</span><span class=\"br0\"\
+      >)</span> <span class=\"sy0\">!=</span> <span class=\"kw5\">none</span><span\
+      \ class=\"br0\">)</span>\n\t   <span class=\"kw2\">return</span> <span class=\"\
+      nu0\">2.0</span>;\n \n    <span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span><span class=\"kw9\">Vehicle</span><span class=\"br0\">(</span>B.<span\
+      \ class=\"me0\">Target</span><span class=\"br0\">)</span> <span class=\"sy0\"\
+      >!=</span> <span class=\"kw5\">none</span><span class=\"br0\">)</span>\n   \
+      \    <span class=\"kw2\">return</span> <span class=\"nu0\">1.2</span>;\n \n\
+      \    <span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      kw3\">VSize</span><span class=\"br0\">(</span> <span class=\"kw7\">Instigator</span>.<span\
+      \ class=\"kw7\">Location</span> <span class=\"sy0\">-</span> B.<span class=\"\
+      me0\">Target</span>.<span class=\"kw7\">Location</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">&gt;</span> LinkFire<span class=\"br0\">(</span>FireMode<span\
+      \ class=\"br0\">[</span><span class=\"nu0\">1</span><span class=\"br0\">]</span><span\
+      \ class=\"br0\">)</span>.<span class=\"me0\">TraceRange</span><span class=\"\
+      br0\">)</span>\n       <span class=\"kw2\">return</span> <span class=\"sy0\"\
+      >-</span><span class=\"nu0\">2.0</span>;\n \n    <span class=\"kw2\">return</span>\
+      \ AIRating;\n<span class=\"br0\">}</span></pre></div>\n</div>\n<dl>\n<dt>function\
+      \ float SuggestAttackStyle()&#160;</dt>\n<dd>tells bot whether to charge or\
+      \ back off while using this weapon (negative = run away, positive = run towards)</dd>\n\
+      <dt>function float SuggestDefenseStyle()&#160;</dt>\n<dd>tells bot whether to\
+      \ charge or back off while defending against this weapon (negative = run away,\
+      \ positive = run towards)</dd>\n<dt>function bool SplashJump()&#160;</dt>\n\
+      <dd>return true if recommend jumping while firing to improve splash damage (by\
+      \ shooting at feet) true for R.L., for example</dd>\n<dt>function bool CanAttack(Actor\
+      \ Other)&#160;</dt>\n<dd>return false if out of range, can't see target, etc.\
+      \ otherwise, if the bot can attack then return true.</dd>\n</dl>\n<p>In this\
+      \ case, I had to let the bot know that the link beam has a limited range.</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">function</span>\
+      \ <span class=\"kw5\">bool</span> CanAttack<span class=\"br0\">(</span><span\
+      \ class=\"kw9\">Actor</span> Other<span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n    <span class=\"kw1\">local</span> <span class=\"kw9\">bot</span>\
+      \ B;\n \n\tB <span class=\"sy0\">=</span> <span class=\"kw9\">Bot</span><span\
+      \ class=\"br0\">(</span><span class=\"kw7\">Instigator</span>.<span class=\"\
+      kw9\">Controller</span><span class=\"br0\">)</span>;\n    <span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span>B <span class=\"sy0\">==</span> <span\
+      \ class=\"kw5\">none</span><span class=\"br0\">)</span>\n       <span class=\"\
+      kw2\">return</span> <span class=\"kw6\">true</span>;\n \n    <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span><span class=\"br0\">(</span> B.<span\
+      \ class=\"me0\">bAltFire</span> <span class=\"sy0\">==</span> <span class=\"\
+      nu0\">1</span> <span class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"br0\">(</span> <span class=\"kw3\">VSize</span><span class=\"\
+      br0\">(</span> <span class=\"kw7\">Instigator</span>.<span class=\"kw7\">Location</span>\
+      \ <span class=\"sy0\">-</span> Other.<span class=\"kw7\">Location</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">&gt;</span> LinkFire<span class=\"\
+      br0\">(</span>FireMode<span class=\"br0\">[</span><span class=\"nu0\">1</span><span\
+      \ class=\"br0\">]</span><span class=\"br0\">)</span>.<span class=\"me0\">TraceRange</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n       <span class=\"\
+      kw2\">return</span> <span class=\"kw6\">false</span>;\n \n    <span class=\"\
+      kw2\">return</span> <span class=\"kw6\">true</span>;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<h2><span class=\"mw-headline\" id=\"Comments\">Comments</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:How_UT2003_Weapons_Work/Teaching_Bots_To_Use_Your_Weapon?section=4\"\
+      \ title=\"Edit section: Comments\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p><b>Enigmatic:</b> OK, I probably could use a etter\
+      \ name/location for this mess, but I think it's a pretty solid block of something\
+      \ at least</p>\n<p><b>JonAzz:</b> What signifigance does this function have\
+      \ in any of this?</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">static</span> <span class=\"kw1\">function</span> <span class=\"kw5\"\
+      >float</span> GetRange<span class=\"br0\">(</span><span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n\t<span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span><span class=\"kw1\">default</span>.<span class=\"kw7\">LifeSpan</span>\
+      \ <span class=\"sy0\">==</span> <span class=\"nu0\">0.0</span><span class=\"\
+      br0\">)</span>\n\t\t<span class=\"kw2\">return</span> <span class=\"nu0\">15000</span>;\n\
+      \t<span class=\"kw2\">else</span>\n\t\t<span class=\"kw2\">return</span> <span\
+      \ class=\"br0\">(</span><span class=\"kw1\">default</span>.<span class=\"me0\"\
+      >MaxSpeed</span> <span class=\"sy0\">*</span> <span class=\"kw1\">default</span>.<span\
+      \ class=\"kw7\">LifeSpan</span><span class=\"br0\">)</span>;\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p>this is from UT2004... I can't find a\
+      \ UT2004 version, but I am assuming they are similar...somewhat.</p>\n\n<!--\
+      \ \nNewPP limit report\nCPU time usage: 0.119 seconds\nReal time usage: 0.412\
+      \ seconds\nPreprocessor visited node count: 53/1000000\nPreprocessor generated\
+      \ node count: 120/1000000\nPost‐expand include size: 0/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:1411-0!*!0!!en!*!* and timestamp 20221118160739 and revision\
+      \ id 3572\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Mod Ideas/Semigib Onslaught"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Overview"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:How_UT2003_Weapons_Work/Teaching_Bots_To_Use_Your_Weapon"
+    byteoffset: 0
+    anchor: "Overview"
+  - toclevel: 1
+    level: "2"
+    line: "Bot variables"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:How_UT2003_Weapons_Work/Teaching_Bots_To_Use_Your_Weapon"
+    byteoffset: 990
+    anchor: "Bot_variables"
+  - toclevel: 1
+    level: "2"
+    line: "Weapon Functions"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:How_UT2003_Weapons_Work/Teaching_Bots_To_Use_Your_Weapon"
+    byteoffset: 1272
+    anchor: "Weapon_Functions"
+  - toclevel: 1
+    level: "2"
+    line: "Comments"
+    number: "4"
+    index: "4"
+    fromtitle: "Legacy:How_UT2003_Weapons_Work/Teaching_Bots_To_Use_Your_Weapon"
+    byteoffset: 5565
+    anchor: "Comments"
+  displaytitle: "Legacy:How UT2003 Weapons Work/Teaching Bots To Use Your Weapon"
+  iwlinks: []
+  wikitext:
+    text: "==Overview==\n\nBots don't understand the most obvious thing about your\
+      \ weapon.  I don't care if it's just another machinegun or yet another shotgun.\
+      \  The truth is, it might as well be a stick of wood for all they care.  Fortunatly,\
+      \ the bot does know how to pull a trigger, so it can handle that.  Unfortunatly,\
+      \ it doesn't know what the trigger does or whether your superdoopershotgun is\
+      \ better than the wet noodle it can also choose from.  Even if it can make a\
+      \ choice, there's probably more than one way to use your weapon, assuming there's\
+      \ an alt-fire function. This all means we're going to have to do a little work\
+      \ to make the weapon bot-friendly.\n\nFirst, in any function you've got to get\
+      \ a handle for a bot.  This is done like this:\n\n<uscript>\nlocal Bot B;\n\n\
+      B = Bot(Instigator.Controller);\n</uscript>\n\nAnd then running off and doing\
+      \ whatever we're going to do with it.  I'm using examples from my work on the\
+      \ [[Legacy:Mod_Ideas/Semigib_Onslaught|Mod_Ideas/Semigib_Onslaught]] mutator\n\
+      \n==Bot variables==\n; Pawn Enemy : The pawn the bot is hunting/fighting with\
+      \ (not used normally since Target is the real meat)\n; Actor Target : Whatever\
+      \ the bot is shooting at\n; bool bFire : 1 if the primary fire mode is selected\n\
+      ; bool bAltFire : 1 if the alt-fire mode is selected\n\n==Weapon Functions==\n\
+      ; function float RangedAttackTime() : Time for the bot to wait between attacks.\n\
+      ; function bool RecommendRangedAttack() : Unknown, What is defined as \"Ranged\"\
+      \ in the UT engine? This is false by default, and ranged weapons don't seem\
+      \ to be bothered by this.\n; function bool RecommendLongRangedAttack() : Unknown,\
+      \ What is defined as \"Long Ranged\" in the UT engine? This is false by default,\
+      \ and ranged weapons don't seem to be bothered by this.\n; function bool FocusOnLeader(bool\
+      \ bLeaderFiring) : return true if the bot should focus on the leader of it's\
+      \ Squad.  The best example of this is the Link Gun.\n; function bool SplashDamage()\
+      \ : return true if weapon effect has splash damage (if significant), used by\
+      \ bot to avoid hurting self.  It should be based on current firing Mode if active\n\
+      ; function bool RecommendSplashDamage() : return true if weapon should be fired\
+      \ to take advantage of splash damage.  For example, rockets should be fired\
+      \ at enemy feet\n; function float GetDamageRadius() : return the damage radius\
+      \ of the splash damage.\n; function float RefireRate() : Repeater weapons like\
+      \ minigun should be 0.99, other weapons based on likelihood of firing again\
+      \ right away\n; function bool FireOnRelease() : tells AI that it needs to release\
+      \ the fire button for this weapon to do anything\n; function byte BestMode()\
+      \ : choose between regular or alt-fire, 0 is regular, 1 is alt-fire.\n\nNote:\
+      \ This is for the Instagib Linkgun.  The primary fire is only useful for other\
+      \ xPawns, and thus the secondary fire is chosen if the bot is targeting a xPawn.\
+      \  Of course, the primary fire doesn't help teammates, so the check for teams\
+      \ had to be added as well\n\n<uscript>\nfunction byte BestMode()\n{\n\tlocal\
+      \ bot B;\n\n\tB = Bot(Instigator.Controller);\n\tif (( B == None ) || ((xPawn(B.Target)\
+      \ != none) && (xPawn(B.Target).PlayerReplicationInfo.Team != Instigator.Controller.Pawn.PlayerReplicationInfo.Team)))\n\
+      \t\treturn 0;\n\n\treturn 1;\n}\n</uscript>\n; function bool BotFire(bool bFinished,\
+      \ optional name FiringMode) : called by NPC firing weapon. Weapon chooses appropriate\
+      \ firing Mode to use (typically no change) bFinished should only be true if\
+      \ called from the Finished() function FiringMode can be passed in to specify\
+      \ a firing Mode (used by scripted sequences)\n; simulated function float RateSelf()\
+      \ : need to figure out modified rating based on enemy/tactical situation. The\
+      \ range is -2 to 2, the higher the better.\n; function float GetAIRating() :\
+      \ Returns the AI Rating for the weapon ranged from -2.0 to 2.0.  This is the\
+      \ real meat of the rating system.  It's what is used, along with a bot's personal\
+      \ opinion of the weapon (this is where the \"favorite weapon\" comes into play)\
+      \ comes into effect and is actually used when the bot trys to descide which\
+      \ weapon to bring up.\n\n<uscript>\nfunction float GetAIRating()\n{\n\n    local\
+      \ Bot B;\n\n\tB = Bot(Instigator.Controller);\n\tif (B == None)\n\t\treturn\
+      \ AIRating;\n\n    if ( (B.Enemy == None) && (B.Target == none) && (AmmoCharge[0]\
+      \ >= FireMode[0].AmmoClass.default.AmmoAmount))\n       return -2.0;\n\n\tif\
+      \ (xPawn(B.Target) != none)\n\t   return 2.0;\n\n    if (Vehicle(B.Target) !=\
+      \ none)\n       return 1.2;\n\n    if (VSize( Instigator.Location - B.Target.Location)\
+      \ > LinkFire(FireMode[1]).TraceRange)\n       return -2.0;\n\n    return AIRating;\n\
+      }\n</uscript>\n; function float SuggestAttackStyle() : tells bot whether to\
+      \ charge or back off while using this weapon (negative = run away, positive\
+      \ = run towards)\n; function float SuggestDefenseStyle() : tells bot whether\
+      \ to charge or back off while defending against this weapon (negative = run\
+      \ away, positive = run towards)\n; function bool SplashJump() : return true\
+      \ if recommend jumping while firing to improve splash damage (by shooting at\
+      \ feet) true for R.L., for example\n; function bool CanAttack(Actor Other) :\
+      \ return false if out of range, can't see target, etc. otherwise, if the bot\
+      \ can attack then return true.\n\nIn this case, I had to let the bot know that\
+      \ the link beam has a limited range.\n\n<uscript>\nfunction bool CanAttack(Actor\
+      \ Other)\n{\n    local bot B;\n\n\tB = Bot(Instigator.Controller);\n    if (B\
+      \ == none)\n       return true;\n\n    if (( B.bAltFire == 1 ) && ( VSize( Instigator.Location\
+      \ - Other.Location) > LinkFire(FireMode[1]).TraceRange))\n       return false;\n\
+      \n    return true;\n}\n</uscript>\n\n==Comments==\n\n'''Enigmatic:''' OK, I\
+      \ probably could use a etter name/location for this mess, but I think it's a\
+      \ pretty solid block of something at least\n\n'''JonAzz:''' What signifigance\
+      \ does this function have in any of this? \n\n<uscript>\nstatic function float\
+      \ GetRange()\n{\n\tif (default.LifeSpan == 0.0)\n\t\treturn 15000;\n\telse\n\
+      \t\treturn (default.MaxSpeed * default.LifeSpan);\n}\n</uscript>\n\nthis is\
+      \ from UT2004... I can't find a UT2004 version, but I am assuming they are similar...somewhat."
+  properties: []
+  revId: 3572
+name: "Legacy:How UT2003 Weapons Work/Teaching Bots To Use Your Weapon"
+revision:
+  revid: 3572
+  parentid: 3573
+  user: "JonAzz"
+  timestamp: 1114969780.000000000
+  comment: "*"
+timestamp: 1668787508.258552000

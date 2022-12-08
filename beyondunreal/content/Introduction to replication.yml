@@ -1,0 +1,375 @@
+---
+parse:
+  title: "Introduction to replication"
+  text:
+    text: "<p><a href=\"/Replication\" title=\"Replication\" class=\"mw-redirect\"\
+      >Replication</a> is one of the most important concepts in <a href=\"/Unreal_Engine\"\
+      \ title=\"Unreal Engine\" class=\"mw-redirect\">Unreal Engine</a> games as it\
+      \ is the basis for keeping game clients synchronized with the game server in\
+      \ network games.</p>\n<p>While details have slightly evolved between engine\
+      \ generations, the basic principles are still the same. Generally there are\
+      \ three major types of replication: <b>actor replication</b>, <b>variable value\
+      \ replication</b> and <b>function call replication</b>. Replication can only\
+      \ go from the server to one or more clients, or from one client to the server,\
+      \ but never from one client to another directly. Replication does not happen\
+      \ immediately, but is delayed until the end of the tick, when things are replicated\
+      \ to the remote side. At the start of the next tick, things received from the\
+      \ remote side take effect.</p>\n<h2><span class=\"mw-headline\" id=\"Actor_replication\"\
+      >Actor replication</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Introduction_to_replication?section=1\" title=\"Edit\
+      \ section: Actor replication\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>Before any other kind of replication is possible,\
+      \ there needs to be a common ground the server and client can base their communication\
+      \ on. This common ground are actor instances. Variable values and function calls\
+      \ can only be replicated if both sides know which actor instance the replicated\
+      \ value or function call belongs to.</p>\n<p>Actor classes that have <i>bStatic</i>\
+      \ or <i>bNoDelete</i> set to <i>True</i> can neither be created nor destroyed\
+      \ at runtime. We'll call these \"persistent actors\" from here on, as opposed\
+      \ to non-persistent actors that have both <i>bStatic</i> and <i>bNoDelete</i>\
+      \ set to <i>False</i>. Persistent actors make replication pretty simple as they\
+      \ already exist when the level is loaded and they will continue to exist until\
+      \ a different level is loaded or the game exits.</p>\n<p>Non-persistent actors,\
+      \ on the other hand, may initially exist in the level but could get destroyed\
+      \ at runtime. Or new instances of a non-persistent actor class are spawned at\
+      \ runtime. Imagine a non-persistent actor that initially existed in the current\
+      \ level, but gets destroyed on the server. Now if a client connects, what will\
+      \ happen to the clientside version of this actor? The Unreal Engine takes a\
+      \ conservative approach here: When a level is loaded on a client, all non-persistent\
+      \ actors are removed there. Then the server will replicate non-persistent actors\
+      \ back to the client without making a difference between initially existing\
+      \ actor and actors spawned at runtime.</p>\n<p>Actors can't be replicated all\
+      \ the time. Especially when a client connects the server would have to send\
+      \ a great number of actors, taking up valuable bandwidth. The trick is, that\
+      \ the server will only replicate an actor to a specific client if the actor\
+      \ is \"<a href=\"/Relevant\" title=\"Relevant\" class=\"mw-redirect\">relevant</a>\"\
+      \ to that client. Many actors are completely excluded from replication because\
+      \ clients simply do not need them. Usually, when an actor is no longer relevant,\
+      \ it is removed from the client again, but there are also exceptions. If a replicated\
+      \ actor is destroyed on the server, it will also be destroyed on all clients\
+      \ it is currently relevant to.</p>\n<p>The most important exception are \"net-temporary\"\
+      \ actors, i.e. instances of actor classes that have <i>bNetTemporary</i> set\
+      \ to <i>True</i>. A net-temporary actor is replicated to any client it becomes\
+      \ relevant to, but after the initial data the client takes full control of the\
+      \ actor, including its eventual destruction. This is mostly used for simple\
+      \ projectiles that fly in a straight line and explode on contact with an object.</p>\n\
+      <p>Another exception are torn-off actors in <a href=\"/edit/Unreal_Engine_2?redlink=1\"\
+      \ class=\"new\" title=\"Unreal Engine 2 (page does not exist)\">Unreal Engine\
+      \ 2</a> and later. These start out as regular non-persistent actors, but at\
+      \ some point the server sets the actor's <i>bTearOff</i> property to <i>True</i>.\
+      \ This cuts off the connection to clients after a final network update for this\
+      \ actor. When an actor is torn off, it will behave like a locally-spawned, non-replicated\
+      \ actor on the server and all clients it was relevant to at the time of tearing\
+      \ off. Unlike net-temporary actors, a torn-off actor can not become relevant\
+      \ to other clients that didn't know the actor before it was torn off. An example\
+      \ of actors that are torn off at some point are the xPawn class from <a href=\"\
+      /UT2003\" title=\"UT2003\" class=\"mw-redirect\">UT2003</a> and <a href=\"/UT2004\"\
+      \ title=\"UT2004\" class=\"mw-redirect\">UT2004</a>. When an xPawn dies, it\
+      \ is torn off and clients independently handle the ragdoll physics, while a\
+      \ dedicated server gets rid of the xPawn actor pretty quickly.</p>\n<h2><span\
+      \ class=\"mw-headline\" id=\"Variable_value_replication\">Variable value replication</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Introduction_to_replication?section=2\" title=\"Edit section:\
+      \ Variable value replication\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>Values stored in class <a href=\"/Variables\" title=\"\
+      Variables\">variables</a> can be replicated from the server to any client if\
+      \ the actor is either persistent or currently relevant to the target client.\
+      \ Variable replication from client to server is possible (but discouraged) in\
+      \ <a href=\"/edit/Unreal_Engine_1?redlink=1\" class=\"new\" title=\"Unreal Engine\
+      \ 1 (page does not exist)\">Unreal Engine 1</a>, but not in any later engine\
+      \ generation. Apart from the initial data when an actor is replicated to a client,\
+      \ variable replication does not happen instantly when a variable changes. Only\
+      \ once in a while, as specified by the <i>NetUpdateFrequency</i> property, the\
+      \ server checks for changed variables and replicates their new values.</p>\n\
+      <p>Before a variable value is replicated, the client assumes it to have the\
+      \ default value as specified in the <a href=\"/Defaultproperties\" title=\"\
+      Defaultproperties\">defaultproperties</a> block. This also goes for actors that\
+      \ initially exist in the map because the mapper added them in the editor. Generally,\
+      \ variable values are only replicated after they were changed for that actor\
+      \ instance at runtime. Values of configurable or localized variables don't count\
+      \ as \"changed\" just because their configured/localized default value is different\
+      \ from their original defaultproperties value!</p>\n<p>The exact conditions\
+      \ for when to replicate a variable's value can be specified in the <a href=\"\
+      /Replication_block\" title=\"Replication block\">replication block</a> of the\
+      \ class declaring the variable. It is not possible to change this replication\
+      \ condition for subclasses. The <i>reliable</i> and <i>unreliable</i> keywords\
+      \ that need to be specified in the replication block of Unreal Engine 1 and\
+      \ 2 have no meaning for replicated variables.</p>\n<p>If the size of their values\
+      \ allows it, multiple changed variables of a single actor instance are replicated\
+      \ together. Elements of a <a href=\"/Static_array\" title=\"Static array\" class=\"\
+      mw-redirect\">static array</a> variable are replicated individually and only\
+      \ if they actually changed. The value of a <a href=\"/Struct\" title=\"Struct\"\
+      \ class=\"mw-redirect\">struct</a> variable is always replicated as a unit.\
+      \ If the value is too large to fit into a single packet, it will never get replicated!\
+      \ Similar rules apply to strings, which can only be replicated if their length\
+      \ doesn't exceed the packet size. <a href=\"/Dynamic_arrays\" title=\"Dynamic\
+      \ arrays\">Dynamic arrays</a> do not support replication at all. Attempting\
+      \ to replicate a dynamic array variable will have no effect, trying to replicate\
+      \ a dynamic array as part of a struct will result in an array empty on the receiving\
+      \ side.</p>\n<h2><span class=\"mw-headline\" id=\"Function_call_replication\"\
+      >Function call replication</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Introduction_to_replication?section=3\"\
+      \ title=\"Edit section: Function call replication\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p><a href=\"/Function\" title=\"Function\" class=\"\
+      mw-redirect\">Function</a> calls can be used for a more responsive and structured\
+      \ communication between the server and individual clients. Whether calls to\
+      \ a function are replicated must be specified in the class that originally declared\
+      \ the function. Subclasses can neither change existing replication declarations,\
+      \ nor can they make overridden functions replicated. Also, in order for a function\
+      \ to actually get replicated to the remote side, the actor mus be directly or\
+      \ indirectly owned by the client involved in the replication, i.e. the client's\
+      \ PlayerPawn/PlayerController is either the actor itself or can be reached by\
+      \ traversing the actor's <i>Owner</i> \"chain\".</p>\n<p>Like replicated variables,\
+      \ the replication of a function call can be tied to certain conditions. In Unreal\
+      \ Engine 1 and 2 this condition is specified via the <a href=\"/Replication_block\"\
+      \ title=\"Replication block\">replication block</a> and typically involves comparing\
+      \ the actor's <i>Role</i> to the value <code>ROLE_Authority</code>, <a href=\"\
+      /Unreal_Engine_3\" title=\"Unreal Engine 3\">Unreal Engine 3</a> provides the\
+      \ special function modifiers <i>client</i> and <i>server</i> instead. Additionally\
+      \ a function can be replicated reliably or unreliably, which is specified by\
+      \ the keywords <i>reliable</i> and <i>unreliable</i> in front of the replication\
+      \ condition or as additional modifier in the UE3 function declaration.</p>\n\
+      <p>Function calls are always replicated asynchronously. As a result, a replicated\
+      \ function call returns immediately. If the function has a return type, the\
+      \ corresponding <a href=\"/Type\" title=\"Type\" class=\"mw-redirect\">type</a>'s\
+      \ null value is returned locally. Whatever the function returns on the remote\
+      \ side (i.e. where it is executed) will be discarded there. If the replication\
+      \ conditions for a replicated function call aren't met, the function is executed\
+      \ locally as if it was a non-replicated function. You can use this fact to check\
+      \ whether a function was actually replicated or not:</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw1\">reliable</span> client <span class=\"\
+      kw1\">function</span> <span class=\"kw5\">bool</span> DoSomething<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n \
+      \ <span class=\"kw2\">return</span> <span class=\"kw6\">true</span>;\n<span\
+      \ class=\"br0\">}</span></pre></div>\n</div>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw2\">if</span> <span class=\"br0\">(</span>DoSomething<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\
+      \ <span class=\"br0\">{</span>\n  <span class=\"co1\">// function returned True,\
+      \ so it was executed locally</span>\n<span class=\"br0\">}</span>\n<span class=\"\
+      kw2\">else</span> <span class=\"br0\">{</span>\n  <span class=\"co1\">// function\
+      \ returned the null value (i.e. False), so it was replicated</span>\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p>Note that regular calling restrictions\
+      \ apply for replicated functions. For example if a function is replicated to\
+      \ a client where the actor's local <i>Role</i> is <code>ROLE_SimulatedProxy</code>,\
+      \ but the function is not declared as <i>simulated</i>, it will not be executed.\
+      \ Conveniently the UE3 modifier <i>client</i> already implies the <i>simulated</i>\
+      \ modifier, so this is more of a problem in earlier engine generations.</p>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.057 seconds\nReal time usage:\
+      \ 0.059 seconds\nPreprocessor visited node count: 17/1000000\nPreprocessor generated\
+      \ node count: 56/1000000\nPost‐expand include size: 0/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:24004-0!*!0!!*!*!* and timestamp 20221118012005 and revision\
+      \ id 43592\n -->\n"
+  categories:
+  - sortkey: ""
+    name: "Replication"
+  links:
+  - ns: 0
+    exists: true
+    name: "Relevant"
+  - ns: 0
+    exists: true
+    name: "Struct"
+  - ns: 0
+    exists: true
+    name: "Unreal Engine"
+  - ns: 0
+    exists: true
+    name: "UT2004"
+  - ns: 0
+    exists: false
+    name: "Unreal Engine 1"
+  - ns: 0
+    exists: true
+    name: "Defaultproperties"
+  - ns: 0
+    exists: true
+    name: "Function"
+  - ns: 0
+    exists: true
+    name: "Variables"
+  - ns: 0
+    exists: true
+    name: "UT2003"
+  - ns: 0
+    exists: true
+    name: "Replication block"
+  - ns: 0
+    exists: true
+    name: "Unreal Engine 3"
+  - ns: 0
+    exists: true
+    name: "Static array"
+  - ns: 0
+    exists: true
+    name: "Replication"
+  - ns: 0
+    exists: true
+    name: "Dynamic arrays"
+  - ns: 0
+    exists: true
+    name: "Type"
+  - ns: 0
+    exists: false
+    name: "Unreal Engine 2"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Actor replication"
+    number: "1"
+    index: "1"
+    fromtitle: "Introduction_to_replication"
+    byteoffset: 789
+    anchor: "Actor_replication"
+  - toclevel: 1
+    level: "2"
+    line: "Variable value replication"
+    number: "2"
+    index: "2"
+    fromtitle: "Introduction_to_replication"
+    byteoffset: 4164
+    anchor: "Variable_value_replication"
+  - toclevel: 1
+    level: "2"
+    line: "Function call replication"
+    number: "3"
+    index: "3"
+    fromtitle: "Introduction_to_replication"
+    byteoffset: 6412
+    anchor: "Function_call_replication"
+  displaytitle: "Introduction to replication"
+  iwlinks: []
+  wikitext:
+    text: "[[Replication]] is one of the most important concepts in [[Unreal Engine]]\
+      \ games as it is the basis for keeping game clients synchronized with the game\
+      \ server in network games.\n\nWhile details have slightly evolved between engine\
+      \ generations, the basic principles are still the same. Generally there are\
+      \ three major types of replication: '''actor replication''', '''variable value\
+      \ replication''' and '''function call replication'''. Replication can only go\
+      \ from the server to one or more clients, or from one client to the server,\
+      \ but never from one client to another directly. Replication does not happen\
+      \ immediately, but is delayed until the end of the tick, when things are replicated\
+      \ to the remote side. At the start of the next tick, things received from the\
+      \ remote side take effect.\n\n==Actor replication==\nBefore any other kind of\
+      \ replication is possible, there needs to be a common ground the server and\
+      \ client can base their communication on. This common ground are actor instances.\
+      \ Variable values and function calls can only be replicated if both sides know\
+      \ which actor instance the replicated value or function call belongs to.\n\n\
+      Actor classes that have ''bStatic'' or ''bNoDelete'' set to ''True'' can neither\
+      \ be created nor destroyed at runtime. We'll call these \"persistent actors\"\
+      \ from here on, as opposed to non-persistent actors that have both ''bStatic''\
+      \ and ''bNoDelete'' set to ''False''. Persistent actors make replication pretty\
+      \ simple as they already exist when the level is loaded and they will continue\
+      \ to exist until a different level is loaded or the game exits.\n\nNon-persistent\
+      \ actors, on the other hand, may initially exist in the level but could get\
+      \ destroyed at runtime. Or new instances of a non-persistent actor class are\
+      \ spawned at runtime. Imagine a non-persistent actor that initially existed\
+      \ in the current level, but gets destroyed on the server. Now if a client connects,\
+      \ what will happen to the clientside version of this actor? The Unreal Engine\
+      \ takes a conservative approach here: When a level is loaded on a client, all\
+      \ non-persistent actors are removed there. Then the server will replicate non-persistent\
+      \ actors back to the client without making a difference between initially existing\
+      \ actor and actors spawned at runtime.\n\nActors can't be replicated all the\
+      \ time. Especially when a client connects the server would have to send a great\
+      \ number of actors, taking up valuable bandwidth. The trick is, that the server\
+      \ will only replicate an actor to a specific client if the actor is \"[[relevant]]\"\
+      \ to that client. Many actors are completely excluded from replication because\
+      \ clients simply do not need them. Usually, when an actor is no longer relevant,\
+      \ it is removed from the client again, but there are also exceptions. If a replicated\
+      \ actor is destroyed on the server, it will also be destroyed on all clients\
+      \ it is currently relevant to.\n\nThe most important exception are \"net-temporary\"\
+      \ actors, i.e. instances of actor classes that have ''bNetTemporary'' set to\
+      \ ''True''. A net-temporary actor is replicated to any client it becomes relevant\
+      \ to, but after the initial data the client takes full control of the actor,\
+      \ including its eventual destruction. This is mostly used for simple projectiles\
+      \ that fly in a straight line and explode on contact with an object.\n\nAnother\
+      \ exception are torn-off actors in [[Unreal Engine 2]] and later. These start\
+      \ out as regular non-persistent actors, but at some point the server sets the\
+      \ actor's ''bTearOff'' property to ''True''. This cuts off the connection to\
+      \ clients after a final network update for this actor. When an actor is torn\
+      \ off, it will behave like a locally-spawned, non-replicated actor on the server\
+      \ and all clients it was relevant to at the time of tearing off. Unlike net-temporary\
+      \ actors, a torn-off actor can not become relevant to other clients that didn't\
+      \ know the actor before it was torn off. An example of actors that are torn\
+      \ off at some point are the xPawn class from [[UT2003]] and [[UT2004]]. When\
+      \ an xPawn dies, it is torn off and clients independently handle the ragdoll\
+      \ physics, while a dedicated server gets rid of the xPawn actor pretty quickly.\n\
+      \n==Variable value replication==\nValues stored in class [[variables]] can be\
+      \ replicated from the server to any client if the actor is either persistent\
+      \ or currently relevant to the target client. Variable replication from client\
+      \ to server is possible (but discouraged) in [[Unreal Engine 1]], but not in\
+      \ any later engine generation. Apart from the initial data when an actor is\
+      \ replicated to a client, variable replication does not happen instantly when\
+      \ a variable changes. Only once in a while, as specified by the ''NetUpdateFrequency''\
+      \ property, the server checks for changed variables and replicates their new\
+      \ values.\n\nBefore a variable value is replicated, the client assumes it to\
+      \ have the default value as specified in the [[defaultproperties]] block. This\
+      \ also goes for actors that initially exist in the map because the mapper added\
+      \ them in the editor. Generally, variable values are only replicated after they\
+      \ were changed for that actor instance at runtime. Values of configurable or\
+      \ localized variables don't count as \"changed\" just because their configured/localized\
+      \ default value is different from their original defaultproperties value!\n\n\
+      The exact conditions for when to replicate a variable's value can be specified\
+      \ in the [[replication block]] of the class declaring the variable. It is not\
+      \ possible to change this replication condition for subclasses. The ''reliable''\
+      \ and ''unreliable'' keywords that need to be specified in the replication block\
+      \ of Unreal Engine 1 and 2 have no meaning for replicated variables.\n\nIf the\
+      \ size of their values allows it, multiple changed variables of a single actor\
+      \ instance are replicated together. Elements of a [[static array]] variable\
+      \ are replicated individually and only if they actually changed. The value of\
+      \ a [[struct]] variable is always replicated as a unit. If the value is too\
+      \ large to fit into a single packet, it will never get replicated! Similar rules\
+      \ apply to strings, which can only be replicated if their length doesn't exceed\
+      \ the packet size. [[Dynamic arrays]] do not support replication at all. Attempting\
+      \ to replicate a dynamic array variable will have no effect, trying to replicate\
+      \ a dynamic array as part of a struct will result in an array empty on the receiving\
+      \ side.\n\n==Function call replication==\n[[Function]] calls can be used for\
+      \ a more responsive and structured communication between the server and individual\
+      \ clients. Whether calls to a function are replicated must be specified in the\
+      \ class that originally declared the function. Subclasses can neither change\
+      \ existing replication declarations, nor can they make overridden functions\
+      \ replicated. Also, in order for a function to actually get replicated to the\
+      \ remote side, the actor mus be directly or indirectly owned by the client involved\
+      \ in the replication, i.e. the client's PlayerPawn/PlayerController is either\
+      \ the actor itself or can be reached by traversing the actor's ''Owner'' \"\
+      chain\".\n\nLike replicated variables, the replication of a function call can\
+      \ be tied to certain conditions. In Unreal Engine 1 and 2 this condition is\
+      \ specified via the [[replication block]] and typically involves comparing the\
+      \ actor's ''Role'' to the value <code>ROLE_Authority</code>, [[Unreal Engine\
+      \ 3]] provides the special function modifiers ''client'' and ''server'' instead.\
+      \ Additionally a function can be replicated reliably or unreliably, which is\
+      \ specified by the keywords ''reliable'' and ''unreliable'' in front of the\
+      \ replication condition or as additional modifier in the UE3 function declaration.\n\
+      \nFunction calls are always replicated asynchronously. As a result, a replicated\
+      \ function call returns immediately. If the function has a return type, the\
+      \ corresponding [[type]]'s null value is returned locally. Whatever the function\
+      \ returns on the remote side (i.e. where it is executed) will be discarded there.\
+      \ If the replication conditions for a replicated function call aren't met, the\
+      \ function is executed locally as if it was a non-replicated function. You can\
+      \ use this fact to check whether a function was actually replicated or not:\n\
+      <uscript>\nreliable client function bool DoSomething()\n{\n  return true;\n\
+      }\n</uscript>\n<uscript>\nif (DoSomething()) {\n  // function returned True,\
+      \ so it was executed locally\n}\nelse {\n  // function returned the null value\
+      \ (i.e. False), so it was replicated\n}\n</uscript>\nNote that regular calling\
+      \ restrictions apply for replicated functions. For example if a function is\
+      \ replicated to a client where the actor's local ''Role'' is <code>ROLE_SimulatedProxy</code>,\
+      \ but the function is not declared as ''simulated'', it will not be executed.\
+      \ Conveniently the UE3 modifier ''client'' already implies the ''simulated''\
+      \ modifier, so this is more of a problem in earlier engine generations.\n\n\
+      [[Category:Replication]]"
+  properties: []
+  revId: 43592
+name: "Introduction to replication"
+revision:
+  revid: 43592
+  parentid: 33599
+  user: "Eliot"
+  timestamp: 1278121597.000000000
+  comment: "Category -> Replication"
+timestamp: 1668759848.349567000

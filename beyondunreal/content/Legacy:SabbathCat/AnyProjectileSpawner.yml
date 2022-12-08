@@ -1,0 +1,181 @@
+---
+parse:
+  title: "Legacy:SabbathCat/AnyProjectileSpawner"
+  text:
+    text: "<p><br />\nIt's basically a MortarSpawner code, but now will fire any projectile.</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"co1\">//=============================================================================</span>\n\
+      <span class=\"co1\">// MortarSpawner3. New (Improved?)</span>\n<span class=\"\
+      co1\">//=============================================================================</span>\n\
+      <span class=\"kw1\">class</span> GungHo <span class=\"kw1\">extends</span> <span\
+      \ class=\"kw9\">Effects</span>;\n \n<span class=\"co2\">#exec mesh import mesh=gungho01\
+      \ anivfile=Models\\gungho01_a.3d datafile=Models\\gungho01_d.3d x=0 y=0 z=0\
+      \ mlod=0</span>\n<span class=\"co2\">#exec mesh origin mesh=gungho01 x=0 y=0\
+      \ z=0 YAW=-16384 PITCH=16384 ROLL=0</span>\n \n \n<span class=\"co2\">#exec\
+      \ mesh sequence mesh=gungho01 seq=All startframe=0 numframes=1</span>\n \n<span\
+      \ class=\"co2\">#exec meshmap new meshmap=gungho01 mesh=gungho01</span>\n<span\
+      \ class=\"co2\">#exec meshmap scale meshmap=gungho01 x=0.13281 y=0.13281 z=0.26563</span>\n\
+      \ \n<span class=\"kw1\">var</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span> <span class=\"kw5\">int</span> ShellDamage;\n<span class=\"kw1\"\
+      >var</span><span class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"\
+      kw5\">int</span> ShellMomentumTransfer;\n<span class=\"kw1\">var</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"kw5\">int</span>\
+      \ ShellBlastRadius;\n<span class=\"kw1\">var</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span> <span class=\"kw5\">int</span> RateOfFire;\n<span class=\"\
+      kw1\">var</span><span class=\"br0\">(</span><span class=\"br0\">)</span> <span\
+      \ class=\"kw5\">float</span> ShellSpeed;\n<span class=\"kw1\">var</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"kw5\">int</span>\
+      \ Deviation;\n<span class=\"kw1\">var</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span> <span class=\"kw5\">bool</span> bDeviate;\n<span class=\"\
+      kw1\">var</span><span class=\"br0\">(</span><span class=\"br0\">)</span> <span\
+      \ class=\"kw5\">sound</span> FireSound;\n<span class=\"kw1\">var</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> Class<span class=\"sy0\"\
+      >&lt;</span>Projectile<span class=\"sy0\">&gt;</span> ProjectileType;\n<span\
+      \ class=\"kw1\">var</span><span class=\"br0\">(</span><span class=\"br0\">)</span>\
+      \ <span class=\"kw5\">float</span> ProjectileScale;\n<span class=\"kw1\">var</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"kw5\">float</span>\
+      \ PCRM;\n<span class=\"kw1\">var</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span> <span class=\"kw5\">float</span> PCHM;\n<span class=\"kw1\">var</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"kw5\">vector</span>\
+      \ VelocityMultiplyerJ;\n \n<span class=\"kw1\">function</span> <span class=\"\
+      kw4\">BeginPlay</span><span class=\"br0\">(</span><span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n\t<span class=\"kw4\">SetTimer</span><span class=\"\
+      br0\">(</span>RateOfFire, <span class=\"kw6\">True</span><span class=\"br0\"\
+      >)</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">function</span>\
+      \ <span class=\"kw4\">Timer</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n\tLaunchShell<span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>;\n\t<span class=\"kw4\">PlaySound</span><span\
+      \ class=\"br0\">(</span>FireSound, <span class=\"kw7\">SLOT_None</span>, <span\
+      \ class=\"nu0\">4.0</span><span class=\"br0\">)</span>;\t\n<span class=\"br0\"\
+      >}</span>\n \n<span class=\"kw1\">function</span> LaunchShell<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t\
+      <span class=\"kw1\">local</span> <span class=\"kw5\">rotator</span> NewRot;\n\
+      \t<span class=\"kw1\">local</span> <span class=\"kw9\">Projectile</span> shell;\n\
+      \ \n\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>bDeviate<span\
+      \ class=\"br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t\tNewRot.<span class=\"\
+      me0\">Pitch</span> <span class=\"sy0\">=</span> <span class=\"kw7\">Rotation</span>.<span\
+      \ class=\"me0\">Pitch</span> <span class=\"sy0\">+</span> <span class=\"br0\"\
+      >(</span>Deviation<span class=\"sy0\">/</span><span class=\"nu0\">2</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">-</span> <span class=\"br0\">(</span>Deviation\
+      \ <span class=\"sy0\">*</span> <span class=\"kw3\">FRand</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n\t\t\
+      NewRot.<span class=\"me0\">Roll</span>  <span class=\"sy0\">=</span> <span class=\"\
+      kw7\">Rotation</span>.<span class=\"me0\">Roll</span>  <span class=\"sy0\">+</span>\
+      \ <span class=\"br0\">(</span>Deviation<span class=\"sy0\">/</span><span class=\"\
+      nu0\">2</span><span class=\"br0\">)</span> <span class=\"sy0\">-</span> <span\
+      \ class=\"br0\">(</span>Deviation <span class=\"sy0\">*</span> <span class=\"\
+      kw3\">FRand</span><span class=\"br0\">(</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span>;\n\t\tNewRot.<span class=\"me0\">Yaw</span>   <span\
+      \ class=\"sy0\">=</span> <span class=\"kw7\">Rotation</span>.<span class=\"\
+      me0\">Yaw</span>   <span class=\"sy0\">+</span> <span class=\"br0\">(</span>Deviation<span\
+      \ class=\"sy0\">/</span><span class=\"nu0\">2</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">-</span> <span class=\"br0\">(</span>Deviation <span class=\"\
+      sy0\">*</span> <span class=\"kw3\">FRand</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>;\n\t<span class=\"br0\"\
+      >}</span>\n\t<span class=\"kw2\">else</span>\n\t\tNewRot <span class=\"sy0\"\
+      >=</span> <span class=\"kw7\">Rotation</span>;\n \n\tshell <span class=\"sy0\"\
+      >=</span> <span class=\"kw4\">Spawn</span><span class=\"br0\">(</span>ProjectileType,,,\
+      \ <span class=\"kw7\">Location</span><span class=\"sy0\">+</span><span class=\"\
+      kw5\">Vector</span><span class=\"br0\">(</span><span class=\"kw7\">Rotation</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">*</span><span class=\"nu0\">20</span>,\
+      \ NewRot<span class=\"br0\">)</span>;\n        shell.<span class=\"me0\">Speed</span>\
+      \ <span class=\"sy0\">=</span> ShellSpeed;\n\tshell.<span class=\"me0\">Damage</span>\
+      \ <span class=\"sy0\">=</span> ShellDamage;\n\tshell.<span class=\"me0\">MomentumTransfer</span>\
+      \ <span class=\"sy0\">=</span> ShellMomentumTransfer;\n\tshell.<span class=\"\
+      kw7\">DrawScale</span><span class=\"sy0\">=</span>ProjectileScale;\n<span class=\"\
+      co1\">//\tshell.CollisionHeight = shell.CollisionHeight*PCHM;</span>\n<span\
+      \ class=\"co1\">//\tshell.CollisionRadius = shell.CollisionRadius*PCRM;</span>\n\
+      \        shell.<span class=\"kw7\">Velocity</span><span class=\"sy0\">=</span>shell.<span\
+      \ class=\"kw7\">Velocity</span><span class=\"sy0\">*</span>VelocityMultiplyerJ;\n\
+      \ \n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">defaultproperties</span>\n\
+      <span class=\"br0\">{</span>\n     ShellDamage<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">70</span>\n     ShellMomentumTransfer<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">150000</span>\n     ShellBlastRadius<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">400</span>\n     RateOfFire<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">5</span>\n     Deviation<span class=\"sy0\">=</span><span class=\"\
+      nu0\">4096</span>\n     bDeviate<span class=\"sy0\">=</span><span class=\"kw6\"\
+      >True</span>\n     FireSound<span class=\"sy0\">=</span><span class=\"kw5\"\
+      >Sound</span><span class=\"st0\">'UnrealShare.flak.Explode1'</span>\n     bHidden<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">True</span>\n     bNetTemporary<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">False</span>\n     bDirectional<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">True</span>\n  <span class=\"kw7\"\
+      >DrawType</span><span class=\"sy0\">=</span><span class=\"kw7\">DT_Mesh</span>\n\
+      \  <span class=\"kw5\">Mesh</span><span class=\"sy0\">=</span><span class=\"\
+      kw5\">Mesh</span><span class=\"st0\">'gungho01'</span>\n  bCollideWhenPlacing<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">False</span>\n  bCollideWorld<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">False</span>\n  <span class=\"kw7\"\
+      >CollisionRadius</span><span class=\"sy0\">=</span><span class=\"nu0\">17.00000</span>\n\
+      \  <span class=\"kw7\">CollisionHeight</span><span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">34.00000</span>\n  MultiSkins<span class=\"br0\">(</span><span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span><span class=\"sy0\">=</span><span\
+      \ class=\"kw5\">Texture</span><span class=\"st0\">'UnrealI.Skins.JBlob1'</span>\n\
+      \  MultiSkins<span class=\"br0\">(</span><span class=\"nu0\">1</span><span class=\"\
+      br0\">)</span><span class=\"sy0\">=</span><span class=\"kw5\">Texture</span><span\
+      \ class=\"st0\">'UnrealI.Skins.JBoulder1'</span>\n  MultiSkins<span class=\"\
+      br0\">(</span><span class=\"nu0\">2</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">=</span><span class=\"kw5\">Texture</span><span class=\"st0\"\
+      >'UnrealI.Skins.AAsbSuit1'</span>\n     ProjectileScale<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">1.000000</span>\n     PCHM<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">1.000000</span> \n     PCRM<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">1.000000</span>\n  VelocityMultiplyerJ<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">1.000000</span>,<span class=\"nu0\">1.000000</span>,<span class=\"\
+      nu0\">1.000000</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n\n\
+      <!-- \nNewPP limit report\nCPU time usage: 0.038 seconds\nReal time usage: 0.187\
+      \ seconds\nPreprocessor visited node count: 4/1000000\nPreprocessor generated\
+      \ node count: 24/1000000\nPost‐expand include size: 0/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:2887-0!*!*!*!*!*!* and timestamp 20221120232302 and revision\
+      \ id 7692\n -->\n"
+  categories: []
+  links: []
+  templates: []
+  images: []
+  externallinks: []
+  sections: []
+  displaytitle: "Legacy:SabbathCat/AnyProjectileSpawner"
+  iwlinks: []
+  wikitext:
+    text: "\n\nIt's basically a MortarSpawner code, but now will fire any projectile.\n\
+      \n<uscript>\n//=============================================================================\n\
+      // MortarSpawner3. New (Improved?)\n//=============================================================================\n\
+      class GungHo extends Effects;\n\n#exec mesh import mesh=gungho01 anivfile=Models\\\
+      gungho01_a.3d datafile=Models\\gungho01_d.3d x=0 y=0 z=0 mlod=0\n#exec mesh\
+      \ origin mesh=gungho01 x=0 y=0 z=0 YAW=-16384 PITCH=16384 ROLL=0\n\n\n#exec\
+      \ mesh sequence mesh=gungho01 seq=All startframe=0 numframes=1\n\n#exec meshmap\
+      \ new meshmap=gungho01 mesh=gungho01\n#exec meshmap scale meshmap=gungho01 x=0.13281\
+      \ y=0.13281 z=0.26563\n\nvar() int ShellDamage;\nvar() int ShellMomentumTransfer;\n\
+      var() int ShellBlastRadius;\nvar() int RateOfFire;\nvar() float ShellSpeed;\n\
+      var() int Deviation;\nvar() bool bDeviate;\nvar() sound FireSound;\nvar() Class<Projectile>\
+      \ ProjectileType;\nvar() float ProjectileScale;\nvar() float PCRM;\nvar() float\
+      \ PCHM;\nvar() vector VelocityMultiplyerJ;\n\nfunction BeginPlay()\n{\n\tSetTimer(RateOfFire,\
+      \ True);\n}\n\nfunction Timer()\n{\n\tLaunchShell();\n\tPlaySound(FireSound,\
+      \ SLOT_None, 4.0);\t\n}\n\nfunction LaunchShell()\n{\n\tlocal rotator NewRot;\n\
+      \tlocal Projectile shell;\n\n\tif (bDeviate)\n\t{\n\t\tNewRot.Pitch = Rotation.Pitch\
+      \ + (Deviation/2) - (Deviation * FRand());\n\t\tNewRot.Roll  = Rotation.Roll\
+      \  + (Deviation/2) - (Deviation * FRand());\n\t\tNewRot.Yaw   = Rotation.Yaw\
+      \   + (Deviation/2) - (Deviation * FRand());\n\t}\n\telse\n\t\tNewRot = Rotation;\n\
+      \n\tshell = Spawn(ProjectileType,,, Location+Vector(Rotation)*20, NewRot);\n\
+      \        shell.Speed = ShellSpeed;\n\tshell.Damage = ShellDamage;\n\tshell.MomentumTransfer\
+      \ = ShellMomentumTransfer;\n\tshell.DrawScale=ProjectileScale;\n//\tshell.CollisionHeight\
+      \ = shell.CollisionHeight*PCHM;\n//\tshell.CollisionRadius = shell.CollisionRadius*PCRM;\n\
+      \        shell.Velocity=shell.Velocity*VelocityMultiplyerJ;\n\n}\n\ndefaultproperties\n\
+      {\n     ShellDamage=70\n     ShellMomentumTransfer=150000\n     ShellBlastRadius=400\n\
+      \     RateOfFire=5\n     Deviation=4096\n     bDeviate=True\n     FireSound=Sound'UnrealShare.flak.Explode1'\n\
+      \     bHidden=True\n     bNetTemporary=False\n     bDirectional=True\n  DrawType=DT_Mesh\n\
+      \  Mesh=Mesh'gungho01'\n  bCollideWhenPlacing=False\n  bCollideWorld=False\n\
+      \  CollisionRadius=17.00000\n  CollisionHeight=34.00000\n  MultiSkins(0)=Texture'UnrealI.Skins.JBlob1'\n\
+      \  MultiSkins(1)=Texture'UnrealI.Skins.JBoulder1'\n  MultiSkins(2)=Texture'UnrealI.Skins.AAsbSuit1'\n\
+      \     ProjectileScale=1.000000\n     PCHM=1.000000 \n     PCRM=1.000000\n  VelocityMultiplyerJ=1.000000,1.000000,1.000000\n\
+      }\n\n</uscript>"
+  properties: []
+  revId: 7692
+name: "Legacy:SabbathCat/AnyProjectileSpawner"
+revision:
+  revid: 7692
+  parentid: 0
+  user: "SabbathCat"
+  timestamp: 1071266655.000000000
+  comment: "*"
+timestamp: 1668986583.364471000

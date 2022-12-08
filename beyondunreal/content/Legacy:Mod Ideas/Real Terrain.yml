@@ -1,0 +1,340 @@
+---
+parse:
+  title: "Legacy:Mod Ideas/Real Terrain"
+  text:
+    text: "<p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n\
+      </div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#Deforming_Terrain_in_Real-Time\"\
+      ><span class=\"tocnumber\">1</span> <span class=\"toctext\">Deforming Terrain\
+      \ in Real-Time</span></a>\n<ul>\n<li class=\"toclevel-2 tocsection-2\"><a href=\"\
+      #How_you_Deform_the_Terrain\"><span class=\"tocnumber\">1.1</span> <span class=\"\
+      toctext\">How you Deform the Terrain</span></a></li>\n<li class=\"toclevel-2\
+      \ tocsection-3\"><a href=\"#Everything_in_Moderation\"><span class=\"tocnumber\"\
+      >1.2</span> <span class=\"toctext\">Everything in Moderation</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-4\"><a href=\"#Suggested_Usage\"><span class=\"\
+      tocnumber\">1.3</span> <span class=\"toctext\">Suggested Usage</span></a></li>\n\
+      </ul>\n</li>\n<li class=\"toclevel-1 tocsection-5\"><a href=\"#Discussion\"\
+      ><span class=\"tocnumber\">2</span> <span class=\"toctext\">Discussion</span></a></li>\n\
+      </ul>\n</div>\n<p></p>\n<h2><span class=\"mw-headline\" id=\"Deforming_Terrain_in_Real-Time\"\
+      >Deforming Terrain in Real-Time</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Mod_Ideas/Real_Terrain?section=1\"\
+      \ title=\"Edit section: Deforming Terrain in Real-Time\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<p>UT2003 has a nifty feature\
+      \ built into the <a href=\"/Legacy:TerrainInfo\" title=\"Legacy:TerrainInfo\"\
+      >TerrainInfo</a> class, that interestingly is not used by the game itself. It\
+      \ allows you to modify the heightmap of the terrain during play. Note that this\
+      \ feature is unique to UT2003, and is not part of the stock Unreal Engine.</p>\n\
+      <p>The ability to modify terrain in real-time makes it possible for you to have\
+      \ your weapons create craters and all sorts of other mayhem. It is similar to\
+      \ the GeoMod technology used in Red Faction, but does not work quite the same.\
+      \ This form of terrain modification works simply by altering the height of different\
+      \ points on the terrain, which means a couple of things:</p>\n<ol>\n<li>You\
+      \ can't bore a tunnel through terrain using this. It is more like blasting a\
+      \ hole, and then having that hole fill up with sand/dirt/whatever from above.</li>\n\
+      <li>It looks a bit strange if you use it on extremely steep cliffs, but only\
+      \ the steepest of cliffs (basically 90 degree cliffs) are affected by this.</li>\n\
+      <li>The holes that are created have pointy bottoms. If you fall into a deep\
+      \ crater you will be able to see \"outside the world\" because the bottom of\
+      \ the hole is just wide enough for your player to fit in, but not the camera.</li>\n\
+      </ol>\n<p>Also note that because players are generally going to want to walk\
+      \ over the ground, and cannot do so reasonably when it's filled with craters\
+      \ and chasms. It is therefore important not to go overboard with terrain deformation.\
+      \ Also be aware of any gameplay issues that may arise, such as the only entrances\
+      \ to a flagbase being blocked off by chasms of deformed terrain.</p>\n<p>There\
+      \ is also a limit to how deeply you can burrow, which I believe is the minimum\
+      \ height of the heightmap. This means that eventually, if you crater it enough,\
+      \ it will start to plateu at a much lower level.</p>\n<h3><span class=\"mw-headline\"\
+      \ id=\"How_you_Deform_the_Terrain\">How you Deform the Terrain</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Mod_Ideas/Real_Terrain?section=2\"\
+      \ title=\"Edit section: How you Deform the Terrain\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h3>\n<p>The heart of the terrain deformation\
+      \ lies in a function called <b>PokeTerrain.</b> it's definition can be found\
+      \ in the <a href=\"/Legacy:TerrainInfo\" title=\"Legacy:TerrainInfo\">TerrainInfo</a>\
+      \ class, and looks like this:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">native</span> <span class=\"kw1\">final</span> <span class=\"\
+      kw1\">function</span> PokeTerrain<span class=\"br0\">(</span> <span class=\"\
+      kw5\">vector</span> WorldLocation, <span class=\"kw5\">int</span> Radius, <span\
+      \ class=\"kw5\">int</span> MaxDepth <span class=\"br0\">)</span>;</pre></div>\n\
+      </div>\n<p><b>WorldLocation</b> is the location that you want to make the crater.\
+      \ The height above the terrain does not seem to make any difference, but I don't\
+      \ believe it will work if the location specified is below the terrain. <b>Radius</b>\
+      \ specifies the radius of the crater you want to make. <b>MaxDepth</b> specifies\
+      \ the depth of crater you would like to make. Interestingly enough, although\
+      \ in theory it should have been easy to implement, you cannot make a lump in\
+      \ the terrain by using a negative maxdepth. You can only use poketerrain to\
+      \ decrease the height of the terrain.</p>\n<p><b>Solid Snake:</b>Well, maybe\
+      \ they fixed this a while ago, but with the latest patch you may use a negative\
+      \ value to increase the height of the terrain.</p>\n<p>Unfortunately, that function\
+      \ is a little buggy so some care is needed when using it. Generally you would\
+      \ call it from within your HitWall function of your projectile. (hitting terrain\
+      \ always calls HitWall instead of Landed) However, sometimes it will not work\
+      \ if you simply use your Location as the WorldLocation. Sometimes it will, and\
+      \ sometimes it won't - this seems to depend on the physical size of the projectile.\
+      \ (it's collision height and radius) If your projectile does not seem to be\
+      \ denting the terrain - this may be why. Fortunately, however, this can be easily\
+      \ worked around by setting bBounce to true. bBounce is native and basically\
+      \ forces the physics engine to keep this object from penetrating into the ground\
+      \ when it hits. That should ensure that the projectile's location is always\
+      \ above the terrain level and thus that the poketerrain always works.</p>\n\
+      <p><b>Solid Snake:</b> Another way to fix this problem is to alter the location\
+      \ of the PokeTerrain, by using something like this: HitLocation + 16 * Vector(HitNormal),\
+      \ that way the PokeTerrain should always be above where the projectile hit.</p>\n\
+      <p>To complete the effect, you should put a decal inside the new crater to give\
+      \ it it's own texture. If you do not, it will have the same texture as the terrain\
+      \ had before, which can look a bit silly if your redeemer leaves a craterful\
+      \ of snow behind.</p>\n<h3><span class=\"mw-headline\" id=\"Everything_in_Moderation\"\
+      >Everything in Moderation</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Mod_Ideas/Real_Terrain?section=3\"\
+      \ title=\"Edit section: Everything in Moderation\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>This was stated above, but it's worth repeating: it\
+      \ may seem cool to have all your weapons deform terrain and make huge craters,\
+      \ but trust me - it's not as cool as it seems. The crater created by the weapon\
+      \ should be significantly smaller than the \"blast effect,\" for three reasons:</p>\n\
+      <ol>\n<li>There is no tweening on the deformation, and if it is not completely\
+      \ covered by your other visual effects, it will look like crap as a chunk of\
+      \ the world vanishes before your very eyes. Ideally your projectile should also\
+      \ spawn some rocks and junk to come out so it looks like the chunk you removed\
+      \ actually went somewhere.</li>\n<li>It's mentioned above, but very important\
+      \ - although cratering the crap out of everything will not particularly impact\
+      \ the framerate, it can inhibit gameplay. Craters can \"pile up\" and leave\
+      \ a deep chasm or hole that people can fall into. Usually, they won't fall far\
+      \ enough to die, but they'll still be stuck, and the camera will be outside\
+      \ the world, which is ugly. Though it may also seem neat to \"open up new gameplay\
+      \ options\" through the ability to deform terrain, a literally impassable moat\
+      \ doesn't do much for gameplay. Also, things that were formerly placed nicely\
+      \ can end up just hovering in space: static mesh lamp posts mounted on the terrain\
+      \ will not \"fall\" into your new crater, for instance. Terrain Decoration Layers\
+      \ usually conform to the new shape, but not always.</li>\n<li>It's just plain\
+      \ unrealistic. A redeemer would probrably make a hole about the size of a luxury\
+      \ car. Fragmentation rockets would do little more than scorch the surface of\
+      \ the ground. Heck, a hydrogen bomb only takes a bite out of a small island.\
+      \ The amount of actual material displaced by an explosion is generally quite\
+      \ small compared to the area peppered by shrapnel and singed by the flames.</li>\n\
+      </ol>\n<h3><span class=\"mw-headline\" id=\"Suggested_Usage\">Suggested Usage</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Mod_Ideas/Real_Terrain?section=4\" title=\"Edit section:\
+      \ Suggested Usage\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>-Scorched Earth clone <a rel=\"nofollow\" class=\"external free\" href=\"\
+      http://www.scorched3d.co.uk/\">http://www.scorched3d.co.uk/</a>-</p>\n<h2><span\
+      \ class=\"mw-headline\" id=\"Discussion\">Discussion</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Mod_Ideas/Real_Terrain?section=5\"\
+      \ title=\"Edit section: Discussion\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p><b>Foxpaw:</b> Refactored the discussion and whatnot\
+      \ into a description of how to do it, now that we've got it all figured out.\
+      \ It probrably wouldn't hurt to rename this page to \"Deformable Terrain\" or\
+      \ \"Creating Deformable Terrain\" or something along those lines.</p>\n<p><b>EntropicLqd:</b>\
+      \ Good job well done. Have some bonus points or something&#160;:)</p>\n<p><b>AlphaOne:</b>\
+      \ I added that for one main reason: because I think pokeTerrain sucks for anything\
+      \ else.</p>\n<p><b>Foxpaw:</b> It can actually have a nice effect, but you have\
+      \ to use it very judiciouslly. I use it on my mod - a 105mm howitzer causes\
+      \ a small depression about the size of a GT40.</p>\n<p><b>Solid Snake:</b> I\
+      \ just tried it, and maybe they fixed it in a patch a while ago, but you can\
+      \ actually increase the terrain height by using a negative value.</p>\n<p><b>Foxpaw:</b>\
+      \ I didn't have any success with that, but if you got it to work, then the above\
+      \ text could be updated with that information.</p>\n<p><b>RegularX:</b> Has\
+      \ anyone tried to use this to make random terrain? Or is that wack tinfoil stuff?</p>\n\
+      <p><b>Foxpaw:</b> That sounds like it should be easily doable, but I don't think\
+      \ anyone has tried.</p>\n<p><b>Solid Snake:</b> I've tried it already... some\
+      \ pretty crap results though. Certainly not ones to brag about.</p>\n<p><b>Foxpaw:</b>\
+      \ Crap results in what sense? As in, is there a finite granularity to PokeTerrain\
+      \ that forces poor results, or is it simply difficult to generate the appropriate\
+      \ values to pass to PokeTerrain?</p>\n<p><b>Solid Snake:</b> While you can generate\
+      \ the terrain dynamically and randomly the texturing of the terrain is the next\
+      \ issue. As it isn't possible to really dynamically alter the terrain (I have\
+      \ already tried to the Unrealscripted Texture route, it results in a very blurry\
+      \ texture) because the textures don't match the resultant terrain just doesn't\
+      \ look very good or very real.</p>\n<p><b>RegularX:</b> Hrm, thanks for the\
+      \ info. I'll give it a go anyway, since this project isn't FPS I think some\
+      \ luxuries can be taken on the terrain looking good. The replayability of random\
+      \ terrain should trump it.</p>\n<p><b>FrozenCow</b> I've made a picture of the\
+      \ result of PokeTerrain with MaxDepth=-512:</p>\n<div class=\"center\">\n<div\
+      \ class=\"floatnone\"><a href=\"/File:Legacy_PokeTerrainExample.jpeg\" class=\"\
+      image\" title=\"PokeTerrain Example with MaxDepth=-512\"><img alt=\"PokeTerrain\
+      \ Example with MaxDepth=-512\" src=\"/w/images/Legacy_PokeTerrainExample.jpeg\"\
+      \ width=\"829\" height=\"413\" /></a></div>\n</div>\n\n<!-- \nNewPP limit report\n\
+      CPU time usage: 0.089 seconds\nReal time usage: 0.092 seconds\nPreprocessor\
+      \ visited node count: 29/1000000\nPreprocessor generated node count: 60/1000000\n\
+      Post‐expand include size: 44/2097152 bytes\nTemplate argument size: 0/2097152\
+      \ bytes\nHighest expansion depth: 2/40\nExpensive parser function count: 0/100\n\
+      -->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n100.00%\
+      \    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:1978-0!*!0!!en!5!*\
+      \ and timestamp 20221118020216 and revision id 4838\n -->\n"
+  categories:
+  - sortkey: "Mod Ideas/Real Terrain"
+    name: "Legacy_Journal"
+  - sortkey: "Mod Ideas/Real Terrain"
+    name: "Legacy_Tutorial"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:TerrainInfo"
+  templates: []
+  images:
+  - "Legacy_PokeTerrainExample.jpeg"
+  externallinks:
+  - "http://www.scorched3d.co.uk/"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Deforming Terrain in Real-Time"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Mod_Ideas/Real_Terrain"
+    byteoffset: 0
+    anchor: "Deforming_Terrain_in_Real-Time"
+  - toclevel: 2
+    level: "3"
+    line: "How you Deform the Terrain"
+    number: "1.1"
+    index: "2"
+    fromtitle: "Legacy:Mod_Ideas/Real_Terrain"
+    byteoffset: 1804
+    anchor: "How_you_Deform_the_Terrain"
+  - toclevel: 2
+    level: "3"
+    line: "Everything in Moderation"
+    number: "1.2"
+    index: "3"
+    fromtitle: "Legacy:Mod_Ideas/Real_Terrain"
+    byteoffset: 4210
+    anchor: "Everything_in_Moderation"
+  - toclevel: 2
+    level: "3"
+    line: "Suggested Usage"
+    number: "1.3"
+    index: "4"
+    fromtitle: "Legacy:Mod_Ideas/Real_Terrain"
+    byteoffset: 6033
+    anchor: "Suggested_Usage"
+  - toclevel: 1
+    level: "2"
+    line: "Discussion"
+    number: "2"
+    index: "5"
+    fromtitle: "Legacy:Mod_Ideas/Real_Terrain"
+    byteoffset: 6140
+    anchor: "Discussion"
+  displaytitle: "Legacy:Mod Ideas/Real Terrain"
+  iwlinks: []
+  wikitext:
+    text: "==Deforming Terrain in Real-Time==\n\nUT2003 has a nifty feature built\
+      \ into the [[Legacy:TerrainInfo|TerrainInfo]] class, that interestingly is not\
+      \ used by the game itself. It allows you to modify the heightmap of the terrain\
+      \ during play. Note that this feature is unique to UT2003, and is not part of\
+      \ the stock Unreal Engine.\n\nThe ability to modify terrain in real-time makes\
+      \ it possible for you to have your weapons create craters and all sorts of other\
+      \ mayhem. It is similar to the GeoMod technology used in Red Faction, but does\
+      \ not work quite the same. This form of terrain modification works simply by\
+      \ altering the height of different points on the terrain, which means a couple\
+      \ of things:\n\n# You can't bore a tunnel through terrain using this. It is\
+      \ more like blasting a hole, and then having that hole fill up with sand/dirt/whatever\
+      \ from above.\n# It looks a bit strange if you use it on extremely steep cliffs,\
+      \ but only the steepest of cliffs (basically 90 degree cliffs) are affected\
+      \ by this.\n# The holes that are created have pointy bottoms. If you fall into\
+      \ a deep crater you will be able to see \"outside the world\" because the bottom\
+      \ of the hole is just wide enough for your player to fit in, but not the camera.\n\
+      \nAlso note that because players are generally going to want to walk over the\
+      \ ground, and cannot do so reasonably when it's filled with craters and chasms.\
+      \ It is therefore important not to go overboard with terrain deformation. Also\
+      \ be aware of any gameplay issues that may arise, such as the only entrances\
+      \ to a flagbase being blocked off by chasms of deformed terrain.\n\nThere is\
+      \ also a limit to how deeply you can burrow, which I believe is the minimum\
+      \ height of the heightmap. This means that eventually, if you crater it enough,\
+      \ it will start to plateu at a much lower level.\n\n===How you Deform the Terrain===\n\
+      \nThe heart of the terrain deformation lies in a function called '''PokeTerrain.'''\
+      \ it's definition can be found in the [[Legacy:TerrainInfo|TerrainInfo]] class,\
+      \ and looks like this:\n\n<uscript>\nnative final function PokeTerrain( vector\
+      \ WorldLocation, int Radius, int MaxDepth );\n</uscript>\n\n'''WorldLocation'''\
+      \ is the location that you want to make the crater. The height above the terrain\
+      \ does not seem to make any difference, but I don't believe it will work if\
+      \ the location specified is below the terrain. '''Radius''' specifies the radius\
+      \  of the crater you want to make. '''MaxDepth''' specifies the depth of crater\
+      \ you would like to make. Interestingly enough, although in theory it should\
+      \ have been easy to implement, you cannot make a lump in the terrain by using\
+      \ a negative maxdepth. You can only use poketerrain to decrease the height of\
+      \ the terrain.\n\n'''Solid Snake:'''Well, maybe they fixed this a while ago,\
+      \ but with the latest patch you may use a negative value to increase the height\
+      \ of the terrain.\n\nUnfortunately, that function is a little buggy so some\
+      \ care is needed when using it. Generally you would call it from within your\
+      \ HitWall function of your projectile. (hitting terrain always calls HitWall\
+      \ instead of Landed) However, sometimes it will not work if you simply use your\
+      \ Location as the WorldLocation. Sometimes it will, and sometimes it won't -\
+      \ this seems to depend on the physical size of the projectile. (it's collision\
+      \ height and radius) If your projectile does not seem to be denting the terrain\
+      \ - this may be why. Fortunately, however, this can be easily worked around\
+      \ by setting bBounce to true. bBounce is native and basically forces the physics\
+      \ engine to keep this object from penetrating into the ground when it hits.\
+      \ That should ensure that the projectile's location is always above the terrain\
+      \ level and thus that the poketerrain always works.\n\n'''Solid Snake:''' Another\
+      \ way to fix this problem is to alter the location of the PokeTerrain, by using\
+      \ something like this: HitLocation + 16 * Vector(HitNormal), that way the PokeTerrain\
+      \ should always be above where the projectile hit.\n\nTo complete the effect,\
+      \ you should put a decal inside the new crater to give it it's own texture.\
+      \ If you do not, it will have the same texture as the terrain had before, which\
+      \ can look a bit silly if your redeemer leaves a craterful of snow behind.\n\
+      \n===Everything in Moderation===\n\nThis was stated above, but it's worth repeating:\
+      \ it may seem cool to have all your weapons deform terrain and make huge craters,\
+      \ but trust me - it's not as cool as it seems. The crater created by the weapon\
+      \ should be significantly smaller than the \"blast effect,\" for three reasons:\n\
+      \n# There is no tweening on the deformation, and if it is not completely covered\
+      \ by your other visual effects, it will look like crap as a chunk of the world\
+      \ vanishes before your very eyes. Ideally your projectile should also spawn\
+      \ some rocks and junk to come out so it looks like the chunk you removed actually\
+      \ went somewhere.\n# It's mentioned above, but very important - although cratering\
+      \ the crap out of everything will not particularly impact the framerate, it\
+      \ can inhibit gameplay. Craters can \"pile up\" and leave a deep chasm or hole\
+      \ that people can fall into. Usually, they won't fall far enough to die, but\
+      \ they'll still be stuck, and the camera will be outside the world, which is\
+      \ ugly. Though it may also seem neat to \"open up new gameplay options\" through\
+      \ the ability to deform terrain, a literally impassable moat doesn't do much\
+      \ for gameplay. Also, things that were formerly placed nicely can end up just\
+      \ hovering in space: static mesh lamp posts mounted on the terrain will not\
+      \ \"fall\" into your new crater, for instance. Terrain Decoration Layers usually\
+      \ conform to the new shape, but not always.\n# It's just plain unrealistic.\
+      \ A redeemer would probrably make a hole about the size of a luxury car. Fragmentation\
+      \ rockets would do little more than scorch the surface of the ground. Heck,\
+      \ a hydrogen bomb only takes a bite out of a small island. The amount of actual\
+      \ material displaced by an explosion is generally quite small compared to the\
+      \ area peppered by shrapnel and singed by the flames.\n\n===Suggested Usage===\n\
+      \n-Scorched Earth clone [http://www.scorched3d.co.uk/ http://www.scorched3d.co.uk/]-\n\
+      \n==Discussion==\n\n'''Foxpaw:''' Refactored the discussion and whatnot into\
+      \ a description of how to do it, now that we've got it all figured out. It probrably\
+      \ wouldn't hurt to rename this page to \"Deformable Terrain\" or \"Creating\
+      \ Deformable Terrain\" or something along those lines.\n\n'''EntropicLqd:'''\
+      \ Good job well done.  Have some bonus points or something :)\n\n'''AlphaOne:'''\
+      \ I added that for one main reason: because I think pokeTerrain sucks for anything\
+      \ else.\n\n'''Foxpaw:''' It can actually have a nice effect, but you have to\
+      \ use it very judiciouslly. I use it on my mod - a 105mm howitzer causes a small\
+      \ depression about the size of a GT40.\n\n'''Solid Snake:''' I just tried it,\
+      \ and maybe they fixed it in a patch a while ago, but you can actually increase\
+      \ the terrain height by using a negative value.\n\n'''Foxpaw:''' I didn't have\
+      \ any success with that, but if you got it to work, then the above text could\
+      \ be updated with that information.\n\n'''RegularX:''' Has anyone tried to use\
+      \ this to make random terrain?  Or is that wack tinfoil stuff?\n\n'''Foxpaw:'''\
+      \ That sounds like it should be easily doable, but I don't think anyone has\
+      \ tried.\n\n'''Solid Snake:''' I've tried it already... some pretty crap results\
+      \ though. Certainly not ones to brag about.\n\n'''Foxpaw:''' Crap results in\
+      \ what sense? As in, is there a finite granularity to PokeTerrain that forces\
+      \ poor results, or is it simply difficult to generate the appropriate values\
+      \ to pass to PokeTerrain?\n\n'''Solid Snake:''' While you can generate the terrain\
+      \ dynamically and randomly the texturing of the terrain is the next issue. As\
+      \ it isn't possible to really dynamically alter the terrain (I have already\
+      \ tried to the Unrealscripted Texture route, it results in a very blurry texture)\
+      \ because the textures don't match the resultant terrain just doesn't look very\
+      \ good or very real.\n\n'''RegularX:''' Hrm, thanks for the info.  I'll give\
+      \ it a go anyway, since this project isn't FPS I think some luxuries can be\
+      \ taken on the terrain looking good.  The replayability of random terrain should\
+      \ trump it.\n\n'''FrozenCow''' I've made a picture of the result of PokeTerrain\
+      \ with MaxDepth=-512:\n\n[[Image:Legacy_PokeTerrainExample.jpeg|center|PokeTerrain\
+      \ Example with MaxDepth=-512]]\n[[Category:Legacy Journal|{{PAGENAME}}]]\n[[Category:Legacy\
+      \ Tutorial|{{PAGENAME}}]]"
+  properties: []
+  revId: 4838
+name: "Legacy:Mod Ideas/Real Terrain"
+revision:
+  revid: 4838
+  parentid: 4839
+  user: "Sweavo"
+  timestamp: 1195490965.000000000
+  comment: "*"
+timestamp: 1668765434.725682000

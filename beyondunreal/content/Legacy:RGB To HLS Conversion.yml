@@ -1,0 +1,222 @@
+---
+parse:
+  title: "Legacy:RGB To HLS Conversion"
+  text:
+    text: "<p>This is a function to convert RGB values to HLS. If you want to code\
+      \ colour changing lights in unreal and find that either you can't think in HLS\
+      \ or the light colour is supposed to represent some parameter that's easier\
+      \ coded with RGB you might find this code snippet useful.</p>\n<p>To use this\
+      \ function just feed it a vector (R,G,B) with values from 0...1 for its components\
+      \ and it'll return (H,L,S) ready for you to assign to a light.</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"> <span class=\"kw1\">function</span> <span class=\"kw5\"\
+      >vector</span> colourmap <span class=\"br0\">(</span> <span class=\"kw5\">vector</span>\
+      \ rgb<span class=\"br0\">)</span>\n <span class=\"br0\">{</span>\n  <span class=\"\
+      kw1\">local</span> <span class=\"kw5\">float</span> <span class=\"kw3\">min</span>;\n\
+      \  <span class=\"kw1\">local</span> <span class=\"kw5\">float</span> <span class=\"\
+      kw3\">max</span>;\n  <span class=\"kw1\">local</span> <span class=\"kw5\">vector</span>\
+      \ hls;\n  <span class=\"kw1\">local</span> <span class=\"kw5\">float</span>\
+      \ r,g,b,h,l,s;\n  <span class=\"co1\">// clamp em all to range 0...1;</span>\n\
+      \  rgb.<span class=\"me0\">x</span><span class=\"sy0\">=</span> <span class=\"\
+      kw3\">Fclamp</span><span class=\"br0\">(</span>rgb.<span class=\"me0\">x</span>,<span\
+      \ class=\"nu0\">0</span>,<span class=\"nu0\">1</span><span class=\"br0\">)</span>;\n\
+      \  rgb.<span class=\"me0\">y</span><span class=\"sy0\">=</span> <span class=\"\
+      kw3\">Fclamp</span><span class=\"br0\">(</span>rgb.<span class=\"me0\">y</span>,<span\
+      \ class=\"nu0\">0</span>,<span class=\"nu0\">1</span><span class=\"br0\">)</span>;\n\
+      \  rgb.<span class=\"me0\">z</span><span class=\"sy0\">=</span> <span class=\"\
+      kw3\">Fclamp</span><span class=\"br0\">(</span>rgb.<span class=\"me0\">z</span>,<span\
+      \ class=\"nu0\">0</span>,<span class=\"nu0\">1</span><span class=\"br0\">)</span>;\n\
+      \ \n  r<span class=\"sy0\">=</span>rgb.<span class=\"me0\">x</span>; <span class=\"\
+      co1\">//sanity improving assignments!</span>\n  g<span class=\"sy0\">=</span>rgb.<span\
+      \ class=\"me0\">y</span>;\n  b<span class=\"sy0\">=</span>rgb.<span class=\"\
+      me0\">z</span>;\n \n  <span class=\"co1\">// find minimum and maximum</span>\n\
+      \  <span class=\"kw3\">max</span> <span class=\"sy0\">=</span> <span class=\"\
+      kw3\">Fmax</span><span class=\"br0\">(</span><span class=\"kw3\">fmax</span><span\
+      \ class=\"br0\">(</span>r,g<span class=\"br0\">)</span>,b<span class=\"br0\"\
+      >)</span> ;\n  <span class=\"kw3\">min</span> <span class=\"sy0\">=</span> <span\
+      \ class=\"kw3\">Fmin</span><span class=\"br0\">(</span><span class=\"kw3\">Fmin</span><span\
+      \ class=\"br0\">(</span>r,g<span class=\"br0\">)</span>,b<span class=\"br0\"\
+      >)</span>;\n \n  l <span class=\"sy0\">=</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw3\">max</span><span class=\"sy0\">+</span><span class=\"kw3\">min</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">/</span><span class=\"nu0\">2</span>;\
+      \ <span class=\"co1\">//lightness</span>\n \n  <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span><span class=\"kw3\">max</span><span class=\"sy0\"\
+      >==</span><span class=\"kw3\">min</span><span class=\"br0\">)</span>  <span\
+      \ class=\"co1\">//i.e it's pure grey</span>\n   <span class=\"br0\">{</span>\n\
+      \     s <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>;\n     h <span\
+      \ class=\"sy0\">=</span> <span class=\"nu0\">0</span>;\n   <span class=\"br0\"\
+      >}</span>\n  <span class=\"kw2\">else</span>\n   <span class=\"br0\">{</span>\n\
+      \    <span class=\"kw2\">if</span> <span class=\"br0\">(</span>l <span class=\"\
+      sy0\">&lt;</span> <span class=\"nu0\">0.5</span><span class=\"br0\">)</span>\
+      \  s <span class=\"sy0\">=</span><span class=\"br0\">(</span>max<span class=\"\
+      sy0\">-</span><span class=\"kw3\">min</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">/</span><span class=\"br0\">(</span><span class=\"kw3\">max</span><span\
+      \ class=\"sy0\">+</span><span class=\"kw3\">min</span><span class=\"br0\">)</span>;\n\
+      \    <span class=\"kw2\">If</span> <span class=\"br0\">(</span>l <span class=\"\
+      sy0\">&gt;=</span><span class=\"nu0\">0.5</span><span class=\"br0\">)</span>\
+      \  s <span class=\"sy0\">=</span><span class=\"br0\">(</span>max<span class=\"\
+      sy0\">-</span><span class=\"kw3\">min</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">/</span><span class=\"br0\">(</span><span class=\"nu0\">2.0</span><span\
+      \ class=\"sy0\">-</span>max<span class=\"sy0\">-</span><span class=\"kw3\">min</span><span\
+      \ class=\"br0\">)</span>;\n   <span class=\"br0\">}</span>\n \n  <span class=\"\
+      kw2\">If</span> <span class=\"br0\">(</span>R <span class=\"sy0\">==</span>\
+      \ <span class=\"kw3\">max</span><span class=\"br0\">)</span>  h  <span class=\"\
+      sy0\">=</span> <span class=\"br0\">(</span>G<span class=\"sy0\">-</span>B<span\
+      \ class=\"br0\">)</span><span class=\"sy0\">/</span><span class=\"br0\">(</span>max<span\
+      \ class=\"sy0\">-</span><span class=\"kw3\">min</span><span class=\"br0\">)</span>;\n\
+      \  <span class=\"kw2\">If</span> <span class=\"br0\">(</span>G <span class=\"\
+      sy0\">==</span> <span class=\"kw3\">max</span><span class=\"br0\">)</span> h\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">2.0</span> <span class=\"\
+      sy0\">+</span> <span class=\"br0\">(</span>B<span class=\"sy0\">-</span>R<span\
+      \ class=\"br0\">)</span><span class=\"sy0\">/</span><span class=\"br0\">(</span>max<span\
+      \ class=\"sy0\">-</span><span class=\"kw3\">min</span><span class=\"br0\">)</span>;\n\
+      \  <span class=\"kw2\">If</span> <span class=\"br0\">(</span>B <span class=\"\
+      sy0\">==</span> <span class=\"kw3\">max</span><span class=\"br0\">)</span> \
+      \   h <span class=\"sy0\">=</span> <span class=\"nu0\">4.0</span> <span class=\"\
+      sy0\">+</span> <span class=\"br0\">(</span>R<span class=\"sy0\">-</span>G<span\
+      \ class=\"br0\">)</span><span class=\"sy0\">/</span><span class=\"br0\">(</span>max<span\
+      \ class=\"sy0\">-</span><span class=\"kw3\">min</span><span class=\"br0\">)</span>;\n\
+      \ \n  <span class=\"co1\">//this leaves h from 0...6 , l,s from 0..1 now scale\
+      \ to what unreal wants:</span>\n  <span class=\"co1\">// in this case 0..255\
+      \   ,apart from saturation which seems to want 0..100 ish</span>\n  hls.<span\
+      \ class=\"me0\">x</span><span class=\"sy0\">=</span><span class=\"br0\">(</span>h<span\
+      \ class=\"sy0\">/</span><span class=\"nu0\">6</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">*</span><span class=\"nu0\">255</span>;\n  hls.<span class=\"\
+      me0\">y</span><span class=\"sy0\">=</span><span class=\"br0\">(</span>l<span\
+      \ class=\"sy0\">*</span><span class=\"nu0\">255</span><span class=\"br0\">)</span>;\n\
+      \  hls.<span class=\"me0\">z</span><span class=\"sy0\">=</span><span class=\"\
+      br0\">(</span>s<span class=\"sy0\">*</span><span class=\"nu0\">127</span><span\
+      \ class=\"br0\">)</span>;\n \n  <span class=\"kw2\">return</span><span class=\"\
+      br0\">(</span> hls<span class=\"br0\">)</span>;\n <span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<h2><span class=\"mw-headline\" id=\"Be_sure_to...\">Be sure to...</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:RGB_To_HLS_Conversion?section=1\" title=\"Edit section:\
+      \ Be sure to...\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p><b>DJPaul:</b> This function expects an RGB value from 0..1 and outputs it\
+      \ in the range unreal expects. If you have a colour in RGB (or an RGB \"Colour\
+      \ Picker\") that you want to find the HLS equivalent of, do as follows:</p>\n\
+      <ul>\n<li>For each R, G and B value:\n<ul>\n<li>cast them to floats</li>\n<li>then\
+      \ divide by 255.0</li>\n</ul>\n</li>\n</ul>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Comments\">Comments</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:RGB_To_HLS_Conversion?section=2\"\
+      \ title=\"Edit section: Comments\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p><b>Wormbo:</b> The input and output formats of this\
+      \ function are kind of strange. I'd probably use something like this to work\
+      \ with this function:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">function</span> RGBToHLS<span class=\"br0\">(</span><span class=\"kw5\"\
+      >color</span> InRGB, <span class=\"kw1\">out</span> <span class=\"kw5\">byte</span>\
+      \ Hue, <span class=\"kw1\">out</span> <span class=\"kw5\">byte</span> Luminance,\
+      \ <span class=\"kw1\">out</span> <span class=\"kw5\">byte</span> Saturation<span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n    <span class=\"kw1\"\
+      >local</span> <span class=\"kw5\">vector</span> RGB, HLS;\n \n    RGB.<span\
+      \ class=\"me0\">X</span> <span class=\"sy0\">=</span> InRGB.<span class=\"me0\"\
+      >R</span> <span class=\"sy0\">/</span> <span class=\"nu0\">255.0</span>;\n \
+      \   RGB.<span class=\"me0\">Y</span> <span class=\"sy0\">=</span> InRGB.<span\
+      \ class=\"me0\">G</span> <span class=\"sy0\">/</span> <span class=\"nu0\">255.0</span>;\n\
+      \    RGB.<span class=\"me0\">Z</span> <span class=\"sy0\">=</span> InRGB.<span\
+      \ class=\"me0\">B</span> <span class=\"sy0\">/</span> <span class=\"nu0\">255.0</span>;\n\
+      \    HLS <span class=\"sy0\">=</span> colourmap<span class=\"br0\">(</span>RGB<span\
+      \ class=\"br0\">)</span>;\n    Hue <span class=\"sy0\">=</span> HLS.<span class=\"\
+      me0\">X</span>;\n    Luminance <span class=\"sy0\">=</span> HLS.<span class=\"\
+      me0\">Y</span>;\n    Saturation <span class=\"sy0\">=</span> HLS.<span class=\"\
+      me0\">Z</span>;\n<span class=\"br0\">}</span></pre></div>\n</div>\n<h2><span\
+      \ class=\"mw-headline\" id=\"Related_Topics\">Related Topics</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:RGB_To_HLS_Conversion?section=3\"\
+      \ title=\"Edit section: Related Topics\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<ul>\n<li><a href=\"/Legacy:HLS_To_RGB_Conversion\" title=\"\
+      Legacy:HLS To RGB Conversion\">HLS To RGB Conversion</a></li>\n<li><a href=\"\
+      /Legacy:Open_Source\" title=\"Legacy:Open Source\">Open Source</a></li>\n<li><a\
+      \ href=\"/Legacy:Color_Operators\" title=\"Legacy:Color Operators\">Color Operators</a></li>\n\
+      </ul>\n\n<!-- \nNewPP limit report\nCPU time usage: 0.068 seconds\nReal time\
+      \ usage: 0.070 seconds\nPreprocessor visited node count: 29/1000000\nPreprocessor\
+      \ generated node count: 56/1000000\nPost‐expand include size: 0/2097152 bytes\n\
+      Template argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive\
+      \ parser function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report\
+      \ (%,ms,calls,template)\n100.00%    0.000      1 - -total\n-->\n\n<!-- Saved\
+      \ in parser cache with key wiki:pcache:idhash:2597-0!*!0!!*!*!* and timestamp\
+      \ 20221118025053 and revision id 6198\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Open Source"
+  - ns: 100
+    exists: true
+    name: "Legacy:HLS To RGB Conversion"
+  - ns: 100
+    exists: true
+    name: "Legacy:Color Operators"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Be sure to..."
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:RGB_To_HLS_Conversion"
+    byteoffset: 1427
+    anchor: "Be_sure_to..."
+  - toclevel: 1
+    level: "2"
+    line: "Comments"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:RGB_To_HLS_Conversion"
+    byteoffset: 1740
+    anchor: "Comments"
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:RGB_To_HLS_Conversion"
+    byteoffset: 2219
+    anchor: "Related_Topics"
+  displaytitle: "Legacy:RGB To HLS Conversion"
+  iwlinks: []
+  wikitext:
+    text: "This is a function to convert RGB values to HLS. If you want to code colour\
+      \ changing lights in unreal and find that either you can't think in HLS or the\
+      \ light colour is supposed to represent some parameter that's easier coded with\
+      \ RGB you might find this code snippet useful.\n\nTo use this function just\
+      \ feed it a vector (R,G,B) with values from 0...1 for its components and it'll\
+      \ return (H,L,S) ready for you to assign to a light.\n\n<uscript>\n function\
+      \ vector colourmap ( vector rgb)\n {\n  local float min;\n  local float max;\n\
+      \  local vector hls;\n  local float r,g,b,h,l,s;\n  // clamp em all to range\
+      \ 0...1;\n  rgb.x= Fclamp(rgb.x,0,1);\n  rgb.y= Fclamp(rgb.y,0,1);\n  rgb.z=\
+      \ Fclamp(rgb.z,0,1);\n\n  r=rgb.x; //sanity improving assignments!\n  g=rgb.y;\n\
+      \  b=rgb.z;\n \n  // find minimum and maximum\n  max = Fmax(fmax(r,g),b) ;\n\
+      \  min = Fmin(Fmin(r,g),b);\n\n  l = (max+min)/2; //lightness\n\n  if (max==min)\
+      \  //i.e it's pure grey\n   {\n     s = 0;\n     h = 0;\n   }\n  else\n   {\n\
+      \    if (l < 0.5)  s =(max-min)/(max+min);\n    If (l >=0.5)  s =(max-min)/(2.0-max-min);\n\
+      \   }\n  \n  If (R == max)  h  = (G-B)/(max-min);\n  If (G == max) h = 2.0 +\
+      \ (B-R)/(max-min);\n  If (B == max)    h = 4.0 + (R-G)/(max-min);\n\n  //this\
+      \ leaves h from 0...6 , l,s from 0..1 now scale to what unreal wants:\n  //\
+      \ in this case 0..255   ,apart from saturation which seems to want 0..100 ish\n\
+      \  hls.x=(h/6)*255;\n  hls.y=(l*255);\n  hls.z=(s*127);\n\n  return( hls);\n\
+      \ }\n</uscript>\n\n==Be sure to...==\n\n'''DJPaul:''' This function expects\
+      \ an RGB value from 0..1 and outputs it in the range unreal expects.  If you\
+      \ have a colour in RGB (or an RGB \"Colour Picker\") that you want to find the\
+      \ HLS equivalent of, do as follows:\n*For each R, G and B value:\n**cast them\
+      \ to floats\n**then divide by 255.0\n\n==Comments==\n\n'''Wormbo:''' The input\
+      \ and output formats of this function are kind of strange. I'd probably use\
+      \ something like this to work with this function:<uscript>\nfunction RGBToHLS(color\
+      \ InRGB, out byte Hue, out byte Luminance, out byte Saturation)\n{\n    local\
+      \ vector RGB, HLS;\n    \n    RGB.X = InRGB.R / 255.0;\n    RGB.Y = InRGB.G\
+      \ / 255.0;\n    RGB.Z = InRGB.B / 255.0;\n    HLS = colourmap(RGB);\n    Hue\
+      \ = HLS.X;\n    Luminance = HLS.Y;\n    Saturation = HLS.Z;\n}</uscript>\n\n\
+      ==Related Topics==\n* [[Legacy:HLS To RGB Conversion|HLS To RGB Conversion]]\n\
+      * [[Legacy:Open Source|Open Source]]\n* [[Legacy:Color Operators|Color Operators]]"
+  properties: []
+  revId: 6198
+name: "Legacy:RGB To HLS Conversion"
+revision:
+  revid: 6198
+  parentid: 6200
+  user: "Wormbo"
+  timestamp: 1060248796.000000000
+  comment: "*"
+timestamp: 1668764929.806618000

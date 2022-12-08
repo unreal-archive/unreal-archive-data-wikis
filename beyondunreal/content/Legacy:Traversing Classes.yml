@@ -1,0 +1,405 @@
+---
+parse:
+  title: "Legacy:Traversing Classes"
+  text:
+    text: "<p>This page is an extension to <a href=\"/Legacy:Package\" title=\"Legacy:Package\"\
+      >Package</a>. I will attempt to explain the basic methods used in accessing\
+      \ and manipulating variables, functions, properties, etc. in other classes.</p>\n\
+      <p>This tutorial is designed for new scripters. After reading this document,\
+      \ hopefully you will be able to:</p>\n<ul>\n<li>Recognize if an arbitrary class\
+      \ is accessible from within the class you're currently editing</li>\n<li>Retrieve\
+      \ the values of variables defined in other classes</li>\n<li>Modify and save\
+      \ variables in other classes from within the class you're currently editing</li>\n\
+      <li>Execute functions in other classes</li>\n<li>Spawn new instances of other\
+      \ classes</li>\n<li>Gain valid references to any class from within any other\
+      \ class in UT (this one can be tough)</li>\n</ul>\n<p>This tutorial assumes\
+      \ you are already familiar with:</p>\n<ul>\n<li><a href=\"/Legacy:Class_Syntax\"\
+      \ title=\"Legacy:Class Syntax\">Defining Classes</a></li>\n<li><a href=\"/Legacy:Variable_Syntax\"\
+      \ title=\"Legacy:Variable Syntax\">Variable Types and Syntax</a></li>\n<li>Basics\
+      \ Structure of Class Files</li>\n<li>Class Hierarchy</li>\n<li>SubClasses &amp;\
+      \ ParentClasses</li>\n</ul>\n<p>After reading this tutorial, you should next\
+      \ learn about:</p>\n<ul>\n<li><a href=\"/Legacy:Iterator\" title=\"Legacy:Iterator\"\
+      >Working with Iterators</a></li>\n<li>Manipulating return types for functions</li>\n\
+      <li>Working with static/default</li>\n<li>When to override functions</li>\n\
+      </ul>\n<h2><span class=\"mw-headline\" id=\"Variable_Types\">Variable Types</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Traversing_Classes?section=1\" title=\"Edit section: Variable\
+      \ Types\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <h3><span class=\"mw-headline\" id=\"Defining_Variables\">Defining Variables</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Traversing_Classes?section=2\" title=\"Edit section: Defining\
+      \ Variables\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>MyVar = SomeOtherVariable;</p>\n<p>Here I'm setting the value of the MyVar\
+      \ variable to the value of SomeOtherVariable. Pretty simple. Well, that's fine\
+      \ if SomeOtherVariable is in our own class, but what if SomeOtherVariable is\
+      \ in another class? Actually, it depends a lot on where you are attempting to\
+      \ access this variable from, and what you want to use it for. Another big part\
+      \ of how we'll do this is exactly what type of variable it is, such as a regular\
+      \ variable, like the ones you define at the top of your class's script, a local\
+      \ variable, or argument variables. Let's define these real quick.</p>\n<dl>\n\
+      <dt>Global variable</dt>\n<dd>Defined at the beginning of the class, before\
+      \ any functions, after the class statement and any #exec lines. Global variables\
+      \ are public variables, and can be accessed and modified by any other class.\
+      \ These variables are the only kind that can be config variables (can be saved\
+      \ to an .ini file). Likewise, only global variables can be defined in defaultproperties{\
+      \ }. Global variables can be used throughout the class that they are defined\
+      \ in, as well as any child classes (without being redefined in those child classes).</dd>\n\
+      <dd>Global variables look like this:</dd>\n</dl>\n<pre>         var int NumUsers;\n\
+      \         var config bool bTournament;\n         var class&lt;Pawn&gt; MyPawnType;\n\
+      </pre>\n<dl>\n<dt>Local variables</dt>\n<dd>Local variables are defined in the\
+      \ beginning of functions, before any statements are executed. Local variables\
+      \ may only be used within the function that they are defined in, and will be\
+      \ reset to their null value (0 for integers, \"\" for strings, None for actors,\
+      \ false for booleans, 0.00 for floats, etc.) each time that function is called.\
+      \ Local variables are inaccessible to functions outside of the function it is\
+      \ contained in, including functions in the same class or child classes. Local\
+      \ variables look like this:</dd>\n</dl>\n<pre>         local int i;\n      \
+      \   local PlayerPawn P;\n         local Names[128] UserName;\n</pre>\n<dl>\n\
+      <dt>Argument variables</dt>\n<dd>Argument variables are essentially local variables,\
+      \ which are declared and assigned a value in one step. Argument variables are\
+      \ the variables you use in function definitions, such as:</dd>\n</dl>\n<pre>function\
+      \ DoSomething(string ArugmentVariableString, int ArgumentVariableInt, bool ArgumentVariableBool)\n\
+      </pre>\n<dl>\n<dd>Argument variables, like local variables, may only be used\
+      \ in the function that they are defined within. You do not need to declare argument\
+      \ variables manually in your function ( i.e. local bool bSomething )</dd>\n\
+      </dl>\n<h3><span class=\"mw-headline\" id=\"Working_with_Variables\">Working\
+      \ with Variables</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Traversing_Classes?section=3\" title=\"Edit\
+      \ section: Working with Variables\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>The key to learning how to effectively work with variables\
+      \ and functions in other classes is to understand the difference between a <b>class</b>\
+      \ and an <b>object of that class</b>. Let's say we're working with the HealthVial\
+      \ class, and we want to get the value of the \"HealingAmount\" variable from\
+      \ that class. Let's say we're doing this from a mutator (since most who read\
+      \ this will probably be working on their first or second mutator).</p>\n<p>There\
+      \ are essentially two methods to do this, depending on whether we only need\
+      \ the starting value of the HealingAmount variable, or whether we need the \"\
+      real-time\" value of the HealingAmount variable.</p>\n<p>It's helpful to think\
+      \ of classes (classes in this case being the actual script that you write) as\
+      \ templates for objects. Inside the game engine, when it is time to create your\
+      \ object, the engine looks at the class for your object, and creates an object\
+      \ that has all of the parameters and characteristics of your script. If a default\
+      \ value for any of your global variables is listed, it assigns those values\
+      \ to the object. From that point on, the global variable values may be changed\
+      \ or affected by methods within that object, or other objects within the game.\
+      \ The original default value, however, is not affected by any changes made to\
+      \ the object that was spawned.</p>\n<p>To understand what an \"instance\" is,\
+      \ and how to access instances of objects, think about a car lot. Imagine you\
+      \ go to a car dealer, and give the dealer a list of parameters for the car that\
+      \ you want. Let's say you are looking for a Ford Mustang, manual transmission,\
+      \ red exterior, white interior, convertible. So, the dealer thinks for a minute,\
+      \ reaches under the desk, and hands you a set of keys and tells you your car\
+      \ is outside in the lot. You walk outside where there are thousands of cars.\
+      \ Of those thousands of cars, there are a few hundred Mustangs. Of those few\
+      \ hundred Mustangs, there are about 100 that have red exteriors. Of those, there\
+      \ a few dozen that have white interiors.....so on and so forth. Your key will\
+      \ only work in ONE of these cars, but the dealer hasn't told you which one.\
+      \ Since it isn't really feasible to try the key in every one of those thousands\
+      \ of cars, you're stuck.</p>\n<p>This is very similar to how objects and classes\
+      \ work inside the game engine. The description you gave the dealer, describing\
+      \ the characteristics of the car you're looking for is like a class. Attempting\
+      \ to access a variable in a class without first having a valid reference to\
+      \ an object is like the dealer handing you they keys to the car without telling\
+      \ you which car they belong to, then telling you to go start it up. You won't\
+      \ be able to start it up until the dealer tells you exactly which car the keys\
+      \ belong to.</p>\n<p>OK, so now we know the difference between a class and an\
+      \ object in a very basic abstract sense, but what does that *really* mean??\
+      \ How does knowing this help me write a mod? Where does the madness end?</p>\n\
+      <p>woot! I wrote another paragragh&#160;:) I swear I'm going to finish this\
+      \ document one day&#160;:P</p>\n<p>The first, and easiest way to do this, is\
+      \ to call an iterator function.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">var</span> BigHealthVial BHV1;\n<span class=\"kw1\">var</span>\
+      \ BigHealthVial BHV2;\n<span class=\"kw1\">var</span> BigHealthVial BHV3;\n\
+      \ \n<span class=\"kw1\">function</span> <span class=\"kw4\">PostBeginPlay</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \t<span class=\"kw1\">local</span> HealthVial HV;\n \n \n\t<span class=\"kw2\"\
+      >foreach</span> <span class=\"kw2\">AllActors</span><span class=\"br0\">(</span><span\
+      \ class=\"kw1\">class</span><span class=\"st0\">'HealthVial'</span>, HV<span\
+      \ class=\"br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t\t<span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>HV.<span class=\"me0\">HealingAmount</span>\
+      \ <span class=\"sy0\">&gt;</span> <span class=\"nu0\">25</span><span class=\"\
+      br0\">)</span>\n\t\t<span class=\"br0\">{</span>\n\t\t\t<span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span>BHV1 <span class=\"sy0\">==</span> <span\
+      \ class=\"kw5\">None</span><span class=\"br0\">)</span>\n\t\t\t\tBHV1 <span\
+      \ class=\"sy0\">=</span> HV;\n\t\t\t<span class=\"kw2\">else</span> <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>BHV2 <span class=\"sy0\">==</span>\
+      \ <span class=\"kw5\">None</span><span class=\"br0\">)</span>\n\t\t\t\tBHV2\
+      \ <span class=\"sy0\">=</span> HV;\n\t\t\t<span class=\"kw2\">else</span> <span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span>BHV3 <span class=\"sy0\"\
+      >==</span> <span class=\"kw5\">None</span><span class=\"br0\">)</span>\n\t\t\
+      \t\tBHV3 <span class=\"sy0\">=</span> HV;\n\t\t<span class=\"br0\">}</span>\n\
+      \t<span class=\"br0\">}</span>\n \n\t<span class=\"kw3\">log</span><span class=\"\
+      br0\">(</span><span class=\"st0\">\"Found all the Big Health Vials!\"</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <p>To be continued <a href=\"/edit/User:Evolution?redlink=1\" class=\"new\"\
+      \ title=\"User:Evolution (page does not exist)\">Evolution</a></p>\n<p>the following\
+      \ is a cut-n-paste from a conversation I had in IRC in which I covered most\
+      \ of the material I was going to write here, so I'm leaving it here (so I don't\
+      \ lose it) until I have time to edit and clean it up a bit:</p>\n<pre>\nwell,\
+      \ there are two different methods\n\nin method one, you have a reference to\
+      \ an actual object in the game\n\nmethod 2, you don't have an actual object,\
+      \ but want to access the class anyway\n\nbut I think you'd be safer with doing\
+      \ the first way, and accessing ACTUAL health vials that exist in the game\n\
+      well, you're dealing with instance variables\nso you'll need a valid reference\
+      \ to each instance of the class 'HealthVial'\nok, say we're in the game and\
+      \ we have 100 health vials in the level\n\ni want to access HealthAmount variable\n\
+      maybe something like\nif (HealthAmount != 25) { do my code }\nso far so good?\n\
+      but in the game, \"MedBox\" doesn't exist\n\"MedBox\" is a class\n(20:31) (Dorkorama|VolatileHEALTH)\
+      \ \"in the game\" is refering to the hypothetical, right?\n(20:32) (Evolution)\
+      \ no, in the game, referring to \"as our code is executing in the game\"\n\n\
+      only OBJECTS of the class 'MedBox' exist in the game\nso to access their variables,\
+      \ we must use a \"class reference variable\" (read: class-reference variable,\
+      \ or reference-to-object-of-XXClass variable)\nso we declare a variable like:\
+      \ var MedBox MB;\n\nto access a variable in an object of a particular class,\
+      \ we must first have a class reference variable to work with\nthe class reference\
+      \ variable will represent the objects whose variables we want to access\n\n\
+      MB is still nothing\nbecause we haven't assigned anything to it\nwe've only\
+      \ declared it\n\nit means, \"whatever we assign to MB, it must be this type\
+      \ of thing\"\n(20:36) (Evolution) so then we can do an iterator\n(20:36) (Evolution)\
+      \ let's use Foreach AllActors\n(20:37) (Evolution) the syntax for that is \"\
+      foreach allactors(&lt;class we're looking for&gt;, &lt;our class variable&gt;)\n\
+      (20:37) (Evolution) so in this case, it would be \"ForEach AllActors(class'MedBox',\
+      \ MB)\"\n\nOkay... that searches every actor and if it matches the class we're\
+      \ looking for it's data is copied to the class variable (MB)\n\n\nwhen that\
+      \ happens, it will execute whatever code is in the brackets\nsooooooo, ForEach\
+      \ AllActors(class'MedBox', MB) { if (MB.HealthAmount != 25) MB.HealthAmount\
+      \ = 25; }\nafter it executes whatever code is in the brackets, then it will\
+      \ continue searching all the actors for another medbox, then it will do it all\
+      \ over again\n(20:41) (Evolution) is HealthVial a subclassof MedBox?\n(20:41)\
+      \ (Dorkorama|VolatileHEALTH) No\n(20:41) (Evolution) then that wouldn't work\n\
+      (20:41) (Dorkorama|VolatileHEALTH) Huh?\n(20:42) (Evolution) nesting foreach?\n\
+      (20:42) (Dorkorama|VolatileHEALTH) Yeah\n(20:42) (Evolution) avoid that\n(20:42)\
+      \ (Dorkorama|VolatileHEALTH) Crud....\n(20:42) (Evolution) until you're more\
+      \ familiar with using iterators, anyway\n(20:42) (Dorkorama|VolatileHEALTH)\
+      \ bleh....\n(20:42) (Evolution) cuz that's a real easy way to make UT grind\
+      \ to a halt\n(20:42) (Dorkorama|VolatileHEALTH) 8-\\\n(20:43) (Evolution) if\
+      \ you're doing the iterator in a singlular function, like PostBeginPlay()\n\
+      (20:43) (Dorkorama|VolatileHEALTH) I still wonder what's in the latest PURE\
+      \ builds that makes gameplay go slower and slower\n(20:43) (Dorkorama|VolatileHEALTH)\
+      \ ANyway...\n(20:43) (Evolution) just do two iterators\n(20:43) (Evolution)\
+      \ one for medbox, one for healthvial\n</pre>\n<pre>To be Continued....  →<a\
+      \ href=\"/Legacy:Evolution\" title=\"Legacy:Evolution\">Evolution</a>\n</pre>\n\
+      <p><b>Tarquin:</b> Ev, I think this will be a multi-page topic. Do you want\
+      \ to take material from <a href=\"/Legacy:Communication_Between_Objects\" title=\"\
+      Legacy:Communication Between Objects\">Communication Between Objects</a> for\
+      \ this? (BTW, I think this page title is way better than \"Communication Between\
+      \ Objects\" )</p>\n\n<!-- \nNewPP limit report\nCPU time usage: 0.058 seconds\n\
+      Real time usage: 0.120 seconds\nPreprocessor visited node count: 18/1000000\n\
+      Preprocessor generated node count: 64/1000000\nPost‐expand include size: 18/2097152\
+      \ bytes\nTemplate argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\n\
+      Expensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion expansion\
+      \ time report (%,ms,calls,template)\n100.00%    0.000      1 - -total\n-->\n\
+      \n<!-- Saved in parser cache with key wiki:pcache:idhash:3105-0!*!0!!*!*!* and\
+      \ timestamp 20221118015144 and revision id 44370\n -->\n"
+  categories:
+  - sortkey: "Traversing Classes"
+    name: "Legacy_Refactor_Me"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Communication Between Objects"
+  - ns: 100
+    exists: true
+    name: "Legacy:Variable Syntax"
+  - ns: 2
+    exists: false
+    name: "User:Evolution"
+  - ns: 100
+    exists: true
+    name: "Legacy:Evolution"
+  - ns: 100
+    exists: true
+    name: "Legacy:Iterator"
+  - ns: 100
+    exists: true
+    name: "Legacy:Package"
+  - ns: 100
+    exists: true
+    name: "Legacy:Class Syntax"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Variable Types"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Traversing_Classes"
+    byteoffset: 1160
+    anchor: "Variable_Types"
+  - toclevel: 2
+    level: "3"
+    line: "Defining Variables"
+    number: "1.1"
+    index: "2"
+    fromtitle: "Legacy:Traversing_Classes"
+    byteoffset: 1180
+    anchor: "Defining_Variables"
+  - toclevel: 2
+    level: "3"
+    line: "Working with Variables"
+    number: "1.2"
+    index: "3"
+    fromtitle: "Legacy:Traversing_Classes"
+    byteoffset: 3644
+    anchor: "Working_with_Variables"
+  displaytitle: "Legacy:Traversing Classes"
+  iwlinks: []
+  wikitext:
+    text: "This page is an extension to [[Legacy:Package|Package]].  I will attempt\
+      \ to explain the basic methods used in accessing and manipulating variables,\
+      \ functions, properties, etc. in other classes.\n\nThis tutorial is designed\
+      \ for new scripters.  After reading this document, hopefully you will be able\
+      \ to:\n* Recognize if an arbitrary class is accessible from within the class\
+      \ you're currently editing\n* Retrieve the values of variables defined in other\
+      \ classes\n* Modify and save variables in other classes from within the class\
+      \ you're currently editing\n* Execute functions in other classes\n* Spawn new\
+      \ instances of other classes\n* Gain valid references to any class from within\
+      \ any other class in UT (this one can be tough)\n\nThis tutorial assumes you\
+      \ are already familiar with:\n* [[Legacy:Class Syntax|Defining Classes]]\n*\
+      \ [[Legacy:Variable Syntax|Variable Types and Syntax]]\n* Basics Structure of\
+      \ Class Files\n* Class Hierarchy\n* SubClasses & ParentClasses\n\nAfter reading\
+      \ this tutorial, you should next learn about:\n* [[Legacy:Iterator | Working\
+      \ with Iterators]]\n* Manipulating return types for functions\n* Working with\
+      \ static/default\n* When to override functions\n\n==Variable Types==\n\n===Defining\
+      \ Variables===\n\nMyVar = SomeOtherVariable;\n\nHere I'm setting the value of\
+      \ the MyVar variable to the value of SomeOtherVariable.  Pretty simple.  Well,\
+      \ that's fine if SomeOtherVariable is in our own class, but what if SomeOtherVariable\
+      \ is in another class?  Actually, it depends a lot on where you are attempting\
+      \ to access this variable from, and what you want to use it for.  Another big\
+      \ part of how we'll do this is exactly what type of variable it is, such as\
+      \ a regular variable, like the ones you define at the top of your class's script,\
+      \ a local variable, or argument variables.  Let's define these real quick.\n\
+      \n; Global variable\n:Defined at the beginning of the class, before any functions,\
+      \ after the class statement and any #exec lines.  Global variables are public\
+      \ variables, and can be accessed and modified by any other class.  These variables\
+      \ are the only kind that can be config variables (can be saved to an .ini file).\
+      \  Likewise, only global variables can be defined in defaultproperties{ }. Global\
+      \ variables can be used throughout the class that they are defined in, as well\
+      \ as any child classes (without being redefined in those child classes).\n:Global\
+      \ variables look like this:\n          var int NumUsers;\n          var config\
+      \ bool bTournament;\n          var class<Pawn> MyPawnType;\n\n;Local variables\n\
+      :Local variables are defined in the beginning of functions, before any statements\
+      \ are executed.  Local variables may only be used within the function that they\
+      \ are defined in, and will be reset to their null value (0 for integers, \"\"\
+      \ for strings, None for actors, false for booleans, 0.00 for floats, etc.) each\
+      \ time that function is called.  Local variables are inaccessible to functions\
+      \ outside of the function it is contained in, including functions in the same\
+      \ class or child classes.  Local variables look like this:\n          local\
+      \ int i;\n          local PlayerPawn P;\n          local Names[128] UserName;\n\
+      \n;Argument variables\n:Argument variables are essentially local variables,\
+      \ which are declared and assigned a value in one step.  Argument variables are\
+      \ the variables you use in function definitions, such as:\n\n function DoSomething(string\
+      \ ArugmentVariableString, int ArgumentVariableInt, bool ArgumentVariableBool)\n\
+      \n:Argument variables, like local variables, may only be used in the function\
+      \ that they are defined within.  You do not need to declare argument variables\
+      \ manually in your function ( i.e. local bool bSomething )\n\n===Working with\
+      \ Variables===\n\nThe key to learning how to effectively work with variables\
+      \ and functions in other classes is to understand the difference between a <b>class</b>\
+      \ and an <b>object of that class</b>.  Let's say we're working with the HealthVial\
+      \ class, and we want to get the value of the \"HealingAmount\" variable from\
+      \ that class.  Let's say we're doing this from a mutator (since most who read\
+      \ this will probably be working on their first or second mutator).\n\nThere\
+      \ are essentially two methods to do this, depending on whether we only need\
+      \ the starting value of the HealingAmount variable, or whether we need the \"\
+      real-time\" value of the HealingAmount variable.\n\nIt's helpful to think of\
+      \ classes (classes in this case being the actual script that you write) as templates\
+      \ for objects.  Inside the game engine, when it is time to create your object,\
+      \ the engine looks at the class for your object, and creates an object that\
+      \ has all of the parameters and characteristics of your script.  If a default\
+      \ value for any of your global variables is listed, it assigns those values\
+      \ to the object.  From that point on, the global variable values may be changed\
+      \ or affected by methods within that object, or other objects within the game.\
+      \  The original default value, however, is not affected by any changes made\
+      \ to the object that was spawned.\n\nTo understand what an \"instance\" is,\
+      \ and how to access instances of objects, think about a car lot.  Imagine you\
+      \ go to a car dealer, and give the dealer a list of parameters for the car that\
+      \ you want.  Let's say you are looking for a Ford Mustang, manual transmission,\
+      \ red exterior, white interior, convertible.  So, the dealer thinks for a minute,\
+      \ reaches under the desk, and hands you a set of keys and tells you your car\
+      \ is outside in the lot.  You walk outside where there are thousands of cars.\
+      \  Of those thousands of cars, there are a few hundred Mustangs.  Of those few\
+      \ hundred Mustangs, there are about 100 that have red exteriors.  Of those,\
+      \ there a few dozen that have white interiors.....so on and so forth.  Your\
+      \ key will only work in ONE of these cars, but the dealer hasn't told you which\
+      \ one.  Since it isn't really feasible to try the key in every one of those\
+      \ thousands of cars, you're stuck.\n\nThis is very similar to how objects and\
+      \ classes work inside the game engine.  The description you gave the dealer,\
+      \ describing the characteristics of the car you're looking for is like a class.\
+      \ Attempting to access a variable in a class without first having a valid reference\
+      \ to an object is like the dealer handing you they keys to the car without telling\
+      \ you which car they belong to, then telling you to go start it up.  You won't\
+      \ be able to start it up until the dealer tells you exactly which car the keys\
+      \ belong to.\n\nOK, so now we know the difference between a class and an object\
+      \ in a very basic abstract sense, but what does that *really* mean??  How does\
+      \ knowing this help me write a mod?  Where does the madness end?\n\nwoot!  I\
+      \ wrote another paragragh :)  I swear I'm going to finish this document one\
+      \ day :P\n\nThe first, and easiest way to do this, is to call an iterator function.\n\
+      \n<uscript>\nvar BigHealthVial BHV1;\nvar BigHealthVial BHV2;\nvar BigHealthVial\
+      \ BHV3;\n\nfunction PostBeginPlay()\n{\n\tlocal HealthVial HV;\n\t\n\t\n\tforeach\
+      \ AllActors(class'HealthVial', HV)\n\t{\n\t\tif (HV.HealingAmount > 25)\n\t\t\
+      {\n\t\t\tif (BHV1 == None)\n\t\t\t\tBHV1 = HV;\n\t\t\telse if (BHV2 == None)\n\
+      \t\t\t\tBHV2 = HV;\n\t\t\telse if (BHV3 == None)\n\t\t\t\tBHV3 = HV;\n\t\t}\n\
+      \t}\n\t\n\tlog(\"Found all the Big Health Vials!\")\n}\n</uscript>\n\nTo be\
+      \ continued [[User:Evolution|Evolution]]\n\nthe following is a cut-n-paste from\
+      \ a conversation I had in IRC in which I covered most of the material I was\
+      \ going to write here, so I'm leaving it here (so I don't lose it) until I have\
+      \ time to edit and clean it up a bit:\n\n<pre>\nwell, there are two different\
+      \ methods\n\nin method one, you have a reference to an actual object in the\
+      \ game\n\nmethod 2, you don't have an actual object, but want to access the\
+      \ class anyway\n\nbut I think you'd be safer with doing the first way, and accessing\
+      \ ACTUAL health vials that exist in the game\nwell, you're dealing with instance\
+      \ variables\nso you'll need a valid reference to each instance of the class\
+      \ 'HealthVial'\nok, say we're in the game and we have 100 health vials in the\
+      \ level\n\ni want to access HealthAmount variable\nmaybe something like\nif\
+      \ (HealthAmount != 25) { do my code }\nso far so good?\nbut in the game, \"\
+      MedBox\" doesn't exist\n\"MedBox\" is a class\n(20:31) (Dorkorama|VolatileHEALTH)\
+      \ \"in the game\" is refering to the hypothetical, right?\n(20:32) (Evolution)\
+      \ no, in the game, referring to \"as our code is executing in the game\"\n\n\
+      only OBJECTS of the class 'MedBox' exist in the game\nso to access their variables,\
+      \ we must use a \"class reference variable\" (read: class-reference variable,\
+      \ or reference-to-object-of-XXClass variable)\nso we declare a variable like:\
+      \ var MedBox MB;\n\nto access a variable in an object of a particular class,\
+      \ we must first have a class reference variable to work with\nthe class reference\
+      \ variable will represent the objects whose variables we want to access\n\n\
+      MB is still nothing\nbecause we haven't assigned anything to it\nwe've only\
+      \ declared it\n\nit means, \"whatever we assign to MB, it must be this type\
+      \ of thing\"\n(20:36) (Evolution) so then we can do an iterator\n(20:36) (Evolution)\
+      \ let's use Foreach AllActors\n(20:37) (Evolution) the syntax for that is \"\
+      foreach allactors(<class we're looking for>, <our class variable>)\n(20:37)\
+      \ (Evolution) so in this case, it would be \"ForEach AllActors(class'MedBox',\
+      \ MB)\"\n\nOkay... that searches every actor and if it matches the class we're\
+      \ looking for it's data is copied to the class variable (MB)\n\n\nwhen that\
+      \ happens, it will execute whatever code is in the brackets\nsooooooo, ForEach\
+      \ AllActors(class'MedBox', MB) { if (MB.HealthAmount != 25) MB.HealthAmount\
+      \ = 25; }\nafter it executes whatever code is in the brackets, then it will\
+      \ continue searching all the actors for another medbox, then it will do it all\
+      \ over again\n(20:41) (Evolution) is HealthVial a subclassof MedBox?\n(20:41)\
+      \ (Dorkorama|VolatileHEALTH) No\n(20:41) (Evolution) then that wouldn't work\n\
+      (20:41) (Dorkorama|VolatileHEALTH) Huh?\n(20:42) (Evolution) nesting foreach?\n\
+      (20:42) (Dorkorama|VolatileHEALTH) Yeah\n(20:42) (Evolution) avoid that\n(20:42)\
+      \ (Dorkorama|VolatileHEALTH) Crud....\n(20:42) (Evolution) until you're more\
+      \ familiar with using iterators, anyway\n(20:42) (Dorkorama|VolatileHEALTH)\
+      \ bleh....\n(20:42) (Evolution) cuz that's a real easy way to make UT grind\
+      \ to a halt\n(20:42) (Dorkorama|VolatileHEALTH) 8-\\\n(20:43) (Evolution) if\
+      \ you're doing the iterator in a singlular function, like PostBeginPlay()\n\
+      (20:43) (Dorkorama|VolatileHEALTH) I still wonder what's in the latest PURE\
+      \ builds that makes gameplay go slower and slower\n(20:43) (Dorkorama|VolatileHEALTH)\
+      \ ANyway...\n(20:43) (Evolution) just do two iterators\n(20:43) (Evolution)\
+      \ one for medbox, one for healthvial\n</pre>\n To be Continued....  &rarr;[[Legacy:Evolution|Evolution]]\n\
+      \n'''Tarquin:''' Ev, I think this will be a multi-page topic. Do you want to\
+      \ take material from [[Legacy:Communication Between Objects|Communication Between\
+      \ Objects]] for this? (BTW, I think this page title is way better than \"Communication\
+      \ Between Objects\" )\n\n[[Category:Legacy Refactor Me|{{PAGENAME}}]]"
+  properties: []
+  revId: 44370
+name: "Legacy:Traversing Classes"
+revision:
+  revid: 44370
+  parentid: 8147
+  user: "Evolution"
+  timestamp: 1302480381.000000000
+  comment: "/* Working with Variables */"
+timestamp: 1668762085.676299000

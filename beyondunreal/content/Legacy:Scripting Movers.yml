@@ -1,0 +1,263 @@
+---
+parse:
+  title: "Legacy:Scripting Movers"
+  text:
+    text: "<p>When the Epic movers aren't enough, it's relatively easy to script your\
+      \ own. These can be embedded in a map's <a href=\"/Legacy:MyLevel\" title=\"\
+      Legacy:MyLevel\">MyLevel</a> package.</p>\n<p>Basic steps:</p>\n<ol>\n<li>Subclass\
+      \ the mover class (see <a href=\"/Legacy:Create_A_Subclass\" title=\"Legacy:Create\
+      \ A Subclass\">Create A Subclass</a> for more on this)</li>\n<li>Write the script</li>\n\
+      <li>Compile</li>\n<li>Make the <a href=\"/Legacy:Red_Builder_Brush\" title=\"\
+      Legacy:Red Builder Brush\">red builder brush</a> into a mover template</li>\n\
+      <li>Right-click the Add Mover button in the <a href=\"/Legacy:Toolbox\" title=\"\
+      Legacy:Toolbox\">toolbox</a>. The name of the new mover class appears here,\
+      \ subclasses of subclasses will not appear (e.g. a subclass of LoopMover, which\
+      \ is itself a subclass of Mover).</li>\n</ol>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Example\">Example</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Scripting_Movers?section=1\"\
+      \ title=\"Edit section: Example\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p><i>Tarquin writes:</i></p>\n<p>StandTriggerMover adds\
+      \ a new state. Expanding from a state wasn't really necessary, since I ended\
+      \ up having to copy the Attach() function across as well, since StandOpenTimed's\
+      \ Attach() function explicitly sends it to that state to open. (See <a href=\"\
+      /Legacy:State\" title=\"Legacy:State\">State</a> for more on states...)</p>\n\
+      <p>This mover is activated both by being stood on by a player and a trigger.\
+      \ I've tested it and it works fine. Feel free to use it, though please credit\
+      \ the Wiki if you do. If you make any alterations, comment &amp; document them\
+      \ here.</p>\n<p>Turns out this script is largely pointless, and you can use\
+      \ BumpEvent or something to get the mover to trigger itself when stood on...\
+      \ sigh...</p>\n<p>PS. The best way to credit the Wiki, besides a mention in\
+      \ a map's helpfile, is to add to it...&#160;:-)</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"co1\">//=============================================================================</span>\n\
+      <span class=\"co1\">// StandTriggerMover.</span>\n<span class=\"co1\">// This\
+      \ mover responds to both triggering and being stood on.</span>\n<span class=\"\
+      co1\">//=============================================================================</span>\n\
+      <span class=\"kw1\">class</span> StandTriggerMover <span class=\"kw1\">extends</span>\
+      \ Mover;\n \n<span class=\"kw1\">state</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span> TriggerStandOpenTimed <span class=\"kw1\">extends</span>\
+      \ StandOpenTimed\n<span class=\"br0\">{</span>\n <span class=\"kw1\">function</span>\
+      \ <span class=\"kw4\">Trigger</span><span class=\"br0\">(</span> <span class=\"\
+      kw9\">actor</span> Other, <span class=\"kw9\">pawn</span> EventInstigator <span\
+      \ class=\"br0\">)</span>\n <span class=\"br0\">{</span>\n  SavedTrigger <span\
+      \ class=\"sy0\">=</span> Other;\n  <span class=\"kw7\">Instigator</span> <span\
+      \ class=\"sy0\">=</span> EventInstigator;\n  <span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span> SavedTrigger <span class=\"sy0\">!=</span> <span class=\"\
+      kw5\">None</span> <span class=\"br0\">)</span>\n   SavedTrigger.<span class=\"\
+      kw4\">BeginEvent</span><span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \ \n  <span class=\"kw3\">GotoState</span><span class=\"br0\">(</span> <span\
+      \ class=\"st0\">'TriggerStandOpenTimed'</span>, <span class=\"st0\">'Open'</span>\
+      \ <span class=\"br0\">)</span>;\n <span class=\"br0\">}</span>\n \n <span class=\"\
+      kw1\">function</span> <span class=\"kw3\">BeginState</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>\n <span class=\"br0\">{</span>\n  bOpening\
+      \ <span class=\"sy0\">=</span> <span class=\"kw6\">false</span>;\n <span class=\"\
+      br0\">}</span>\n \n <span class=\"kw1\">function</span> <span class=\"kw4\"\
+      >Attach</span><span class=\"br0\">(</span> <span class=\"kw9\">actor</span>\
+      \ Other <span class=\"br0\">)</span>\n <span class=\"br0\">{</span>\n  <span\
+      \ class=\"kw1\">local</span> <span class=\"kw9\">pawn</span>  P;\n \n  P <span\
+      \ class=\"sy0\">=</span> <span class=\"kw9\">Pawn</span><span class=\"br0\"\
+      >(</span>Other<span class=\"br0\">)</span>;\n  <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span> <span class=\"br0\">(</span>BumpType <span class=\"\
+      sy0\">!=</span> BT_AnyBump<span class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"br0\">(</span>P <span class=\"sy0\">==</span> <span class=\"\
+      kw5\">None</span><span class=\"br0\">)</span> <span class=\"br0\">)</span>\n\
+      \   <span class=\"kw2\">return</span>;\n  <span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span> <span class=\"br0\">(</span>BumpType <span class=\"\
+      sy0\">==</span> BT_PlayerBump<span class=\"br0\">)</span> <span class=\"sy0\"\
+      >&amp;&amp;</span> <span class=\"sy0\">!</span>P.<span class=\"me0\">bIsPlayer</span>\
+      \ <span class=\"br0\">)</span>\n   <span class=\"kw2\">return</span>;\n  <span\
+      \ class=\"kw2\">if</span> <span class=\"br0\">(</span> <span class=\"br0\">(</span>BumpType\
+      \ <span class=\"sy0\">==</span> BT_PawnBump<span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span>Other.<span class=\"\
+      kw7\">Mass</span> <span class=\"sy0\">&lt;</span> <span class=\"nu0\">10</span><span\
+      \ class=\"br0\">)</span> <span class=\"br0\">)</span>\n   <span class=\"kw2\"\
+      >return</span>;\n  SavedTrigger <span class=\"sy0\">=</span> <span class=\"\
+      kw5\">None</span>;\n  <span class=\"kw3\">GotoState</span><span class=\"br0\"\
+      >(</span> <span class=\"st0\">'TriggerStandOpenTimed'</span>, <span class=\"\
+      st0\">'Open'</span> <span class=\"br0\">)</span>;\n <span class=\"br0\">}</span>\n\
+      \ \nOpen:\n <span class=\"kw3\">Disable</span><span class=\"br0\">(</span> <span\
+      \ class=\"st0\">'Attach'</span> <span class=\"br0\">)</span>;\n <span class=\"\
+      kw3\">Disable</span><span class=\"br0\">(</span> <span class=\"st0\">'Trigger'</span>\
+      \ <span class=\"br0\">)</span>;\n <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span> DelayTime <span class=\"sy0\">&gt;</span> <span class=\"nu0\"\
+      >0</span> <span class=\"br0\">)</span>\n <span class=\"br0\">{</span>\n  bDelaying\
+      \ <span class=\"sy0\">=</span> <span class=\"kw6\">true</span>;\n  <span class=\"\
+      kw4\">Sleep</span><span class=\"br0\">(</span>DelayTime<span class=\"br0\">)</span>;\n\
+      \ <span class=\"br0\">}</span>\n DoOpen<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n FinishInterpolation<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n FinishedOpening<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n <span class=\"kw4\">Sleep</span><span class=\"br0\">(</span>\
+      \ StayOpenTime <span class=\"br0\">)</span>;\n <span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span> bTriggerOnceOnly <span class=\"br0\">)</span>\n  <span\
+      \ class=\"kw3\">GotoState</span><span class=\"br0\">(</span><span class=\"st0\"\
+      >''</span><span class=\"br0\">)</span>;\nClose:\n DoClose<span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>;\n FinishInterpolation<span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>;\n FinishedClosing<span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>;\n <span class=\"kw3\">Enable</span><span\
+      \ class=\"br0\">(</span> <span class=\"st0\">'Trigger'</span> <span class=\"\
+      br0\">)</span>;\n <span class=\"kw3\">Enable</span><span class=\"br0\">(</span>\
+      \ <span class=\"st0\">'Attach'</span> <span class=\"br0\">)</span>;\n \n<span\
+      \ class=\"br0\">}</span></pre></div>\n</div>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Related_Topics\">Related Topics</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Scripting_Movers?section=2\"\
+      \ title=\"Edit section: Related Topics\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<ul>\n<li><a href=\"/Legacy:VariableTimedMover\" title=\"\
+      Legacy:VariableTimedMover\">VariableTimedMover</a></li>\n<li><a href=\"/Legacy:UnrealScript\"\
+      \ title=\"Legacy:UnrealScript\">UnrealScript</a></li>\n<li><a href=\"/Legacy:UnrealScript_Lessons\"\
+      \ title=\"Legacy:UnrealScript Lessons\">UnrealScript Lessons</a></li>\n<li><a\
+      \ href=\"/Legacy:Making_Mods\" title=\"Legacy:Making Mods\">Making Mods</a></li>\n\
+      <li><a href=\"/Legacy:Custom_Mover\" title=\"Legacy:Custom Mover\">Custom Mover</a></li>\n\
+      </ul>\n<h2><span class=\"mw-headline\" id=\"Discussion\">Discussion</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Scripting_Movers?section=3\" title=\"Edit section: Discussion\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n<p><b>Dr.AwkwArD:</b>\
+      \ Was this for UT99?</p>\n<p><b>Tarquin:</b> yes. Though in principle it should\
+      \ work with any version, with maybe tweaks.</p>\n<p><b>Vitaloverdose</b> About\
+      \ the Function attach...i cant see any attaching going on, is there any chance\
+      \ you could provide some info as to what its doing? Maybe some line comments?</p>\n\
+      <p><b>[CK]Davros</b> Minor mods to the Basic Steps, just to say that it must\
+      \ be a sublass of \"THE mover class\" not \"a mover class\" and that subclasses\
+      \ are not shown in the right-click menu. I'm not going to make a mess of this\
+      \ article but just to say that I've used this to make a GradualLoopMover which\
+      \ both moves in a loop (i.e. goes from KeyNum 'n' to KeyNum 0 directly without\
+      \ going back through all the previous Keys.) and also offers varying move speeds.\
+      \ So if this is \"largely pointless\", well, there's another use for it.</p>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.059 seconds\nReal time usage:\
+      \ 0.127 seconds\nPreprocessor visited node count: 23/1000000\nPreprocessor generated\
+      \ node count: 60/1000000\nPost‐expand include size: 48/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:2727-0!*!0!!*!*!* and timestamp 20221118020501 and revision\
+      \ id 43690\n -->\n"
+  categories:
+  - sortkey: "Scripting Movers"
+    name: "Legacy_Custom_Class_(UT2004)"
+  - sortkey: "Scripting Movers"
+    name: "Legacy_Tutorial"
+  - sortkey: "Scripting Movers"
+    name: "Legacy_Custom_Class_(UT)"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:State"
+  - ns: 100
+    exists: true
+    name: "Legacy:UnrealScript Lessons"
+  - ns: 100
+    exists: true
+    name: "Legacy:Making Mods"
+  - ns: 100
+    exists: true
+    name: "Legacy:Red Builder Brush"
+  - ns: 100
+    exists: true
+    name: "Legacy:MyLevel"
+  - ns: 100
+    exists: true
+    name: "Legacy:Create A Subclass"
+  - ns: 100
+    exists: true
+    name: "Legacy:VariableTimedMover"
+  - ns: 100
+    exists: true
+    name: "Legacy:UnrealScript"
+  - ns: 100
+    exists: true
+    name: "Legacy:Custom Mover"
+  - ns: 100
+    exists: true
+    name: "Legacy:Toolbox"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Example"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Scripting_Movers"
+    byteoffset: 595
+    anchor: "Example"
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Scripting_Movers"
+    byteoffset: 2721
+    anchor: "Related_Topics"
+  - toclevel: 1
+    level: "2"
+    line: "Discussion"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:Scripting_Movers"
+    byteoffset: 2962
+    anchor: "Discussion"
+  displaytitle: "Legacy:Scripting Movers"
+  iwlinks: []
+  wikitext:
+    text: "When the Epic movers aren't enough, it's relatively easy to script your\
+      \ own. These can be embedded in a map's [[Legacy:MyLevel|MyLevel]] package.\n\
+      \nBasic steps:\n# Subclass the mover class (see [[Legacy:Create A Subclass|Create\
+      \ A Subclass]] for more on this)\n# Write the script\n# Compile\n# Make the\
+      \ [[Legacy:Red Builder Brush|red builder brush]] into a  mover template \n#\
+      \ Right-click the Add Mover button in the [[Legacy:Toolbox|toolbox]]. The name\
+      \ of the new mover class appears here, subclasses of subclasses will not appear\
+      \ (e.g. a subclass of LoopMover, which is itself a subclass of Mover).\n\n==Example\
+      \ ==\n\n<i>Tarquin writes:</i>\n\nStandTriggerMover adds a new state. Expanding\
+      \ from a state wasn't really necessary, since I ended up having to copy the\
+      \ Attach() function across as well, since StandOpenTimed's Attach() function\
+      \ explicitly sends it to that state to open. (See [[Legacy:State|State]] for\
+      \ more on states...)\n\nThis mover is activated both by being stood on by a\
+      \ player and a trigger. I've tested it and it works fine. Feel free to use it,\
+      \ though please credit the Wiki if you do. If you make any alterations, comment\
+      \ & document them here.\n\nTurns out this script is largely pointless, and you\
+      \ can use BumpEvent or something to get the mover to trigger itself when stood\
+      \ on... sigh...\n\nPS. The best way to credit the Wiki, besides a mention in\
+      \ a map's helpfile, is to add to it... :-)\n\n<uscript>\n//=============================================================================\n\
+      // StandTriggerMover.\n// This mover responds to both triggering and being stood\
+      \ on.\n//=============================================================================\n\
+      class StandTriggerMover extends Mover;\n\nstate() TriggerStandOpenTimed extends\
+      \ StandOpenTimed\n{\n function Trigger( actor Other, pawn EventInstigator )\n\
+      \ {\n  SavedTrigger = Other;\n  Instigator = EventInstigator;\n  if ( SavedTrigger\
+      \ != None )\n   SavedTrigger.BeginEvent();\n\n  GotoState( 'TriggerStandOpenTimed',\
+      \ 'Open' );\n }\n\n function BeginState()\n {\n  bOpening = false;\n }\n\n function\
+      \ Attach( actor Other )\n {\n  local pawn  P;\n\n  P = Pawn(Other);\n  if (\
+      \ (BumpType != BT_AnyBump) && (P == None) )\n   return;\n  if ( (BumpType ==\
+      \ BT_PlayerBump) && !P.bIsPlayer )\n   return;\n  if ( (BumpType == BT_PawnBump)\
+      \ && (Other.Mass < 10) )\n   return;\n  SavedTrigger = None;\n  GotoState( 'TriggerStandOpenTimed',\
+      \ 'Open' );\n }\n\nOpen:\n Disable( 'Attach' );\n Disable( 'Trigger' );\n if\
+      \ ( DelayTime > 0 )\n {\n  bDelaying = true;\n  Sleep(DelayTime);\n }\n DoOpen();\n\
+      \ FinishInterpolation();\n FinishedOpening();\n Sleep( StayOpenTime );\n if(\
+      \ bTriggerOnceOnly )\n  GotoState('');\nClose:\n DoClose();\n FinishInterpolation();\n\
+      \ FinishedClosing();\n Enable( 'Trigger' );\n Enable( 'Attach' );\n\n}\n</uscript>\n\
+      \n==Related Topics==\n* [[Legacy:VariableTimedMover|VariableTimedMover]]\n*\
+      \ [[Legacy:UnrealScript|UnrealScript]]\n* [[Legacy:UnrealScript Lessons|UnrealScript\
+      \ Lessons]]\n* [[Legacy:Making Mods|Making Mods]]\n* [[Legacy:Custom Mover|Custom\
+      \ Mover]]\n\n==Discussion==\n\n'''Dr.AwkwArD:''' Was this for UT99?\n\n'''Tarquin:'''\
+      \ yes. Though in principle it should work with any version, with maybe tweaks.\n\
+      \n'''Vitaloverdose''' About the Function attach...i cant see any attaching going\
+      \ on, is there any chance you could provide some info as to what its doing?\
+      \ Maybe some line comments?\n\n'''[CK]Davros''' Minor mods to the Basic Steps,\
+      \ just to say that it must be a sublass of \"THE mover class\" not \"a mover\
+      \ class\" and that subclasses are not shown in the right-click menu. I'm not\
+      \ going to make a mess of this article but just to say that I've used this to\
+      \ make a GradualLoopMover which both moves in a loop (i.e. goes from KeyNum\
+      \ 'n' to KeyNum 0 directly without going back through all the previous Keys.)\
+      \ and also offers varying move speeds. So if this is \"largely pointless\",\
+      \ well, there's another use for it.\n\n[[Category:Legacy Tutorial|{{PAGENAME}}]]\n\
+      [[Category:Legacy Custom Class (UT)|{{PAGENAME}}]]\n[[Category:Legacy Custom\
+      \ Class (UT2004)|{{PAGENAME}}]]"
+  properties: []
+  revId: 43690
+name: "Legacy:Scripting Movers"
+revision:
+  revid: 43690
+  parentid: 7320
+  user: "86.21.15.190"
+  timestamp: 1279383945.000000000
+  comment: "minor technical correction"
+timestamp: 1668764841.988291000

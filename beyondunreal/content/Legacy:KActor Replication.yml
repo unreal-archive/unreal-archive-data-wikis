@@ -1,0 +1,741 @@
+---
+parse:
+  title: "Legacy:KActor Replication"
+  text:
+    text: "<h2><span class=\"mw-headline\" id=\"How_it_works\">How it works</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:KActor_Replication?section=1\" title=\"Edit section: How\
+      \ it works\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>The code is based on the replication technique found in <a href=\"/Legacy:KCar\"\
+      \ title=\"Legacy:KCar\">KCar</a>. Every tick, the server checks the location,\
+      \ linear and angular velocity of the actor, and if it differs much from when\
+      \ the last replication occured or if more time than MaxNetUpdateInterval has\
+      \ elapsed, the state of the actor on the server will be stored in a variable\
+      \ that is replicated to clients. On recieving the new state, the actor on the\
+      \ client will apply the new state to itself.</p>\n<p>Note that RemoteRole is\
+      \ set to ROLE_SimulatedProxy, bNetNotify is set to true (so that PostNetReceive\
+      \ is called on the client) and the <a href=\"/Legacy:KarmaParams\" title=\"\
+      Legacy:KarmaParams\">KarmaParams</a> property bClientOnly is set to false (so\
+      \ Karma is simulated on the server as well as the client).</p>\n<h2><span class=\"\
+      mw-headline\" id=\"The_code\">The code</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:KActor_Replication?section=2\"\
+      \ title=\"Edit section: The code\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">class</span> LawDogsKActor <span class=\"kw1\">extends</span> <span class=\"\
+      kw9\">KActor</span>\n\t<span class=\"kw1\">placeable</span>;\n \n<span class=\"\
+      kw1\">var</span><span class=\"br0\">(</span><span class=\"br0\">)</span> <span\
+      \ class=\"kw5\">float</span> MaxNetUpdateInterval;\n<span class=\"kw1\">var</span>\
+      \ <span class=\"kw5\">float</span> NextNetUpdateTime;\n \n<span class=\"kw1\"\
+      >var</span> <span class=\"kw5\">KRigidBodyState</span> KState, KRepState;\n\
+      <span class=\"kw1\">var</span> <span class=\"kw5\">bool</span> bNewKState;\n\
+      <span class=\"kw1\">var</span> <span class=\"kw5\">int</span> StateCount, LastStateCount;\n\
+      \ \n<span class=\"kw1\">replication</span>\n<span class=\"br0\">{</span>\n\t\
+      <span class=\"kw1\">unreliable</span> <span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span><span class=\"kw7\">Role</span> <span class=\"sy0\">==</span>\
+      \ <span class=\"kw7\">ROLE_Authority</span><span class=\"br0\">)</span>\n\t\t\
+      KRepState, StateCount;\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\"\
+      >function</span> <span class=\"kw4\">Tick</span><span class=\"br0\">(</span><span\
+      \ class=\"kw5\">float</span> Delta<span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n\tPackState<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"co1\">//Pack current state to\
+      \ be replicated</span>\n<span class=\"kw1\">function</span> PackState<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t\
+      <span class=\"kw1\">local</span> <span class=\"kw5\">bool</span> bChanged;\n\
+      \ \n\t<span class=\"kw2\">if</span><span class=\"br0\">(</span><span class=\"\
+      sy0\">!</span>KIsAwake<span class=\"br0\">(</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span>\n\t\t<span class=\"kw2\">return</span>;\n \n\tKGetRigidBodyState<span\
+      \ class=\"br0\">(</span>KState<span class=\"br0\">)</span>;\n \n\tbChanged <span\
+      \ class=\"sy0\">=</span> <span class=\"kw7\">Level</span>.<span class=\"me0\"\
+      >TimeSeconds</span> <span class=\"sy0\">&gt;</span> NextNetUpdateTime;\n\tbChanged\
+      \ <span class=\"sy0\">=</span> bChanged <span class=\"sy0\">||</span> <span\
+      \ class=\"kw3\">VSize</span><span class=\"br0\">(</span>KRBVecToVector<span\
+      \ class=\"br0\">(</span>KState.<span class=\"me0\">Position</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">-</span> KRBVecToVector<span class=\"br0\"\
+      >(</span>KRepState.<span class=\"me0\">Position</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">&gt;</span> <span class=\"nu0\"\
+      >5</span>;\n\tbChanged <span class=\"sy0\">=</span> bChanged <span class=\"\
+      sy0\">||</span> <span class=\"kw3\">VSize</span><span class=\"br0\">(</span>KRBVecToVector<span\
+      \ class=\"br0\">(</span>KState.<span class=\"me0\">LinVel</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">-</span> KRBVecToVector<span class=\"br0\"\
+      >(</span>KRepState.<span class=\"me0\">LinVel</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">&gt;</span> <span class=\"nu0\"\
+      >1</span>;\n\tbChanged <span class=\"sy0\">=</span> bChanged <span class=\"\
+      sy0\">||</span> <span class=\"kw3\">VSize</span><span class=\"br0\">(</span>KRBVecToVector<span\
+      \ class=\"br0\">(</span>KState.<span class=\"me0\">AngVel</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">-</span> KRBVecToVector<span class=\"br0\"\
+      >(</span>KRepState.<span class=\"me0\">AngVel</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">&gt;</span> <span class=\"nu0\"\
+      >1</span>;\n \n\t<span class=\"kw2\">if</span><span class=\"br0\">(</span>bChanged<span\
+      \ class=\"br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t\tNextNetUpdateTime\
+      \ <span class=\"sy0\">=</span> <span class=\"kw7\">Level</span>.<span class=\"\
+      me0\">TimeSeconds</span> <span class=\"sy0\">+</span> MaxNetUpdateInterval;\n\
+      \t\tKRepState <span class=\"sy0\">=</span> KState;\n\t\tStateCount<span class=\"\
+      sy0\">++</span>;\n\t<span class=\"br0\">}</span>\n\t<span class=\"kw2\">else</span>\n\
+      \t\t<span class=\"kw2\">return</span>;\n<span class=\"br0\">}</span>\n \n<span\
+      \ class=\"co1\">//New state recieved.</span>\n<span class=\"kw1\">simulated</span>\
+      \ <span class=\"kw1\">event</span> <span class=\"kw4\">PostNetReceive</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \t<span class=\"kw2\">if</span><span class=\"br0\">(</span>StateCount <span\
+      \ class=\"sy0\">==</span> LastStateCount<span class=\"br0\">)</span>\n\t\t<span\
+      \ class=\"kw2\">return</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"\
+      co1\">//Apply new state.</span>\n<span class=\"kw1\">simulated</span> <span\
+      \ class=\"kw1\">event</span> <span class=\"kw5\">bool</span> KUpdateState<span\
+      \ class=\"br0\">(</span><span class=\"kw1\">out</span> <span class=\"kw5\">KRigidBodyState</span>\
+      \ newState<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span\
+      \ class=\"co1\">//This should never get called on the server - but just in case!</span>\n\
+      \t<span class=\"kw2\">if</span><span class=\"br0\">(</span><span class=\"kw7\"\
+      >Role</span> <span class=\"sy0\">==</span> <span class=\"kw7\">ROLE_Authority</span>\
+      \ <span class=\"sy0\">||</span> StateCount <span class=\"sy0\">==</span> LastStateCount<span\
+      \ class=\"br0\">)</span>\n\t\t<span class=\"kw2\">return</span> <span class=\"\
+      kw6\">false</span>;\n \n\t<span class=\"co1\">//Apply received data as new position\
+      \ of actor.</span>\n\tnewState <span class=\"sy0\">=</span> KRepState;\n\tStateCount\
+      \ <span class=\"sy0\">=</span> LastStateCount;\n \n\t<span class=\"kw2\">return</span>\
+      \ <span class=\"kw6\">true</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"\
+      kw1\">defaultproperties</span>\n<span class=\"br0\">{</span>\n\tMaxNetUpdateInterval<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0.5</span>\n \n\t<span class=\"\
+      kw5\">StaticMesh</span><span class=\"sy0\">=</span><span class=\"kw5\">StaticMesh</span><span\
+      \ class=\"st0\">'MiscPhysicsMeshes.Barrels.Barrel'</span>\n \n    <span class=\"\
+      kw2\">Begin</span> <span class=\"kw8\">Object</span> <span class=\"kw1\">Class</span><span\
+      \ class=\"sy0\">=</span><span class=\"kw8\">KarmaParams</span> <span class=\"\
+      kw5\">Name</span><span class=\"sy0\">=</span>KarmaParams0\n        KMass<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0.5</span>\n        bHighDetailOnly<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">False</span>\n        bKAllowRotate<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">True</span>\n        KFriction<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0.2</span>\n        KRestitution<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0.5</span>\n        KImpactThreshold<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">1000.0</span>\n        bClientOnly<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">False</span>\n        <span class=\"\
+      kw5\">Name</span><span class=\"sy0\">=</span><span class=\"st0\">\"KarmaParams0\"\
+      </span>\n    End <span class=\"kw8\">Object</span>\n\tKParams<span class=\"\
+      sy0\">=</span><span class=\"kw8\">KarmaParams</span><span class=\"st0\">'KarmaParams0'</span>\n\
+      \ \n\t<span class=\"kw7\">RemoteRole</span><span class=\"sy0\">=</span><span\
+      \ class=\"kw7\">ROLE_SimulatedProxy</span>\n\tbNetNotify<span class=\"sy0\"\
+      >=</span><span class=\"kw6\">True</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<h2><span class=\"mw-headline\" id=\"Related_Topics\">Related Topics</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:KActor_Replication?section=3\" title=\"Edit section: Related\
+      \ Topics\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <ul>\n<li><a href=\"/Legacy:KActor\" title=\"Legacy:KActor\">KActor</a></li>\n\
+      </ul>\n<p><b>Foxpaw</b>: I think this page could be called something else..\
+      \ KActor is just a class that you can use to make karma physics objects.. kind\
+      \ of like staticmeshactor. Any actor can have a static mesh, and any actor can\
+      \ use Karma physics.. so I think this should have a more general name seeing\
+      \ as this applies to more than just KActors.</p>\n<p><b>Kaoh</b>: Yeah but the\
+      \ replication technique is special for karma actors. Its not needed for other\
+      \ actors, So I feel it applies.</p>\n<p><b>Foxpaw:</b> What I'm saying is, KActor\
+      \ is just a class that happens to use Karma physics. There are many karma actors\
+      \ that aren't KActors, so I think a more general name would be better.</p>\n\
+      <p><b>UsAaR33:</b> Just wondering.. what is the point of that PostNetReceive()\
+      \ event?</p>\n<p><b>Foxpaw:</b> Err.. hmm. I hate to pick holes in someone's\
+      \ work, but you're right. In fact, that code is going to produce slide-show-esque\
+      \ physics client side, (as the physics never actually simulate client side,\
+      \ they get reset to the most recent server version every time the physics is\
+      \ simulated) and err, yeah. It's not doing half the stuff that it looks like\
+      \ it should be doing. However, if it was tested on the same machine, (so no\
+      \ latency or bandwidth limits) it would APPEAR as though it was working perfectly.</p>\n\
+      <p>Here's how I would have done it: (note that this code has not been tested\
+      \ or compiled in any way, I'm going on experience here. Some tweaks may be necessary.\
+      \ I also removed the \"threshold\" stuff, but you could put that back in if\
+      \ you really felt it was necessary.)</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">class</span> ReplicatedKActor <span class=\"kw1\"\
+      >extends</span> <span class=\"kw9\">KActor</span> <span class=\"kw1\">placeable</span>;\n\
+      \ \n<span class=\"kw1\">struct</span> RepState\n<span class=\"br0\">{</span>\n\
+      \  <span class=\"kw1\">var</span> <span class=\"kw5\">KRigidBodyState</span>\
+      \ <span class=\"kw1\">State</span>;\n  <span class=\"kw1\">var</span> <span\
+      \ class=\"kw5\">byte</span>\t      Timestamp;\n<span class=\"br0\">}</span>;\n\
+      \ \n<span class=\"kw1\">var</span> <span class=\"kw5\">bool</span>     bUpdateState;\n\
+      <span class=\"kw1\">var</span> <span class=\"kw5\">byte</span>     LastTimeStamp;\n\
+      <span class=\"kw1\">var</span> RepState RepKState;\n \n<span class=\"kw1\">replication</span>\n\
+      <span class=\"br0\">{</span>\n  <span class=\"kw1\">unreliable</span> <span\
+      \ class=\"kw2\">if</span><span class=\"br0\">(</span><span class=\"kw7\">Role</span>\
+      \ <span class=\"sy0\">==</span> <span class=\"kw7\">ROLE_Authority</span><span\
+      \ class=\"br0\">)</span>\n    RepKState;\n<span class=\"br0\">}</span>\n \n\
+      <span class=\"kw1\">function</span> <span class=\"kw4\">Tick</span><span class=\"\
+      br0\">(</span><span class=\"kw5\">float</span> Delta<span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n  <span class=\"kw6\">Super</span>.<span class=\"\
+      kw4\">Tick</span><span class=\"br0\">(</span> Delta <span class=\"br0\">)</span>;\n\
+      \ \n  PackState<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n<span\
+      \ class=\"br0\">}</span>\n \n<span class=\"co1\">//Pack current state to be\
+      \ replicated</span>\n<span class=\"kw1\">function</span> PackState<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n \
+      \ <span class=\"kw1\">local</span> <span class=\"kw5\">bool</span> bChanged;\n\
+      \  <span class=\"kw1\">local</span> <span class=\"kw5\">KRigidBodyState</span>\
+      \ KState;\n \n  <span class=\"kw2\">if</span><span class=\"br0\">(</span><span\
+      \ class=\"sy0\">!</span>KIsAwake<span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span><span class=\"br0\">)</span>\n    <span class=\"kw2\">return</span>;\n\
+      \ \n  KGetRigidBodyState<span class=\"br0\">(</span>KState<span class=\"br0\"\
+      >)</span>;\n  <span class=\"kw2\">if</span> <span class=\"br0\">(</span> KState\
+      \ <span class=\"sy0\">==</span> RepKState.<span class=\"kw1\">State</span> <span\
+      \ class=\"br0\">)</span>\n    <span class=\"kw2\">return</span>;\n \n  RepKState.<span\
+      \ class=\"kw1\">State</span> <span class=\"sy0\">=</span> KState;\n  RepKState.<span\
+      \ class=\"me0\">TimeStamp</span><span class=\"sy0\">++</span>;\n<span class=\"\
+      br0\">}</span>\n \n<span class=\"co1\">//New state recieved.</span>\n<span class=\"\
+      kw1\">simulated</span> <span class=\"kw1\">event</span> <span class=\"kw4\"\
+      >PostNetReceive</span><span class=\"br0\">(</span><span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n  <span class=\"kw6\">Super</span>.<span class=\"\
+      me0\">PostNetRecieve</span><span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \ \n  <span class=\"kw2\">if</span> <span class=\"br0\">(</span> RepKState.<span\
+      \ class=\"me0\">TimeStamp</span> <span class=\"sy0\">!=</span> LastTimeStamp\
+      \ <span class=\"br0\">)</span>\n  <span class=\"br0\">{</span>\n    LastTimeStamp\
+      \ <span class=\"sy0\">=</span> RepKState.<span class=\"me0\">TimeStamp</span>;\n\
+      \    bUpdateState <span class=\"sy0\">=</span> <span class=\"kw6\">true</span>;\n\
+      \  <span class=\"br0\">}</span>\n<span class=\"br0\">}</span>\n \n<span class=\"\
+      co1\">//Apply new state.</span>\n<span class=\"kw1\">simulated</span> <span\
+      \ class=\"kw1\">event</span> <span class=\"kw5\">bool</span> KUpdateState<span\
+      \ class=\"br0\">(</span><span class=\"kw1\">out</span> <span class=\"kw5\">KRigidBodyState</span>\
+      \ newState<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n  <span\
+      \ class=\"kw6\">Super</span>.<span class=\"me0\">KUpdateState</span><span class=\"\
+      br0\">(</span> newState <span class=\"br0\">)</span>;\n \n  <span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span> bUpdateState <span class=\"br0\">)</span>\n\
+      \  <span class=\"br0\">{</span>\n    newState <span class=\"sy0\">=</span> KRepState;\n\
+      \    bUpdateState <span class=\"sy0\">=</span> <span class=\"kw6\">false</span>;\n\
+      \    <span class=\"kw2\">return</span> <span class=\"kw6\">true</span>;\n  <span\
+      \ class=\"br0\">}</span>\n \n  <span class=\"kw2\">return</span> <span class=\"\
+      kw6\">false</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">defaultproperties</span>\n\
+      <span class=\"br0\">{</span>\n  <span class=\"kw5\">StaticMesh</span><span class=\"\
+      sy0\">=</span><span class=\"kw5\">StaticMesh</span><span class=\"st0\">'MiscPhysicsMeshes.Barrels.Barrel'</span>\n\
+      \ \n  <span class=\"kw2\">Begin</span> <span class=\"kw8\">Object</span> <span\
+      \ class=\"kw1\">Class</span><span class=\"sy0\">=</span><span class=\"kw8\"\
+      >KarmaParams</span> <span class=\"kw5\">Name</span><span class=\"sy0\">=</span>KarmaParams0\n\
+      \    KMass<span class=\"sy0\">=</span><span class=\"nu0\">0.5</span>\n    bHighDetailOnly<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">False</span>\n    bKAllowRotate<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">True</span>\n    KFriction<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0.2</span>\n    KRestitution<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">0.5</span>\n    KImpactThreshold<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">1000.0</span>\n    bClientOnly<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">False</span>\n    <span class=\"\
+      kw5\">Name</span><span class=\"sy0\">=</span><span class=\"st0\">\"KarmaParams0\"\
+      </span>\n  End <span class=\"kw8\">Object</span>\n  KParams<span class=\"sy0\"\
+      >=</span><span class=\"kw8\">KarmaParams</span><span class=\"st0\">'KarmaParams0'</span>\n\
+      \ \n  <span class=\"kw7\">RemoteRole</span><span class=\"sy0\">=</span><span\
+      \ class=\"kw7\">ROLE_SimulatedProxy</span>\n  bNetNotify<span class=\"sy0\"\
+      >=</span><span class=\"kw6\">True</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p><b>CIpen:</b> Well I don't mean to break anyone's hearts but KCar\
+      \ isn't a KActor. KCar extends from KVehicle, and KVehicle extends from Vehicle.\
+      \ Lastly, Vehicle extends from Pawn.</p>\n<p>Even though it's not in KCar, I\
+      \ found this code that might help in SCar:</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\">cpptext\n<span class=\"br0\">{</span>\n<span class=\"co2\">#ifdef WITH_KARMA</span>\n\
+      \t<span class=\"co1\">// Actor interface.</span>\n\tvirtual UBOOL <span class=\"\
+      kw4\">Tick</span><span class=\"br0\">(</span><span class=\"kw5\">FLOAT</span>\
+      \ DeltaTime, <span class=\"kw1\">enum</span> ELevelTick TickType<span class=\"\
+      br0\">)</span>;\n\tvirtual void <span class=\"kw4\">PostNetReceive</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n \n\t<span class=\"co1\"\
+      >// SVehicle interface.</span>\n\tvirtual void UpdateVehicle<span class=\"br0\"\
+      >(</span><span class=\"kw5\">FLOAT</span> DeltaTime<span class=\"br0\">)</span>;\n\
+      \ \n\t<span class=\"co1\">// SCar interface.</span>\n\tvirtual void ProcessCarInput<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n\tvirtual void ChangeGear<span\
+      \ class=\"br0\">(</span>UBOOL bReverse<span class=\"br0\">)</span>;\n\tvirtual\
+      \ void PackState<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      <span class=\"co2\">#endif</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>I find this interesting because I Have tried to make a rock that\
+      \ you could shoot and blow up(had health).</p>\n<p><b>Solid Snake:</b> This\
+      \ was written before SCar existed, aka UT2003. The above solution allowed for\
+      \ Karma to be replicated over the network thus allowing it to be used in network\
+      \ games for whatever reason you needed it for.</p>\n<p><b>ShrapnelMagnet:</b>\
+      \ I was hoping to replicate a simple box-like KActor in Unreal Tournament 2004.\
+      \ I'd like players to be able to roll boxes around in a little game, but I'm\
+      \ having trouble getting the KActor to replicate across the network. I see a\
+      \ lot of code here, but not being a big coder myself, I'm not sure what works\
+      \ or what doesn't. Any help would be appreciated, thanks.</p>\n<p><b>EricBlade:</b>\
+      \ Well, I have tested the above 2 sets of code, as well as the code from a package\
+      \ I found called \"GoodKarma\".. the \"GoodKarma\" developer appears to have\
+      \ disappeared off the face of the planet about a year or so ago, along with\
+      \ the small handful of users who claimed they'd seen it work. Not a bit of this\
+      \ seems to actually function, at least on engine build 2226. As far as I can\
+      \ tell, when running as dedicated server, karma is completely not simulated\
+      \ on the server. Using all three of the codes that I mentioned above, placing\
+      \ the modified kactor in a level, and using the following:</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">simulated</span> <span class=\"kw1\"\
+      >function</span> DoPush<span class=\"br0\">(</span><span class=\"br0\">)</span>\
+      \ <span class=\"br0\">{</span>\n\t<span class=\"kw1\">local</span> <span class=\"\
+      kw5\">vector</span> StartTrace, EndTrace, HitLocation, HitNormal;\n\t<span class=\"\
+      kw1\">local</span> <span class=\"kw9\">Actor</span> hit;\n \n\tStartTrace <span\
+      \ class=\"sy0\">=</span> <span class=\"kw7\">Location</span> <span class=\"\
+      sy0\">+</span> EyePosition<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \tEndTrace <span class=\"sy0\">=</span> StartTrace <span class=\"sy0\">+</span>\
+      \ <span class=\"nu0\">196</span> <span class=\"sy0\">*</span> <span class=\"\
+      kw5\">vector</span><span class=\"br0\">(</span><span class=\"kw9\">Controller</span>.<span\
+      \ class=\"me0\">GetViewRotation</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span><span class=\"br0\">)</span>;\n\thit <span class=\"sy0\">=</span>\
+      \ <span class=\"kw4\">Trace</span><span class=\"br0\">(</span>HitLocation, HitNormal,\
+      \ EndTrace, StartTrace, <span class=\"kw6\">true</span><span class=\"br0\">)</span>;\n\
+      \ \n\tDebug<span class=\"br0\">(</span><span class=\"kw6\">self</span><span\
+      \ class=\"sy0\">$</span><span class=\"st0\">\": I hit a \"</span><span class=\"\
+      sy0\">$</span>hit<span class=\"br0\">)</span>;\n\t<span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span>hit <span class=\"sy0\">!=</span> <span class=\"kw5\"\
+      >None</span><span class=\"br0\">)</span> <span class=\"br0\">{</span>\n\t\t\
+      hit.<span class=\"me0\">KWake</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n\t   hit.<span class=\"kw4\">KAddImpulse</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">34000</span> <span class=\"sy0\">*</span>\
+      \ <span class=\"br0\">(</span><span class=\"sy0\">-</span>hitnormal<span class=\"\
+      br0\">)</span>, <span class=\"kw7\">location</span><span class=\"br0\">)</span>;\n\
+      \t   bumpfactor <span class=\"sy0\">=</span> <span class=\"nu0\">7</span>; <span\
+      \ class=\"co1\">// we add several wait-ticks before next bump, so we aren't\
+      \ adding that to it too</span>\n\t<span class=\"br0\">}</span>\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p>results in my log file on the server\
+      \ saying that my Pawn hit the \"ball\", accompanied by absolutely nothing. Same\
+      \ thing works in single player, with any of those codes. Logging the \"ball\"\
+      's location property every tick, tells me that it's not moving anywhere, either.\
+      \ If I shoot it, it starts moving on the client, but not on the server.</p>\n\
+      <p>... and right after posting that, I had an apparently brilliant idea. Setting\
+      \ bClientOnly = false in DefaultProps doesn't work, but it does work if done\
+      \ in PreBeginPlay(). This results in the physics being simulated completely\
+      \ seperately on both ends. The code from the LawDogsKActor seems to get them\
+      \ following each other for the first tick or so, but very quickly you realise\
+      \ that the server has your KActor in a totally different place than the client\
+      \ put it. Foxpaw's seems to lock the KActor in place on the server, while making\
+      \ the client simulate somewhat slowly. The \"GoodKarma\" code has no effect\
+      \ over and above LawDogs.</p>\n<p><b>EricBlade:</b> Well, I spent all night\
+      \ playing with this, and thought I'd put up what I have, and see if anyone had\
+      \ any further suggestions. It's sort of a combination of all the code i've seen\
+      \ for dealing with this.. I was hoping to get something forgiveably accurate\
+      \ enough that I could do a little one-on-one soccer with, but unfortunatly,\
+      \ I don't think it's possible to get anywhere near that accurate.. but I will\
+      \ definitely take suggestions. The following code does not have a horribly lagging\
+      \ simulation, but at reasonably decent speeds using my test-ball (the severed\
+      \ head mesh from Land of the Dead), a moment or two after kicking it, the ball\
+      \ will snap into the place the server simulated it at, which is usually fairly\
+      \ close to where it came to rest on the client, however it can sometimes be\
+      \ quite a bit away. I also just now tested this on a test map that had about\
+      \ 6 of these on it. Then with only 2. Having more than one of these on a level\
+      \ causes absolute chaos, with the objects seemingly randomly warping about in\
+      \ the level.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">class</span> Ball <span class=\"kw1\">extends</span> <span class=\"kw9\"\
+      >Actor</span>;\n \n<span class=\"kw1\">var</span> <span class=\"kw5\">float</span>\
+      \ MaxNetUpdateInterval;\n<span class=\"kw1\">var</span> <span class=\"kw5\"\
+      >float</span> NextNetUpdateTime;\n<span class=\"kw1\">var</span> <span class=\"\
+      kw5\">float</span> LastUpdateTime;\n \n<span class=\"kw1\">var</span> <span\
+      \ class=\"kw5\">KRigidBodyState</span> KState;\n<span class=\"kw1\">var</span>\
+      \ <span class=\"kw5\">bool</span> bChanged;\n \n<span class=\"kw1\">var</span>\
+      \ <span class=\"kw5\">int</span> counter;\n \n \n<span class=\"kw1\">struct</span>\
+      \ repinfo <span class=\"br0\">{</span>\n\t<span class=\"kw1\">var</span> <span\
+      \ class=\"kw5\">KRigidBodyState</span> <span class=\"kw1\">state</span>;\n\t\
+      <span class=\"kw1\">var</span> <span class=\"kw5\">float</span> timestamp;\n\
+      <span class=\"br0\">}</span>;\n \n<span class=\"kw1\">var</span> repinfo KRepState;\n\
+      \ \n<span class=\"kw1\">replication</span>\n<span class=\"br0\">{</span>\n \
+      \   <span class=\"kw1\">unreliable</span> <span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span><span class=\"kw7\">Role</span> <span class=\"sy0\"\
+      >==</span> <span class=\"kw7\">ROLE_Authority</span><span class=\"br0\">)</span>\n\
+      \        KRepState, bChanged;\n<span class=\"br0\">}</span>\n \n<span class=\"\
+      kw1\">function</span> <span class=\"kw4\">Tick</span><span class=\"br0\">(</span><span\
+      \ class=\"kw5\">float</span> Delta<span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n\t<span class=\"kw2\">if</span><span class=\"br0\">(</span><span\
+      \ class=\"kw7\">Role</span> <span class=\"sy0\">==</span> <span class=\"kw7\"\
+      >ROLE_Authority</span><span class=\"br0\">)</span> <span class=\"br0\">{</span>\n\
+      \t    <span class=\"kw2\">if</span><span class=\"br0\">(</span>KIsAwake<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\
+      \ <span class=\"br0\">{</span>\n\t        counter <span class=\"sy0\">=</span>\
+      \ <span class=\"nu0\">30</span>;\n\t    <span class=\"br0\">}</span> <span class=\"\
+      kw2\">else</span> <span class=\"br0\">{</span>\n\t        <span class=\"kw2\"\
+      >if</span><span class=\"br0\">(</span>counter <span class=\"sy0\">&gt;</span>\
+      \ <span class=\"nu0\">0</span><span class=\"br0\">)</span> counter<span class=\"\
+      sy0\">--</span>;\n\t    <span class=\"br0\">}</span>\n    \tPackState<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n    <span class=\"br0\">}</span>\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">function</span> PackState<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \    <span class=\"kw2\">if</span><span class=\"br0\">(</span>counter <span\
+      \ class=\"sy0\">&lt;</span> <span class=\"nu0\">1</span> <span class=\"sy0\"\
+      >&amp;&amp;</span> <span class=\"sy0\">!</span>KIsAwake<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n\t    <span class=\"kw2\"\
+      >return</span>;\n    bChanged <span class=\"sy0\">=</span> <span class=\"kw6\"\
+      >false</span>;\n    KGetRigidBodyState<span class=\"br0\">(</span>KState<span\
+      \ class=\"br0\">)</span>;\n \n    <span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span><span class=\"kw3\">VSize</span><span class=\"br0\">(</span>KRBVecToVector<span\
+      \ class=\"br0\">(</span>KState.<span class=\"me0\">Position</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">-</span> KRBVecToVector<span class=\"br0\"\
+      >(</span>KRepState.<span class=\"kw1\">state</span>.<span class=\"me0\">Position</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span> <span class=\"sy0\">&gt;</span>\
+      \ <span class=\"nu0\">10</span><span class=\"br0\">)</span> <span class=\"br0\"\
+      >{</span>\n    \t<span class=\"co1\">//log(self@\"Position Change\");</span>\n\
+      \        bChanged <span class=\"sy0\">=</span> <span class=\"kw6\">true</span>;\n\
+      \    <span class=\"br0\">}</span>\n    <span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span><span class=\"kw3\">VSize</span><span class=\"br0\">(</span>KRBVecToVector<span\
+      \ class=\"br0\">(</span>KState.<span class=\"me0\">LinVel</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">-</span> KRBVecToVector<span class=\"br0\"\
+      >(</span>KRepState.<span class=\"kw1\">state</span>.<span class=\"me0\">LinVel</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span> <span class=\"sy0\">&gt;</span>\
+      \ <span class=\"nu0\">10</span><span class=\"br0\">)</span> <span class=\"br0\"\
+      >{</span>\n        <span class=\"co1\">//log(self@\"LinVel Change\");</span>\n\
+      \    \tbChanged <span class=\"sy0\">=</span> <span class=\"kw6\">true</span>;\n\
+      \    <span class=\"br0\">}</span>\n    <span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span><span class=\"kw3\">VSize</span><span class=\"br0\">(</span>KRBVecToVector<span\
+      \ class=\"br0\">(</span>KState.<span class=\"me0\">AngVel</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">-</span> KRBVecToVector<span class=\"br0\"\
+      >(</span>KRepState.<span class=\"kw1\">state</span>.<span class=\"me0\">AngVel</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span> <span class=\"sy0\">&gt;</span>\
+      \ <span class=\"nu0\">10</span><span class=\"br0\">)</span> <span class=\"br0\"\
+      >{</span>\n    \t<span class=\"co1\">//log(self@\"AngVel\");</span>\n      \
+      \  bChanged <span class=\"sy0\">=</span> <span class=\"kw6\">true</span>;\n\
+      \    <span class=\"br0\">}</span>\n    <span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span>bChanged <span class=\"sy0\">==</span> <span class=\"kw6\">false</span>\
+      \ <span class=\"sy0\">&amp;&amp;</span> <span class=\"kw7\">Level</span>.<span\
+      \ class=\"me0\">TimeSeconds</span> <span class=\"sy0\">&gt;</span> NextNetUpdateTime<span\
+      \ class=\"br0\">)</span> <span class=\"br0\">{</span>\n    \t<span class=\"\
+      co1\">//log(self@\"MaxNetUpdateInterval reached\");</span>\n        bChanged\
+      \ <span class=\"sy0\">=</span> <span class=\"kw6\">true</span>;\n    <span class=\"\
+      br0\">}</span>\n    <span class=\"kw2\">if</span><span class=\"br0\">(</span>bChanged\
+      \ <span class=\"sy0\">==</span> <span class=\"kw6\">true</span><span class=\"\
+      br0\">)</span> <span class=\"br0\">{</span>\n        KRepState.<span class=\"\
+      kw1\">state</span> <span class=\"sy0\">=</span> KState;\n        NextNetUpdateTime\
+      \ <span class=\"sy0\">=</span> <span class=\"kw7\">Level</span>.<span class=\"\
+      me0\">TimeSeconds</span> <span class=\"sy0\">+</span> MaxNetUpdateInterval;\n\
+      \t\tKRepState.<span class=\"me0\">timestamp</span> <span class=\"sy0\">=</span>\
+      \ <span class=\"kw7\">Level</span>.<span class=\"me0\">TimeSeconds</span>;\n\
+      \t<span class=\"br0\">}</span>\n \n<span class=\"br0\">}</span>\n \n<span class=\"\
+      kw1\">simulated</span> <span class=\"kw1\">event</span> <span class=\"kw5\"\
+      >bool</span> KUpdateState<span class=\"br0\">(</span><span class=\"kw1\">out</span>\
+      \ <span class=\"kw5\">KRigidBodyState</span> newState<span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n    <span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span><span class=\"kw7\">Role</span> <span class=\"sy0\">==</span>\
+      \ <span class=\"kw7\">ROLE_Authority</span><span class=\"br0\">)</span>\n  \
+      \      <span class=\"kw2\">return</span> <span class=\"kw6\">false</span>;\n\
+      \    <span class=\"kw2\">if</span><span class=\"br0\">(</span>bChanged <span\
+      \ class=\"sy0\">==</span> <span class=\"kw6\">false</span><span class=\"br0\"\
+      >)</span> <span class=\"kw2\">return</span> <span class=\"kw6\">false</span>;\n\
+      \    <span class=\"kw2\">if</span><span class=\"br0\">(</span>LastUpdateTime\
+      \ <span class=\"sy0\">&gt;</span> KRepState.<span class=\"me0\">timestamp</span><span\
+      \ class=\"br0\">)</span> <span class=\"kw2\">return</span> <span class=\"kw6\"\
+      >false</span>;\n    newState <span class=\"sy0\">=</span> KRepState.<span class=\"\
+      kw1\">state</span>;\n    LastUpdateTime <span class=\"sy0\">=</span> KRepState.<span\
+      \ class=\"me0\">timestamp</span>;\n\tbChanged <span class=\"sy0\">=</span> <span\
+      \ class=\"kw6\">false</span>;\n    <span class=\"kw2\">return</span> <span class=\"\
+      kw6\">true</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">simulated</span>\
+      \ <span class=\"kw1\">event</span> <span class=\"kw4\">PreBeginPlay</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"br0\">{</span>\n\
+      \t<span class=\"kw8\">KarmaParams</span><span class=\"br0\">(</span>KParams<span\
+      \ class=\"br0\">)</span>.<span class=\"me0\">bClientOnly</span> <span class=\"\
+      sy0\">=</span> <span class=\"kw6\">false</span>;\n<span class=\"br0\">}</span>\n\
+      \ \n \n<span class=\"kw1\">DefaultProperties</span>\n<span class=\"br0\">{</span>\n\
+      \tMaxNetUpdateInterval<span class=\"sy0\">=</span><span class=\"nu0\">0.2</span>\n\
+      \tbBlockZeroExtentTraces <span class=\"sy0\">=</span> <span class=\"kw6\">true</span>\n\
+      \tbBlockNonZeroExtentTraces <span class=\"sy0\">=</span> <span class=\"kw6\"\
+      >true</span>\n    <span class=\"co1\">//NetUpdateFrequency = 1</span>\n\t<span\
+      \ class=\"co1\">//bUpdateSimulatedPosition=true</span>\n\t<span class=\"co1\"\
+      >//bGameRelevant=true</span>\n\tbAlwaysRelevant<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">true</span>\n\tbCollideWorld<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">true</span>\n\tbNetNotify<span class=\"sy0\">=</span><span class=\"\
+      kw6\">true</span>\n\t<span class=\"kw7\">RemoteRole</span><span class=\"sy0\"\
+      >=</span><span class=\"kw7\">ROLE_SimulatedProxy</span>\n\t<span class=\"kw7\"\
+      >DrawScale</span><span class=\"sy0\">=</span><span class=\"nu0\">2.75</span>\n\
+      \t<span class=\"kw7\">Physics</span><span class=\"sy0\">=</span><span class=\"\
+      kw7\">PHYS_Karma</span>\n\t<span class=\"kw2\">Begin</span> <span class=\"kw8\"\
+      >Object</span> <span class=\"kw1\">Class</span><span class=\"sy0\">=</span><span\
+      \ class=\"kw8\">KarmaParams</span> <span class=\"kw5\">Name</span><span class=\"\
+      sy0\">=</span>KParams0\n\t\tbHighDetailOnly\t\t\t<span class=\"sy0\">=</span>\t\
+      <span class=\"kw6\">False</span>\n\t\tbKNonSphericalInertia\t<span class=\"\
+      sy0\">=</span>\t<span class=\"kw6\">False</span>\n\t\tKActorGravScale\t\t\t\
+      <span class=\"sy0\">=</span>\t<span class=\"nu0\">0.55</span>\n\t\tKAngularDamping\t\
+      \t\t<span class=\"sy0\">=</span>\t<span class=\"nu0\">0.2</span>\n\t\tKBuoyancy\t\
+      \t\t\t<span class=\"sy0\">=</span>\t<span class=\"nu0\">1.01</span>\n\t\tKLinearDamping\t\
+      \t\t<span class=\"sy0\">=</span>\t<span class=\"nu0\">0.2</span>\n\t\tKMass\t\
+      \t\t\t\t<span class=\"sy0\">=</span>\t<span class=\"nu0\">0.45</span>\n\t\t\
+      KStartEnabled\t\t\t<span class=\"sy0\">=</span>\t<span class=\"kw6\">False</span>\n\
+      \t\tKFriction\t\t\t\t<span class=\"sy0\">=</span>\t<span class=\"nu0\">0.40</span>\n\
+      \t\tKRestitution\t\t\t<span class=\"sy0\">=</span>\t<span class=\"nu0\">0.50</span>\n\
+      \t\tKImpactThreshold\t\t<span class=\"sy0\">=</span>\t<span class=\"nu0\">5</span>\n\
+      \tEnd <span class=\"kw8\">Object</span>\n\tKParams<span class=\"sy0\">=</span><span\
+      \ class=\"kw8\">KarmaParams</span><span class=\"st0\">'KParams0'</span>\n\t\
+      <span class=\"kw5\">StaticMesh</span><span class=\"sy0\">=</span><span class=\"\
+      kw5\">StaticMesh</span><span class=\"st0\">'UZGMeshes.Body.Head'</span>\n\t\
+      <span class=\"kw7\">DrawType</span><span class=\"sy0\">=</span><span class=\"\
+      kw7\">DT_StaticMesh</span>\n<span class=\"co1\">//\t bNoDelete=True</span>\n\
+      \t bCollideActors<span class=\"sy0\">=</span><span class=\"kw6\">True</span>\n\
+      \t bBlockActors<span class=\"sy0\">=</span><span class=\"kw6\">True</span>\n\
+      \t bBlockPlayers<span class=\"sy0\">=</span><span class=\"kw6\">True</span>\n\
+      \t bProjTarget<span class=\"sy0\">=</span><span class=\"kw6\">True</span>\n\t\
+      \ bBlockKarma<span class=\"sy0\">=</span><span class=\"kw6\">True</span>\n<span\
+      \ class=\"br0\">}</span></pre></div>\n</div>\n<hr />\n<p><a href=\"/Category:Legacy_Refactor_Me\"\
+      \ title=\"Category:Legacy Refactor Me\">Category:Legacy Refactor Me</a><br />\n\
+      <a href=\"/Category:Legacy_Journal\" title=\"Category:Legacy Journal\">Category:Legacy\
+      \ Journal</a><br />\n<a href=\"/Category:Legacy_To_Do\" title=\"Category:Legacy\
+      \ To Do\">Category:Legacy To Do</a> – If this really is stuff unique to <a href=\"\
+      /Legacy:Karma\" title=\"Legacy:Karma\">Karma</a> and <a href=\"/Legacy:Replication\"\
+      \ title=\"Legacy:Replication\">Replication</a> then <a href=\"/edit/Legacy:Replication/Karma?redlink=1\"\
+      \ class=\"new\" title=\"Legacy:Replication/Karma (page does not exist)\">Replication/Karma</a>,\
+      \ <a href=\"/edit/Legacy:Karma/Replication?redlink=1\" class=\"new\" title=\"\
+      Legacy:Karma/Replication (page does not exist)\">Karma/Replication</a> or <a\
+      \ href=\"/edit/Legacy:Karma_Replication?redlink=1\" class=\"new\" title=\"Legacy:Karma\
+      \ Replication (page does not exist)\">Karma Replication</a> might be a better\
+      \ location for this. Otherwise this should probably be folded into the grand\
+      \ topic of <a href=\"/Legacy:Replication\" title=\"Legacy:Replication\">Replication</a>.\
+      \ See <a href=\"/Legacy:Replication/Discussing\" title=\"Legacy:Replication/Discussing\"\
+      >Replication/Discussing</a></p>\n\n<!-- \nNewPP limit report\nCPU time usage:\
+      \ 0.128 seconds\nReal time usage: 0.130 seconds\nPreprocessor visited node count:\
+      \ 36/1000000\nPreprocessor generated node count: 144/1000000\nPost‐expand include\
+      \ size: 54/2097152 bytes\nTemplate argument size: 0/2097152 bytes\nHighest expansion\
+      \ depth: 2/40\nExpensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion\
+      \ expansion time report (%,ms,calls,template)\n100.00%    0.000      1 - -total\n\
+      -->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:1605-0!*!0!!*!*!*\
+      \ and timestamp 20221118031207 and revision id 3987\n -->\n"
+  categories:
+  - sortkey: "KActor Replication"
+    name: "Legacy_Journal"
+  - sortkey: "KActor Replication"
+    name: "Legacy_To_Do"
+  - sortkey: "KActor Replication"
+    name: "Legacy_Refactor_Me"
+  links:
+  - ns: 14
+    exists: true
+    name: "Category:Legacy Journal"
+  - ns: 100
+    exists: false
+    name: "Legacy:Replication/Karma"
+  - ns: 100
+    exists: true
+    name: "Legacy:Replication"
+  - ns: 100
+    exists: true
+    name: "Legacy:KarmaParams"
+  - ns: 100
+    exists: true
+    name: "Legacy:Karma"
+  - ns: 100
+    exists: true
+    name: "Legacy:KActor"
+  - ns: 14
+    exists: true
+    name: "Category:Legacy Refactor Me"
+  - ns: 100
+    exists: true
+    name: "Legacy:KCar"
+  - ns: 100
+    exists: false
+    name: "Legacy:Karma/Replication"
+  - ns: 100
+    exists: true
+    name: "Legacy:Replication/Discussing"
+  - ns: 100
+    exists: false
+    name: "Legacy:Karma Replication"
+  - ns: 14
+    exists: true
+    name: "Category:Legacy To Do"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "How it works"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:KActor_Replication"
+    byteoffset: 0
+    anchor: "How_it_works"
+  - toclevel: 1
+    level: "2"
+    line: "The code"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:KActor_Replication"
+    byteoffset: 754
+    anchor: "The_code"
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:KActor_Replication"
+    byteoffset: 2689
+    anchor: "Related_Topics"
+  displaytitle: "Legacy:KActor Replication"
+  iwlinks: []
+  wikitext:
+    text: "==How it works==\n\nThe code is based on the replication technique found\
+      \ in [[Legacy:KCar|KCar]]. Every tick, the server checks the location, linear\
+      \ and angular velocity of the actor, and if it differs much from when the last\
+      \ replication occured or if more time than MaxNetUpdateInterval has elapsed,\
+      \ the state of the actor on the server will be stored in a variable that is\
+      \ replicated to clients. On recieving the new state, the actor on the client\
+      \ will apply the new state to itself.\n\nNote that RemoteRole is set to ROLE_SimulatedProxy,\
+      \ bNetNotify is set to true (so that PostNetReceive is called on the client)\
+      \ and the [[Legacy:KarmaParams|KarmaParams]] property bClientOnly is set to\
+      \ false (so Karma is simulated on the server as well as the client).\n\n==The\
+      \ code==\n\n<uscript>\nclass LawDogsKActor extends KActor\n\tplaceable;\n\n\
+      var() float MaxNetUpdateInterval;\nvar float NextNetUpdateTime;\n\nvar KRigidBodyState\
+      \ KState, KRepState;\nvar bool bNewKState;\nvar int StateCount, LastStateCount;\n\
+      \nreplication\n{\n\tunreliable if(Role == ROLE_Authority)\n\t\tKRepState, StateCount;\n\
+      }\n\nfunction Tick(float Delta)\n{\n\tPackState();\n}\n\n//Pack current state\
+      \ to be replicated\nfunction PackState()\n{\n\tlocal bool bChanged;\n\n\tif(!KIsAwake())\n\
+      \t\treturn;\n\n\tKGetRigidBodyState(KState);\n\n\tbChanged = Level.TimeSeconds\
+      \ > NextNetUpdateTime;\n\tbChanged = bChanged || VSize(KRBVecToVector(KState.Position)\
+      \ - KRBVecToVector(KRepState.Position)) > 5;\n\tbChanged = bChanged || VSize(KRBVecToVector(KState.LinVel)\
+      \ - KRBVecToVector(KRepState.LinVel)) > 1;\n\tbChanged = bChanged || VSize(KRBVecToVector(KState.AngVel)\
+      \ - KRBVecToVector(KRepState.AngVel)) > 1;\n\n\tif(bChanged)\n\t{\n\t\tNextNetUpdateTime\
+      \ = Level.TimeSeconds + MaxNetUpdateInterval;\n\t\tKRepState = KState;\n\t\t\
+      StateCount++;\n\t}\n\telse\n\t\treturn;\n}\n\n//New state recieved.\nsimulated\
+      \ event PostNetReceive()\n{\n\tif(StateCount == LastStateCount)\n\t\treturn;\n\
+      }\n\n//Apply new state.\nsimulated event bool KUpdateState(out KRigidBodyState\
+      \ newState)\n{\n\t//This should never get called on the server - but just in\
+      \ case!\n\tif(Role == ROLE_Authority || StateCount == LastStateCount)\n\t\t\
+      return false;\n\t\t\n\t//Apply received data as new position of actor.\n\tnewState\
+      \ = KRepState;\n\tStateCount = LastStateCount;\n\n\treturn true;\n}\n\ndefaultproperties\n\
+      {\n\tMaxNetUpdateInterval=0.5\n\n\tStaticMesh=StaticMesh'MiscPhysicsMeshes.Barrels.Barrel'\n\
+      \n    Begin Object Class=KarmaParams Name=KarmaParams0\n        KMass=0.5\n\
+      \        bHighDetailOnly=False\n        bKAllowRotate=True\n        KFriction=0.2\n\
+      \        KRestitution=0.5\n        KImpactThreshold=1000.0\n        bClientOnly=False\n\
+      \        Name=\"KarmaParams0\"\n    End Object\n\tKParams=KarmaParams'KarmaParams0'\n\
+      \n\tRemoteRole=ROLE_SimulatedProxy\n\tbNetNotify=True\n}</uscript>\n\n==Related\
+      \ Topics==\n* [[Legacy:KActor|KActor]]\n\n'''Foxpaw''': I think this page could\
+      \ be called something else.. KActor is just a class that you can use to make\
+      \ karma physics objects.. kind of like staticmeshactor. Any actor can have a\
+      \ static mesh, and any actor can use Karma physics.. so I think this should\
+      \ have a more general name seeing as this applies to more than just KActors.\n\
+      \n'''Kaoh''': Yeah but the replication technique is special for karma actors.\
+      \ Its not needed for other actors, So I feel it applies.\n\n'''Foxpaw:''' What\
+      \ I'm saying is, KActor is just a class that happens to use Karma physics. There\
+      \ are many karma actors that aren't KActors, so I think a more general name\
+      \ would be better.\n\n'''UsAaR33:''' Just wondering.. what is the point of that\
+      \ PostNetReceive() event?\n\n'''Foxpaw:''' Err.. hmm. I hate to pick holes in\
+      \ someone's work, but you're right. In fact, that code is going to produce slide-show-esque\
+      \ physics client side, (as the physics never actually simulate client side,\
+      \ they get reset to the most recent server version every time the physics is\
+      \ simulated) and err, yeah. It's not doing half the stuff that it looks like\
+      \ it should be doing. However, if it was tested on the same machine, (so no\
+      \ latency or bandwidth limits) it would APPEAR as though it was working perfectly.\n\
+      \nHere's how I would have done it: (note that this code has not been tested\
+      \ or compiled in any way, I'm going on experience here. Some tweaks may be necessary.\
+      \ I also removed the \"threshold\" stuff, but you could put that back in if\
+      \ you really felt it was necessary.)\n\n<uscript>\nclass ReplicatedKActor extends\
+      \ KActor placeable;\n\nstruct RepState\n{\n  var KRigidBodyState State;\n  var\
+      \ byte\t      Timestamp;\n};\n\nvar bool     bUpdateState;\nvar byte     LastTimeStamp;\n\
+      var RepState RepKState;\n\nreplication\n{\n  unreliable if(Role == ROLE_Authority)\n\
+      \    RepKState;\n}\n\nfunction Tick(float Delta)\n{\n  Super.Tick( Delta );\n\
+      \  \n  PackState();\n}\n\n//Pack current state to be replicated\nfunction PackState()\n\
+      {\n  local bool bChanged;\n  local KRigidBodyState KState;\n\n  if(!KIsAwake())\n\
+      \    return;\n\n  KGetRigidBodyState(KState);\n  if ( KState == RepKState.State\
+      \ )\n    return;\n\n  RepKState.State = KState;\n  RepKState.TimeStamp++;\n\
+      }\n\n//New state recieved.\nsimulated event PostNetReceive()\n{\n  Super.PostNetRecieve();\n\
+      \  \n  if ( RepKState.TimeStamp != LastTimeStamp )\n  {\n    LastTimeStamp =\
+      \ RepKState.TimeStamp;\n    bUpdateState = true;\n  }\n}\n\n//Apply new state.\n\
+      simulated event bool KUpdateState(out KRigidBodyState newState)\n{\n  Super.KUpdateState(\
+      \ newState );\n \n  if ( bUpdateState )\n  {\n    newState = KRepState;\n  \
+      \  bUpdateState = false;\n    return true;\n  }\n\n  return false;\n}\n\ndefaultproperties\n\
+      {\n  StaticMesh=StaticMesh'MiscPhysicsMeshes.Barrels.Barrel'\n\n  Begin Object\
+      \ Class=KarmaParams Name=KarmaParams0\n    KMass=0.5\n    bHighDetailOnly=False\n\
+      \    bKAllowRotate=True\n    KFriction=0.2\n    KRestitution=0.5\n    KImpactThreshold=1000.0\n\
+      \    bClientOnly=False\n    Name=\"KarmaParams0\"\n  End Object\n  KParams=KarmaParams'KarmaParams0'\n\
+      \n  RemoteRole=ROLE_SimulatedProxy\n  bNetNotify=True\n}\n</uscript>\n\n'''CIpen:'''\
+      \  Well I don't mean to break anyone's hearts but KCar isn't a KActor.  KCar\
+      \ extends from KVehicle, and KVehicle extends from Vehicle.  Lastly, Vehicle\
+      \ extends from Pawn.\n\nEven though it's not in KCar, I found this code that\
+      \ might help in SCar:\n\n<uscript>\ncpptext\n{\n#ifdef WITH_KARMA\n\t// Actor\
+      \ interface.\n\tvirtual UBOOL Tick(FLOAT DeltaTime, enum ELevelTick TickType);\n\
+      \tvirtual void PostNetReceive();\n\n\t// SVehicle interface.\n\tvirtual void\
+      \ UpdateVehicle(FLOAT DeltaTime);\n\n\t// SCar interface.\n\tvirtual void ProcessCarInput();\n\
+      \tvirtual void ChangeGear(UBOOL bReverse);\n\tvirtual void PackState();\n#endif\n\
+      }\n</uscript>\n\nI find this interesting because I Have tried to make a rock\
+      \ that you could shoot and blow up(had health).\n\n'''Solid Snake:''' This was\
+      \ written before SCar existed, aka UT2003. The above solution allowed for Karma\
+      \ to be replicated over the network thus allowing it to be used in network games\
+      \ for whatever reason you needed it for.\n\n'''ShrapnelMagnet:''' I was hoping\
+      \ to replicate a simple box-like KActor in Unreal Tournament 2004. I'd like\
+      \ players to be able to roll boxes around in a little game, but I'm having trouble\
+      \ getting the KActor to replicate across the network. I see a lot of code here,\
+      \ but not being a big coder myself, I'm not sure what works or what doesn't.\
+      \ Any help would be appreciated, thanks.\n\n'''EricBlade:''' Well, I have tested\
+      \ the above 2 sets of code, as well as the code from a package I found called\
+      \ \"GoodKarma\".. the \"GoodKarma\" developer appears to have disappeared off\
+      \ the face of the planet about a year or so ago, along with the small handful\
+      \ of users who claimed they'd seen it work.  Not a bit of this seems to actually\
+      \ function, at least on engine build 2226.  As far as I can tell, when running\
+      \ as dedicated server, karma is completely not simulated on the server.  Using\
+      \ all three of the codes that I mentioned above, placing the modified kactor\
+      \ in a level, and using the following:\n\n<uscript>\nsimulated function DoPush()\
+      \ {\n\tlocal vector StartTrace, EndTrace, HitLocation, HitNormal;\n\tlocal Actor\
+      \ hit;\n\n\tStartTrace = Location + EyePosition();\n\tEndTrace = StartTrace\
+      \ + 196 * vector(Controller.GetViewRotation());\n\thit = Trace(HitLocation,\
+      \ HitNormal, EndTrace, StartTrace, true);\n\n\tDebug(self$\": I hit a \"$hit);\n\
+      \tif(hit != None) {\n\t\thit.KWake();\n\t   hit.KAddImpulse(34000 * (-hitnormal),\
+      \ location);\n\t   bumpfactor = 7; // we add several wait-ticks before next\
+      \ bump, so we aren't adding that to it too\n\t}\n}\n</uscript>\n\nresults in\
+      \ my log file on the server saying that my Pawn hit the \"ball\", accompanied\
+      \ by absolutely nothing.  Same thing works in single player, with any of those\
+      \ codes.  Logging the \"ball\"'s location property every tick, tells me that\
+      \ it's not moving anywhere, either.  If I shoot it, it starts moving on the\
+      \ client, but not on the server.\n\n... and right after posting that, I had\
+      \ an apparently brilliant idea.  Setting bClientOnly = false in DefaultProps\
+      \ doesn't work, but it does work if done in PreBeginPlay().  This results in\
+      \ the physics being simulated completely seperately on both ends.   The code\
+      \ from the LawDogsKActor seems to get them following each other for the first\
+      \ tick or so, but very quickly you realise that the server has your KActor in\
+      \ a totally different place than the client put it.  Foxpaw's seems to lock\
+      \ the KActor in place on the server, while making the client simulate somewhat\
+      \ slowly.  The \"GoodKarma\" code has no effect over and above LawDogs.  \n\n\
+      '''EricBlade:''' Well, I spent all night playing with this, and thought I'd\
+      \ put up what I have, and see if anyone had any further suggestions.  It's sort\
+      \ of a combination of all the code i've seen for dealing with this.. I was hoping\
+      \ to get something forgiveably accurate enough that I could do a little one-on-one\
+      \ soccer with, but unfortunatly, I don't think it's possible to get anywhere\
+      \ near that accurate.. but I will definitely take suggestions.  The following\
+      \ code does not have a horribly lagging simulation, but at reasonably decent\
+      \ speeds using my test-ball (the severed head mesh from Land of the Dead), a\
+      \ moment or two after kicking it, the ball will snap into the place the server\
+      \ simulated it at, which is usually fairly close to where it came to rest on\
+      \ the client, however it can sometimes be quite a bit away.  I also just now\
+      \ tested this on a test map that had about 6 of these on it.  Then with only\
+      \ 2.  Having more than one of these on a level causes absolute chaos, with the\
+      \ objects seemingly randomly warping about in the level.\n\n<uscript>\nclass\
+      \ Ball extends Actor;\n\nvar float MaxNetUpdateInterval;\nvar float NextNetUpdateTime;\n\
+      var float LastUpdateTime;\n\nvar KRigidBodyState KState;\nvar bool bChanged;\n\
+      \nvar int counter;\n\n\nstruct repinfo {\n\tvar KRigidBodyState state;\n\tvar\
+      \ float timestamp;\n};\n\nvar repinfo KRepState;\n\nreplication\n{\n    unreliable\
+      \ if(Role == ROLE_Authority)\n        KRepState, bChanged;\n}\n\nfunction Tick(float\
+      \ Delta)\n{\n\tif(Role == ROLE_Authority) {\n\t    if(KIsAwake()) {\n\t    \
+      \    counter = 30;\n\t    } else {\n\t        if(counter > 0) counter--;\n\t\
+      \    }\n    \tPackState();\n    }\n}\n\nfunction PackState()\n{\n    if(counter\
+      \ < 1 && !KIsAwake())\n\t    return;\n    bChanged = false;\n    KGetRigidBodyState(KState);\n\
+      \n    if(VSize(KRBVecToVector(KState.Position) - KRBVecToVector(KRepState.state.Position))\
+      \ > 10) {\n    \t//log(self@\"Position Change\");\n        bChanged = true;\n\
+      \    }\n    if(VSize(KRBVecToVector(KState.LinVel) - KRBVecToVector(KRepState.state.LinVel))\
+      \ > 10) {\n        //log(self@\"LinVel Change\");\n    \tbChanged = true;\n\
+      \    }\n    if(VSize(KRBVecToVector(KState.AngVel) - KRBVecToVector(KRepState.state.AngVel))\
+      \ > 10) {\n    \t//log(self@\"AngVel\");\n        bChanged = true;\n    }\n\
+      \    if(bChanged == false && Level.TimeSeconds > NextNetUpdateTime) {\n    \t\
+      //log(self@\"MaxNetUpdateInterval reached\");\n        bChanged = true;\n  \
+      \  }\n    if(bChanged == true) {\n        KRepState.state = KState;\n      \
+      \  NextNetUpdateTime = Level.TimeSeconds + MaxNetUpdateInterval;\n\t\tKRepState.timestamp\
+      \ = Level.TimeSeconds;\n\t}\n\n}\n\nsimulated event bool KUpdateState(out KRigidBodyState\
+      \ newState)\n{\n    if(Role == ROLE_Authority)\n        return false;\n    if(bChanged\
+      \ == false) return false;\n    if(LastUpdateTime > KRepState.timestamp) return\
+      \ false;\n    newState = KRepState.state;\n    LastUpdateTime = KRepState.timestamp;\n\
+      \tbChanged = false;\n    return true;\n}\n\nsimulated event PreBeginPlay() {\n\
+      \tKarmaParams(KParams).bClientOnly = false;\n}\n\n\nDefaultProperties\n{\n\t\
+      MaxNetUpdateInterval=0.2\n\tbBlockZeroExtentTraces = true\n\tbBlockNonZeroExtentTraces\
+      \ = true\n    //NetUpdateFrequency = 1\n\t//bUpdateSimulatedPosition=true\n\t\
+      //bGameRelevant=true\n\tbAlwaysRelevant=true\n\tbCollideWorld=true\n\tbNetNotify=true\n\
+      \tRemoteRole=ROLE_SimulatedProxy\n\tDrawScale=2.75\n\tPhysics=PHYS_Karma\n\t\
+      Begin Object Class=KarmaParams Name=KParams0\n\t\tbHighDetailOnly\t\t\t=\tFalse\n\
+      \t\tbKNonSphericalInertia\t=\tFalse\n\t\tKActorGravScale\t\t\t=\t0.55\n\t\t\
+      KAngularDamping\t\t\t=\t0.2\n\t\tKBuoyancy\t\t\t\t=\t1.01\n\t\tKLinearDamping\t\
+      \t\t=\t0.2\n\t\tKMass\t\t\t\t\t=\t0.45\n\t\tKStartEnabled\t\t\t=\tFalse\n\t\t\
+      KFriction\t\t\t\t=\t0.40\n\t\tKRestitution\t\t\t=\t0.50\n\t\tKImpactThreshold\t\
+      \t=\t5\n\tEnd Object\n\tKParams=KarmaParams'KParams0'\n\tStaticMesh=StaticMesh'UZGMeshes.Body.Head'\n\
+      \tDrawType=DT_StaticMesh\n//\t bNoDelete=True\n\t bCollideActors=True\n\t bBlockActors=True\n\
+      \t bBlockPlayers=True\n\t bProjTarget=True\n\t bBlockKarma=True\n}\n</uscript>\n\
+      \n----\n\n[[:Category:Legacy Refactor Me]]<br />[[:Category:Legacy Journal]]<br\
+      \ />[[:Category:Legacy To Do]] &ndash; If this really is stuff unique to [[Legacy:Karma|Karma]]\
+      \ and [[Legacy:Replication|Replication]] then [[Legacy:Replication/Karma|Replication/Karma]],\
+      \ [[Legacy:Karma/Replication|Karma/Replication]] or [[Legacy:Karma Replication|Karma\
+      \ Replication]] might be a better location for this. Otherwise this should probably\
+      \ be folded into the grand topic of [[Legacy:Replication|Replication]]. See\
+      \ [[Legacy:Replication/Discussing|Replication/Discussing]]\n[[Category:Legacy\
+      \ Refactor Me|{{PAGENAME}}]]\n[[Category:Legacy Journal|{{PAGENAME}}]]\n[[Category:Legacy\
+      \ To Do|{{PAGENAME}}]]"
+  properties: []
+  revId: 3987
+name: "Legacy:KActor Replication"
+revision:
+  revid: 3987
+  parentid: 3988
+  user: "Sweavo"
+  timestamp: 1195485021.000000000
+  comment: "made it into category journal (I'm doing this for Category Custom Class\
+    \ pages that are more works-in-progress with discussion rather than finished Classes.)"
+timestamp: 1668797523.537074000

@@ -1,0 +1,241 @@
+---
+parse:
+  title: "Legacy:Defining SpeciesTypes"
+  text:
+    text: "<p>This page describes how to use the <a href=\"/Legacy:Object\" title=\"\
+      Legacy:Object\">Object</a> &gt;&gt; <a href=\"/Legacy:SpeciesType\" title=\"\
+      Legacy:SpeciesType\">SpeciesType</a> class to implement different species with\
+      \ different characteristics in <a href=\"/Legacy:UT2003\" title=\"Legacy:UT2003\"\
+      \ class=\"mw-redirect\">UT2003</a>.</p>\n<p>These characteristics can be e.g.:</p>\n\
+      <ul>\n<li>the ground speed of a pawn</li>\n<li>the jump height of a pawn</li>\n\
+      <li>the acceleration when running</li>\n<li>change the damage done to a pawn\
+      \ (like a species having an armoured skin)</li>\n<li>change the damage that\
+      \ this pawn does to others (like a species having a nasty punch)</li>\n</ul>\n\
+      <p>First, lets start with an overview of the classes that contribute to the\
+      \ species-system (they are explained in more detail later):</p>\n<dl>\n<dt>SpeciesType&#160;</dt>\n\
+      <dd>This class and its subclasses define the species and their individual characteristics.\
+      \ UT2003 e.g. comes with several build-in species like <tt>SPECIES_Alien</tt>,\
+      \ <tt>SPECIES_Bot</tt>, <tt>SPECIES_Human</tt> (where the humans have some sub-species,\
+      \ namely <tt>SPECIES_Egypt</tt>, <tt>SPECIES_Merc</tt> and <tt>SPECIES_Night</tt>),\
+      \ and <tt>SPECIES_Jugg</tt>. You can easily expand these to form your own species\
+      \ with their own characteristics. See <a href=\"/Legacy:SpeciesType\" title=\"\
+      Legacy:SpeciesType\">SpeciesType</a></dd>\n<dt>xPawn&#160;</dt>\n<dd>xPawn has\
+      \ the member <tt>Species</tt> of type <a href=\"/Legacy:SpeciesType\" title=\"\
+      Legacy:SpeciesType\">SpeciesType</a> to define the Species that this xPawn is\
+      \ of.</dd>\n<dt>MutSpeciesStats&#160;</dt>\n<dd>Is a mutator that activates\
+      \ the species-system ingame.</dd>\n<dt>SpeciesGameRules&#160;</dt>\n<dd>Are\
+      \ species-specific game rules activated by the MutSpeciesStats.</dd>\n<dt><a\
+      \ href=\"/Legacy:UPL_File\" title=\"Legacy:UPL File\">UPL File</a> files&#160;</dt>\n\
+      <dd>define player-models, including their assigned species.</dd>\n</dl>\n<p>These\
+      \ classes (resp.files) are explained in more detail now.</p>\n<p></p>\n<div\
+      \ id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n</div>\n\
+      <ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#xPawn\"><span class=\"\
+      tocnumber\">1</span> <span class=\"toctext\">xPawn</span></a></li>\n<li class=\"\
+      toclevel-1 tocsection-2\"><a href=\"#.upl\"><span class=\"tocnumber\">2</span>\
+      \ <span class=\"toctext\">.upl</span></a></li>\n<li class=\"toclevel-1 tocsection-3\"\
+      ><a href=\"#MutSpeciesStat\"><span class=\"tocnumber\">3</span> <span class=\"\
+      toctext\">MutSpeciesStat</span></a></li>\n<li class=\"toclevel-1 tocsection-4\"\
+      ><a href=\"#SpeciesGameRules\"><span class=\"tocnumber\">4</span> <span class=\"\
+      toctext\">SpeciesGameRules</span></a></li>\n</ul>\n</div>\n<p></p>\n<h2><span\
+      \ class=\"mw-headline\" id=\"xPawn\">xPawn</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Defining_SpeciesTypes?section=1\"\
+      \ title=\"Edit section: xPawn\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<ul>\n<li>has the member <tt>Species</tt> of type <tt>SpeciesType</tt>\
+      \ that defines its Species. This member's default property is set in the defaultproperties.</li>\n\
+      </ul>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"\
+      uscript source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">defaultproperties</span>\n\
+      <span class=\"br0\">{</span> \n  ...\n  <span class=\"me0\">Species</span><span\
+      \ class=\"sy0\">=</span><span class=\"kw1\">class</span><span class=\"st0\"\
+      >'SPECIES_Jugg'</span>\n  ...\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <p>Its real value is determined at runtime in the function <tt><a href=\"/Legacy:XPawn\"\
+      \ title=\"Legacy:XPawn\">xPawn</a>.Setup</tt> that uses the class <tt>xUtil</tt>\
+      \ to find the player record that is defined for a character name:</p>\n<div\
+      \ dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\">rec <span class=\"sy0\">=</span> <span\
+      \ class=\"kw1\">class</span><span class=\"st0\">'xUtil'</span>.<span class=\"\
+      kw1\">static</span>.<span class=\"me0\">FindPlayerRecord</span><span class=\"\
+      br0\">(</span><span class=\"st0\">\"Gorge\"</span><span class=\"br0\">)</span>;</pre></div>\n\
+      </div>\n<p>This function is native, that is, it is implemented in the C/C++\
+      \ core and its sourcecode is not accessible, but I assume it just searches all\
+      \ .upl files and returns the player record who's DefaultName matches the given\
+      \ character name.</p>\n<h2><span class=\"mw-headline\" id=\".upl\">.upl</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Defining_SpeciesTypes?section=2\" title=\"Edit section:\
+      \ .upl\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>The .upl files define the characters, i.e. how they look (Mesh, Skin), what\
+      \ portrait they have in the player selection menu, their favorite weapon (in\
+      \ case its a bot) and of course their species type. I guess since you can set\
+      \ the sex of an character in the .upl file that this also defines the voice\
+      \ of that character. .upl files are located in the UT2003/System directory and\
+      \ look like this:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      br0\">[</span><span class=\"kw1\">Public</span><span class=\"br0\">]</span>\n\
+      <span class=\"kw8\">Player</span><span class=\"sy0\">=</span><span class=\"\
+      br0\">(</span>DefaultName<span class=\"sy0\">=</span><span class=\"st0\">\"\
+      Diva\"</span>,<span class=\"kw5\">Mesh</span><span class=\"sy0\">=</span>HumanFemaleA.<span\
+      \ class=\"me0\">EgyptFemaleA</span>,species<span class=\"sy0\">=</span>xGame.<span\
+      \ class=\"me0\">SPECIES_Egypt</span>,BodySkin<span class=\"sy0\">=</span>PlayerSkins.<span\
+      \ class=\"me0\">EgyptFemaleABodyA</span>,FaceSkin<span class=\"sy0\">=</span>PlayerSkins.<span\
+      \ class=\"me0\">EgyptFemaleAHeadA</span>,Portrait<span class=\"sy0\">=</span>PlayerPictures.<span\
+      \ class=\"me0\">cEgyptFemaleAA</span>,Text<span class=\"sy0\">=</span>XPlayers.<span\
+      \ class=\"me0\">EgyptFemaleAA</span>,Sex<span class=\"sy0\">=</span>Female,Menu<span\
+      \ class=\"sy0\">=</span><span class=\"st0\">\"SP\"</span>,Aggressiveness<span\
+      \ class=\"sy0\">=+</span><span class=\"nu0\">0.4</span>,CombatStyle<span class=\"\
+      sy0\">=+</span><span class=\"nu0\">0.4</span>,FavoriteWeapon<span class=\"sy0\"\
+      >=</span>xWeapons.<span class=\"me0\">RocketLauncher</span>,bJumpy<span class=\"\
+      sy0\">=</span><span class=\"nu0\">1</span>,StrafingAbility<span class=\"sy0\"\
+      >=+</span><span class=\"nu0\">0.5</span><span class=\"br0\">)</span>\n<span\
+      \ class=\"kw8\">Player</span><span class=\"sy0\">=</span><span class=\"br0\"\
+      >(</span>DefaultName<span class=\"sy0\">=</span><span class=\"st0\">\"Scarab\"\
+      </span>,<span class=\"kw5\">Mesh</span><span class=\"sy0\">=</span>HumanMaleA.<span\
+      \ class=\"me0\">EgyptMaleA</span>,species<span class=\"sy0\">=</span>xGame.<span\
+      \ class=\"me0\">SPECIES_Egypt</span>,BodySkin<span class=\"sy0\">=</span>PlayerSkins.<span\
+      \ class=\"me0\">EgyptMaleABodyA</span>,FaceSkin<span class=\"sy0\">=</span>PlayerSkins.<span\
+      \ class=\"me0\">EgyptMaleAHeadA</span>,Portrait<span class=\"sy0\">=</span>PlayerPictures.<span\
+      \ class=\"me0\">cEgyptMaleAA</span>,Text<span class=\"sy0\">=</span>XPlayers.<span\
+      \ class=\"me0\">EgyptMaleAA</span>,Sex<span class=\"sy0\">=</span>Male,Menu<span\
+      \ class=\"sy0\">=</span><span class=\"st0\">\"SP\"</span>,Tactics<span class=\"\
+      sy0\">=</span><span class=\"nu0\">1.0</span>,FavoriteWeapon<span class=\"sy0\"\
+      >=</span>xWeapons.<span class=\"me0\">LinkGun</span>,CombatStyle<span class=\"\
+      sy0\">=-</span><span class=\"nu0\">0.1</span>,StrafingAbility<span class=\"\
+      sy0\">=+</span><span class=\"nu0\">0.4</span>,Accuracy<span class=\"sy0\">=-</span><span\
+      \ class=\"nu0\">0.4</span><span class=\"br0\">)</span>\n...</pre></div>\n</div>\n\
+      <h2><span class=\"mw-headline\" id=\"MutSpeciesStat\">MutSpeciesStat</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Defining_SpeciesTypes?section=3\" title=\"Edit section:\
+      \ MutSpeciesStat\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <ul>\n<li>activates the <tt>SpeciesGameRules</tt> to use the species-specific\
+      \ damage system.</li>\n<li>modifies xPawns to species-specific attributes like\
+      \ GroundSpeed, WaterSpeed, Jump-Height etc. in <tt>ModifyPawn</tt>.</li>\n</ul>\n\
+      <p>You should use this Mutator if you want the species-system to be activated.</p>\n\
+      <h2><span class=\"mw-headline\" id=\"SpeciesGameRules\">SpeciesGameRules</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Defining_SpeciesTypes?section=4\" title=\"Edit section:\
+      \ SpeciesGameRules\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <ul>\n<li>modifies damage done to an xPawn, depending on the species of that\
+      \ pawn (<tt>SpeciesGameRules.ModifyReceivedDamage</tt>)</li>\n<li>modifies damage\
+      \ done to an xPawn, depending on the species of the instigator (<tt>SpeciesGameRules.ModifyImpartedDamage</tt>)</li>\n\
+      </ul>\n<p>You could create your own species game rules that extend these game\
+      \ rules and define more sophisticated species-related stuff.</p>\n\n<!-- \n\
+      NewPP limit report\nCPU time usage: 0.059 seconds\nReal time usage: 0.060 seconds\n\
+      Preprocessor visited node count: 42/1000000\nPreprocessor generated node count:\
+      \ 80/1000000\nPost‐expand include size: 0/2097152 bytes\nTemplate argument size:\
+      \ 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser function\
+      \ count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:987-0!*!0!!en!*!* and timestamp 20221118044745 and revision\
+      \ id 2665\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:SpeciesType"
+  - ns: 100
+    exists: true
+    name: "Legacy:XPawn"
+  - ns: 100
+    exists: true
+    name: "Legacy:UT2003"
+  - ns: 100
+    exists: true
+    name: "Legacy:Object"
+  - ns: 100
+    exists: true
+    name: "Legacy:UPL File"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "xPawn"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Defining_SpeciesTypes"
+    byteoffset: 1571
+    anchor: "xPawn"
+  - toclevel: 1
+    level: "2"
+    line: ".upl"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Defining_SpeciesTypes"
+    byteoffset: 2328
+    anchor: ".upl"
+  - toclevel: 1
+    level: "2"
+    line: "MutSpeciesStat"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:Defining_SpeciesTypes"
+    byteoffset: 3465
+    anchor: "MutSpeciesStat"
+  - toclevel: 1
+    level: "2"
+    line: "SpeciesGameRules"
+    number: "4"
+    index: "4"
+    fromtitle: "Legacy:Defining_SpeciesTypes"
+    byteoffset: 3767
+    anchor: "SpeciesGameRules"
+  displaytitle: "Legacy:Defining SpeciesTypes"
+  iwlinks: []
+  wikitext:
+    text: "This page describes how to use the [[Legacy:Object|Object]] >> [[Legacy:SpeciesType|SpeciesType]]\
+      \ class to implement different species with different characteristics in [[Legacy:UT2003|UT2003]].\n\
+      \nThese characteristics can be e.g.:\n* the ground speed of a pawn\n* the jump\
+      \ height of a pawn\n* the acceleration when running\n* change the damage done\
+      \ to a pawn (like a species having an armoured skin)\n* change the damage that\
+      \ this pawn does to others (like a species having a nasty punch)\n\nFirst, lets\
+      \ start with an overview of the classes that contribute to the species-system\
+      \ (they are explained in more detail later):\n; SpeciesType : This class and\
+      \ its subclasses define the species and their individual characteristics. UT2003\
+      \ e.g. comes with several build-in species like <tt>SPECIES_Alien</tt>, <tt>SPECIES_Bot</tt>,\
+      \ <tt>SPECIES_Human</tt> (where the humans have some sub-species, namely <tt>SPECIES_Egypt</tt>,\
+      \ <tt>SPECIES_Merc</tt> and <tt>SPECIES_Night</tt>), and <tt>SPECIES_Jugg</tt>.\
+      \ You can easily expand these to form your own species with their own characteristics.\
+      \ See [[Legacy:SpeciesType|SpeciesType]]\n; xPawn : xPawn has the member <tt>Species</tt>\
+      \ of type [[Legacy:SpeciesType|SpeciesType]] to define the Species that this\
+      \ xPawn is of.\n; MutSpeciesStats : Is a mutator that activates the species-system\
+      \ ingame.\n; SpeciesGameRules : Are species-specific game rules activated by\
+      \ the MutSpeciesStats.\n; [[Legacy:UPL File|UPL File]] files : define player-models,\
+      \ including their assigned species.\n\nThese classes (resp.files) are explained\
+      \ in more detail now.\n\n==xPawn==\n* has the member <tt>Species</tt> of type\
+      \ <tt>SpeciesType</tt> that defines its Species. This member's default property\
+      \ is set in the defaultproperties.\n\n<uscript>\ndefaultproperties\n{ \n  ...\n\
+      \  Species=class'SPECIES_Jugg'\n  ...\n}\n</uscript>\n\nIts real value is determined\
+      \ at runtime in the function <tt>[[Legacy:XPawn|xPawn]].Setup</tt> that uses\
+      \ the class <tt>xUtil</tt> to find the player record that is defined for a character\
+      \ name:\n\n<uscript>\nrec = class'xUtil'.static.FindPlayerRecord(\"Gorge\");\n\
+      </uscript>\n\nThis function is native, that is, it is implemented in the C/C++\
+      \ core and its sourcecode is not accessible, but I assume it just searches all\
+      \ .upl files and returns the player record who's DefaultName matches the given\
+      \ character name. \n\n==.upl ==\n\nThe .upl files define the characters, i.e.\
+      \ how they look (Mesh, Skin), what portrait they have in the player selection\
+      \ menu, their favorite weapon (in case its a bot) and of course their species\
+      \ type. I guess since you can set the sex of an character in the .upl file that\
+      \ this also defines the voice of that character. .upl files are located in the\
+      \ UT2003/System directory and look like this:\n\n<uscript>\n[Public]\nPlayer=(DefaultName=\"\
+      Diva\",Mesh=HumanFemaleA.EgyptFemaleA,species=xGame.SPECIES_Egypt,BodySkin=PlayerSkins.EgyptFemaleABodyA,FaceSkin=PlayerSkins.EgyptFemaleAHeadA,Portrait=PlayerPictures.cEgyptFemaleAA,Text=XPlayers.EgyptFemaleAA,Sex=Female,Menu=\"\
+      SP\",Aggressiveness=+0.4,CombatStyle=+0.4,FavoriteWeapon=xWeapons.RocketLauncher,bJumpy=1,StrafingAbility=+0.5)\n\
+      Player=(DefaultName=\"Scarab\",Mesh=HumanMaleA.EgyptMaleA,species=xGame.SPECIES_Egypt,BodySkin=PlayerSkins.EgyptMaleABodyA,FaceSkin=PlayerSkins.EgyptMaleAHeadA,Portrait=PlayerPictures.cEgyptMaleAA,Text=XPlayers.EgyptMaleAA,Sex=Male,Menu=\"\
+      SP\",Tactics=1.0,FavoriteWeapon=xWeapons.LinkGun,CombatStyle=-0.1,StrafingAbility=+0.4,Accuracy=-0.4)\n\
+      ...\n</uscript>\n\n==MutSpeciesStat==\n* activates the <tt>SpeciesGameRules</tt>\
+      \ to use the species-specific damage system.\n* modifies xPawns to species-specific\
+      \ attributes like GroundSpeed, WaterSpeed, Jump-Height etc. in <tt>ModifyPawn</tt>.\n\
+      \nYou should use this Mutator if you want the species-system to be activated.\n\
+      \n==SpeciesGameRules==\n* modifies damage done to an xPawn, depending on the\
+      \ species of that pawn (<tt>SpeciesGameRules.ModifyReceivedDamage</tt>)\n* modifies\
+      \ damage done to an xPawn, depending on the species of the instigator (<tt>SpeciesGameRules.ModifyImpartedDamage</tt>)\n\
+      \nYou could create your own species game rules that extend these game rules\
+      \ and define more sophisticated species-related stuff."
+  properties: []
+  revId: 2665
+name: "Legacy:Defining SpeciesTypes"
+revision:
+  revid: 2665
+  parentid: 2666
+  user: "Tarquin"
+  timestamp: 1078874747.000000000
+  comment: "*"
+timestamp: 1668775839.433153000

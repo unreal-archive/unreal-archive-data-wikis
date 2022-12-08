@@ -1,0 +1,739 @@
+---
+parse:
+  title: "Legacy:Communication Between Objects"
+  text:
+    text: "<p>Objects in <a href=\"/Legacy:UnrealScript\" title=\"Legacy:UnrealScript\"\
+      >UnrealScript</a> often need to be able to discover information about each other\
+      \ in order to actually interact with eachother in some way. For example.</p>\n\
+      <ul>\n<li>A weapon needs to know how many charges are left in a powerup.</li>\n\
+      <li>In a CTF the flag needs to know the team of the player that just touched\
+      \ it.</li>\n<li>A player needs to know who fired the projectile that just killed\
+      \ them.</li>\n<li>The guided redeemer shell needs to know the orientation of\
+      \ the player guiding it.</li>\n</ul>\n<p>This is achieved by object <i>references</i>\
+      \ and will be better understood if we look at a few examples from the game itself.</p>\n\
+      <p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n\
+      </div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#The_CTF_Flag\"\
+      ><span class=\"tocnumber\">1</span> <span class=\"toctext\">The CTF Flag</span></a>\n\
+      <ul>\n<li class=\"toclevel-2 tocsection-2\"><a href=\"#The_Reference_Itself\"\
+      ><span class=\"tocnumber\">1.1</span> <span class=\"toctext\">The Reference\
+      \ Itself</span></a></li>\n<li class=\"toclevel-2 tocsection-3\"><a href=\"#Setting_The_Reference\"\
+      ><span class=\"tocnumber\">1.2</span> <span class=\"toctext\">Setting The Reference</span></a></li>\n\
+      </ul>\n</li>\n<li class=\"toclevel-1 tocsection-4\"><a href=\"#A_silly_example\"\
+      ><span class=\"tocnumber\">2</span> <span class=\"toctext\">A silly example</span></a>\n\
+      <ul>\n<li class=\"toclevel-2 tocsection-5\"><a href=\"#Comments\"><span class=\"\
+      tocnumber\">2.1</span> <span class=\"toctext\">Comments</span></a></li>\n<li\
+      \ class=\"toclevel-2 tocsection-6\"><a href=\"#Zedsquared_chips_in_with_a_more_general_view:\"\
+      ><span class=\"tocnumber\">2.2</span> <span class=\"toctext\">Zedsquared chips\
+      \ in with a more general view:</span></a></li>\n<li class=\"toclevel-2 tocsection-7\"\
+      ><a href=\"#Alternate_.2B_More_Efficient_Way\"><span class=\"tocnumber\">2.3</span>\
+      \ <span class=\"toctext\">Alternate + More Efficient Way</span></a></li>\n<li\
+      \ class=\"toclevel-2 tocsection-8\"><a href=\"#.22Global.22_object_references\"\
+      ><span class=\"tocnumber\">2.4</span> <span class=\"toctext\">\"Global\" object\
+      \ references</span></a></li>\n</ul>\n</li>\n<li class=\"toclevel-1 tocsection-9\"\
+      ><a href=\"#Related_Topics\"><span class=\"tocnumber\">3</span> <span class=\"\
+      toctext\">Related Topics</span></a></li>\n<li class=\"toclevel-1 tocsection-10\"\
+      ><a href=\"#Comments_2\"><span class=\"tocnumber\">4</span> <span class=\"toctext\"\
+      >Comments</span></a></li>\n</ul>\n</div>\n<p></p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"The_CTF_Flag\">The CTF Flag</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Communication_Between_Objects?section=1\"\
+      \ title=\"Edit section: The CTF Flag\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>Let's first take a look at how the CTF Flag in UT2004\
+      \ uses references to figure out just who exactly is holding it and how it interacts\
+      \ with that person.</p>\n<h3><span class=\"mw-headline\" id=\"The_Reference_Itself\"\
+      >The Reference Itself</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Communication_Between_Objects?section=2\" title=\"\
+      Edit section: The Reference Itself\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>The code that tells the Flag who is holding it is\
+      \ not actually in the <a href=\"/Legacy:CTFFlag\" title=\"Legacy:CTFFlag\">CTFFlag</a>\
+      \ class at all. It is actually in a SuperClass called GameObject. In this class\
+      \ there are several important things that are essential for the CTF Flag to\
+      \ operate.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n\
+      <div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"co1\"\
+      >//The reference itself</span>\n<span class=\"kw1\">var</span> <span class=\"\
+      kw9\">UnrealPawn</span>      Holder;  <span class=\"co1\">//Holder has to be\
+      \ an UnrealPawn or any of it's subclasses</span>\n \n<span class=\"co1\">//Another\
+      \ reference, although not required, it will help out</span>\n<span class=\"\
+      kw1\">var</span> TeamPlayerReplicationInfo HolderPRI; <span class=\"co1\">//HolderPRI\
+      \ is simply the TeamPlayerReplicationInfo for the flags holder</span></pre></div>\n\
+      </div>\n<p>These are the only variable-level references that are useful to this\
+      \ example so I won't bother going into detail with too many other aspects of\
+      \ the code.</p>\n<p><b>Side Note</b></p>\n<p>These references are also pretty\
+      \ useless unless we 'reference' an actual object that exists. What I mean by\
+      \ that is best explained by this:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">var</span> <span class=\"kw9\">UnrealPawn</span> MyPawn;\n\
+      \ \n<span class=\"kw1\">function</span> <span class=\"kw4\">PostBeginPlay</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \    MyPawn.<span class=\"me0\">Health</span> <span class=\"sy0\">=</span> <span\
+      \ class=\"nu0\">100</span>;\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <p>Doing <b>just</b> this will actually create an Accessed None error in the\
+      \ log if it is executed by the engine. The reason for this is because declaring\
+      \ a variable as a reference is only good if you point that reference to something.\
+      \ Putting the following before trying to change the health of my Pawn in the\
+      \ previous pseudo-code does two things.</p>\n<p><b>One:</b> It will spawn an\
+      \ actor (in this case an UnrealPawn) and</p>\n<p><b>Two:</b> It will point MyPawn\
+      \ to the newly created actor.</p>\n<p>This means that everytime you use MyPawn\
+      \ in the script, you're actually talking about the UnrealPawn that you spawned.</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\">MyPawn <span class=\"sy0\">=</span>\
+      \ <span class=\"kw4\">Spawn</span><span class=\"br0\">(</span><span class=\"\
+      kw1\">class</span><span class=\"st0\">'UnrealGame.UnrealPawn'</span><span class=\"\
+      br0\">)</span>;</pre></div>\n</div>\n<h3><span class=\"mw-headline\" id=\"Setting_The_Reference\"\
+      >Setting The Reference</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Communication_Between_Objects?section=3\" title=\"\
+      Edit section: Setting The Reference\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Setting or Pointing the reference is what we need\
+      \ to do next, and the GameObject uses a SetHolder() function to do that.</p>\n\
+      <p>When the SetHolder() function is called it will execute the following code:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">function</span>\
+      \ SetHolder<span class=\"br0\">(</span><span class=\"kw9\">Controller</span>\
+      \ C<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"\
+      kw1\">local</span> <span class=\"kw5\">int</span> i;\n \n    <span class=\"\
+      co1\">//log(self$\" setholder c=\"$c, 'GameObject');</span>\n    LogTaken<span\
+      \ class=\"br0\">(</span>c<span class=\"br0\">)</span>;\n    Holder <span class=\"\
+      sy0\">=</span> <span class=\"kw9\">UnrealPawn</span><span class=\"br0\">(</span>C.<span\
+      \ class=\"kw9\">Pawn</span><span class=\"br0\">)</span>;\n    Holder.<span class=\"\
+      me0\">DeactivateSpawnProtection</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n    HolderPRI <span class=\"sy0\">=</span> TeamPlayerReplicationInfo<span\
+      \ class=\"br0\">(</span>Holder.<span class=\"me0\">PlayerReplicationInfo</span><span\
+      \ class=\"br0\">)</span>;\n    C.<span class=\"me0\">PlayerReplicationInfo</span>.<span\
+      \ class=\"me0\">HasFlag</span> <span class=\"sy0\">=</span> <span class=\"kw6\"\
+      >self</span>;\n\tC.<span class=\"me0\">PlayerReplicationInfo</span>.<span class=\"\
+      me0\">NetUpdateTime</span> <span class=\"sy0\">=</span> <span class=\"kw7\"\
+      >Level</span>.<span class=\"me0\">TimeSeconds</span> <span class=\"sy0\">-</span>\
+      \ <span class=\"nu0\">1</span>;\n \n    <span class=\"kw3\">GotoState</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'Held'</span><span class=\"br0\"\
+      >)</span>;\n \n\t<span class=\"co1\">// AI Related</span>\n\tC.<span class=\"\
+      me0\">MoveTimer</span> <span class=\"sy0\">=</span> <span class=\"sy0\">-</span><span\
+      \ class=\"nu0\">1</span>;\n\tHolder.<span class=\"kw4\">MakeNoise</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">2.0</span><span class=\"br0\">)</span>;\n\
+      \ \n\t<span class=\"co1\">// Track First Touch</span>\n \n\t<span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span>FirstTouch <span class=\"sy0\">==</span>\
+      \ <span class=\"kw5\">None</span><span class=\"br0\">)</span>\n\t\tFirstTouch\
+      \ <span class=\"sy0\">=</span> C;\n \n\t<span class=\"co1\">// Track Assists</span>\n\
+      \ \n\t<span class=\"kw2\">for</span> <span class=\"br0\">(</span>i<span class=\"\
+      sy0\">=</span><span class=\"nu0\">0</span>;i<span class=\"sy0\">&lt;</span>Assists.<span\
+      \ class=\"me0\">Length</span>;i<span class=\"sy0\">++</span><span class=\"br0\"\
+      >)</span>\n\t\t<span class=\"kw2\">if</span> <span class=\"br0\">(</span>Assists<span\
+      \ class=\"br0\">[</span>i<span class=\"br0\">]</span> <span class=\"sy0\">==</span>\
+      \ C<span class=\"br0\">)</span>\n\t\t  <span class=\"kw2\">return</span>;\n\
+      \ \n\tAssists.<span class=\"me0\">Length</span> <span class=\"sy0\">=</span>\
+      \ Assists.<span class=\"me0\">Length</span><span class=\"sy0\">+</span><span\
+      \ class=\"nu0\">1</span>;\n  \tAssists<span class=\"br0\">[</span>Assists.<span\
+      \ class=\"me0\">Length</span><span class=\"sy0\">-</span><span class=\"nu0\"\
+      >1</span><span class=\"br0\">]</span> <span class=\"sy0\">=</span> C;\n \n<span\
+      \ class=\"br0\">}</span></pre></div>\n</div>\n<p>We will only concern ourselves\
+      \ with the first few lines of the code however. Firstly, the controller (the\
+      \ player) who took the flag will be logged. Then the Holder reference will be\
+      \ set with the following code.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      >Holder <span class=\"sy0\">=</span> <span class=\"kw9\">UnrealPawn</span><span\
+      \ class=\"br0\">(</span>C.<span class=\"kw9\">Pawn</span><span class=\"br0\"\
+      >)</span>;</pre></div>\n</div>\n<p>Note that the Holder reference is being pointed\
+      \ to a Pawn that already exists, thus there is no need to spawn the pawn. If\
+      \ for some reason the pawn died when this function was called however, it would\
+      \ produce an error as the pawn in question would no longer exist.</p>\n<p>If\
+      \ the Holder had spawn protection active, it would disable it when the flag\
+      \ is picked up allowing defenders to have a chance to kill the Holder of the\
+      \ flag. This is done by called the DeactivateSpawnProtection() method through\
+      \ the Holder reference.</p>\n<p>Because Holder is pointed to UnrealPawn(C.Pawn),\
+      \ It actually calls that method within UnrealPawn(C.Pawn) so:</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\">Holder.<span class=\"me0\">DeactivateSpawnProtection</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;</pre></div>\n</div>\n\
+      <p>could very well be written as:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw9\">UnrealPawn</span><span class=\"br0\">(</span>C.<span class=\"\
+      kw9\">Pawn</span><span class=\"br0\">)</span>.<span class=\"me0\">DeactivateSpawnProtection</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;</pre></div>\n</div>\n\
+      <p>They will do the same thing, but using references is more efficient, less\
+      \ messy and can also help with describing how your code works.</p>\n<p>Next\
+      \ it will also assign HolderPRI to the PRI of the Holder in question. This is\
+      \ purely for efficiency and anti-mess purposes I would imagine.</p>\n<p>If for\
+      \ whatever reason we wanted to add 100 health to the Holder of the flag when\
+      \ it is picked up, we could add something like the following before the end\
+      \ of the function.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\">Holder.<span class=\"\
+      me0\">Health</span> <span class=\"sy0\">=</span> Holder.<span class=\"me0\"\
+      >Health</span> <span class=\"sy0\">+</span> <span class=\"nu0\">50</span>; <span\
+      \ class=\"co1\">//Add 50 health to the Holders current health</span></pre></div>\n\
+      </div>\n<h2><span class=\"mw-headline\" id=\"A_silly_example\">A silly example</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Communication_Between_Objects?section=4\" title=\"Edit\
+      \ section: A silly example\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>Using the BugEyedMonster class from <a href=\"/Legacy:Extending_States\"\
+      \ title=\"Legacy:Extending States\">Extending States</a> again, let's suppose\
+      \ that we have a BugEyedQueen, and that when BugEyedMonster is very scared it\
+      \ runs towards her. We might have some sort of function RunToQueen() in BugEyedMonster's\
+      \ script.</p>\n<p>The simplest thing might be to look for the Queen when we\
+      \ need to find her, with a foreach <a href=\"/Legacy:Iterator\" title=\"Legacy:Iterator\"\
+      >iterator</a>: obtain a reference to the Queen, get her location and move towards\
+      \ it.</p>\n<dl>\n<dd>(example code here...)</dd>\n</dl>\n<p>This might be fine\
+      \ if the BUM only needs to do this once. However, if the Queen is also moving\
+      \ we have ourselves a case of the \"pursuit problem\" in maths (the one I could\
+      \ never solve – Tarquin), and BUM needs to know about her location more than\
+      \ once, maybe even every tick. Running a foreach iterator this frequently is\
+      \ too heavy for the engine, and there's a more efficient way of doing it:</p>\n\
+      <p>Give the BUM a <i>variable</i> of type BugEyedQueen. This in fact means a\
+      \ variable that holds a reference to an object, and the class of the object\
+      \ must be BugEyedQueen, or a subclass. (Remember the <a href=\"/Legacy:Peppers_And_Pepper_Grinders\"\
+      \ title=\"Legacy:Peppers And Pepper Grinders\">Peppers And Pepper Grinders</a>\
+      \ analogy: this variable does not indicate a class, it indicates an object of\
+      \ a certain class.) We could make it so the mapper has to set its value to point\
+      \ to the Queen object in the map:</p>\n<dl>\n<dd>var() BugEyedQueen MyQueen;</dd>\n\
+      </dl>\n<p>This requires the mapper to think, is bound to lead to confusion,\
+      \ recriminations and spilled milk. Docers often need to think for pammers&#160;;-)</p>\n\
+      <ul>\n<li>set the variable uneditable by declaring it with just var, no ()</li>\n\
+      <li>in one of the begin play functions (PreBeginPlay, PostBeginPlay, I don't\
+      \ know which is appropriate (PostBeginPlay() gets my vote – <a href=\"/Legacy:EntropicLqd\"\
+      \ title=\"Legacy:EntropicLqd\">EntropicLqd</a>)), run the foreach code as above\
+      \ to find the Queen, and set MyQueen to point to it</li>\n<li>whenever we need\
+      \ to find something out about the Queen, simply access local variable MyQueen,\
+      \ for example Destination = MyQueen.Location</li>\n</ul>\n<dl>\n<dd>I've just\
+      \ realised on reading the bit below that I essentially (and stupidly) rewrote\
+      \ it with BugEyedMonster above. I'll try and merge them later. I'll stick to\
+      \ the reactor example, it's by far the more sensible of the two – <i>Tarquin</i></dd>\n\
+      <dd>maybe a page on PreBeginPlay, PostBeginPlay would be useful, but I don't\
+      \ know what to call it. ­- <i>Tarquin</i></dd>\n</dl>\n<p>º: have a look at\
+      \ the <a href=\"/Legacy:Creating_Actors_And_Objects\" title=\"Legacy:Creating\
+      \ Actors And Objects\">Creating Actors and Objects</a> page. (\"What exactly\
+      \ happens when I spawn an actor?\") Is this what you were looking for or should\
+      \ there be more details? – <a href=\"/Legacy:Wormbo\" title=\"Legacy:Wormbo\"\
+      >Wormbo</a></p>\n<hr />\n<p>Tarquin: snip from one of my forum posts:</p>\n\
+      <p>The standard way round this is to only call ForEach once, like this:</p>\n\
+      <p>Each actor that will need to call Bomb.AddTime gets a:</p>\n<p>var bomb myBomb&#160;;</p>\n\
+      <p>(check my syntax, it might be var class&lt;bomb&gt; etc...)</p>\n<p>Then\
+      \ one of the BeginPlay functions calls ForEach.AllActors and sets the local\
+      \ myBomb variable to point to the map's Bomb actor.</p>\n<p>Then when you need\
+      \ to access the Bomb actor's function, grab it from myBomb.AddTime.</p>\n<h4><span\
+      \ class=\"mw-headline\" id=\"Comments\">Comments</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Communication_Between_Objects?section=5\"\
+      \ title=\"Edit section: Comments\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h4>\n<p><i>Tarquin</i> Excellent idea, including this kind\
+      \ of information. Although, NOOBs will not have clue as to what you're referring\
+      \ to, and, how it would be implemented. I'll tell ya,...being a NOOB sucks.\
+      \ <a href=\"/Legacy:Nuclear_Fuzz_Grunge\" title=\"Legacy:Nuclear Fuzz Grunge\"\
+      >NFG</a></p>\n<dl>\n<dd>It's very vague for now, needs major work.&#160;:-)\
+      \ – <i>Tarquin</i></dd>\n</dl>\n<h4><span class=\"mw-headline\" id=\"Zedsquared_chips_in_with_a_more_general_view:\"\
+      >Zedsquared chips in with a more general view:</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Communication_Between_Objects?section=6\"\
+      \ title=\"Edit section: Zedsquared chips in with a more general view:\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h4>\n<p>If you want to have\
+      \ a master actor on your map that exchanges information with other slave actors\
+      \ which can be dynamically created during gameplay then the only way for those\
+      \ slaves to get a reference the master actor is for the slaves to scan through\
+      \ all the actors on the level when created ( i.e. run a foreach.allactors iteration\
+      \ in prebeginplay ) and identify the master actor (hopefully it will be the\
+      \ only one of it's type on the level or we're in trouble).</p>\n<p>So, to put\
+      \ things in more concrete terms, imagine you have a mod where a reactor goes\
+      \ critical and will blow once the opposing team has pulled enough control rods\
+      \ out (meanwhile the defending team can push them back in).</p>\n<p>Each player\
+      \ on has a small device (we'll call it an RCM or Reactor Core Monitor) which\
+      \ can display a reactor temperature which is going to be varying according to\
+      \ how many rods are in or out, this means that there's</p>\n<p>no simple timer\
+      \ here, the state of the reactor depends on the actions of the players and this\
+      \ info has to come from the reactor</p>\n<p>itself.</p>\n<p>One way of doing\
+      \ this would be for the reactor object to scan all actors on the level each\
+      \ tick and each time it finds an RCM it would call an UpdateStatus function,\
+      \ like this:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">var</span> <span class=\"kw5\">float</span> temperature;\n<span class=\"\
+      kw1\">event</span> <span class=\"kw4\">tick</span><span class=\"br0\">(</span>\
+      \ <span class=\"kw5\">float</span> deltatime<span class=\"br0\">)</span>\n <span\
+      \ class=\"br0\">{</span>\n    <span class=\"kw1\">local</span> RCM monitor;\n\
+      \ \n    modelheat<span class=\"br0\">(</span>deltatime<span class=\"br0\">)</span>;\
+      \ <span class=\"co1\">// do calcs to see how hot we are</span>\n    <span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span>temperature <span class=\"sy0\">&gt;</span>\
+      \ critical_temperature<span class=\"br0\">)</span> boom<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n    <span class=\"kw2\">else</span>\n      <span class=\"\
+      kw2\">foreach</span> <span class=\"kw2\">allactors</span><span class=\"br0\"\
+      >(</span> <span class=\"kw1\">class</span><span class=\"st0\">'RCM'</span>,\
+      \ monitor<span class=\"br0\">)</span>\n        monitor.<span class=\"me0\">UpdateStatus</span><span\
+      \ class=\"br0\">(</span>temperature<span class=\"br0\">)</span>;\n <span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p>Which is all well and good but somewhat\
+      \ inefficient as the foreach allactors iterator gets called every tick, this\
+      \ is slow and generally a Bad Thing.</p>\n<p>Another way to approach this is\
+      \ to have the RCM's find out where the reactor is when they're created and then\
+      \ use that information to query the reactor themselves, like this:</p>\n<div\
+      \ dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\">  <span class=\"kw1\">var</span> myreactor\
+      \ reactor;\n \n  <span class=\"kw1\">function</span> <span class=\"kw4\">prebeginplay</span>\
+      \ <span class=\"br0\">(</span><span class=\"br0\">)</span>\n  <span class=\"\
+      br0\">{</span>\n   <span class=\"co1\">// find the reactor and assign a pointer\
+      \ to it</span>\n   <span class=\"kw2\">foreach</span> <span class=\"kw2\">allactors</span><span\
+      \ class=\"br0\">(</span><span class=\"kw1\">class</span><span class=\"st0\"\
+      >'myreactor'</span>, reactor<span class=\"br0\">)</span>;\n  <span class=\"\
+      br0\">}</span>\n \n  <span class=\"kw1\">event</span> <span class=\"kw4\">tick</span>\
+      \ <span class=\"br0\">(</span><span class=\"kw5\">float</span> deltatime<span\
+      \ class=\"br0\">)</span>\n  <span class=\"br0\">{</span>\n   <span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span>reactor <span class=\"sy0\">!=</span><span\
+      \ class=\"kw5\">none</span><span class=\"br0\">)</span> UpdateStatus<span class=\"\
+      br0\">(</span>reactor.<span class=\"me0\">temperature</span><span class=\"br0\"\
+      >)</span>;\n  <span class=\"br0\">}</span></pre></div>\n</div>\n<p>The nasty\
+      \ slow iterator gets called only once per RCM actor (it'd probably be spawned\
+      \ as part of the players inventory on game login and that's when it scans to\
+      \ get a reference to the reactor) and all the reactor has to do is check how\
+      \ hot it's getting at regular intervals and set that value in it's temperature\
+      \ variable for the others to read... easy!</p>\n<p>(and that mod ideas sounds\
+      \ like it might be fun... feel free to pinch it&#160;:-) )</p>\n<h4><span class=\"\
+      mw-headline\" id=\"Alternate_.2B_More_Efficient_Way\">Alternate + More Efficient\
+      \ Way</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Communication_Between_Objects?section=7\" title=\"\
+      Edit section: Alternate + More Efficient Way\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h4>\n<p>An alternative way that I have found that works is\
+      \ to have a reference in your 'slave' actors to the 'master' actor and when\
+      \ you spawn the slaves (the easiest way would be to spawn from the slave), set\
+      \ the 'master' reference in their properties to that of the 'master' actor on\
+      \ the map.</p>\n<p>An Example:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"co1\">//In the slave class</span>\n<span class=\"kw1\">Class</span>\
+      \ SlaveClass <span class=\"kw1\">Extends</span> SomeOtherActor;\n<span class=\"\
+      kw1\">var</span> MasterActor MyMaster; <span class=\"co1\">//An empty reference\
+      \ when the slave is first created</span></pre></div>\n</div>\n<div dir=\"ltr\"\
+      \ class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"co1\">//In the Master Class</span>\n<span\
+      \ class=\"kw1\">Class</span> MasterClass <span class=\"kw1\">Extends</span>\
+      \ SomeOtherActor;\n \n<span class=\"kw1\">function</span> SpawnSlave<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n \
+      \  <span class=\"kw1\">local</span> SlaveClass MySlave;   \n   MySlave <span\
+      \ class=\"sy0\">=</span> <span class=\"kw4\">Spawn</span><span class=\"br0\"\
+      >(</span><span class=\"kw1\">class</span><span class=\"st0\">'YourPackage.SlaveClass)\
+      \ //plus whatever else you need to spawn &gt;_&lt;\n   MySlave.MyMaster = Self\
+      \ //Set the empty reference MyMaster to reference the MasterClass    \n}</span></pre></div>\n\
+      </div>\n<p>I believe this to be far more efficient than going through the list\
+      \ of actors etc.</p>\n<p><br /></p>\n<h4><span class=\"mw-headline\" id=\".22Global.22_object_references\"\
+      >\"Global\" object references</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Communication_Between_Objects?section=8\"\
+      \ title=\"Edit section: &quot;Global&quot; object references\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h4>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw1\">class</span> Foo <span class=\"kw1\"\
+      >extends</span> <span class=\"kw8\">Object</span>;\n \n<span class=\"kw1\">var</span>\
+      \ <span class=\"kw8\">Object</span> Bar;\n \n<span class=\"kw1\">event</span>\
+      \ Whatever<span class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n    <span class=\"kw2\">if</span><span class=\"br0\">(</span>\
+      \ <span class=\"kw1\">default</span>.<span class=\"me0\">Bar</span> <span class=\"\
+      sy0\">==</span> <span class=\"kw5\">None</span> <span class=\"br0\">)</span>\n\
+      \    <span class=\"br0\">{</span>\n        <span class=\"kw1\">default</span>.<span\
+      \ class=\"me0\">Bar</span> <span class=\"sy0\">=</span> SpawnFindAssignWhatever<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n        Bar <span class=\"\
+      sy0\">=</span> <span class=\"kw1\">default</span>.<span class=\"me0\">Bar</span>;\n\
+      \    <span class=\"br0\">}</span>\n \n    <span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span> <span class=\"kw1\">default</span>.<span class=\"me0\"\
+      >Bar</span> <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span> <span\
+      \ class=\"br0\">)</span>\n        <span class=\"kw1\">default</span>.<span class=\"\
+      me0\">Bar</span>.<span class=\"me0\">Hello</span><span class=\"br0\">(</span><span\
+      \ class=\"kw6\">self</span><span class=\"br0\">)</span>;\n<span class=\"br0\"\
+      >}</span></pre></div>\n</div>\n<ul>\n<li>SpawnFindAssignWhatever(); will be\
+      \ called only once per game in the best case</li>\n<li>All Foo's automatically\
+      \ gain access to Bar actor through default.Bar;</li>\n<li>Newly created objects\
+      \ have their Bar variable initialized to what's in default.Bar;</li>\n<li>Other\
+      \ objects can access Foo's bar through class'Foo'.default.Bar;</li>\n</ul>\n\
+      <p>another example:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">class</span> Foo <span class=\"kw1\">extends</span> <span class=\"kw8\"\
+      >Object</span>;\n \n<span class=\"kw1\">var</span> <span class=\"kw8\">Object</span>\
+      \ Bar;\n \n<span class=\"kw1\">event</span> Whatever<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n    <span class=\"kw2\"\
+      >if</span><span class=\"br0\">(</span> <span class=\"kw1\">default</span>.<span\
+      \ class=\"me0\">Bar</span> <span class=\"sy0\">!=</span> <span class=\"kw5\"\
+      >None</span> <span class=\"br0\">)</span>\n        <span class=\"kw1\">default</span>.<span\
+      \ class=\"me0\">Bar</span>.<span class=\"me0\">Hello</span><span class=\"br0\"\
+      >(</span><span class=\"kw6\">self</span><span class=\"br0\">)</span>;\n<span\
+      \ class=\"br0\">}</span></pre></div>\n</div>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">class</span> Bar <span class=\"kw1\">extends</span>\
+      \ <span class=\"kw8\">Object</span>;\n \n<span class=\"kw1\">event</span> Whatever<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \    <span class=\"kw2\">if</span><span class=\"br0\">(</span> <span class=\"\
+      kw1\">class</span><span class=\"st0\">'Foo'</span>.<span class=\"kw1\">default</span>.<span\
+      \ class=\"me0\">Bar</span> <span class=\"sy0\">==</span> <span class=\"kw5\"\
+      >None</span> <span class=\"br0\">)</span>\n        <span class=\"kw1\">class</span><span\
+      \ class=\"st0\">'Foo'</span>.<span class=\"kw1\">default</span>.<span class=\"\
+      me0\">Bar</span> <span class=\"sy0\">=</span> <span class=\"kw6\">self</span>;\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">function</span> Hello<span\
+      \ class=\"br0\">(</span> <span class=\"kw8\">Object</span> o <span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n    <span class=\"co1\">//...</span>\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Related_Topics\">Related Topics</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Communication_Between_Objects?section=9\"\
+      \ title=\"Edit section: Related Topics\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<ul>\n<li><a href=\"/Legacy:UnrealScript\" title=\"Legacy:UnrealScript\"\
+      >UnrealScript</a></li>\n<li><a href=\"/Legacy:Iterator\" title=\"Legacy:Iterator\"\
+      >Iterators</a></li>\n</ul>\n<h2><span class=\"mw-headline\" id=\"Comments_2\"\
+      >Comments</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Communication_Between_Objects?section=10\" title=\"\
+      Edit section: Comments\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p><b>dataangel</b>: I don't think this is correct:</p>\n<p>\"If you want to\
+      \ have a master actor on your map that exchanges information with other slave\
+      \ actors which can be dynamically created during gameplay then the only way\
+      \ for those slaves to get a reference the master actor is for the slaves to\
+      \ scan through all the actors on the level when created ( i.e. run a foreach.allactors\
+      \ iteration in prebeginplay ) and identify the master actor (hopefully it will\
+      \ be the only one of it's type on the level or we're in trouble).\"</p>\n<p>Couldn't\
+      \ you simply assign the slave's master when you create it? The same way game\
+      \ rules objects usually have a reference to the mutator that spawns them.</p>\n\
+      <p><b>Fataloverdose</b> yes, if it was the master that spawned the slave.But\
+      \ all the slaves would have to be spawned after the gameplay has started to\
+      \ be able get a valid refference to the master.</p>\n<p><b>Ben</b></p>\n<p>Well,\
+      \ what is the problem in the fact that the master didn't spawn the slaves&#160;?\
+      \ Why don't we do like that:</p>\n<p>The master has a list of all the slaves\
+      \ (empty at the begining) and a method \"add_slave(slave newSlave)\".</p>\n\
+      <p>When a slave appears, in its prebeginplay() method, it find the reactor and\
+      \ do \"pointorToTheReactorFound.add_slave(this)\"</p>\n<p>Like that the master\
+      \ update the slaves only when it changes.</p>\n<p><b>mE</b>: this is really\
+      \ confusing, and for some reason i think it's really important. Still it seems\
+      \ pretty simple, when i have my code working i may edit this down i think i\
+      \ know what i'm doing now.</p>\n<p><b>Kartoshka:</b> This page could use a good\
+      \ cleaning <a href=\"/Category:Legacy_Refactor_Me\" title=\"Category:Legacy\
+      \ Refactor Me\">Category:Legacy Refactor Me</a>. Also, one earlier question\
+      \ wasn't ever really answered. Which is a better place for the foreach iterator\
+      \ code – PreBeginPlay or PostBeginPlay?</p>\n<p><b>MythOpus:</b> I didn't really\
+      \ know there was a question like that... but here's my answer... I believe it's\
+      \ better it do any iterators in the PostBeginPlay as all the actors would have\
+      \ been created at that point so I believe it would be a better way of doing\
+      \ things. I will also look at refactoring this up later in the week as I have\
+      \ final's but am off thursday and friday. EDIT- I guess I'll also write up examples\
+      \ for the CTF Flag that the original author hasn't gotten around to yet heh.</p>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.251 seconds\nReal time usage:\
+      \ 0.558 seconds\nPreprocessor visited node count: 175/1000000\nPreprocessor\
+      \ generated node count: 352/1000000\nPost‐expand include size: 29/2097152 bytes\n\
+      Template argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive\
+      \ parser function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report\
+      \ (%,ms,calls,template)\n100.00%    0.000      1 - -total\n-->\n\n<!-- Saved\
+      \ in parser cache with key wiki:pcache:idhash:691-0!*!0!!en!*!* and timestamp\
+      \ 20221117192146 and revision id 2013\n -->\n"
+  categories:
+  - sortkey: "Communication Between Objects"
+    name: "Legacy_Refactor_Me"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Creating Actors And Objects"
+  - ns: 100
+    exists: true
+    name: "Legacy:EntropicLqd"
+  - ns: 100
+    exists: true
+    name: "Legacy:Peppers And Pepper Grinders"
+  - ns: 100
+    exists: true
+    name: "Legacy:Wormbo"
+  - ns: 100
+    exists: true
+    name: "Legacy:CTFFlag"
+  - ns: 100
+    exists: true
+    name: "Legacy:UnrealScript"
+  - ns: 100
+    exists: true
+    name: "Legacy:Iterator"
+  - ns: 100
+    exists: true
+    name: "Legacy:Nuclear Fuzz Grunge"
+  - ns: 14
+    exists: true
+    name: "Category:Legacy Refactor Me"
+  - ns: 100
+    exists: true
+    name: "Legacy:Extending States"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "The CTF Flag"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Communication_Between_Objects"
+    byteoffset: 609
+    anchor: "The_CTF_Flag"
+  - toclevel: 2
+    level: "3"
+    line: "The Reference Itself"
+    number: "1.1"
+    index: "2"
+    fromtitle: "Legacy:Communication_Between_Objects"
+    byteoffset: 782
+    anchor: "The_Reference_Itself"
+  - toclevel: 2
+    level: "3"
+    line: "Setting The Reference"
+    number: "1.2"
+    index: "3"
+    fromtitle: "Legacy:Communication_Between_Objects"
+    byteoffset: 2459
+    anchor: "Setting_The_Reference"
+  - toclevel: 1
+    level: "2"
+    line: "A silly example"
+    number: "2"
+    index: "4"
+    fromtitle: "Legacy:Communication_Between_Objects"
+    byteoffset: 5003
+    anchor: "A_silly_example"
+  - toclevel: 2
+    level: "4"
+    line: "Comments"
+    number: "2.1"
+    index: "5"
+    fromtitle: "Legacy:Communication_Between_Objects"
+    byteoffset: 8082
+    anchor: "Comments"
+  - toclevel: 2
+    level: "4"
+    line: "Zedsquared chips in with a more general view:"
+    number: "2.2"
+    index: "6"
+    fromtitle: "Legacy:Communication_Between_Objects"
+    byteoffset: 8408
+    anchor: "Zedsquared_chips_in_with_a_more_general_view:"
+  - toclevel: 2
+    level: "4"
+    line: "Alternate + More Efficient Way"
+    number: "2.3"
+    index: "7"
+    fromtitle: "Legacy:Communication_Between_Objects"
+    byteoffset: 11048
+    anchor: "Alternate_.2B_More_Efficient_Way"
+  - toclevel: 2
+    level: "4"
+    line: "\"Global\" object references"
+    number: "2.4"
+    index: "8"
+    fromtitle: "Legacy:Communication_Between_Objects"
+    byteoffset: 11970
+    anchor: ".22Global.22_object_references"
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "3"
+    index: "9"
+    fromtitle: "Legacy:Communication_Between_Objects"
+    byteoffset: 12942
+    anchor: "Related_Topics"
+  - toclevel: 1
+    level: "2"
+    line: "Comments"
+    number: "4"
+    index: "10"
+    fromtitle: "Legacy:Communication_Between_Objects"
+    byteoffset: 13034
+    anchor: "Comments_2"
+  displaytitle: "Legacy:Communication Between Objects"
+  iwlinks: []
+  wikitext:
+    text: "Objects in [[Legacy:UnrealScript|UnrealScript]] often need to be able to\
+      \ discover information about each other in order to actually interact with eachother\
+      \ in some way.  For example.\n* A weapon needs to know how many charges are\
+      \ left in a powerup.\n* In a CTF the flag needs to know the team of the player\
+      \ that just touched it.\n* A player needs to know who fired the projectile that\
+      \ just killed them.\n* The guided redeemer shell needs to know the orientation\
+      \ of the player guiding it.\n\nThis is achieved by object ''references'' and\
+      \ will be better understood if we look at a few examples from the game itself.\n\
+      \n==The CTF Flag==\n\nLet's first take a look at how the CTF Flag in UT2004\
+      \ uses references to figure out just who exactly is holding it and how it interacts\
+      \ with that person.\n\n===The Reference Itself===\n\nThe code that tells the\
+      \ Flag who is holding it is not actually in the [[Legacy:CTFFlag|CTFFlag]] class\
+      \ at all.  It is actually in a SuperClass called GameObject.  In this class\
+      \ there are several important things that are essential for the CTF Flag to\
+      \ operate.\n\n<uscript>\n//The reference itself\nvar UnrealPawn      Holder;\
+      \  //Holder has to be an UnrealPawn or any of it's subclasses\n\n//Another reference,\
+      \ although not required, it will help out\nvar TeamPlayerReplicationInfo HolderPRI;\
+      \ //HolderPRI is simply the TeamPlayerReplicationInfo for the flags holder\n\
+      </uscript>\n\nThese are the only variable-level references that are useful to\
+      \ this example so I won't bother going into detail with too many other aspects\
+      \ of the code.\n\n'''Side Note'''\n\nThese references are also pretty useless\
+      \ unless we 'reference' an actual object that exists.  What I mean by that is\
+      \ best explained by this:\n\n<uscript>\nvar UnrealPawn MyPawn;\n\nfunction PostBeginPlay()\n\
+      {\n    MyPawn.Health = 100;\n}\n</uscript>\n\nDoing '''just''' this will actually\
+      \ create an Accessed None error in the log if it is executed by the engine.\
+      \  The reason for this is because declaring a variable as a reference is only\
+      \ good if you point that reference to something.  Putting the following before\
+      \ trying to change the health of my Pawn in the previous pseudo-code does two\
+      \ things.\n\n'''One:''' It will spawn an actor (in this case an UnrealPawn)\
+      \ and\n\n'''Two:''' It will point MyPawn to the newly created actor.\n\nThis\
+      \ means that everytime you use MyPawn in the script, you're actually talking\
+      \ about the UnrealPawn that you spawned.\n\n<uscript>\nMyPawn = Spawn(class'UnrealGame.UnrealPawn');\n\
+      </uscript>\n\n===Setting The Reference===\n\nSetting or Pointing the reference\
+      \ is what we need to do next, and the GameObject uses a SetHolder() function\
+      \ to do that.\n\nWhen the SetHolder() function is called it will execute the\
+      \ following code:\n\n<uscript>\nfunction SetHolder(Controller C)\n{\n\tlocal\
+      \ int i;\n\n    //log(self$\" setholder c=\"$c, 'GameObject');\n    LogTaken(c);\n\
+      \    Holder = UnrealPawn(C.Pawn);\n    Holder.DeactivateSpawnProtection();\n\
+      \    HolderPRI = TeamPlayerReplicationInfo(Holder.PlayerReplicationInfo);\n\
+      \    C.PlayerReplicationInfo.HasFlag = self;\n\tC.PlayerReplicationInfo.NetUpdateTime\
+      \ = Level.TimeSeconds - 1;\n\n    GotoState('Held');\n\n\t// AI Related\n\t\
+      C.MoveTimer = -1;\n\tHolder.MakeNoise(2.0);\n\n\t// Track First Touch\n\n\t\
+      if (FirstTouch == None)\n\t\tFirstTouch = C;\n\n\t// Track Assists\n\n\tfor\
+      \ (i=0;i<Assists.Length;i++)\n\t\tif (Assists[i] == C)\n\t\t  return;\n\n\t\
+      Assists.Length = Assists.Length+1;\n  \tAssists[Assists.Length-1] = C;\n\n}\n\
+      </uscript>\n\nWe will only concern ourselves with the first few lines of the\
+      \ code however.  Firstly, the controller (the player) who took the flag will\
+      \ be logged.  Then the Holder reference will be set with the following code.\n\
+      \n<uscript>\nHolder = UnrealPawn(C.Pawn);\n</uscript>\n\nNote that the Holder\
+      \ reference is being pointed to a Pawn that already exists, thus there is no\
+      \ need to spawn the pawn.  If for some reason the pawn died when this function\
+      \ was called however, it would produce an error as the pawn in question would\
+      \ no longer exist.\n\nIf the Holder had spawn protection active, it would disable\
+      \ it when the flag is picked up allowing defenders to have a chance to kill\
+      \ the Holder of the flag.  This is done by called the DeactivateSpawnProtection()\
+      \ method through the Holder reference.\n\nBecause Holder is pointed to UnrealPawn(C.Pawn),\
+      \ It actually calls that method within UnrealPawn(C.Pawn) so:\n\n<uscript>\n\
+      Holder.DeactivateSpawnProtection();\n</uscript>\n\ncould very well be written\
+      \ as:\n\n<uscript>\nUnrealPawn(C.Pawn).DeactivateSpawnProtection();\n</uscript>\n\
+      \nThey will do the same thing, but using references is more efficient, less\
+      \ messy and can also help with describing how your code works.\n\nNext it will\
+      \ also assign HolderPRI to the PRI of the Holder in question.  This is purely\
+      \ for efficiency and anti-mess purposes I would imagine.\n\nIf for whatever\
+      \ reason we wanted to add 100 health to the Holder of the flag when it is picked\
+      \ up, we could add something like the following before the end of the function.\n\
+      \n<uscript>\nHolder.Health = Holder.Health + 50; //Add 50 health to the Holders\
+      \ current health\n</uscript>\n\n==A silly example==\n\nUsing the BugEyedMonster\
+      \ class from [[Legacy:Extending States|Extending States]] again, let's suppose\
+      \ that we have a BugEyedQueen, and that when BugEyedMonster is very scared it\
+      \ runs towards her. We might have some sort of function RunToQueen() in BugEyedMonster's\
+      \ script.\n\nThe simplest thing might be to look for the Queen when we need\
+      \ to find her, with  a foreach [[Legacy:Iterator|iterator]]: obtain a reference\
+      \ to the Queen, get her location and move towards it.\n: (example code here...)\n\
+      \nThis might be fine if the BUM only needs to do this once. However, if the\
+      \ Queen is also moving we have ourselves a case of the \"pursuit problem\" in\
+      \ maths (the one I could never solve &ndash; Tarquin), and BUM needs to know\
+      \ about her location more than once, maybe even every tick. Running a foreach\
+      \ iterator this frequently is too heavy for the engine, and there's a more efficient\
+      \ way of doing it:\n\nGive the BUM a ''variable'' of type BugEyedQueen. This\
+      \ in fact means a variable that holds a reference to an object, and the class\
+      \ of the object must be BugEyedQueen, or a subclass. (Remember the [[Legacy:Peppers\
+      \ And Pepper Grinders|Peppers And Pepper Grinders]] analogy: this variable does\
+      \ not indicate a class, it indicates an object of a certain class.) We could\
+      \ make it so the mapper has to set its value to point to the Queen object in\
+      \ the map: \n: var() BugEyedQueen MyQueen;\n\nThis requires the mapper to think,\
+      \ is bound to lead to confusion, recriminations and spilled milk. Docers often\
+      \ need to think for pammers ;-)\n\n* set the variable uneditable by declaring\
+      \ it with just var, no ()\n* in one of the begin play functions (PreBeginPlay,\
+      \ PostBeginPlay, I don't know which is appropriate (PostBeginPlay() gets my\
+      \ vote &ndash; [[Legacy:EntropicLqd|EntropicLqd]])), run the foreach code as\
+      \ above to find the Queen, and set MyQueen to point to it\n* whenever we need\
+      \ to find something out about the Queen, simply access local variable MyQueen,\
+      \ for example Destination = MyQueen.Location\n\n: I've just realised on reading\
+      \ the bit below that I essentially (and stupidly) rewrote it with BugEyedMonster\
+      \ above. I'll try and merge them later. I'll stick to the reactor example, it's\
+      \ by far the more sensible of the two  &ndash; ''Tarquin'' \n: maybe a page\
+      \ on PreBeginPlay, PostBeginPlay would be useful, but I don't know what to call\
+      \ it.  ­- ''Tarquin''\n\nº: have a look at the [[Legacy:Creating Actors And\
+      \ Objects|Creating Actors and Objects]] page. (\"What exactly happens when I\
+      \ spawn an actor?\") Is this what you were looking for or should there be more\
+      \ details? &ndash; [[Legacy:Wormbo|Wormbo]]\n\n----\n\nTarquin: snip from one\
+      \ of my forum posts:\n\nThe standard way round this is to only call ForEach\
+      \ once, like this: \n\nEach actor that will need to call Bomb.AddTime gets a:\
+      \ \n\nvar bomb myBomb ; \n\n(check my syntax, it might be var class<bomb> etc...)\
+      \ \n\nThen one of the BeginPlay functions calls ForEach.AllActors and sets the\
+      \ local myBomb variable to point to the map's Bomb actor. \n\nThen when you\
+      \ need to access the Bomb actor's function, grab it from myBomb.AddTime. \n\n\
+      ====Comments ====\n\n''Tarquin'' Excellent idea, including this kind of information.\
+      \ Although, NOOBs will not have clue as to what you're referring to, and, how\
+      \ it would be implemented. I'll tell ya,...being a NOOB sucks. [[Legacy:Nuclear\
+      \ Fuzz Grunge|NFG]]\n:It's very vague for now, needs major work. :-)  &ndash;\
+      \ ''Tarquin'' \n\n====Zedsquared chips in with a more general view: ====\n\n\
+      If you want to have a master actor on your map that exchanges information with\
+      \ other slave actors which can be dynamically created during gameplay then the\
+      \ only way for those slaves to get a reference the master actor is for the slaves\
+      \ to scan through all the actors on the level when created ( i.e. run a foreach.allactors\
+      \ iteration in prebeginplay ) and identify the master actor (hopefully it will\
+      \ be the only one of it's type on the level or we're in trouble).  \n\nSo, to\
+      \ put things in more concrete terms, imagine you have a mod where a reactor\
+      \ goes critical and will blow once the opposing team has pulled enough control\
+      \ rods out (meanwhile the defending team can push them back in).\n\nEach player\
+      \ on has a small device (we'll call it an RCM or Reactor Core Monitor) which\
+      \ can display a reactor temperature which is going to be varying according to\
+      \ how many rods are in or out, this means that there's\n\nno simple timer here,\
+      \ the state of the reactor depends on the actions of the players and this info\
+      \ has to come from the reactor\n\nitself. \n\nOne way of doing this would be\
+      \ for the reactor object to scan all actors on the level each tick and each\
+      \ time it finds an RCM it would call an UpdateStatus function, like this:\n\n\
+      <uscript>\nvar float temperature;\nevent tick( float deltatime)\n {\n    local\
+      \ RCM monitor;\n\n    modelheat(deltatime); // do calcs to see how hot we are\n\
+      \    if(temperature > critical_temperature) boom()\n    else\n      foreach\
+      \ allactors( class'RCM', monitor)\n        monitor.UpdateStatus(temperature);\n\
+      \ }   \n</uscript>\n\nWhich is all well and good but somewhat inefficient as\
+      \ the foreach allactors iterator gets called every tick, this is slow and generally\
+      \ a Bad Thing. \n\nAnother way to approach this is to have the RCM's find out\
+      \ where the reactor is when they're created and then use that information to\
+      \ query the reactor themselves, like this:\n\n<uscript>\n  var myreactor reactor;\n\
+      \n  function prebeginplay ()\n  {\n   // find the reactor and assign a pointer\
+      \ to it\n   foreach allactors(class'myreactor', reactor);\n  }\n\n  event tick\
+      \ (float deltatime)\n  {\n   if(reactor !=none) UpdateStatus(reactor.temperature);\n\
+      \  } \n</uscript>\n\nThe nasty slow iterator gets called only once per RCM actor\
+      \ (it'd probably be spawned as part of the players inventory on game login and\
+      \ that's when it scans to get a reference to the reactor) and all the reactor\
+      \ has to do is check how hot it's getting at regular intervals and set that\
+      \ value in it's temperature variable for the others to read... easy! \n\n(and\
+      \ that mod ideas sounds like it might be fun... feel free to pinch it :-)  )\n\
+      \n====Alternate + More Efficient Way====\n\nAn alternative way that I have found\
+      \ that works is to have a reference in your 'slave' actors to the 'master' actor\
+      \ and when you spawn the slaves (the easiest way would be to spawn from the\
+      \ slave), set the 'master' reference in their properties to that of the 'master'\
+      \ actor on the map.\n\nAn Example:\n\n<uscript>\n//In the slave class\nClass\
+      \ SlaveClass Extends SomeOtherActor;\nvar MasterActor MyMaster; //An empty reference\
+      \ when the slave is first created\n</uscript>\n\n<uscript>\n//In the Master\
+      \ Class\nClass MasterClass Extends SomeOtherActor;\n\nfunction SpawnSlave()\n\
+      {\n   local SlaveClass MySlave;   \n   MySlave = Spawn(class'YourPackage.SlaveClass)\
+      \ //plus whatever else you need to spawn >_<\n   MySlave.MyMaster = Self //Set\
+      \ the empty reference MyMaster to reference the MasterClass    \n}\n</uscript>\n\
+      \nI believe this to be far more efficient than going through the list of actors\
+      \ etc.\n \n\n====\"Global\" object references====\n\n<uscript>\nclass Foo extends\
+      \ Object;\n\nvar Object Bar;\n\nevent Whatever()\n{\n    if( default.Bar ==\
+      \ None )\n    {\n        default.Bar = SpawnFindAssignWhatever();\n        Bar\
+      \ = default.Bar;\n    }\n\n    if( default.Bar != None )\n        default.Bar.Hello(self);\n\
+      }\n</uscript>\n* SpawnFindAssignWhatever(); will be called only once per game\
+      \ in the best case\n* All Foo's automatically gain access to Bar actor through\
+      \ default.Bar;\n* Newly created objects have their Bar variable initialized\
+      \ to what's in default.Bar;\n* Other objects can access Foo's bar through class'Foo'.default.Bar;\n\
+      \nanother example:\n\n<uscript>\nclass Foo extends Object;\n\nvar Object Bar;\n\
+      \nevent Whatever()\n{\n    if( default.Bar != None )\n        default.Bar.Hello(self);\n\
+      }\n</uscript>\n\n<uscript>\nclass Bar extends Object;\n\nevent Whatever()\n\
+      {\n    if( class'Foo'.default.Bar == None )\n        class'Foo'.default.Bar\
+      \ = self;\n}\n\nfunction Hello( Object o )\n{\n    //...\n}\n</uscript>\n\n\
+      ==Related Topics ==\n* [[Legacy:UnrealScript|UnrealScript]]\n* [[Legacy:Iterator|Iterator]]s\n\
+      \n==Comments==\n\n'''dataangel''': I don't think this is correct:\n\n\"If you\
+      \ want to have a master actor on your map that exchanges information with other\
+      \ slave actors which can be dynamically created during gameplay then the only\
+      \ way for those slaves to get a reference the master actor is for the slaves\
+      \ to scan through all the actors on the level when created ( i.e. run a foreach.allactors\
+      \ iteration in prebeginplay ) and identify the master actor (hopefully it will\
+      \ be the only one of it's type on the level or we're in trouble).\"\n\nCouldn't\
+      \ you simply assign the slave's master when you create it? The same way game\
+      \ rules objects usually have a reference to the mutator that spawns them.\n\n\
+      '''Fataloverdose''' yes, if it was the master that spawned the slave.But all\
+      \ the slaves would have to be spawned after the gameplay has started to be able\
+      \ get a valid refference to the master.\n\n'''Ben'''\n\nWell, what is the problem\
+      \ in the fact that the master didn't spawn the slaves ? Why don't we do like\
+      \ that:\n\nThe master has a list of all the slaves (empty at the begining) and\
+      \ a method \"add_slave(slave newSlave)\".\n\nWhen a slave appears, in its prebeginplay()\
+      \ method, it find the reactor and do \"pointorToTheReactorFound.add_slave(this)\"\
+      \n\nLike that the master update the slaves only when it changes.\n\n'''mE''':\
+      \ this is really confusing, and for some reason i think it's really important.\
+      \ Still it seems pretty simple, when i have my code working i may edit this\
+      \ down i think i know what i'm doing now.\n\n'''Kartoshka:''' This page could\
+      \ use a good cleaning [[:Category:Legacy Refactor Me]]. Also, one earlier question\
+      \ wasn't ever really answered. Which is a better place for the foreach iterator\
+      \ code &ndash; PreBeginPlay or PostBeginPlay?\n\n'''MythOpus:''' I didn't really\
+      \ know there was a question like that... but here's my answer... I believe it's\
+      \ better it do any iterators in the PostBeginPlay as all the actors would have\
+      \ been created at that point so I believe it would be a better way of doing\
+      \ things.  I will also look at refactoring this up later in the week as I have\
+      \ final's but am off thursday and friday.  EDIT- I guess I'll also write up\
+      \ examples for the CTF Flag that the original author hasn't gotten around to\
+      \ yet heh.\n[[Category:Legacy Refactor Me|{{PAGENAME}}]]"
+  properties: []
+  revId: 2013
+name: "Legacy:Communication Between Objects"
+revision:
+  revid: 2013
+  parentid: 2015
+  user: "SuperApe"
+  timestamp: 1177199110.000000000
+  comment: "*"
+timestamp: 1668755544.222094000

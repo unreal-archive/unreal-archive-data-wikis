@@ -1,0 +1,334 @@
+---
+parse:
+  title: "Legacy:Role"
+  text:
+    text: "<p><b>Role</b> is a concept in <a href=\"/Legacy:Replication\" title=\"\
+      Legacy:Replication\">replication</a>. <a href=\"/Legacy:Actor\" title=\"Legacy:Actor\"\
+      >Actors</a> have two properties to define their role on server and client in\
+      \ network games: <code>Role</code> and <code>RemoteRole</code>. Role always\
+      \ tells us (and the engine&#160;:)) about the actor's <i>local</i> role while\
+      \ RemoteRole tells about the actor's role on the other side of the network.\
+      \ When an actor is replicated to a client, its Role and RemoteRole properties\
+      \ are swapped there, so the serverside Role value becomes the clientside RemoteRole\
+      \ value and vice versa. When we talk about an actor's Role or RemoteRole on\
+      \ this page we always mean \"as viewed from the local machine.\"</p>\n<ul>\n\
+      <li>All actors existing <b>on the server</b> have <i>Role</i> == ROLE_Authority\
+      \ there, while their <i>RemoteRole</i> can be either ROLE_None, ROLE_DumbProxy,\
+      \ ROLE_SimulatedProxy or ROLE_AutonomousProxy.</li>\n<li><b>On the clients</b>\
+      \ the replicated actors have their Role and RemoteRole swapped, i.e. <i>RemoteRole</i>\
+      \ == ROLE_Authority and <i>Role</i> is any of the other values according to\
+      \ the Actor's RemoteRole on the server.</li>\n<li><b>Client-side actors</b>\
+      \ (i.e. actors that weren't replicated, but spawned on the client) have <code>Role\
+      \ == ROLE_Authority</code> <i>on the network client</i>. These actors only exist\
+      \ on the client they were spawned on. They can't be replicated to any other\
+      \ client or the server.</li>\n</ul>\n<h2><span class=\"mw-headline\" id=\"What_do_the_different_net_roles_mean.3F\"\
+      >What do the different net roles mean?</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Role?section=1\"\
+      \ title=\"Edit section: What do the different net roles mean?\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>The net roles are\
+      \ defined in the Actor class, as the enum ENetRole (see <a href=\"/Legacy:Actor/Enums\"\
+      \ title=\"Legacy:Actor/Enums\">Actor/Enums</a> for others).</p>\n<dl>\n<dt>ROLE_None&#160;</dt>\n\
+      <dd>In <code>RemoteRole</code> This means that none of the actor's attributes\
+      \ or functions will be replicated at all. Examples for this kind of actors are\
+      \ the <a href=\"/Legacy:GameInfo\" title=\"Legacy:GameInfo\">GameInfo</a>, <a\
+      \ href=\"/Legacy:Mutator\" title=\"Legacy:Mutator\">Mutators</a> and <a href=\"\
+      /Legacy:GameRules\" title=\"Legacy:GameRules\">GameRules</a> as well as some\
+      \ explosion effects and <a href=\"/Legacy:Decal\" title=\"Legacy:Decal\">decals</a>\
+      \ in UT. In <code>Role</code> it is contradictory, as it implies the actor does\
+      \ not exist on the machine this script is executing on.<br />\n<b>Note:</b>\
+      \ is is perfectly possible to instantiate an Actor on multiple network machines\
+      \ by using simulated functions. However these will not be tied together by replication\
+      \ and the client copies will not function as proxies for the server copy. For\
+      \ instance, destroying the actor on the server will <b>not</b> destroy any corresponding\
+      \ actor on the client (and vice-versa).</dd>\n</dl>\n<dl>\n<dt>ROLE_DumbProxy&#160;</dt>\n\
+      <dd>The actor is replicated, but most (if not all) of its logic stays on the\
+      \ server. Theoretically the actor may execute <a href=\"/Legacy:Simulated_Function\"\
+      \ title=\"Legacy:Simulated Function\">simulated functions</a> and simulated\
+      \ state code, but this is rarely used. Usually clientside behavior is purely\
+      \ a result of replicating variables.<br />\nIf you see this in <code>Role</code>\
+      \ it means we are looking at the proxy instance, not the copy that was authoratively\
+      \ spawned.</dd>\n</dl>\n<dl>\n<dt>ROLE_SimulatedProxy&#160;</dt>\n<dd>The actor\
+      \ is replicated and may execute <a href=\"/Legacy:Simulated_Function\" title=\"\
+      Legacy:Simulated Function\">simulated functions</a> and simulated state code\
+      \ on the remote side. Often this kind of actor simulates its behavior based\
+      \ on initially replicated properties without (much) further \"help\" from the\
+      \ server.</dd>\n</dl>\n<dl>\n<dt>ROLE_AutonomousProxy&#160;</dt>\n<dd>The client\
+      \ has autonomous control over the actor replicated to it. The actor is not restricted\
+      \ to simulated functions and can execute non-simulated functions and state code\
+      \ as well. For other clients these actors appear as regular simulated proxies.<br\
+      \ />\nThis (Remote)Role is usually used for the player actor (<a href=\"/Legacy:PlayerPawn\"\
+      \ title=\"Legacy:PlayerPawn\">PlayerPawn</a> in UE1, <a href=\"/Legacy:PlayerController\"\
+      \ title=\"Legacy:PlayerController\">PlayerController</a> in UE2) and important\
+      \ actors controlled by it, like the <a href=\"/edit/Legacy:GuidedWarshell?redlink=1\"\
+      \ class=\"new\" title=\"Legacy:GuidedWarshell (page does not exist)\">GuidedWarshell</a>\
+      \ (the guided redeemer warhead) in <a href=\"/Legacy:UT\" title=\"Legacy:UT\"\
+      \ class=\"mw-redirect\">UT</a> or all kind of <a href=\"/Legacy:Pawn\" title=\"\
+      Legacy:Pawn\">Pawns</a> in <a href=\"/Legacy:UT2003\" title=\"Legacy:UT2003\"\
+      \ class=\"mw-redirect\">UT2003</a> (including <a href=\"/Legacy:UT2004\" title=\"\
+      Legacy:UT2004\" class=\"mw-redirect\">UT2004</a> <a href=\"/Legacy:Vehicle\"\
+      \ title=\"Legacy:Vehicle\">Vehicles</a>).</dd>\n</dl>\n<dl>\n<dt>ROLE_Authority&#160;</dt>\n\
+      <dd>All functions can be executed. This must appear in <code>Role</code> on\
+      \ the machine the actor was spawned on, and must appear in either <code>Role</code>\
+      \ or <code>RemoteRole</code> (but not both) for every actor. In standalone games\
+      \ all Actors have <code>Role == ROLE_Authority</code>. In net play nearly all\
+      \ Actors have this <code>Role</code> on the server. The exception is actors\
+      \ that cannot influence other players, such as <a href=\"/Legacy:Karma_Ragdoll\"\
+      \ title=\"Legacy:Karma Ragdoll\">Karma ragdolls</a>. Never manually set the\
+      \ RemoteRole on the authorative version of an actor or the Role on a replicated\
+      \ version of the actor to this value.</dd>\n</dl>\n<p>When your script sees\
+      \ <code>RemoteRole == ROLE_Authority</code> it means it is executing on the\
+      \ proxy version of the Actor. Usually it's more useful to check the value of\
+      \ <code>Role</code> though.</p>\n<h2><span class=\"mw-headline\" id=\"Possible_Combinations_of_Roles\"\
+      >Possible Combinations of Roles</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Role?section=2\" title=\"\
+      Edit section: Possible Combinations of Roles\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<table>\n<tr>\n<td><b>Server</b></td>\n<td><b>Client</b></td>\n\
+      <td><b>Owner Client</b></td>\n<td><b>Example</b></td>\n</tr>\n<tr>\n<td>ROLE_Authority</td>\n\
+      <td>ROLE_SimulatedProxy</td>\n<td>ROLE_SimulatedProxy</td>\n<td><a href=\"/Legacy:Projectile\"\
+      \ title=\"Legacy:Projectile\">Projectiles</a>, most <a href=\"/Legacy:ReplicationInfo\"\
+      \ title=\"Legacy:ReplicationInfo\">ReplicationInfos</a>, a Pawn's <a href=\"\
+      /Legacy:Inventory\" title=\"Legacy:Inventory\">Inventory</a></td>\n</tr>\n<tr>\n\
+      <td>ROLE_Authority</td>\n<td>ROLE_SimulatedProxy</td>\n<td>ROLE_AutonomousProxy</td>\n\
+      <td>UT: <a href=\"/Legacy:PlayerPawn\" title=\"Legacy:PlayerPawn\">PlayerPawns</a>,\
+      \ <a href=\"/edit/Legacy:GuidedRedeemer?redlink=1\" class=\"new\" title=\"Legacy:GuidedRedeemer\
+      \ (page does not exist)\">GuidedRedeemer</a><br />\nUT200x: <a href=\"/Legacy:Pawn\"\
+      \ title=\"Legacy:Pawn\">Pawns</a> currently possessed by a client player (includes\
+      \ <a href=\"/Legacy:Vehicle\" title=\"Legacy:Vehicle\">Vehicles</a> and the\
+      \ guided <a href=\"/Legacy:RedeemerWarhead\" title=\"Legacy:RedeemerWarhead\"\
+      >RedeemerWarhead</a>)</td>\n</tr>\n<tr>\n<td>ROLE_Authority</td>\n<td>ROLE_DumbProxy</td>\n\
+      <td>ROLE_DumbProxy</td>\n<td>UT200x <a href=\"/Legacy:Pickup\" title=\"Legacy:Pickup\"\
+      >Pickups</a>, certain effects that need to be replicated but don't need to simulate\
+      \ any behavior</td>\n</tr>\n<tr>\n<td>ROLE_Authority</td>\n<td>ROLE_Authority</td>\n\
+      <td>ROLE_Authority</td>\n<td><a href=\"/Legacy:XPawn\" title=\"Legacy:XPawn\"\
+      >XPawn</a> ragdolls (see note below)</td>\n</tr>\n</table>\n<p>It's not unusual\
+      \ that an actor's clientside role changes. The last example is a special case\
+      \ which happens only when the server sets bTearOff=True on a simulated proxy\
+      \ after the actor has been replicated. The server and client versions of the\
+      \ actor become completely independent and nothing is replicated between them\
+      \ anymore. In UT pickups often change between simulated and dumb proxies when\
+      \ they are picked up or dropped.</p>\n<h2><span class=\"mw-headline\" id=\"\
+      Related_Topics\">Related Topics</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Role?section=3\" title=\"\
+      Edit section: Related Topics\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<ul>\n<li><a href=\"/Legacy:Replication\" title=\"Legacy:Replication\"\
+      >Replication</a></li>\n<li><a href=\"/Legacy:Netcode_Idioms\" title=\"Legacy:Netcode\
+      \ Idioms\">Netcode Idioms</a> – useful code to pick out different types of machine</li>\n\
+      <li><a href=\"/Legacy:NetMode\" title=\"Legacy:NetMode\">NetMode</a> – tells\
+      \ you what type of game is running: server, client, etc.</li>\n<li><a href=\"\
+      /Legacy:Simulated_Function\" title=\"Legacy:Simulated Function\">Simulated Function</a></li>\n\
+      <li><a href=\"/Legacy:Replicated_Function\" title=\"Legacy:Replicated Function\"\
+      >Replicated Function</a></li>\n</ul>\n\n<!-- \nNewPP limit report\nCPU time\
+      \ usage: 0.050 seconds\nReal time usage: 0.123 seconds\nPreprocessor visited\
+      \ node count: 16/1000000\nPreprocessor generated node count: 32/1000000\nPost‐\
+      expand include size: 4/2097152 bytes\nTemplate argument size: 0/2097152 bytes\n\
+      Highest expansion depth: 2/40\nExpensive parser function count: 0/100\n-->\n\
+      \n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n100.00% \
+      \   0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:2621-0!*!0!!*!*!*\
+      \ and timestamp 20221118082424 and revision id 28671\n -->\n"
+  categories:
+  - sortkey: "Role"
+    name: "Legacy_Enum"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:NetMode"
+  - ns: 100
+    exists: false
+    name: "Legacy:GuidedWarshell"
+  - ns: 100
+    exists: true
+    name: "Legacy:Projectile"
+  - ns: 100
+    exists: false
+    name: "Legacy:GuidedRedeemer"
+  - ns: 100
+    exists: true
+    name: "Legacy:Replicated Function"
+  - ns: 100
+    exists: true
+    name: "Legacy:XPawn"
+  - ns: 100
+    exists: true
+    name: "Legacy:Inventory"
+  - ns: 100
+    exists: true
+    name: "Legacy:PlayerPawn"
+  - ns: 100
+    exists: true
+    name: "Legacy:Actor/Enums"
+  - ns: 100
+    exists: true
+    name: "Legacy:Simulated Function"
+  - ns: 100
+    exists: true
+    name: "Legacy:GameInfo"
+  - ns: 100
+    exists: true
+    name: "Legacy:Actor"
+  - ns: 100
+    exists: true
+    name: "Legacy:Mutator"
+  - ns: 100
+    exists: true
+    name: "Legacy:GameRules"
+  - ns: 100
+    exists: true
+    name: "Legacy:Pickup"
+  - ns: 100
+    exists: true
+    name: "Legacy:RedeemerWarhead"
+  - ns: 100
+    exists: true
+    name: "Legacy:Pawn"
+  - ns: 100
+    exists: true
+    name: "Legacy:UT2003"
+  - ns: 100
+    exists: true
+    name: "Legacy:UT2004"
+  - ns: 100
+    exists: true
+    name: "Legacy:PlayerController"
+  - ns: 100
+    exists: true
+    name: "Legacy:UT"
+  - ns: 100
+    exists: true
+    name: "Legacy:Karma Ragdoll"
+  - ns: 100
+    exists: true
+    name: "Legacy:Vehicle"
+  - ns: 100
+    exists: true
+    name: "Legacy:ReplicationInfo"
+  - ns: 100
+    exists: true
+    name: "Legacy:Netcode Idioms"
+  - ns: 100
+    exists: true
+    name: "Legacy:Replication"
+  - ns: 100
+    exists: true
+    name: "Legacy:Decal"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "What do the different net roles mean?"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Role"
+    byteoffset: 1352
+    anchor: "What_do_the_different_net_roles_mean.3F"
+  - toclevel: 1
+    level: "2"
+    line: "Possible Combinations of Roles"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Role"
+    byteoffset: 4630
+    anchor: "Possible_Combinations_of_Roles"
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:Role"
+    byteoffset: 5926
+    anchor: "Related_Topics"
+  displaytitle: "Legacy:Role"
+  iwlinks: []
+  wikitext:
+    text: "'''Role''' is a concept in [[Legacy:Replication|replication]]. [[Legacy:Actor|Actor]]s\
+      \ have two properties to define their role on server and client in network games:\
+      \ <code>Role</code> and <code>RemoteRole</code>. Role always tells us (and the\
+      \ engine :)) about the actor's ''local'' role while RemoteRole tells about the\
+      \ actor's role on the other side of the network. When an actor is replicated\
+      \ to a client, its Role and RemoteRole properties are swapped there, so the\
+      \ serverside Role value becomes the clientside RemoteRole value and vice versa.\
+      \ When we talk about an actor's Role or RemoteRole on this page we always mean\
+      \ \"as viewed from the local machine.\"\n\n* All actors existing '''on the server'''\
+      \ have ''Role'' == ROLE_Authority there, while their ''RemoteRole'' can be either\
+      \ ROLE_None, ROLE_DumbProxy, ROLE_SimulatedProxy or ROLE_AutonomousProxy. \n\
+      * '''On the clients''' the replicated actors have their Role and RemoteRole\
+      \ swapped, i.e. ''RemoteRole'' == ROLE_Authority and ''Role'' is any of the\
+      \ other values according to the Actor's RemoteRole on the server.\n* '''Client-side\
+      \ actors''' (i.e. actors that weren't replicated, but spawned on the client)\
+      \ have <code>Role == ROLE_Authority</code> ''on the network client''. These\
+      \ actors only exist on the client they were spawned on. They can't be replicated\
+      \ to any other client or the server.\n\n==What do the different net roles mean?==\n\
+      \nThe net roles are defined in the Actor class, as the enum ENetRole (see [[Legacy:Actor/Enums|Actor/Enums]]\
+      \ for others).\n\n; ROLE_None : In <code>RemoteRole</code> This means that none\
+      \ of the actor's attributes or functions will be replicated at all.  Examples\
+      \ for this kind of actors are the [[Legacy:GameInfo|GameInfo]], [[Legacy:Mutator|Mutator]]s\
+      \ and [[Legacy:GameRules|GameRules]] as well as some explosion effects and [[Legacy:Decal|decal]]s\
+      \ in UT.  In <code>Role</code> it is contradictory, as it implies the actor\
+      \ does not exist on the machine this script is executing on. <br />'''Note:'''\
+      \ is is perfectly possible to instantiate an Actor on multiple network machines\
+      \ by using simulated functions.  However these will not be tied together by\
+      \ replication and the client copies will not function as proxies for the server\
+      \ copy.  For instance, destroying the actor on the server will '''not''' destroy\
+      \ any corresponding actor on the client (and vice-versa).\n\n; ROLE_DumbProxy\
+      \ : The actor is replicated, but most (if not all) of its logic stays on the\
+      \ server. Theoretically the actor may execute [[Legacy:Simulated Function|simulated\
+      \ function]]s and simulated state code, but this is rarely used. Usually clientside\
+      \ behavior is purely a result of replicating variables.<br />If you see this\
+      \ in <code>Role</code> it means we are looking at the proxy instance, not the\
+      \ copy that was authoratively spawned.\n\n; ROLE_SimulatedProxy : The actor\
+      \ is replicated and may execute [[Legacy:Simulated Function|simulated function]]s\
+      \ and simulated state code on the remote side. Often this kind of actor simulates\
+      \ its behavior based on initially replicated properties without (much) further\
+      \ \"help\" from the server.\n\n; ROLE_AutonomousProxy : The client has autonomous\
+      \ control over the actor replicated to it. The actor is not restricted to simulated\
+      \ functions and can execute non-simulated functions and state code as well.\
+      \ For other clients these actors appear as regular simulated proxies.<br />This\
+      \ (Remote)Role is usually used for the player actor ([[Legacy:PlayerPawn|PlayerPawn]]\
+      \ in UE1, [[Legacy:PlayerController|PlayerController]] in UE2) and important\
+      \ actors controlled by it, like the [[Legacy:GuidedWarshell|GuidedWarshell]]\
+      \ (the guided redeemer warhead) in [[Legacy:UT|UT]] or all kind of [[Legacy:Pawn|Pawn]]s\
+      \ in [[Legacy:UT2003|UT2003]] (including [[Legacy:UT2004|UT2004]] [[Legacy:Vehicle|Vehicle]]s).\n\
+      \n; ROLE_Authority : All functions can be executed.  This must appear in <code>Role</code>\
+      \ on the machine the actor was spawned on, and must appear in either <code>Role</code>\
+      \ or <code>RemoteRole</code> (but not both) for every actor.  In standalone\
+      \ games all Actors have <code>Role == ROLE_Authority</code>.  In net play nearly\
+      \ all Actors have this <code>Role</code> on the server.  The exception is actors\
+      \ that cannot influence other players, such as [[Legacy:Karma Ragdoll|Karma\
+      \ ragdoll]]s.  Never manually set the RemoteRole on the authorative version\
+      \ of an actor or the Role on a replicated version of the actor to this value.\n\
+      \nWhen your script sees <code>RemoteRole == ROLE_Authority</code> it means it\
+      \ is executing on the proxy version of the Actor.  Usually it's more useful\
+      \ to check the value of <code>Role</code> though.\n\n==Possible Combinations\
+      \ of Roles==\n\n{|\n\n|-\n|'''Server\n|'''Client\n|'''Owner Client\n|'''Example\
+      \ \n|-\n|ROLE_Authority\n|ROLE_SimulatedProxy\n|ROLE_SimulatedProxy\n|[[Legacy:Projectile|Projectile]]s,\
+      \ most [[Legacy:ReplicationInfo|ReplicationInfo]]s, a Pawn's [[Legacy:Inventory|Inventory]]\n\
+      |-\n|ROLE_Authority\n|ROLE_SimulatedProxy\n|ROLE_AutonomousProxy\n|UT: [[Legacy:PlayerPawn|PlayerPawn]]s,\
+      \ [[Legacy:GuidedRedeemer|GuidedRedeemer]]<br />UT200x: [[Legacy:Pawn|Pawn]]s\
+      \ currently possessed by a client player (includes [[Legacy:Vehicle|Vehicle]]s\
+      \ and the guided [[Legacy:RedeemerWarhead|RedeemerWarhead]])\n|-\n|ROLE_Authority\n\
+      |ROLE_DumbProxy\n|ROLE_DumbProxy\n|UT200x [[Legacy:Pickup|Pickup]]s, certain\
+      \ effects that need to be replicated but don't need to simulate any behavior\n\
+      |-\n|ROLE_Authority\n|ROLE_Authority\n|ROLE_Authority\n|[[Legacy:XPawn|XPawn]]\
+      \ ragdolls (see note below)\n|}\n\nIt's not unusual that an actor's clientside\
+      \ role changes. The last example is a special case which happens only when the\
+      \ server sets bTearOff=True on a simulated proxy after the actor has been replicated.\
+      \ The server and client versions of the actor become completely independent\
+      \ and nothing is replicated between them anymore. In UT pickups often change\
+      \ between simulated and dumb proxies when they are picked up or dropped.\n\n\
+      ==Related Topics==\n* [[Legacy:Replication|Replication]]\n* [[Legacy:Netcode\
+      \ Idioms|Netcode Idioms]] &ndash; useful code to pick out different types of\
+      \ machine\n* [[Legacy:NetMode|NetMode]] &ndash; tells you what type of game\
+      \ is running: server, client, etc.\n* [[Legacy:Simulated Function|Simulated\
+      \ Function]]\n* [[Legacy:Replicated Function|Replicated Function]]\n\n[[Category:Legacy\
+      \ Enum|{{PAGENAME}}]]"
+  properties: []
+  revId: 28671
+name: "Legacy:Role"
+revision:
+  revid: 28671
+  parentid: 6253
+  user: "Wormbo"
+  timestamp: 1211282921.000000000
+  comment: "removed non-existing category"
+timestamp: 1668759865.216446000

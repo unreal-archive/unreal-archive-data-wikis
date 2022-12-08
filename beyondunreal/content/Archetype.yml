@@ -1,0 +1,345 @@
+---
+parse:
+  title: "Archetype"
+  text:
+    text: "<p>If you have skimmed through the <i>exported</i> <a href=\"/UT3\" title=\"\
+      UT3\" class=\"mw-redirect\">UT3</a> <a href=\"/UnrealScript_source_code\" title=\"\
+      UnrealScript source code\">UnrealScript source code</a>, you may have noticed\
+      \ a certain property in each and every <a href=\"/Defaultproperties\" title=\"\
+      Defaultproperties\">defaultproperties</a> section, including any <a href=\"\
+      /Subobject\" title=\"Subobject\" class=\"mw-redirect\">subobject</a> definitions:\
+      \ <b>ObjectArchetype</b>. This article will explain what an \"(Object)Archetype\"\
+      \ is, how to use it and why it can be found all over the exported script sources,\
+      \ but not in the original source files you can download from <a href=\"http://udn.epicgames.com/Three/UT3ModHome\"\
+      \ class=\"extiw\" title=\"udn3:UT3ModHome\">UDN's UT3ModHome</a> page. (Note\
+      \ that the <a href=\"/UDK\" title=\"UDK\" class=\"mw-redirect\">UDK</a> already\
+      \ comes with the original, not the exported sources.)</p>\n<h2><span class=\"\
+      mw-headline\" id=\"What_is_an_archetype.3F\">What is an archetype?</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Archetype?section=1\" title=\"Edit section: What is an archetype?\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>In\
+      \ the context of <a href=\"/Unreal_Engine_3\" title=\"Unreal Engine 3\">Unreal\
+      \ Engine 3</a> an \"archetype\" simply is an object template, a set of property\
+      \ values that will be assigned to newly created objects.</p>\n<h2><span class=\"\
+      mw-headline\" id=\"Using_archetypes\">Using archetypes</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Archetype?section=2\"\
+      \ title=\"Edit section: Using archetypes\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>A common explicit use (see the next section for an\
+      \ even more common implicit use) for archetypes is to duplicate objects. To\
+      \ duplicate a non-actor object, an expression like one of the following is used:</p>\n\
+      <pre><b>new</b> <i>OriginalObject</i><b>.Class (</b><i>OriginalObject</i><b>)</b>\n\
+      <b>new(</b><i>NewOuter</i><b>)</b> <i>OriginalObject</i><b>.Class (</b><i>OriginalObject</i><b>)</b>\n\
+      </pre>\n<p>The first line duplicates the <i>OriginalObject</i> and uses the\
+      \ object executing that code as the duplicate's new <b>Outer</b>, while the\
+      \ second line explicitly specifies a different object as the <b>Outer</b>. See\
+      \ <a href=\"/New\" title=\"New\" class=\"mw-redirect\">new</a> for more details\
+      \ on creating objects with the special operator <b>new</b>.</p>\n<p>Analogously\
+      \ you could duplicate actors with the <a href=\"/UE3:Actor_native_functions_(UT3)#Spawn\"\
+      \ title=\"UE3:Actor native functions (UT3)\">Spawn()</a> function, but this\
+      \ may not work correctly with replicated actors. There is no instance of spawning\
+      \ actors using archetypes in the stock code, though.</p>\n<p>Actor archetypes\
+      \ can be used within <a href=\"/UnrealEd\" title=\"UnrealEd\" class=\"mw-redirect\"\
+      >UnrealEd</a>, though. You can create archetypes for certain types of actors\
+      \ you are going to need more than just once. Before (and after!) you place actors\
+      \ based on that archetype, you can modify the archetype's properties and the\
+      \ change will be propagated to all actors created based on that archetype. If\
+      \ you changed a property of one of those actors directly, it will no longer\
+      \ be inherited from the archetype and any changes to the archetype's property\
+      \ is ignored by that specific actor instance.</p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Why_is_ObjectArchetype_in_all_defaultproperties.3F\">Why is ObjectArchetype\
+      \ in all defaultproperties?</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Archetype?section=3\" title=\"\
+      Edit section: Why is ObjectArchetype in all defaultproperties?\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>Actually it isn't.\
+      \ No really, it's not in there before compiling. You only see them there because\
+      \ the script exporter generated the defaultproperties blocks on-the-fly during\
+      \ export by simply dumping each class's corresponding default archetype's properties.</p>\n\
+      <p>Just for clearification: <b>Never set a Name or ObjectArchetype in the defaultproperties\
+      \ of your own classes.</b> The remainder of this section only explains how the\
+      \ engine works with archetypes internally to represent default values, and not\
+      \ how you should do it.</p>\n<p>This, however, provides an excellent view on\
+      \ how archetypes work and how they are used internally.</p>\n<p>Let's have a\
+      \ look at the Core.Object class's exported defaults:</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw1\">defaultproperties</span>\n<span class=\"\
+      br0\">{</span>\n   <span class=\"kw5\">Name</span><span class=\"sy0\">=</span><span\
+      \ class=\"st0\">\"Default__Object\"</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>That's obviously not the class name, and it's not the name of newly\
+      \ created objects either. It's actually the name of the archetype object holding\
+      \ the default values of the Object class. This is the only defaultproperties\
+      \ block without an ObjectArchetype definition, by the way. Now let's have a\
+      \ look at a direct Object subclass: <a href=\"/UE3:Component_(UT3)\" title=\"\
+      UE3:Component (UT3)\">Core.Component</a>.</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">defaultproperties</span>\n<span class=\"br0\">{</span>\n\
+      \   <span class=\"kw5\">Name</span><span class=\"sy0\">=</span><span class=\"\
+      st0\">\"Default__Component\"</span>\n   ObjectArchetype<span class=\"sy0\">=</span><span\
+      \ class=\"kw8\">Object</span><span class=\"st0\">'Core.Default__Object'</span>\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>There's an ObjectArchetype,\
+      \ and look what it's set to: an object of class <i>Object</i> with the name\
+      \ <i>Default__Object</i> from the <i>Core</i> package.<br />\nCoincidence? Let's\
+      \ have a look at the direct Component subclass <a href=\"/UE3:AudioComponent_(UT3)\"\
+      \ title=\"UE3:AudioComponent (UT3)\">Engine.ActorComponent</a>:</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"kw1\">defaultproperties</span>\n<span class=\"\
+      br0\">{</span>\n   TickGroup<span class=\"sy0\">=</span>TG_DuringAsyncWork\n\
+      \   <span class=\"kw5\">Name</span><span class=\"sy0\">=</span><span class=\"\
+      st0\">\"Default__ActorComponent\"</span>\n   ObjectArchetype<span class=\"sy0\"\
+      >=</span>Component<span class=\"st0\">'Core.Default__Component'</span>\n<span\
+      \ class=\"br0\">}</span></pre></div>\n</div>\n<p>Here, ObjectArchetype is set\
+      \ to an object of class <i>Component</i> with the name <i>Default__Component</i>\
+      \ from the <i>Core</i> package. See the pattern?<br />\nOk, let's try the ActorComponent\
+      \ subclass <a href=\"/UE3:PrimitiveComponent_(UT3)\" title=\"UE3:PrimitiveComponent\
+      \ (UT3)\">Engine.PrimitiveComponent</a>:</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">defaultproperties</span>\n<span class=\"br0\">{</span>\n\
+      \   <span class=\"co1\">// (stripped some defaults here)</span>\n   <span class=\"\
+      kw5\">Name</span><span class=\"sy0\">=</span><span class=\"st0\">\"Default__PrimitiveComponent\"\
+      </span>\n   ObjectArchetype<span class=\"sy0\">=</span>ActorComponent<span class=\"\
+      st0\">'Engine.Default__ActorComponent'</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>Aha, the ObjectArchetype now is an <i>ActorComponent</i> from the\
+      \ <i>Engine</i> package called <i>Default__ActorComponent</i>!</p>\n<p>What\
+      \ you see here is how the Unreal Engine manages default values. The compiler\
+      \ actually turns the defaultproperties block into an archetype of the class\
+      \ defining those defaults and sets its ObjectArchetype property to the default\
+      \ archetype of the parent class. That's exactly what you would expect from defaultproperties,\
+      \ they are inherited from parent classes.</p>\n<p>In other words, archetypes\
+      \ form a hierarchy tree very similar to the <a href=\"/Class\" title=\"Class\"\
+      \ class=\"mw-redirect\">class</a> tree with Object'Core.Default__Object' being\
+      \ the root. For each class that extends Object, there's an archetype that uses\
+      \ Object'Core.Default__Object' as its \"parent archetype\" to inherit property\
+      \ values from. When selecting a few of those archetypes, a tree like the following\
+      \ could be formed:</p>\n<div style=\"font-family: monospace; white-space: preserve;\
+      \ line-height: 1em;\">Object'Core.Default__Object'<br />\n__TREETAG_3__Actor'Engine.Default_Actor'<br\
+      \ />\n__TREETAG_1____TREETAG_2__Info'Engine.Default__Info'<br />\n__TREETAG_2__Component'Core.Default__Component'<br\
+      \ />\n__TREETAG_0____TREETAG_2__ActorComponent'Engine.Default__ActorComponent'<br\
+      \ />\n__TREETAG_0____TREETAG_0____TREETAG_2__PrimitiveComponent'Engine.Default__PrimitiveComponent'<br\
+      \ />\n__TREETAG_0____TREETAG_0____TREETAG_0____TREETAG_2__SprintComponent'Engine.Default__SpriteComponent'<br\
+      \ />\n__TREETAG_0____TREETAG_0____TREETAG_0____TREETAG_0____TREETAG_2__SpriteComponent'Engine.Default__Info:Sprite'<br\
+      \ /></div>\n<p>Each node of this tree uses its parent node as its ObjectArchetype.</p>\n\
+      <p>But wait, what's that last one? It looks totally different. That one actually\
+      \ is a <a href=\"/Subobject\" title=\"Subobject\" class=\"mw-redirect\">subobject</a>'s\
+      \ archetype, the archetype of the subobject with the name \"Sprite\" in class\
+      \ <a href=\"/UE3:Info_(UT3)\" title=\"UE3:Info (UT3)\">Engine.Info</a>, to be\
+      \ precise. To see why that's such a big deal, let's have a look at the <a href=\"\
+      /UE3:Route_(UT3)\" title=\"UE3:Route (UT3)\">Engine.Route</a> class, which extends\
+      \ Engine.Info. In the exported defaultproperties you will notice the following\
+      \ lines:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n\
+      <div class=\"uscript source-uscript\">\n<pre class=\"de1\">   <span class=\"\
+      kw2\">Begin</span> <span class=\"kw8\">Object</span> <span class=\"kw1\">Class</span><span\
+      \ class=\"sy0\">=</span>SpriteComponent <span class=\"kw5\">Name</span><span\
+      \ class=\"sy0\">=</span>Sprite ObjName<span class=\"sy0\">=</span>Sprite Archetype<span\
+      \ class=\"sy0\">=</span>SpriteComponent<span class=\"st0\">'Engine.Default__Info:Sprite'</span>\n\
+      \      Sprite<span class=\"sy0\">=</span>Texture2D<span class=\"st0\">'EngineResources.S_Route'</span>\n\
+      \      ObjectArchetype<span class=\"sy0\">=</span>SpriteComponent<span class=\"\
+      st0\">'Engine.Default__Info:Sprite'</span>\n   End <span class=\"kw8\">Object</span></pre></div>\n\
+      </div>\n<p>Urgh, what a messy subobject definition. Let's compare that to the\
+      \ original script source:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\">   <span class=\"\
+      kw2\">Begin</span> <span class=\"kw8\">Object</span> <span class=\"kw5\">Name</span><span\
+      \ class=\"sy0\">=</span>Sprite\n      Sprite<span class=\"sy0\">=</span>Texture2D<span\
+      \ class=\"st0\">'EngineResources.S_Route'</span>\n   End <span class=\"kw8\"\
+      >Object</span></pre></div>\n</div>\n<p>Oh, much better! As you can see there's\
+      \ no \"Class=…\" clause in the <a href=\"/Subobject\" title=\"Subobject\" class=\"\
+      mw-redirect\">subobject</a> definition. This means the subobject with the same\
+      \ name in the parent class is used as template, but with the modifications specified\
+      \ here. The actual result of this can be seen in the exported subobject definition\
+      \ above: the parent class subobject is used as archetype for the new subobject.\
+      \ In our \"archetype tree\" the Sprite subobject of class Route would become\
+      \ a child of the SpriteComponent'Engine.Default__Info:Sprite' node.</p>\n<p><i>Here\
+      \ on the Unreal Wiki you cannot directly browse this \"archetype tree\", but\
+      \ whenever you stumble across a subobject definition on the class description\
+      \ pages, it will link to the subobject and class it is based on.</i></p>\n\n\
+      <!-- \nNewPP limit report\nCPU time usage: 0.128 seconds\nReal time usage: 0.146\
+      \ seconds\nPreprocessor visited node count: 29/1000000\nPreprocessor generated\
+      \ node count: 136/1000000\nPost‐expand include size: 0/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:5104-0!*!0!!*!*!* and timestamp 20221117202955 and revision\
+      \ id 42581\n -->\n"
+  categories:
+  - sortkey: ""
+    name: "Programming_articles"
+  links:
+  - ns: 0
+    exists: true
+    name: "Defaultproperties"
+  - ns: 106
+    exists: true
+    name: "UE3:PrimitiveComponent (UT3)"
+  - ns: 0
+    exists: true
+    name: "Subobject"
+  - ns: 0
+    exists: true
+    name: "New"
+  - ns: 0
+    exists: true
+    name: "UDK"
+  - ns: 0
+    exists: true
+    name: "UnrealScript source code"
+  - ns: 106
+    exists: true
+    name: "UE3:AudioComponent (UT3)"
+  - ns: 0
+    exists: true
+    name: "Class"
+  - ns: 106
+    exists: true
+    name: "UE3:Component (UT3)"
+  - ns: 106
+    exists: true
+    name: "UE3:Info (UT3)"
+  - ns: 0
+    exists: true
+    name: "Unreal Engine 3"
+  - ns: 106
+    exists: true
+    name: "UE3:Actor native functions (UT3)"
+  - ns: 106
+    exists: true
+    name: "UE3:Route (UT3)"
+  - ns: 0
+    exists: true
+    name: "UT3"
+  - ns: 0
+    exists: true
+    name: "UnrealEd"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "What is an archetype?"
+    number: "1"
+    index: "1"
+    fromtitle: "Archetype"
+    byteoffset: 556
+    anchor: "What_is_an_archetype.3F"
+  - toclevel: 1
+    level: "2"
+    line: "Using archetypes"
+    number: "2"
+    index: "2"
+    fromtitle: "Archetype"
+    byteoffset: 739
+    anchor: "Using_archetypes"
+  - toclevel: 1
+    level: "2"
+    line: "Why is ObjectArchetype in all defaultproperties?"
+    number: "3"
+    index: "3"
+    fromtitle: "Archetype"
+    byteoffset: 2204
+    anchor: "Why_is_ObjectArchetype_in_all_defaultproperties.3F"
+  displaytitle: "Archetype"
+  iwlinks:
+  - prefix: "udn3"
+    url: "http://udn.epicgames.com/Three/UT3ModHome"
+    name: "udn3:UT3ModHome"
+  wikitext:
+    text: "If you have skimmed through the ''exported'' [[UT3]] [[UnrealScript source\
+      \ code]], you may have noticed a certain property in each and every [[defaultproperties]]\
+      \ section, including any [[subobject]] definitions: '''ObjectArchetype'''. This\
+      \ article will explain what an \"(Object)Archetype\" is, how to use it and why\
+      \ it can be found all over the exported script sources, but not in the original\
+      \ source files you can download from [[udn3:UT3ModHome|UDN's UT3ModHome]] page.\
+      \ (Note that the [[UDK]] already comes with the original, not the exported sources.)\n\
+      \n==What is an archetype?==\nIn the context of [[Unreal Engine 3]] an \"archetype\"\
+      \ simply is an object template, a set of property values that will be assigned\
+      \ to newly created objects.\n\n==Using archetypes==\nA common explicit use (see\
+      \ the next section for an even more common implicit use) for archetypes is to\
+      \ duplicate objects. To duplicate a non-actor object, an expression like one\
+      \ of the following is used:\n '''new''' ''OriginalObject'''''.Class ('''''OriginalObject''''')'''\n\
+      \ '''new('''''NewOuter''''')''' ''OriginalObject'''''.Class ('''''OriginalObject''''')'''\n\
+      The first line duplicates the ''OriginalObject'' and uses the object executing\
+      \ that code as the duplicate's new '''Outer''', while the second line explicitly\
+      \ specifies a different object as the '''Outer'''. See [[new]] for more details\
+      \ on creating objects with the special operator '''new'''.\n\nAnalogously you\
+      \ could duplicate actors with the [[UE3:Actor native functions (UT3)#Spawn|Spawn()]]\
+      \ function, but this may not work correctly with replicated actors. There is\
+      \ no instance of spawning actors using archetypes in the stock code, though.\n\
+      \nActor archetypes can be used within [[UnrealEd]], though. You can create archetypes\
+      \ for certain types of actors you are going to need more than just once. Before\
+      \ (and after!) you place actors based on that archetype, you can modify the\
+      \ archetype's properties and the change will be propagated to all actors created\
+      \ based on that archetype. If you changed a property of one of those actors\
+      \ directly, it will no longer be inherited from the archetype and any changes\
+      \ to the archetype's property is ignored by that specific actor instance.\n\n\
+      ==Why is ObjectArchetype in all defaultproperties?==\nActually it isn't. No\
+      \ really, it's not in there before compiling. You only see them there because\
+      \ the script exporter generated the defaultproperties blocks on-the-fly during\
+      \ export by simply dumping each class's corresponding default archetype's properties.\n\
+      \nJust for clearification: '''Never set a Name or ObjectArchetype in the defaultproperties\
+      \ of your own classes.''' The remainder of this section only explains how the\
+      \ engine works with archetypes internally to represent default values, and not\
+      \ how you should do it.\n\nThis, however, provides an excellent view on how\
+      \ archetypes work and how they are used internally.\n\nLet's have a look at\
+      \ the Core.Object class's exported defaults:\n<uscript>\ndefaultproperties\n\
+      {\n   Name=\"Default__Object\"\n}\n</uscript>\nThat's obviously not the class\
+      \ name, and it's not the name of newly created objects either. It's actually\
+      \ the name of the archetype object holding the default values of the Object\
+      \ class. This is the only defaultproperties block without an ObjectArchetype\
+      \ definition, by the way. Now let's have a look at a direct Object subclass:\
+      \ [[UE3:Component (UT3)|Core.Component]].\n<uscript>\ndefaultproperties\n{\n\
+      \   Name=\"Default__Component\"\n   ObjectArchetype=Object'Core.Default__Object'\n\
+      }\n</uscript>\nThere's an ObjectArchetype, and look what it's set to: an object\
+      \ of class ''Object'' with the name ''Default__Object'' from the ''Core'' package.<br/>\n\
+      Coincidence? Let's have a look at the direct Component subclass [[UE3:AudioComponent\
+      \ (UT3)|Engine.ActorComponent]]:\n<uscript>\ndefaultproperties\n{\n   TickGroup=TG_DuringAsyncWork\n\
+      \   Name=\"Default__ActorComponent\"\n   ObjectArchetype=Component'Core.Default__Component'\n\
+      }\n</uscript>\nHere, ObjectArchetype is set to an object of class ''Component''\
+      \ with the name ''Default__Component'' from the ''Core'' package. See the pattern?<br/>\n\
+      Ok, let's try the ActorComponent subclass [[UE3:PrimitiveComponent (UT3)|Engine.PrimitiveComponent]]:\n\
+      <uscript>\ndefaultproperties\n{\n   // (stripped some defaults here)\n   Name=\"\
+      Default__PrimitiveComponent\"\n   ObjectArchetype=ActorComponent'Engine.Default__ActorComponent'\n\
+      }\n</uscript>\nAha, the ObjectArchetype now is an ''ActorComponent'' from the\
+      \ ''Engine'' package called ''Default__ActorComponent''!\n\nWhat you see here\
+      \ is how the Unreal Engine manages default values. The compiler actually turns\
+      \ the defaultproperties block into an archetype of the class defining those\
+      \ defaults and sets its ObjectArchetype property to the default archetype of\
+      \ the parent class. That's exactly what you would expect from defaultproperties,\
+      \ they are inherited from parent classes.\n\nIn other words, archetypes form\
+      \ a hierarchy tree very similar to the [[class]] tree with Object'Core.Default__Object'\
+      \ being the root. For each class that extends Object, there's an archetype that\
+      \ uses Object'Core.Default__Object' as its \"parent archetype\" to inherit property\
+      \ values from. When selecting a few of those archetypes, a tree like the following\
+      \ could be formed:\n+Object'Core.Default__Object'\n++Actor'Engine.Default_Actor'\n\
+      +++Info'Engine.Default__Info'\n++Component'Core.Default__Component'\n+++ActorComponent'Engine.Default__ActorComponent'\n\
+      ++++PrimitiveComponent'Engine.Default__PrimitiveComponent'\n+++++SprintComponent'Engine.Default__SpriteComponent'\n\
+      ++++++SpriteComponent'Engine.Default__Info:Sprite'\nEach node of this tree uses\
+      \ its parent node as its ObjectArchetype.\n\nBut wait, what's that last one?\
+      \ It looks totally different. That one actually is a [[subobject]]'s archetype,\
+      \ the archetype of the subobject with the name \"Sprite\" in class [[UE3:Info\
+      \ (UT3)|Engine.Info]], to be precise. To see why that's such a big deal, let's\
+      \ have a look at the [[UE3:Route (UT3)|Engine.Route]] class, which extends Engine.Info.\
+      \ In the exported defaultproperties you will notice the following lines:\n<uscript>\n\
+      \   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__Info:Sprite'\n\
+      \      Sprite=Texture2D'EngineResources.S_Route'\n      ObjectArchetype=SpriteComponent'Engine.Default__Info:Sprite'\n\
+      \   End Object\n</uscript>\nUrgh, what a messy subobject definition. Let's compare\
+      \ that to the original script source:\n<uscript>\n   Begin Object Name=Sprite\n\
+      \      Sprite=Texture2D'EngineResources.S_Route'\n   End Object\n</uscript>\n\
+      Oh, much better! As you can see there's no \"Class=&hellip;\" clause in the\
+      \ [[subobject]] definition. This means the subobject with the same name in the\
+      \ parent class is used as template, but with the modifications specified here.\
+      \ The actual result of this can be seen in the exported subobject definition\
+      \ above: the parent class subobject is used as archetype for the new subobject.\
+      \ In our \"archetype tree\" the Sprite subobject of class Route would become\
+      \ a child of the SpriteComponent'Engine.Default__Info:Sprite' node.\n\n''Here\
+      \ on the Unreal Wiki you cannot directly browse this \"archetype tree\", but\
+      \ whenever you stumble across a subobject definition on the class description\
+      \ pages, it will link to the subobject and class it is based on.''\n\n[[Category:Programming\
+      \ articles]]"
+  properties: []
+  revId: 42581
+name: "Archetype"
+revision:
+  revid: 42581
+  parentid: 42502
+  user: "Wormbo"
+  timestamp: 1267691832.000000000
+  comment: "further clarified that the article is about *exported* sources; more linkage"
+timestamp: 1668760341.050765000

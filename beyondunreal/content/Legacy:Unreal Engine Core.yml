@@ -1,0 +1,330 @@
+---
+parse:
+  title: "Legacy:Unreal Engine Core"
+  text:
+    text: "<p>This page is an introduction to the core concepts of the <a href=\"\
+      /Legacy:Unreal_Engine\" title=\"Legacy:Unreal Engine\">Unreal Engine</a>.</p>\n\
+      <p>At its simplest, a computer game is made up of the following things:</p>\n\
+      <ul>\n<li>a collection of things that describe the environment the player is\
+      \ supposed to experience,</li>\n<li>a means of conveying that to the player\
+      \ on her monitor, through her speakers and so on.</li>\n</ul>\n<p>The collection\
+      \ of things is staggeringly huge, even for the average game of UT2003. We don't\
+      \ tend to realize just how fast computers are these days. In programming terms,\
+      \ each thing is called an <b>object</b>. The Unreal engine is constantly aware\
+      \ of where these objects are in the fictional world, what they are doing and\
+      \ so on. It does this by looking at each one in turn, although as we'll see\
+      \ later from the point of view of the programmer, we can usually envisage all\
+      \ this as happening simultaneously, in real time.</p>\n<p>So far, we have a\
+      \ long list of objects, and each one is assigned a position in 3-dimensional\
+      \ <a href=\"http://en.wikipedia.org/wiki/Cartesian_coordinates\" class=\"extiw\"\
+      \ title=\"wikipedia:Cartesian coordinates\">Wikipedia:Cartesian coordinates</a>.\
+      \ Now the engine also knows where the player is in the world (the player is\
+      \ represented by just another type of object, but more on this much later),\
+      \ and can calculate what the player is supposed to see and hear. If a rocket\
+      \ just flew past in front of you, then you'll see a rocket in front of you on\
+      \ the screen.</p>\n<p>Some questions that might be raised now include: what\
+      \ makes the rocket fly in a particular direction? what makes it explode when\
+      \ it hits something? when it hits the player, what makes him lose health and\
+      \ go 'ouch'?</p>\n<h2><span class=\"mw-headline\" id=\"The_virtual_machine\"\
+      >The virtual machine</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Unreal_Engine_Core?section=1\" title=\"Edit\
+      \ section: The virtual machine\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>We now come to a fundamental difference between the\
+      \ Unreal Engine and most other first-person shooters. It's a difference which,\
+      \ in the opinion of many modders, makes working with Unreal much easier than\
+      \ with other engines.</p>\n<p>The parts of the software that handle display\
+      \ on the screen (<b>rendering</b>), sound, and knowing where all these objects\
+      \ are, networking (clients and servers sending each other information about\
+      \ the objects) as well as anything else that is platform-specific, is written\
+      \ in <a href=\"http://en.wikipedia.org/wiki/C_Plus_Plus\" class=\"extiw\" title=\"\
+      wikipedia:C Plus Plus\">C++</a>. We call the \"native\" stuff. You can't see\
+      \ the code for this (it's \"closed-source\"), and hardly any of the work done\
+      \ by modders involves this.</p>\n<p>The native software also creates a <a href=\"\
+      http://en.wikipedia.org/wiki/virtual_machine\" class=\"extiw\" title=\"wikipedia:virtual\
+      \ machine\">Wikipedia:virtual machine</a>, similar to the <a href=\"http://en.wikipedia.org/wiki/Java_virtual_machine\"\
+      \ class=\"extiw\" title=\"wikipedia:Java virtual machine\">Wikipedia:Java virtual\
+      \ machine</a>. This is like a programming environment that sits on top of the\
+      \ native stuff. The language for this is <a href=\"/Legacy:UnrealScript\" title=\"\
+      Legacy:UnrealScript\">UnrealScript</a>; it's similar to Java and JavaScript.\
+      \ It is compiled into bytecodes, like Java, but the source remains visible,\
+      \ and it's this that allows the modding of the Unreal engine games. Tim Sweeney's\
+      \ <a href=\"/Legacy:UnrealScript_Language_Reference/Introduction\" title=\"\
+      Legacy:UnrealScript Language Reference/Introduction\">Design goals for UnrealScript</a>\
+      \ explain this idea further.</p>\n<p>In very simple terms, every single object\
+      \ in the game is a piece of UnrealScript code. The engine runs all these scripts,\
+      \ and they decide what to do. So when the rocket hits a wall, a function in\
+      \ its script called something like HitAWall says: \"I have hit a wall. I should\
+      \ now produce an explosion, make a noise, and remove myself from the game.\"\
+      \ How does the rocket know it hit a wall? The native part of the engine told\
+      \ it. How does the engine know? Every single moment of the game, it is checking\
+      \ where objects are and what they are touching.</p>\n<blockquote class=\"legacyquote\"\
+      >\n<p>Since UnrealScript is object oriented, you won't be editing any of the\
+      \ original source. This is different from Quake, where you edit the original\
+      \ source and then distribute a new DLL. In US, you will subclass the classes\
+      \ that shipped with Unreal Tournament, modifying them to suit your needs. –\
+      \ Tim Sweeney</p>\n</blockquote>\n<h2><span class=\"mw-headline\" id=\"The_tick\"\
+      >The tick</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Unreal_Engine_Core?section=2\" title=\"Edit\
+      \ section: The tick\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>The engine divides time into <b>ticks</b>. A tick is not a specific length,\
+      \ which allows the engine to scale this according to the power of the machine\
+      \ and the current load. While the C++ parts of the engine are fast, UnrealScript\
+      \ is a relatively slow language to execute. The software is designed in such\
+      \ a way that things that happen all the time, like movement and checking whether\
+      \ objects are touching, is handled natively, while particular events are handled\
+      \ in UnrealScript. While the rocket is moving, no UnrealScript is being executed.\
+      \ The native engine knows to keep moving it forwards each tick, and the renderer\
+      \ is of course showing it to you in a different position each frame (the renderer\
+      \ works in frames, like animation. Again, how fast these go, the FPS, depends\
+      \ on your hardware and how much is going on in the game.)</p>\n<p>But when the\
+      \ rocket hits the wall, things begin to happen in UnrealScript:</p>\n<ol>\n\
+      <li>the rocket is notified. This starts a chain of events:</li>\n<li>the rocket\
+      \ informs the thing it's hit: \"you've just been hit by a rocket. This is maybe\
+      \ going to hurt you\". The thing it's hit could be a player which received damage,\
+      \ or a piece of architecture which won't care much. But the point is that the\
+      \ rocket doesn't care what the target does about being hit. This is a very important\
+      \ point about <b>object-oriented programming</b>, which we'll see later on.\
+      \ Roughly speaking, this is <b>encapsulation</b>.</li>\n<li>the rocket creates\
+      \ a new object: an explosion. This explosion object will begin to run its own\
+      \ script, which says:\n<ol>\n<li>display bright flashes at your position.</li>\n\
+      <li>Make a loud noise.</li>\n<li>Now some smoke. When the renderer inspects\
+      \ all the objects the player can see, it will see that there are bright flashes\
+      \ and smoke called for at a particular spot.</li>\n<li>Then remove yourself\
+      \ from the game, you're done.</li>\n</ol>\n</li>\n<li>the rocket then removes\
+      \ itself from the game. The object that represents the rocket no longer exists.</li>\n\
+      </ol>\n<p>Now from the point of view of the C++ native code, each object is\
+      \ taken in turn. But from a programmer's point of view, we can imagine the rocket\
+      \ and the explosion as running in parallel.</p>\n<hr />\n<p><b>Tarquin:</b>\
+      \ ok guys, what next? Are we ready to lead on into <a href=\"/Legacy:Object_Oriented_Programming_Overview\"\
+      \ title=\"Legacy:Object Oriented Programming Overview\">OOP Overview</a>&#160;?</p>\n\
+      <h2><span class=\"mw-headline\" id=\"Comments\">Comments</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Unreal_Engine_Core?section=3\"\
+      \ title=\"Edit section: Comments\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p><b>Tarquin:</b> How am I doing so far? Want to change\
+      \ the list on <a href=\"/Legacy:UnrealScript_Lessons\" title=\"Legacy:UnrealScript\
+      \ Lessons\">UnrealScript Lessons</a> so it reflects the order?</p>\n<p><b>Sobiwan:</b>\
+      \ How can I say this... ah, yes. The music artist \"Sting\" comes to mind: \"\
+      every little thing Tarquin does is magic...\"&#160;:)</p>\n<p><b>Wormbo:</b>\
+      \ I'm sure this is mentioned somewhere: The Unreal engine loads packages because\
+      \ they are referenced by code, i.e. they are referenced by other packages, or\
+      \ because objects in those packages are mentined in <a href=\"/Legacy:INT_File\"\
+      \ title=\"Legacy:INT File\">INT files</a>, which again leads to code loading\
+      \ those objects after scanning all INT files for a certain MetaClass.</p>\n\
+      <p><b>Daid303:</b> \"UnrealScript (lets call it US for short)\" Let's NOT call\
+      \ it US for short, but UScript for short, ok?</p>\n<p><b>Tarquin:</b> Well I\
+      \ think much of the bottom half of this page will be deleted anyway, unless\
+      \ someone tidies it up... This page needs a better title too.&#160;!Unreal Engine\
+      \ Overview\" maybe?</p>\n<p><b>King Mango:</b> Perhaps somewhere a compilation\
+      \ of suggested encapsulation actions for each type of actor that we newbs should\
+      \ begin to train ourselves to be aware of. I really like knowing now that the\
+      \ rocket tells what it hit 'this might hurt' rather than what is being hit is\
+      \ what determines should it be damaged. I'm sure I have this all wrong lol But\
+      \ back to my request, I think I'd like to see \"projectiles and what they need\
+      \ to be responsible for.\" \"Player Characters and what they need to be responsible\
+      \ for\" But yes from a beginner's stand point, I think I would be ready to move\
+      \ on to OOP overview. I'm probably way ahead of myself... nm me</p>\n<p><b>SuperApe:</b>\
+      \ LOL, Mango. It looks like a link to OOP overview is in order. Although, I\
+      \ see relations to <a href=\"/Legacy:Communication_Between_Objects\" title=\"\
+      Legacy:Communication Between Objects\">Communication Between Objects</a> and\
+      \ <a href=\"/Legacy:Linked_List/Existing_Lists_In_Unreal_Tournament\" title=\"\
+      Legacy:Linked List/Existing Lists In Unreal Tournament\">Linked List/Existing\
+      \ Lists In Unreal Tournament</a> as well. I hope I'm not confusing the point.</p>\n\
+      <p><b>Switch`:</b> <i>\"So far, we have a long list of objects, and each one\
+      \ is assigned a position in 3-dimensional...\"</i> Misleading, objects don't\
+      \ have a location.</p>\n\n<!-- \nNewPP limit report\nCPU time usage: 0.047 seconds\n\
+      Real time usage: 0.049 seconds\nPreprocessor visited node count: 22/1000000\n\
+      Preprocessor generated node count: 69/1000000\nPost‐expand include size: 726/2097152\
+      \ bytes\nTemplate argument size: 315/2097152 bytes\nHighest expansion depth:\
+      \ 3/40\nExpensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion expansion\
+      \ time report (%,ms,calls,template)\n100.00%    6.473      1 - -total\n100.00%\
+      \    6.473      1 - Template:Innerbox\n-->\n\n<!-- Saved in parser cache with\
+      \ key wiki:pcache:idhash:3294-0!*!0!!*!*!* and timestamp 20221118014705 and\
+      \ revision id 8529\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:INT File"
+  - ns: 100
+    exists: true
+    name: "Legacy:Communication Between Objects"
+  - ns: 100
+    exists: true
+    name: "Legacy:Linked List/Existing Lists In Unreal Tournament"
+  - ns: 100
+    exists: true
+    name: "Legacy:Unreal Engine"
+  - ns: 100
+    exists: true
+    name: "Legacy:Object Oriented Programming Overview"
+  - ns: 100
+    exists: true
+    name: "Legacy:UnrealScript"
+  - ns: 100
+    exists: true
+    name: "Legacy:UnrealScript Lessons"
+  - ns: 100
+    exists: true
+    name: "Legacy:UnrealScript Language Reference/Introduction"
+  templates:
+  - ns: 10
+    exists: true
+    name: "Template:Innerbox"
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "The virtual machine"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Unreal_Engine_Core"
+    byteoffset: 1532
+    anchor: "The_virtual_machine"
+  - toclevel: 1
+    level: "2"
+    line: "The tick"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Unreal_Engine_Core"
+    byteoffset: 3673
+    anchor: "The_tick"
+  - toclevel: 1
+    level: "2"
+    line: "Comments"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:Unreal_Engine_Core"
+    byteoffset: 5939
+    anchor: "Comments"
+  displaytitle: "Legacy:Unreal Engine Core"
+  iwlinks:
+  - prefix: "wikipedia"
+    url: "http://en.wikipedia.org/wiki/C_Plus_Plus"
+    name: "wikipedia:C Plus Plus"
+  - prefix: "wikipedia"
+    url: "http://en.wikipedia.org/wiki/Cartesian_coordinates"
+    name: "wikipedia:Cartesian coordinates"
+  - prefix: "wikipedia"
+    url: "http://en.wikipedia.org/wiki/virtual_machine"
+    name: "wikipedia:virtual machine"
+  - prefix: "wikipedia"
+    url: "http://en.wikipedia.org/wiki/Java_virtual_machine"
+    name: "wikipedia:Java virtual machine"
+  wikitext:
+    text: "This page is an introduction to the core concepts of the [[Legacy:Unreal\
+      \ Engine|Unreal Engine]]. \n\nAt its simplest, a computer game is made up of\
+      \ the following things:\n* a collection of things that describe the environment\
+      \ the player is supposed to experience,\n* a means of conveying that to the\
+      \ player on her monitor, through her speakers and so on.\n\nThe collection of\
+      \ things is staggeringly huge, even for the average game of UT2003. We don't\
+      \ tend to realize just how fast computers are these days. In programming terms,\
+      \ each thing is called an '''object'''. The Unreal engine is constantly aware\
+      \ of where these objects are in the fictional world, what they are doing and\
+      \ so on. It does this by looking at each one in turn, although as we'll see\
+      \ later from the point of view of the programmer, we can usually envisage all\
+      \ this as happening simultaneously, in real time. \n\nSo far, we have a long\
+      \ list of objects, and each one is assigned a position in 3-dimensional [[Wikipedia:Cartesian\
+      \ coordinates]]. Now the engine also knows where the player is in the world\
+      \ (the player is represented by just another type of object, but more on this\
+      \ much later), and can calculate what the player is supposed to see and hear.\
+      \ If a rocket just flew past in front of you, then you'll see a rocket in front\
+      \ of you on the screen.\n\nSome questions that might be raised now include:\
+      \ what makes the rocket fly in a particular direction? what makes it explode\
+      \ when it hits something? when it hits the player, what makes him lose health\
+      \ and go 'ouch'?\n\n==The virtual machine==\n\nWe now come to a fundamental\
+      \ difference between the Unreal Engine and most other first-person shooters.\
+      \ It's a difference which, in the opinion of many modders, makes working with\
+      \ Unreal much easier than with other engines.\n\nThe parts of the software that\
+      \ handle display on the screen ('''rendering'''), sound, and knowing where all\
+      \ these objects are, networking (clients and servers sending each other information\
+      \ about the objects) as well as anything else that is platform-specific, is\
+      \ written in [[Wikipedia:C Plus Plus|C++]]. We call the \"native\" stuff. You\
+      \ can't see the code for this (it's \"closed-source\"), and hardly any of the\
+      \ work done by modders involves this. \n\nThe native software also creates a\
+      \ [[Wikipedia:virtual machine]], similar to the [[Wikipedia:Java virtual machine]].\
+      \ This is like a programming environment that sits on top of the native stuff.\
+      \ The language for this is [[Legacy:UnrealScript|UnrealScript]]; it's similar\
+      \ to Java and JavaScript. It is compiled into bytecodes, like Java, but the\
+      \ source remains visible, and it's this that allows the modding of the Unreal\
+      \ engine games. Tim Sweeney's [[Legacy:UnrealScript Language Reference/Introduction|Design\
+      \ goals for UnrealScript]] explain this idea further.\n\nIn very simple terms,\
+      \ every single object in the game is a piece of UnrealScript code. The engine\
+      \ runs all these scripts, and they decide what to do. So when the rocket hits\
+      \ a wall, a function in its script called something like HitAWall says: \"I\
+      \ have hit a wall. I should now produce an explosion, make a noise, and remove\
+      \ myself from the game.\"  How does the rocket know it hit a wall? The native\
+      \ part of the engine told it. How does the engine know? Every single moment\
+      \ of the game, it is checking where objects are and what they are touching.\
+      \ \n\n{{innerbox| Since UnrealScript is object oriented, you won't be editing\
+      \ any of the original source. This is different from Quake, where you edit the\
+      \ original source and then distribute a new DLL. In US, you will subclass the\
+      \ classes that shipped with Unreal Tournament, modifying them to suit your needs.\
+      \ &ndash; Tim Sweeney\n\n}}\n\n==The tick==\n\nThe engine divides time into\
+      \ '''ticks'''. A tick is not a specific length, which allows the engine to scale\
+      \ this according to the power of the machine and the current load. While the\
+      \ C++ parts of the engine are fast, UnrealScript is a relatively slow language\
+      \ to execute. The software is designed in such a way that things that happen\
+      \ all the time, like movement and checking whether objects are touching, is\
+      \ handled natively, while particular events are handled in UnrealScript. While\
+      \ the rocket is moving, no UnrealScript is being executed. The native engine\
+      \ knows to keep moving it forwards each tick, and the renderer is of course\
+      \ showing it to you in a different position each frame (the renderer works in\
+      \ frames, like animation. Again, how fast these go, the FPS, depends on your\
+      \ hardware and how much is going on in the game.)\n\nBut when the rocket hits\
+      \ the wall, things begin to happen in UnrealScript:\n# the rocket is notified.\
+      \ This starts a chain of events:\n# the rocket informs the thing it's hit: \"\
+      you've just been hit by a rocket. This is maybe going to hurt you\". The thing\
+      \ it's hit could be a player which received damage, or a piece of architecture\
+      \ which won't care much. But the point is that the rocket doesn't care what\
+      \ the target does about being hit. This is a very important point about '''object-oriented\
+      \ programming''', which we'll see later on. Roughly speaking, this is '''encapsulation'''.\n\
+      # the rocket creates a new object: an explosion. This explosion object will\
+      \ begin to run its own script, which says: \n## display bright flashes at your\
+      \ position. \n## Make a loud noise. \n## Now some smoke. When the renderer inspects\
+      \ all the objects the player can see, it will see that there are bright flashes\
+      \ and smoke called for at a particular spot.\n## Then remove yourself from the\
+      \ game, you're done. \n# the rocket then removes itself from the game. The object\
+      \ that represents the rocket no longer exists. \n\nNow from the point of view\
+      \ of the C++ native code, each object is taken in turn. But from a programmer's\
+      \ point of view, we can imagine the rocket and the explosion as running in parallel.\
+      \ \n\n----\n\n'''Tarquin:''' ok guys, what next? Are we ready to lead on into\
+      \ [[Legacy:Object Oriented Programming Overview|OOP Overview]] ?\n\n==Comments\
+      \ ==\n\n'''Tarquin:''' How am I doing so far? Want to change the list on [[Legacy:UnrealScript\
+      \ Lessons|UnrealScript Lessons]] so it reflects the order?\n\n'''Sobiwan:'''\
+      \ How can I say this... ah, yes.  The music artist \"Sting\" comes to mind:\
+      \ \"every little thing Tarquin does is magic...\" :)\n\n'''Wormbo:''' I'm sure\
+      \ this is mentioned somewhere: The Unreal engine loads packages because they\
+      \ are referenced by code, i.e. they are referenced by other packages, or because\
+      \ objects in those packages are mentined in [[Legacy:INT File|INT file]]s, which\
+      \ again leads to code loading those objects after scanning all INT files for\
+      \ a certain MetaClass.\n\n'''Daid303:''' \"UnrealScript (lets call it US for\
+      \ short)\" Let's NOT call it US for short, but UScript for short, ok?\n\n'''Tarquin:'''\
+      \ Well I think much of the bottom half of this page will be deleted anyway,\
+      \ unless someone tidies it up... This page needs a better title too. !Unreal\
+      \ Engine Overview\" maybe?\n\n'''King Mango:''' Perhaps somewhere a compilation\
+      \ of suggested encapsulation actions for each type of actor that we newbs should\
+      \ begin to train ourselves to be aware of. I really like knowing now that the\
+      \ rocket tells what it hit 'this might hurt' rather than what is being hit is\
+      \ what determines should it be damaged. I'm sure I have this all wrong lol But\
+      \ back to my request, I think I'd like to see \"projectiles and what they need\
+      \ to be responsible for.\" \"Player Characters and what they need to be responsible\
+      \ for\" But yes from a beginner's stand point, I think I would be ready to move\
+      \ on to OOP overview. I'm probably way ahead of myself... nm me\n\n'''SuperApe:'''\
+      \ LOL, Mango.  It looks like a link to OOP overview is in order.  Although,\
+      \ I see relations to [[Legacy:Communication Between Objects|Communication Between\
+      \ Objects]] and [[Legacy:Linked List/Existing Lists In Unreal Tournament|Linked\
+      \ List/Existing Lists In Unreal Tournament]] as well.  I hope I'm not confusing\
+      \ the point.\n\n'''Switch`:''' ''\"So far, we have a long list of objects, and\
+      \ each one is assigned a position in 3-dimensional...\"'' Misleading, objects\
+      \ don't have a location."
+  properties: []
+  revId: 8529
+name: "Legacy:Unreal Engine Core"
+revision:
+  revid: 8529
+  parentid: 8531
+  user: "Wormbo"
+  timestamp: 1177334248.000000000
+  comment: "reverted"
+timestamp: 1668763400.119506000

@@ -1,0 +1,231 @@
+---
+parse:
+  title: "Legacy:Creating A TCP Client"
+  text:
+    text: "<p>Hi, This sample is to showing you how to create quikely a <a href=\"\
+      http://en.wikipedia.org/wiki/TCP\" class=\"extiw\" title=\"wikipedia:TCP\">Wikipedia:TCP</a>\
+      \ client for UT2003. - Matthieu29 -</p>\n<h3><span class=\"mw-headline\" id=\"\
+      The_.22TCP.22_class:\">The \"TCP\" class:</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Creating_A_TCP_Client?section=1\"\
+      \ title=\"Edit section: The &quot;TCP&quot; class:\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h3>\n<p>It will send to an external\
+      \ progam, some text messages. I created this code to let's know in real time\
+      \ the status of the game by an external application.</p>\n<p><i><b>For infos:</b></i>\
+      \ For my personal usage, all messages get a \"line feed\" caracter at the end\
+      \ but, for general purpose, it's not needed.&#160;;)</p>\n<p>The client have\
+      \ to connect to a server, so we set the server's port thanks to the default\
+      \ property variable \"RemotePort\". The server's address can be set too.</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">Class</span> MyTcp\
+      \ <span class=\"kw1\">extends</span> TcpLink;\n \n<span class=\"kw1\">var</span>\
+      \ <span class=\"kw5\">int</span>  RemotePort;    <span class=\"co1\">// Port\
+      \ of the server to connect</span>\n<span class=\"kw1\">var</span> <span class=\"\
+      kw5\">char</span> ServerAddress; <span class=\"co1\">// Address of the server\
+      \ to connect  // Seems to be string in UT2004</span>\n<span class=\"kw1\">var</span>\
+      \ <span class=\"kw5\">string</span> LF;          <span class=\"co1\">// Used\
+      \ for linefeed \"\\n\" </span>\n \n<span class=\"co1\">//------------------------------------------------------------------------------</span>\n\
+      \ \n<span class=\"co1\">// First function called (init of the TCP connection)</span>\n\
+      <span class=\"kw1\">Function</span> InitTcpLinkEventLogger<span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>\n <span class=\"br0\">{</span>\n LF <span\
+      \ class=\"sy0\">=</span> <span class=\"kw3\">Chr</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">10</span><span class=\"br0\">)</span>; <span class=\"co1\">//\
+      \ Line feed char \"\\n\"</span>\n \n <span class=\"kw3\">Log</span><span class=\"\
+      br0\">(</span><span class=\"st0\">\"InitTcpLinkEventLogger: Will start TCP connection!\"\
+      </span><span class=\"br0\">)</span>;\n \n Resolve<span class=\"br0\">(</span>ServerAddress<span\
+      \ class=\"br0\">)</span>;   <span class=\"co1\">// Resolve the address of the\
+      \ server</span>\n<span class=\"br0\">}</span>                     \n \n<span\
+      \ class=\"co1\">//------------------------------------------------------------------------------</span>\n\
+      \ \n<span class=\"kw1\">Function</span> Cclose<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span> <span class=\"co1\">// Closes the current connection.</span>\n\
+      <span class=\"br0\">{</span>\n Close<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"co1\">//------------------------------------------------------------------------------</span>\n\
+      \ \n<span class=\"kw1\">Function</span> <span class=\"kw5\">int</span> SendText\
+      \ <span class=\"br0\">(</span><span class=\"kw1\">coerce</span> <span class=\"\
+      kw5\">string</span> Str<span class=\"br0\">)</span>  <span class=\"co1\">//\
+      \ Send the string \"Str\" + \"line feed\" char</span>\n<span class=\"br0\">{</span>\n\
+      \ <span class=\"kw1\">local</span> <span class=\"kw5\">int</span> result;\n\
+      \ \n result <span class=\"sy0\">=</span> <span class=\"kw6\">super</span>.<span\
+      \ class=\"me0\">SendText</span><span class=\"br0\">(</span>Str<span class=\"\
+      sy0\">$</span>LF<span class=\"br0\">)</span>;  <span class=\"co1\">// Call the\
+      \ super (send the text)</span>\n <span class=\"kw3\">Log</span> <span class=\"\
+      br0\">(</span><span class=\"st0\">\"SentText: \"</span> <span class=\"sy0\"\
+      >$</span>Str<span class=\"sy0\">$</span><span class=\"st0\">\" , (Number of\
+      \ bytes sent: \"</span><span class=\"sy0\">$</span>result<span class=\"sy0\"\
+      >$</span><span class=\"st0\">\")\"</span><span class=\"br0\">)</span>;\n <span\
+      \ class=\"kw2\">return</span> result;\n<span class=\"br0\">}</span>\n \n<span\
+      \ class=\"co1\">//--EVENTS--</span>\n \n<span class=\"co1\">// Called when the\
+      \ IP is resolved</span>\n<span class=\"kw1\">Event</span> Resolved<span class=\"\
+      br0\">(</span> IpAddr Addr <span class=\"br0\">)</span>\n<span class=\"br0\"\
+      >{</span>\n  <span class=\"kw3\">Log</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">\"OK, Address resolved\"</span><span class=\"br0\">)</span>;\n\
+      \  Addr.<span class=\"me0\">Port</span> <span class=\"sy0\">=</span> remotePort;\n\
+      \  BindPort<span class=\"br0\">(</span><span class=\"br0\">)</span>;       \
+      \  <span class=\"co1\">// In UnrealTournament, the CLIENT has to make a bind\
+      \ to create a socket! (Not as a classic TCP connection!!!)</span>\n \n  ReceiveMode\
+      \ <span class=\"sy0\">=</span> RMODE_Event;  <span class=\"co1\">// Incomming\
+      \ messages are triggering events</span>\n  LinkMode <span class=\"sy0\">=</span>\
+      \ MODE_Text;       <span class=\"co1\">// We expect to receive text (if we receive\
+      \ data)</span>\n  Open<span class=\"br0\">(</span>Addr<span class=\"br0\">)</span>;\
+      \                 <span class=\"co1\">// Open the connection</span>\n \n  <span\
+      \ class=\"kw3\">Log</span> <span class=\"br0\">(</span><span class=\"st0\">\"\
+      Connected =&gt; Port: \"</span><span class=\"sy0\">$</span>Addr.<span class=\"\
+      me0\">port</span><span class=\"sy0\">$</span><span class=\"st0\">\" Address:\
+      \ \"</span><span class=\"sy0\">$</span>Addr.<span class=\"me0\">Addr</span><span\
+      \ class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"co1\"\
+      >//------------------------------------------------------------------------------</span>\n\
+      \ \n<span class=\"co1\">// If the IP was not resolved...</span>\n<span class=\"\
+      kw1\">Event</span> ResolveFailed<span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw3\">Log</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">\"### Error, resolve failed!!!\"\
+      </span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n \n<span\
+      \ class=\"co1\">//------------------------------------------------------------------------------</span>\n\
+      \ \n<span class=\"kw1\">event</span> Opened<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw3\"\
+      >Log</span><span class=\"br0\">(</span><span class=\"st0\">\"Ok, connection\
+      \ opened\"</span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"co1\">//------------------------------------------------------------------------------</span>\n\
+      \ \n<span class=\"co1\">// If somebody has close the connection...</span>\n\
+      <span class=\"kw1\">Event</span> Closed<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw3\">Log</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">\"Connection closed\"</span><span\
+      \ class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"co1\"\
+      >//------------------------------------------------------------------------------</span>\n\
+      \ \n<span class=\"co1\">// Called when a string is received</span>\n<span class=\"\
+      kw1\">Event</span> ReceivedText <span class=\"br0\">(</span><span class=\"kw5\"\
+      >string</span> Text<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \  <span class=\"co1\">// We have just received a string !</span>\n  <span class=\"\
+      kw3\">Log</span><span class=\"br0\">(</span><span class=\"st0\">\"Read string:\
+      \ \"</span><span class=\"sy0\">$</span>Text<span class=\"sy0\">$</span><span\
+      \ class=\"st0\">\" Size : \"</span><span class=\"sy0\">$</span>Len<span class=\"\
+      br0\">(</span>Text<span class=\"br0\">)</span><span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"co1\">//------------------------------------------------------------------------------</span>\n\
+      \ \n<span class=\"kw1\">defaultproperties</span>\n  <span class=\"br0\">{</span>\n\
+      \  ServerAddress<span class=\"sy0\">=</span><span class=\"st0\">\"127.0.0.1\"\
+      </span>  <span class=\"co1\">// Remote server address</span>\n  remotePort<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">3850</span>            <span class=\"\
+      co1\">// Remote port number</span>\n  <span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<h3><span class=\"mw-headline\" id=\"Ok.2C_now_how_to_use_it:\">Ok,\
+      \ now how to use it:</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Creating_A_TCP_Client?section=2\" title=\"Edit\
+      \ section: Ok, now how to use it:\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<ul>\n<li>Create a <b>MyTCPLink</b> class</li>\n<li>Call\
+      \ <b>InitTcpLinkEventLogger</b>()</li>\n<li>Call <b>SendText</b>(\"A beautifull\
+      \ string\")</li>\n<li>Call <b>Cclose</b>()</li>\n</ul>\n<p>ReceivedText() is\
+      \ called when you receive some datas (I didn't tested this part of code, but\
+      \ there is no reasons it dosen't works)&#160;:)</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"co1\">// Somewhere in a class.....</span>\n\
+      \ \n<span class=\"kw1\">var</span> MyTcp ATcp;  \n \n \n<span class=\"kw1\"\
+      >simulated</span> <span class=\"kw1\">event</span> <span class=\"kw4\">PostBeginPlay</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n  <span class=\"br0\"\
+      >{</span>\n  <span class=\"kw6\">Super</span>.<span class=\"kw4\">PostBeginPlay</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;          <span class=\"\
+      co1\">// call the super class</span>\n  ATcp<span class=\"sy0\">=</span><span\
+      \ class=\"kw4\">Spawn</span><span class=\"br0\">(</span><span class=\"kw1\"\
+      >class</span><span class=\"st0\">'MyTcp'</span><span class=\"br0\">)</span>;\
+      \ <span class=\"co1\">// Instanciate MyTCP class</span>\n  ATcp.<span class=\"\
+      me0\">InitTcpLinkEventLogger</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;  <span class=\"co1\">// Init the connection</span>\n  <span\
+      \ class=\"br0\">}</span>\n \n<span class=\"br0\">[</span>...<span class=\"br0\"\
+      >]</span>\n \n<span class=\"co1\">// Somewhere in a function in this class...</span>\n\
+      ATcp.<span class=\"me0\">SendText</span> <span class=\"br0\">(</span><span class=\"\
+      st0\">\"Hello world\"</span><span class=\"br0\">)</span>;    <span class=\"\
+      co1\">// The classic !</span></pre></div>\n</div>\n\n<!-- \nNewPP limit report\n\
+      CPU time usage: 0.078 seconds\nReal time usage: 0.079 seconds\nPreprocessor\
+      \ visited node count: 21/1000000\nPreprocessor generated node count: 68/1000000\n\
+      Post‐expand include size: 42/2097152 bytes\nTemplate argument size: 0/2097152\
+      \ bytes\nHighest expansion depth: 2/40\nExpensive parser function count: 0/100\n\
+      -->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n100.00%\
+      \    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:819-0!*!*!!*!*!*\
+      \ and timestamp 20221120083445 and revision id 34627\n -->\n"
+  categories:
+  - sortkey: "Creating A TCP Client"
+    name: "Legacy_Custom_Class_(UT2003)"
+  - sortkey: "Creating A TCP Client"
+    name: "Legacy_Tutorial"
+  links: []
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "3"
+    line: "The \"TCP\" class:"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Creating_A_TCP_Client"
+    byteoffset: 111
+    anchor: "The_.22TCP.22_class:"
+  - toclevel: 1
+    level: "3"
+    line: "Ok, now how to use it:"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Creating_A_TCP_Client"
+    byteoffset: 3194
+    anchor: "Ok.2C_now_how_to_use_it:"
+  displaytitle: "Legacy:Creating A TCP Client"
+  iwlinks:
+  - prefix: "wikipedia"
+    url: "http://en.wikipedia.org/wiki/TCP"
+    name: "wikipedia:TCP"
+  wikitext:
+    text: "Hi, This sample is to showing you how to create quikely a [[Wikipedia:TCP]]\
+      \ client for UT2003. - Matthieu29 -\n\n===The \"TCP\" class:===\n\nIt will send\
+      \ to an external progam, some text messages. I created this code to let's know\
+      \ in real time the status of the game by an external application.\n\n'''''For\
+      \ infos:''''' For my personal usage, all messages get a \"line feed\" caracter\
+      \ at the end but, for general purpose, it's not needed. ;)\n\nThe client have\
+      \ to connect to a server, so we set the server's port thanks to the default\
+      \ property variable \"RemotePort\". The server's address can be set too.\n\n\
+      <uscript>\n\nClass MyTcp extends TcpLink;\n\nvar int  RemotePort;    // Port\
+      \ of the server to connect\nvar char ServerAddress; // Address of the server\
+      \ to connect  // Seems to be string in UT2004\nvar string LF;          // Used\
+      \ for linefeed \"\\n\" \n\n//------------------------------------------------------------------------------\n\
+      \n// First function called (init of the TCP connection)\nFunction InitTcpLinkEventLogger()\n\
+      \ {\n LF = Chr(10); // Line feed char \"\\n\"\n\n Log(\"InitTcpLinkEventLogger:\
+      \ Will start TCP connection!\");\n\n Resolve(ServerAddress);   // Resolve the\
+      \ address of the server\n}                     \n\n//------------------------------------------------------------------------------\n\
+      \nFunction Cclose() // Closes the current connection.\n{\n Close();\n}\n\n//------------------------------------------------------------------------------\n\
+      \nFunction int SendText (coerce string Str)  // Send the string \"Str\" + \"\
+      line feed\" char\n{\n local int result;\n\n result = super.SendText(Str$LF);\
+      \  // Call the super (send the text)\n Log (\"SentText: \" $Str$\" , (Number\
+      \ of bytes sent: \"$result$\")\");\n return result;\n}\n\n//--EVENTS--\n\n//\
+      \ Called when the IP is resolved\nEvent Resolved( IpAddr Addr )\n{\n  Log(\"\
+      OK, Address resolved\");\n  Addr.Port = remotePort;\n  BindPort();         //\
+      \ In UnrealTournament, the CLIENT has to make a bind to create a socket! (Not\
+      \ as a classic TCP connection!!!)\n\n  ReceiveMode = RMODE_Event;  // Incomming\
+      \ messages are triggering events\n  LinkMode = MODE_Text;       // We expect\
+      \ to receive text (if we receive data)\n  Open(Addr);                 // Open\
+      \ the connection\n\n  Log (\"Connected => Port: \"$Addr.port$\" Address: \"\
+      $Addr.Addr);\n}\n\n//------------------------------------------------------------------------------\n\
+      \n// If the IP was not resolved...\nEvent ResolveFailed()\n{\n  Log(\"### Error,\
+      \ resolve failed!!!\");\n}\n\n//------------------------------------------------------------------------------\n\
+      \nevent Opened()\n{\n  Log(\"Ok, connection opened\");\n}\n\n//------------------------------------------------------------------------------\n\
+      \n// If somebody has close the connection...\nEvent Closed()\n{\n  Log(\"Connection\
+      \ closed\");\n}\n\n//------------------------------------------------------------------------------\n\
+      \n// Called when a string is received\nEvent ReceivedText (string Text)\n{\n\
+      \  // We have just received a string !\n  Log(\"Read string: \"$Text$\" Size\
+      \ : \"$Len(Text));\n}\n\n//------------------------------------------------------------------------------\n\
+      \ndefaultproperties\n  {\n  ServerAddress=\"127.0.0.1\"  // Remote server address\n\
+      \  remotePort=3850            // Remote port number\n  }\n\n</uscript>\n\n===Ok,\
+      \ now how to use it:===\n\n* Create a '''MyTCPLink''' class\n* Call '''InitTcpLinkEventLogger'''()\n\
+      * Call '''SendText'''(\"A beautifull string\")\n* Call '''Cclose'''()\n\nReceivedText()\
+      \ is called when you receive some datas (I didn't tested this part of code,\
+      \ but there is no reasons it dosen't works) :)  \n\n<uscript>\n\n// Somewhere\
+      \ in a class.....\n\nvar MyTcp ATcp;  \n\n\nsimulated event PostBeginPlay()\n\
+      \  {\n  Super.PostBeginPlay();          // call the super class\n  ATcp=Spawn(class'MyTcp');\
+      \ // Instanciate MyTCP class\n  ATcp.InitTcpLinkEventLogger();  // Init the\
+      \ connection\n  }\n\n[...]\n\n// Somewhere in a function in this class...\n\
+      ATcp.SendText (\"Hello world\");    // The classic !\n\n</uscript>\n\n[[Category:Legacy\
+      \ Tutorial|{{PAGENAME}}]]\n[[Category:Legacy Custom Class (UT2003)|{{PAGENAME}}]]"
+  properties: []
+  revId: 34627
+name: "Legacy:Creating A TCP Client"
+revision:
+  revid: 34627
+  parentid: 34626
+  user: "128.151.80.181"
+  timestamp: 1249589740.000000000
+  comment: ""
+timestamp: 1668975812.260942000

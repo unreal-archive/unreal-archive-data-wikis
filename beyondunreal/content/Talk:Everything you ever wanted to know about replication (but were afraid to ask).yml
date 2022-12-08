@@ -1,0 +1,258 @@
+---
+parse:
+  title: "Talk:Everything you ever wanted to know about replication (but were afraid\
+    \ to ask)"
+  text:
+    text: "<p>Ah sorry for changing that i thought dynamic would make more sense and\
+      \ have still the same meaning so i dealt with it just like typos and adding\
+      \ categories to someone else his article. --Eliot 19:28, 13 August 2010 (UTC)</p>\n\
+      <h2><span class=\"mw-headline\" id=\"So_if_I_get_this_right....\">So if I get\
+      \ this right....</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Talk:Everything_you_ever_wanted_to_know_about_replication_(but_were_afraid_to_ask)?section=1\"\
+      \ title=\"Edit section: So if I get this right....\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<p>Ok if I understand this correctly:</p>\n\
+      <p>1. The</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n\
+      <div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\"\
+      >replication</span><span class=\"br0\">{</span><span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>block is used to update variables on the client(s). When this happens,\
+      \ depends on the variable used in the if-statement (ie bNetInitial) surrounding\
+      \ the variable.</p>\n<p><br /></p>\n<p>2. To execute something after a variable\
+      \ is updated, mark the variable for replication notifications using 'repnotify':</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">var</span> repnotify\
+      \ <span class=\"kw5\">int</span> myRepInt</pre></div>\n</div>\n<p>This calls\
+      \ the</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div\
+      \ class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\"\
+      >simulated</span> <span class=\"kw1\">event</span> ReplicatedEvent<span class=\"\
+      br0\">(</span><span class=\"kw5\">name</span> VarName<span class=\"br0\">)</span></pre></div>\n\
+      </div>\n<p>function.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">simulated</span> <span class=\"kw1\">event</span> ReplicatedEvent<span\
+      \ class=\"br0\">(</span><span class=\"kw5\">name</span> VarName<span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n    <span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span>VarName <span class=\"sy0\">==</span> <span class=\"\
+      st0\">'myRepInt'</span><span class=\"br0\">)</span>\n    <span class=\"br0\"\
+      >{</span>\n        myActionOnRepIntChange<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n    <span class=\"br0\">}</span>\n    <span class=\"kw2\">else</span>\n\
+      \    <span class=\"br0\">{</span>\n        <span class=\"kw6\">super</span>.<span\
+      \ class=\"me0\">ReplicatedEvent</span><span class=\"br0\">(</span>VarName<span\
+      \ class=\"br0\">)</span>;\n    <span class=\"br0\">}</span>\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p><br /></p>\n<p>3. If we execute a function\
+      \ on the client (function has to be marked simulated for this) and it needs\
+      \ to be done on the server aswell (to update/notify change to all others), we\
+      \ need a reliable (or unreliable if it's not that big of a deal if it doesn't\
+      \ happen) server function (containing the same logic as the client function).</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">exec</span> setMyRepInt<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \    initMyRepInt<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">simulated</span> <span\
+      \ class=\"kw1\">function</span> initMyRepInt<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n    myRepInt <span class=\"\
+      sy0\">=</span> <span class=\"nu0\">10</span>;\n \n    <span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span><span class=\"kw7\">Role</span> <span class=\"sy0\"\
+      >&lt;</span> <span class=\"kw7\">Role_Authority</span><span class=\"br0\">)</span>\n\
+      \    <span class=\"br0\">{</span>\n        serverInitMyRepInt<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n    <span class=\"br0\">}</span>\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">reliable</span> server\
+      \ <span class=\"kw1\">function</span> serverInitMyRepInt<span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n    myRepInt\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">10</span>;\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p>I hope this is correct and that if it\
+      \ is the code may enhance the tutorial/QA/overview of replication for others.\
+      \ <small><span class=\"autosigned\">—Preceding <a href=\"http://en.wikipedia.org/wiki/Wikipedia:Signatures\"\
+      \ class=\"extiw\" title=\"wp:Wikipedia:Signatures\">unsigned</a> comment added\
+      \ by <a href=\"/edit/User:Omar007?redlink=1\" class=\"new\" title=\"User:Omar007\
+      \ (page does not exist)\">Omar007</a> (<a href=\"/edit/User_talk:Omar007?redlink=1\"\
+      \ class=\"new\" title=\"User talk:Omar007 (page does not exist)\">talk</a> •\
+      \ <a href=\"/Special:Contributions/Omar007\" title=\"Special:Contributions/Omar007\"\
+      >contribs</a>) 19:49, 12 October 2011</span></small></p>\n<p><br /></p>\n<hr\
+      \ />\n<p><br />\nYes, that's correct, but it's highly UE3-specific. In earlier\
+      \ engine generations replication of functions is specified in the replication\
+      \ block as well and repnotify/ReplicatedEvent() do not exist. —<a href=\"/User:Wormbo\"\
+      \ title=\"User:Wormbo\">Wormbo</a> 19:41, 12 October 2011 (UTC)</p>\n<p><br\
+      \ /></p>\n<hr />\n<p><br />\nYes that is true. I wrote this with the UDK replication\
+      \ syntax in mind as that is what I needed to know for sure&#160;;)</p>\n<p>Greatly\
+      \ appreciate you writing this document and confirming my verification question.</p>\n\
+      <p>--<a href=\"/edit/User:Omar007?redlink=1\" class=\"new\" title=\"User:Omar007\
+      \ (page does not exist)\">Omar007</a> 21:06, 12 October 2011 (UTC)</p>\n<p><br\
+      \ /></p>\n<h2><span class=\"mw-headline\" id=\"Name_type\">Name type</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Talk:Everything_you_ever_wanted_to_know_about_replication_(but_were_afraid_to_ask)?section=2\"\
+      \ title=\"Edit section: Name type\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>Is it just me doing something wrong or is the replicating\
+      \ of Name variable types not possible? When I send a Name variable from server\
+      \ to client the client may receive 'bTrackMouse' when the server actually sent\
+      \ 'foo', it seems that the engine just sends the name index instead of sending\
+      \ the new name string for the client to register to its internal Names list,\
+      \ either that or I am doing it wrong? --<a href=\"/User:Eliot\" title=\"User:Eliot\"\
+      >Eliot</a> 12:31, 10 March 2014 (UTC)</p>\n<dl>\n<dd>Replicating names should\
+      \ work, as long as you don't use names from dynamically loaded packages or even\
+      \ names created at runtime. Names are just sent as name table index. —<a href=\"\
+      /User:Wormbo\" title=\"User:Wormbo\">Wormbo</a> 17:29, 10 March 2014 (UTC)</dd>\n\
+      </dl>\n<dl>\n<dd>\n<dl>\n<dd>Thanks for confirming my suspicion Wormbo!, that\
+      \ explains why QueueAnnouncement works. --<a href=\"/User:Eliot\" title=\"User:Eliot\"\
+      >Eliot</a> 18:50, 10 March 2014 (UTC)</dd>\n</dl>\n</dd>\n</dl>\n<h2><span class=\"\
+      mw-headline\" id=\"Is_a_replicated_function_executed_in_tick.3F\">Is a replicated\
+      \ function executed in tick?</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Talk:Everything_you_ever_wanted_to_know_about_replication_(but_were_afraid_to_ask)?section=3\"\
+      \ title=\"Edit section: Is a replicated function executed in tick?\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>I've been looking\
+      \ for this information for some time now, but can't find it anywhere. When a\
+      \ client calls the server with a replicated function, does the server immediately\
+      \ start the execution (ie: in a separate thread?) as soon as it gets the client's\
+      \ call, or does it wait for the next tick to execute the function?</p>\n<p>If\
+      \ the function runs in a separate thread, is there any issue accessing and modifying\
+      \ variables? In general, is there any behavior that could cause problems and\
+      \ should be avoided in replicated functions? (should the function function be\
+      \ lightweight, with minimal impact? Or is there no real restriction?)</p>\n\
+      <p>Thanks! --<a href=\"/edit/User:Benit2?redlink=1\" class=\"new\" title=\"\
+      User:Benit2 (page does not exist)\">Benit2</a> (<a href=\"/edit/User_talk:Benit2?redlink=1\"\
+      \ class=\"new\" title=\"User talk:Benit2 (page does not exist)\">talk</a>) 09:52,\
+      \ 30 September 2015 (EDT)</p>\n<dl>\n<dd>UnrealScript is strictly single-threaded.\
+      \ (There may be parallel physics updates in UE3, but I'm not sure if they would\
+      \ cause any asynchronous UnrealScript execution.) Replicated functions are executed\
+      \ when the receiving party polls the data during the connection tick, and thus\
+      \ run synchronously in relation to other UnrealScript functions on the executing\
+      \ client or server instance. —<a href=\"/User:Wormbo\" title=\"User:Wormbo\"\
+      >Wormbo</a> 16:55, 1 October 2015 (EDT)</dd>\n</dl>\n<dl>\n<dd>\n<dl>\n<dd>Thanks\
+      \ that pretty much answers my question.&#160;:) --<a href=\"/edit/User:Benit2?redlink=1\"\
+      \ class=\"new\" title=\"User:Benit2 (page does not exist)\">Benit2</a> (<a href=\"\
+      /edit/User_talk:Benit2?redlink=1\" class=\"new\" title=\"User talk:Benit2 (page\
+      \ does not exist)\">talk</a>) 12:41, 2 October 2015 (EDT)</dd>\n</dl>\n</dd>\n\
+      </dl>\n\n<!-- \nNewPP limit report\nCPU time usage: 0.115 seconds\nReal time\
+      \ usage: 0.120 seconds\nPreprocessor visited node count: 68/1000000\nPreprocessor\
+      \ generated node count: 177/1000000\nPost‐expand include size: 237/2097152 bytes\n\
+      Template argument size: 50/2097152 bytes\nHighest expansion depth: 2/40\nExpensive\
+      \ parser function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report\
+      \ (%,ms,calls,template)\n100.00%    6.556      1 - -total\n100.00%    6.556\
+      \      1 - Template:Unsigned\n-->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:29128-0!*!0!!*!*!*\
+      \ and timestamp 20221207084052 and revision id 46233\n -->\n"
+  categories: []
+  links:
+  - ns: 2
+    exists: false
+    name: "User:Omar007"
+  - ns: 3
+    exists: false
+    name: "User talk:Omar007"
+  - ns: 2
+    exists: false
+    name: "User:Benit2"
+  - ns: 2
+    exists: true
+    name: "User:Wormbo"
+  - ns: 2
+    exists: true
+    name: "User:Eliot"
+  - ns: 3
+    exists: false
+    name: "User talk:Benit2"
+  templates:
+  - ns: 10
+    exists: true
+    name: "Template:Unsigned"
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "So if I get this right...."
+    number: "1"
+    index: "1"
+    fromtitle: "Talk:Everything_you_ever_wanted_to_know_about_replication_(but_were_afraid_to_ask)"
+    byteoffset: 222
+    anchor: "So_if_I_get_this_right...."
+  - toclevel: 1
+    level: "2"
+    line: "Name type"
+    number: "2"
+    index: "2"
+    fromtitle: "Talk:Everything_you_ever_wanted_to_know_about_replication_(but_were_afraid_to_ask)"
+    byteoffset: 2248
+    anchor: "Name_type"
+  - toclevel: 1
+    level: "2"
+    line: "Is a replicated function executed in tick?"
+    number: "3"
+    index: "3"
+    fromtitle: "Talk:Everything_you_ever_wanted_to_know_about_replication_(but_were_afraid_to_ask)"
+    byteoffset: 3076
+    anchor: "Is_a_replicated_function_executed_in_tick.3F"
+  displaytitle: "Talk:Everything you ever wanted to know about replication (but were\
+    \ afraid to ask)"
+  iwlinks:
+  - prefix: "wp"
+    url: "http://en.wikipedia.org/wiki/Wikipedia:Signatures"
+    name: "wp:Wikipedia:Signatures"
+  wikitext:
+    text: "Ah sorry for changing that i thought dynamic would make more sense and\
+      \ have still the same meaning so i dealt with it just like typos and adding\
+      \ categories to someone else his article. --Eliot 19:28, 13 August 2010 (UTC)\n\
+      \n== So if I get this right.... ==\n\nOk if I understand this correctly:\n\n\
+      1. The <uscript>replication{}</uscript> block is used to update variables on\
+      \ the client(s). When this happens, depends on the variable used in the if-statement\
+      \ (ie bNetInitial) surrounding the variable.\n\n\n\n2. To execute something\
+      \ after a variable is updated, mark the variable for replication notifications\
+      \ using 'repnotify': <uscript>var repnotify int myRepInt</uscript>\nThis calls\
+      \ the <uscript>simulated event ReplicatedEvent(name VarName)</uscript> function.\n\
+      <uscript>simulated event ReplicatedEvent(name VarName)\n{\n    if(VarName ==\
+      \ 'myRepInt')\n    {\n        myActionOnRepIntChange();\n    }\n    else\n \
+      \   {\n        super.ReplicatedEvent(VarName);\n    }\n}</uscript>\n\n\n\n3.\
+      \ If we execute a function on the client (function has to be marked simulated\
+      \ for this) and it needs to be done on the server aswell (to update/notify change\
+      \ to all others),\nwe need a reliable (or unreliable if it's not that big of\
+      \ a deal if it doesn't happen) server function (containing the same logic as\
+      \ the client function).\n<uscript>\nexec setMyRepInt()\n{\n    initMyRepInt();\n\
+      }\n\nsimulated function initMyRepInt()\n{\n    myRepInt = 10;\n\n    if(Role\
+      \ < Role_Authority)\n    {\n        serverInitMyRepInt();\n    }\n}\n\nreliable\
+      \ server function serverInitMyRepInt()\n{\n    myRepInt = 10;\n}\n</uscript>\n\
+      \nI hope this is correct and that if it is the code may enhance the tutorial/QA/overview\
+      \ of replication for others.\n{{unsigned|Omar007|19:49, 12 October 2011}}\n\n\
+      \n----\n\n\nYes, that's correct, but it's highly UE3-specific. In earlier engine\
+      \ generations replication of functions is specified in the replication block\
+      \ as well and repnotify/ReplicatedEvent() do not exist. —[[User:Wormbo|Wormbo]]\
+      \ 19:41, 12 October 2011 (UTC)\n\n\n----\n\n\nYes that is true. I wrote this\
+      \ with the UDK replication syntax in mind as that is what I needed to know for\
+      \ sure ;)\n\nGreatly appreciate you writing this document and confirming my\
+      \ verification question.\n\n--[[User:Omar007|Omar007]] 21:06, 12 October 2011\
+      \ (UTC)\n\n\n==Name type==\nIs it just me doing something wrong or is the replicating\
+      \ of Name variable types not possible? When I send a Name variable from server\
+      \ to client the client may receive 'bTrackMouse' when the server actually sent\
+      \ 'foo', it seems that the engine just sends the name index instead of sending\
+      \ the new name string for the client to register to its internal Names list,\
+      \ either that or I am doing it wrong?\n--[[User:Eliot|Eliot]] 12:31, 10 March\
+      \ 2014 (UTC)\n\n:Replicating names should work, as long as you don't use names\
+      \ from dynamically loaded packages or even names created at runtime. Names are\
+      \ just sent as name table index. —[[User:Wormbo|Wormbo]] 17:29, 10 March 2014\
+      \ (UTC)\n\n::Thanks for confirming my suspicion Wormbo!, that explains why QueueAnnouncement\
+      \ works. --[[User:Eliot|Eliot]] 18:50, 10 March 2014 (UTC)\n\n== Is a replicated\
+      \ function executed in tick? ==\n\nI've been looking for this information for\
+      \ some time now, but can't find it anywhere.\nWhen a client calls the server\
+      \ with a replicated function, does the server immediately start the execution\
+      \ (ie: in a separate thread?) as soon as it gets the client's call, or does\
+      \ it wait for the next tick to execute the function?\n\nIf the function runs\
+      \ in a separate thread, is there any issue accessing and modifying variables?\
+      \ \nIn general, is there any behavior that could cause problems and should be\
+      \ avoided in replicated functions? (should the function function be lightweight,\
+      \ with minimal impact? Or is there no real restriction?)\n\nThanks! \n--[[User:Benit2|Benit2]]\
+      \ ([[User talk:Benit2|talk]]) 09:52, 30 September 2015 (EDT)\n\n:UnrealScript\
+      \ is strictly single-threaded. (There may be parallel physics updates in UE3,\
+      \ but I'm not sure if they would cause any asynchronous UnrealScript execution.)\
+      \ Replicated functions are executed when the receiving party polls the data\
+      \ during the connection tick, and thus run synchronously in relation to other\
+      \ UnrealScript functions on the executing client or server instance. —[[User:Wormbo|Wormbo]]\
+      \ 16:55, 1 October 2015 (EDT)\n\n::Thanks that pretty much answers my question.\
+      \ :) --[[User:Benit2|Benit2]] ([[User talk:Benit2|talk]]) 12:41, 2 October 2015\
+      \ (EDT)"
+  properties: []
+  revId: 46233
+name: "Talk:Everything you ever wanted to know about replication (but were afraid\
+  \ to ask)"
+revision:
+  revid: 46233
+  parentid: 46232
+  user: "Benit2"
+  timestamp: 1443804109.000000000
+  comment: "/* Is a replicated function executed in tick? */"
+timestamp: 1670402453.124324000

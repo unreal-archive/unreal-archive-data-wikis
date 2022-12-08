@@ -1,0 +1,253 @@
+---
+parse:
+  title: "Legacy:UDP Server Sample"
+  text:
+    text: "<p>Well, this is my first contribution....If I made some mistakes feel\
+      \ free to correct them&#160;:) - Matthieu29 -</p>\n<p>This sample code show\
+      \ how to run an <a href=\"http://en.wikipedia.org/wiki/UDP\" class=\"extiw\"\
+      \ title=\"wikipedia:UDP\">Wikipedia:UDP</a> server for UT2003.</p>\n<p>UDP is\
+      \ a connection-less protocol, this means that there's no establisched connection\
+      \ between the client and server. Packets might get lost or might be received\
+      \ in random order. Also the remote side is not validated, there's no way to\
+      \ assure that the packet came from the host as reported by the packet (spoofing\
+      \ IP's). The only check that is performed on UDP packets is if the content is\
+      \ valid (CRC checksum). If the content is invalid the packet is dropped as if\
+      \ it was never send. Because of all this UDP provides as fast way to communicate.\
+      \ UDP is often used in applications where it doesn't matter much that data might\
+      \ get lost: game servers, streaming video, VoIP. UDP also has a limitation the\
+      \ the maximum data because packet fragmentation is not supported. You can't\
+      \ send UDP packets larger that the MTU (which is often 1500), using 1000 bytes\
+      \ as a maximum length is usualy a good choice.</p>\n<p>This class create, an\
+      \ UDP server socket to receive datas from an external program. You just have\
+      \ to specify the port number (a default properties), the IP address used id\
+      \ the local one&#160;: 127.0.0.1. I originally designed this class to use a\
+      \ 3D tracker (mounted on a virtual reality helmet) in order to set virtual player's\
+      \ pitch roll and yaw.</p>\n<p>First, the class extracts 6 chars sended by the\
+      \ external program: the pitch yaw and roll composing player's head rotation.\
+      \ (Each of the 3 angles are coded with 2 chars).</p>\n<p>After, an another class\
+      \ of the game gets these informations in order to set the virtual player's rotation.</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">Class</span> MyUdp\
+      \ <span class=\"kw1\">extends</span> UdpLink;\n \n<span class=\"kw1\">var</span>\
+      \ <span class=\"kw5\">int</span> iPort;   <span class=\"co1\">// server port\
+      \ number</span>\n<span class=\"kw1\">var</span> <span class=\"kw5\">int</span>\
+      \ pitch;\n<span class=\"kw1\">var</span> <span class=\"kw5\">int</span> yaw;\n\
+      <span class=\"kw1\">var</span> <span class=\"kw5\">int</span> roll;\n \n<span\
+      \ class=\"kw1\">function</span> InitUdpLinkTracker<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n  <span class=\"br0\">{</span>\n  <span class=\"kw1\"\
+      >local</span> <span class=\"kw5\">string</span> address; <span class=\"co1\"\
+      >// contains the address (for debug purposes)</span>\n  <span class=\"kw1\"\
+      >local</span> IpAddr Addr;    <span class=\"co1\">// struct with the address\
+      \ and the port of the client (us)</span>\n \n  <span class=\"kw3\">log</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">\"InitUdpLinkTracker (entered)\"\
+      </span><span class=\"br0\">)</span>;\n \n  ReceiveMode <span class=\"sy0\">=</span>\
+      \ RMODE_Event; <span class=\"co1\">// We are using events to catch incomming\
+      \ datas</span>\n  LinkMode <span class=\"sy0\">=</span> MODE_Text;      <span\
+      \ class=\"co1\">// We expect to receive datas in text format</span>\n \n  <span\
+      \ class=\"co1\">// set the socket</span>\n  GetLocalIp<span class=\"br0\">(</span>Addr<span\
+      \ class=\"br0\">)</span>;\n  addr.<span class=\"me0\">port</span> <span class=\"\
+      sy0\">=</span> iport;\n  address <span class=\"sy0\">=</span> ipaddrtostring<span\
+      \ class=\"br0\">(</span>Addr<span class=\"br0\">)</span>;\n  <span class=\"\
+      kw3\">log</span> <span class=\"br0\">(</span><span class=\"st0\">\"Address:\
+      \ \"</span><span class=\"sy0\">$</span>address<span class=\"br0\">)</span>;\n\
+      \ \n  <span class=\"co1\">// bind</span>\n  <span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span>BindPort<span class=\"br0\">(</span>addr.<span class=\"\
+      me0\">port</span>, <span class=\"kw6\">true</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">&gt;</span> <span class=\"nu0\">0</span><span class=\"\
+      br0\">)</span>\n    <span class=\"br0\">{</span>\n    <span class=\"kw3\">log</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">\"bind OK : socket initialized and\
+      \ binded!\"</span><span class=\"br0\">)</span>;\n \n    address <span class=\"\
+      sy0\">=</span> ipaddrtostring<span class=\"br0\">(</span>Addr<span class=\"\
+      br0\">)</span>;\n    <span class=\"kw3\">log</span> <span class=\"br0\">(</span><span\
+      \ class=\"st0\">\"Addr\"</span><span class=\"sy0\">$</span>address<span class=\"\
+      br0\">)</span>;\n    <span class=\"br0\">}</span>\n  <span class=\"kw2\">else</span>\
+      \ <span class=\"kw3\">log</span><span class=\"br0\">(</span><span class=\"st0\"\
+      >\"### bind ERROR!\"</span><span class=\"br0\">)</span>;\n<span class=\"br0\"\
+      >}</span>\n \n<span class=\"kw1\">event</span> ReceivedText <span class=\"br0\"\
+      >(</span>IpAddr Addr, <span class=\"kw5\">string</span> Text<span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n<span class=\"co1\">// we have just\
+      \ received a string !</span>\n \n<span class=\"kw3\">log</span><span class=\"\
+      br0\">(</span><span class=\"st0\">\"Read string: \"</span><span class=\"sy0\"\
+      >$</span>Text<span class=\"sy0\">$</span><span class=\"st0\">\" Size : \"</span><span\
+      \ class=\"sy0\">$</span>Len<span class=\"br0\">(</span>Text<span class=\"br0\"\
+      >)</span><span class=\"br0\">)</span>;\n \n<span class=\"co1\">//convert the\
+      \ 6 read chars into three 32 bits int (2 chars =&gt; 2X8 bits)</span>\n  pitch\
+      \ <span class=\"sy0\">=</span> <span class=\"kw3\">Asc</span><span class=\"\
+      br0\">(</span><span class=\"kw3\">Right</span><span class=\"br0\">(</span>Text,<span\
+      \ class=\"kw3\">len</span><span class=\"br0\">(</span>Text<span class=\"br0\"\
+      >)</span><span class=\"sy0\">-</span><span class=\"nu0\">1</span><span class=\"\
+      br0\">)</span><span class=\"br0\">)</span> <span class=\"sy0\">+</span> <span\
+      \ class=\"nu0\">256</span> <span class=\"sy0\">*</span> <span class=\"kw3\"\
+      >Asc</span><span class=\"br0\">(</span><span class=\"kw3\">Right</span><span\
+      \ class=\"br0\">(</span>Text,<span class=\"kw3\">len</span><span class=\"br0\"\
+      >(</span>Text<span class=\"br0\">)</span><span class=\"br0\">)</span><span class=\"\
+      br0\">)</span>;\n  yaw  <span class=\"sy0\">=</span> <span class=\"kw3\">Asc</span><span\
+      \ class=\"br0\">(</span><span class=\"kw3\">Right</span><span class=\"br0\"\
+      >(</span>Text,<span class=\"kw3\">len</span><span class=\"br0\">(</span>Text<span\
+      \ class=\"br0\">)</span><span class=\"sy0\">-</span><span class=\"nu0\">3</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span> <span class=\"sy0\">+</span>\
+      \ <span class=\"nu0\">256</span> <span class=\"sy0\">*</span> <span class=\"\
+      kw3\">Asc</span><span class=\"br0\">(</span><span class=\"kw3\">Right</span><span\
+      \ class=\"br0\">(</span>Text,<span class=\"kw3\">len</span><span class=\"br0\"\
+      >(</span>Text<span class=\"br0\">)</span><span class=\"sy0\">-</span><span class=\"\
+      nu0\">2</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n  roll\
+      \ <span class=\"sy0\">=</span> <span class=\"kw3\">Asc</span><span class=\"\
+      br0\">(</span><span class=\"kw3\">Right</span><span class=\"br0\">(</span>Text,<span\
+      \ class=\"kw3\">len</span><span class=\"br0\">(</span>Text<span class=\"br0\"\
+      >)</span><span class=\"sy0\">-</span><span class=\"nu0\">5</span><span class=\"\
+      br0\">)</span><span class=\"br0\">)</span> <span class=\"sy0\">+</span> <span\
+      \ class=\"nu0\">256</span> <span class=\"sy0\">*</span> <span class=\"kw3\"\
+      >Asc</span><span class=\"br0\">(</span><span class=\"kw3\">Right</span><span\
+      \ class=\"br0\">(</span>Text,<span class=\"kw3\">len</span><span class=\"br0\"\
+      >(</span>Text<span class=\"br0\">)</span><span class=\"sy0\">-</span><span class=\"\
+      nu0\">4</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n \n\
+      <span class=\"kw3\">log</span><span class=\"br0\">(</span><span class=\"st0\"\
+      >\" pitch read \"</span><span class=\"sy0\">$</span>pitch<span class=\"br0\"\
+      >)</span>;\n<span class=\"kw3\">log</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">\" yaw read \"</span><span class=\"sy0\">$</span>yaw<span class=\"\
+      br0\">)</span>;\n<span class=\"kw3\">log</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">\" roll read \"</span><span class=\"sy0\">$</span>roll<span\
+      \ class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n \n \n<span class=\"\
+      kw1\">defaultproperties</span>\n  <span class=\"br0\">{</span>\n  iPort<span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">4000</span>     <span class=\"co1\"\
+      >// local port number</span>\n  <span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <p>As I explained, the server port number is set by \"iPort\", and the IP adress\
+      \ of the server is the IP of the local machine.</p>\n<p>\"ReceivedText\" is\
+      \ called when you have received datas.</p>\n<p>After, pitch yaw and roll are\
+      \ acessed by an another class so I can change the player's rotation&#160;!&#160;:)</p>\n\
+      <p>So, let's see how to use it:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">class</span> MyXPlayer <span class=\"kw1\">extends</span>\
+      \ <span class=\"kw9\">XPlayer</span>\n    DependsOn<span class=\"br0\">(</span><span\
+      \ class=\"kw8\">xUtil</span><span class=\"br0\">)</span> <span class=\"kw1\"\
+      >config</span><span class=\"br0\">(</span>user<span class=\"br0\">)</span>;\n\
+      \ \n<span class=\"kw1\">var</span> MyTcp UdpComm;      <span class=\"co1\">//\
+      \ class member for UDP communication (UDP communication used to set the rotation\
+      \ of the player)</span>\n \n<span class=\"co1\">// Initialize the UDP comunication\
+      \ class</span>\n<span class=\"kw1\">simulated</span> <span class=\"kw1\">event</span>\
+      \ <span class=\"kw4\">PostBeginPlay</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n  <span class=\"br0\">{</span>\n  <span class=\"kw6\"\
+      >Super</span>.<span class=\"kw4\">PostBeginPlay</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>; <span class=\"co1\">// call the super</span>\n  UdpComm<span\
+      \ class=\"sy0\">=</span><span class=\"kw4\">Spawn</span><span class=\"br0\"\
+      >(</span><span class=\"kw1\">class</span><span class=\"st0\">'MyUdp'</span><span\
+      \ class=\"br0\">)</span>;   <span class=\"co1\">// Here we spawn the MyUDP class</span>\n\
+      \  UdpComm.<span class=\"me0\">InitUdpLinkTracker</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>;  <span class=\"co1\">// Here we initilalize\
+      \ the UDP connection</span>\n  <span class=\"br0\">}</span>\n \n<span class=\"\
+      co1\">//Function \"PlayerTick\" called every DeltaTime T</span>\n<span class=\"\
+      kw1\">event</span> PlayerTick<span class=\"br0\">(</span> <span class=\"kw5\"\
+      >float</span> DeltaTime <span class=\"br0\">)</span>\n  <span class=\"br0\"\
+      >{</span>\n  <span class=\"kw6\">Super</span>.<span class=\"me0\">PlayerTick</span><span\
+      \ class=\"br0\">(</span>DeltaTime<span class=\"br0\">)</span>; <span class=\"\
+      co1\">// call the super</span>\n  SetRotationOfPlayer<span class=\"br0\">(</span>UdpComm.<span\
+      \ class=\"me0\">pitch</span>, UdpComm.<span class=\"me0\">yaw</span>, UdpComm.<span\
+      \ class=\"me0\">roll</span><span class=\"br0\">)</span>;\n  <span class=\"br0\"\
+      >}</span>\n \n<span class=\"co1\">// set the rotation of the player!</span>\n\
+      <span class=\"kw1\">simulated</span> <span class=\"kw1\">function</span> SetRotationOfPlayer<span\
+      \ class=\"br0\">(</span><span class=\"kw5\">int</span> ClientPitch, <span class=\"\
+      kw5\">int</span> ClientYaw, <span class=\"kw5\">int</span> ClientRoll<span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n<span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">rotator</span> PlayerRotate;\n \n  PlayerRotate.<span\
+      \ class=\"me0\">Pitch</span> <span class=\"sy0\">=</span> ClientPitch;\n  PlayerRotate.<span\
+      \ class=\"me0\">Yaw</span>   <span class=\"sy0\">=</span> ClientYaw;\n  PlayerRotate.<span\
+      \ class=\"me0\">Roll</span>  <span class=\"sy0\">=</span> ClientRoll;\n  <span\
+      \ class=\"kw4\">SetRotation</span><span class=\"br0\">(</span>PlayerRotate<span\
+      \ class=\"br0\">)</span>; <span class=\"co1\">//apply the rotation</span>\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">replication</span>\n  <span\
+      \ class=\"br0\">{</span>\n  <span class=\"kw1\">reliable</span> <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span> <span class=\"kw7\">Role</span>\
+      \ <span class=\"sy0\">==</span> <span class=\"kw7\">ROLE_Authority</span> <span\
+      \ class=\"br0\">)</span>\n  SetRotationOfPlayer<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n  <span class=\"br0\">}</span></pre></div>\n</div>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.084 seconds\nReal time usage:\
+      \ 0.085 seconds\nPreprocessor visited node count: 7/1000000\nPreprocessor generated\
+      \ node count: 44/1000000\nPost‐expand include size: 0/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:3453-0!*!*!*!*!*!* and timestamp 20221122044647 and revision\
+      \ id 8879\n -->\n"
+  categories: []
+  links: []
+  templates: []
+  images: []
+  externallinks: []
+  sections: []
+  displaytitle: "Legacy:UDP Server Sample"
+  iwlinks:
+  - prefix: "wikipedia"
+    url: "http://en.wikipedia.org/wiki/UDP"
+    name: "wikipedia:UDP"
+  wikitext:
+    text: "Well, this is my first contribution....If I made some mistakes feel free\
+      \ to correct them :)      - Matthieu29 -\n\nThis sample code show how to run\
+      \ an [[Wikipedia:UDP]] server for UT2003.\n\nUDP is a connection-less protocol,\
+      \ this means that there's no establisched connection between the client and\
+      \ server. Packets might get lost or might be received in random order. Also\
+      \ the remote side is not validated, there's no way to assure that the packet\
+      \ came from the host as reported by the packet (spoofing IP's). The only check\
+      \ that is performed on UDP packets is if the content is valid (CRC checksum).\
+      \ If the content is invalid the packet is dropped as if it was never send. Because\
+      \ of all this UDP provides as fast way to communicate. UDP is often used in\
+      \ applications where it doesn't matter much that data might get lost: game servers,\
+      \ streaming video, VoIP. UDP also has a limitation the the maximum data because\
+      \ packet fragmentation is not supported. You can't send UDP packets larger that\
+      \ the MTU (which is often 1500), using 1000 bytes as a maximum length is usualy\
+      \ a good choice.\n\nThis class create, an UDP server socket to receive datas\
+      \ from an external program. You just have to specify the port number (a default\
+      \ properties), the IP address used id the local one : 127.0.0.1. I originally\
+      \ designed this class to use a 3D tracker (mounted on a virtual reality helmet)\
+      \ in order to set virtual player's pitch roll and yaw.\n\nFirst, the class extracts\
+      \ 6 chars sended by the external program: the pitch yaw and roll composing player's\
+      \ head rotation. (Each of the 3 angles are coded with 2 chars).\n\nAfter, an\
+      \ another class of the game gets these informations in order to set the virtual\
+      \ player's rotation.\n\n<uscript>\nClass MyUdp extends UdpLink;\n\nvar int iPort;\
+      \   // server port number\nvar int pitch;\nvar int yaw;\nvar int roll;\n\nfunction\
+      \ InitUdpLinkTracker()\n  {\n  local string address; // contains the address\
+      \ (for debug purposes)\n  local IpAddr Addr;    // struct with the address and\
+      \ the port of the client (us)\n\n  log(\"InitUdpLinkTracker (entered)\");\n\n\
+      \  ReceiveMode = RMODE_Event; // We are using events to catch incomming datas\n\
+      \  LinkMode = MODE_Text;      // We expect to receive datas in text format\n\
+      \n  // set the socket\n  GetLocalIp(Addr);\n  addr.port = iport;\n  address\
+      \ = ipaddrtostring(Addr);\n  log (\"Address: \"$address);\n\n  // bind\n  if\
+      \ (BindPort(addr.port, true) > 0)\n    {\n    log(\"bind OK : socket initialized\
+      \ and binded!\");\n\n    address = ipaddrtostring(Addr);\n    log (\"Addr\"\
+      $address);\n    }\n  else log(\"### bind ERROR!\");\n}\n\nevent ReceivedText\
+      \ (IpAddr Addr, string Text)\n{\n// we have just received a string !\n\nlog(\"\
+      Read string: \"$Text$\" Size : \"$Len(Text));\n\n//convert the 6 read chars\
+      \ into three 32 bits int (2 chars => 2X8 bits)\n  pitch = Asc(Right(Text,len(Text)-1))\
+      \ + 256 * Asc(Right(Text,len(Text)));\n  yaw  = Asc(Right(Text,len(Text)-3))\
+      \ + 256 * Asc(Right(Text,len(Text)-2));\n  roll = Asc(Right(Text,len(Text)-5))\
+      \ + 256 * Asc(Right(Text,len(Text)-4));\n\nlog(\" pitch read \"$pitch);\nlog(\"\
+      \ yaw read \"$yaw);\nlog(\" roll read \"$roll);\n}\n\n\ndefaultproperties\n\
+      \  {\n  iPort=4000     // local port number\n  }\n\n</uscript>\n\nAs I explained,\
+      \ the server port number is set by \"iPort\", and the IP adress of the server\
+      \ is the IP of the local machine.\n\n\"ReceivedText\" is called when you have\
+      \ received datas.\n\nAfter, pitch yaw and roll are acessed by an another class\
+      \ so I can change the player's rotation ! :)\n\nSo, let's see how to use it:\n\
+      \n<uscript>\n\nclass MyXPlayer extends XPlayer\n    DependsOn(xUtil) config(user);\n\
+      \nvar MyTcp UdpComm;      // class member for UDP communication (UDP communication\
+      \ used to set the rotation of the player)\n\n// Initialize the UDP comunication\
+      \ class\nsimulated event PostBeginPlay()\n  {\n  Super.PostBeginPlay(); // call\
+      \ the super\n  UdpComm=Spawn(class'MyUdp');   // Here we spawn the MyUDP class\n\
+      \  UdpComm.InitUdpLinkTracker();  // Here we initilalize the UDP connection\n\
+      \  }\n\n//Function \"PlayerTick\" called every DeltaTime T\nevent PlayerTick(\
+      \ float DeltaTime )\n  {\n  Super.PlayerTick(DeltaTime); // call the super\n\
+      \  SetRotationOfPlayer(UdpComm.pitch, UdpComm.yaw, UdpComm.roll);\n  }\n\n//\
+      \ set the rotation of the player!\nsimulated function SetRotationOfPlayer(int\
+      \ ClientPitch, int ClientYaw, int ClientRoll)\n{\nlocal rotator PlayerRotate;\n\
+      \n  PlayerRotate.Pitch = ClientPitch;\n  PlayerRotate.Yaw   = ClientYaw;\n \
+      \ PlayerRotate.Roll  = ClientRoll;\n  SetRotation(PlayerRotate); //apply the\
+      \ rotation\n}\n\nreplication\n  {\n  reliable if ( Role == ROLE_Authority )\n\
+      \  SetRotationOfPlayer();\n  }\n</uscript>"
+  properties: []
+  revId: 8879
+name: "Legacy:UDP Server Sample"
+revision:
+  revid: 8879
+  parentid: 8880
+  user: "Pingz"
+  timestamp: 1071063344.000000000
+  comment: "Fixed error in code."
+timestamp: 1669092408.181478000

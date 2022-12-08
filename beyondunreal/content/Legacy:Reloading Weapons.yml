@@ -1,0 +1,617 @@
+---
+parse:
+  title: "Legacy:Reloading Weapons"
+  text:
+    text: "<p><i>This tutorial does NOT work in UT2004.</i></p>\n<p><i>Attempted offline\
+      \ fix. No test, just using my memory... -Solid Snake</i></p>\n<h2><span class=\"\
+      mw-headline\" id=\"Reloading_Weapons.\">Reloading Weapons.</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Reloading_Weapons?section=1\"\
+      \ title=\"Edit section: Reloading Weapons.\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>I've put quite a bit of effort in to making robust\
+      \ reloading code for the <a href=\"/Legacy:Weapon\" title=\"Legacy:Weapon\"\
+      >Weapons</a> in the LawDogs mod. Since reloading is something that is potentially\
+      \ useful to everyone, I have made the code available here (minus all the stuff\
+      \ that doesn't relate to reloading).</p>\n<p>It is complete with features allowing\
+      \ for sounds, animations and other effects, it works on-line and as far as I\
+      \ can tell it is virtually free of bugs. All the main code is contained in a\
+      \ weapon class. It is an abstract class, the actual weapons are subclasses of\
+      \ it.</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div\
+      \ class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\"\
+      >class</span> ReloadingWeapon <span class=\"kw1\">extends</span> <span class=\"\
+      kw9\">Weapon</span>\n\t<span class=\"kw1\">abstract</span>;\n \n<span class=\"\
+      kw1\">var</span><span class=\"br0\">(</span><span class=\"br0\">)</span> <span\
+      \ class=\"kw5\">int</span> ClipCount; <span class=\"co1\">//What's that you\
+      \ say? Clip is not a technically correct term? Do I care?</span>\n<span class=\"\
+      kw1\">var</span><span class=\"br0\">(</span><span class=\"br0\">)</span> <span\
+      \ class=\"kw5\">float</span> ReloadRate; <span class=\"co1\">//Time it takes\
+      \ to insert one bullet.</span>\n<span class=\"kw1\">var</span> <span class=\"\
+      kw5\">float</span> ReloadTimer;\n \n<span class=\"kw1\">var</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span> <span class=\"kw5\">sound</span>\
+      \ ReloadBeginSound, ReloadSound, ReloadEndSound; <span class=\"co1\">//Sounds\
+      \ played when start to reload, on insertion of each bullet, and when reloading\
+      \ has ended.</span>\n<span class=\"kw1\">var</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span> <span class=\"kw5\">name</span> ReloadAnim; <span class=\"\
+      co1\">//Animation to play when reloading is started.</span>\n<span class=\"\
+      kw1\">var</span><span class=\"br0\">(</span><span class=\"br0\">)</span> <span\
+      \ class=\"kw5\">float</span> ReloadAnimRate;\n \n<span class=\"kw1\">var</span>\
+      \ <span class=\"kw5\">bool</span> bIsReloading, bReloadEffectDone;\n \n<span\
+      \ class=\"kw1\">replication</span>\n<span class=\"br0\">{</span>\n\t<span class=\"\
+      kw1\">reliable</span> <span class=\"kw2\">if</span><span class=\"br0\">(</span><span\
+      \ class=\"kw7\">Role</span> <span class=\"sy0\">==</span> <span class=\"kw7\"\
+      >ROLE_Authority</span><span class=\"br0\">)</span>\n\t\tClipCount;\n \n\t<span\
+      \ class=\"co1\">//Functions called on the server from the client.</span>\n\t\
+      <span class=\"kw1\">reliable</span> <span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span><span class=\"kw7\">Role</span> <span class=\"sy0\">&lt;</span>\
+      \ <span class=\"kw7\">ROLE_Authority</span><span class=\"br0\">)</span>\n\t\t\
+      ReloadMeNow, FinishReloading;\n \n\t<span class=\"co1\">//Functions called on\
+      \ the client from the server.</span>\n\t<span class=\"kw1\">reliable</span>\
+      \ <span class=\"kw2\">if</span><span class=\"br0\">(</span><span class=\"kw7\"\
+      >Role</span> <span class=\"sy0\">==</span> <span class=\"kw7\">ROLE_Authority</span><span\
+      \ class=\"br0\">)</span>\n\t\tClientReload, ClientFinishReloading, ClientReloadEffects;\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"co1\">//So reloading can be bound\
+      \ to a key. Exec functions in weapons can only be called for the currently held\
+      \ weapon, which is perfect for this purpose.</span>\n<span class=\"kw1\">exec</span>\
+      \ <span class=\"kw1\">function</span> ReloadMeNow<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw2\"\
+      >if</span><span class=\"br0\">(</span><span class=\"sy0\">!</span>AllowReload<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\n\
+      \t\t<span class=\"kw2\">return</span>;\n \n\tbIsReloading <span class=\"sy0\"\
+      >=</span> <span class=\"kw6\">true</span>;\n\tReloadTimer <span class=\"sy0\"\
+      >=</span> <span class=\"kw7\">Level</span>.<span class=\"me0\">TimeSeconds</span>;\n\
+      \t<span class=\"kw4\">PlaySound</span><span class=\"br0\">(</span>ReloadBeginSound,\
+      \ <span class=\"kw7\">SLOT_Misc</span>, <span class=\"kw7\">TransientSoundVolume</span>,,,,\
+      \ <span class=\"kw6\">false</span><span class=\"br0\">)</span>;\n\tClientReload<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"co1\">//Called on the client when reloading starts.</span>\n\
+      <span class=\"kw1\">simulated</span> <span class=\"kw1\">function</span> ClientReload<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \tbIsReloading <span class=\"sy0\">=</span> <span class=\"kw6\">true</span>;\n\
+      \t<span class=\"kw4\">PlayAnim</span><span class=\"br0\">(</span>ReloadAnim,\
+      \ ReloadAnimRate, <span class=\"nu0\">0.1</span><span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"co1\">//For effects during reloading,\
+      \ like smoke or shells ejected from the breech.</span>\n<span class=\"kw1\"\
+      >simulated</span> <span class=\"kw1\">function</span> ClientReloadEffects<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span><span class=\"br0\">{</span><span\
+      \ class=\"br0\">}</span>\n \n<span class=\"co1\">//Reloading ends when the key\
+      \ is released.</span>\n<span class=\"kw1\">exec</span> <span class=\"kw1\">function</span>\
+      \ FinishReloading<span class=\"br0\">(</span><span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n\t<span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span><span class=\"sy0\">!</span>bIsReloading<span class=\"br0\">)</span>\n\
+      \t\t<span class=\"kw2\">return</span>;\n \n\t<span class=\"kw4\">PlaySound</span><span\
+      \ class=\"br0\">(</span>ReloadEndSound, <span class=\"kw7\">SLOT_Misc</span>,\
+      \ <span class=\"kw7\">TransientSoundVolume</span>,,,, <span class=\"kw6\">false</span><span\
+      \ class=\"br0\">)</span>;\n\tClientFinishReloading<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n\tbIsReloading <span class=\"sy0\">=</span> <span\
+      \ class=\"kw6\">false</span>;\n\tbReloadEffectDone <span class=\"sy0\">=</span>\
+      \ <span class=\"kw6\">false</span>;\n<span class=\"br0\">}</span>\n \n<span\
+      \ class=\"co1\">//Called on the client when reloading ends.</span>\n<span class=\"\
+      kw1\">simulated</span> <span class=\"kw1\">function</span> ClientFinishReloading<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \tbIsReloading <span class=\"sy0\">=</span> <span class=\"kw6\">false</span>;\n\
+      \tPlayIdle<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n \n\t<span\
+      \ class=\"kw2\">if</span><span class=\"br0\">(</span><span class=\"kw7\">Instigator</span>.<span\
+      \ class=\"me0\">PendingWeapon</span> <span class=\"sy0\">!=</span> <span class=\"\
+      kw5\">None</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"kw7\"\
+      >Instigator</span>.<span class=\"me0\">PendingWeapon</span> <span class=\"sy0\"\
+      >!=</span> <span class=\"kw6\">self</span><span class=\"br0\">)</span>\n\t\t\
+      <span class=\"kw7\">Instigator</span>.<span class=\"kw9\">Controller</span>.<span\
+      \ class=\"me0\">ClientSwitchToBestWeapon</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"co1\"\
+      >//I compressed this to make it a little tider. I have no idea why I do this...\
+      \ is it harder to read or </span>\n<span class=\"co1\">//do I just like smaller\
+      \ UC files...</span>\n<span class=\"kw1\">function</span> <span class=\"kw5\"\
+      >bool</span> AllowReload<span class=\"br0\">(</span><span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n\t<span class=\"co1\">//Can't reload whilst firing,\
+      \ reloading, if the clip is full or if we don't have enough ammo.</span>\n\t\
+      <span class=\"kw2\">if</span><span class=\"br0\">(</span><span class=\"br0\"\
+      >(</span>FireMode<span class=\"br0\">[</span><span class=\"nu0\">0</span><span\
+      \ class=\"br0\">]</span>.<span class=\"me0\">IsFiring</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span> <span class=\"sy0\">||</span> FireMode<span\
+      \ class=\"br0\">[</span><span class=\"nu0\">1</span><span class=\"br0\">]</span>.<span\
+      \ class=\"me0\">IsFiring</span><span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span><span class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span>\
+      \ \n           bIsReloading <span class=\"sy0\">&amp;&amp;</span> ClipCount\
+      \ <span class=\"sy0\">&gt;=</span> <span class=\"kw1\">Default</span>.<span\
+      \ class=\"me0\">ClipCount</span> <span class=\"sy0\">&amp;&amp;</span> \n  \
+      \         <span class=\"br0\">(</span><span class=\"kw9\">Ammo</span><span class=\"\
+      br0\">[</span><span class=\"nu0\">0</span><span class=\"br0\">]</span> <span\
+      \ class=\"sy0\">==</span> <span class=\"kw5\">None</span> <span class=\"sy0\"\
+      >||</span> <span class=\"kw9\">Ammo</span><span class=\"br0\">[</span><span\
+      \ class=\"nu0\">0</span><span class=\"br0\">]</span>.<span class=\"me0\">AmmoAmount</span>\
+      \ <span class=\"sy0\">&lt;=</span> ClipCount<span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span>\n\t\t<span class=\"kw2\">return</span> <span class=\"\
+      kw6\">false</span>;\n\t<span class=\"kw2\">return</span> <span class=\"kw6\"\
+      >true</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"co1\">//Don't\
+      \ allow weapon switching whilst reloading.</span>\n<span class=\"kw1\">simulated</span>\
+      \ <span class=\"kw1\">function</span> <span class=\"kw5\">bool</span> PutDown<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \t<span class=\"kw2\">if</span><span class=\"br0\">(</span>bIsReloading<span\
+      \ class=\"br0\">)</span>\n\t\t<span class=\"kw2\">return</span> <span class=\"\
+      kw6\">false</span>;\n \n\t<span class=\"kw2\">return</span> <span class=\"kw6\"\
+      >Super</span>.<span class=\"me0\">PutDown</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\"\
+      >simulated</span> <span class=\"kw1\">function</span> BringUp<span class=\"\
+      br0\">(</span><span class=\"kw1\">optional</span> <span class=\"kw9\">Weapon</span>\
+      \ PrevWeapon<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span\
+      \ class=\"kw6\">Super</span>.<span class=\"me0\">BringUp</span><span class=\"\
+      br0\">(</span>PrevWeapon<span class=\"br0\">)</span>;\n\tbIsReloading <span\
+      \ class=\"sy0\">=</span> <span class=\"kw6\">false</span>;\n<span class=\"br0\"\
+      >}</span>\n \n<span class=\"co1\">//Reduce ClipCount every time a bullet is\
+      \ fired.</span>\n<span class=\"kw1\">simulated</span> <span class=\"kw1\">function</span>\
+      \ <span class=\"kw5\">bool</span> ConsumeAmmo<span class=\"br0\">(</span><span\
+      \ class=\"kw5\">int</span> Mode, <span class=\"kw5\">float</span> load, <span\
+      \ class=\"kw1\">optional</span> <span class=\"kw5\">bool</span> bAmountNeededIsMax<span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw2\"\
+      >if</span><span class=\"br0\">(</span><span class=\"kw9\">Ammo</span><span class=\"\
+      br0\">[</span>Mode<span class=\"br0\">]</span> <span class=\"sy0\">!=</span>\
+      \ <span class=\"kw5\">None</span><span class=\"br0\">)</span>\n\t<span class=\"\
+      br0\">{</span>\n\t\t<span class=\"kw2\">if</span><span class=\"br0\">(</span><span\
+      \ class=\"kw9\">Ammo</span><span class=\"br0\">[</span>Mode<span class=\"br0\"\
+      >]</span>.<span class=\"me0\">UseAmmo</span><span class=\"br0\">(</span><span\
+      \ class=\"kw5\">int</span><span class=\"br0\">(</span>load<span class=\"br0\"\
+      >)</span><span class=\"br0\">)</span> <span class=\"sy0\">&amp;&amp;</span>\
+      \ load <span class=\"sy0\">&gt;</span> <span class=\"nu0\">0</span><span class=\"\
+      br0\">)</span>\n\t\t\tClipCount<span class=\"sy0\">--</span>;\n\t<span class=\"\
+      br0\">}</span>\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">simulated</span>\
+      \ <span class=\"kw1\">function</span> <span class=\"kw5\">bool</span> HasAmmo<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \t<span class=\"co1\">//Ignore FireMode[1] which doesn't use any ammo.</span>\n\
+      \t<span class=\"kw2\">return</span> <span class=\"br0\">(</span><span class=\"\
+      kw9\">Ammo</span><span class=\"br0\">[</span><span class=\"nu0\">0</span><span\
+      \ class=\"br0\">]</span> <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span>\
+      \ <span class=\"sy0\">&amp;&amp;</span> FireMode<span class=\"br0\">[</span><span\
+      \ class=\"nu0\">0</span><span class=\"br0\">]</span> <span class=\"sy0\">!=</span>\
+      \ <span class=\"kw5\">None</span> <span class=\"sy0\">&amp;&amp;</span> <span\
+      \ class=\"kw9\">Ammo</span><span class=\"br0\">[</span><span class=\"nu0\">0</span><span\
+      \ class=\"br0\">]</span>.<span class=\"me0\">AmmoAmount</span> <span class=\"\
+      sy0\">&gt;=</span> FireMode<span class=\"br0\">[</span><span class=\"nu0\">0</span><span\
+      \ class=\"br0\">]</span>.<span class=\"me0\">AmmoPerFire</span><span class=\"\
+      br0\">)</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">event</span>\
+      \ WeaponTick<span class=\"br0\">(</span><span class=\"kw5\">float</span> dt<span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw2\"\
+      >if</span><span class=\"br0\">(</span><span class=\"sy0\">!</span>bIsReloading<span\
+      \ class=\"br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t\t<span class=\"\
+      co1\">//Stupid bots like to run around with an empty weapon, so force them to\
+      \ reload when appropriate.</span>\n\t\t<span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span><span class=\"sy0\">!</span><span class=\"kw7\">Instigator</span>.<span\
+      \ class=\"me0\">IsHumanControlled</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span><span class=\"br0\">)</span>\n\t\t<span class=\"br0\">{</span>\n\
+      \t\t\t<span class=\"kw2\">if</span><span class=\"br0\">(</span><span class=\"\
+      kw7\">Level</span>.<span class=\"me0\">TimeSeconds</span> <span class=\"sy0\"\
+      >-</span> <span class=\"kw7\">Instigator</span>.<span class=\"kw9\">Controller</span>.<span\
+      \ class=\"me0\">LastSeenTime</span> <span class=\"sy0\">&gt;</span> ClipCount<span\
+      \ class=\"br0\">)</span>\n\t\t\t\tReloadMeNow<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n\t\t<span class=\"br0\">}</span>\n\t<span class=\"\
+      br0\">}</span>\n\t<span class=\"kw2\">else</span>\n\t<span class=\"br0\">{</span>\n\
+      \t\t<span class=\"co1\">//Add one bullet at a time as long as reloading key\
+      \ is held down.</span>\n\t\t<span class=\"kw2\">if</span><span class=\"br0\"\
+      >(</span><span class=\"kw7\">Level</span>.<span class=\"me0\">TimeSeconds</span>\
+      \ <span class=\"sy0\">-</span> ReloadTimer <span class=\"sy0\">&gt;=</span>\
+      \ ReloadRate<span class=\"br0\">)</span>\n\t\t<span class=\"br0\">{</span>\n\
+      \t\t\t<span class=\"kw2\">if</span><span class=\"br0\">(</span>ClipCount <span\
+      \ class=\"sy0\">&gt;=</span> <span class=\"kw1\">Default</span>.<span class=\"\
+      me0\">ClipCount</span><span class=\"br0\">)</span> <span class=\"co1\">//Full.</span>\n\
+      \t\t\t<span class=\"br0\">{</span>\n\t\t\t\tClipCount <span class=\"sy0\">=</span>\
+      \ <span class=\"kw1\">Default</span>.<span class=\"me0\">ClipCount</span>;\n\
+      \t\t\t\tFinishReloading<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \t\t\t<span class=\"br0\">}</span>\n\t\t\t<span class=\"kw2\">else</span> <span\
+      \ class=\"kw2\">if</span><span class=\"br0\">(</span><span class=\"kw9\">Ammo</span><span\
+      \ class=\"br0\">[</span><span class=\"nu0\">0</span><span class=\"br0\">]</span>.<span\
+      \ class=\"me0\">AmmoAmount</span> <span class=\"sy0\">&lt;=</span> ClipCount<span\
+      \ class=\"br0\">)</span> <span class=\"co1\">//Out of ammo.</span>\n\t\t\t<span\
+      \ class=\"br0\">{</span>\n\t\t\t\tClipCount <span class=\"sy0\">=</span> <span\
+      \ class=\"kw9\">Ammo</span><span class=\"br0\">[</span><span class=\"nu0\">0</span><span\
+      \ class=\"br0\">]</span>.<span class=\"me0\">AmmoAmount</span>;\n\t\t\t\tFinishReloading<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n\t\t\t<span class=\"\
+      br0\">}</span>\n\t\t\t<span class=\"kw2\">else</span> <span class=\"co1\">//Add\
+      \ another bullet.</span>\n\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t<span\
+      \ class=\"kw4\">PlaySound</span><span class=\"br0\">(</span>ReloadSound, <span\
+      \ class=\"kw7\">SLOT_Misc</span>, <span class=\"kw7\">TransientSoundVolume</span>,,,,\
+      \ <span class=\"kw6\">false</span><span class=\"br0\">)</span>;\n\t\t\t\tInsertBullet<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n \n\t\t\t\t<span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span>ClipCount <span class=\"sy0\">&gt;=</span>\
+      \ <span class=\"kw1\">Default</span>.<span class=\"me0\">ClipCount</span><span\
+      \ class=\"br0\">)</span>\n\t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t\tReloadTimer\
+      \ <span class=\"sy0\">=</span> <span class=\"kw7\">Level</span>.<span class=\"\
+      me0\">TimeSeconds</span> <span class=\"sy0\">-</span> <span class=\"br0\">(</span>ReloadRate\
+      \ <span class=\"sy0\">/</span> <span class=\"nu0\">2</span><span class=\"br0\"\
+      >)</span>;\n\t\t\t\t<span class=\"br0\">}</span>\n\t\t\t\t<span class=\"kw2\"\
+      >else</span>\n\t\t\t\t\tReloadTimer <span class=\"sy0\">=</span> <span class=\"\
+      kw7\">Level</span>.<span class=\"me0\">TimeSeconds</span>;\n\t\t\t<span class=\"\
+      br0\">}</span>\n\t\t<span class=\"br0\">}</span>\n\t\t<span class=\"kw2\">else</span>\
+      \ <span class=\"kw2\">if</span><span class=\"br0\">(</span><span class=\"sy0\"\
+      >!</span>bReloadEffectDone <span class=\"sy0\">&amp;&amp;</span> <span class=\"\
+      kw7\">Level</span>.<span class=\"me0\">TimeSeconds</span> <span class=\"sy0\"\
+      >-</span> ReloadTimer <span class=\"sy0\">&gt;=</span> ReloadRate <span class=\"\
+      sy0\">/</span> <span class=\"nu0\">2</span><span class=\"br0\">)</span>\n\t\t\
+      <span class=\"br0\">{</span>\n\t\t\tbReloadEffectDone <span class=\"sy0\">=</span>\
+      \ <span class=\"kw6\">true</span>;\n\t\t\tClientReloadEffects<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n\t\t<span class=\"br0\">}</span>\n\
+      \t<span class=\"br0\">}</span>\n<span class=\"br0\">}</span>\n \n<span class=\"\
+      co1\">//Can play animations for inserting individual bullets here, or other\
+      \ effects. </span>\n<span class=\"co1\">//Server-side only, so should call a\
+      \ replicated function here and play animations in it, </span>\n<span class=\"\
+      co1\">//rather than in this function itself.</span>\n<span class=\"kw1\">function</span>\
+      \ InsertBullet<span class=\"br0\">(</span><span class=\"br0\">)</span>\n<span\
+      \ class=\"br0\">{</span>\n\tClipCount<span class=\"sy0\">++</span>;\n<span class=\"\
+      br0\">}</span>\n \n<span class=\"co1\">//Show how many bullets left until reload.</span>\n\
+      <span class=\"kw1\">simulated</span> <span class=\"kw1\">function</span> <span\
+      \ class=\"kw5\">float</span> ChargeBar<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">float</span> CurrentClip, MaxClip;\n \n\t<span class=\"\
+      co1\">//Store the int values as floats to avoid rounding errors.</span>\n\t\
+      CurrentClip <span class=\"sy0\">=</span> ClipCount;\n\tMaxClip <span class=\"\
+      sy0\">=</span> <span class=\"kw1\">Default</span>.<span class=\"me0\">ClipCount</span>;\n\
+      \ \n\t<span class=\"kw2\">return</span> <span class=\"kw3\">FMin</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">1</span>, CurrentClip<span class=\"\
+      sy0\">/</span>MaxClip<span class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"kw1\">function</span> <span class=\"kw5\">byte</span> BestMode<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \t<span class=\"kw2\">if</span><span class=\"br0\">(</span>ClipCount <span class=\"\
+      sy0\">&gt;</span> <span class=\"nu0\">0</span><span class=\"br0\">)</span>\n\
+      \t\t<span class=\"kw2\">return</span> <span class=\"nu0\">0</span>;\n \n\t<span\
+      \ class=\"kw2\">return</span> <span class=\"nu0\">1</span>;\n<span class=\"\
+      br0\">}</span>\n \n<span class=\"kw1\">defaultproperties</span>\n<span class=\"\
+      br0\">{</span>\n\tClipCount<span class=\"sy0\">=</span><span class=\"nu0\">6</span>\n\
+      \tReloadRate<span class=\"sy0\">=</span><span class=\"nu0\">1.0</span>\n\tReloadAnim<span\
+      \ class=\"sy0\">=</span>Reload\n\tReloadAnimRate<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">1.0</span>\n \n\tbShowChargingBar<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">True</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <p>Bullets are inserted one at a time. If you wanted to completely fill the\
+      \ weapon in one go (as would be the case with most modern-style weapons) then\
+      \ change the bit in the InsertBullet function to <b>ClipCount = Default.ClipCount</b></p>\n\
+      <p>To have reloading triggered from a key press, two functions need to be bound\
+      \ to one key. For example, in User.ini:</p>\n<p><b>E=ReloadMeNow | OnRelease\
+      \ FinishReloading</b></p>\n<p>To make it easier to bind for end-users, you can\
+      \ make a custom <a href=\"/Legacy:GUIUserKeyBinding\" title=\"Legacy:GUIUserKeyBinding\"\
+      >GUIUserKeyBinding</a>, which will make the bind show up in the controls menu.\
+      \ Here is an example:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">class</span> ReloadBinding <span class=\"kw1\">extends</span> GUIUserKeyBinding;\n\
+      \ \n<span class=\"kw1\">defaultproperties</span>\n<span class=\"br0\">{</span>\n\
+      \tKeyData<span class=\"br0\">(</span><span class=\"nu0\">0</span><span class=\"\
+      br0\">)</span><span class=\"sy0\">=</span><span class=\"br0\">(</span>KeyLabel<span\
+      \ class=\"sy0\">=</span><span class=\"st0\">\"YourMod\"</span>,bIsSection<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">True</span><span class=\"br0\">)</span>\n\
+      \tKeyData<span class=\"br0\">(</span><span class=\"nu0\">1</span><span class=\"\
+      br0\">)</span><span class=\"sy0\">=</span><span class=\"br0\">(</span>Alias<span\
+      \ class=\"sy0\">=</span><span class=\"st0\">\"ReloadMeNow | OnRelease FinishReloading\"\
+      </span>,KeyLabel<span class=\"sy0\">=</span><span class=\"st0\">\"Reload\"</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <p>As well as reloading from a key, it can also be done from alt-fire, like\
+      \ this:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div\
+      \ class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\"\
+      >class</span> ReloadFire <span class=\"kw1\">extends</span> <span class=\"kw8\"\
+      >WeaponFire</span>;\n \n<span class=\"kw1\">event</span> ModeDoFire<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t\
+      ReloadingWeapon<span class=\"br0\">(</span><span class=\"kw9\">Weapon</span><span\
+      \ class=\"br0\">)</span>.<span class=\"me0\">ReloadMeNow</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"kw1\">function</span> StopFiring<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\tReloadingWeapon<span\
+      \ class=\"br0\">(</span><span class=\"kw9\">Weapon</span><span class=\"br0\"\
+      >)</span>.<span class=\"me0\">FinishReloading</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\"\
+      >function</span> <span class=\"kw5\">bool</span> IsFiring<span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n    <span\
+      \ class=\"kw2\">return</span> <span class=\"kw6\">false</span>;\n<span class=\"\
+      br0\">}</span>\n \n<span class=\"kw1\">defaultproperties</span>\n<span class=\"\
+      br0\">{</span>\n\tbModeExclusive<span class=\"sy0\">=</span><span class=\"kw6\"\
+      >true</span>\n\tbWaitForRelease<span class=\"sy0\">=</span><span class=\"kw6\"\
+      >true</span>\n\tFireRate<span class=\"sy0\">=</span><span class=\"nu0\">0.2</span>\n\
+      \tBotRefireRate<span class=\"sy0\">=</span><span class=\"nu0\">1.0</span>\n\t\
+      AmmoClass<span class=\"sy0\">=</span><span class=\"kw1\">class</span><span class=\"\
+      st0\">'BallAmmo'</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <p>Last but not least, to ensure that the firemode(s) can only fire whilst there\
+      \ is ammo in the clip:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">class</span> ReloadFire <span class=\"kw1\">extends</span> ProjectileFire\n\
+      \t<span class=\"kw1\">abstract</span>;\n \n<span class=\"kw1\">var</span> <span\
+      \ class=\"kw5\">float</span> LastClickTime;\n \n<span class=\"kw1\">var</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"kw5\">Name</span>\
+      \ EmptyAnim;\n<span class=\"kw1\">var</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span> <span class=\"kw5\">float</span> EmptyAnimRate;\n \n\
+      <span class=\"kw1\">simulated</span> <span class=\"kw1\">function</span> <span\
+      \ class=\"kw5\">bool</span> AllowFire<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span>ReloadingWeapon<span class=\"br0\">(</span><span class=\"\
+      kw9\">Weapon</span><span class=\"br0\">)</span>.<span class=\"me0\">bIsReloading</span><span\
+      \ class=\"br0\">)</span>\n\t\t<span class=\"kw2\">return</span> <span class=\"\
+      kw6\">false</span>;\n \n\t<span class=\"kw2\">if</span><span class=\"br0\">(</span>ReloadingWeapon<span\
+      \ class=\"br0\">(</span><span class=\"kw9\">Weapon</span><span class=\"br0\"\
+      >)</span>.<span class=\"me0\">ClipCount</span> <span class=\"sy0\">&lt;</span>\
+      \ <span class=\"nu0\">1</span><span class=\"br0\">)</span>\n\t<span class=\"\
+      br0\">{</span>\n\t\t<span class=\"kw2\">if</span><span class=\"br0\">(</span><span\
+      \ class=\"kw7\">Level</span>.<span class=\"me0\">TimeSeconds</span> <span class=\"\
+      sy0\">-</span> LastClickTime <span class=\"sy0\">&gt;</span> FireRate<span class=\"\
+      br0\">)</span>\n\t\t<span class=\"br0\">{</span>\n\t\t\t<span class=\"kw9\"\
+      >Weapon</span>.<span class=\"kw4\">PlayOwnedSound</span><span class=\"br0\"\
+      >(</span>NoAmmoSound, <span class=\"kw7\">SLOT_Interact</span>, <span class=\"\
+      kw7\">TransientSoundVolume</span>,,,, <span class=\"kw6\">false</span><span\
+      \ class=\"br0\">)</span>;\n\t\t\tLastClickTime <span class=\"sy0\">=</span>\
+      \ <span class=\"kw7\">Level</span>.<span class=\"me0\">TimeSeconds</span>;\n\
+      \ \n\t\t\t<span class=\"kw2\">if</span><span class=\"br0\">(</span><span class=\"\
+      kw9\">Weapon</span>.<span class=\"kw4\">HasAnim</span><span class=\"br0\">(</span>EmptyAnim<span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>\n\t\t\t\t<span class=\"\
+      kw9\">weapon</span>.<span class=\"kw4\">PlayAnim</span><span class=\"br0\">(</span>EmptyAnim,\
+      \ EmptyAnimRate, <span class=\"nu0\">0.0</span><span class=\"br0\">)</span>;\n\
+      \t\t<span class=\"br0\">}</span>\n \n\t\t<span class=\"kw2\">return</span> <span\
+      \ class=\"kw6\">false</span>;\n\t<span class=\"br0\">}</span>\n \n\tLastClickTime\
+      \ <span class=\"sy0\">=</span> <span class=\"kw7\">Level</span>.<span class=\"\
+      me0\">TimeSeconds</span>;\n \n\t<span class=\"kw2\">return</span> <span class=\"\
+      kw6\">Super</span>.<span class=\"me0\">AllowFire</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n \n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <p>In this case it is a <a href=\"/Legacy:ProjectileFire\" title=\"Legacy:ProjectileFire\"\
+      >ProjectileFire</a>, but it applies exactly the same for <a href=\"/Legacy:InstantFire\"\
+      \ title=\"Legacy:InstantFire\">InstantFire</a> classes.</p>\n<p><a href=\"/Category:Legacy_Tutorial\"\
+      \ title=\"Category:Legacy Tutorial\">Category:Legacy Tutorial</a></p>\n<p><b>Stagger:</b>\
+      \ Does not seem to like UT2004 or vice versa. Does not compile as-is, spits\
+      \ out error over difference between consumeammo in reloadingweapon and weapon\
+      \ classes. Tried simply renaming consumeammo function, compiled successfully,\
+      \ but cannot select reloading weapon in game, gives the \"(weapon name) is out\
+      \ of ammo\" message, even if you enter allammo code.</p>\n<p><b>Tarquin:</b>\
+      \ Do you people not LOOK at what happens after you have posted? Please reformat\
+      \ your text, it is currently unreadable.</p>\n<p><b>Tarquin:</b> see <a rel=\"\
+      nofollow\" class=\"external free\" href=\"http://forums.beyondunreal.com/showthread.php?t=141177\"\
+      >http://forums.beyondunreal.com/showthread.php?t=141177</a> seems the code for\
+      \ this tute has a problem.</p>\n<p><b>Solid Snake:</b> I wonder if that works.\
+      \ I doubt it...</p>\n<p><b>MythOpus:</b> Stagger: It keeps saying the out of\
+      \ ammo message because you don't have a proper AmmoClass in the default properties\
+      \ of the weapon fire... If you subclass your weapons from the custom code above\
+      \ and add an ammo class it should work. Solid Snake: This code DOES work...\
+      \ just not too well&#160;:)</p>\n<p><b>Solid Snake:</b> Great, I just did some\
+      \ syntax fixes. When I whack in my own reloading code, I'll post it here as\
+      \ well. This one is a shotgun type reloading I think, a bullet at a time. I'll\
+      \ be doing both methods I think.</p>\n<p><b>MythOpus:</b> That explains a whole\
+      \ lot. I tried using this code for one of my mods awhile back... I used it for\
+      \ an assault rifle and it didn't work too well... I guess I know why now...\
+      \ Didn't think about it being for a shotgun&#160;:(. I cant wait for YOUR reloading\
+      \ code Though&#160;:D</p>\n<p><b>Benoît</b> Ce tut est vraiment sympa, ca fait\
+      \ un bout de temps que je cherche de la doc sur les replications. Merci. / This\
+      \ tut's really great. I've been looking for good tuts about replications for\
+      \ a while. Thanks.</p>\n<p><b>Benoît</b>&#160;: Are you sure about the declaration\
+      \ 'simulated function bool ConsumeAmmo(int Mode, float load, optional bool bAmountNeededIsMax)'\
+      \ (signature needed&#160;: function ConsumeAmmo(int Mode, float load))&#160;?\
+      \ I had a compilation error and had to modify a bit, but the rest works fine&#160;:)</p>\n\
+      <p><b>Switch`:</b> To make it work with UT2004's bNoAmmoInstances feature you\
+      \ may try following changes: (untested!)</p>\n<ol>\n<li>Replace all instances\
+      \ of <tt>Ammo[0].AmmoAmount</tt> with <tt>AmmoAmount(0)</tt></li>\n<li>Replace\
+      \ all instances of <tt>Ammo[0]==None</tt> with <tt>AmmoAmount(0)==0</tt></li>\n\
+      <li>Remove the overloaded HasAmmo() function from ReloadingWeapon source, in\
+      \ FireMode[1] set AmmoPerFire=0 in defaultproperties</li>\n<li>Use Super.ConsumeAmmo()</li>\n\
+      </ol>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"\
+      uscript source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">simulated</span>\
+      \ <span class=\"kw1\">function</span> <span class=\"kw5\">bool</span> ConsumeAmmo<span\
+      \ class=\"br0\">(</span> <span class=\"kw5\">int</span> Mode, <span class=\"\
+      kw5\">float</span> Load, <span class=\"kw1\">optional</span> <span class=\"\
+      kw5\">bool</span> bAmountNeededIsMax <span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n\t<span class=\"kw2\">if</span><span class=\"br0\">(</span>\
+      \ <span class=\"kw6\">Super</span>.<span class=\"me0\">ConsumeAmmo</span><span\
+      \ class=\"br0\">(</span>Mode, Load, bAmountNeededIsMax<span class=\"br0\">)</span>\
+      \ <span class=\"br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t\t<span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span> Load <span class=\"sy0\">&gt;</span>\
+      \ <span class=\"nu0\">0</span> <span class=\"br0\">)</span>\n\t\t\tClipCount<span\
+      \ class=\"sy0\">--</span>;\n\t\t<span class=\"kw2\">return</span> <span class=\"\
+      kw6\">true</span>;\n\t<span class=\"br0\">}</span>\n\t<span class=\"kw2\">return</span>\
+      \ <span class=\"kw6\">false</span>;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p><b>Kohan:</b> Bleh, it's not a magazine-based one. Can I warp some\
+      \ of your code to make it magazine-based? I'd put it in a separate tutorial,\
+      \ of course.</p>\n<p><b>OlympusMons:</b> Yeah clipcount is alittle misleading\
+      \ as it is actually the amount of ammo in the clip, a quick fix would be to\
+      \ do this so when you reload the complete ammo is added in one hit. This is\
+      \ untested but you could try...</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">function</span> InsertBullet<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span><span class=\"br0\">{</span>\n    ClipCount<span class=\"\
+      sy0\">=</span><span class=\"kw1\">Default</span>.<span class=\"me0\">ClipCount</span>;\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>For a better version you\
+      \ could make clipcount the amount of clips by doing ammo amount x ammo per clip,\
+      \ which should give you the amount of clips. Then you can make a ammo in clip\
+      \ variable which would replace the old clipcount, Im kinda thinking out loud\
+      \ here so you'll have to work it out alittle more perhaps. Im pretty sure Im\
+      \ going in the right direction, there is replication to take into consideration\
+      \ as well I think.</p>\n\n<!-- \nNewPP limit report\nCPU time usage: 0.185 seconds\n\
+      Real time usage: 0.396 seconds\nPreprocessor visited node count: 22/1000000\n\
+      Preprocessor generated node count: 136/1000000\nPost‐expand include size: 17/2097152\
+      \ bytes\nTemplate argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\n\
+      Expensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion expansion\
+      \ time report (%,ms,calls,template)\n100.00%    0.000      1 - -total\n-->\n\
+      \n<!-- Saved in parser cache with key wiki:pcache:idhash:2626-0!*!0!*!*!*!*\
+      \ and timestamp 20221118014227 and revision id 6263\n -->\n"
+  categories:
+  - sortkey: "Reloading Weapons"
+    name: "Legacy_Tutorial"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Weapon"
+  - ns: 100
+    exists: true
+    name: "Legacy:GUIUserKeyBinding"
+  - ns: 100
+    exists: true
+    name: "Legacy:ProjectileFire"
+  - ns: 100
+    exists: true
+    name: "Legacy:InstantFire"
+  - ns: 14
+    exists: true
+    name: "Category:Legacy Tutorial"
+  templates: []
+  images: []
+  externallinks:
+  - "http://forums.beyondunreal.com/showthread.php?t=141177"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Reloading Weapons."
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Reloading_Weapons"
+    byteoffset: 118
+    anchor: "Reloading_Weapons."
+  displaytitle: "Legacy:Reloading Weapons"
+  iwlinks: []
+  wikitext:
+    text: "''This tutorial does NOT work in UT2004.''\n\n''Attempted offline fix.\
+      \ No test, just using my memory... -Solid Snake''\n\n==Reloading Weapons.==\n\
+      \nI've put quite a bit of effort in to making robust reloading code for the\
+      \ [[Legacy:Weapon|Weapon]]s in the LawDogs mod. Since reloading is something\
+      \ that is potentially useful to everyone, I have made the code available here\
+      \ (minus all the stuff that doesn't relate to reloading).\n\nIt is complete\
+      \ with features allowing for sounds, animations and other effects, it works\
+      \ on-line and as far as I can tell it is virtually free of bugs. All the main\
+      \ code is contained in a weapon class. It is an abstract class, the actual weapons\
+      \ are subclasses of it.\n\n<uscript>\nclass ReloadingWeapon extends Weapon\n\
+      \tabstract;\n\nvar() int ClipCount; //What's that you say? Clip is not a technically\
+      \ correct term? Do I care?\nvar() float ReloadRate; //Time it takes to insert\
+      \ one bullet.\nvar float ReloadTimer;\n\nvar() sound ReloadBeginSound, ReloadSound,\
+      \ ReloadEndSound; //Sounds played when start to reload, on insertion of each\
+      \ bullet, and when reloading has ended.\nvar() name ReloadAnim; //Animation\
+      \ to play when reloading is started.\nvar() float ReloadAnimRate;\n\nvar bool\
+      \ bIsReloading, bReloadEffectDone;\n\nreplication\n{\n\treliable if(Role ==\
+      \ ROLE_Authority)\n\t\tClipCount;\n\n\t//Functions called on the server from\
+      \ the client.\n\treliable if(Role < ROLE_Authority)\n\t\tReloadMeNow, FinishReloading;\n\
+      \n\t//Functions called on the client from the server.\n\treliable if(Role ==\
+      \ ROLE_Authority)\n\t\tClientReload, ClientFinishReloading, ClientReloadEffects;\n\
+      }\n\n//So reloading can be bound to a key. Exec functions in weapons can only\
+      \ be called for the currently held weapon, which is perfect for this purpose.\n\
+      exec function ReloadMeNow()\n{\n\tif(!AllowReload())\n\t\treturn;\n\n\tbIsReloading\
+      \ = true;\n\tReloadTimer = Level.TimeSeconds;\n\tPlaySound(ReloadBeginSound,\
+      \ SLOT_Misc, TransientSoundVolume,,,, false);\n\tClientReload();\n}\n\n//Called\
+      \ on the client when reloading starts.\nsimulated function ClientReload()\n\
+      {\n\tbIsReloading = true;\n\tPlayAnim(ReloadAnim, ReloadAnimRate, 0.1);\n}\n\
+      \n//For effects during reloading, like smoke or shells ejected from the breech.\n\
+      simulated function ClientReloadEffects(){}\n\n//Reloading ends when the key\
+      \ is released.\nexec function FinishReloading()\n{\n\tif(!bIsReloading)\n\t\t\
+      return;\n\n\tPlaySound(ReloadEndSound, SLOT_Misc, TransientSoundVolume,,,, false);\n\
+      \tClientFinishReloading();\n\tbIsReloading = false;\n\tbReloadEffectDone = false;\n\
+      }\n\n//Called on the client when reloading ends.\nsimulated function ClientFinishReloading()\n\
+      {\n\tbIsReloading = false;\n\tPlayIdle();\n\n\tif(Instigator.PendingWeapon !=\
+      \ None && Instigator.PendingWeapon != self)\n\t\tInstigator.Controller.ClientSwitchToBestWeapon();\n\
+      }\n\n//I compressed this to make it a little tider. I have no idea why I do\
+      \ this... is it harder to read or \n//do I just like smaller UC files...\nfunction\
+      \ bool AllowReload()\n{\n\t//Can't reload whilst firing, reloading, if the clip\
+      \ is full or if we don't have enough ammo.\n\tif((FireMode[0].IsFiring() ||\
+      \ FireMode[1].IsFiring()) && \n           bIsReloading && ClipCount >= Default.ClipCount\
+      \ && \n           (Ammo[0] == None || Ammo[0].AmmoAmount <= ClipCount))\n\t\t\
+      return false;\n\treturn true;\n}\n\n//Don't allow weapon switching whilst reloading.\n\
+      simulated function bool PutDown()\n{\n\tif(bIsReloading)\n\t\treturn false;\n\
+      \n\treturn Super.PutDown();\n}\n\nsimulated function BringUp(optional Weapon\
+      \ PrevWeapon)\n{\n\tSuper.BringUp(PrevWeapon);\n\tbIsReloading = false;\n}\n\
+      \n//Reduce ClipCount every time a bullet is fired.\nsimulated function bool\
+      \ ConsumeAmmo(int Mode, float load, optional bool bAmountNeededIsMax)\n{\n\t\
+      if(Ammo[Mode] != None)\n\t{\n\t\tif(Ammo[Mode].UseAmmo(int(load)) && load >\
+      \ 0)\n\t\t\tClipCount--;\n\t}\n}\n\nsimulated function bool HasAmmo()\n{\n\t\
+      //Ignore FireMode[1] which doesn't use any ammo.\n\treturn (Ammo[0] != None\
+      \ && FireMode[0] != None && Ammo[0].AmmoAmount >= FireMode[0].AmmoPerFire);\n\
+      }\n\nevent WeaponTick(float dt)\n{\n\tif(!bIsReloading)\n\t{\n\t\t//Stupid bots\
+      \ like to run around with an empty weapon, so force them to reload when appropriate.\n\
+      \t\tif(!Instigator.IsHumanControlled())\n\t\t{\n\t\t\tif(Level.TimeSeconds -\
+      \ Instigator.Controller.LastSeenTime > ClipCount)\n\t\t\t\tReloadMeNow();\n\t\
+      \t}\n\t}\n\telse\n\t{\n\t\t//Add one bullet at a time as long as reloading key\
+      \ is held down.\n\t\tif(Level.TimeSeconds - ReloadTimer >= ReloadRate)\n\t\t\
+      {\n\t\t\tif(ClipCount >= Default.ClipCount) //Full.\n\t\t\t{\n\t\t\t\tClipCount\
+      \ = Default.ClipCount;\n\t\t\t\tFinishReloading();\n\t\t\t}\n\t\t\telse if(Ammo[0].AmmoAmount\
+      \ <= ClipCount) //Out of ammo.\n\t\t\t{\n\t\t\t\tClipCount = Ammo[0].AmmoAmount;\n\
+      \t\t\t\tFinishReloading();\n\t\t\t}\n\t\t\telse //Add another bullet.\n\t\t\t\
+      {\n\t\t\t\tPlaySound(ReloadSound, SLOT_Misc, TransientSoundVolume,,,, false);\n\
+      \t\t\t\tInsertBullet();\n\n\t\t\t\tif(ClipCount >= Default.ClipCount)\n\t\t\t\
+      \t{\n\t\t\t\t\tReloadTimer = Level.TimeSeconds - (ReloadRate / 2);\n\t\t\t\t\
+      }\n\t\t\t\telse\n\t\t\t\t\tReloadTimer = Level.TimeSeconds;\n\t\t\t}\n\t\t}\n\
+      \t\telse if(!bReloadEffectDone && Level.TimeSeconds - ReloadTimer >= ReloadRate\
+      \ / 2)\n\t\t{\n\t\t\tbReloadEffectDone = true;\n\t\t\tClientReloadEffects();\n\
+      \t\t}\n\t}\n}\n\n//Can play animations for inserting individual bullets here,\
+      \ or other effects. \n//Server-side only, so should call a replicated function\
+      \ here and play animations in it, \n//rather than in this function itself.\n\
+      function InsertBullet()\n{\n\tClipCount++;\n}\n\n//Show how many bullets left\
+      \ until reload.\nsimulated function float ChargeBar()\n{\n\tlocal float CurrentClip,\
+      \ MaxClip;\n\n\t//Store the int values as floats to avoid rounding errors.\n\
+      \tCurrentClip = ClipCount;\n\tMaxClip = Default.ClipCount;\n\n\treturn FMin(1,\
+      \ CurrentClip/MaxClip);\n}\n\nfunction byte BestMode()\n{\n\tif(ClipCount >\
+      \ 0)\n\t\treturn 0;\n\n\treturn 1;\n}\n\ndefaultproperties\n{\n\tClipCount=6\n\
+      \tReloadRate=1.0\n\tReloadAnim=Reload\n\tReloadAnimRate=1.0\n\n\tbShowChargingBar=True\n\
+      }\n</uscript>\n\nBullets are inserted one at a time. If you wanted to completely\
+      \ fill the weapon in one go (as would be the case with most modern-style weapons)\
+      \ then change the bit in the InsertBullet function to '''ClipCount = Default.ClipCount'''\n\
+      \nTo have reloading triggered from a key press, two functions need to be bound\
+      \ to one key. For example, in User.ini:\n\n'''E=ReloadMeNow | OnRelease FinishReloading'''\n\
+      \nTo make it easier to bind for end-users, you can make a custom [[Legacy:GUIUserKeyBinding|GUIUserKeyBinding]],\
+      \ which will make the bind show up in the controls menu. Here is an example:\n\
+      \n<uscript>\nclass ReloadBinding extends GUIUserKeyBinding;\n\ndefaultproperties\n\
+      {\n\tKeyData(0)=(KeyLabel=\"YourMod\",bIsSection=True)\n\tKeyData(1)=(Alias=\"\
+      ReloadMeNow | OnRelease FinishReloading\",KeyLabel=\"Reload\")\n}\n</uscript>\n\
+      \nAs well as reloading from a key, it can also be done from alt-fire, like this:\n\
+      \n<uscript>\nclass ReloadFire extends WeaponFire;\n\nevent ModeDoFire()\n{\n\
+      \tReloadingWeapon(Weapon).ReloadMeNow();\n}\n\nfunction StopFiring()\n{\n\t\
+      ReloadingWeapon(Weapon).FinishReloading();\n}\n\nfunction bool IsFiring()\n\
+      {\n    return false;\n}\n\ndefaultproperties\n{\n\tbModeExclusive=true\n\tbWaitForRelease=true\n\
+      \tFireRate=0.2\n\tBotRefireRate=1.0\n\tAmmoClass=class'BallAmmo'\n}\n</uscript>\n\
+      \nLast but not least, to ensure that the firemode(s) can only fire whilst there\
+      \ is ammo in the clip:\n\n<uscript>\nclass ReloadFire extends ProjectileFire\n\
+      \tabstract;\n\nvar float LastClickTime;\n\nvar() Name EmptyAnim;\nvar() float\
+      \ EmptyAnimRate;\n\nsimulated function bool AllowFire()\n{\n\tif(ReloadingWeapon(Weapon).bIsReloading)\n\
+      \t\treturn false;\n\n\tif(ReloadingWeapon(Weapon).ClipCount < 1)\n\t{\n\t\t\
+      if(Level.TimeSeconds - LastClickTime > FireRate)\n\t\t{\n\t\t\tWeapon.PlayOwnedSound(NoAmmoSound,\
+      \ SLOT_Interact, TransientSoundVolume,,,, false);\n\t\t\tLastClickTime = Level.TimeSeconds;\n\
+      \n\t\t\tif(Weapon.HasAnim(EmptyAnim))\n\t\t\t\tweapon.PlayAnim(EmptyAnim, EmptyAnimRate,\
+      \ 0.0);\n\t\t}\n\n\t\treturn false;\n\t}\n\n\tLastClickTime = Level.TimeSeconds;\n\
+      \n\treturn Super.AllowFire();\n\n}\n</uscript>\n\nIn this case it is a [[Legacy:ProjectileFire|ProjectileFire]],\
+      \ but it applies exactly the same for [[Legacy:InstantFire|InstantFire]] classes.\n\
+      \n[[:Category:Legacy Tutorial]]\n\n'''Stagger:''' Does not seem to like UT2004\
+      \ or vice versa. Does not compile as-is, spits out error over difference between\
+      \ consumeammo in reloadingweapon and weapon classes. Tried simply renaming consumeammo\
+      \ function, compiled successfully, but cannot select reloading weapon in game,\
+      \ gives the \"(weapon name) is out of ammo\" message, even if you enter allammo\
+      \ code.\n\n'''Tarquin:''' Do you people not LOOK at what happens after you have\
+      \ posted? Please reformat your text, it is currently unreadable.\n\n'''Tarquin:'''\
+      \ see http://forums.beyondunreal.com/showthread.php?t=141177  seems the code\
+      \ for this tute has a problem.\n\n'''Solid Snake:''' I wonder if that works.\
+      \ I doubt it...\n\n'''MythOpus:''' Stagger:  It keeps saying the out of ammo\
+      \ message because you don't have a proper AmmoClass in the default properties\
+      \ of the weapon fire...  If you subclass your weapons from the custom code above\
+      \ and add an ammo class it should work. Solid Snake:  This code DOES work...\
+      \ just not too well :)  \n\n'''Solid Snake:''' Great, I just did some syntax\
+      \ fixes. When I whack in my own reloading code, I'll post it here as well. This\
+      \ one is a shotgun type reloading I think, a bullet at a time. I'll be doing\
+      \ both methods I think.\n\n'''MythOpus:''' That explains a whole lot.  I tried\
+      \ using this code for one of my mods awhile back... I used it for an assault\
+      \ rifle and it didn't work too well... I guess I know why now... Didn't think\
+      \ about it being for a shotgun :(.  I cant wait for YOUR reloading code Though\
+      \ :D\n\n'''Benoît''' Ce tut est vraiment sympa, ca fait un bout de temps que\
+      \ je cherche de la doc sur les replications. Merci. / This tut's really great.\
+      \ I've been looking for good tuts about replications for a while. Thanks.\n\n\
+      '''Benoît''' : Are you sure about the declaration 'simulated function bool ConsumeAmmo(int\
+      \ Mode, float load, optional bool bAmountNeededIsMax)' (signature needed : function\
+      \ ConsumeAmmo(int Mode, float load)) ? I had a compilation error and had to\
+      \ modify a bit, but the rest works fine :)\n\n'''Switch`:''' To make it work\
+      \ with UT2004's bNoAmmoInstances feature you may try following changes: (untested!)\n\
+      # Replace all instances of <tt>Ammo[0].AmmoAmount</tt> with <tt>AmmoAmount(0)</tt>\n\
+      # Replace all instances of <tt>Ammo[0]==None</tt> with <tt>AmmoAmount(0)==0</tt>\n\
+      # Remove the overloaded HasAmmo() function from ReloadingWeapon source, in FireMode[1]\
+      \ set AmmoPerFire=0 in defaultproperties  \n# Use Super.ConsumeAmmo()\n\n<uscript>\n\
+      simulated function bool ConsumeAmmo( int Mode, float Load, optional bool bAmountNeededIsMax\
+      \ )\n{\n\tif( Super.ConsumeAmmo(Mode, Load, bAmountNeededIsMax) )\n\t{\n\t\t\
+      if( Load > 0 )\n\t\t\tClipCount--;\n\t\treturn true;\n\t}\n\treturn false;\n\
+      }</uscript>\n\n'''Kohan:''' Bleh, it's not a magazine-based one.  Can I warp\
+      \ some of your code to make it magazine-based?  I'd put it in a separate tutorial,\
+      \ of course.\n\n'''OlympusMons:''' Yeah clipcount is alittle misleading as it\
+      \ is actually the amount of ammo in the clip, a quick fix would be to do this\
+      \ so when you reload the complete ammo is added in one hit. This is untested\
+      \ but you could try...\n\n<uscript>\nfunction InsertBullet(){\n    ClipCount=Default.ClipCount;\n\
+      }</uscript>\n\nFor a better version you could make clipcount the amount of clips\
+      \ by doing ammo amount x ammo per clip, which should give you the amount of\
+      \ clips. Then you can make a ammo in clip variable which would replace the old\
+      \ clipcount, Im kinda thinking out loud here so you'll have to work it out alittle\
+      \ more perhaps. Im pretty sure Im going in the right direction, there is replication\
+      \ to take into consideration as well I think.\n[[Category:Legacy Tutorial|{{PAGENAME}}]]"
+  properties: []
+  revId: 6263
+name: "Legacy:Reloading Weapons"
+revision:
+  revid: 6263
+  parentid: 6264
+  user: "066.pth0504.pth.iprimus.net.au"
+  timestamp: 1156436940.000000000
+  comment: "*"
+timestamp: 1668763889.629732000

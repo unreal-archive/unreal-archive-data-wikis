@@ -1,0 +1,499 @@
+---
+parse:
+  title: "Legacy:Genetic Programming/Genes"
+  text:
+    text: "<p><a href=\"/Legacy:ZedSquared/Developer_Journal\" title=\"Legacy:ZedSquared/Developer\
+      \ Journal\">This page</a> introduced the core class and ideas behind breeding\
+      \ a routine using <a rel=\"nofollow\" class=\"external text\" href=\"http://www.genetic-programming.com/\"\
+      >Genetic Programming.</a></p>\n<p>Having sorted out the core stuff we need to\
+      \ think about the bigger picture:</p>\n<p>The 'outer loop' of GP goes like this:</p>\n\
+      <ol>\n<li>Pick a candidate from a population of random programmes</li>\n<li>Test\
+      \ the candidate, keep track of how well it does</li>\n<li>Repeat untill all\
+      \ candidates have had enough trials to get a measure of their fitness for the\
+      \ task in hand</li>\n<li>Breed a new population by:\n<ol>\n<li>Finding the best\
+      \ performing members of the current 'generation'</li>\n<li>Perform 'genetic\
+      \ operations' on these elite performers to generate members of the next generation\
+      \ by combining or changing their code in some way.</li>\n<li>Repeat untill you\
+      \ have a new population to test.</li>\n</ol>\n</li>\n<li>Start all over again\
+      \ at 1), repeat until you deem performance good enough.</li>\n</ol>\n<p>Now\
+      \ the classical way to do this involves running one large population on one\
+      \ machine and this is what I'll start off with. But this can have some disadvantages\
+      \ as the population can become under diversified as an early partial solution\
+      \ to the problem rises to the top and monopolises all the gene pool.</p>\n<p>One\
+      \ way around this is to adopt the so called 'island' model and maintain many\
+      \ populations, each randomised at the start, and to allow those to breed for\
+      \ a while and then periodically allow exchange of members with the others thus\
+      \ ensuring some diversity. These populations can be run on different machines\
+      \ communicating over a network, or as many processes on one machine.</p>\n<p>Anyway\
+      \ that's getting a bit ahead of myself... I need some way of storing and manipulating\
+      \ these things so it's time for a fresh class: The GPmaster:</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"co1\">//---------------------------------------------------------</span>\n\
+      <span class=\"co1\">// class that handles breeding, fitness selection etc of\
+      \ GP</span>\n<span class=\"co1\">// trees</span>\n<span class=\"co1\">//-----------------------------------------------------------</span>\n\
+      \ \n<span class=\"kw1\">class</span> GPMaster <span class=\"kw1\">extends</span>\
+      \ <span class=\"kw9\">Info</span> <span class=\"kw1\">config</span><span class=\"\
+      br0\">(</span>Genes<span class=\"br0\">)</span>;</pre></div>\n</div>\n<p>A good\
+      \ start&#160;:) as the only way of storing persistant data in uscript is via\
+      \ ini files we make this use genes.ini as a gene pool database (see <a href=\"\
+      /Legacy:Config_Vars_And_.Ini_Files\" title=\"Legacy:Config Vars And .Ini Files\"\
+      >Config_Vars_And_.Ini_Files</a> ).</p>\n<p>Uscript never was meant to be used\
+      \ as a heavy duty database so if the breeding programme takes off and requires\
+      \ the tracking of thousands of individuals then I'll have to look at using <a\
+      \ href=\"/Legacy:TcpLink\" title=\"Legacy:TcpLink\">TcpLink</a> to talk to an\
+      \ external decent DBMS like MySQL or something. But at this stage in development\
+      \ ini files will do.</p>\n<p>To keep track of a member of the population we\
+      \ need to store the code that it uses and its performance in the trials, this\
+      \ sounds like just the job for a struct:</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">struct</span> gene\n  <span class=\"br0\">{</span>\n\
+      \    <span class=\"kw1\">var</span> <span class=\"kw5\">string</span> code;\n\
+      \    <span class=\"kw1\">var</span> fitnessstats fitness;\n    <span class=\"\
+      kw1\">var</span> <span class=\"kw5\">int</span> PoolIdx;\n    <span class=\"\
+      kw1\">var</span> <span class=\"kw5\">int</span> trials;  <span class=\"co1\"\
+      >// number of times this has been tested in this run</span>\n    <span class=\"\
+      kw1\">var</span> <span class=\"kw5\">int</span> rank;\n  <span class=\"br0\"\
+      >}</span>;</pre></div>\n</div>\n<p>At this point I realised that the GP framework\
+      \ I'm putting together could get used for many different tasks, not just breeding\
+      \ something that's good at steering lightcycles. Different tasks will have different\
+      \ ways of measuring success, not just number of frags... perhaps number of hits/bullets\
+      \ fired, or time spent staying alive, or prisoners rescued... whatever, the\
+      \ point is that we don't know what info will be returned by the other game code\
+      \ (the stuff that's actually running the trials ) so we make this gpmaster class\
+      \ somewhat abstract and fill in nitty gritty details in a subclass.</p>\n<p>My\
+      \ first thought was along the lines of:</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">struct</span> fitnessstats    <span class=\"co1\"\
+      >// redefined in subclasses  for different tasks</span>\n \n  <span class=\"\
+      br0\">{</span>\n \n  <span class=\"br0\">}</span>;\n \n<span class=\"kw1\">function</span>\
+      \ initfitstats<span class=\"br0\">(</span> fitnessstats f<span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n <span class=\"co1\">// called to initialise\
+      \ stats on new gene</span>\n <span class=\"co1\">// define in subclass</span>\n\
+      <span class=\"br0\">}</span>\n \n \n \n<span class=\"kw1\">function</span> addfitstats<span\
+      \ class=\"br0\">(</span> fitnessStats <span class=\"kw1\">new</span>, fitnessstats\
+      \ old <span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"\
+      co1\">// merges fitness stats from gene returning from trial</span>\n  <span\
+      \ class=\"co1\">// with those in pool</span>\n  <span class=\"co1\">// define\
+      \ in subclass</span>\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">function</span>\
+      \ gene best<span class=\"br0\">(</span> gene g1, gene g2 <span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n<span class=\"co1\">// evaluate and\
+      \ return fittest of the two genes</span>\n<span class=\"co1\">// submitted.</span>\n\
+      <span class=\"co1\">// Used to sort genes to find the best performers</span>\n\
+      <span class=\"co1\">// define in subclass</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>And all seemed fine, I coded up a subclass, put some actual variables\
+      \ in the struct and all compiled fine.. then I wrote initfitstats to suit and\
+      \ blarrrt! compiler error about redefining initfitstats, probably because even\
+      \ though the number of arguments to that function seemingly haven't changed\
+      \ (there's still just one struct passed) there are now more variables in that\
+      \ struct, hence the confusion&#160;:) No panic, I'll just have to define an\
+      \ object to hold fitness variables and subclass that instead I guess. Actually\
+      \ this is a bit neater as that class can also hold the functions needed to initialise\
+      \ itself and so on, but is messier as storing these variables is a problem...\
+      \ hmmm some more thought needed there, quick workround for now, though is to\
+      \ define all the stuff I need to get *my* task done up here in the superclass\
+      \ and worry about being versatile later&#160;:) So we have the variable definition\
+      \ block in full:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">struct</span> fitnessstats    <span class=\"co1\">// need to replace this\
+      \ with an object so it can be redifined in subclasses</span>\n             \
+      \          <span class=\"co1\">// for different tasks</span>\n  <span class=\"\
+      br0\">{</span>\n   <span class=\"kw1\">var</span>   <span class=\"kw5\">int</span>\
+      \ gameswonVbots;\n   <span class=\"kw1\">var</span>   <span class=\"kw5\">int</span>\
+      \ gameslostVbots;\n   <span class=\"kw1\">var</span>   <span class=\"kw5\">int</span>\
+      \ GameswonVhumans;\n   <span class=\"kw1\">var</span>   <span class=\"kw5\"\
+      >int</span> GameslostVhumans;\n   <span class=\"kw1\">var</span> <span class=\"\
+      kw5\">float</span> timespentplaying;\n  <span class=\"br0\">}</span>;\n \n \n\
+      <span class=\"kw1\">struct</span> gene\n  <span class=\"br0\">{</span>\n   \
+      \ <span class=\"kw1\">var</span> <span class=\"kw5\">string</span> code;\n \
+      \   <span class=\"kw1\">var</span> fitnessstats fitness;\n    <span class=\"\
+      kw1\">var</span> <span class=\"kw5\">int</span> PoolIdx;\n    <span class=\"\
+      kw1\">var</span> <span class=\"kw5\">int</span> trials;  <span class=\"co1\"\
+      >// number of times this has been tested in this run</span>\n    <span class=\"\
+      kw1\">var</span> <span class=\"kw5\">int</span> rank;\n  <span class=\"br0\"\
+      >}</span>;\n \n<span class=\"kw1\">var</span> <span class=\"kw1\">config</span>\
+      \ gene pool<span class=\"br0\">[</span><span class=\"nu0\">200</span><span class=\"\
+      br0\">]</span>;\n<span class=\"kw1\">var</span> <span class=\"kw1\">config</span>\
+      \ <span class=\"kw5\">int</span> totaltrials,PoolPtr;\n<span class=\"kw1\">var</span>\
+      \ <span class=\"kw5\">int</span> maxdepth;</pre></div>\n</div>\n<p>So you can\
+      \ see we have an array of genes, size 200 for our population (number 200 pulled\
+      \ out of the air... may grow later), and a couple of persistant variables to\
+      \ keep track of how many trials have been made and which was the last gene plucked\
+      \ fro the pool for testing.</p>\n<p>Right, now for some proper meat:</p>\n<div\
+      \ dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">function</span>\
+      \ PullGene<span class=\"br0\">(</span><span class=\"kw1\">out</span> gpinfo\
+      \ result<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n<span class=\"\
+      co1\">// grab a gene from the pool</span>\n \n <span class=\"kw1\">local</span>\
+      \ gpnode root1;\n <span class=\"kw1\">Local</span> <span class=\"kw5\">int</span>\
+      \ idx;\n <span class=\"kw3\">log</span><span class=\"br0\">(</span><span class=\"\
+      st0\">\" *GPM* pullgene called with gpi = \"</span><span class=\"sy0\">$</span>result<span\
+      \ class=\"br0\">)</span>;\n <span class=\"co1\">// alternate between next gene\
+      \ from pool and random gene</span>\n <span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span>toggler <span class=\"sy0\">==</span><span class=\"nu0\">0</span><span\
+      \ class=\"br0\">)</span> idx <span class=\"sy0\">=</span> <span class=\"kw3\"\
+      >rand</span><span class=\"br0\">(</span><span class=\"nu0\">600</span><span\
+      \ class=\"br0\">)</span>;\n <span class=\"kw2\">else</span>\n   <span class=\"\
+      br0\">{</span>\n     idx <span class=\"sy0\">=</span> poolptr;\n     poolptr\
+      \ <span class=\"sy0\">++</span>;\n     <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span>poolptr <span class=\"sy0\">==</span><span class=\"nu0\">601</span><span\
+      \ class=\"br0\">)</span> poolptr<span class=\"sy0\">=</span><span class=\"nu0\"\
+      >0</span>;\n   <span class=\"br0\">}</span>\n toggler <span class=\"sy0\">=</span>\
+      \ <span class=\"nu0\">1</span><span class=\"sy0\">-</span>toggler;\n \n result.<span\
+      \ class=\"me0\">initialise</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n <span class=\"kw2\">if</span><span class=\"br0\">(</span>\
+      \ pool<span class=\"br0\">[</span>idx<span class=\"br0\">]</span>.<span class=\"\
+      me0\">code</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"\"</span>\
+      \ <span class=\"br0\">)</span>\n   <span class=\"br0\">{</span>\n     <span\
+      \ class=\"co1\">// grow random tree to fill empty pool position</span>\n   \
+      \  root1<span class=\"sy0\">=</span><span class=\"kw4\">spawn</span><span class=\"\
+      br0\">(</span><span class=\"kw1\">class</span><span class=\"st0\">'gpnode'</span><span\
+      \ class=\"br0\">)</span>;\n     root1.<span class=\"me0\">RandomGrow</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">0</span>,maxdepth<span class=\"\
+      br0\">)</span>;\n     root1.<span class=\"me0\">WriteToString</span><span class=\"\
+      br0\">(</span>result.<span class=\"me0\">code</span><span class=\"br0\">)</span>;\n\
+      \     <span class=\"kw3\">log</span><span class=\"br0\">(</span><span class=\"\
+      st0\">\" GPM new code generated = \"</span><span class=\"sy0\">$</span>result.<span\
+      \ class=\"me0\">code</span><span class=\"br0\">)</span>;\n     root1.<span class=\"\
+      me0\">prune</span><span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \     pool<span class=\"br0\">[</span>idx<span class=\"br0\">]</span>.<span\
+      \ class=\"me0\">PoolIdx</span> <span class=\"sy0\">=</span> idx;\n     pool<span\
+      \ class=\"br0\">[</span>idx<span class=\"br0\">]</span>.<span class=\"me0\"\
+      >trials</span><span class=\"sy0\">=</span><span class=\"nu0\">0</span>;\n  \
+      \   pool<span class=\"br0\">[</span>idx<span class=\"br0\">]</span>.<span class=\"\
+      me0\">code</span><span class=\"sy0\">=</span>result.<span class=\"me0\">code</span>;\n\
+      \     root1.<span class=\"kw4\">Destroy</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;\n   <span class=\"br0\">}</span>\n \n \n result.<span\
+      \ class=\"me0\">code</span><span class=\"sy0\">=</span>pool<span class=\"br0\"\
+      >[</span>idx<span class=\"br0\">]</span>.<span class=\"me0\">code</span>;\n\
+      \ result.<span class=\"me0\">ID</span><span class=\"sy0\">=</span>idx;\n <span\
+      \ class=\"kw3\">saveconfig</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n \n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">function</span>\
+      \ returngene<span class=\"br0\">(</span> GPinfo incoming <span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n <span class=\"co1\">// maybe some\
+      \ sort of hash function for indexing genes later ?</span>\n addfitstats<span\
+      \ class=\"br0\">(</span>incoming<span class=\"br0\">)</span>;\n pool<span class=\"\
+      br0\">[</span>incoming.<span class=\"me0\">id</span><span class=\"br0\">]</span>.<span\
+      \ class=\"me0\">trials</span> <span class=\"sy0\">++</span>;\n pool<span class=\"\
+      br0\">[</span>incoming.<span class=\"me0\">id</span><span class=\"br0\">]</span>.<span\
+      \ class=\"me0\">rank</span><span class=\"sy0\">=</span><span class=\"kw3\">eval</span><span\
+      \ class=\"br0\">(</span>pool<span class=\"br0\">[</span>incoming.<span class=\"\
+      me0\">id</span><span class=\"br0\">]</span><span class=\"br0\">)</span>;\n totaltrials<span\
+      \ class=\"sy0\">++</span>;\n <span class=\"kw2\">if</span><span class=\"br0\"\
+      >(</span>totaltrials <span class=\"sy0\">%</span> Trials_per_generation<span\
+      \ class=\"sy0\">==</span><span class=\"nu0\">0</span><span class=\"br0\">)</span>\n\
+      \     breednewpool<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n\
+      \ <span class=\"kw3\">saveconfig</span><span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>Pullgene\
+      \ will be used by the game entity that's going to be controlled by the GP tree\
+      \ to request a new brain for testing, it alternately selects either a random\
+      \ gene or the next one in sequence, this was done so I could ensure that as,\
+      \ long as I run at least twice as many tests as there are candidates in the\
+      \ pool, each candidate is guaranteed to be tested but not only against its immediate\
+      \ neighbours as would happen if I were simply to go through the genes sequentially.</p>\n\
+      <p>Within each gene struct is stored an index to the pool array so that when\
+      \ it comes back from the trial and returngene() is called then the appropriate\
+      \ set of fitness stats gets updated, remember there could be any number of in\
+      \ game bots all requesting new brains at different times during a trial so this\
+      \ is the best way to keep track of things IMO.</p>\n<p>Now a break from the\
+      \ higher level logic for an actual genetic operator: the crossover operator.\
+      \ What this should do is take two trees, chose a node at random on each one,and\
+      \ swap over those nodes, along with any sub tree attached to them.</p>\n<div\
+      \ dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">function</span>\
+      \ crossover<span class=\"br0\">(</span> gene g1, gene g2, <span class=\"kw1\"\
+      >out</span> gene g3, <span class=\"kw1\">out</span> gene g4<span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n<span class=\"kw1\">local</span> <span\
+      \ class=\"kw5\">int</span> n1,n2;\n<span class=\"kw1\">local</span> <span class=\"\
+      kw5\">int</span> nc1,nc2;\n<span class=\"kw1\">local</span> <span class=\"kw5\"\
+      >string</span> s1,s2;\n<span class=\"kw1\">local</span> gpnode root1,root2,\
+      \ node1, node2;\n \n<span class=\"kw3\">log</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">\" crossover: building trees \"</span><span class=\"br0\">)</span>;\n\
+      root1<span class=\"sy0\">=</span><span class=\"kw4\">spawn</span><span class=\"\
+      br0\">(</span><span class=\"kw1\">class</span><span class=\"st0\">'gpnode'</span><span\
+      \ class=\"br0\">)</span>;\nroot2<span class=\"sy0\">=</span><span class=\"kw4\"\
+      >spawn</span><span class=\"br0\">(</span><span class=\"kw1\">class</span><span\
+      \ class=\"st0\">'gpnode'</span><span class=\"br0\">)</span>;\n \n<span class=\"\
+      kw3\">log</span><span class=\"br0\">(</span><span class=\"st0\">\"code string1\
+      \ =\"</span><span class=\"sy0\">$</span>g1.<span class=\"me0\">code</span><span\
+      \ class=\"br0\">)</span>;\n<span class=\"kw3\">log</span><span class=\"br0\"\
+      >(</span><span class=\"st0\">\"code string2 =\"</span><span class=\"sy0\">$</span>g2.<span\
+      \ class=\"me0\">code</span><span class=\"br0\">)</span>;\nroot1.<span class=\"\
+      me0\">ReadFromString</span><span class=\"br0\">(</span>g1.<span class=\"me0\"\
+      >code</span><span class=\"br0\">)</span>;\nroot2.<span class=\"me0\">ReadFromString</span><span\
+      \ class=\"br0\">(</span>g2.<span class=\"me0\">code</span><span class=\"br0\"\
+      >)</span>;\n \n<span class=\"co1\">// count nodes in candidates</span>\nroot1.<span\
+      \ class=\"me0\">CountNodes</span><span class=\"br0\">(</span>nc1<span class=\"\
+      br0\">)</span>;\nroot2.<span class=\"me0\">CountNodes</span><span class=\"br0\"\
+      >(</span>nc2<span class=\"br0\">)</span>;\n \n<span class=\"kw3\">log</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">\" crossover: nodes counted in tree\
+      \ 1 = \"</span><span class=\"sy0\">$</span>nc1<span class=\"br0\">)</span>;\n\
+      <span class=\"kw3\">log</span><span class=\"br0\">(</span><span class=\"st0\"\
+      >\" crossover: nodes counted in tree 2 = \"</span><span class=\"sy0\">$</span>nc2<span\
+      \ class=\"br0\">)</span>;\n<span class=\"co1\">// select a couple of nodes at\
+      \ random</span>\n \nn1 <span class=\"sy0\">=</span> <span class=\"kw3\">rand</span><span\
+      \ class=\"br0\">(</span>nc1<span class=\"sy0\">-</span><span class=\"nu0\">1</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">+</span><span class=\"nu0\">2</span>;\n\
+      \ \nn2 <span class=\"sy0\">=</span> <span class=\"kw3\">rand</span><span class=\"\
+      br0\">(</span>nc2<span class=\"sy0\">-</span><span class=\"nu0\">1</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">+</span><span class=\"nu0\">2</span>;\n\
+      \ \n<span class=\"kw3\">log</span><span class=\"br0\">(</span><span class=\"\
+      st0\">\" Crossover point 1 = \"</span><span class=\"sy0\">$</span>n1<span class=\"\
+      br0\">)</span>;\n<span class=\"kw3\">log</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">\" CRossover point 2 = \"</span><span class=\"sy0\">$</span>n2<span\
+      \ class=\"br0\">)</span>;\n \nnode1 <span class=\"sy0\">=</span> root1.<span\
+      \ class=\"me0\">findnode</span><span class=\"br0\">(</span>n1<span class=\"\
+      br0\">)</span>;\nnode2 <span class=\"sy0\">=</span> root2.<span class=\"me0\"\
+      >findnode</span><span class=\"br0\">(</span>n2<span class=\"br0\">)</span>;\n\
+      \ \n<span class=\"kw3\">log</span><span class=\"br0\">(</span><span class=\"\
+      st0\">\" crossover node on tree1 = \"</span><span class=\"sy0\">$</span>node1<span\
+      \ class=\"br0\">)</span>;\n<span class=\"kw3\">log</span><span class=\"br0\"\
+      >(</span><span class=\"st0\">\" crossover node on tree2 = \"</span><span class=\"\
+      sy0\">$</span>node2<span class=\"br0\">)</span>;\n<span class=\"co1\">//swap\
+      \ over subtrees</span>\n \nnode1.<span class=\"me0\">parent</span>.<span class=\"\
+      me0\">children</span><span class=\"br0\">[</span>node1.<span class=\"me0\">childnum</span><span\
+      \ class=\"br0\">]</span><span class=\"sy0\">=</span>node2;\nnode2.<span class=\"\
+      me0\">parent</span>.<span class=\"me0\">children</span><span class=\"br0\">[</span>node2.<span\
+      \ class=\"me0\">childnum</span><span class=\"br0\">]</span><span class=\"sy0\"\
+      >=</span>node1;\n \n<span class=\"co1\">// write out new strings</span>\nroot1.<span\
+      \ class=\"me0\">WriteToString</span><span class=\"br0\">(</span>s1<span class=\"\
+      br0\">)</span>;\nroot2.<span class=\"me0\">WriteToString</span><span class=\"\
+      br0\">(</span>s2<span class=\"br0\">)</span>;\n \n<span class=\"kw3\">log</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">\" after crossover tree1 =\"</span><span\
+      \ class=\"sy0\">$</span>s1<span class=\"br0\">)</span>;\n<span class=\"kw3\"\
+      >log</span><span class=\"br0\">(</span><span class=\"st0\">\" after crossover\
+      \ tree2 =\"</span><span class=\"sy0\">$</span>s2<span class=\"br0\">)</span>;\n\
+      \ \n<span class=\"co1\">// kill orphans</span>\n \n \nroot1.<span class=\"me0\"\
+      >prune</span><span class=\"br0\">(</span><span class=\"br0\">)</span>; root1.<span\
+      \ class=\"kw4\">destroy</span><span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>;\nroot2.<span class=\"me0\">prune</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>; root2.<span class=\"kw4\">Destroy</span><span class=\"\
+      br0\">(</span><span class=\"br0\">)</span>;\n \n<span class=\"co1\">// initialise\
+      \ new stats blocks.</span>\ninitfitstats<span class=\"br0\">(</span>g3<span\
+      \ class=\"br0\">)</span>;\ninitfitstats<span class=\"br0\">(</span>g4<span class=\"\
+      br0\">)</span>;\n \n<span class=\"co1\">// assign new code strings</span>\n\
+      \ \ng3.<span class=\"me0\">code</span><span class=\"sy0\">=</span>s1;\ng4.<span\
+      \ class=\"me0\">code</span><span class=\"sy0\">=</span>s2;\n<span class=\"co1\"\
+      >// the end!</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>All\
+      \ those logs are from testing and I'm pleased to say it all worked OK... here's\
+      \ some annotated log snippage to illustrate:</p>\n<p>ScriptLog: crossover: building\
+      \ trees</p>\n<p>ScriptLog: code string1 =XXERQG</p>\n<p>ScriptLog: code string2\
+      \ =N*HNK0.020814LQ-A+&lt;A+HEA+K0.155583GE</p>\n<p>ScriptLog: crossover: nodes\
+      \ counted in tree 1 = 7</p>\n<p>ScriptLog: crossover: nodes counted in tree\
+      \ 2 = 21</p>\n<p>ScriptLog: Crossover point 1 = 7</p>\n<p>ScriptLog: CRossover\
+      \ point 2 = 11</p>\n<p>ScriptLog: crossover node on tree1 = UTronCyclebottrainerTEST.GPTlookLeft4180</p>\n\
+      <p>ScriptLog: crossover node on tree2 = UTronCyclebottrainerTEST.GPFplus5064</p>\n\
+      <p>So the seventh node on tree1 is the chosen crossover point with the eleventh\
+      \ node on tree2. Counting along the strings (starting from 2 to allow for the\
+      \ root node) gives us the characters 'G' and '+' respectively and the logged\
+      \ node types agree... great! that means the node counting and selecting routines\
+      \ all work.</p>\n<p>ScriptLog: after crossover tree1 =XXERQ+&lt;A+HEA+K0.155583GE</p>\n\
+      <p>ScriptLog: after crossover tree2 =N*HNK0.020814LQ-AG</p>\n<p>And checking\
+      \ those resulting strings confirms that the crossover went OK, woot!</p>\n<p>Now\
+      \ for the next main genetic operator... mutation, but this page is getting large\
+      \ so hop on along to:</p>\n<p><a href=\"/Legacy:Genetic_Programming/Mutation\"\
+      \ title=\"Legacy:Genetic Programming/Mutation\">Genetic Programming/Mutation</a></p>\n\
+      <h2><span class=\"mw-headline\" id=\"your_comments_welcome\">your comments welcome</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Genetic_Programming/Genes?section=1\" title=\"Edit section:\
+      \ your comments welcome\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p><b>Tarquin:</b> Suggestions:</p>\n<ol>\n<li>move content out of <a href=\"\
+      /Legacy:ZedSquared/Developer_Journal\" title=\"Legacy:ZedSquared/Developer Journal\"\
+      >ZedSquared/Developer Journal</a> to be episode I of GP.</li>\n<li>change the\
+      \ page names, eg <a href=\"/Legacy:Genetic_Programming/Mutation\" title=\"Legacy:Genetic\
+      \ Programming/Mutation\">Genetic Programming/Mutation</a> for episode 3.</li>\n\
+      </ol>\n<p><b>Zedsquared</b> Cheers for the suggestions Tarq, I'll be doing that\
+      \ sort of thing once I get to the end of my adventure, meanwhile it's somewhat\
+      \ of a shambling pile... bit like me really&#160;:)</p>\n\n<!-- \nNewPP limit\
+      \ report\nCPU time usage: 0.144 seconds\nReal time usage: 0.664 seconds\nPreprocessor\
+      \ visited node count: 57/1000000\nPreprocessor generated node count: 128/1000000\n\
+      Post‐expand include size: 0/2097152 bytes\nTemplate argument size: 0/2097152\
+      \ bytes\nHighest expansion depth: 2/40\nExpensive parser function count: 0/100\n\
+      -->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n100.00%\
+      \    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:1364-0!*!0!*!*!*!*\
+      \ and timestamp 20221118161301 and revision id 3462\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Config Vars And .Ini Files"
+  - ns: 100
+    exists: true
+    name: "Legacy:ZedSquared/Developer Journal"
+  - ns: 100
+    exists: true
+    name: "Legacy:TcpLink"
+  - ns: 100
+    exists: true
+    name: "Legacy:Genetic Programming/Mutation"
+  templates: []
+  images: []
+  externallinks:
+  - "http://www.genetic-programming.com/"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "your comments welcome"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Genetic_Programming/Genes"
+    byteoffset: 10800
+    anchor: "your_comments_welcome"
+  displaytitle: "Legacy:Genetic Programming/Genes"
+  iwlinks: []
+  wikitext:
+    text: "[[Legacy:ZedSquared/Developer Journal|This page]] introduced the core class\
+      \ and ideas behind breeding a routine using [http://www.genetic-programming.com/\
+      \ Genetic Programming.]  \n\nHaving sorted out the core stuff we need to think\
+      \ about the bigger picture:\n\nThe 'outer loop' of GP goes like this:\n# Pick\
+      \ a candidate from a population of random programmes\n# Test the candidate,\
+      \ keep track of how well it does\n# Repeat untill all candidates have had enough\
+      \ trials to get a measure of their fitness for the task in hand\n# Breed a new\
+      \ population by:\n## Finding the best performing members of the current 'generation'\n\
+      ## Perform 'genetic operations' on these elite performers to generate members\
+      \ of the next generation by combining or changing their code in some way.\n\
+      ## Repeat untill you have a new population to test.\n# Start all over again\
+      \ at 1), repeat until you deem performance good enough.\n\nNow the classical\
+      \ way to do this involves running one large population on one machine and this\
+      \ is  what I'll start off with. But this can have some disadvantages as the\
+      \ population can become under diversified as an early partial solution to the\
+      \ problem rises to the top and monopolises all the gene pool. \n\nOne way around\
+      \ this is to adopt the so called 'island' model and maintain many populations,\
+      \ each randomised at the start, and to allow those to breed for a while and\
+      \ then periodically allow exchange of members with the others thus ensuring\
+      \ some diversity. These populations can be run on different machines communicating\
+      \ over a network, or as many processes on one machine.\n\nAnyway that's getting\
+      \ a bit ahead of myself... I need some way of storing and manipulating these\
+      \ things so it's time for a fresh class:  The GPmaster:\n\n<uscript>\n//---------------------------------------------------------\n\
+      // class that handles breeding, fitness selection etc of GP\n// trees\n//-----------------------------------------------------------\n\
+      \nclass GPMaster extends Info config(Genes);\n\n</uscript>\n\nA good start :)\
+      \ as the only way of storing persistant data in uscript is via ini files we\
+      \ make this use genes.ini as a gene pool database (see [[Legacy:Config_Vars_And_.Ini_Files|Config_Vars_And_.Ini_Files]]\
+      \ ).\n\nUscript never was meant to be used as a heavy duty database so if the\
+      \ breeding programme takes off and requires the tracking of thousands of individuals\
+      \ then I'll have to look at using [[Legacy:TcpLink|TcpLink]] to talk to an external\
+      \ decent DBMS like MySQL or something. But at this stage in development ini\
+      \ files will do.\n\nTo keep track of a member of the population we need to store\
+      \ the code that it uses and its performance in the trials, this sounds like\
+      \ just the job for a struct:\n\n<uscript>\n\nstruct gene\n  {\n    var string\
+      \ code;\n    var fitnessstats fitness;\n    var int PoolIdx;\n    var int trials;\
+      \  // number of times this has been tested in this run\n    var int rank;\n\
+      \  };\n\n</uscript>\n\nAt this point I realised that the GP framework I'm putting\
+      \ together could get used for many different tasks, not just breeding something\
+      \ that's good at steering lightcycles. Different tasks will have different ways\
+      \ of measuring success, not just number of frags... perhaps number of hits/bullets\
+      \ fired, or time spent staying alive, or prisoners rescued... whatever, the\
+      \ point is that we don't know what info will be returned by the other game code\
+      \ (the stuff that's actually running the trials ) so we make this gpmaster class\
+      \ somewhat abstract and fill in nitty gritty details in a subclass.\n\nMy first\
+      \ thought was along the lines of:\n\n<uscript>\n\nstruct fitnessstats    //\
+      \ redefined in subclasses  for different tasks\n                      \n  {\n\
+      \   \n  };\n\nfunction initfitstats( fitnessstats f)\n{\n // called to initialise\
+      \ stats on new gene\n // define in subclass\n}\n\n\n\nfunction addfitstats(\
+      \ fitnessStats new, fitnessstats old )\n{\n  // merges fitness stats from gene\
+      \ returning from trial\n  // with those in pool\n  // define in subclass\n}\n\
+      \nfunction gene best( gene g1, gene g2 )\n{\n// evaluate and return fittest\
+      \ of the two genes\n// submitted.\n// Used to sort genes to find the best performers\n\
+      // define in subclass\n}\n</uscript>\n\nAnd all seemed fine, I coded up a subclass,\
+      \ put some actual variables in the struct and all compiled fine.. then I wrote\
+      \ initfitstats to suit and blarrrt! compiler error about redefining initfitstats,\
+      \ probably because even though the number of arguments to that function seemingly\
+      \ haven't changed (there's still just one struct passed) there are now more\
+      \ variables in that struct, hence the confusion :) No panic, I'll just have\
+      \ to define an object to hold fitness variables and subclass that instead I\
+      \ guess. Actually this is a bit neater as that class can also hold the functions\
+      \ needed to initialise itself and so on, but is messier as storing these variables\
+      \ is a problem... hmmm some more thought needed there, quick workround for now,\
+      \ though is to define all the stuff I need to get *my* task done up here in\
+      \ the superclass and worry about being versatile later :) So we have the variable\
+      \ definition block in full:\n\n<uscript>\nstruct fitnessstats    // need to\
+      \ replace this with an object so it can be redifined in subclasses\n       \
+      \                // for different tasks\n  {\n   var   int gameswonVbots;\n\
+      \   var   int gameslostVbots;\n   var   int GameswonVhumans;\n   var   int GameslostVhumans;\n\
+      \   var float timespentplaying;\n  };\n\n\nstruct gene\n  {\n    var string\
+      \ code;\n    var fitnessstats fitness;\n    var int PoolIdx;\n    var int trials;\
+      \  // number of times this has been tested in this run\n    var int rank;\n\
+      \  };\n\nvar config gene pool[200];\nvar config int totaltrials,PoolPtr;\nvar\
+      \ int maxdepth;\n\n</uscript>\n\nSo you can see we have an array of genes, size\
+      \ 200 for our population (number 200 pulled out of the air... may grow later),\
+      \ and a couple of persistant variables to keep track of how many trials have\
+      \ been made and which was the last gene plucked fro the pool for testing.\n\n\
+      Right, now for some proper meat:\n\n<uscript>\n\nfunction PullGene(out gpinfo\
+      \ result)\n{\n// grab a gene from the pool\n\n local gpnode root1;\n Local int\
+      \ idx;\n log(\" *GPM* pullgene called with gpi = \"$result);\n // alternate\
+      \ between next gene from pool and random gene\n if(toggler ==0) idx = rand(600);\n\
+      \ else\n   {\n     idx = poolptr;\n     poolptr ++;\n     if (poolptr ==601)\
+      \ poolptr=0;\n   }\n toggler = 1-toggler;\n\n result.initialise();\n if( pool[idx].code\
+      \ == \"\" )\n   {\n     // grow random tree to fill empty pool position\n  \
+      \   root1=spawn(class'gpnode');\n     root1.RandomGrow(0,maxdepth);\n     root1.WriteToString(result.code);\n\
+      \     log(\" GPM new code generated = \"$result.code);\n     root1.prune();\n\
+      \     pool[idx].PoolIdx = idx;\n     pool[idx].trials=0;\n     pool[idx].code=result.code;\n\
+      \     root1.Destroy();\n   }\n\n\n result.code=pool[idx].code;\n result.ID=idx;\n\
+      \ saveconfig();\n\n}\n\nfunction returngene( GPinfo incoming )\n{\n // maybe\
+      \ some sort of hash function for indexing genes later ?\n addfitstats(incoming);\n\
+      \ pool[incoming.id].trials ++;\n pool[incoming.id].rank=eval(pool[incoming.id]);\n\
+      \ totaltrials++;\n if(totaltrials % Trials_per_generation==0)\n     breednewpool();\n\
+      \ saveconfig();\n}\n</uscript>\n\nPullgene will be used by the game entity that's\
+      \ going to be controlled by the GP tree to request a new brain for testing,\
+      \ it alternately selects either a random gene or the next one in sequence, this\
+      \ was done so I could ensure that as, long as I run at least twice as many tests\
+      \ as there are candidates in the pool, each candidate is guaranteed to be tested\
+      \ but not only against its immediate neighbours as would happen if I were simply\
+      \ to go through the genes sequentially. \n\nWithin each gene struct is stored\
+      \ an index to the pool array so that when it comes back from the trial and returngene()\
+      \ is called then the appropriate set of fitness stats gets updated, remember\
+      \ there could be any number of in game bots all requesting new brains at different\
+      \ times during a trial so this is the best way to keep track of things IMO.\n\
+      \nNow a break from the higher level logic for an actual genetic operator: the\
+      \ crossover operator. What this should do is take two trees, chose a node at\
+      \ random on each one,and swap over those nodes, along with any sub tree attached\
+      \ to them. \n\n<uscript>\n\nfunction crossover( gene g1, gene g2, out gene g3,\
+      \ out gene g4)\n{\nlocal int n1,n2;\nlocal int nc1,nc2;\nlocal string s1,s2;\n\
+      local gpnode root1,root2, node1, node2;\n\nlog(\" crossover: building trees\
+      \ \");\nroot1=spawn(class'gpnode');\nroot2=spawn(class'gpnode');\n\nlog(\"code\
+      \ string1 =\"$g1.code);\nlog(\"code string2 =\"$g2.code);\nroot1.ReadFromString(g1.code);\n\
+      root2.ReadFromString(g2.code);\n\n// count nodes in candidates\nroot1.CountNodes(nc1);\n\
+      root2.CountNodes(nc2);\n\nlog(\" crossover: nodes counted in tree 1 = \"$nc1);\n\
+      log(\" crossover: nodes counted in tree 2 = \"$nc2);\n// select a couple of\
+      \ nodes at random\n\nn1 = rand(nc1-1)+2;\n\nn2 = rand(nc2-1)+2;\n\nlog(\" Crossover\
+      \ point 1 = \"$n1);\nlog(\" CRossover point 2 = \"$n2);\n\nnode1 = root1.findnode(n1);\n\
+      node2 = root2.findnode(n2);\n\nlog(\" crossover node on tree1 = \"$node1);\n\
+      log(\" crossover node on tree2 = \"$node2);\n//swap over subtrees\n\nnode1.parent.children[node1.childnum]=node2;\n\
+      node2.parent.children[node2.childnum]=node1;\n\n// write out new strings\nroot1.WriteToString(s1);\n\
+      root2.WriteToString(s2);\n\nlog(\" after crossover tree1 =\"$s1);\nlog(\" after\
+      \ crossover tree2 =\"$s2);\n\n// kill orphans\n\n\nroot1.prune(); root1.destroy();\n\
+      root2.prune(); root2.Destroy();\n\n// initialise new stats blocks.\ninitfitstats(g3);\n\
+      initfitstats(g4);\n\n// assign new code strings\n\ng3.code=s1;\ng4.code=s2;\n\
+      // the end!\n}\n</uscript>\n\nAll those logs are from testing and I'm pleased\
+      \ to say it all worked OK... here's some annotated log snippage to illustrate:\n\
+      \nScriptLog:  crossover: building trees \n\nScriptLog: code string1 =XXERQG\n\
+      \nScriptLog: code string2 =N*HNK0.020814LQ-A+<A+HEA+K0.155583GE\n\nScriptLog:\
+      \  crossover: nodes counted in tree 1 = 7\n\nScriptLog:  crossover: nodes counted\
+      \ in tree 2 = 21\n\nScriptLog:  Crossover point 1 = 7\n\nScriptLog:  CRossover\
+      \ point 2 = 11\n\nScriptLog:  crossover node on tree1 = UTronCyclebottrainerTEST.GPTlookLeft4180\n\
+      \nScriptLog:  crossover node on tree2 = UTronCyclebottrainerTEST.GPFplus5064\n\
+      \nSo the seventh node on tree1 is the chosen crossover point with the eleventh\
+      \ node on tree2. Counting along the strings (starting from 2 to allow for the\
+      \ root node) gives us the characters 'G' and '+' respectively and the logged\
+      \ node types agree... great! that means the node counting and selecting routines\
+      \ all work.\n\nScriptLog:  after crossover tree1 =XXERQ+<A+HEA+K0.155583GE\n\
+      \nScriptLog:  after crossover tree2 =N*HNK0.020814LQ-AG\n\nAnd checking those\
+      \ resulting strings confirms that the crossover went OK, woot! \n\nNow for the\
+      \ next main genetic operator... mutation, but this page is getting large so\
+      \ hop on along to:\n\n[[Legacy:Genetic Programming/Mutation|Genetic Programming/Mutation]]\n\
+      \n==your comments welcome==\n\n'''Tarquin:''' Suggestions: \n# move content\
+      \ out of [[Legacy:ZedSquared/Developer Journal|ZedSquared/Developer Journal]]\
+      \ to be episode I of GP.\n# change the page names, eg  [[Legacy:Genetic Programming/Mutation|Genetic\
+      \ Programming/Mutation]] for episode 3.\n\n'''Zedsquared'''  Cheers for the\
+      \ suggestions Tarq, I'll be doing that sort of thing once I get to the end of\
+      \ my adventure, meanwhile it's somewhat of a shambling pile... bit like me really\
+      \ :)"
+  properties: []
+  revId: 3462
+name: "Legacy:Genetic Programming/Genes"
+revision:
+  revid: 3462
+  parentid: 3463
+  user: "Wetering.xs4all.nl"
+  timestamp: 1091373019.000000000
+  comment: "Fixed link"
+timestamp: 1668787830.759067000

@@ -1,0 +1,167 @@
+---
+parse:
+  title: "Legacy:Mod Authoring/Adding A HUD"
+  text:
+    text: "<p>Notice the <a href=\"/Legacy:GameInfo_(UT)\" title=\"Legacy:GameInfo\
+      \ (UT)\">GameInfo (UT)</a> variable HUDType. This is used to specify the type\
+      \ of <a href=\"/Legacy:HUD_(UT)\" title=\"Legacy:HUD (UT)\">HUD (UT)</a> the\
+      \ player will be given if they play your game. <a href=\"/Legacy:DeathMatchPlus\"\
+      \ title=\"Legacy:DeathMatchPlus\">DeathMatchPlus</a> uses a HUDType of Botpack.ChallengeHUD.\
+      \ The <a href=\"/Legacy:ChallengeHUD\" title=\"Legacy:ChallengeHUD\">ChallengeHUD</a>\
+      \ class is the primary HUD for Unreal Tournament. Let's take a look at adding\
+      \ custom HUD elements.</p>\n<p>First, create a subclass of ChallengeHUD. Lets\
+      \ call it MyHUD:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">class</span> MyHUD <span class=\"kw1\">extends</span> ChallengeHUD;</pre></div>\n\
+      </div>\n<p>Now add MyHUD to your gametype's HUDType. In the defaultproperties\
+      \ set MyHUD equal to <code>class'MyPackage.MyHUD'</code> Remember, you can't\
+      \ see <a href=\"/Legacy:Default_Properties\" title=\"Legacy:Default Properties\"\
+      >defaultproperties</a> if you are editing UnrealScript from UnrealEd. Make sure\
+      \ you've exported the source classes and are editing using your own text editor\
+      \ like CoolEdit or MS Dev Studio.</p>\n<p>A HUD does all of its drawing in the\
+      \ PostRender function. PostRender is called after the world has been drawn and\
+      \ all the models in the world have been drawn. The function passes you a canvas,\
+      \ which is an object that is used as an interface to the player's screen. Add\
+      \ a PostRender function to MyHUD:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">function</span> PostRender<span class=\"br0\">(</span><span\
+      \ class=\"kw8\">canvas</span> C<span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n\t<span class=\"kw6\">Super</span>.<span class=\"me0\">PostRender</span><span\
+      \ class=\"br0\">(</span>C<span class=\"br0\">)</span>;\n<span class=\"br0\"\
+      >}</span></pre></div>\n</div>\n<p>What does the Super call do? It calls the\
+      \ parent class version of PostRender. MyHUD's parent class is ChallengeHUD,\
+      \ so that version of PostRender is called. If you add your custom code after\
+      \ the call to Super.PostRender, you'll be able to add elements to the HUD that\
+      \ will draw on top of all the other HUD elements. If you don't call Super.PostRender\
+      \ all of the basic HUD elements like weapon readouts and so forth will not be\
+      \ drawn.</p>\n<p>The <a href=\"/Legacy:Canvas\" title=\"Legacy:Canvas\">Canvas</a>\
+      \ class is defined in the Engine package. You might want to open it up and get\
+      \ a look at its member functions. The ChallengeHUD class is full of good examples\
+      \ on how to draw stuff to the HUD. As an example, lets just draw the player's\
+      \ name on the HUD:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">function</span> PostRender<span class=\"br0\">(</span><span class=\"kw8\"\
+      >canvas</span> C<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \t<span class=\"kw6\">Super</span>.<span class=\"me0\">PostRender</span><span\
+      \ class=\"br0\">(</span>C<span class=\"br0\">)</span>;\n\tC.<span class=\"me0\"\
+      >SetPos</span><span class=\"br0\">(</span> <span class=\"nu0\">0</span>, C.<span\
+      \ class=\"me0\">ClipY</span><span class=\"sy0\">/</span><span class=\"nu0\"\
+      >2</span> <span class=\"br0\">)</span>;\n\tC.<span class=\"me0\">DrawColor</span>.<span\
+      \ class=\"me0\">R</span> <span class=\"sy0\">=</span> <span class=\"nu0\">255</span>;\n\
+      \tC.<span class=\"me0\">DrawColor</span>.<span class=\"me0\">G</span> <span\
+      \ class=\"sy0\">=</span> <span class=\"nu0\">0</span>;\n\tC.<span class=\"me0\"\
+      >DrawColor</span>.<span class=\"me0\">B</span> <span class=\"sy0\">=</span>\
+      \ <span class=\"nu0\">0</span>;\n\tC.<span class=\"me0\">Font</span> <span class=\"\
+      sy0\">=</span> MyFonts.<span class=\"me0\">GetBigFont</span><span class=\"br0\"\
+      >(</span> C.<span class=\"me0\">ClipX</span> <span class=\"br0\">)</span>;\n\
+      \tC.<span class=\"me0\">DrawText</span><span class=\"br0\">(</span> PlayerOwner.<span\
+      \ class=\"me0\">PlayerReplicationInfo</span>.<span class=\"me0\">PlayerName</span>,\
+      \ <span class=\"kw6\">False</span> <span class=\"br0\">)</span>;\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p>This code sets the canvas drawing position\
+      \ to halfway down the screen and all the way to the left. Next, it sets the\
+      \ drawing color to be a deep red. It then asks MyFonts (the ChallengeHUD font\
+      \ info object) to return an appropriate big font. The font size returned depends\
+      \ on the screen's resolution, so we have to tell the FontInfo class what the\
+      \ X length of the screen is. Finally, we draw the player's name.</p>\n<p>Your\
+      \ HUD can be much more complex... adding scrolling features and new types of\
+      \ information readouts. You'll want to look over ChallengeHUD's PostRender function\
+      \ and see how it gets information about the world from PlayerOwner and other\
+      \ related objects. Skillfully changing the HUD can add a whole new look and\
+      \ feel to your modification.</p>\n<hr />\n<p>Prev Page: <a href=\"/Legacy:Mod_Authoring/A_First_Look_At_GameInfo\"\
+      \ title=\"Legacy:Mod Authoring/A First Look At GameInfo\">Legacy:Mod Authoring/A\
+      \ First Look At GameInfo</a> – <b>Section 11 of 12</b> – Next Page: <a href=\"\
+      /Legacy:Mod_Authoring/Adding_A_Scoreboard\" title=\"Legacy:Mod Authoring/Adding\
+      \ A Scoreboard\">Legacy:Mod Authoring/Adding A Scoreboard</a></p>\n\n<!-- \n\
+      NewPP limit report\nCPU time usage: 0.065 seconds\nReal time usage: 0.159 seconds\n\
+      Preprocessor visited node count: 14/1000000\nPreprocessor generated node count:\
+      \ 96/1000000\nPost‐expand include size: 38/2097152 bytes\nTemplate argument\
+      \ size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser function\
+      \ count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:1788-0!*!0!*!*!*!* and timestamp 20221118155522 and revision\
+      \ id 4386\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Default Properties"
+  - ns: 100
+    exists: true
+    name: "Legacy:HUD (UT)"
+  - ns: 100
+    exists: true
+    name: "Legacy:GameInfo (UT)"
+  - ns: 100
+    exists: true
+    name: "Legacy:DeathMatchPlus"
+  - ns: 100
+    exists: true
+    name: "Legacy:Mod Authoring/A First Look At GameInfo"
+  - ns: 100
+    exists: true
+    name: "Legacy:Canvas"
+  - ns: 100
+    exists: true
+    name: "Legacy:ChallengeHUD"
+  - ns: 100
+    exists: true
+    name: "Legacy:Mod Authoring/Adding A Scoreboard"
+  templates: []
+  images: []
+  externallinks: []
+  sections: []
+  displaytitle: "Legacy:Mod Authoring/Adding A HUD"
+  iwlinks: []
+  wikitext:
+    text: "Notice the [[Legacy:GameInfo (UT)|GameInfo (UT)]] variable HUDType. This\
+      \ is used to specify the type of [[Legacy:HUD (UT)|HUD (UT)]] the player will\
+      \ be given if they play your game. [[Legacy:DeathMatchPlus|DeathMatchPlus]]\
+      \ uses a HUDType of Botpack.ChallengeHUD. The [[Legacy:ChallengeHUD|ChallengeHUD]]\
+      \ class is the primary HUD for Unreal Tournament. Let's take a look at adding\
+      \ custom HUD elements.\n\nFirst, create a subclass of ChallengeHUD. Lets call\
+      \ it MyHUD:\n\n<uscript>class MyHUD extends ChallengeHUD;</uscript>\n\nNow add\
+      \ MyHUD to your gametype's HUDType. In the defaultproperties set MyHUD equal\
+      \ to <code>class'MyPackage.MyHUD'</code> Remember, you can't see [[Legacy:Default\
+      \ Properties|defaultproperties]] if you are editing UnrealScript from UnrealEd.\
+      \ Make sure you've exported the source classes and are editing using your own\
+      \ text editor like CoolEdit or MS Dev Studio.\n\nA HUD does all of its drawing\
+      \ in the PostRender function. PostRender is called after the world has been\
+      \ drawn and all the models in the world have been drawn. The function passes\
+      \ you a canvas, which is an object that is used as an interface to the player's\
+      \ screen. Add a PostRender function to MyHUD:\n\n<uscript>\nfunction PostRender(canvas\
+      \ C)\n{\n\tSuper.PostRender(C);\n}\n</uscript>\n\nWhat does the Super call do?\
+      \ It calls the parent class version of PostRender. MyHUD's parent class is ChallengeHUD,\
+      \ so that version of PostRender is called. If you add your custom code after\
+      \ the call to Super.PostRender, you'll be able to add elements to the HUD that\
+      \ will draw on top of all the other HUD elements. If you don't call Super.PostRender\
+      \ all of the basic HUD elements like weapon readouts and so forth will not be\
+      \ drawn.\n\nThe [[Legacy:Canvas|Canvas]] class is defined in the Engine package.\
+      \ You might want to open it up and get a look at its member functions. The ChallengeHUD\
+      \ class is full of good examples on how to draw stuff to the HUD. As an example,\
+      \ lets just draw the player's name on the HUD:\n\n<uscript>\nfunction PostRender(canvas\
+      \ C)\n{\n\tSuper.PostRender(C);\n\tC.SetPos( 0, C.ClipY/2 );\n\tC.DrawColor.R\
+      \ = 255;\n\tC.DrawColor.G = 0;\n\tC.DrawColor.B = 0;\n\tC.Font = MyFonts.GetBigFont(\
+      \ C.ClipX );\n\tC.DrawText( PlayerOwner.PlayerReplicationInfo.PlayerName, False\
+      \ );\n}\n</uscript>\n\nThis code sets the canvas drawing position to halfway\
+      \ down the screen and all the way to the left. Next, it sets the drawing color\
+      \ to be a deep red. It then asks MyFonts (the ChallengeHUD font info object)\
+      \ to return an appropriate big font. The font size returned depends on the screen's\
+      \ resolution, so we have to tell the FontInfo class what the X length of the\
+      \ screen is. Finally, we draw the player's name.\n\nYour HUD can be much more\
+      \ complex... adding scrolling features and new types of information readouts.\
+      \ You'll want to look over ChallengeHUD's PostRender function and see how it\
+      \ gets information about the world from PlayerOwner and other related objects.\
+      \ Skillfully changing the HUD can add a whole new look and feel to your modification.\n\
+      \n----\n\nPrev Page: [[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/A First Look At GameInfo]]\
+      \ &ndash; '''Section 11 of 12''' &ndash; Next Page: [[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/Adding\
+      \ A Scoreboard]]"
+  properties: []
+  revId: 4386
+name: "Legacy:Mod Authoring/Adding A HUD"
+revision:
+  revid: 4386
+  parentid: 4387
+  user: "Cache1-nrth.server.ntli.net"
+  timestamp: 1048961307.000000000
+  comment: "Fixed the code"
+timestamp: 1668786845.623042000

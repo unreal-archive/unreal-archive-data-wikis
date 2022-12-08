@@ -1,0 +1,368 @@
+---
+parse:
+  title: "Legacy:FPS AI Architecture, Continued"
+  text:
+    text: "<p><i>(Continued from, <a href=\"/Legacy:First_Person_Shooter_AI_Architecture\"\
+      \ title=\"Legacy:First Person Shooter AI Architecture\">First Person Shooter\
+      \ AI Architecture</a>)</i></p>\n<p></p>\n<div id=\"toc\" class=\"toc\">\n<div\
+      \ id=\"toctitle\">\n<h2>Contents</h2>\n</div>\n<ul>\n<li class=\"toclevel-1\
+      \ tocsection-1\"><a href=\"#The_Simulation_of_Realistic_AI_Spatial_Comprehension:\"\
+      ><span class=\"tocnumber\">1</span> <span class=\"toctext\">The Simulation of\
+      \ Realistic AI Spatial Comprehension:</span></a></li>\n<li class=\"toclevel-1\
+      \ tocsection-2\"><a href=\"#Combat_AI_Tactics_during_Gameplay\"><span class=\"\
+      tocnumber\">2</span> <span class=\"toctext\">Combat AI Tactics during Gameplay</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-3\"><a href=\"#The_Integrated_Agent_Behavior_Control_Component\"\
+      ><span class=\"tocnumber\">3</span> <span class=\"toctext\">The Integrated Agent\
+      \ Behavior Control Component</span></a></li>\n<li class=\"toclevel-1 tocsection-4\"\
+      ><a href=\"#The_UnrealScript_Language_and_the_Event-Trigger_System\"><span class=\"\
+      tocnumber\">4</span> <span class=\"toctext\">The UnrealScript Language and the\
+      \ Event-Trigger System</span></a></li>\n<li class=\"toclevel-1 tocsection-5\"\
+      ><a href=\"#Perceptual_Modeling\"><span class=\"tocnumber\">5</span> <span class=\"\
+      toctext\">Perceptual Modeling</span></a></li>\n<li class=\"toclevel-1 tocsection-6\"\
+      ><a href=\"#Related_Topics\"><span class=\"tocnumber\">6</span> <span class=\"\
+      toctext\">Related Topics</span></a></li>\n<li class=\"toclevel-1 tocsection-7\"\
+      ><a href=\"#Discussion\"><span class=\"tocnumber\">7</span> <span class=\"toctext\"\
+      >Discussion</span></a></li>\n</ul>\n</div>\n<p></p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"The_Simulation_of_Realistic_AI_Spatial_Comprehension:\">The Simulation\
+      \ of Realistic AI Spatial Comprehension:</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:FPS_AI_Architecture,_Continued?section=1\"\
+      \ title=\"Edit section: The Simulation of Realistic AI Spatial Comprehension:\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>The\
+      \ primary problem for AIs attempting to perform spatial and pathfinding reasoning\
+      \ and determining strategy, is that the raw geometry of the level itself is\
+      \ incredibly difficult to parse. Attempting to perform reasoning with the raw\
+      \ geometry at runtime would be prohibitively expensive, because the geometry\
+      \ often contains so many extraneous and irrelevant details. A section of Solid\
+      \ Constructive Geometry (SCG), for example, might be composed of numerous aggregate\
+      \ polygons, but the AI is only concerned with its collision characteristic as\
+      \ a barrier to travel.</p>\n<p>As with the global pathfinding problem, the most\
+      \ often employed solution is to build an optimized structural database. Developers\
+      \ can construct a very simple, streamlined database of spatial tactical data\
+      \ that contains only the key information the combat AI will require to understand\
+      \ the tactical significance of various spatial configurations of the level.</p>\n\
+      <p>Customized Graphical User Interfaces can automatically analyze a given level?s\
+      \ static geometry, determine the tactical significance of different areas, and\
+      \ automatically generate a detailed tactical database that will be used to direct\
+      \ game agent mobility. Level designers also are required to embed specific indicator\
+      \ objects into their navigation systems, designating certain areas as ambush\
+      \ points, defense points, patrolling and event-driven activity, and other command\
+      \ options. (See also, <a href=\"/Legacy:NavigationPoint\" title=\"Legacy:NavigationPoint\"\
+      >NavigationPoint</a>)</p>\n<p>The only major drawback to a precomputed database\
+      \ is that it can sometimes work poorly in environments with a large number of\
+      \ dynamic obstacles.</p>\n<h2><span class=\"mw-headline\" id=\"Combat_AI_Tactics_during_Gameplay\"\
+      >Combat AI Tactics during Gameplay</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:FPS_AI_Architecture,_Continued?section=2\"\
+      \ title=\"Edit section: Combat AI Tactics during Gameplay\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<p>With the generation of a CSG\
+      \ tactical database, we need to direct the game AIs to access it. A combat AI\
+      \ component will typically draw from a structured library of tactics, in which\
+      \ each tactic is responsible for executing a specific behavior in combat. Prospective\
+      \ tactics must communicate with the movement and animation subsystems to ensure\
+      \ that it exhibits the appropriate behaviors.</p>\n<p>Another critical problem\
+      \ is the tactic selection problem. Given an arbitrary situation in combat, we\
+      \ need to pick the best tactic with which to attack our opponents so that the\
+      \ game is continually challenging. This decision will depend on three major\
+      \ factors: the nature of the tactic under consideration, the relative tactical\
+      \ significance of all the combatants? various locations (as determined by the\
+      \ tactical database), and the current tactical situation (the AI agents health,\
+      \ weapon, ammo, and location, plus the values of those characteristics for all\
+      \ of its allies and opponents).</p>\n<p>A related problem is the opponent-selection\
+      \ problem. Given a number of potential opponents, the combat AI needs to select\
+      \ one as the current&#160;?target?. Although it does not necessarily ignore\
+      \ all of its other adversaries, we need to designate a&#160;?target? to represent\
+      \ the fact that the AI will engage a single enemy at a time.</p>\n<p>In complex\
+      \ game situations, it is usually easy to find a good target-picking heuristic\
+      \ by considering the relative tactical situation of the AI against every potential\
+      \ opponent. An AI is primarily concerned with defending itself first, and then\
+      \ attempting to identify whether any particular opponent is immediately threatening.\
+      \ If not, it can identify the most vulnerable target nearest to itself. A simple\
+      \ ranking function can easily make this determination and call the appropriate\
+      \ combat command.</p>\n<p>After an AI has selected a target and initiated combat,\
+      \ it should consider changing its target whenever its tactical situation changes\
+      \ significantly. Obviously, if the AI or its target dies, that?s a good time\
+      \ to reconsider the current target.</p>\n<p>Finally, there?s the weapon-firing\
+      \ problem. Most FPS weapons are high-velocity ranged (or hit-scan) weapons,\
+      \ so the key problem is determining where and along which line of sight to fire.</p>\n\
+      <h2><span class=\"mw-headline\" id=\"The_Integrated_Agent_Behavior_Control_Component\"\
+      >The Integrated Agent Behavior Control Component</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:FPS_AI_Architecture,_Continued?section=3\"\
+      \ title=\"Edit section: The Integrated Agent Behavior Control Component\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>At the top of the\
+      \ AI system hierarchy is the dominant control component called the behavior\
+      \ controller. This controller is responsible for determining the AI agent?s\
+      \ current state and a range of high-level goals. It determines the AIs overall\
+      \ behavior&#160;? how it animates, what audio files it plays, where it moves,\
+      \ and when and how it enters combat.</p>\n<p>There are any number of ways to\
+      \ model a behavior controller, depending on your game?s design requirements.\
+      \ Most FPS games use a finite-state machine (FSM) for this part of the AI.<br\
+      \ /></p>\n<p>The list below provides some typical states in the FSM for a typical\
+      \ FPS:</p>\n<dl>\n<dt>Idle&#160;</dt>\n<dd>The AI is standing guard, or not\
+      \ engaged in combat or movement.</dd>\n<dt>Patrolling&#160;</dt>\n<dd>The AI\
+      \ is following a designer-specified patrol path.</dd>\n<dt>Combat&#160;</dt>\n\
+      <dd>The AI is engaged in combat and has passed most of the responsibility for\
+      \ character control over to the combat controller.</dd>\n<dt>Wandering&#160;</dt>\n\
+      <dd>Probably a fugue state, maybe even suffering romantic difficulties.</dd>\n\
+      <dt>Fleeing&#160;</dt>\n<dd>The AI is attempting to flee its opponent or any\
+      \ perceived threat.</dd>\n<dt>Searching&#160;</dt>\n<dd>The AI is looking for\
+      \ an opponent to fight or searching for an opponent who fled during combat.</dd>\n\
+      </dl>\n<p>These behaviors are each represented by an object that is responsible\
+      \ for communicating with the movement, animation, and combat subsystems in order\
+      \ to represent the behaviors appropriately. Developing these behaviors will\
+      \ typically be very easy, since the movement, animation, and combat subsystems\
+      \ already do most of the work and provide a rich palette of basic behaviors\
+      \ for the behavioral component to assimilate.</p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"The_UnrealScript_Language_and_the_Event-Trigger_System\">The UnrealScript\
+      \ Language and the Event-Trigger System</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:FPS_AI_Architecture,_Continued?section=4\"\
+      \ title=\"Edit section: The UnrealScript Language and the Event-Trigger System\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>Level\
+      \ designers will inevitably need some way to specify their design intentions\
+      \ in certain ambiguous or confusing sectors of the game. They need a way to\
+      \ take some degree of control over the AI for triggered gameplay sequences,\
+      \ cut scenes, or other&#160;?triggered? or&#160;?scripted? events that should\
+      \ happen during the game under certain circumstances. In order to make this\
+      \ happen, it?s necessary to design an interface for communication between the\
+      \ trigger/scripting system and the agent AI.</p>\n<p>This communication will\
+      \ typically take two forms. First, the triggered events can set AI parameters.\
+      \ For example, an event might enable or disable certain states of the behavior\
+      \ controller?s finite-state machine, or modify various aggressiveness parameters\
+      \ to change the priority of various potential combat tactics.</p>\n<p>The more\
+      \ common form of communication consists of sending commands to any of the AI\
+      \ subsystems from a triggered event. For example, the trigger system can tell\
+      \ an AI to move to a given point or to flee from its current target by issuing\
+      \ a command to its behavior controller. This command changes the current state\
+      \ of the FSM to one that will execute the appropriate behaviors.</p>\n<h2><span\
+      \ class=\"mw-headline\" id=\"Perceptual_Modeling\">Perceptual Modeling</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:FPS_AI_Architecture,_Continued?section=5\" title=\"Edit\
+      \ section: Perceptual Modeling\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>A game player's perception (data input) is broken\
+      \ down into different subsystems. Different types of perception work differently,\
+      \ so we model our character's visual, auditory, and tactile subsystems seperately.</p>\n\
+      <p>The visual subsystem should take into account such factors as the distance\
+      \ to a given visual stimulus, the angle of the stimulus relative to the AIs\
+      \ field of view, and the current visibility level at the location of the stimulus\
+      \ (lighting and fog, and obstructions).</p>\n<p>In order to ensure that the\
+      \ AI can actually see the object, it's also essential to use a Ray-Tracing network.\
+      \ The AI should query the underlying game engine to ensure that there's a clear\
+      \ line-of-sight between the AIs eyes and the object its attempting to see.</p>\n\
+      <p>The final sensory subsystem is the tactile subsystem. This system is responsible\
+      \ for anything the AI feels. This includes damage notifications (whenever the\
+      \ AI is wounded) as well as collision notifications (whenever the AI bumps into\
+      \ something, or some other object bumps into it).</p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Related_Topics\">Related Topics</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:FPS_AI_Architecture,_Continued?section=6\"\
+      \ title=\"Edit section: Related Topics\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<ul>\n<li><a href=\"/Legacy:Artificial_Intelligence\"\
+      \ title=\"Legacy:Artificial Intelligence\">Artificial Intelligence</a></li>\n\
+      <li><a href=\"/Legacy:Introduction_To_Game_AI\" title=\"Legacy:Introduction\
+      \ To Game AI\">Introduction to Game AI</a></li>\n<li><a href=\"/Legacy:First_Person_Shooter_AI_Architecture\"\
+      \ title=\"Legacy:First Person Shooter AI Architecture\">First Person Shooter\
+      \ AI Architecture</a></li>\n</ul>\n<h2><span class=\"mw-headline\" id=\"Discussion\"\
+      >Discussion</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:FPS_AI_Architecture,_Continued?section=7\" title=\"\
+      Edit section: Discussion\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p><b>SuperApe:</b> Heady stuff. Nice addition to the wiki.</p>\n\n<!-- \nNewPP\
+      \ limit report\nCPU time usage: 0.034 seconds\nReal time usage: 0.035 seconds\n\
+      Preprocessor visited node count: 28/1000000\nPreprocessor generated node count:\
+      \ 34/1000000\nPost‐expand include size: 0/2097152 bytes\nTemplate argument size:\
+      \ 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser function\
+      \ count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:1230-0!*!0!!en!*!* and timestamp 20221118024658 and revision\
+      \ id 3177\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:First Person Shooter AI Architecture"
+  - ns: 100
+    exists: true
+    name: "Legacy:Artificial Intelligence"
+  - ns: 100
+    exists: true
+    name: "Legacy:NavigationPoint"
+  - ns: 100
+    exists: true
+    name: "Legacy:Introduction To Game AI"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "The Simulation of Realistic AI Spatial Comprehension:"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:FPS_AI_Architecture,_Continued"
+    byteoffset: 108
+    anchor: "The_Simulation_of_Realistic_AI_Spatial_Comprehension:"
+  - toclevel: 1
+    level: "2"
+    line: "Combat AI Tactics during Gameplay"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:FPS_AI_Architecture,_Continued"
+    byteoffset: 1779
+    anchor: "Combat_AI_Tactics_during_Gameplay"
+  - toclevel: 1
+    level: "2"
+    line: "The Integrated Agent Behavior Control Component"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:FPS_AI_Architecture,_Continued"
+    byteoffset: 4058
+    anchor: "The_Integrated_Agent_Behavior_Control_Component"
+  - toclevel: 1
+    level: "2"
+    line: "The UnrealScript Language and the Event-Trigger System"
+    number: "4"
+    index: "4"
+    fromtitle: "Legacy:FPS_AI_Architecture,_Continued"
+    byteoffset: 5690
+    anchor: "The_UnrealScript_Language_and_the_Event-Trigger_System"
+  - toclevel: 1
+    level: "2"
+    line: "Perceptual Modeling"
+    number: "5"
+    index: "5"
+    fromtitle: "Legacy:FPS_AI_Architecture,_Continued"
+    byteoffset: 6935
+    anchor: "Perceptual_Modeling"
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "6"
+    index: "6"
+    fromtitle: "Legacy:FPS_AI_Architecture,_Continued"
+    byteoffset: 7986
+    anchor: "Related_Topics"
+  - toclevel: 1
+    level: "2"
+    line: "Discussion"
+    number: "7"
+    index: "7"
+    fromtitle: "Legacy:FPS_AI_Architecture,_Continued"
+    byteoffset: 8215
+    anchor: "Discussion"
+  displaytitle: "Legacy:FPS AI Architecture, Continued"
+  iwlinks: []
+  wikitext:
+    text: "''(Continued from, [[Legacy:First Person Shooter AI Architecture|First\
+      \ Person Shooter AI Architecture]])''\n\n==The Simulation of Realistic AI Spatial\
+      \ Comprehension:==\n\nThe primary problem for AIs attempting to perform spatial\
+      \ and pathfinding reasoning and determining strategy, is that the raw geometry\
+      \ of the level itself is incredibly difficult to parse. Attempting to perform\
+      \ reasoning with the raw geometry at runtime would be prohibitively expensive,\
+      \ because the geometry often contains so many extraneous and irrelevant details.\
+      \ A section of Solid Constructive Geometry (SCG), for example, might be composed\
+      \ of numerous aggregate polygons, but the AI is only concerned with its collision\
+      \ characteristic as a barrier to travel.\n\nAs with the global pathfinding problem,\
+      \ the most often employed solution is to build an optimized structural database.\
+      \ Developers can construct a very simple, streamlined database of spatial tactical\
+      \ data that contains only the key information the combat AI will require to\
+      \ understand the tactical significance of various spatial configurations of\
+      \ the level.\n\nCustomized Graphical User Interfaces can automatically analyze\
+      \ a given level?s static geometry, determine the tactical significance of different\
+      \ areas, and automatically generate a detailed tactical database that will be\
+      \ used to direct game agent mobility. Level designers also are required to embed\
+      \ specific indicator objects into their navigation systems, designating certain\
+      \ areas as ambush points, defense points, patrolling and event-driven activity,\
+      \ and other command options. (See also, [[Legacy:NavigationPoint|NavigationPoint]])\
+      \ \n\nThe only major drawback to a precomputed database is that it can sometimes\
+      \ work poorly in environments with a large number of dynamic obstacles.\n\n\
+      ==Combat AI Tactics during Gameplay==\n\nWith the generation of a CSG tactical\
+      \ database, we need to direct the game AIs to access it. A combat AI component\
+      \ will typically draw from a structured library of tactics, in which each tactic\
+      \ is responsible for executing a specific behavior in combat. Prospective tactics\
+      \ must communicate with the movement and animation subsystems to ensure that\
+      \ it exhibits the appropriate behaviors.\n\nAnother critical problem is the\
+      \ tactic selection problem. Given an arbitrary situation in combat, we need\
+      \ to pick the best tactic with which to attack our opponents so that the game\
+      \ is continually challenging. This decision will depend on three major factors:\
+      \ the nature of the tactic under consideration, the relative tactical significance\
+      \ of all the combatants? various locations (as determined by the tactical database),\
+      \ and the current tactical situation (the AI agents health, weapon, ammo, and\
+      \ location, plus the values of those characteristics for all of its allies and\
+      \ opponents).\n\nA related problem is the opponent-selection problem. Given\
+      \ a number of potential opponents, the combat AI needs to select one as the\
+      \ current ?target?. Although it does not necessarily ignore all of its other\
+      \ adversaries, we need to designate a ?target? to represent the fact that the\
+      \ AI will engage a single enemy at a time.\n\nIn complex game situations, it\
+      \ is usually easy to find a good target-picking heuristic by considering the\
+      \ relative tactical situation of the AI against every potential opponent. An\
+      \ AI is primarily concerned with defending itself first, and then attempting\
+      \ to identify whether any particular opponent is immediately threatening. If\
+      \ not, it can identify the most vulnerable target nearest to itself. A simple\
+      \ ranking function can easily make this determination and call the appropriate\
+      \ combat command.\n\nAfter an AI has selected a target and initiated combat,\
+      \ it should consider changing its target whenever its tactical situation changes\
+      \ significantly. Obviously, if the AI or its target dies, that?s a good time\
+      \ to reconsider the current target.\n\nFinally, there?s the weapon-firing problem.\
+      \ Most FPS weapons are high-velocity ranged (or hit-scan) weapons, so the key\
+      \ problem is determining where and along which line of sight to fire.\n\n==The\
+      \ Integrated Agent Behavior Control Component==\n\nAt the top of the AI system\
+      \ hierarchy is the dominant control component called the behavior controller.\
+      \ This controller is responsible for determining the AI agent?s current state\
+      \ and a range of high-level goals. It determines the AIs overall behavior ?\
+      \ how it animates, what audio files it plays, where it moves, and when and how\
+      \ it enters combat.\n\nThere are any number of ways to model a behavior controller,\
+      \ depending on your game?s design requirements. Most FPS games use a finite-state\
+      \ machine (FSM) for this part of the AI. <br />\n\nThe list below provides some\
+      \ typical states in the FSM for a typical FPS:\n; Idle : The AI is standing\
+      \ guard, or not engaged in combat or movement.\n; Patrolling : The AI is following\
+      \ a designer-specified patrol path.\n; Combat : The AI is engaged in combat\
+      \ and has passed most of the responsibility for character control over to the\
+      \ combat controller.\n; Wandering : Probably a fugue state, maybe even suffering\
+      \ romantic difficulties.\n; Fleeing : The AI is attempting to flee its opponent\
+      \ or any perceived threat.\n; Searching : The AI is looking for an opponent\
+      \ to fight or searching for an opponent who fled during combat.\n\nThese behaviors\
+      \ are each represented by an object that is responsible for communicating with\
+      \ the movement, animation, and combat subsystems in order to represent the behaviors\
+      \ appropriately. Developing these behaviors will typically be very easy, since\
+      \ the movement, animation, and combat subsystems already do most of the work\
+      \ and provide a rich palette of basic behaviors for the behavioral component\
+      \ to assimilate.\n\n==The UnrealScript Language and the Event-Trigger System==\n\
+      \nLevel designers will inevitably need some way to specify their design intentions\
+      \ in certain ambiguous or confusing sectors of the game. They need a way to\
+      \ take some degree of control over the AI for triggered gameplay sequences,\
+      \ cut scenes, or other ?triggered? or ?scripted? events that should happen during\
+      \ the game under certain circumstances. In order to make this happen, it?s necessary\
+      \ to design an interface for communication between the trigger/scripting system\
+      \ and the agent AI.\n\nThis communication will typically take two forms. First,\
+      \ the triggered events can set AI parameters. For example, an event might enable\
+      \ or disable certain states of the behavior controller?s finite-state machine,\
+      \ or modify various aggressiveness parameters to change the priority of various\
+      \ potential combat tactics.\n\nThe more common form of communication consists\
+      \ of sending commands to any of the AI subsystems from a triggered event. For\
+      \ example, the trigger system can tell an AI to move to a given point or to\
+      \ flee from its current target by issuing a command to its behavior controller.\
+      \ This command changes the current state of the FSM to one that will execute\
+      \ the appropriate behaviors.\n\n==Perceptual Modeling==\n\nA game player's perception\
+      \ (data input) is broken down into different subsystems. Different types of\
+      \ perception work differently, so we model our character's visual, auditory,\
+      \ and tactile subsystems seperately.\n\nThe visual subsystem should take into\
+      \ account such factors as the distance to a given visual stimulus, the angle\
+      \ of the stimulus relative to the AIs field of view, and the current visibility\
+      \ level at the location of the stimulus (lighting and fog, and obstructions).\n\
+      \nIn order to ensure that the AI can actually see the object, it's also essential\
+      \ to use a Ray-Tracing network. The AI should query the underlying game engine\
+      \ to ensure that there's a clear line-of-sight between the AIs eyes and the\
+      \ object its attempting to see.\n\nThe final sensory subsystem is the tactile\
+      \ subsystem. This system is responsible for anything the AI feels. This includes\
+      \ damage notifications (whenever the AI is wounded) as well as collision notifications\
+      \ (whenever the AI bumps into something, or some other object bumps into it).\n\
+      \n==Related Topics==\n* [[Legacy:Artificial Intelligence|Artificial Intelligence]]\n\
+      * [[Legacy:Introduction To Game AI|Introduction to Game AI]]\n* [[Legacy:First\
+      \ Person Shooter AI Architecture|First Person Shooter AI Architecture]]\n\n\
+      ==Discussion==\n\n'''SuperApe:''' Heady stuff.  Nice addition to the wiki."
+  properties: []
+  revId: 3177
+name: "Legacy:FPS AI Architecture, Continued"
+revision:
+  revid: 3177
+  parentid: 3179
+  user: "Wormbo"
+  timestamp: 1144396820.000000000
+  comment: "reverted"
+timestamp: 1668766762.111502000

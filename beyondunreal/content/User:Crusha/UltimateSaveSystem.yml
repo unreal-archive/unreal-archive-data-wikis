@@ -1,0 +1,633 @@
+---
+parse:
+  title: "User:Crusha/UltimateSaveSystem"
+  text:
+    text: "<p><b>UltimateSaveSystem</b> is a ready-to-use solution for writing and\
+      \ reading variables from UnrealScript or Kismet into and from binary files,\
+      \ using unique names to find the value in the file. It is capable of saving\
+      \ Integer, Float, Boolean, Vector and String variables (with unlimited length).</p>\n\
+      <p>The DLL creates a separate file for each data type set, since it's easier\
+      \ to handle that way. This doesn't have any effect on the usability of the code.\
+      \ If the save name is \"Test\", the file you save is a float and the extension\
+      \ is the default one, then the resulting file will be named \"Test_f.sav\".\
+      \ Files are saved in the Binaries\\Win32\\UserCode folder.</p>\n<p><br />\n\
+      This page will give you a quick guide through the contents of this package.\
+      \ Afterwards will I give you a quick example of how to use this UltimateSaveSystem\
+      \ to spawn the player at a checkpoint he touched in a previous session when\
+      \ he starts the game the next time.</p>\n<p>The DLL-side should be irrelevant\
+      \ for most people here and the others can probably find out more by simply reading\
+      \ through it, so I will only talk about the Unreal side here.</p>\n<p><br /></p>\n\
+      <p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n\
+      </div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#Main_Class\"\
+      ><span class=\"tocnumber\">1</span> <span class=\"toctext\">Main Class</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-2\"><a href=\"#Kismet_SeqActions\"><span class=\"\
+      tocnumber\">2</span> <span class=\"toctext\">Kismet SeqActions</span></a>\n\
+      <ul>\n<li class=\"toclevel-2 tocsection-3\"><a href=\"#SeqAct_SetCurrentSaveName\"\
+      ><span class=\"tocnumber\">2.1</span> <span class=\"toctext\">SeqAct_SetCurrentSaveName</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-4\"><a href=\"#SeqAct_SaveVariable\"><span\
+      \ class=\"tocnumber\">2.2</span> <span class=\"toctext\">SeqAct_SaveVariable</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-5\"><a href=\"#SeqAct_LoadVariable\"><span\
+      \ class=\"tocnumber\">2.3</span> <span class=\"toctext\">SeqAct_LoadVariable</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-6\"><a href=\"#SeqAct_DeleteVariable\"><span\
+      \ class=\"tocnumber\">2.4</span> <span class=\"toctext\">SeqAct_DeleteVariable</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-7\"><a href=\"#SeqAct_DeleteAllVariables\"\
+      ><span class=\"tocnumber\">2.5</span> <span class=\"toctext\">SeqAct_DeleteAllVariables</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-8\"><a href=\"#SeqAct_SaveValue\"><span class=\"\
+      tocnumber\">2.6</span> <span class=\"toctext\">SeqAct_SaveValue</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-9\"><a href=\"#SeqAct_LoadValue\"><span class=\"\
+      tocnumber\">2.7</span> <span class=\"toctext\">SeqAct_LoadValue</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-10\"><a href=\"#SeqAct_DeleteValue\"><span\
+      \ class=\"tocnumber\">2.8</span> <span class=\"toctext\">SeqAct_DeleteValue</span></a></li>\n\
+      </ul>\n</li>\n<li class=\"toclevel-1 tocsection-11\"><a href=\"#Tutorial:_Using_the_Kismet-parts_of_this_SaveSystem\"\
+      ><span class=\"tocnumber\">3</span> <span class=\"toctext\">Tutorial: Using\
+      \ the Kismet-parts of this SaveSystem</span></a></li>\n<li class=\"toclevel-1\
+      \ tocsection-12\"><a href=\"#Download\"><span class=\"tocnumber\">4</span> <span\
+      \ class=\"toctext\">Download</span></a></li>\n<li class=\"toclevel-1 tocsection-13\"\
+      ><a href=\"#Permissions\"><span class=\"tocnumber\">5</span> <span class=\"\
+      toctext\">Permissions</span></a></li>\n<li class=\"toclevel-1 tocsection-14\"\
+      ><a href=\"#Credits\"><span class=\"tocnumber\">6</span> <span class=\"toctext\"\
+      >Credits</span></a></li>\n</ul>\n</div>\n<p></p>\n<h1><span class=\"mw-headline\"\
+      \ id=\"Main_Class\">Main Class</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/User:Crusha/UltimateSaveSystem?section=1\"\
+      \ title=\"Edit section: Main Class\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h1>\n<p>The heart of this pack is the <b>UltimateSaveSystem</b>\
+      \ class. It provides the functionality to communicate with the DLL and can be\
+      \ referenced from any point in script to save or load values. All other classes\
+      \ in this pack rely on it as well. It basically consists of the DLLImport functions\
+      \ and their UScript pendants as wrapper functions. You should always call the\
+      \ wrappers and not the actual DLLImports.</p>\n<p>There are 9 different operations\
+      \ that can be executed in the DLL and each of these 9 operations exist for each\
+      \ of the 5 supported data types plus one that works for all data types plus\
+      \ one additional static function, giving you 47 functions in this class.</p>\n\
+      <p><br />\nLet's start with the static function: <b>GetSaveSystem()</b></p>\n\
+      <p>This one will simply give you a reference to the UltimateSaveSystem instance\
+      \ so that you can reference it for easy use in other classes. If the Actor doesn't\
+      \ exist yet, a new one is spawned and returned. Same as <i>WorldInfo.static.GetWorldInfo()</i>\
+      \ would do.</p>\n<p><br /></p>\n<p>Now we come to the functions that communicate\
+      \ with the DLL. Most of them simply call the actual DLL-function, but the String\
+      \ implementation has some special implementation that allows it to save and\
+      \ load strings of unlimited length. You should also pay attention that the Bool\
+      \ functions use Int as argument, where 0 is False and Non-Zero (usually 1) is\
+      \ True.</p>\n<p>X is the name of variable type here. (Int,Float,Bool,Vect,String)</p>\n\
+      <p><br />\n<b>Import*X*(Value, PropertyName)</b> will load a name-value pair\
+      \ of type X into a dynamic array inside the DLL. The entry is in the array now,\
+      \ but it's not yet saved (this is for optimization purposes because you generally\
+      \ only need to save once after importing many stuff). If an entry with the given\
+      \ name already exists in that array, only it's value will be changed. No return\
+      \ value for this function.</p>\n<p><b>Save*X*List(SaveName)</b> will save the\
+      \ whole array in the DLL into a file with the specified name. The different\
+      \ files are independent per data type and list, so if you add entries to a Bool\
+      \ and Int list, you have to save both lists manually. True is returned if the\
+      \ file could be saved/created successfully.</p>\n<p><b>Load*X*List(SaveName)</b>\
+      \ will load an array from the file with the matching name into the DLL. A loaded\
+      \ list will stay valid until a new map is loaded or you load a list of the same\
+      \ type from another file. True is returned if a file with the save name was\
+      \ found.</p>\n<p><b>Export*X*(PropertyName, out Value)</b> will look for an\
+      \ entry with the matching property name and returns the associated value as\
+      \ out parameter. True is returned if an entry with the specified name was found\
+      \ (you can also use this as test to see if a certain name-value pair already\
+      \ exists).</p>\n<p><b>Delete*X*(PropertyName)</b> will look for an entry with\
+      \ the matching property name and remove it from the array. The array needs to\
+      \ be saved manually afterwards. True is returned if an entry was found.</p>\n\
+      <p><b>DeleteAll*X*(SaveName)</b> will delete the whole file that holds this\
+      \ data type. A new one will be created as soon as something needs to be saved\
+      \ again. Returns True if the file was deleted successfully.</p>\n<p><b>DeleteWholeSave(SaveName)</b>\
+      \ will call the function above for all data types and only returns False if\
+      \ no file for none of the data types existed. This is just helpful for a SeqAction.</p>\n\
+      <p><br />\nThe Load, Save and Delete functions come also in a variant that works\
+      \ with arrays:</p>\n<p><b>Save*X*Array(Values, ArrayName)</b> will call the\
+      \ functions above for each individual entry of the array passed as \"Values\"\
+      \ and save and load them with the name <i>ArrayName[i]</i>, where [i] is the\
+      \ index of the element in the array. So if you submit an Int array with 3 entries\
+      \ and the ArrayName \"Numbers\", it will save the three values in the file with\
+      \ the names Numbers0, Numbers1 and Numbers2. Keep in mind that these are not\
+      \ specially distinguished from other names in the file, so you could accidentally\
+      \ overwrite old values if you saved on as \"Numbers1\", for example. But on\
+      \ the other hand can you also load individual properties of the array this way,\
+      \ if you know their index.</p>\n<p><b>Load*X*Array(ArrayName, Values)</b> will\
+      \ load the values that were saved with the above array-naming layout and return\
+      \ them as a real array.</p>\n<p><b>Delete*X*Array(ArrayName)</b> will delete\
+      \ all values named after the array-naming layout. As for the Load function,\
+      \ this will start at index 0 and will continue in consecutive order until no\
+      \ more name+index entries are found.</p>\n<p><br /></p>\n<p>In the end I should\
+      \ mention that you can change the file extension of your saves in the DefaultProperties\
+      \ of this class, in case you're going to re-compile it anyway. The default extension\
+      \ is \".sav\", but you are free to use any other or none at all, if you don't\
+      \ want people to know immediately what the file is actually about.</p>\n<p><br\
+      \ /></p>\n<h1><span class=\"mw-headline\" id=\"Kismet_SeqActions\">Kismet SeqActions</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/User:Crusha/UltimateSaveSystem?section=2\" title=\"Edit section:\
+      \ Kismet SeqActions\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h1>\n\
+      <div class=\"center\">\n<div class=\"floatnone\"><a href=\"/File:SaveSystemKismet.png\"\
+      \ class=\"image\"><img alt=\"SaveSystemKismet.png\" src=\"/w/images/SaveSystemKismet.png\"\
+      \ width=\"1356\" height=\"409\" /></a></div>\n</div>\n<p><br /></p>\n<h2><span\
+      \ class=\"mw-headline\" id=\"SeqAct_SetCurrentSaveName\">SeqAct_SetCurrentSaveName</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/User:Crusha/UltimateSaveSystem?section=3\" title=\"Edit section:\
+      \ SeqAct SetCurrentSaveName\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>You need to have at least one of these in your whole\
+      \ Kismet sequence when using any of the other SeqActions! This simply takes\
+      \ the part of globally setting the name of the file to which you save or from\
+      \ which you read. A name will be active once the action gets activated and it\
+      \ is always the save name of the last activated SeqAction used.</p>\n<h2><span\
+      \ class=\"mw-headline\" id=\"SeqAct_SaveVariable\">SeqAct_SaveVariable</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/User:Crusha/UltimateSaveSystem?section=4\" title=\"Edit section:\
+      \ SeqAct SaveVariable\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>When activated, it will save all variables plugged into it's slots to a file\
+      \ with the name from SeqAct_SetCurrentSaveName. You can plug up to 999 variables\
+      \ of a type into a SeqAction of this kind, but the variable needs to have a\
+      \ VarName set - it does't work with unnamed variables because the VarName is\
+      \ the one that is saved in the file with the value. But in any case should you\
+      \ use a NamedVariable (the specifc type) because multiple \"normal\" variables\
+      \ with the same name may cause trouble later.</p>\n<p>The SeqAction will activate\
+      \ the <i>Success</i> output if everything went well and the <i>Failure</i> output\
+      \ if at least one variable could not be saved for whatever reason.</p>\n<h2><span\
+      \ class=\"mw-headline\" id=\"SeqAct_LoadVariable\">SeqAct_LoadVariable</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/User:Crusha/UltimateSaveSystem?section=5\" title=\"Edit section:\
+      \ SeqAct LoadVariable\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>When activated, it will load the values of all variables with VarNames plugged\
+      \ into it's slots from a file with the name from SeqAct_SetCurrentSaveName.\
+      \ You can plug up to 999 variables of a type into a SeqAction of this kind.</p>\n\
+      <p>It will activate the <i>Success</i> output if everything went well and the\
+      \ <i>Failure</i> output if at least one variable could not be loaded for whatever\
+      \ reason (for example it wasn't saved in the file yet).</p>\n<h2><span class=\"\
+      mw-headline\" id=\"SeqAct_DeleteVariable\">SeqAct_DeleteVariable</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/User:Crusha/UltimateSaveSystem?section=6\" title=\"Edit section:\
+      \ SeqAct DeleteVariable\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>When activated, it will delete all variables with VarNames plugged into the\
+      \ slots from a file with the name from SeqAct_SetCurrentSaveName. You can plug\
+      \ up to 999 variables of a type into a SeqAction of this kind.</p>\n<p>It will\
+      \ activate the <i>Success</i> output if everything went well and the <i>Failure</i>\
+      \ output if at least one variable could not be deleted for whatever reason (it\
+      \ didn't exist in the file, for example).</p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"SeqAct_DeleteAllVariables\">SeqAct_DeleteAllVariables</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/User:Crusha/UltimateSaveSystem?section=7\"\
+      \ title=\"Edit section: SeqAct DeleteAllVariables\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>This has 6 variable links and each of them accepts\
+      \ a single unnamed boolean variable. It will get rid of a whole file of the\
+      \ data type whose link has a boolean variable with True value.</p>\n<p>The sixth\
+      \ link is labeled <i>All</i> and is a workaround. If you use the other links\
+      \ alone, the <i>Failure</i> output will be activated if at least one data type\
+      \ that has a True link did not exist yet. The <i>All</i> link will only activate\
+      \ the <i>Failure</i> output if nothing with the current file name existed at\
+      \ all.</p>\n<p><br /></p>\n<h2><span class=\"mw-headline\" id=\"SeqAct_SaveValue\"\
+      >SeqAct_SaveValue</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/User:Crusha/UltimateSaveSystem?section=8\" title=\"\
+      Edit section: SeqAct SaveValue\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>The <b>Value</b> SeqActions differ from the <b>Variable</b>\
+      \ SeqActions in that the latter require variables with VarNames while the first\
+      \ can save the value of an unnamed variable of whatever type (one of the 5 supported\
+      \ types) plugged into the <i>Value</i> link under the current file name with\
+      \ a property name defined by up to 999 String variables plugged into the <i>Name</i>\
+      \ link.</p>\n<p>If you plug a plain float variable with value 15.0 into the\
+      \ <i>Value</i> and two string variables with \"CountA\" and \"Result\" into\
+      \ the <i>Name</i> slot, the SeqAction will save CountA and Result both with\
+      \ value 15.0 in the file.</p>\n<p><i>Failure</i> is activated, if the value\
+      \ could not be saved.</p>\n<h2><span class=\"mw-headline\" id=\"SeqAct_LoadValue\"\
+      >SeqAct_LoadValue</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/User:Crusha/UltimateSaveSystem?section=9\" title=\"\
+      Edit section: SeqAct LoadValue\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>Again, this doesn't require a named variable but uses\
+      \ a single string to determine the name of the property to load. The type of\
+      \ the property is determined by the single variable that you plug into the <i>Value</i>\
+      \ slot.</p>\n<p><i>Failure</i> is activated, if the value could not be loaded.</p>\n\
+      <h2><span class=\"mw-headline\" id=\"SeqAct_DeleteValue\">SeqAct_DeleteValue</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/User:Crusha/UltimateSaveSystem?section=10\" title=\"Edit section:\
+      \ SeqAct DeleteValue\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>This only takes up to 999 string variables into it's only slot. It will then\
+      \ delete the entries from the file of a fixed file type, which is set in the\
+      \ properties of this SeqAction.</p>\n<p><i>Failure</i> is activated, if at least\
+      \ one entry did not exist in the file of the specified data type.</p>\n<p><br\
+      \ /></p>\n<h1><span class=\"mw-headline\" id=\"Tutorial:_Using_the_Kismet-parts_of_this_SaveSystem\"\
+      >Tutorial: Using the Kismet-parts of this SaveSystem</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/User:Crusha/UltimateSaveSystem?section=11\"\
+      \ title=\"Edit section: Tutorial: Using the Kismet-parts of this SaveSystem\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h1>\n<p>At\
+      \ first we need to get familiar with the test map:</p>\n<div class=\"center\"\
+      >\n<div class=\"floatnone\"><a href=\"/File:SaveSystemTestMap.jpg\" class=\"\
+      image\"><img alt=\"SaveSystemTestMap.jpg\" src=\"/w/images/SaveSystemTestMap.jpg\"\
+      \ width=\"1197\" height=\"696\" /></a></div>\n</div>\n<p><br />\nThe player\
+      \ spawns regularly at the PlayerStart at the bottom. Furthermore we have a Trigger\
+      \ and a PathNode on each of the smaller platforms, one Trigger on the bigger\
+      \ platform and a DynamicPointLight at the center of the map. The other PathNodes\
+      \ are not important.</p>\n<p><br />\nNow let's take a look at how to set up\
+      \ the checkpoints:</p>\n<div class=\"center\">\n<div class=\"floatnone\"><a\
+      \ href=\"/File:SaveFiles.png\" class=\"image\"><img alt=\"SaveFiles.png\" src=\"\
+      /w/images/SaveFiles.png\" width=\"1634\" height=\"618\" /></a></div>\n</div>\n\
+      <p>As you can see, we get the location and rotation of the PathNodes on the\
+      \ platforms. The PathNode basically acts as additional PlayerStart, just that\
+      \ the engine doesn't recognize it as that yet.</p>\n<p>The float values that\
+      \ I saved there too is just for demonstration and testing purpose and doesn't\
+      \ have any effect on the checkpoint system.</p>\n<p><br /></p>\n<p>The next\
+      \ step is to handle the spawning of the player:</p>\n<div class=\"center\">\n\
+      <div class=\"floatnone\"><a href=\"/File:LoadFiles.png\" class=\"image\"><img\
+      \ alt=\"LoadFiles.png\" src=\"/w/images/LoadFiles.png\" width=\"1667\" height=\"\
+      451\" /></a></div>\n</div>\n<p>We use a workaround at this point: the location\
+      \ of the player can't be just changed by using Set Actor Location. We need to\
+      \ use a Teleport for that, but that only accepts Actors as destination and not\
+      \ vectors. The solution is to use Set Actor Location on a dynamic Actor (bStatic\
+      \ = False), a DynamicPointLight in my case so that we can clearly see that it\
+      \ moved.</p>\n<p>The end of this sequence belongs to the demonstration with\
+      \ the float again. If the player touched the Trigger on the right platform,\
+      \ the value of MyFloat in the file will be 1.0 and thus will the Compare Float\
+      \ activate the \"Got MyFloat!\" message at the end. If the player touched the\
+      \ Trigger on the left, the value of MyFloat will be 0.5, which will activate\
+      \ the \"Fail Float\" message.</p>\n<p><br />\nWe are actually done at this point,\
+      \ but I should also show how to reset the whole stuff to the initial state again:</p>\n\
+      <div class=\"center\">\n<div class=\"floatnone\"><a href=\"/File:DeleteFiles.png\"\
+      \ class=\"image\"><img alt=\"DeleteFiles.png\" src=\"/w/images/DeleteFiles.png\"\
+      \ width=\"1105\" height=\"318\" /></a></div>\n</div>\n<p>Nothing easier than\
+      \ that. I could also have used a \"Delete Variable\" SeqAction and pass it the\
+      \ individual variable references, but this one is more efficient in this case\
+      \ - it radically sweeps the whole files from the disk.</p>\n<p><br />\nThere\
+      \ are more SeqActions that were not discussed in this tutorial, but you should\
+      \ be able to figure them out yourself. With some creativity can you achieve\
+      \ a lot of stuff with this SaveSystem.</p>\n<p><br /></p>\n<h1><span class=\"\
+      mw-headline\" id=\"Download\">Download</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/User:Crusha/UltimateSaveSystem?section=12\"\
+      \ title=\"Edit section: Download\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h1>\n<p><a rel=\"nofollow\" class=\"external text\" href=\"\
+      http://www.mediafire.com/?nk9lmsnsyt2xpvv\">Mediafire Download</a> (3.55 MB)</p>\n\
+      <p>This zip package contains the compiled UnrealScript files (.u) and all necessary\
+      \ compiled DLL files (.dll, .exp, .ilk, .lib, .pdb), as well as the source code\
+      \ of the UnrealScript files (.uc in the Development/src/UltimateSaveSystem/classes\
+      \ folder) and the Visual C++ 2008 project folder with the source code for the\
+      \ DLL.</p>\n<p><br />\n<a rel=\"nofollow\" class=\"external text\" href=\"http://www.mediafire.com/?for3c274bpvy3c4\"\
+      >Mediafire Download</a> (19.69 KB)</p>\n<p>This package contains the map I used\
+      \ for testing. You can give it a shot yourself and experiment, if you like.</p>\n\
+      <p><br /></p>\n<h1><span class=\"mw-headline\" id=\"Permissions\">Permissions</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/User:Crusha/UltimateSaveSystem?section=13\" title=\"Edit section:\
+      \ Permissions\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h1>\n\
+      <p>The content of this package is provided under the terms of the <a rel=\"\
+      nofollow\" class=\"external text\" href=\"http://en.wikipedia.org/wiki/Creative_Commons\"\
+      >Creative Commons</a> <a rel=\"nofollow\" class=\"external text\" href=\"http://creativecommons.org/licenses/by-sa/3.0/\"\
+      >Attribution-Share Alike 3.0</a> license. In short does that mean, that you\
+      \ may freely use this for commercial and non-commercial projects as long as\
+      \ you provide credits (see the UltimateSaveSystem.uc file for reference about\
+      \ to whom and how credit needs to be given in this particular case) and provide\
+      \ any modifications you perform on the code in this package under the same or\
+      \ a <a rel=\"nofollow\" class=\"external text\" href=\"http://creativecommons.org/compatiblelicenses\"\
+      >compatible license</a>. If you don't apply changes to the code, it is enough\
+      \ to just point people who are interested in this SaveSystem to this page.</p>\n\
+      <p>The purpose of these terms in a nutshell: Be nice guys and give credit where\
+      \ it's due and if you happen to develop some improvements for some part of this\
+      \ SaveSystem, be fair and share it with everyone as I shared with you. It would\
+      \ be very kind if you could write me a message in such a case so that I can\
+      \ incorporate it into this package to make it easy accessible for everyone.&#160;:)</p>\n\
+      <p><br />\nFurthermore would it be kind if you notify me if you release something\
+      \ that uses this. Simply because I am curious (and for having at least some\
+      \ little hope that you don't forget about me in case you earn millions with\
+      \ your project).&#160;:p</p>\n<p>But questions about this are preferably handled\
+      \ in the forum topic than in PMs.</p>\n<p><br /></p>\n<h1><span class=\"mw-headline\"\
+      \ id=\"Credits\">Credits</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/User:Crusha/UltimateSaveSystem?section=14\"\
+      \ title=\"Edit section: Credits\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h1>\n<ul>\n<li>Me for the idea and coding.</li>\n<li>[WuTz!],\
+      \ creator of the <a rel=\"nofollow\" class=\"external text\" href=\"http://www.moddb.com/engines/wtech\"\
+      >wTech engine</a>, for endless help on the C++ side of this (since I was a complete\
+      \ newbie to C++).</li>\n<li>Ayalaskin for providing the tutorial on the first\
+      \ DLLBind Save System on which this project is basing.</li>\n<li>Wormbo for\
+      \ useful hints when I couldn't find the mistakes again.</li>\n</ul>\n\n<!--\
+      \ \nNewPP limit report\nCPU time usage: 0.125 seconds\nReal time usage: 0.482\
+      \ seconds\nPreprocessor visited node count: 55/1000000\nPreprocessor generated\
+      \ node count: 60/1000000\nPost‐expand include size: 0/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:29220-0!*!*!!en!5!* and timestamp 20221118084442 and revision\
+      \ id 44174\n -->\n"
+  categories: []
+  links: []
+  templates: []
+  images:
+  - "DeleteFiles.png"
+  - "SaveFiles.png"
+  - "SaveSystemKismet.png"
+  - "LoadFiles.png"
+  - "SaveSystemTestMap.jpg"
+  externallinks:
+  - "http://www.moddb.com/engines/wtech"
+  - "http://en.wikipedia.org/wiki/Creative_Commons"
+  - "http://www.mediafire.com/?for3c274bpvy3c4"
+  - "http://creativecommons.org/licenses/by-sa/3.0/"
+  - "http://www.mediafire.com/?nk9lmsnsyt2xpvv"
+  - "http://creativecommons.org/compatiblelicenses"
+  sections:
+  - toclevel: 1
+    level: "1"
+    line: "Main Class"
+    number: "1"
+    index: "1"
+    fromtitle: "User:Crusha/UltimateSaveSystem"
+    byteoffset: 1095
+    anchor: "Main_Class"
+  - toclevel: 1
+    level: "1"
+    line: "Kismet SeqActions"
+    number: "2"
+    index: "2"
+    fromtitle: "User:Crusha/UltimateSaveSystem"
+    byteoffset: 5881
+    anchor: "Kismet_SeqActions"
+  - toclevel: 2
+    level: "2"
+    line: "SeqAct_SetCurrentSaveName"
+    number: "2.1"
+    index: "3"
+    fromtitle: "User:Crusha/UltimateSaveSystem"
+    byteoffset: 5942
+    anchor: "SeqAct_SetCurrentSaveName"
+  - toclevel: 2
+    level: "2"
+    line: "SeqAct_SaveVariable"
+    number: "2.2"
+    index: "4"
+    fromtitle: "User:Crusha/UltimateSaveSystem"
+    byteoffset: 6314
+    anchor: "SeqAct_SaveVariable"
+  - toclevel: 2
+    level: "2"
+    line: "SeqAct_LoadVariable"
+    number: "2.3"
+    index: "5"
+    fromtitle: "User:Crusha/UltimateSaveSystem"
+    byteoffset: 7009
+    anchor: "SeqAct_LoadVariable"
+  - toclevel: 2
+    level: "2"
+    line: "SeqAct_DeleteVariable"
+    number: "2.4"
+    index: "6"
+    fromtitle: "User:Crusha/UltimateSaveSystem"
+    byteoffset: 7465
+    anchor: "SeqAct_DeleteVariable"
+  - toclevel: 2
+    level: "2"
+    line: "SeqAct_DeleteAllVariables"
+    number: "2.5"
+    index: "7"
+    fromtitle: "User:Crusha/UltimateSaveSystem"
+    byteoffset: 7908
+    anchor: "SeqAct_DeleteAllVariables"
+  - toclevel: 2
+    level: "2"
+    line: "SeqAct_SaveValue"
+    number: "2.6"
+    index: "8"
+    fromtitle: "User:Crusha/UltimateSaveSystem"
+    byteoffset: 8436
+    anchor: "SeqAct_SaveValue"
+  - toclevel: 2
+    level: "2"
+    line: "SeqAct_LoadValue"
+    number: "2.7"
+    index: "9"
+    fromtitle: "User:Crusha/UltimateSaveSystem"
+    byteoffset: 9118
+    anchor: "SeqAct_LoadValue"
+  - toclevel: 2
+    level: "2"
+    line: "SeqAct_DeleteValue"
+    number: "2.8"
+    index: "10"
+    fromtitle: "User:Crusha/UltimateSaveSystem"
+    byteoffset: 9419
+    anchor: "SeqAct_DeleteValue"
+  - toclevel: 1
+    level: "1"
+    line: "Tutorial: Using the Kismet-parts of this SaveSystem"
+    number: "3"
+    index: "11"
+    fromtitle: "User:Crusha/UltimateSaveSystem"
+    byteoffset: 9730
+    anchor: "Tutorial:_Using_the_Kismet-parts_of_this_SaveSystem"
+  - toclevel: 1
+    level: "1"
+    line: "Download"
+    number: "4"
+    index: "12"
+    fromtitle: "User:Crusha/UltimateSaveSystem"
+    byteoffset: 11987
+    anchor: "Download"
+  - toclevel: 1
+    level: "1"
+    line: "Permissions"
+    number: "5"
+    index: "13"
+    fromtitle: "User:Crusha/UltimateSaveSystem"
+    byteoffset: 12584
+    anchor: "Permissions"
+  - toclevel: 1
+    level: "1"
+    line: "Credits"
+    number: "6"
+    index: "14"
+    fromtitle: "User:Crusha/UltimateSaveSystem"
+    byteoffset: 14054
+    anchor: "Credits"
+  displaytitle: "User:Crusha/UltimateSaveSystem"
+  iwlinks: []
+  wikitext:
+    text: "'''UltimateSaveSystem''' is a ready-to-use solution for writing and reading\
+      \ variables from UnrealScript or Kismet into and from binary files, using unique\
+      \ names to find the value in the file. It is capable of saving Integer, Float,\
+      \ Boolean, Vector and String variables (with unlimited length).\n\nThe DLL creates\
+      \ a separate file for each data type set, since it's easier to handle that way.\
+      \ This doesn't have any effect on the usability of the code. If the save name\
+      \ is \"Test\", the file you save is a float and the extension is the default\
+      \ one, then the resulting file will be named \"Test_f.sav\". Files are saved\
+      \ in the Binaries\\Win32\\UserCode folder.\n\n\nThis page will give you a quick\
+      \ guide through the contents of this package. Afterwards will I give you a quick\
+      \ example of how to use this UltimateSaveSystem to spawn the player at a checkpoint\
+      \ he touched in a previous session when he starts the game the next time.\n\n\
+      The DLL-side should be irrelevant for most people here and the others can probably\
+      \ find out more by simply reading through it, so I will only talk about the\
+      \ Unreal side here.\n\n\n=Main Class=\nThe heart of this pack is the '''UltimateSaveSystem'''\
+      \ class. It provides the functionality to communicate with the DLL and can be\
+      \ referenced from any point in script to save or load values. All other classes\
+      \ in this pack rely on it as well.\nIt basically consists of the DLLImport functions\
+      \ and their UScript pendants as wrapper functions. You should always call the\
+      \ wrappers and not the actual DLLImports.\n\nThere are 9 different operations\
+      \ that can be executed in the DLL and each of these 9 operations exist for each\
+      \ of the 5 supported data types plus one that works for all data types plus\
+      \ one additional static function, giving you 47 functions in this class.\n\n\
+      \nLet's start with the static function:\n'''GetSaveSystem()'''\n\nThis one will\
+      \ simply give you a reference to the UltimateSaveSystem instance so that you\
+      \ can reference it for easy use in other classes. If the Actor doesn't exist\
+      \ yet, a new one is spawned and returned. Same as ''WorldInfo.static.GetWorldInfo()''\
+      \ would do.\n\n\n\nNow we come to the functions that communicate with the DLL.\
+      \ Most of them simply call the actual DLL-function, but the String implementation\
+      \ has some special implementation that allows it to save and load strings of\
+      \ unlimited length. You should also pay attention that the Bool functions use\
+      \ Int as argument, where 0 is False and Non-Zero (usually 1) is True.\n\nX is\
+      \ the name of variable type here. (Int,Float,Bool,Vect,String)\n\n\n'''Import*X*(Value,\
+      \ PropertyName)''' will load a name-value pair of type X into a dynamic array\
+      \ inside the DLL. The entry is in the array now, but it's not yet saved (this\
+      \ is for optimization purposes because you generally only need to save once\
+      \ after importing many stuff).\nIf an entry with the given name already exists\
+      \ in that array, only it's value will be changed.\nNo return value for this\
+      \ function.\n\n'''Save*X*List(SaveName)''' will save the whole array in the\
+      \ DLL into a file with the specified name.\nThe different files are independent\
+      \ per data type and list, so if you add entries to a Bool and Int list, you\
+      \ have to save both lists manually.\nTrue is returned if the file could be saved/created\
+      \ successfully.\n\n'''Load*X*List(SaveName)''' will load an array from the file\
+      \ with the matching name into the DLL.\nA loaded list will stay valid until\
+      \ a new map is loaded or you load a list of the same type from another file.\n\
+      True is returned if a file with the save name was found.\n\n'''Export*X*(PropertyName,\
+      \ out Value)''' will look for an entry with the matching property name and returns\
+      \ the associated value as out parameter.\nTrue is returned if an entry with\
+      \ the specified name was found (you can also use this as test to see if a certain\
+      \ name-value pair already exists).\n\n'''Delete*X*(PropertyName)''' will look\
+      \ for an entry with the matching property name and remove it from the array.\
+      \ The array needs to be saved manually afterwards.\nTrue is returned if an entry\
+      \ was found.\n\n'''DeleteAll*X*(SaveName)''' will delete the whole file that\
+      \ holds this data type. A new one will be created as soon as something needs\
+      \ to be saved again.\nReturns True if the file was deleted successfully.\n\n\
+      '''DeleteWholeSave(SaveName)''' will call the function above for all data types\
+      \ and only returns False if no file for none of the data types existed. This\
+      \ is just helpful for a SeqAction.\n\n\nThe Load, Save and Delete functions\
+      \ come also in a variant that works with arrays:\n\n'''Save*X*Array(Values,\
+      \ ArrayName)''' will call the functions above for each individual entry of the\
+      \ array passed as \"Values\" and save and load them with the name ''ArrayName[i]'',\
+      \ where [i] is the index of the element in the array. So if you submit an Int\
+      \ array with 3 entries and the ArrayName \"Numbers\", it will save the three\
+      \ values in the file with the names Numbers0, Numbers1 and Numbers2. Keep in\
+      \ mind that these are not specially distinguished from other names in the file,\
+      \ so you could accidentally overwrite old values if you saved on as \"Numbers1\"\
+      , for example. But on the other hand can you also load individual properties\
+      \ of the array this way, if you know their index.\n\n'''Load*X*Array(ArrayName,\
+      \ Values)''' will load the values that were saved with the above array-naming\
+      \ layout and return them as a real array.\n\n'''Delete*X*Array(ArrayName)'''\
+      \ will delete all values named after the array-naming layout. As for the Load\
+      \ function, this will start at index 0 and will continue in consecutive order\
+      \ until no more name+index entries are found.\n\n\n\nIn the end I should mention\
+      \ that you can change the file extension of your saves in the DefaultProperties\
+      \ of this class, in case you're going to re-compile it anyway. The default extension\
+      \ is \".sav\", but you are free to use any other or none at all, if you don't\
+      \ want people to know immediately what the file is actually about.\n\n\n=Kismet\
+      \ SeqActions=\n\n[[Image:SaveSystemKismet.png|center]]\n\n\n==SeqAct_SetCurrentSaveName==\n\
+      You need to have at least one of these in your whole Kismet sequence when using\
+      \ any of the other SeqActions!\nThis simply takes the part of globally setting\
+      \ the name of the file to which you save or from which you read.\nA name will\
+      \ be active once the action gets activated and it is always the save name of\
+      \ the last activated SeqAction used.\n\n==SeqAct_SaveVariable==\nWhen activated,\
+      \ it will save all variables plugged into it's slots to a file with the name\
+      \ from SeqAct_SetCurrentSaveName.\nYou can plug up to 999 variables of a type\
+      \ into a SeqAction of this kind, but the variable needs to have a VarName set\
+      \ - it does't work with unnamed variables because the VarName is the one that\
+      \ is saved in the file with the value.\nBut in any case should you use a NamedVariable\
+      \ (the specifc type) because multiple \"normal\" variables with the same name\
+      \ may cause trouble later.\n\nThe SeqAction will activate the ''Success'' output\
+      \ if everything went well and the ''Failure'' output if at least one variable\
+      \ could not be saved for whatever reason.\n \n==SeqAct_LoadVariable==\nWhen\
+      \ activated, it will load the values of all variables with VarNames plugged\
+      \ into it's slots from a file with the name from SeqAct_SetCurrentSaveName.\n\
+      You can plug up to 999 variables of a type into a SeqAction of this kind.\n\n\
+      It will activate the ''Success'' output if everything went well and the ''Failure''\
+      \ output if at least one variable could not be loaded for whatever reason (for\
+      \ example it wasn't saved in the file yet).\n\n==SeqAct_DeleteVariable==\nWhen\
+      \ activated, it will delete all variables with VarNames plugged into the slots\
+      \ from a file with the name from SeqAct_SetCurrentSaveName.\nYou can plug up\
+      \ to 999 variables of a type into a SeqAction of this kind.\n\nIt will activate\
+      \ the ''Success'' output if everything went well and the ''Failure'' output\
+      \ if at least one variable could not be deleted for whatever reason (it didn't\
+      \ exist in the file, for example).\n\n==SeqAct_DeleteAllVariables==\nThis has\
+      \ 6 variable links and each of them accepts a single unnamed boolean variable.\
+      \ It will get rid of a whole file of the data type whose link has a boolean\
+      \ variable with True value.\n\nThe sixth link is labeled ''All'' and is a workaround.\
+      \ If you use the other links alone, the ''Failure'' output will be activated\
+      \ if at least one data type that has a True link did not exist yet. The ''All''\
+      \ link will only activate the ''Failure'' output if nothing with the current\
+      \ file name existed at all.\n\n\n==SeqAct_SaveValue==\nThe '''Value''' SeqActions\
+      \ differ from the '''Variable''' SeqActions in that the latter require variables\
+      \ with VarNames while the first can save the value of an unnamed variable of\
+      \ whatever type (one of the 5 supported types) plugged into the ''Value'' link\
+      \ under the current file name with a property name defined by up to 999 String\
+      \ variables plugged into the ''Name'' link.\n\nIf you plug a plain float variable\
+      \ with value 15.0 into the ''Value'' and two string variables with \"CountA\"\
+      \ and \"Result\" into the ''Name'' slot, the SeqAction will save CountA and\
+      \ Result both with value 15.0 in the file.\n\n''Failure'' is activated, if the\
+      \ value could not be saved.\n\n==SeqAct_LoadValue==\nAgain, this doesn't require\
+      \ a named variable but uses a single string to determine the name of the property\
+      \ to load. The type of the property is determined by the single variable that\
+      \ you plug into the ''Value'' slot.\n\n''Failure'' is activated, if the value\
+      \ could not be loaded.\n\n==SeqAct_DeleteValue==\nThis only takes up to 999\
+      \ string variables into it's only slot. It will then delete the entries from\
+      \ the file of a fixed file type, which is set in the properties of this SeqAction.\n\
+      \n''Failure'' is activated, if at least one entry did not exist in the file\
+      \ of the specified data type.\n\n\n\n=Tutorial: Using the Kismet-parts of this\
+      \ SaveSystem=\n\nAt first we need to get familiar with the test map:\n\n[[Image:SaveSystemTestMap.jpg|center]]\n\
+      \n\nThe player spawns regularly at the PlayerStart at the bottom. Furthermore\
+      \ we have a Trigger and a PathNode on each of the smaller platforms, one Trigger\
+      \ on the bigger platform and a DynamicPointLight at the center of the map.\n\
+      The other PathNodes are not important.\n\n\nNow let's take a look at how to\
+      \ set up the checkpoints:\n\n[[Image:SaveFiles.png|center]]\n\nAs you can see,\
+      \ we get the location and rotation of the PathNodes on the platforms. The PathNode\
+      \ basically acts as additional PlayerStart, just that the engine doesn't recognize\
+      \ it as that yet.\n\nThe float values that I saved there too is just for demonstration\
+      \ and testing purpose and doesn't have any effect on the checkpoint system.\n\
+      \n\n\nThe next step is to handle the spawning of the player:\n\n[[Image:LoadFiles.png|center]]\n\
+      \nWe use a workaround at this point: the location of the player can't be just\
+      \ changed by using Set Actor Location. We need to use a Teleport for that, but\
+      \ that only accepts Actors as destination and not vectors. The solution is to\
+      \ use Set Actor Location on a dynamic Actor (bStatic = False), a DynamicPointLight\
+      \ in my case so that we can clearly see that it moved.\n\nThe end of this sequence\
+      \ belongs to the demonstration with the float again. If the player touched the\
+      \ Trigger on the right platform, the value of MyFloat in the file will be 1.0\
+      \ and thus will the Compare Float activate the \"Got MyFloat!\" message at the\
+      \ end. If the player touched the Trigger on the left, the value of MyFloat will\
+      \ be 0.5, which will activate the \"Fail Float\" message.\n\n\nWe are actually\
+      \ done at this point, but I should also show how to reset the whole stuff to\
+      \ the initial state again:\n\n[[Image:DeleteFiles.png|center]]\n\nNothing easier\
+      \ than that. I could also have used a \"Delete Variable\" SeqAction and pass\
+      \ it the individual variable references, but this one is more efficient in this\
+      \ case - it radically sweeps the whole files from the disk.\n\n\nThere are more\
+      \ SeqActions that were not discussed in this tutorial, but you should be able\
+      \ to figure them out yourself. With some creativity can you achieve a lot of\
+      \ stuff with this SaveSystem. \n\n\n\n=Download=\n\n[http://www.mediafire.com/?nk9lmsnsyt2xpvv\
+      \ Mediafire Download] (3.55 MB)\n\nThis zip package contains the compiled UnrealScript\
+      \ files (.u) and all necessary compiled DLL files (.dll, .exp, .ilk, .lib, .pdb),\
+      \ as well as the source code of the UnrealScript files (.uc in the Development/src/UltimateSaveSystem/classes\
+      \ folder) and the Visual C++ 2008 project folder with the source code for the\
+      \ DLL.\n\n\n[http://www.mediafire.com/?for3c274bpvy3c4 Mediafire Download] (19.69\
+      \ KB)\n\nThis package contains the map I used for testing. You can give it a\
+      \ shot yourself and experiment, if you like.\n\n\n=Permissions=\n\nThe content\
+      \ of this package is provided under the terms of the [http://en.wikipedia.org/wiki/Creative_Commons\
+      \ Creative Commons] [http://creativecommons.org/licenses/by-sa/3.0/ Attribution-Share\
+      \ Alike 3.0] license. In short does that mean, that you may freely use this\
+      \ for commercial and non-commercial projects as long as you provide credits\
+      \ (see the UltimateSaveSystem.uc file for reference about to whom and how credit\
+      \ needs to be given in this particular case) and provide any modifications you\
+      \ perform on the code in this package under the same or a [http://creativecommons.org/compatiblelicenses\
+      \ compatible license]. If you don't apply changes to the code, it is enough\
+      \ to just point people who are interested in this SaveSystem to this page.\n\
+      \nThe purpose of these terms in a nutshell: Be nice guys and give credit where\
+      \ it's due and if you happen to develop some improvements for some part of this\
+      \ SaveSystem, be fair and share it with everyone as I shared with you. It would\
+      \ be very kind if you could write me a message in such a case so that I can\
+      \ incorporate it into this package to make it easy accessible for everyone.\
+      \ :)\n\n\nFurthermore would it be kind if you notify me if you release something\
+      \ that uses this. Simply because I am curious (and for having at least some\
+      \ little hope that you don't forget about me in case you earn millions with\
+      \ your project). :p\n\nBut questions about this are preferably handled in the\
+      \ forum topic than in PMs.\n\n\n=Credits=\n\n*Me for the idea and coding.\n\
+      *[WuTz!], creator of the [http://www.moddb.com/engines/wtech wTech engine],\
+      \ for endless help on the C++ side of this (since I was a complete newbie to\
+      \ C++).\n*Ayalaskin for providing the tutorial on the first DLLBind Save System\
+      \ on which this project is basing.\n*Wormbo for useful hints when I couldn't\
+      \ find the mistakes again."
+  properties: []
+  revId: 44174
+name: "User:Crusha/UltimateSaveSystem"
+revision:
+  revid: 44174
+  parentid: 44173
+  user: "Crusha"
+  timestamp: 1292265876.000000000
+  comment: "Format correction."
+timestamp: 1668761083.875374000

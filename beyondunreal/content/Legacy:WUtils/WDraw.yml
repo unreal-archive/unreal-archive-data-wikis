@@ -1,0 +1,397 @@
+---
+parse:
+  title: "Legacy:WUtils/WDraw"
+  text:
+    text: "<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"\
+      uscript source-uscript\">\n<pre class=\"de1\"><span class=\"co1\">///////////////////////////////////////////////////////////////////////////////</span>\n\
+      <span class=\"co1\">// filename:    wDraw.uc</span>\n<span class=\"co1\">//\
+      \ revision:    101</span>\n<span class=\"co1\">// authors:     various UnrealWiki\
+      \ members (http://wiki.beyondunreal.com)</span>\n<span class=\"co1\">//    \
+      \          http://wiki.beyondunreal.com/WUtils</span>\n<span class=\"co1\">///////////////////////////////////////////////////////////////////////////////</span>\n\
+      \ \n<span class=\"kw1\">class</span> wDraw <span class=\"kw1\">extends</span>\
+      \ <span class=\"kw8\">Object</span> <span class=\"kw1\">exportstructs</span>;\n\
+      \ \n<span class=\"kw1\">struct</span> MaterialRegion \n<span class=\"br0\">{</span>\n\
+      \    <span class=\"kw1\">var</span> <span class=\"kw5\">Material</span> Tex;\n\
+      \    <span class=\"kw1\">var</span> <span class=\"kw5\">IntBox</span> TexCoords;\
+      \   <span class=\"co1\">// absolute material coordinates</span>\n    <span class=\"\
+      kw1\">var</span> <span class=\"kw5\">FloatBox</span> ScreenCoords;  <span class=\"\
+      co1\">// relative screen coordinates</span>\n    <span class=\"kw1\">var</span>\
+      \ <span class=\"kw9\">Actor</span>.<span class=\"me0\">ERenderStyle</span> RenderStyle;\n\
+      \    <span class=\"kw1\">var</span> <span class=\"kw5\">Color</span> DrawColor;\n\
+      <span class=\"br0\">}</span>;\n \n<span class=\"coMULTI\">/** scale keeps the\
+      \ MaterialRegion's center at the same location */</span>\n<span class=\"kw1\"\
+      >static</span> <span class=\"kw1\">final</span> <span class=\"kw1\">function</span>\
+      \ DrawMaterialRegion<span class=\"br0\">(</span><span class=\"kw8\">Canvas</span>\
+      \ C, MaterialRegion M,\n        <span class=\"kw1\">optional</span> <span class=\"\
+      kw5\">float</span> ScaleX, <span class=\"kw1\">optional</span> <span class=\"\
+      kw5\">float</span> ScaleY, <span class=\"kw1\">optional</span> <span class=\"\
+      kw5\">bool</span> bClipped<span class=\"br0\">)</span>\n<span class=\"br0\"\
+      >{</span>\n    <span class=\"kw1\">local</span> <span class=\"kw5\">byte</span>\
+      \ OldStyle;\n    <span class=\"kw1\">local</span> <span class=\"kw5\">Color</span>\
+      \ OldColor;\n    <span class=\"kw1\">local</span> <span class=\"kw5\">float</span>\
+      \ X, Y, W, H, CenterX, CenterY;\n \n    <span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span> ScaleX <span class=\"sy0\">==</span> <span class=\"\
+      nu0\">0</span> <span class=\"br0\">)</span>\n        ScaleX <span class=\"sy0\"\
+      >=</span> <span class=\"nu0\">1.0</span>;\n \n    <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span> ScaleY <span class=\"sy0\">==</span> <span class=\"\
+      nu0\">0</span> <span class=\"br0\">)</span>\n        ScaleY <span class=\"sy0\"\
+      >=</span> ScaleX;\n \n    X <span class=\"sy0\">=</span> M.<span class=\"me0\"\
+      >ScreenCoords</span>.<span class=\"me0\">X1</span> <span class=\"sy0\">*</span>\
+      \ C.<span class=\"me0\">ClipX</span>;\n    Y <span class=\"sy0\">=</span> M.<span\
+      \ class=\"me0\">ScreenCoords</span>.<span class=\"me0\">Y1</span> <span class=\"\
+      sy0\">*</span> C.<span class=\"me0\">ClipY</span>;\n    W <span class=\"sy0\"\
+      >=</span> <span class=\"br0\">(</span>M.<span class=\"me0\">ScreenCoords</span>.<span\
+      \ class=\"me0\">X2</span> <span class=\"sy0\">-</span> M.<span class=\"me0\"\
+      >ScreenCoords</span>.<span class=\"me0\">X1</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">*</span> C.<span class=\"me0\">ClipX</span>;\n    H <span\
+      \ class=\"sy0\">=</span> <span class=\"br0\">(</span>M.<span class=\"me0\">ScreenCoords</span>.<span\
+      \ class=\"me0\">Y2</span> <span class=\"sy0\">-</span> M.<span class=\"me0\"\
+      >ScreenCoords</span>.<span class=\"me0\">Y1</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">*</span> C.<span class=\"me0\">ClipY</span>;\n    CenterX\
+      \ <span class=\"sy0\">=</span> <span class=\"br0\">(</span>M.<span class=\"\
+      me0\">ScreenCoords</span>.<span class=\"me0\">X1</span> <span class=\"sy0\"\
+      >+</span> M.<span class=\"me0\">ScreenCoords</span>.<span class=\"me0\">X2</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">*</span> <span class=\"nu0\">0.5</span>\
+      \ <span class=\"sy0\">*</span> C.<span class=\"me0\">ClipX</span>;\n    CenterY\
+      \ <span class=\"sy0\">=</span> <span class=\"br0\">(</span>M.<span class=\"\
+      me0\">ScreenCoords</span>.<span class=\"me0\">Y1</span> <span class=\"sy0\"\
+      >+</span> M.<span class=\"me0\">ScreenCoords</span>.<span class=\"me0\">Y2</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">*</span> <span class=\"nu0\">0.5</span>\
+      \ <span class=\"sy0\">*</span> C.<span class=\"me0\">ClipY</span>;\n \n    W\
+      \ <span class=\"sy0\">*=</span> ScaleX;\n    H <span class=\"sy0\">*=</span>\
+      \ ScaleY;\n    X <span class=\"sy0\">=</span> CenterX <span class=\"sy0\">-</span>\
+      \ <span class=\"nu0\">0.5</span> <span class=\"sy0\">*</span> W;\n    Y <span\
+      \ class=\"sy0\">=</span> CenterY <span class=\"sy0\">-</span> <span class=\"\
+      nu0\">0.5</span> <span class=\"sy0\">*</span> H;\n \n    OldStyle <span class=\"\
+      sy0\">=</span> C.<span class=\"kw7\">Style</span>;\n    OldColor <span class=\"\
+      sy0\">=</span> C.<span class=\"me0\">DrawColor</span>;\n \n    C.<span class=\"\
+      kw7\">Style</span> <span class=\"sy0\">=</span> M.<span class=\"me0\">RenderStyle</span>;\n\
+      \    C.<span class=\"me0\">DrawColor</span> <span class=\"sy0\">=</span> M.<span\
+      \ class=\"me0\">DrawColor</span>;\n    C.<span class=\"me0\">SetPos</span><span\
+      \ class=\"br0\">(</span>X, Y<span class=\"br0\">)</span>;\n    <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span> <span class=\"sy0\">!</span>bClipped\
+      \ <span class=\"br0\">)</span>\n        C.<span class=\"me0\">DrawTile</span><span\
+      \ class=\"br0\">(</span>M.<span class=\"me0\">Tex</span>, W, H, M.<span class=\"\
+      me0\">TexCoords</span>.<span class=\"me0\">X1</span>, M.<span class=\"me0\"\
+      >TexCoords</span>.<span class=\"me0\">Y1</span>,\n                M.<span class=\"\
+      me0\">TexCoords</span>.<span class=\"me0\">X2</span> <span class=\"sy0\">-</span>\
+      \ M.<span class=\"me0\">TexCoords</span>.<span class=\"me0\">X1</span>, M.<span\
+      \ class=\"me0\">TexCoords</span>.<span class=\"me0\">Y2</span> <span class=\"\
+      sy0\">-</span> M.<span class=\"me0\">TexCoords</span>.<span class=\"me0\">Y1</span><span\
+      \ class=\"br0\">)</span>;\n    <span class=\"kw2\">else</span>\n        C.<span\
+      \ class=\"me0\">DrawTileClipped</span><span class=\"br0\">(</span>M.<span class=\"\
+      me0\">Tex</span>, W, H, M.<span class=\"me0\">TexCoords</span>.<span class=\"\
+      me0\">X1</span>, M.<span class=\"me0\">TexCoords</span>.<span class=\"me0\"\
+      >Y1</span>,\n                M.<span class=\"me0\">TexCoords</span>.<span class=\"\
+      me0\">X2</span> <span class=\"sy0\">-</span> M.<span class=\"me0\">TexCoords</span>.<span\
+      \ class=\"me0\">X1</span>, M.<span class=\"me0\">TexCoords</span>.<span class=\"\
+      me0\">Y2</span> <span class=\"sy0\">-</span> M.<span class=\"me0\">TexCoords</span>.<span\
+      \ class=\"me0\">Y1</span><span class=\"br0\">)</span>;\n \n    C.<span class=\"\
+      kw7\">Style</span> <span class=\"sy0\">=</span> OldStyle;\n    C.<span class=\"\
+      me0\">DrawColor</span> <span class=\"sy0\">=</span> OldColor;\n<span class=\"\
+      br0\">}</span>\n \n<span class=\"coMULTI\">/** draws a float value with the\
+      \ decimal point at about the specified coordinates */</span>\n<span class=\"\
+      kw1\">static</span> <span class=\"kw1\">final</span> <span class=\"kw1\">function</span>\
+      \ DrawDecimalNumberAt<span class=\"br0\">(</span><span class=\"kw8\">Canvas</span>\
+      \ C, <span class=\"kw5\">float</span> Value, <span class=\"kw5\">float</span>\
+      \ X, <span class=\"kw5\">float</span> Y, <span class=\"kw1\">optional</span>\
+      \ <span class=\"kw5\">bool</span> bClipped, <span class=\"kw1\">optional</span>\
+      \ <span class=\"kw5\">int</span> Precision<span class=\"br0\">)</span>\n<span\
+      \ class=\"br0\">{</span>\n    <span class=\"kw1\">local</span> <span class=\"\
+      kw5\">int</span> IntPart;\n    <span class=\"kw1\">local</span> <span class=\"\
+      kw5\">float</span> FloatPart;\n    <span class=\"kw1\">local</span> <span class=\"\
+      kw5\">float</span> XL, YL, OldX, OldY;\n    <span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">string</span> IntString, FloatString;\n \n    OldX <span\
+      \ class=\"sy0\">=</span> C.<span class=\"me0\">CurX</span>; OldY <span class=\"\
+      sy0\">=</span> C.<span class=\"me0\">CurY</span>;\n \n    <span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span> Precision <span class=\"sy0\">==</span>\
+      \ <span class=\"nu0\">0</span> <span class=\"br0\">)</span>\n        Precision\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">2</span>; <span class=\"\
+      co1\">// default UT2k3 setting</span>\n    <span class=\"kw2\">else</span>\n\
+      \        Precision <span class=\"sy0\">=</span> <span class=\"kw3\">Max</span><span\
+      \ class=\"br0\">(</span>Precision, <span class=\"nu0\">1</span><span class=\"\
+      br0\">)</span>;  <span class=\"co1\">// otherwise Canvas.DrawScreenText should\
+      \ be used</span>\n \n    <span class=\"kw2\">if</span> <span class=\"br0\">(</span>\
+      \ Value <span class=\"sy0\">&lt;</span> <span class=\"nu0\">0</span> <span class=\"\
+      br0\">)</span> <span class=\"br0\">{</span>\n        IntString <span class=\"\
+      sy0\">=</span> <span class=\"st0\">\"-\"</span>;\n        Value <span class=\"\
+      sy0\">*=</span> <span class=\"sy0\">-</span><span class=\"nu0\">1</span>;\n\
+      \    <span class=\"br0\">}</span>\n    IntPart <span class=\"sy0\">=</span>\
+      \ <span class=\"kw5\">int</span><span class=\"br0\">(</span>Value<span class=\"\
+      br0\">)</span>;\n    FloatPart <span class=\"sy0\">=</span> Value <span class=\"\
+      sy0\">-</span> IntPart;\n    IntString <span class=\"sy0\">=</span> IntString\
+      \ <span class=\"sy0\">$</span> <span class=\"kw5\">string</span><span class=\"\
+      br0\">(</span>IntPart<span class=\"br0\">)</span>;\n    IntString <span class=\"\
+      sy0\">=</span> <span class=\"kw5\">string</span><span class=\"br0\">(</span>IntPart<span\
+      \ class=\"br0\">)</span>;\n    FloatString <span class=\"sy0\">=</span> <span\
+      \ class=\"kw5\">string</span><span class=\"br0\">(</span><span class=\"kw5\"\
+      >int</span><span class=\"br0\">(</span>FloatPart <span class=\"sy0\">*</span>\
+      \ <span class=\"nu0\">10</span> <span class=\"sy0\">**</span> Precision<span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>;\n    <span class=\"kw2\"\
+      >while</span> <span class=\"br0\">(</span><span class=\"kw3\">Len</span><span\
+      \ class=\"br0\">(</span>FloatString<span class=\"br0\">)</span> <span class=\"\
+      sy0\">&lt;</span> Precision<span class=\"br0\">)</span>\n        FloatString\
+      \ <span class=\"sy0\">=</span> <span class=\"st0\">\"0\"</span> <span class=\"\
+      sy0\">$</span> FloatString;\n \n    C.<span class=\"me0\">TextSize</span><span\
+      \ class=\"br0\">(</span>IntString, XL, YL<span class=\"br0\">)</span>;\n   \
+      \ C.<span class=\"me0\">SetPos</span><span class=\"br0\">(</span>X <span class=\"\
+      sy0\">-</span> XL, Y<span class=\"br0\">)</span>;\n    <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span> <span class=\"sy0\">!</span>bClipped <span class=\"\
+      br0\">)</span>\n        C.<span class=\"me0\">DrawText</span><span class=\"\
+      br0\">(</span>IntString<span class=\"sy0\">$</span><span class=\"st0\">\".\"\
+      </span><span class=\"sy0\">$</span>FloatString<span class=\"br0\">)</span>;\n\
+      \    <span class=\"kw2\">else</span>\n        C.<span class=\"me0\">DrawTextClipped</span><span\
+      \ class=\"br0\">(</span>IntString<span class=\"sy0\">$</span><span class=\"\
+      st0\">\".\"</span><span class=\"sy0\">$</span>FloatString<span class=\"br0\"\
+      >)</span>;\n \n    C.<span class=\"me0\">SetPos</span><span class=\"br0\">(</span>OldX,\
+      \ OldY<span class=\"br0\">)</span>;   <span class=\"co1\">// reset draw position</span>\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"coMULTI\">/** Calculates a box\
+      \ around an actor in relative screen coordinates.  */</span>\n<span class=\"\
+      kw1\">static</span> <span class=\"kw1\">final</span> <span class=\"kw1\">function</span>\
+      \ <span class=\"kw5\">FloatBox</span> GetActorBox<span class=\"br0\">(</span><span\
+      \ class=\"kw8\">Canvas</span> C, <span class=\"kw9\">Actor</span> A<span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n    <span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">float</span> <span class=\"kw3\">Left</span>, <span class=\"\
+      kw3\">Right</span>;\n    <span class=\"kw1\">local</span> <span class=\"kw5\"\
+      >vector</span> CamLoc, X, Y, Z;\n    <span class=\"kw1\">local</span> <span\
+      \ class=\"kw5\">rotator</span> CamRot;\n    <span class=\"kw1\">local</span>\
+      \ array<span class=\"sy0\">&lt;</span>float<span class=\"sy0\">&gt;</span> Height;\n\
+      \    <span class=\"kw1\">local</span> <span class=\"kw5\">FloatBox</span> <span\
+      \ class=\"kw5\">box</span>;\n \n    <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span> A <span class=\"sy0\">==</span> <span class=\"kw5\">None</span>\
+      \ <span class=\"br0\">)</span>\n        <span class=\"kw2\">return</span> <span\
+      \ class=\"kw5\">box</span>;\n \n    C.<span class=\"me0\">GetCameraLocation</span><span\
+      \ class=\"br0\">(</span>CamLoc, CamRot<span class=\"br0\">)</span>;\n    <span\
+      \ class=\"kw3\">GetAxes</span><span class=\"br0\">(</span>CamRot, X, Y, Z<span\
+      \ class=\"br0\">)</span>;\n    <span class=\"kw3\">Right</span> <span class=\"\
+      sy0\">=</span> C.<span class=\"me0\">WorldToScreen</span><span class=\"br0\"\
+      >(</span>A.<span class=\"kw7\">Location</span> <span class=\"sy0\">+</span>\
+      \ Y <span class=\"sy0\">*</span> A.<span class=\"kw7\">CollisionRadius</span><span\
+      \ class=\"br0\">)</span>.<span class=\"me0\">X</span>;\n    <span class=\"kw3\"\
+      >Left</span> <span class=\"sy0\">=</span> C.<span class=\"me0\">WorldToScreen</span><span\
+      \ class=\"br0\">(</span>A.<span class=\"kw7\">Location</span> <span class=\"\
+      sy0\">-</span> Y <span class=\"sy0\">*</span> A.<span class=\"kw7\">CollisionRadius</span><span\
+      \ class=\"br0\">)</span>.<span class=\"me0\">X</span>;\n    X <span class=\"\
+      sy0\">=</span> <span class=\"kw3\">Normal</span><span class=\"br0\">(</span>X\
+      \ <span class=\"sy0\">*</span> <span class=\"kw3\">vect</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">1</span>,<span class=\"nu0\">1</span>,<span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">*</span> A.<span class=\"kw7\">CollisionRadius</span>;\n\
+      \    Z <span class=\"sy0\">=</span> <span class=\"kw3\">vect</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">0</span>,<span class=\"nu0\">0</span>,<span\
+      \ class=\"nu0\">1</span><span class=\"br0\">)</span> <span class=\"sy0\">*</span>\
+      \ A.<span class=\"kw7\">CollisionHeight</span>;\n    Height<span class=\"br0\"\
+      >[</span><span class=\"nu0\">0</span><span class=\"br0\">]</span> <span class=\"\
+      sy0\">=</span> C.<span class=\"me0\">WorldToScreen</span><span class=\"br0\"\
+      >(</span>A.<span class=\"kw7\">Location</span> <span class=\"sy0\">+</span>\
+      \ X <span class=\"sy0\">+</span> Z<span class=\"br0\">)</span>.<span class=\"\
+      me0\">Y</span>;\n    Height<span class=\"br0\">[</span><span class=\"nu0\">1</span><span\
+      \ class=\"br0\">]</span> <span class=\"sy0\">=</span> C.<span class=\"me0\"\
+      >WorldToScreen</span><span class=\"br0\">(</span>A.<span class=\"kw7\">Location</span>\
+      \ <span class=\"sy0\">-</span> X <span class=\"sy0\">+</span> Z<span class=\"\
+      br0\">)</span>.<span class=\"me0\">Y</span>;\n    Height<span class=\"br0\"\
+      >[</span><span class=\"nu0\">2</span><span class=\"br0\">]</span> <span class=\"\
+      sy0\">=</span> C.<span class=\"me0\">WorldToScreen</span><span class=\"br0\"\
+      >(</span>A.<span class=\"kw7\">Location</span> <span class=\"sy0\">+</span>\
+      \ X <span class=\"sy0\">-</span> Z<span class=\"br0\">)</span>.<span class=\"\
+      me0\">Y</span>;\n    Height<span class=\"br0\">[</span><span class=\"nu0\">3</span><span\
+      \ class=\"br0\">]</span> <span class=\"sy0\">=</span> C.<span class=\"me0\"\
+      >WorldToScreen</span><span class=\"br0\">(</span>A.<span class=\"kw7\">Location</span>\
+      \ <span class=\"sy0\">-</span> X <span class=\"sy0\">-</span> Z<span class=\"\
+      br0\">)</span>.<span class=\"me0\">Y</span>;\n \n    <span class=\"kw5\">box</span>.<span\
+      \ class=\"me0\">X1</span> <span class=\"sy0\">=</span> <span class=\"kw3\">Left</span>\
+      \ <span class=\"sy0\">/</span> C.<span class=\"me0\">SizeX</span>;\n    <span\
+      \ class=\"kw5\">box</span>.<span class=\"me0\">X2</span> <span class=\"sy0\"\
+      >=</span> <span class=\"kw3\">Right</span> <span class=\"sy0\">/</span> C.<span\
+      \ class=\"me0\">SizeX</span>;\n    <span class=\"kw5\">box</span>.<span class=\"\
+      me0\">Y1</span> <span class=\"sy0\">=</span> <span class=\"kw1\">class</span><span\
+      \ class=\"st0\">'wArray'</span>.<span class=\"kw1\">static</span>.<span class=\"\
+      me0\">MinF</span><span class=\"br0\">(</span>Height<span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">/</span> C.<span class=\"me0\">SizeY</span>;\n    <span\
+      \ class=\"kw5\">box</span>.<span class=\"me0\">Y2</span> <span class=\"sy0\"\
+      >=</span> <span class=\"kw1\">class</span><span class=\"st0\">'wArray'</span>.<span\
+      \ class=\"kw1\">static</span>.<span class=\"me0\">MaxF</span><span class=\"\
+      br0\">(</span>Height<span class=\"br0\">)</span> <span class=\"sy0\">/</span>\
+      \ C.<span class=\"me0\">SizeY</span>;\n \n    <span class=\"kw2\">return</span>\
+      \ <span class=\"kw5\">box</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"\
+      coMULTI\">/** Sets the canvas' clipping region. Can use a FloatBox like it is\
+      \ returned by the GetActorBox method. */</span>\n<span class=\"kw1\">static</span>\
+      \ <span class=\"kw1\">final</span> <span class=\"kw1\">function</span> SetClipRegion<span\
+      \ class=\"br0\">(</span><span class=\"kw8\">Canvas</span> C, <span class=\"\
+      kw5\">FloatBox</span> ClipRegion<span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n    C.<span class=\"me0\">SetOrigin</span><span class=\"br0\"\
+      >(</span>ClipRegion.<span class=\"me0\">X1</span> <span class=\"sy0\">*</span>\
+      \ C.<span class=\"me0\">SizeX</span>, ClipRegion.<span class=\"me0\">Y1</span>\
+      \ <span class=\"sy0\">*</span> C.<span class=\"me0\">SizeY</span><span class=\"\
+      br0\">)</span>;\n    C.<span class=\"me0\">SetClip</span><span class=\"br0\"\
+      >(</span><span class=\"br0\">(</span>ClipRegion.<span class=\"me0\">X2</span>\
+      \ <span class=\"sy0\">-</span> ClipRegion.<span class=\"me0\">X1</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">*</span> C.<span class=\"me0\"\
+      >SizeX</span>, <span class=\"br0\">(</span>ClipRegion.<span class=\"me0\">Y2</span>\
+      \ <span class=\"sy0\">-</span> ClipRegion.<span class=\"me0\">Y1</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">*</span> C.<span class=\"me0\"\
+      >SizeY</span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n \n\
+      <span class=\"coMULTI\">/** Resets the canvas' clipping region. */</span>\n\
+      <span class=\"kw1\">static</span> <span class=\"kw1\">final</span> <span class=\"\
+      kw1\">function</span> ResetClipRegion<span class=\"br0\">(</span><span class=\"\
+      kw8\">Canvas</span> C<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \    C.<span class=\"me0\">SetOrigin</span><span class=\"br0\">(</span>C.<span\
+      \ class=\"kw1\">Default</span>.<span class=\"me0\">OrgX</span>, C.<span class=\"\
+      kw1\">Default</span>.<span class=\"me0\">OrgY</span><span class=\"br0\">)</span>;\n\
+      \    C.<span class=\"me0\">SetClip</span><span class=\"br0\">(</span>C.<span\
+      \ class=\"kw1\">Default</span>.<span class=\"me0\">ClipX</span>, C.<span class=\"\
+      kw1\">Default</span>.<span class=\"me0\">ClipY</span><span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"coMULTI\">/** This function is\
+      \ a corrected version of the function with the same name in the Canvas class.\
+      \ */</span>\n<span class=\"kw1\">static</span> <span class=\"kw1\">final</span>\
+      \ <span class=\"kw1\">function</span> DrawBracket<span class=\"br0\">(</span><span\
+      \ class=\"kw8\">Canvas</span> C, <span class=\"kw5\">float</span> width, <span\
+      \ class=\"kw5\">float</span> height, <span class=\"kw5\">float</span> bracket_size<span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n    <span class=\"kw1\"\
+      >local</span> <span class=\"kw5\">float</span> X, Y;\n    X <span class=\"sy0\"\
+      >=</span> C.<span class=\"me0\">CurX</span>;\n    Y <span class=\"sy0\">=</span>\
+      \ C.<span class=\"me0\">CurY</span>;\n \n    Width  <span class=\"sy0\">=</span>\
+      \ <span class=\"kw3\">max</span><span class=\"br0\">(</span>width,<span class=\"\
+      nu0\">5</span><span class=\"br0\">)</span>;\n    Height <span class=\"sy0\"\
+      >=</span> <span class=\"kw3\">max</span><span class=\"br0\">(</span>height,<span\
+      \ class=\"nu0\">5</span><span class=\"br0\">)</span>;\n \n    <span class=\"\
+      co1\">// top left</span>\n    C.<span class=\"me0\">DrawLine</span><span class=\"\
+      br0\">(</span><span class=\"nu0\">3</span>, bracket_size<span class=\"br0\"\
+      >)</span>;    <span class=\"co1\">// to left</span>\n    C.<span class=\"me0\"\
+      >DrawLine</span><span class=\"br0\">(</span><span class=\"nu0\">1</span>, bracket_size<span\
+      \ class=\"br0\">)</span>;    <span class=\"co1\">// down</span>\n \n    <span\
+      \ class=\"co1\">// top right</span>\n    C.<span class=\"me0\">SetPos</span><span\
+      \ class=\"br0\">(</span>X <span class=\"sy0\">+</span> width, Y<span class=\"\
+      br0\">)</span>;\n    C.<span class=\"me0\">DrawLine</span><span class=\"br0\"\
+      >(</span><span class=\"nu0\">2</span>, bracket_size<span class=\"br0\">)</span>;\
+      \    <span class=\"co1\">// to right</span>\n    C.<span class=\"me0\">SetPos</span><span\
+      \ class=\"br0\">(</span>X <span class=\"sy0\">+</span> width <span class=\"\
+      sy0\">-</span> <span class=\"nu0\">2</span>, Y<span class=\"br0\">)</span>;\n\
+      \    C.<span class=\"me0\">DrawLine</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">1</span>, bracket_size<span class=\"br0\">)</span>;    <span\
+      \ class=\"co1\">// down</span>\n \n    <span class=\"co1\">// bottom right</span>\n\
+      \    C.<span class=\"me0\">SetPos</span><span class=\"br0\">(</span>X <span\
+      \ class=\"sy0\">+</span> width <span class=\"sy0\">-</span> <span class=\"nu0\"\
+      >2</span>, Y <span class=\"sy0\">+</span> height<span class=\"br0\">)</span>;\n\
+      \    C.<span class=\"me0\">DrawLine</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">0</span>, bracket_size<span class=\"br0\">)</span>;    <span\
+      \ class=\"co1\">// up</span>\n    C.<span class=\"me0\">SetPos</span><span class=\"\
+      br0\">(</span>X <span class=\"sy0\">+</span> width, Y <span class=\"sy0\">+</span>\
+      \ height <span class=\"sy0\">-</span> <span class=\"nu0\">2</span><span class=\"\
+      br0\">)</span>;\n    C.<span class=\"me0\">DrawLine</span><span class=\"br0\"\
+      >(</span><span class=\"nu0\">2</span>, bracket_size<span class=\"br0\">)</span>;\
+      \    <span class=\"co1\">// to right</span>\n \n    <span class=\"co1\">// bottom\
+      \ left</span>\n    C.<span class=\"me0\">SetPos</span><span class=\"br0\">(</span>X,\
+      \ Y <span class=\"sy0\">+</span> height <span class=\"sy0\">-</span> <span class=\"\
+      nu0\">2</span><span class=\"br0\">)</span>;\n    C.<span class=\"me0\">DrawLine</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">3</span>, bracket_size<span class=\"\
+      br0\">)</span>;    <span class=\"co1\">// to left</span>\n    C.<span class=\"\
+      me0\">SetPos</span><span class=\"br0\">(</span>X, Y <span class=\"sy0\">+</span>\
+      \ height<span class=\"br0\">)</span>;\n    C.<span class=\"me0\">DrawLine</span><span\
+      \ class=\"br0\">(</span> <span class=\"nu0\">0</span>, bracket_size<span class=\"\
+      br0\">)</span>;   <span class=\"co1\">// up</span>\n \n    C.<span class=\"\
+      me0\">SetPos</span><span class=\"br0\">(</span>X, Y<span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n\n<!-- \nNewPP limit report\n\
+      CPU time usage: 0.070 seconds\nReal time usage: 0.070 seconds\nPreprocessor\
+      \ visited node count: 5/1000000\nPreprocessor generated node count: 32/1000000\n\
+      Post‐expand include size: 12/2097152 bytes\nTemplate argument size: 0/2097152\
+      \ bytes\nHighest expansion depth: 2/40\nExpensive parser function count: 0/100\n\
+      -->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n100.00%\
+      \    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:3775-0!*!*!*!*!*!*\
+      \ and timestamp 20221118120045 and revision id 9563\n -->\n"
+  categories:
+  - sortkey: "WUtils/WDraw"
+    name: "Legacy_Custom_Class_(UT2004)"
+  links: []
+  templates: []
+  images: []
+  externallinks: []
+  sections: []
+  displaytitle: "Legacy:WUtils/WDraw"
+  iwlinks: []
+  wikitext:
+    text: "<uscript>\n///////////////////////////////////////////////////////////////////////////////\n\
+      // filename:    wDraw.uc\n// revision:    101\n// authors:     various UnrealWiki\
+      \ members (http://wiki.beyondunreal.com)\n//              http://wiki.beyondunreal.com/WUtils\n\
+      ///////////////////////////////////////////////////////////////////////////////\n\
+      \nclass wDraw extends Object exportstructs;\n\nstruct MaterialRegion \n{\n \
+      \   var Material Tex;\n    var IntBox TexCoords;   // absolute material coordinates\n\
+      \    var FloatBox ScreenCoords;  // relative screen coordinates\n    var Actor.ERenderStyle\
+      \ RenderStyle;\n    var Color DrawColor;\n};\n\n/** scale keeps the MaterialRegion's\
+      \ center at the same location */\nstatic final function DrawMaterialRegion(Canvas\
+      \ C, MaterialRegion M,\n        optional float ScaleX, optional float ScaleY,\
+      \ optional bool bClipped)\n{\n    local byte OldStyle;\n    local Color OldColor;\n\
+      \    local float X, Y, W, H, CenterX, CenterY;\n   \n    if ( ScaleX == 0 )\n\
+      \        ScaleX = 1.0;\n   \n    if ( ScaleY == 0 )\n        ScaleY = ScaleX;\n\
+      \   \n    X = M.ScreenCoords.X1 * C.ClipX;\n    Y = M.ScreenCoords.Y1 * C.ClipY;\n\
+      \    W = (M.ScreenCoords.X2 - M.ScreenCoords.X1) * C.ClipX;\n    H = (M.ScreenCoords.Y2\
+      \ - M.ScreenCoords.Y1) * C.ClipY;\n    CenterX = (M.ScreenCoords.X1 + M.ScreenCoords.X2)\
+      \ * 0.5 * C.ClipX;\n    CenterY = (M.ScreenCoords.Y1 + M.ScreenCoords.Y2) *\
+      \ 0.5 * C.ClipY;\n       \n    W *= ScaleX;\n    H *= ScaleY;\n    X = CenterX\
+      \ - 0.5 * W;\n    Y = CenterY - 0.5 * H;\n   \n    OldStyle = C.Style;\n   \
+      \ OldColor = C.DrawColor;\n   \n    C.Style = M.RenderStyle;\n    C.DrawColor\
+      \ = M.DrawColor;\n    C.SetPos(X, Y);\n    if ( !bClipped )\n        C.DrawTile(M.Tex,\
+      \ W, H, M.TexCoords.X1, M.TexCoords.Y1,\n                M.TexCoords.X2 - M.TexCoords.X1,\
+      \ M.TexCoords.Y2 - M.TexCoords.Y1);\n    else\n        C.DrawTileClipped(M.Tex,\
+      \ W, H, M.TexCoords.X1, M.TexCoords.Y1,\n                M.TexCoords.X2 - M.TexCoords.X1,\
+      \ M.TexCoords.Y2 - M.TexCoords.Y1);\n    \n    C.Style = OldStyle;\n    C.DrawColor\
+      \ = OldColor;\n}\n\n/** draws a float value with the decimal point at about\
+      \ the specified coordinates */\nstatic final function DrawDecimalNumberAt(Canvas\
+      \ C, float Value, float X, float Y, optional bool bClipped, optional int Precision)\n\
+      {\n    local int IntPart;\n    local float FloatPart;\n    local float XL, YL,\
+      \ OldX, OldY;\n    local string IntString, FloatString;\n    \n    OldX = C.CurX;\
+      \ OldY = C.CurY;\n    \n    if ( Precision == 0 )\n        Precision = 2; //\
+      \ default UT2k3 setting\n    else\n        Precision = Max(Precision, 1);  //\
+      \ otherwise Canvas.DrawScreenText should be used\n    \n    if ( Value < 0 )\
+      \ {\n        IntString = \"-\";\n        Value *= -1;\n    }\n    IntPart =\
+      \ int(Value);\n    FloatPart = Value - IntPart;\n    IntString = IntString $\
+      \ string(IntPart);\n    IntString = string(IntPart);\n    FloatString = string(int(FloatPart\
+      \ * 10 ** Precision));\n    while (Len(FloatString) < Precision)\n        FloatString\
+      \ = \"0\" $ FloatString;\n    \n    C.TextSize(IntString, XL, YL);\n    C.SetPos(X\
+      \ - XL, Y);\n    if ( !bClipped )\n        C.DrawText(IntString$\".\"$FloatString);\n\
+      \    else\n        C.DrawTextClipped(IntString$\".\"$FloatString);\n    \n \
+      \   C.SetPos(OldX, OldY);   // reset draw position\n}\n\n/** Calculates a box\
+      \ around an actor in relative screen coordinates.  */\nstatic final function\
+      \ FloatBox GetActorBox(Canvas C, Actor A)\n{\n    local float Left, Right;\n\
+      \    local vector CamLoc, X, Y, Z;\n    local rotator CamRot;\n    local array<float>\
+      \ Height;\n    local FloatBox box;\n    \n    if ( A == None )\n        return\
+      \ box;\n    \n    C.GetCameraLocation(CamLoc, CamRot);\n    GetAxes(CamRot,\
+      \ X, Y, Z);\n    Right = C.WorldToScreen(A.Location + Y * A.CollisionRadius).X;\n\
+      \    Left = C.WorldToScreen(A.Location - Y * A.CollisionRadius).X;\n    X =\
+      \ Normal(X * vect(1,1,0)) * A.CollisionRadius;\n    Z = vect(0,0,1) * A.CollisionHeight;\n\
+      \    Height[0] = C.WorldToScreen(A.Location + X + Z).Y;\n    Height[1] = C.WorldToScreen(A.Location\
+      \ - X + Z).Y;\n    Height[2] = C.WorldToScreen(A.Location + X - Z).Y;\n    Height[3]\
+      \ = C.WorldToScreen(A.Location - X - Z).Y;\n    \n    box.X1 = Left / C.SizeX;\n\
+      \    box.X2 = Right / C.SizeX;\n    box.Y1 = class'wArray'.static.MinF(Height)\
+      \ / C.SizeY;\n    box.Y2 = class'wArray'.static.MaxF(Height) / C.SizeY;\n  \
+      \  \n    return box;\n}\n\n/** Sets the canvas' clipping region. Can use a FloatBox\
+      \ like it is returned by the GetActorBox method. */\nstatic final function SetClipRegion(Canvas\
+      \ C, FloatBox ClipRegion)\n{\n    C.SetOrigin(ClipRegion.X1 * C.SizeX, ClipRegion.Y1\
+      \ * C.SizeY);\n    C.SetClip((ClipRegion.X2 - ClipRegion.X1) * C.SizeX, (ClipRegion.Y2\
+      \ - ClipRegion.Y1) * C.SizeY);\n}\n\n/** Resets the canvas' clipping region.\
+      \ */\nstatic final function ResetClipRegion(Canvas C)\n{\n    C.SetOrigin(C.Default.OrgX,\
+      \ C.Default.OrgY);\n    C.SetClip(C.Default.ClipX, C.Default.ClipY);\n}\n\n\
+      /** This function is a corrected version of the function with the same name\
+      \ in the Canvas class. */\nstatic final function DrawBracket(Canvas C, float\
+      \ width, float height, float bracket_size)\n{\n    local float X, Y;\n    X\
+      \ = C.CurX;\n    Y = C.CurY;\n\n    Width  = max(width,5);\n    Height = max(height,5);\n\
+      \    \n    // top left\n    C.DrawLine(3, bracket_size);    // to left\n   \
+      \ C.DrawLine(1, bracket_size);    // down\n    \n    // top right\n    C.SetPos(X\
+      \ + width, Y);\n    C.DrawLine(2, bracket_size);    // to right\n    C.SetPos(X\
+      \ + width - 2, Y);\n    C.DrawLine(1, bracket_size);    // down\n    \n    //\
+      \ bottom right\n    C.SetPos(X + width - 2, Y + height);\n    C.DrawLine(0,\
+      \ bracket_size);    // up\n    C.SetPos(X + width, Y + height - 2);\n    C.DrawLine(2,\
+      \ bracket_size);    // to right\n    \n    // bottom left\n    C.SetPos(X, Y\
+      \ + height - 2);\n    C.DrawLine(3, bracket_size);    // to left\n    C.SetPos(X,\
+      \ Y + height);\n    C.DrawLine( 0, bracket_size);   // up\n\n    C.SetPos(X,\
+      \ Y);\n}\n</uscript>\n\n[[Category:Legacy Custom Class (UT2004)|{{PAGENAME}}]]"
+  properties: []
+  revId: 9563
+name: "Legacy:WUtils/WDraw"
+revision:
+  revid: 9563
+  parentid: 9564
+  user: "Sweavo"
+  timestamp: 1195514251.000000000
+  comment: "*"
+timestamp: 1668772846.110181000

@@ -1,0 +1,345 @@
+---
+parse:
+  title: "Legacy:Netcode Idioms"
+  text:
+    text: "<p>This is a cookbook of ways to get round some of the 'gotchas' in <a\
+      \ href=\"/Legacy:Replication\" title=\"Legacy:Replication\">replication</a>.</p>\n\
+      <p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n\
+      </div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#Targetting_types_of_machine\"\
+      ><span class=\"tocnumber\">1</span> <span class=\"toctext\">Targetting types\
+      \ of machine</span></a></li>\n<li class=\"toclevel-1 tocsection-2\"><a href=\"\
+      #Finding_the_Local_PlayerPawn_or_PlayerController\"><span class=\"tocnumber\"\
+      >2</span> <span class=\"toctext\">Finding the Local PlayerPawn or PlayerController</span></a>\n\
+      <ul>\n<li class=\"toclevel-2 tocsection-3\"><a href=\"#UnrealEngine1\"><span\
+      \ class=\"tocnumber\">2.1</span> <span class=\"toctext\">UnrealEngine1</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-4\"><a href=\"#UnrealEngine2\"><span class=\"\
+      tocnumber\">2.2</span> <span class=\"toctext\">UnrealEngine2</span></a></li>\n\
+      </ul>\n</li>\n<li class=\"toclevel-1 tocsection-5\"><a href=\"#HUD_Mutators\"\
+      ><span class=\"tocnumber\">3</span> <span class=\"toctext\">HUD Mutators</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-6\"><a href=\"#Replicating_Config_Variables\"\
+      ><span class=\"tocnumber\">4</span> <span class=\"toctext\">Replicating Config\
+      \ Variables</span></a></li>\n<li class=\"toclevel-1 tocsection-7\"><a href=\"\
+      #Related_Topics\"><span class=\"tocnumber\">5</span> <span class=\"toctext\"\
+      >Related Topics</span></a></li>\n<li class=\"toclevel-1 tocsection-8\"><a href=\"\
+      #Discussion\"><span class=\"tocnumber\">6</span> <span class=\"toctext\">Discussion</span></a></li>\n\
+      </ul>\n</div>\n<p></p>\n<h2><span class=\"mw-headline\" id=\"Targetting_types_of_machine\"\
+      >Targetting types of machine</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Netcode_Idioms?section=1\"\
+      \ title=\"Edit section: Targetting types of machine\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<p>There are basically 5 types\
+      \ of machine:</p>\n<ul>\n<li><code>(Level.NetMode == NM_ListenServer)</code>\
+      \ – listen servers (with a local player)</li>\n<li><code>(Level.NetMode == NM_DedicatedServer)</code>\
+      \ – dedicated servers (no local player)</li>\n<li><code>(Level.NetMode == NM_Client)</code>\
+      \ – clients</li>\n<li><code>(Level.NetMode == NM_Client &amp;&amp; bNetOwner)</code>\
+      \ – owner clients (special case of client where the local player is the Owner\
+      \ of the actor in question)</li>\n<li><code>(Level.NetMode == NM_Standalone)</code>\
+      \ – standalone games</li>\n</ul>\n<p>You sometimes need things to happen only\
+      \ on certain types of machine. Here's how:</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"\
+      kw7\">Level</span>.<span class=\"me0\">NetMode</span> <span class=\"sy0\">!=</span>\
+      \ NM_DedicatedServer<span class=\"br0\">)</span> <span class=\"br0\">{</span>\n\
+      \  <span class=\"co1\">// This could be offline, a listen server or a client,\
+      \ but we know</span>\n  <span class=\"co1\">// we have a local player on this\
+      \ machine, someone who can see or hear things.</span>\n<span class=\"br0\">}</span>\n\
+      <span class=\"kw2\">if</span> <span class=\"br0\">(</span><span class=\"kw7\"\
+      >Role</span> <span class=\"sy0\">==</span> <span class=\"kw7\">ROLE_Authority</span><span\
+      \ class=\"br0\">)</span> <span class=\"br0\">{</span>\n  <span class=\"co1\"\
+      >// This is the authorative copy of this actor, it was spawned on this machine.</span>\n\
+      \  <span class=\"co1\">// It is not a guarantee that we are on the server or\
+      \ in single player!</span>\n<span class=\"br0\">}</span>\n<span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span><span class=\"kw7\">Role</span> <span\
+      \ class=\"sy0\">&lt;</span> ROLE_Authortity<span class=\"br0\">)</span> <span\
+      \ class=\"br0\">{</span>\n  <span class=\"co1\">// This is a non-authorative\
+      \ copy of this actor that was replicated</span>\n  <span class=\"co1\">// from\
+      \ the server. In other words, we must be on a client.</span>\n<span class=\"\
+      br0\">}</span>\n \n<span class=\"co1\">// please add more!</span></pre></div>\n\
+      </div>\n<p>See also: <a href=\"/Legacy:NetMode\" title=\"Legacy:NetMode\">NetMode</a>,\
+      \ <a href=\"/Legacy:Role\" title=\"Legacy:Role\">Role</a>.</p>\n<h2><span class=\"\
+      mw-headline\" id=\"Finding_the_Local_PlayerPawn_or_PlayerController\">Finding\
+      \ the Local PlayerPawn or PlayerController</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Netcode_Idioms?section=2\"\
+      \ title=\"Edit section: Finding the Local PlayerPawn or PlayerController\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h2>\n<h3><span class=\"\
+      mw-headline\" id=\"UnrealEngine1\">UnrealEngine1</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Netcode_Idioms?section=3\"\
+      \ title=\"Edit section: UnrealEngine1\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>The usual idiom for finding the local player's <a\
+      \ href=\"/Legacy:PlayerPawn\" title=\"Legacy:PlayerPawn\">PlayerPawn</a> (UT)\
+      \ on a network client or a listen server is (after declaring a class-level <tt>var\
+      \ PlayerPawn PlayerLocal</tt>):</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw2\">if</span> <span class=\"br0\">(</span>PlayerLocal <span\
+      \ class=\"sy0\">==</span> <span class=\"kw5\">None</span><span class=\"br0\"\
+      >)</span>\n  <span class=\"kw2\">foreach</span> <span class=\"kw2\">AllActors</span><span\
+      \ class=\"br0\">(</span><span class=\"kw1\">class</span> <span class=\"st0\"\
+      >'PlayerPawn'</span>, PlayerLocal<span class=\"br0\">)</span>\n    <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span>Viewport<span class=\"br0\">(</span>PlayerLocal.<span\
+      \ class=\"kw8\">Player</span><span class=\"br0\">)</span> <span class=\"sy0\"\
+      >!=</span> <span class=\"kw5\">None</span><span class=\"br0\">)</span>\n   \
+      \   <span class=\"kw2\">break</span>;\n \n<span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span>PlayerLocal <span class=\"sy0\">!=</span> <span class=\"\
+      kw5\">None</span><span class=\"br0\">)</span> <span class=\"br0\">{</span> ...\
+      \ <span class=\"br0\">}</span>  <span class=\"co1\">// do something with it</span></pre></div>\n\
+      </div>\n<p>If you have a <a href=\"/Legacy:Canvas\" title=\"Legacy:Canvas\"\
+      >Canvas</a> object handy (in engine events like RenderOverlays, for instance),\
+      \ there's even a more straightforward way to get hold of the local player:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\">PlayerLocal <span class=\"sy0\">=</span>\
+      \ <span class=\"kw8\">Canvas</span>.<span class=\"me0\">Viewport</span>.<span\
+      \ class=\"kw9\">Actor</span>;</pre></div>\n</div>\n<h3><span class=\"mw-headline\"\
+      \ id=\"UnrealEngine2\">UnrealEngine2</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Netcode_Idioms?section=4\"\
+      \ title=\"Edit section: UnrealEngine2\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p><a href=\"/Legacy:UT2003\" title=\"Legacy:UT2003\"\
+      \ class=\"mw-redirect\">UT2003</a> and <a href=\"/Legacy:UT2004\" title=\"Legacy:UT2004\"\
+      \ class=\"mw-redirect\">UT2004</a> have a function to get the local PlayerController\
+      \ which actually uses the PlayerController/DynamicActors combo (and stores the\
+      \ local controller for later use too):</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\">PlayerLocal <span class=\"sy0\">=</span> <span class=\"kw7\">Level</span>.<span\
+      \ class=\"me0\">GetLocalPlayerController</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>;</pre></div>\n</div>\n<p>Again, if you have a <a href=\"\
+      /Legacy:Canvas\" title=\"Legacy:Canvas\">Canvas</a> object handy you should\
+      \ use the more straight forward version like in UT:</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\">PlayerLocal <span class=\"sy0\">=</span> <span class=\"kw8\"\
+      >Canvas</span>.<span class=\"me0\">Viewport</span>.<span class=\"kw9\">Actor</span>;</pre></div>\n\
+      </div>\n<p>Note that the local <a href=\"/Legacy:PlayerPawn\" title=\"Legacy:PlayerPawn\"\
+      >PlayerPawn</a> or <a href=\"/Legacy:PlayerController\" title=\"Legacy:PlayerController\"\
+      >PlayerController</a> is always relevant (for obvious reasons) and thus always\
+      \ exists on its respective client.</p>\n<h2><span class=\"mw-headline\" id=\"\
+      HUD_Mutators\">HUD Mutators</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Netcode_Idioms?section=5\"\
+      \ title=\"Edit section: HUD Mutators\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>See <a href=\"/Legacy:Useful_Mutator_Functions\" title=\"\
+      Legacy:Useful Mutator Functions\">Useful Mutator Functions</a> or <a href=\"\
+      /Legacy:Linked_List/Existing_Lists_In_Unreal_Tournament\" title=\"Legacy:Linked\
+      \ List/Existing Lists In Unreal Tournament\">Linked List/Existing Lists in Unreal\
+      \ Tournament</a> (use the Quick Navigation menu to browse to \"HUD Mutators\"\
+      ). You'll find a description there how to set up a HUD mutator that actually\
+      \ works in network games.</p>\n<h2><span class=\"mw-headline\" id=\"Replicating_Config_Variables\"\
+      >Replicating Config Variables</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Netcode_Idioms?section=6\"\
+      \ title=\"Edit section: Replicating Config Variables\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<p>Clients load the value of\
+      \ <tt>config</tt> or <tt>globalconfig</tt> variables from their own .ini files.\
+      \ Since these values are treated as defaults they are not replicated until they\
+      \ are changed through code. Clients will see their own customized configuration\
+      \ instead of the server's.</p>\n<p>To force replication of these variables use\
+      \ a second (non-config) variable:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">var</span> <span class=\"kw1\">config</span> <span class=\"\
+      kw5\">string</span> MySettings;\n<span class=\"kw1\">var</span> <span class=\"\
+      kw5\">string</span> ServerSettings;\n \n<span class=\"kw1\">replication</span>\n\
+      <span class=\"br0\">{</span>\n    <span class=\"co1\">// replicate the ServerSettings\
+      \ variable to all (relevant) clients</span>\n    <span class=\"kw1\">reliable</span>\
+      \ <span class=\"kw2\">if</span> <span class=\"br0\">(</span> <span class=\"\
+      kw7\">Role</span> <span class=\"sy0\">==</span> <span class=\"kw7\">ROLE_Authority</span>\
+      \ <span class=\"br0\">)</span>\n        ServerSettings;\n<span class=\"br0\"\
+      >}</span>\n \n<span class=\"kw1\">function</span> <span class=\"kw4\">PreBeginPlay</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      <span class=\"co1\">// non-simulated PreBeginPlay() is only executed on the\
+      \ server - You can take away the 'if' expression below then.</span>\n<span class=\"\
+      co1\">// simulated PreBeginPlay() is executed on both the server and the client.\
+      \ - You must include the 'if' expression below then.</span>\n    <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span> <span class=\"kw7\">Role</span>\
+      \ <span class=\"sy0\">==</span> <span class=\"kw7\">ROLE_Authority</span> <span\
+      \ class=\"br0\">)</span>\n        ServerSettings <span class=\"sy0\">=</span>\
+      \ MySettings;\n    <span class=\"kw6\">Super</span>.<span class=\"kw4\">PreBeginPlay</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<h2><span class=\"mw-headline\" id=\"Related_Topics\">Related Topics</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Netcode_Idioms?section=7\" title=\"Edit section: Related\
+      \ Topics\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <ul>\n<li><a href=\"/Legacy:Replication\" title=\"Legacy:Replication\">Replication</a></li>\n\
+      </ul>\n<h2><span class=\"mw-headline\" id=\"Discussion\">Discussion</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Netcode_Idioms?section=8\" title=\"Edit section: Discussion\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n<p><b>Matariel:</b>\
+      \ Correct me if Im wrong but... doesn't Role == Role_Authority simply mean that\
+      \ this is the authoritative copy of the actor? What if this actor was spawned\
+      \ on a client? I don't think a Role == Role_Authority check qualifies the machine\
+      \ as a server, but simply as the owner.</p>\n<p><b>Wormbo:</b> That's correct,\
+      \ but usually you only do any Role checks if you intend to replicate your actor.</p>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.110 seconds\nReal time usage:\
+      \ 0.112 seconds\nPreprocessor visited node count: 85/1000000\nPreprocessor generated\
+      \ node count: 156/1000000\nPost‐expand include size: 0/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:2287-0!*!0!!en!*!* and timestamp 20221118115442 and revision\
+      \ id 5525\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Linked List/Existing Lists In Unreal Tournament"
+  - ns: 100
+    exists: true
+    name: "Legacy:Canvas"
+  - ns: 100
+    exists: true
+    name: "Legacy:UT2003"
+  - ns: 100
+    exists: true
+    name: "Legacy:NetMode"
+  - ns: 100
+    exists: true
+    name: "Legacy:PlayerPawn"
+  - ns: 100
+    exists: true
+    name: "Legacy:PlayerController"
+  - ns: 100
+    exists: true
+    name: "Legacy:Replication"
+  - ns: 100
+    exists: true
+    name: "Legacy:Role"
+  - ns: 100
+    exists: true
+    name: "Legacy:UT2004"
+  - ns: 100
+    exists: true
+    name: "Legacy:Useful Mutator Functions"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Targetting types of machine"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Netcode_Idioms"
+    byteoffset: 102
+    anchor: "Targetting_types_of_machine"
+  - toclevel: 1
+    level: "2"
+    line: "Finding the Local PlayerPawn or PlayerController"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Netcode_Idioms"
+    byteoffset: 1399
+    anchor: "Finding_the_Local_PlayerPawn_or_PlayerController"
+  - toclevel: 2
+    level: "3"
+    line: "UnrealEngine1"
+    number: "2.1"
+    index: "3"
+    fromtitle: "Legacy:Netcode_Idioms"
+    byteoffset: 1453
+    anchor: "UnrealEngine1"
+  - toclevel: 2
+    level: "3"
+    line: "UnrealEngine2"
+    number: "2.2"
+    index: "4"
+    fromtitle: "Legacy:Netcode_Idioms"
+    byteoffset: 2128
+    anchor: "UnrealEngine2"
+  - toclevel: 1
+    level: "2"
+    line: "HUD Mutators"
+    number: "3"
+    index: "5"
+    fromtitle: "Legacy:Netcode_Idioms"
+    byteoffset: 2810
+    anchor: "HUD_Mutators"
+  - toclevel: 1
+    level: "2"
+    line: "Replicating Config Variables"
+    number: "4"
+    index: "6"
+    fromtitle: "Legacy:Netcode_Idioms"
+    byteoffset: 3164
+    anchor: "Replicating_Config_Variables"
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "5"
+    index: "7"
+    fromtitle: "Legacy:Netcode_Idioms"
+    byteoffset: 4163
+    anchor: "Related_Topics"
+  - toclevel: 1
+    level: "2"
+    line: "Discussion"
+    number: "6"
+    index: "8"
+    fromtitle: "Legacy:Netcode_Idioms"
+    byteoffset: 4220
+    anchor: "Discussion"
+  displaytitle: "Legacy:Netcode Idioms"
+  iwlinks: []
+  wikitext:
+    text: "This is a cookbook of ways to get round some of the 'gotchas' in [[Legacy:Replication|replication]].\n\
+      \n==Targetting types of machine==\n\nThere are basically 5 types of machine:\n\
+      * <code>(Level.NetMode == NM_ListenServer)</code> &ndash; listen servers (with\
+      \ a local player)\n* <code>(Level.NetMode == NM_DedicatedServer)</code> &ndash;\
+      \ dedicated servers (no local player)\n* <code>(Level.NetMode == NM_Client)</code>\
+      \ &ndash; clients\n* <code>(Level.NetMode == NM_Client && bNetOwner)</code>\
+      \ &ndash; owner clients (special case of client where the local player is the\
+      \ Owner of the actor in question)\n* <code>(Level.NetMode == NM_Standalone)</code>\
+      \ &ndash; standalone games\n\nYou sometimes need things to happen only on certain\
+      \ types of machine. Here's how:\n\n<uscript>\nif (Level.NetMode != NM_DedicatedServer)\
+      \ {\n  // This could be offline, a listen server or a client, but we know\n\
+      \  // we have a local player on this machine, someone who can see or hear things.\n\
+      }\nif (Role == ROLE_Authority) {\n  // This is the authorative copy of this\
+      \ actor, it was spawned on this machine.\n  // It is not a guarantee that we\
+      \ are on the server or in single player!\n}\nif (Role < ROLE_Authortity) {\n\
+      \  // This is a non-authorative copy of this actor that was replicated\n  //\
+      \ from the server. In other words, we must be on a client.\n}\n\n// please add\
+      \ more!\n</uscript>\n\nSee also: [[Legacy:NetMode|NetMode]], [[Legacy:Role|Role]].\n\
+      \n==Finding the Local PlayerPawn or PlayerController==\n\n===UnrealEngine1===\n\
+      \nThe usual idiom for finding the local player's [[Legacy:PlayerPawn|PlayerPawn]]\
+      \ (UT) on a network client or a listen server is (after declaring a class-level\
+      \ <tt>var PlayerPawn PlayerLocal</tt>):\n\n<uscript>\nif (PlayerLocal == None)\n\
+      \  foreach AllActors(class 'PlayerPawn', PlayerLocal)\n    if (Viewport(PlayerLocal.Player)\
+      \ != None)\n      break;\n\nif (PlayerLocal != None) { ... }  // do something\
+      \ with it\n</uscript>\n\nIf you have a [[Legacy:Canvas|Canvas]] object handy\
+      \ (in engine events like RenderOverlays, for instance), there's even a more\
+      \ straightforward way to get hold of the local player:\n\n<uscript>\nPlayerLocal\
+      \ = Canvas.Viewport.Actor;\n</uscript>\n\n===UnrealEngine2===\n\n[[Legacy:UT2003|UT2003]]\
+      \ and [[Legacy:UT2004|UT2004]] have a function to get the local PlayerController\
+      \ which actually uses the PlayerController/DynamicActors combo (and stores the\
+      \ local controller for later use too):\n\n<uscript>\nPlayerLocal = Level.GetLocalPlayerController();\n\
+      </uscript>\n\nAgain, if you have a [[Legacy:Canvas|Canvas]] object handy you\
+      \ should use the more straight forward version like in UT:\n\n<uscript>\nPlayerLocal\
+      \ = Canvas.Viewport.Actor;\n</uscript>\n\nNote that the local [[Legacy:PlayerPawn|PlayerPawn]]\
+      \ or [[Legacy:PlayerController|PlayerController]] is always relevant (for obvious\
+      \ reasons) and thus always exists on its respective client.\n\n==HUD Mutators==\n\
+      \nSee [[Legacy:Useful Mutator Functions|Useful Mutator Functions]] or [[Legacy:Linked\
+      \ List/Existing Lists In Unreal Tournament|Linked List/Existing Lists in Unreal\
+      \ Tournament]] (use the Quick Navigation menu to browse to \"HUD Mutators\"\
+      ).  You'll find a description there how to set up a HUD mutator that actually\
+      \ works in network games.\n\n==Replicating Config Variables==\n\nClients load\
+      \ the value of <tt>config</tt> or <tt>globalconfig</tt> variables from their\
+      \ own .ini files. Since these values are treated as defaults they are not replicated\
+      \ until they are changed through code.  Clients will see their own customized\
+      \ configuration instead of the server's.\n\nTo force replication of these variables\
+      \ use a second (non-config) variable:\n\n<uscript>\nvar config string MySettings;\n\
+      var string ServerSettings;\n\nreplication\n{\n    // replicate the ServerSettings\
+      \ variable to all (relevant) clients\n    reliable if ( Role == ROLE_Authority\
+      \ )\n        ServerSettings;\n}\n\nfunction PreBeginPlay()\n{\n// non-simulated\
+      \ PreBeginPlay() is only executed on the server - You can take away the 'if'\
+      \ expression below then.\n// simulated PreBeginPlay() is executed on both the\
+      \ server and the client. - You must include the 'if' expression below then.\n\
+      \    if ( Role == ROLE_Authority )\n        ServerSettings = MySettings;\n \
+      \   Super.PreBeginPlay();\n}\n</uscript>\n\n==Related Topics==\n* [[Legacy:Replication|Replication]]\n\
+      \n==Discussion==\n\n'''Matariel:''' Correct me if Im wrong but... doesn't Role\
+      \ == Role_Authority simply mean that this is the authoritative copy of the actor?\
+      \ What if this actor was spawned on a client? I don't think a Role == Role_Authority\
+      \ check qualifies the machine as a server, but simply as the owner.\n\n'''Wormbo:'''\
+      \ That's correct, but usually you only do any Role checks if you intend to replicate\
+      \ your actor."
+  properties: []
+  revId: 5525
+name: "Legacy:Netcode Idioms"
+revision:
+  revid: 5525
+  parentid: 5526
+  user: "Wormbo"
+  timestamp: 1178352879.000000000
+  comment: "*"
+timestamp: 1668772483.080465000

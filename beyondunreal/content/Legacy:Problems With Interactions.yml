@@ -1,0 +1,435 @@
+---
+parse:
+  title: "Legacy:Problems With Interactions"
+  text:
+    text: "<p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n\
+      </div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#Whoohooo.21.21_Good_news...\"\
+      ><span class=\"tocnumber\">1</span> <span class=\"toctext\">Whoohooo!! Good\
+      \ news...</span></a>\n<ul>\n<li class=\"toclevel-2 tocsection-2\"><a href=\"\
+      #No_Self-Destruct.3F\"><span class=\"tocnumber\">1.1</span> <span class=\"toctext\"\
+      >No Self-Destruct?</span></a></li>\n<li class=\"toclevel-2 tocsection-3\"><a\
+      \ href=\"#Removing_Interactions\"><span class=\"tocnumber\">1.2</span> <span\
+      \ class=\"toctext\">Removing Interactions</span></a></li>\n<li class=\"toclevel-2\
+      \ tocsection-4\"><a href=\"#No_Self-Destruct_solution_for_Mutators\"><span class=\"\
+      tocnumber\">1.3</span> <span class=\"toctext\">No Self-Destruct solution for\
+      \ Mutators</span></a></li>\n</ul>\n</li>\n</ul>\n</div>\n<p></p>\n<h2><span\
+      \ class=\"mw-headline\" id=\"Whoohooo.21.21_Good_news...\">Whoohooo!! Good news...</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Problems_With_Interactions?section=1\" title=\"Edit section:\
+      \ Whoohooo!! Good news...\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>Interactions <b>CAN</b> self-destruct, from patch 2166 onwards. This means\
+      \ that if you are using Patch 2166 (and so are the other users of your mod),\
+      \ you dont have to worry about complicated level change detection, just remove\
+      \ the Interaction in the <code>NotifyLevelChange</code> function. Check this\
+      \ out:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div\
+      \ class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\"\
+      >event</span> NotifyLevelChange<span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n\t\tMaster.<span class=\"me0\">RemoveInteraction</span><span\
+      \ class=\"br0\">(</span><span class=\"kw6\">self</span><span class=\"br0\">)</span>;\n\
+      \t<span class=\"co1\">//\t(destroy any actors spawned by this interaction)</span>\n\
+      \t<span class=\"co1\">//\t(clean up any uscript objects that have been loaded)</span>\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p>Simple enough, huh?</p>\n\
+      <p>This means the rest of this article is obsolete, unless you want your interactions\
+      \ to be compatible with older versions of the game, which might a good idea.</p>\n\
+      <h3><span class=\"mw-headline\" id=\"No_Self-Destruct.3F\">No Self-Destruct?</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Problems_With_Interactions?section=2\" title=\"Edit section:\
+      \ No Self-Destruct?\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>Quite simply, Interactions do not kill themselves at the end of a game, whether\
+      \ you \"Forfeit\" it, or leave a server. This can cause problems when connecting\
+      \ to other servers.</p>\n<p>In pre-2164 builds of <a href=\"/Legacy:UT2003\"\
+      \ title=\"Legacy:UT2003\" class=\"mw-redirect\">UT2003</a> it was impossible\
+      \ to detect a level change before it actually occured. Later builds have the\
+      \ <code>NotifyLevelChange</code> event which allows the <a href=\"/Legacy:Interaction\"\
+      \ title=\"Legacy:Interaction\">Interaction</a> to destroy itself before the\
+      \ level changes. The remaining part of this page deals with pre-2164 builds\
+      \ which can't use this event.</p>\n<h3><span class=\"mw-headline\" id=\"Removing_Interactions\"\
+      >Removing Interactions</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Problems_With_Interactions?section=3\" title=\"\
+      Edit section: Removing Interactions\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>I have managed to PARTIALLY solve this problem. By\
+      \ partially I mean that it works, except if you use the OPEN command to connect\
+      \ to a server. It will fail with a \"Corrupt Connection\" error. Though if you\
+      \ run the same command after the faliure, it will work.</p>\n<p>To do this,\
+      \ do the following:</p>\n<p>Add these two variables at the top of your interaction:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">Var</span> GameReplicationInfo\
+      \ GRI;\n<span class=\"kw1\">Var</span> <span class=\"kw5\">String</span> LevelName;</pre></div>\n\
+      </div>\n<p>Add this into your Initialize() function:</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw3\">log</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">\"Interaction Initialized\"</span><span class=\"br0\">)</span>;\n\
+      <span class=\"kw2\">foreach</span> ViewportOwner.<span class=\"kw9\">Actor</span>.<span\
+      \ class=\"kw2\">DynamicActors</span><span class=\"br0\">(</span><span class=\"\
+      kw1\">class</span><span class=\"st0\">'GameReplicationInfo'</span>, GRI<span\
+      \ class=\"br0\">)</span>\n\t<span class=\"kw2\">If</span> <span class=\"br0\"\
+      >(</span>GRI <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span><span\
+      \ class=\"br0\">)</span>\n\t\t<span class=\"kw2\">Break</span>;\n\tLevelName\
+      \ <span class=\"sy0\">=</span> <span class=\"kw3\">Left</span><span class=\"\
+      br0\">(</span><span class=\"kw5\">String</span><span class=\"br0\">(</span>ViewportOwner.<span\
+      \ class=\"kw9\">Actor</span>.<span class=\"me0\">PlayerReplicationInfo</span><span\
+      \ class=\"br0\">)</span>, <span class=\"kw3\">InStr</span><span class=\"br0\"\
+      >(</span><span class=\"kw5\">String</span><span class=\"br0\">(</span>ViewportOwner.<span\
+      \ class=\"kw9\">Actor</span>.<span class=\"me0\">PlayerReplicationInfo</span><span\
+      \ class=\"br0\">)</span>, <span class=\"st0\">\".\"</span><span class=\"br0\"\
+      >)</span><span class=\"br0\">)</span>;</pre></div>\n</div>\n<p>Put this in for\
+      \ Tick:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div\
+      \ class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\"\
+      >Function</span> <span class=\"kw4\">Tick</span><span class=\"br0\">(</span><span\
+      \ class=\"kw5\">Float</span> TimeDelta<span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n\t<span class=\"kw1\">Local</span> <span class=\"kw5\">int</span>\
+      \ i;\n\t<span class=\"kw1\">Local</span> <span class=\"kw5\">bool</span> FoundIt;\n\
+      \ \n\t<span class=\"kw2\">If</span> <span class=\"br0\">(</span>GRI <span class=\"\
+      sy0\">==</span> <span class=\"kw5\">None</span><span class=\"br0\">)</span>\
+      \ <span class=\"co1\">//If the GRI becomes none for some reason, restore it.</span>\n\
+      \t\tRestoreGRI<span class=\"br0\">(</span><span class=\"br0\">)</span>;\n \n\
+      \t<span class=\"co1\">//If the level name has changed</span>\n\t<span class=\"\
+      kw2\">If</span> <span class=\"br0\">(</span><span class=\"kw3\">Left</span><span\
+      \ class=\"br0\">(</span><span class=\"kw5\">String</span><span class=\"br0\"\
+      >(</span>ViewportOwner.<span class=\"kw9\">Actor</span>.<span class=\"me0\"\
+      >PlayerReplicationInfo</span><span class=\"br0\">)</span>, <span class=\"kw3\"\
+      >InStr</span><span class=\"br0\">(</span><span class=\"kw5\">String</span><span\
+      \ class=\"br0\">(</span>ViewportOwner.<span class=\"kw9\">Actor</span>.<span\
+      \ class=\"me0\">PlayerReplicationInfo</span><span class=\"br0\">)</span>, <span\
+      \ class=\"st0\">\".\"</span><span class=\"br0\">)</span><span class=\"br0\"\
+      >)</span>\n\t        <span class=\"sy0\">!=</span> LevelName<span class=\"br0\"\
+      >)</span>\n\t\t<span class=\"br0\">{</span>\n\t\t<span class=\"kw3\">Log</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">\"Removing Self -- Level Different\"\
+      </span><span class=\"br0\">)</span>;\n\t\tViewportOwner.<span class=\"kw8\"\
+      >InteractionMaster</span>.<span class=\"me0\">RemoveInteraction</span><span\
+      \ class=\"br0\">(</span><span class=\"kw6\">Self</span><span class=\"br0\">)</span>;\
+      \ <span class=\"co1\">//Destroy self</span>\n\t\t<span class=\"br0\">}</span>\n\
+      \ \n\t<span class=\"co1\">//Start at newest, and work backwards to oldest. Means\
+      \ the newest one will always be the one that stays.</span>\n\t<span class=\"\
+      kw2\">For</span> <span class=\"br0\">(</span>i <span class=\"sy0\">=</span>\
+      \ ViewPortOwner.<span class=\"me0\">LocalInteractions</span>.<span class=\"\
+      me0\">Length</span> <span class=\"sy0\">-</span> <span class=\"nu0\">1</span>;\
+      \ i <span class=\"sy0\">&gt;=</span> <span class=\"nu0\">0</span>; i<span class=\"\
+      sy0\">--</span><span class=\"br0\">)</span> \n\t\t<span class=\"br0\">{</span>\n\
+      \t\t<span class=\"kw2\">If</span> <span class=\"br0\">(</span>ViewPortOwner.<span\
+      \ class=\"me0\">LocalInteractions</span><span class=\"br0\">[</span>i<span class=\"\
+      br0\">]</span>.<span class=\"kw3\">IsA</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'icu_interaction'</span><span class=\"br0\">)</span><span class=\"\
+      br0\">)</span>\n\t\t\t<span class=\"br0\">{</span>\n\t\t\t<span class=\"kw2\"\
+      >If</span> <span class=\"br0\">(</span><span class=\"sy0\">!</span>FoundIt<span\
+      \ class=\"br0\">)</span>\n\t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\tFoundIt\
+      \ <span class=\"sy0\">=</span> <span class=\"kw6\">True</span>;\n\t\t\t\t<span\
+      \ class=\"br0\">}</span>\n\t\t\t<span class=\"kw2\">Else</span> <span class=\"\
+      kw2\">If</span> <span class=\"br0\">(</span>FoundIt<span class=\"br0\">)</span>\n\
+      \t\t\t\t<span class=\"br0\">{</span>\n\t\t\t\t<span class=\"kw3\">Log</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">\"Dupicate Found -- Destroying!\"\
+      </span><span class=\"br0\">)</span>;\n\t\t\t\tViewportOwner.<span class=\"kw8\"\
+      >InteractionMaster</span>.<span class=\"me0\">RemoveInteraction</span><span\
+      \ class=\"br0\">(</span>ViewPortOwner.<span class=\"me0\">LocalInteractions</span><span\
+      \ class=\"br0\">[</span>i<span class=\"br0\">]</span><span class=\"br0\">)</span>;\
+      \ <span class=\"co1\">//More than one, destroy et!</span>\n\t\t\t\t<span class=\"\
+      br0\">}</span>\n\t\t\t<span class=\"br0\">}</span>\n\t\t<span class=\"br0\"\
+      >}</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>And add this\
+      \ in DefaultProperties (so Tick is executed):</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\">bRequiresTick<span class=\"sy0\">=</span><span class=\"kw6\"\
+      >True</span></pre></div>\n</div>\n<p>Now you have a self-destructing Interaction.\
+      \ Well, pretty much.</p>\n<h3><span class=\"mw-headline\" id=\"No_Self-Destruct_solution_for_Mutators\"\
+      >No Self-Destruct solution for Mutators</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Problems_With_Interactions?section=4\"\
+      \ title=\"Edit section: No Self-Destruct solution for Mutators\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h3>\n<p>It seems that I've\
+      \ solved the Interaction problem at least for Mutators. Here's all the solution:</p>\n\
+      <p>First, we need to make sure that when restarting the round (while using our\
+      \ mutator) Interaction is not duplicated. Let's handle this in Mutator's Tick()\
+      \ function:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">simulated</span> <span class=\"kw1\">function</span> <span class=\"kw4\"\
+      >Tick</span><span class=\"br0\">(</span><span class=\"kw5\">float</span> DeltaTime<span\
+      \ class=\"br0\">)</span> <span class=\"br0\">{</span>\n \n  <span class=\"kw1\"\
+      >local</span> <span class=\"kw9\">PlayerController</span> PC;\n  <span class=\"\
+      kw1\">local</span> <span class=\"kw8\">Interaction</span> Inter;\n  <span class=\"\
+      kw1\">local</span> <span class=\"kw5\">int</span> i;\n \n  <span class=\"co1\"\
+      >// If the player has an interaction already, exit</span>\n  <span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span>bHasInteraction<span class=\"br0\"\
+      >)</span> <span class=\"br0\">{</span>\n    <span class=\"kw2\">return</span>;\n\
+      \  <span class=\"br0\">}</span>\n \n  <span class=\"kw2\">foreach</span> <span\
+      \ class=\"kw2\">DynamicActors</span><span class=\"br0\">(</span><span class=\"\
+      kw1\">Class</span><span class=\"st0\">'PlayerController'</span>, PC<span class=\"\
+      br0\">)</span> <span class=\"br0\">{</span>\n \n    <span class=\"co1\">// If\
+      \ local player is found</span>\n    <span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span>Viewport<span class=\"br0\">(</span>PC.<span class=\"kw8\">Player</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span><span\
+      \ class=\"br0\">)</span> <span class=\"br0\">{</span>\n \n      <span class=\"\
+      kw2\">for</span><span class=\"br0\">(</span>i <span class=\"sy0\">=</span> <span\
+      \ class=\"nu0\">0</span>; i <span class=\"sy0\">&lt;</span> PC.<span class=\"\
+      kw8\">Player</span>.<span class=\"me0\">LocalInteractions</span>.<span class=\"\
+      me0\">Length</span>; i<span class=\"sy0\">++</span><span class=\"br0\">)</span>\
+      \ <span class=\"br0\">{</span>\n        <span class=\"co1\">// If Interaction\
+      \ is already exists</span>\n        <span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span>PC.<span class=\"kw8\">Player</span>.<span class=\"me0\">LocalInteractions</span><span\
+      \ class=\"br0\">[</span>i<span class=\"br0\">]</span>.<span class=\"kw3\">IsA</span><span\
+      \ class=\"br0\">(</span><span class=\"st0\">'MyInteraction'</span><span class=\"\
+      br0\">)</span><span class=\"br0\">)</span> <span class=\"br0\">{</span>\n  \
+      \        <span class=\"co1\">// Remove it</span>\n          PC.<span class=\"\
+      kw8\">Player</span>.<span class=\"kw8\">InteractionMaster</span>.<span class=\"\
+      me0\">RemoveInteraction</span><span class=\"br0\">(</span>PC.<span class=\"\
+      kw8\">Player</span>.<span class=\"me0\">LocalInteractions</span><span class=\"\
+      br0\">[</span>i<span class=\"br0\">]</span><span class=\"br0\">)</span>;\n \
+      \         <span class=\"kw2\">break</span>;\n        <span class=\"br0\">}</span>\n\
+      \      <span class=\"br0\">}</span>\n \n      <span class=\"co1\">// Create\
+      \ the new interaction</span>\n      Inter <span class=\"sy0\">=</span> PC.<span\
+      \ class=\"kw8\">Player</span>.<span class=\"kw8\">InteractionMaster</span>.<span\
+      \ class=\"me0\">AddInteraction</span><span class=\"br0\">(</span><span class=\"\
+      st0\">\"MyInteraction\"</span>, PC.<span class=\"kw8\">Player</span><span class=\"\
+      br0\">)</span>;\n \n      <span class=\"co1\">// If Interaction is successfully\
+      \ created</span>\n      <span class=\"kw2\">if</span><span class=\"br0\">(</span>Inter\
+      \ <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span><span class=\"\
+      br0\">)</span> <span class=\"br0\">{</span>\n        <span class=\"co1\">//\
+      \ Register Mutator on it</span>\n        MyInteraction<span class=\"br0\">(</span>Inter<span\
+      \ class=\"br0\">)</span>.<span class=\"me0\">RegisterMutator</span><span class=\"\
+      br0\">(</span><span class=\"kw6\">self</span><span class=\"br0\">)</span>;\n\
+      \      <span class=\"br0\">}</span>\n \n      bHasInteraction <span class=\"\
+      sy0\">=</span> <span class=\"kw6\">true</span>;\n      <span class=\"kw2\">return</span>;\n\
+      \    <span class=\"br0\">}</span>\n  <span class=\"br0\">}</span>\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p>Then add this two functions and one variable\
+      \ to the MyInteraction class:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code\
+      \ mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"\
+      ><span class=\"kw1\">var</span> <span class=\"kw9\">Mutator</span> M;\n \n<span\
+      \ class=\"kw1\">function</span> RegisterMutator<span class=\"br0\">(</span><span\
+      \ class=\"kw9\">Mutator</span> mut<span class=\"br0\">)</span> <span class=\"\
+      br0\">{</span>\n  <span class=\"co1\">// Set instance of the mutator that has\
+      \ add this Interaction</span>\n  M <span class=\"sy0\">=</span> mut;\n<span\
+      \ class=\"br0\">}</span>\n \n<span class=\"kw1\">Function</span> <span class=\"\
+      kw4\">Tick</span><span class=\"br0\">(</span><span class=\"kw5\">Float</span>\
+      \ TimeDelta<span class=\"br0\">)</span> <span class=\"br0\">{</span>\n \n  <span\
+      \ class=\"co1\">// If mutator that responsible for</span>\n  <span class=\"\
+      co1\">// adding this Interaction is gone</span>\n  <span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span>M <span class=\"sy0\">==</span> <span class=\"kw5\"\
+      >None</span><span class=\"br0\">)</span> <span class=\"br0\">{</span>\n    <span\
+      \ class=\"co1\">// Remove this Interaction (destroy self)</span>\n    Master.<span\
+      \ class=\"me0\">RemoveInteraction</span><span class=\"br0\">(</span><span class=\"\
+      kw6\">Self</span><span class=\"br0\">)</span>;\n  <span class=\"br0\">}</span>\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">defaultproperties</span>\
+      \ <span class=\"br0\">{</span>\n  bRequiresTick<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">True</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <p>So the whole thing works like that: when playing the game with the mutator\
+      \ that adds your Interaction, it first checks is this Interaction already exists\
+      \ on this client. If so, mutator removes it, and then adds a new one (maybe\
+      \ it's better to reuse an old one&#160;:). So the previous Interaction is gone.\
+      \ When a player reconnect to another game or leave current game, the mutator\
+      \ is goes irrelevant and Interaction (that still exists on the client) destroy\
+      \ itself in the first Tick() call on the next game.</p>\n<hr />\n<p><b>Will:</b>\
+      \ Any problems understanding this? Anything I could do to make it clearer? If\
+      \ so: tell me, or do it yourself&#160;;)</p>\n<p><b>Bjorn:</b> If I'm adding\
+      \ my Interaction from a mutator or playercontroller, I'll be able to remove\
+      \ it on their Destroyed call, or not?</p>\n<p><b>Wormbo:</b> Actors are not\
+      \ Destroy()-ed upon level change. They are simply garbage-collected without\
+      \ the Destroyed() function ever being called. You don't have a real chance to\
+      \ catch that in the Interaction.</p>\n<p><b>Bjorn:</b> Hmm, that seems stupid\
+      \ to me. Oh well, then this hack is for me too...</p>\n<p><b>32_Pistoleta</b>\
+      \ Somebody, correct my English please on No Self-Destruct Solution for Mutators\
+      \ 8) At least this solution works perfectly for me. Any notes?</p>\n<p><b>Mychaeel:</b>\
+      \ A thought just occurred to me: If the only purpose of creating an interaction\
+      \ from a mutator is being able to paint something on the HUD, there might be\
+      \ a less problem-prone way to achieve the same goal. I didn't look into that\
+      \ yet so I might be way off, but could it be possible to exploit <a href=\"\
+      /Legacy:LocalMessage_(UT)\" title=\"Legacy:LocalMessage (UT)\">LocalMessage\
+      \ (UT)</a>'s RenderComplexMessage function to paint arbitrary stuff on the client's\
+      \ HUD?</p>\n<p><b>Wormbo:</b> That sounds ok, but there's a small problem: RenderComplexMessage\
+      \ isn't called anywhere in UT2k3. Only UT1 chat messages (and other messages\
+      \ appearing in the chat window) had a chance to use this function.</p>\n<p><b>Mychaeel:</b>\
+      \ Drat. Well, so much for this. Let's keep looking...</p>\n<p><b>Boksha:</b>\
+      \ Darnit. If the \"open\" command doesn't work with one try, so does the new\
+      \ in-game server browser. Bah! Epic should have added in some native code that\
+      \ calls an event for all objects when you switch to a different URL. (Like an\
+      \ \"event ShovedInGarbageCollect()\" or something) Or heck, maybe even only\
+      \ for actors. It'd be enough. (Since actors often keep references to Objects\
+      \ anyway). Also, all interactions have a direct reference to the InteractionMaster,\
+      \ called Master.</p>\n<p><b>Will:</b> I saw something posted in #unrealwiki\
+      \ about lists of changes in an upcoming patch, it was something like \"LevelChange\
+      \ now propgated through interaction and menu subsystem\" (I forget the actual\
+      \ meaning). Does this mean this page will soon become pointless? I hope so&#160;:)</p>\n\
+      <p><b>Wormbo:</b> Currently only the <a href=\"/Legacy:Console\" title=\"Legacy:Console\"\
+      >Console</a> interaction gets the LevelChange(), but that patch will really\
+      \ make the event available to all Interaction subclasses. BU recently posted\
+      \ the <a rel=\"nofollow\" class=\"external text\" href=\"http://forums.beyondunreal.com/showthread.php?threadid=139268\"\
+      >complete list of changes</a> on their front page.</p>\n<p><b>Boksha:</b> Removing\
+      \ interactions in a LevelChange works. I've done it, and no corrupt connection\
+      \ appeared. I haven't tested it thoroughly though. (read: I haven't tried joining\
+      \ a server through the \"open\" console command. If that works, evenrything\
+      \ is fine&#160;:))</p>\n\n<!-- \nNewPP limit report\nCPU time usage: 0.170 seconds\n\
+      Real time usage: 0.187 seconds\nPreprocessor visited node count: 65/1000000\n\
+      Preprocessor generated node count: 160/1000000\nPost‐expand include size: 0/2097152\
+      \ bytes\nTemplate argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\n\
+      Expensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion expansion\
+      \ time report (%,ms,calls,template)\n100.00%    0.000      1 - -total\n-->\n\
+      \n<!-- Saved in parser cache with key wiki:pcache:idhash:2438-0!*!0!!en!*!*\
+      \ and timestamp 20221118122725 and revision id 5858\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:LocalMessage (UT)"
+  - ns: 100
+    exists: true
+    name: "Legacy:Console"
+  - ns: 100
+    exists: true
+    name: "Legacy:UT2003"
+  - ns: 100
+    exists: true
+    name: "Legacy:Interaction"
+  templates: []
+  images: []
+  externallinks:
+  - "http://forums.beyondunreal.com/showthread.php?threadid=139268"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Whoohooo!! Good news..."
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Problems_With_Interactions"
+    byteoffset: 0
+    anchor: "Whoohooo.21.21_Good_news..."
+  - toclevel: 2
+    level: "3"
+    line: "No Self-Destruct?"
+    number: "1.1"
+    index: "2"
+    fromtitle: "Legacy:Problems_With_Interactions"
+    byteoffset: 712
+    anchor: "No_Self-Destruct.3F"
+  - toclevel: 2
+    level: "3"
+    line: "Removing Interactions"
+    number: "1.2"
+    index: "3"
+    fromtitle: "Legacy:Problems_With_Interactions"
+    byteoffset: 1274
+    anchor: "Removing_Interactions"
+  - toclevel: 2
+    level: "3"
+    line: "No Self-Destruct solution for Mutators"
+    number: "1.3"
+    index: "4"
+    fromtitle: "Legacy:Problems_With_Interactions"
+    byteoffset: 3232
+    anchor: "No_Self-Destruct_solution_for_Mutators"
+  displaytitle: "Legacy:Problems With Interactions"
+  iwlinks: []
+  wikitext:
+    text: "==Whoohooo!! Good news...==\n\nInteractions '''CAN''' self-destruct, from\
+      \ patch 2166 onwards. This means that if you are using Patch 2166 (and so are\
+      \ the other users of your mod), you dont have to worry about complicated level\
+      \ change detection, just remove the Interaction in the <code>NotifyLevelChange</code>\
+      \ function. Check this out:\n\n<uscript>\nevent NotifyLevelChange()\n{\n\t\t\
+      Master.RemoveInteraction(self);\n\t//\t(destroy any actors spawned by this interaction)\n\
+      \t//\t(clean up any uscript objects that have been loaded)\n}\n</uscript>\n\n\
+      Simple enough, huh?\n\nThis means the rest of this article is obsolete, unless\
+      \ you want your interactions to be compatible with older versions of the game,\
+      \ which might a good idea.\n\n===No Self-Destruct?===\n\nQuite simply, Interactions\
+      \ do not kill themselves at the end of a game, whether you \"Forfeit\" it, or\
+      \ leave a server. This can cause problems when connecting to other servers.\n\
+      \nIn pre-2164 builds of [[Legacy:UT2003|UT2003]] it was impossible to detect\
+      \ a level change before it actually occured. Later builds have the <code>NotifyLevelChange</code>\
+      \ event which allows the [[Legacy:Interaction|Interaction]] to destroy itself\
+      \ before the level changes. The remaining part of this page deals with pre-2164\
+      \ builds which can't use this event.\n\n===Removing Interactions===\n\nI have\
+      \ managed to PARTIALLY solve this problem. By partially I mean that it works,\
+      \ except if you use the OPEN command to connect to a server. It will fail with\
+      \ a \"Corrupt Connection\" error. Though if you run the same command after the\
+      \ faliure, it will work.\n\nTo do this, do the following:\n\nAdd these two variables\
+      \ at the top of your interaction:\n\n<uscript>\nVar GameReplicationInfo GRI;\n\
+      Var String LevelName;\n</uscript>\n\nAdd this into your Initialize() function:\n\
+      \n<uscript>\nlog(\"Interaction Initialized\");\nforeach ViewportOwner.Actor.DynamicActors(class'GameReplicationInfo',\
+      \ GRI)\n\tIf (GRI != None)\n\t\tBreak;\n\tLevelName = Left(String(ViewportOwner.Actor.PlayerReplicationInfo),\
+      \ InStr(String(ViewportOwner.Actor.PlayerReplicationInfo), \".\"));\n</uscript>\n\
+      \nPut this in for Tick:\n\n<uscript>\nFunction Tick(Float TimeDelta)\n{\n\t\
+      Local int i;\n\tLocal bool FoundIt;\n\n\tIf (GRI == None) //If the GRI becomes\
+      \ none for some reason, restore it.\n\t\tRestoreGRI();\n\n\t//If the level name\
+      \ has changed\n\tIf (Left(String(ViewportOwner.Actor.PlayerReplicationInfo),\
+      \ InStr(String(ViewportOwner.Actor.PlayerReplicationInfo), \".\"))\n\t     \
+      \   != LevelName)\n\t\t{\n\t\tLog(\"Removing Self -- Level Different\");\n\t\
+      \tViewportOwner.InteractionMaster.RemoveInteraction(Self); //Destroy self\n\t\
+      \t}\n\n\t//Start at newest, and work backwards to oldest. Means the newest one\
+      \ will always be the one that stays.\n\tFor (i = ViewPortOwner.LocalInteractions.Length\
+      \ - 1; i >= 0; i--) \n\t\t{\n\t\tIf (ViewPortOwner.LocalInteractions[i].IsA('icu_interaction'))\n\
+      \t\t\t{\n\t\t\tIf (!FoundIt)\n\t\t\t\t{\n\t\t\t\tFoundIt = True;\n\t\t\t\t}\n\
+      \t\t\tElse If (FoundIt)\n\t\t\t\t{\n\t\t\t\tLog(\"Dupicate Found -- Destroying!\"\
+      );\n\t\t\t\tViewportOwner.InteractionMaster.RemoveInteraction(ViewPortOwner.LocalInteractions[i]);\
+      \ //More than one, destroy et!\n\t\t\t\t}\n\t\t\t}\n\t\t}\n}\n</uscript>\n\n\
+      And add this in DefaultProperties (so Tick is executed):\n\n<uscript>\nbRequiresTick=True\n\
+      </uscript>\n\nNow you have a self-destructing Interaction. Well, pretty much.\n\
+      \n===No Self-Destruct solution for Mutators===\n\nIt seems that I've solved\
+      \ the Interaction problem at least for Mutators. Here's all the solution:\n\n\
+      First, we need to make sure that when restarting the round (while using our\
+      \ mutator) Interaction is not duplicated. Let's handle this in Mutator's Tick()\
+      \ function:\n\n<uscript>\nsimulated function Tick(float DeltaTime) {\n\n  local\
+      \ PlayerController PC;\n  local Interaction Inter;\n  local int i;\n\n  // If\
+      \ the player has an interaction already, exit\n  if(bHasInteraction) {\n   \
+      \ return;\n  }\n\n  foreach DynamicActors(Class'PlayerController', PC) {\n\n\
+      \    // If local player is found\n    if(Viewport(PC.Player) != None) {\n\n\
+      \      for(i = 0; i < PC.Player.LocalInteractions.Length; i++) {\n        //\
+      \ If Interaction is already exists\n        if(PC.Player.LocalInteractions[i].IsA('MyInteraction'))\
+      \ {\n          // Remove it\n          PC.Player.InteractionMaster.RemoveInteraction(PC.Player.LocalInteractions[i]);\n\
+      \          break;\n        }\n      }\n\n      // Create the new interaction\n\
+      \      Inter = PC.Player.InteractionMaster.AddInteraction(\"MyInteraction\"\
+      , PC.Player);\n\n      // If Interaction is successfully created\n      if(Inter\
+      \ != None) {\n        // Register Mutator on it\n        MyInteraction(Inter).RegisterMutator(self);\n\
+      \      }\n\n      bHasInteraction = true;\n      return;\n    }\n  }\n}\n</uscript>\n\
+      \nThen add this two functions and one variable to the MyInteraction class:\n\
+      \n<uscript>\nvar Mutator M;\n\nfunction RegisterMutator(Mutator mut) {\n  //\
+      \ Set instance of the mutator that has add this Interaction\n  M = mut;\n}\n\
+      \nFunction Tick(Float TimeDelta) {\n\n  // If mutator that responsible for\n\
+      \  // adding this Interaction is gone\n  if(M == None) {\n    // Remove this\
+      \ Interaction (destroy self)\n    Master.RemoveInteraction(Self);\n  }\n}\n\n\
+      defaultproperties {\n  bRequiresTick=True\n}\n</uscript>\n\nSo the whole thing\
+      \ works like that: when playing the game with the mutator that adds your Interaction,\
+      \ it first checks is this Interaction already exists on this client. If so,\
+      \ mutator removes it, and then adds a new one (maybe it's better to reuse an\
+      \ old one :). So the previous Interaction is gone. When a player reconnect to\
+      \ another game or leave current game, the mutator is goes irrelevant and Interaction\
+      \ (that still exists on the client) destroy itself in the first Tick() call\
+      \ on the next game.\n\n----\n\n'''Will:''' Any problems understanding this?\
+      \ Anything I could do to make it clearer? If so: tell me, or do it yourself\
+      \ ;)\n\n'''Bjorn:''' If I'm adding my Interaction from a mutator or playercontroller,\
+      \ I'll be able to remove it on their Destroyed call, or not?\n\n'''Wormbo:'''\
+      \ Actors are not Destroy()-ed upon level change. They are simply garbage-collected\
+      \ without the Destroyed() function ever being called. You don't have a real\
+      \ chance to catch that in the Interaction.\n\n'''Bjorn:''' Hmm, that seems stupid\
+      \ to me. Oh well, then this hack is for me too...\n\n'''32_Pistoleta''' Somebody,\
+      \ correct my English please on No Self-Destruct Solution for Mutators 8) At\
+      \ least this solution works perfectly for me. Any notes?\n\n'''Mychaeel:'''\
+      \ A thought just occurred to me:  If the only purpose of creating an interaction\
+      \ from a mutator is being able to paint something on the HUD, there might be\
+      \ a less problem-prone way to achieve the same goal.  I didn't look into that\
+      \ yet so I might be way off, but could it be possible to exploit [[Legacy:LocalMessage\
+      \ (UT)|LocalMessage (UT)]]'s RenderComplexMessage function to paint arbitrary\
+      \ stuff on the client's HUD?\n\n'''Wormbo:''' That sounds ok, but there's a\
+      \ small problem: RenderComplexMessage isn't called anywhere in UT2k3. Only UT1\
+      \ chat messages (and other messages appearing in the chat window) had a chance\
+      \ to use this function.\n\n'''Mychaeel:''' Drat.  Well, so much for this.  Let's\
+      \ keep looking...\n\n'''Boksha:''' Darnit. If the \"open\" command doesn't work\
+      \ with one try, so does the new in-game server browser. Bah! Epic should have\
+      \ added in some native code that calls an event for all objects when you switch\
+      \ to a different URL. (Like an \"event ShovedInGarbageCollect()\" or something)\
+      \ Or heck, maybe even only for actors. It'd be enough. (Since actors often keep\
+      \ references to Objects anyway). Also, all interactions have a direct reference\
+      \ to the InteractionMaster, called Master.\n\n'''Will:''' I saw something posted\
+      \ in #unrealwiki about lists of changes in an upcoming patch, it was something\
+      \ like \"LevelChange now propgated through interaction and menu subsystem\"\
+      \ (I forget the actual meaning). Does this mean this page will soon become pointless?\
+      \ I hope so :)\n\n'''Wormbo:''' Currently only the [[Legacy:Console|Console]]\
+      \ interaction gets the LevelChange(), but that patch will really make the event\
+      \ available to all Interaction subclasses. BU recently posted the [http://forums.beyondunreal.com/showthread.php?threadid=139268\
+      \ complete list of changes] on their front page.\n\n'''Boksha:''' Removing interactions\
+      \ in a LevelChange works. I've done it, and no corrupt connection appeared.\
+      \ I haven't tested it thoroughly though. (read: I haven't tried joining a server\
+      \ through the \"open\" console command. If that works, evenrything is fine :))"
+  properties: []
+  revId: 5858
+name: "Legacy:Problems With Interactions"
+revision:
+  revid: 5858
+  parentid: 5860
+  user: "A148033.upc-a.chello.nl"
+  timestamp: 1040500466.000000000
+  comment: "*"
+timestamp: 1668774446.659259000

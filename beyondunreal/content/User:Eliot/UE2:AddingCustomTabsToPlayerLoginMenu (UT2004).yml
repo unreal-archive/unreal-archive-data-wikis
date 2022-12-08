@@ -1,0 +1,198 @@
+---
+parse:
+  title: "User:Eliot/UE2:AddingCustomTabsToPlayerLoginMenu (UT2004)"
+  text:
+    text: "<div style=\"float:right; border:1px solid silver; width:250px; background-color:White;\
+      \ padding:3px;\">\n<center><b>Custom PlayerLoginMenu Tabs</b><br />\n<small>Provides\
+      \ source code to add a tab to the PlayerLogin's menu.</small><br /></center>\n\
+      <p><br /></p>\n<table style=\"background-color:White;\">\n<tr>\n<td><b><a href=\"\
+      http://en.wikipedia.org/wiki/Author\" class=\"extiw\" title=\"wp:Author\">Author</a></b></td>\n\
+      <td><a href=\"/User:Eliot\" title=\"User:Eliot\">Eliot</a></td>\n</tr>\n<tr>\n\
+      <td><b><a href=\"http://en.wikipedia.org/wiki/Computer_compatibility#Software_compatibility\"\
+      \ class=\"extiw\" title=\"wp:Computer compatibility\">Compatible</a></b></td>\n\
+      <td><a href=\"/edit/Unreal_Engine_2?redlink=1\" class=\"new\" title=\"Unreal\
+      \ Engine 2 (page does not exist)\">Unreal Engine 2</a></td>\n</tr>\n</table>\n\
+      <p><br /></p>\n<center>\n<p><small>When using any of the provided source code\
+      \ please credit the listed <i>Author</i> in your source code! e.g. <i>\"Custom\
+      \ PlayerLoginMenu Tabs utils written by <a href=\"/User:Eliot\" title=\"User:Eliot\"\
+      >Eliot</a>.\"</i>.<br />\nView more utils at <a href=\"/UnrealScript_Utils\"\
+      \ title=\"UnrealScript Utils\" class=\"mw-redirect\">UnrealScript Utils</a></small></p>\n\
+      </center>\n</div>\n<p><br /></p>\n<p>One day You might have wanted to modify\
+      \ the <b>PlayerLoginMenu</b> and think about replacing the whole menu class\
+      \ to just add a button or a tab to it, to do this you would search through the\
+      \ many classes of UT2004, taking a lot of time just to figure out where its\
+      \ creating the menu then when done you realize only one mutator will be able\
+      \ to do this because of replacing the menu, therefor the source code provided\
+      \ here provides a method to add a tab to the <i>PlayerLoginMenu</i> when the\
+      \ user opens the <i>PlayerLoginMenu</i> for the first time.</p>\n<p>The basic\
+      \ procedure mutators do using this method is</p>\n<p>Make a mutator class with\
+      \ the defaultproperties as <code>RemoteRole=SimulatedProxy</code> and a event\
+      \ <code>simulated event Tick( float DeltaTime )</code> to add a interaction\
+      \ for your mutator, this interaction will add the tab to the <i>PlayerLoginMenu</i>.</p>\n\
+      <p>Make a interaction class(source code below).</p>\n<p>The interaction will\
+      \ have <code>bRequiresTick</code> so that the interaction will receive the tick\
+      \ event, this tick event will be used to check if the user has the escape menu\
+      \ open so that we can add the tab and then either remove or disable the interaction\
+      \ or leave it.</p>\n<p><br /></p>\n<dl>\n<dt>The Interaction Class</dt>\n</dl>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">class</span> MyInteraction\
+      \ <span class=\"kw1\">extends</span> <span class=\"kw8\">Interaction</span>;\n\
+      \ \n<span class=\"co1\">// Needed so that we don't call ModifyMenu again even\
+      \ when when it already added the new tab.</span>\n<span class=\"kw1\">var</span>\
+      \ <span class=\"kw1\">private</span> editconst <span class=\"kw5\">bool</span>\
+      \ bMenuModified;\n \n<span class=\"co1\">// Needed so that this interaction\
+      \ removes itself after level change.</span>\n<span class=\"kw1\">event</span>\
+      \ NotifyLevelChange<span class=\"br0\">(</span><span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n\tMaster.<span class=\"me0\">RemoveInteraction</span><span\
+      \ class=\"br0\">(</span> <span class=\"kw6\">self</span> <span class=\"br0\"\
+      >)</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">final</span>\
+      \ <span class=\"kw1\">private</span> <span class=\"kw1\">function</span> ModifyMenu<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \t<span class=\"kw1\">local</span> UT2K4PlayerLoginMenu Menu;\n\t<span class=\"\
+      kw1\">local</span> GUITabPanel Panel;\n \n\t<span class=\"co1\">// Try get the\
+      \ menu, will return none if the menu is not open!.</span>\n\tMenu <span class=\"\
+      sy0\">=</span> UT2K4PlayerLoginMenu<span class=\"br0\">(</span>GUIController<span\
+      \ class=\"br0\">(</span>ViewportOwner.<span class=\"kw9\">Actor</span>.<span\
+      \ class=\"kw8\">Player</span>.<span class=\"me0\">GUIController</span><span\
+      \ class=\"br0\">)</span>.<span class=\"me0\">FindPersistentMenuByName</span><span\
+      \ class=\"br0\">(</span> <span class=\"kw9\">UnrealPlayer</span><span class=\"\
+      br0\">(</span>ViewportOwner.<span class=\"kw9\">Actor</span><span class=\"br0\"\
+      >)</span>.<span class=\"me0\">LoginMenuClass</span> <span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span>;\n\t<span class=\"kw2\">if</span><span class=\"br0\"\
+      >(</span> Menu <span class=\"sy0\">!=</span> <span class=\"kw5\">none</span>\
+      \ <span class=\"br0\">)</span>\n\t<span class=\"br0\">{</span>\n           \
+      \     <span class=\"co1\">// You can use the panel reference to do the modifications\
+      \ to the tab etc.</span>\n\t\tPanel <span class=\"sy0\">=</span> Menu.<span\
+      \ class=\"me0\">c_Main</span>.<span class=\"me0\">AddTab</span><span class=\"\
+      br0\">(</span> <span class=\"st0\">\"Caption of my tab\"</span>, <span class=\"\
+      kw5\">string</span><span class=\"br0\">(</span> <span class=\"kw1\">Class</span><span\
+      \ class=\"st0\">'MyPanelClass'</span> <span class=\"br0\">)</span>,, <span class=\"\
+      st0\">\"Hint of my tab\"</span> <span class=\"br0\">)</span>;\n\t\tbMenuModified\
+      \ <span class=\"sy0\">=</span> <span class=\"kw6\">true</span>;\n \n\t\t<span\
+      \ class=\"co1\">// Uncomment if tick is not needed for anything else than ModifyMenu.</span>\n\
+      \t\t<span class=\"co1\">//Disable( 'Tick' );</span>\n\t\t<span class=\"co1\"\
+      >//bRequiresTick = false;</span>\n \n\t\t<span class=\"co1\">// Uncomment if\
+      \ interaction is not needed for anything else than adding a tab to the menu.</span>\n\
+      \t\t<span class=\"co1\">//Master.RemoveInteraction( self );</span>\n\t<span\
+      \ class=\"br0\">}</span>\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\"\
+      >function</span> <span class=\"kw4\">Tick</span><span class=\"br0\">(</span>\
+      \ <span class=\"kw5\">float</span> DeltaTime <span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n\t<span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span> <span class=\"sy0\">!</span>bMenuModified <span class=\"br0\"\
+      >)</span>\n\t<span class=\"br0\">{</span>\n\t\tModifyMenu<span class=\"br0\"\
+      >(</span><span class=\"br0\">)</span>;\n\t<span class=\"br0\">}</span>\n<span\
+      \ class=\"br0\">}</span>\n \n<span class=\"kw1\">defaultproperties</span>\n\
+      <span class=\"br0\">{</span>\n\tbRequiresTick<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">true</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <p>Obviously you could port this code straight into the the mutator's Tick event\
+      \ if you won't use the interaction for more things than just adding a tab to\
+      \ the menu.</p>\n<dl>\n<dt>The Panel Class</dt>\n</dl>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw1\">class</span> MyPanelClass <span class=\"\
+      kw1\">extends</span> MidGamePanel;</pre></div>\n</div>\n<p>The panel class will\
+      \ be the panel that is visible when the added tab is selected, in this panel\
+      \ you should add your GUIComponents.</p>\n<dl>\n<dt>Screenshot</dt>\n</dl>\n\
+      <p>A screenshot of my mutators(MutBestTimes,MutCacheExtractor,TrialGroup) using\
+      \ this method together.</p>\n<div class=\"thumb tleft\">\n<div class=\"thumbinner\"\
+      \ style=\"width:202px;\"><a href=\"/File:Result_CustomLoginMenuTabs_(UT2004).PNG\"\
+      \ class=\"image\"><img alt=\"\" src=\"/w/images/thumb/Result_CustomLoginMenuTabs_%28UT2004%29.PNG/200px-Result_CustomLoginMenuTabs_%28UT2004%29.PNG\"\
+      \ width=\"200\" height=\"160\" class=\"thumbimage\" srcset=\"/w/images/thumb/Result_CustomLoginMenuTabs_%28UT2004%29.PNG/300px-Result_CustomLoginMenuTabs_%28UT2004%29.PNG\
+      \ 1.5x, /w/images/thumb/Result_CustomLoginMenuTabs_%28UT2004%29.PNG/400px-Result_CustomLoginMenuTabs_%28UT2004%29.PNG\
+      \ 2x\" /></a>\n<div class=\"thumbcaption\">\n<div class=\"magnify\"><a href=\"\
+      /File:Result_CustomLoginMenuTabs_(UT2004).PNG\" class=\"internal\" title=\"\
+      Enlarge\"></a></div>\nModified PlayerLoginMenu</div>\n</div>\n</div>\n\n<!--\
+      \ \nNewPP limit report\nCPU time usage: 0.109 seconds\nReal time usage: 0.120\
+      \ seconds\nPreprocessor visited node count: 32/1000000\nPreprocessor generated\
+      \ node count: 179/1000000\nPost‐expand include size: 1008/2097152 bytes\nTemplate\
+      \ argument size: 173/2097152 bytes\nHighest expansion depth: 4/40\nExpensive\
+      \ parser function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report\
+      \ (%,ms,calls,template)\n100.00%    6.614      1 - -total\n100.00%    6.614\
+      \      1 - Template:Infobox_utility\n-->\n\n<!-- Saved in parser cache with\
+      \ key wiki:pcache:idhash:28981-0!*!0!*!*!5!* and timestamp 20221117234218 and\
+      \ revision id 43397\n -->\n"
+  categories:
+  - sortkey: ""
+    name: "UnrealScript_utils"
+  - sortkey: ""
+    name: "Programming_tutorials"
+  links:
+  - ns: 0
+    exists: false
+    name: "Unreal Engine 2"
+  - ns: 0
+    exists: true
+    name: "UnrealScript Utils"
+  - ns: 2
+    exists: true
+    name: "User:Eliot"
+  templates:
+  - ns: 10
+    exists: true
+    name: "Template:Infobox utility"
+  images:
+  - "Result_CustomLoginMenuTabs_(UT2004).PNG"
+  externallinks: []
+  sections: []
+  displaytitle: "User:Eliot/UE2:AddingCustomTabsToPlayerLoginMenu (UT2004)"
+  iwlinks:
+  - prefix: "wp"
+    url: "http://en.wikipedia.org/wiki/Author"
+    name: "wp:Author"
+  - prefix: "wp"
+    url: "http://en.wikipedia.org/wiki/Computer_compatibility"
+    name: "wp:Computer compatibility"
+  wikitext:
+    text: "{{Infobox_utility\n|name=Custom PlayerLoginMenu Tabs\n|description=Provides\
+      \ source code to add a tab to the PlayerLogin's menu.\n|author=[[User:Eliot|Eliot]]\n\
+      |compatible=[[Unreal Engine 2]]\n}}\nOne day You might have wanted to modify\
+      \ the '''PlayerLoginMenu''' and think about replacing the whole menu class to\
+      \ just add a button or a tab to it, to do this you would search through the\
+      \ many classes of UT2004, taking a lot of time just to figure out where its\
+      \ creating the menu then when done you realize only one mutator will be able\
+      \ to do this because of replacing the menu, therefor the source code provided\
+      \ here provides a method to add a tab to the ''PlayerLoginMenu'' when the user\
+      \ opens the ''PlayerLoginMenu'' for the first time.\n\nThe basic procedure mutators\
+      \ do using this method is\n\nMake a mutator class with the defaultproperties\
+      \ as <code>RemoteRole=SimulatedProxy</code> and a event <code>simulated event\
+      \ Tick( float DeltaTime )</code> to add a interaction for your mutator, this\
+      \ interaction will add the tab to the ''PlayerLoginMenu''.\n\nMake a interaction\
+      \ class(source code below).\n\nThe interaction will have <code>bRequiresTick</code>\
+      \ so that the interaction will receive the tick event, this tick event will\
+      \ be used to check if the user has the escape menu open so that we can add the\
+      \ tab and then either remove or disable the interaction or leave it.\n\n<br>\n\
+      ;The Interaction Class\n<uscript>\nclass MyInteraction extends Interaction;\n\
+      \n// Needed so that we don't call ModifyMenu again even when when it already\
+      \ added the new tab.\nvar private editconst bool bMenuModified;\n\n// Needed\
+      \ so that this interaction removes itself after level change.\nevent NotifyLevelChange()\n\
+      {\n\tMaster.RemoveInteraction( self );\n}\n\nfinal private function ModifyMenu()\n\
+      {\n\tlocal UT2K4PlayerLoginMenu Menu;\n\tlocal GUITabPanel Panel;\n\n\t// Try\
+      \ get the menu, will return none if the menu is not open!.\n\tMenu = UT2K4PlayerLoginMenu(GUIController(ViewportOwner.Actor.Player.GUIController).FindPersistentMenuByName(\
+      \ UnrealPlayer(ViewportOwner.Actor).LoginMenuClass ));\n\tif( Menu != none )\n\
+      \t{\n                // You can use the panel reference to do the modifications\
+      \ to the tab etc.\n\t\tPanel = Menu.c_Main.AddTab( \"Caption of my tab\", string(\
+      \ Class'MyPanelClass' ),, \"Hint of my tab\" );\n\t\tbMenuModified = true;\n\
+      \n\t\t// Uncomment if tick is not needed for anything else than ModifyMenu.\n\
+      \t\t//Disable( 'Tick' );\n\t\t//bRequiresTick = false;\n\n\t\t// Uncomment if\
+      \ interaction is not needed for anything else than adding a tab to the menu.\n\
+      \t\t//Master.RemoveInteraction( self );\n\t}\n}\n\nfunction Tick( float DeltaTime\
+      \ )\n{\n\tif( !bMenuModified )\n\t{\n\t\tModifyMenu();\n\t}\n}\n\ndefaultproperties\n\
+      {\n\tbRequiresTick=true\n}\n</uscript>\n\nObviously you could port this code\
+      \ straight into the the mutator's Tick event if you won't use the interaction\
+      \ for more things than just adding a tab to the menu.\n\n;The Panel Class\n\
+      <uscript>\nclass MyPanelClass extends MidGamePanel;\n</uscript>\n\nThe panel\
+      \ class will be the panel that is visible when the added tab is selected, in\
+      \ this panel you should add your GUIComponents.\n\n;Screenshot\nA screenshot\
+      \ of my mutators(MutBestTimes,MutCacheExtractor,TrialGroup) using this method\
+      \ together.\n[[Image:Result_CustomLoginMenuTabs_(UT2004).PNG|left|thumb|200px|Modified\
+      \ PlayerLoginMenu]]\n\n[[Category:UnrealScript utils]][[Category:Programming\
+      \ tutorials]]"
+  properties: []
+  revId: 43397
+name: "User:Eliot/UE2:AddingCustomTabsToPlayerLoginMenu (UT2004)"
+revision:
+  revid: 43397
+  parentid: 43393
+  user: "Eliot"
+  timestamp: 1275219951.000000000
+  comment: "Typos"
+timestamp: 1668797610.353537000

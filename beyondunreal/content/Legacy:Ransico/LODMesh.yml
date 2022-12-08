@@ -1,0 +1,299 @@
+---
+parse:
+  title: "Legacy:Ransico/LODMesh"
+  text:
+    text: "<h3><span class=\"mw-headline\" id=\"LODMesh\">LODMesh</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Ransico/LODMesh?section=1\"\
+      \ title=\"Edit section: LODMesh\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>This class is used to immitate the LOD effect found\
+      \ in some modern engines. LOD is a trick used to have heaps of meshes on the\
+      \ screen at once, without too much of a hit on the framerate. It works by reducing\
+      \ the number of polygons on the mesh, as it gets further away from the player.</p>\n\
+      <p>There are generally two approaches to this:</p>\n<ul>\n<li>you can manually\
+      \ create different detail models in your 3D editor, one for each level of detail</li>\n\
+      <li>have some fancy algorithm do it for you.</li>\n</ul>\n<p>I have chosen the\
+      \ first method - although more work for the modeler, it looks a lot nicer.</p>\n\
+      <p>The main reason I am listing this class here, is a replication demo: as you\
+      \ can imagine, you will only want this class to run on the client, not the server\
+      \ at all. This is achieved by setting various things in the default properties\
+      \ down at the bottom, and also an IF statement in the PostBeginPlay.</p>\n<div\
+      \ dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"coMULTI\">/*\n * LODMesh\
+      \ class - implements a 2 level LOD for static meshes.\n * Lewis Weaver, 1/3/2006\n\
+      \ */</span>\n \n<span class=\"kw1\">class</span> <span class=\"kw5\">LODMesh</span>\
+      \ <span class=\"kw1\">extends</span> <span class=\"kw9\">Actor</span>\n    <span\
+      \ class=\"kw1\">placeable</span>;\n \n<span class=\"kw1\">var</span><span class=\"\
+      br0\">(</span>Display<span class=\"br0\">)</span> <span class=\"kw5\">StaticMesh</span>\
+      \ LODfarMesh;     <span class=\"co1\">// The mesh to use for the far away model</span>\n\
+      <span class=\"kw1\">var</span><span class=\"br0\">(</span>Display<span class=\"\
+      br0\">)</span> <span class=\"kw5\">float</span> LODdist;  <span class=\"co1\"\
+      >// How far away should the LOD kick in</span>\n<span class=\"kw1\">var</span><span\
+      \ class=\"br0\">(</span>Display<span class=\"br0\">)</span> <span class=\"kw5\"\
+      >bool</span> LODrotate; <span class=\"co1\">// Should the mesh always rotate\
+      \ to face the actor, when in LOD_Far state? useful for planes</span>\n \n<span\
+      \ class=\"kw1\">var</span> <span class=\"kw1\">enum</span> LODStates <span class=\"\
+      br0\">{</span>\n    LOD_Waiting,\n    LOD_Near,\n    LOD_Far\n<span class=\"\
+      br0\">}</span> currentState;\n \n<span class=\"co1\">// this variable avoids\
+      \ popping in and out rapidly</span>\n<span class=\"kw1\">var</span> <span class=\"\
+      kw5\">float</span> threshold;\n \n<span class=\"kw1\">simulated</span> <span\
+      \ class=\"kw1\">function</span> <span class=\"kw4\">PostBeginPlay</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"br0\">{</span>\n\
+      \ \n    <span class=\"co1\">// Precalculate the threshold</span>\n    <span\
+      \ class=\"kw2\">if</span><span class=\"br0\">(</span>LODDist <span class=\"\
+      sy0\">&gt;</span> <span class=\"nu0\">2000</span><span class=\"br0\">)</span>\n\
+      \        threshold <span class=\"sy0\">=</span> <span class=\"nu0\">50</span>;\n\
+      \    <span class=\"kw2\">else</span>\n        threshold <span class=\"sy0\"\
+      >=</span> LODDist <span class=\"sy0\">*</span> <span class=\"nu0\">0.025</span>;\n\
+      \ \n    <span class=\"kw3\">disable</span><span class=\"br0\">(</span><span\
+      \ class=\"st0\">'tick'</span><span class=\"br0\">)</span>;\n \n    <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span> <span class=\"kw7\">Level</span>.<span\
+      \ class=\"me0\">NetMode</span> <span class=\"sy0\">!=</span> NM_DedicatedServer\
+      \ <span class=\"br0\">)</span> <span class=\"br0\">{</span>\n \n        waitForPlayer<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n \n    <span class=\"\
+      br0\">}</span>\n \n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">simulated</span>\
+      \ <span class=\"kw1\">function</span> waitForPlayer<span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span> <span class=\"br0\">{</span>\n    <span class=\"kw4\"\
+      >setTimer</span><span class=\"br0\">(</span><span class=\"nu0\">0.1</span>,\
+      \ <span class=\"kw6\">true</span><span class=\"br0\">)</span>;\n    currentState\
+      \ <span class=\"sy0\">=</span> LOD_Waiting;\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"kw1\">simulated</span> <span class=\"kw1\">event</span> <span\
+      \ class=\"kw4\">timer</span><span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span> <span class=\"br0\">{</span>\n    <span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span>currentState <span class=\"sy0\">==</span> LOD_Waiting<span\
+      \ class=\"br0\">)</span> <span class=\"br0\">{</span>\n        <span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span><span class=\"kw7\">level</span>.<span\
+      \ class=\"me0\">GetLocalPlayerController</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">!=</span> <span class=\"kw5\">none</span><span\
+      \ class=\"br0\">)</span> <span class=\"br0\">{</span>\n            <span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span><span class=\"kw3\">VSize</span><span\
+      \ class=\"br0\">(</span><span class=\"kw7\">Location</span> <span class=\"sy0\"\
+      >-</span> <span class=\"kw7\">level</span>.<span class=\"me0\">GetLocalPlayerController</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>.<span class=\"kw9\">Pawn</span>.<span\
+      \ class=\"kw7\">Location</span><span class=\"br0\">)</span> <span class=\"sy0\"\
+      >&gt;</span> LODdist<span class=\"br0\">)</span> <span class=\"br0\">{</span>\n\
+      \                <span class=\"kw4\">SetStaticMesh</span><span class=\"br0\"\
+      >(</span>LODfarMesh<span class=\"br0\">)</span>;\n                currentState\
+      \ <span class=\"sy0\">=</span> LOD_Far;\n            <span class=\"br0\">}</span>\
+      \ <span class=\"kw2\">else</span> <span class=\"br0\">{</span>\n           \
+      \     <span class=\"kw4\">SetStaticMesh</span><span class=\"br0\">(</span><span\
+      \ class=\"kw1\">Default</span>.<span class=\"kw5\">StaticMesh</span><span class=\"\
+      br0\">)</span>;\n                currentState <span class=\"sy0\">=</span> LOD_Near;\n\
+      \            <span class=\"br0\">}</span>\n            <span class=\"kw4\">setTimer</span><span\
+      \ class=\"br0\">(</span>1.0f, <span class=\"kw6\">true</span><span class=\"\
+      br0\">)</span>;\n        <span class=\"br0\">}</span> <span class=\"kw2\">else</span>\
+      \ <span class=\"br0\">{</span>\n            <span class=\"kw4\">SetStaticMesh</span><span\
+      \ class=\"br0\">(</span>LODfarMesh<span class=\"br0\">)</span>;\n        <span\
+      \ class=\"br0\">}</span>\n    <span class=\"br0\">}</span> <span class=\"kw2\"\
+      >else</span> <span class=\"kw2\">if</span> <span class=\"br0\">(</span><span\
+      \ class=\"kw7\">level</span>.<span class=\"me0\">GetLocalPlayerController</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"sy0\">!=</span>\
+      \ <span class=\"kw5\">none</span><span class=\"br0\">)</span> <span class=\"\
+      br0\">{</span>\n        <span class=\"kw2\">if</span><span class=\"br0\">(</span>currentState\
+      \ <span class=\"sy0\">==</span> LOD_Far          <span class=\"sy0\">&amp;&amp;</span>\
+      \ <span class=\"kw3\">VSize</span><span class=\"br0\">(</span><span class=\"\
+      kw7\">Location</span> <span class=\"sy0\">-</span> <span class=\"kw7\">level</span>.<span\
+      \ class=\"me0\">GetLocalPlayerController</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>.<span class=\"kw9\">Pawn</span>.<span class=\"kw7\"\
+      >Location</span><span class=\"br0\">)</span> <span class=\"sy0\">&lt;</span>\
+      \ LODdist <span class=\"sy0\">-</span> threshold<span class=\"br0\">)</span>\
+      \ <span class=\"br0\">{</span>\n            <span class=\"kw4\">SetStaticMesh</span><span\
+      \ class=\"br0\">(</span><span class=\"kw1\">Default</span>.<span class=\"kw5\"\
+      >StaticMesh</span><span class=\"br0\">)</span>;\n            currentState <span\
+      \ class=\"sy0\">=</span> LOD_Near;\n            <span class=\"kw4\">SetRotation</span><span\
+      \ class=\"br0\">(</span><span class=\"kw1\">Default</span>.<span class=\"kw7\"\
+      >Rotation</span><span class=\"br0\">)</span>;\n        <span class=\"br0\">}</span>\
+      \ <span class=\"kw2\">else</span> <span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span>currentState <span class=\"sy0\">==</span> LOD_Near  <span class=\"\
+      sy0\">&amp;&amp;</span> <span class=\"kw3\">VSize</span><span class=\"br0\"\
+      >(</span><span class=\"kw7\">Location</span> <span class=\"sy0\">-</span> <span\
+      \ class=\"kw7\">level</span>.<span class=\"me0\">GetLocalPlayerController</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>.<span class=\"kw9\">Pawn</span>.<span\
+      \ class=\"kw7\">Location</span><span class=\"br0\">)</span> <span class=\"sy0\"\
+      >&gt;</span> LODdist <span class=\"sy0\">+</span> threshold<span class=\"br0\"\
+      >)</span> <span class=\"br0\">{</span>\n            <span class=\"kw4\">SetStaticMesh</span><span\
+      \ class=\"br0\">(</span>LODfarMesh<span class=\"br0\">)</span>;\n          \
+      \  currentState <span class=\"sy0\">=</span> LOD_Far;\n        <span class=\"\
+      br0\">}</span>\n \n        <span class=\"kw2\">if</span><span class=\"br0\"\
+      >(</span>LODrotate <span class=\"sy0\">==</span> <span class=\"kw6\">true</span>\
+      \ <span class=\"sy0\">&amp;&amp;</span> currentState <span class=\"sy0\">==</span>\
+      \ LOD_Far<span class=\"br0\">)</span> <span class=\"br0\">{</span>\n       \
+      \     <span class=\"kw4\">SetRotation</span><span class=\"br0\">(</span><span\
+      \ class=\"kw5\">Rotator</span><span class=\"br0\">(</span><span class=\"kw7\"\
+      >Location</span> <span class=\"sy0\">-</span> <span class=\"kw7\">level</span>.<span\
+      \ class=\"me0\">GetLocalPlayerController</span><span class=\"br0\">(</span><span\
+      \ class=\"br0\">)</span>.<span class=\"kw9\">Pawn</span>.<span class=\"kw7\"\
+      >Location</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n\
+      \        <span class=\"br0\">}</span>\n    <span class=\"br0\">}</span> <span\
+      \ class=\"kw2\">else</span> <span class=\"br0\">{</span>\n        waitForPlayer<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n    <span class=\"br0\"\
+      >}</span>\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">defaultProperties</span>\
+      \ <span class=\"br0\">{</span>\n    <span class=\"kw5\">StaticMesh</span><span\
+      \ class=\"sy0\">=</span><span class=\"kw5\">StaticMesh</span><span class=\"\
+      st0\">'cf_staticMushrooms.cf_gdc_mushroomPile01'</span>;\n    LODfarMesh<span\
+      \ class=\"sy0\">=</span><span class=\"kw5\">StaticMesh</span><span class=\"\
+      st0\">'cf_staticMushrooms.cf_gdc_mushroom10'</span>;\n    LODdist<span class=\"\
+      sy0\">=</span><span class=\"nu0\">1500</span>;\n    LODrotate<span class=\"\
+      sy0\">=</span><span class=\"kw6\">true</span>;\n \n    <span class=\"co1\">//\
+      \ Make it look different in UEd</span>\n    <span class=\"kw5\">Texture</span><span\
+      \ class=\"sy0\">=</span><span class=\"kw5\">Texture</span><span class=\"st0\"\
+      >'XEffectMat.Combos.greencross'</span>;\n    bHidden<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">false</span>;\n    bHiddenEd<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">false</span>;\n \n    <span class=\"co1\">// Client server things\
+      \ - this flag combo is crucial!</span>\n    bTearOff<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">true</span>;\n    bNetTemporary<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">True</span>;\n    bGameRelevant<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">true</span>;\n    bNoDelete<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">true</span>;\n    <span class=\"kw7\">RemoteRole</span><span\
+      \ class=\"sy0\">=</span><span class=\"kw7\">ROLE_SimulatedProxy</span>;\n \n\
+      \    <span class=\"co1\">// Various other CPU Saving things</span>\n    <span\
+      \ class=\"kw7\">Physics</span><span class=\"sy0\">=</span><span class=\"kw7\"\
+      >PHYS_None</span>;\n \n    <span class=\"co1\">// Make it behiave like a normal\
+      \ static mesh</span>\n    bShadowCast<span class=\"sy0\">=</span><span class=\"\
+      kw6\">True</span>;\n    bCollideActors<span class=\"sy0\">=</span><span class=\"\
+      kw6\">True</span>;\n    bBlockActors<span class=\"sy0\">=</span><span class=\"\
+      kw6\">True</span>;\n    bBlockKarma<span class=\"sy0\">=</span><span class=\"\
+      kw6\">True</span>;\n    bWorldGeometry<span class=\"sy0\">=</span><span class=\"\
+      kw6\">True</span>;\n    <span class=\"kw7\">CollisionHeight</span><span class=\"\
+      sy0\">=+</span><span class=\"nu0\">000001.000000</span>;\n    <span class=\"\
+      kw7\">CollisionRadius</span><span class=\"sy0\">=+</span><span class=\"nu0\"\
+      >000001.000000</span>;\n    bAcceptsProjectors<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">True</span>;\n    bUseDynamicLights<span class=\"sy0\">=</span><span\
+      \ class=\"kw6\">true</span>;\n    <span class=\"kw7\">DrawType</span><span class=\"\
+      sy0\">=</span><span class=\"kw7\">DT_StaticMesh</span>;\n<span class=\"br0\"\
+      >}</span></pre></div>\n</div>\n<p>I hope someone finds this useful... If you\
+      \ have any comments, or think something should have been done better, please\
+      \ don't hesitate.</p>\n<h3><span class=\"mw-headline\" id=\"Comments:\">Comments:</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Ransico/LODMesh?section=2\" title=\"Edit section: Comments:\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n<hr />\n\
+      <p><b>Ransico:</b> This is my first real contribution to the wiki, I hope someone\
+      \ finds it useful&#160;:)</p>\n<p><b>MythOpus:</b> Could you not eliminate the\
+      \ need for having a 'waiting' state and just make it a far or near state by\
+      \ default (preferably far as near may be bad for some people). That's basically\
+      \ how Renegade works... sort of. When you first start a game, all the textures\
+      \ and meshes are all minimum quality until the rendering kicks in and realizes\
+      \ everything should look a bit better so it renders accordingly.</p>\n<p><b>HaZarD.ep:</b>\
+      \ Does this really bring performance improvement? As far as I know static meshes\
+      \ are rendered very fast, as they are are static...when always switching back\
+      \ and forth this will certainly cost performance as well. Anyone done some fps\
+      \ test?</p>\n<p><b>Ransico:</b> The idea behind this was for a -massive- outdoor\
+      \ terrain, where everything was viewable at once, and there were craploads of\
+      \ tree's. with around 200 tree's in the world at 1 time, it would require very\
+      \ very low detail meshes... so I designed this to switch to a higher detail\
+      \ when you came up close. Basically, my low detail mesh consists of a plane...\
+      \ and the high detail a good polygon tree.</p>\n<p><b>Ransico:</b> Oh, and the\
+      \ waiting for player state is designed for when the players pawn dies, and is\
+      \ waiting for a respawn.</p>\n\n<!-- \nNewPP limit report\nCPU time usage: 0.059\
+      \ seconds\nReal time usage: 0.060 seconds\nPreprocessor visited node count:\
+      \ 15/1000000\nPreprocessor generated node count: 32/1000000\nPost‐expand include\
+      \ size: 0/2097152 bytes\nTemplate argument size: 0/2097152 bytes\nHighest expansion\
+      \ depth: 2/40\nExpensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion\
+      \ expansion time report (%,ms,calls,template)\n100.00%    0.000      1 - -total\n\
+      -->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:2697-0!*!*!!*!*!*\
+      \ and timestamp 20221118123743 and revision id 6419\n -->\n"
+  categories: []
+  links: []
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "3"
+    line: "LODMesh"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Ransico/LODMesh"
+    byteoffset: 0
+    anchor: "LODMesh"
+  - toclevel: 1
+    level: "3"
+    line: "Comments:"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Ransico/LODMesh"
+    byteoffset: 4145
+    anchor: "Comments:"
+  displaytitle: "Legacy:Ransico/LODMesh"
+  iwlinks: []
+  wikitext:
+    text: "===LODMesh===\n\nThis class is used to immitate the LOD effect found in\
+      \ some modern engines. LOD is a trick used to have heaps of meshes on the screen\
+      \ at once, without too much of a hit on the framerate. It works by reducing\
+      \ the number of polygons on the mesh, as it gets further away from the player.\n\
+      \nThere are generally two approaches to this: \n*you can manually create different\
+      \ detail models in your 3D editor, one for each level of detail\n*have some\
+      \ fancy algorithm do it for you. \n\nI have chosen the first method - although\
+      \ more work for the modeler, it looks a lot nicer.\n\nThe main reason I am listing\
+      \ this class here, is a replication demo: as you can imagine, you will only\
+      \ want this class to run on the client, not the server at all. This is achieved\
+      \ by setting various things in the default properties down at the bottom, and\
+      \ also an IF statement in the PostBeginPlay.\n\n<uscript>\n/*\n * LODMesh class\
+      \ - implements a 2 level LOD for static meshes.\n * Lewis Weaver, 1/3/2006\n\
+      \ */\n\nclass LODMesh extends Actor\n    placeable;\n\nvar(Display) StaticMesh\
+      \ LODfarMesh;     // The mesh to use for the far away model\nvar(Display) float\
+      \ LODdist;  // How far away should the LOD kick in\nvar(Display) bool LODrotate;\
+      \ // Should the mesh always rotate to face the actor, when in LOD_Far state?\
+      \ useful for planes\n\nvar enum LODStates {\n    LOD_Waiting,\n    LOD_Near,\n\
+      \    LOD_Far\n} currentState;\n\n// this variable avoids popping in and out\
+      \ rapidly\nvar float threshold;\n\nsimulated function PostBeginPlay() {\n\n\
+      \    // Precalculate the threshold\n    if(LODDist > 2000)\n        threshold\
+      \ = 50;\n    else\n        threshold = LODDist * 0.025;\n\n    disable('tick');\n\
+      \n    if ( Level.NetMode != NM_DedicatedServer ) {\n\n        waitForPlayer();\n\
+      \n    }\n\n}\n\nsimulated function waitForPlayer() {\n    setTimer(0.1, true);\n\
+      \    currentState = LOD_Waiting;\n}\n\nsimulated event timer() {\n    if(currentState\
+      \ == LOD_Waiting) {\n        if(level.GetLocalPlayerController() != none) {\n\
+      \            if(VSize(Location - level.GetLocalPlayerController().Pawn.Location)\
+      \ > LODdist) {\n                SetStaticMesh(LODfarMesh);\n               \
+      \ currentState = LOD_Far;\n            } else {\n                SetStaticMesh(Default.StaticMesh);\n\
+      \                currentState = LOD_Near;\n            }\n            setTimer(1.0f,\
+      \ true);\n        } else {\n            SetStaticMesh(LODfarMesh);\n       \
+      \ }\n    } else if (level.GetLocalPlayerController() != none) {\n        if(currentState\
+      \ == LOD_Far          && VSize(Location - level.GetLocalPlayerController().Pawn.Location)\
+      \ < LODdist - threshold) {\n            SetStaticMesh(Default.StaticMesh);\n\
+      \            currentState = LOD_Near;\n            SetRotation(Default.Rotation);\n\
+      \        } else if(currentState == LOD_Near  && VSize(Location - level.GetLocalPlayerController().Pawn.Location)\
+      \ > LODdist + threshold) {\n            SetStaticMesh(LODfarMesh);\n       \
+      \     currentState = LOD_Far;\n        }\n\n        if(LODrotate == true &&\
+      \ currentState == LOD_Far) {\n            SetRotation(Rotator(Location - level.GetLocalPlayerController().Pawn.Location));\n\
+      \        }\n    } else {\n        waitForPlayer();\n    }\n}\n\ndefaultProperties\
+      \ {\n    StaticMesh=StaticMesh'cf_staticMushrooms.cf_gdc_mushroomPile01';\n\
+      \    LODfarMesh=StaticMesh'cf_staticMushrooms.cf_gdc_mushroom10';\n    LODdist=1500;\n\
+      \    LODrotate=true;\n\n    // Make it look different in UEd\n    Texture=Texture'XEffectMat.Combos.greencross';\n\
+      \    bHidden=false;\n    bHiddenEd=false;\n\n    // Client server things - this\
+      \ flag combo is crucial!\n    bTearOff=true;\n    bNetTemporary=True;\n    bGameRelevant=true;\n\
+      \    bNoDelete=true;\n    RemoteRole=ROLE_SimulatedProxy;\n\n    // Various\
+      \ other CPU Saving things\n    Physics=PHYS_None;\n\n    // Make it behiave\
+      \ like a normal static mesh\n    bShadowCast=True;\n    bCollideActors=True;\n\
+      \    bBlockActors=True;\n    bBlockKarma=True;\n    bWorldGeometry=True;\n \
+      \   CollisionHeight=+000001.000000;\n    CollisionRadius=+000001.000000;\n \
+      \   bAcceptsProjectors=True;\n    bUseDynamicLights=true;\n    DrawType=DT_StaticMesh;\n\
+      }\n</uscript>\n\nI hope someone finds this useful... If you have any comments,\
+      \ or think something should have been done better, please don't hesitate.\n\n\
+      ===Comments:===\n\n----\n\n'''Ransico:''' This is my first real contribution\
+      \ to the wiki, I hope someone finds it useful :)\n\n'''MythOpus:''' Could you\
+      \ not eliminate the need for having a 'waiting' state and just make it a far\
+      \ or near state by default (preferably far as near may be bad for some people).\
+      \  That's basically how Renegade works... sort of.  When you first start a game,\
+      \ all the textures and meshes are all minimum quality until the rendering kicks\
+      \ in and realizes everything should look a bit better so it renders accordingly.\n\
+      \n'''HaZarD.ep:''' Does this really bring performance improvement? As far as\
+      \ I know static meshes are rendered very fast, as they are are static...when\
+      \ always switching back and forth this will certainly cost performance as well.\
+      \ Anyone done some fps test?\n\n'''Ransico:''' The idea behind this was for\
+      \ a -massive- outdoor terrain, where everything was viewable at once, and there\
+      \ were craploads of tree's. with around 200 tree's in the world at 1 time, it\
+      \ would require very very low detail meshes... so I designed this to switch\
+      \ to a higher detail when you came up close. Basically, my low detail mesh consists\
+      \ of a plane... and the high detail a good polygon tree.\n\n'''Ransico:''' Oh,\
+      \ and the waiting for player state is designed for when the players pawn dies,\
+      \ and is waiting for a respawn."
+  properties: []
+  revId: 6419
+name: "Legacy:Ransico/LODMesh"
+revision:
+  revid: 6419
+  parentid: 6421
+  user: "Ransico"
+  timestamp: 1142335349.000000000
+  comment: "*"
+timestamp: 1668787432.751362000

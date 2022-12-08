@@ -1,0 +1,615 @@
+---
+parse:
+  title: "Legacy:CaptureVolume"
+  text:
+    text: "<p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n\
+      </div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#Linking_Volumes_and_Control_Points\"\
+      ><span class=\"tocnumber\">1</span> <span class=\"toctext\">Linking Volumes\
+      \ and Control Points</span></a></li>\n<li class=\"toclevel-1 tocsection-2\"\
+      ><a href=\"#Writing_The_Code\"><span class=\"tocnumber\">2</span> <span class=\"\
+      toctext\">Writing The Code</span></a>\n<ul>\n<li class=\"toclevel-2 tocsection-3\"\
+      ><a href=\"#CaptureVolume\"><span class=\"tocnumber\">2.1</span> <span class=\"\
+      toctext\">CaptureVolume</span></a></li>\n<li class=\"toclevel-2 tocsection-4\"\
+      ><a href=\"#CapturePoint\"><span class=\"tocnumber\">2.2</span> <span class=\"\
+      toctext\">CapturePoint</span></a></li>\n<li class=\"toclevel-2 tocsection-5\"\
+      ><a href=\"#Custom_PlayerReplicationInfo\"><span class=\"tocnumber\">2.3</span>\
+      \ <span class=\"toctext\">Custom PlayerReplicationInfo</span></a></li>\n</ul>\n\
+      </li>\n<li class=\"toclevel-1 tocsection-6\"><a href=\"#Linking_Through_UnrealEd\"\
+      ><span class=\"tocnumber\">3</span> <span class=\"toctext\">Linking Through\
+      \ UnrealEd</span></a></li>\n</ul>\n</div>\n<p></p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Linking_Volumes_and_Control_Points\">Linking Volumes and Control Points</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:CaptureVolume?section=1\" title=\"Edit section: Linking\
+      \ Volumes and Control Points\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p><i>Or, how I learned to stop worrying and love my\
+      \ volume!</i></p>\n<blockquote class=\"legacyquote\">\n<p>Goes without saying,\
+      \ but if you sample any of this code please give me credit somewhere in your\
+      \ script. Also, note that I'm not the cleanest coder in the world, so be sure\
+      \ to check and double check! Share the love baby!</p>\n<p>Props go to the Adster.\
+      \ Visit his page @ <a rel=\"nofollow\" class=\"external free\" href=\"http://www.speakerprojects.com/index.html\"\
+      >http://www.speakerprojects.com/index.html</a> and tell him he's sexy.</p>\n\
+      </blockquote>\n<p>The origin of this page comes from a project I'm currently\
+      \ working. For the mod, it was necessary to track player position and then have\
+      \ an icon fade in and out on the hud. I'm not going to go into the fades right\
+      \ now since that's a whole monster to itself. What I'm going to focus on is\
+      \ how to link a control point to a capture volume and, using the two, get it\
+      \ to display icons onto the HUD.</p>\n<h2><span class=\"mw-headline\" id=\"\
+      Writing_The_Code\">Writing The Code</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:CaptureVolume?section=2\"\
+      \ title=\"Edit section: Writing The Code\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>You need to create some new UnrealScript classes.\
+      \ You can either:</p>\n<ul>\n<li><a href=\"/Legacy:Create_A_Subclass\" title=\"\
+      Legacy:Create A Subclass\">Create a subclass</a> in UnrealEd for each of the\
+      \ following scripts,</li>\n<li>or create a <a href=\"/Legacy:Package\" title=\"\
+      Legacy:Package\">package</a> containing all of these classes.</li>\n</ul>\n\
+      <p><b>Note:</b> Using UnrealEd is not recommended. Instead, use any of the <a\
+      \ href=\"/Legacy:Text_Editor\" title=\"Legacy:Text Editor\">suggested text editors</a>.</p>\n\
+      <h3><span class=\"mw-headline\" id=\"CaptureVolume\">CaptureVolume</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:CaptureVolume?section=3\" title=\"Edit section: CaptureVolume\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n<p>The\
+      \ first thing you want to do is <a href=\"/Legacy:Create_A_Subclass\" title=\"\
+      Legacy:Create A Subclass\">create a subclass</a> of the <a href=\"/Legacy:Volume\"\
+      \ title=\"Legacy:Volume\">volume</a> class. The volume will be used to track\
+      \ when a player enters (or leaves) a given space.</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"coMULTI\">/*\nExtended Volume Class\n \nGraham\
+      \ Ross 9/21/04\n \nAn extended volume class to help display the names of\nrooms\
+      \ on the HUD\n \n*/</span>\n<span class=\"co1\">//Graham Ross (thanks Adster!!!)</span>\n\
+      <span class=\"co1\">//An interactive volume to trigger elements on the HUD</span>\n\
+      <span class=\"co1\">// 10/13/04</span>\n<span class=\"co1\">//=============================================================================</span>\n\
+      \ \n<span class=\"kw1\">class</span> captureVolume <span class=\"kw1\">extends</span>\
+      \ <span class=\"kw9\">PhysicsVolume</span>;\n \n<span class=\"kw1\">var</span><span\
+      \ class=\"br0\">(</span> <span class=\"br0\">)</span> <span class=\"kw5\">Int</span>\
+      \ captureVolumeNumber;\n<span class=\"kw1\">var</span> CapturePoint ourCapturePoint;\n\
+      \ \n<span class=\"kw1\">var</span> <span class=\"kw5\">int</span> volumeNumber;\n\
+      <span class=\"kw1\">var</span> <span class=\"kw5\">bool</span> inVolume;\n \n\
+      <span class=\"kw1\">simulated</span> <span class=\"kw1\">function</span> <span\
+      \ class=\"kw4\">PostBeginPlay</span><span class=\"br0\">(</span> <span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw1\">local</span>\
+      \ <span class=\"kw9\">NavigationPoint</span> nP;\n \n\t<span class=\"kw6\">Super</span>.<span\
+      \ class=\"kw4\">PostBeginPlay</span><span class=\"br0\">(</span> <span class=\"\
+      br0\">)</span>;\n \n\t<span class=\"kw2\">for</span><span class=\"br0\">(</span>\
+      \ nP <span class=\"sy0\">=</span> <span class=\"kw7\">Level</span>.<span class=\"\
+      me0\">NavigationPointList</span>; nP <span class=\"sy0\">!=</span> <span class=\"\
+      kw5\">None</span>; nP <span class=\"sy0\">=</span> nP.<span class=\"me0\">NextNavigationPoint</span>\
+      \ <span class=\"br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t\t<span class=\"\
+      kw2\">if</span><span class=\"br0\">(</span> <span class=\"sy0\">!</span>nP.<span\
+      \ class=\"kw3\">IsA</span><span class=\"br0\">(</span> <span class=\"st0\">'CapturePoint'</span>\
+      \ <span class=\"br0\">)</span> <span class=\"br0\">)</span>\n\t\t\t<span class=\"\
+      kw2\">continue</span>;\n \n\t\t<span class=\"kw2\">if</span><span class=\"br0\"\
+      >(</span> CapturePoint<span class=\"br0\">(</span> nP <span class=\"br0\">)</span>.<span\
+      \ class=\"me0\">capturePointNumber</span> <span class=\"sy0\">==</span> captureVolumeNumber\
+      \ <span class=\"br0\">)</span>\n\t\t<span class=\"br0\">{</span>\n\t\t\tourCapturePoint\
+      \ <span class=\"sy0\">=</span> CapturePoint<span class=\"br0\">(</span> nP <span\
+      \ class=\"br0\">)</span>;\n\t\t\tourCapturePoint.<span class=\"me0\">SetMaster</span><span\
+      \ class=\"br0\">(</span> <span class=\"kw6\">self</span> <span class=\"br0\"\
+      >)</span>;\n\t\t\t<span class=\"kw2\">break</span>;\n\t\t<span class=\"br0\"\
+      >}</span>\n\t<span class=\"br0\">}</span>\n<span class=\"br0\">}</span>\n \n\
+      <span class=\"kw1\">event</span> PawnEnteredVolume<span class=\"br0\">(</span>\
+      \ <span class=\"kw9\">Pawn</span> other <span class=\"br0\">)</span>\n<span\
+      \ class=\"br0\">{</span>\n\t<span class=\"kw2\">if</span><span class=\"br0\"\
+      >(</span> <span class=\"br0\">(</span> other.<span class=\"me0\">IsPlayerPawn</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"br0\">)</span>\n\
+      \t\t<span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span> ourCapturePoint\
+      \ <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span> <span class=\"\
+      br0\">)</span> <span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span>other.<span\
+      \ class=\"me0\">PlayerReplicationInfo</span> <span class=\"sy0\">!=</span> <span\
+      \ class=\"kw5\">none</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\
+      \   <span class=\"co1\">//is the problem that the capt. point is none?</span>\n\
+      \t<span class=\"br0\">{</span>\n\t\t<span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span> customPawn<span class=\"br0\">(</span> other <span class=\"br0\"\
+      >)</span> <span class=\"sy0\">!=</span> <span class=\"kw5\">none</span> <span\
+      \ class=\"br0\">)</span>\n        \trscPRI<span class=\"br0\">(</span>other.<span\
+      \ class=\"me0\">PlayerReplicationInfo</span><span class=\"br0\">)</span>.<span\
+      \ class=\"me0\">cVolumeNumber</span> <span class=\"sy0\">=</span> captureVolumeNumber;\n\
+      \ \n \t\tourCapturePoint.<span class=\"me0\">Touched</span><span class=\"br0\"\
+      >(</span> other<span class=\"br0\">)</span>;\n \n     <span class=\"br0\">}</span>\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">event</span> PawnLeavingVolume<span\
+      \ class=\"br0\">(</span> <span class=\"kw9\">Pawn</span> other <span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n    <span class=\"kw2\">if</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">(</span>  other  <span class=\"\
+      sy0\">!=</span> <span class=\"kw5\">none</span> <span class=\"br0\">)</span><span\
+      \ class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span> ourCapturePoint\
+      \ <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span> <span class=\"\
+      br0\">)</span><span class=\"sy0\">&amp;&amp;</span> <span class=\"br0\">(</span>other.<span\
+      \ class=\"me0\">PlayerReplicationInfo</span> <span class=\"sy0\">!=</span> <span\
+      \ class=\"kw5\">none</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\n\
+      \    <span class=\"br0\">{</span>\n\t\t<span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span> customPawn<span class=\"br0\">(</span> other <span class=\"br0\"\
+      >)</span> <span class=\"sy0\">!=</span> <span class=\"kw5\">none</span> <span\
+      \ class=\"br0\">)</span>\n        \t rscPRI<span class=\"br0\">(</span>other.<span\
+      \ class=\"me0\">PlayerReplicationInfo</span><span class=\"br0\">)</span>.<span\
+      \ class=\"me0\">cVolumeNumber</span> <span class=\"sy0\">=</span> <span class=\"\
+      nu0\">0</span>;\n \n\t\tourCapturePoint.<span class=\"me0\">Untouched</span><span\
+      \ class=\"br0\">(</span> other<span class=\"br0\">)</span>;\n    <span class=\"\
+      br0\">}</span>\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">defaultproperties</span>\n\
+      <span class=\"br0\">{</span>\n\tcaptureVolumeNumber<span class=\"sy0\">=</span><span\
+      \ class=\"nu0\">255</span>\n\tvolumeNumber <span class=\"sy0\">=</span> <span\
+      \ class=\"sy0\">-</span><span class=\"nu0\">1</span>;\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>So you'll notice there are a few things I'm keeping track of. First,\
+      \ in the PostBeginPlay function, I'm cycling through all the NavigationPoints\
+      \ in the level. If it is a CapturePoint (or a subclass of it), I proceed forward\
+      \ and match up the number of capture points to the number of the volume, two\
+      \ attributes I've manually set from within the level. You'll also notice I have\
+      \ two checks for whether the pawn enters or leaves a volume. This is the most\
+      \ important part of the code. When a player enters the volume, it calls the\
+      \ Touched and Untouched functions of the capture point. We'll get into that\
+      \ part shortly.</p>\n<p><b>Note:</b> I've set captureVolumeNumber and Volume\
+      \ number to 255 and -1, two out of range types.</p>\n<h3><span class=\"mw-headline\"\
+      \ id=\"CapturePoint\">CapturePoint</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:CaptureVolume?section=4\"\
+      \ title=\"Edit section: CapturePoint\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Now we move on to creating a custom CapturePoint for\
+      \ our new CaptureVolumes to link to.</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"co1\">//  Graham Ross (Thanks Adster!!!)</span>\n<span class=\"\
+      co1\">// class for altering the function of GameObjective.</span>\n<span class=\"\
+      co1\">//</span>\n<span class=\"co1\">//=============================================================================</span>\n\
+      \ \n<span class=\"kw1\">class</span> CapturePoint <span class=\"kw1\">extends</span>\
+      \ <span class=\"kw9\">GameObjective</span>\n\t<span class=\"kw1\">Placeable</span>;\n\
+      \ \n<span class=\"kw1\">var</span><span class=\"br0\">(</span> <span class=\"\
+      br0\">)</span> <span class=\"kw1\">localized</span> <span class=\"kw5\">String</span>\
+      \ captureName;\n<span class=\"kw1\">var</span><span class=\"br0\">(</span> <span\
+      \ class=\"br0\">)</span> <span class=\"kw5\">Name</span> captureEvent; \n<span\
+      \ class=\"kw1\">var</span><span class=\"br0\">(</span> <span class=\"br0\">)</span>\
+      \ <span class=\"kw5\">Int</span> capturePointNumber;\n \n<span class=\"kw1\"\
+      >var</span> CaptureVolume captureVolume;\n \n<span class=\"kw1\">simulated</span>\
+      \ <span class=\"kw1\">function</span> <span class=\"kw4\">PostBeginPlay</span><span\
+      \ class=\"br0\">(</span> <span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \t<span class=\"kw6\">Super</span>.<span class=\"kw4\">PostBeginPlay</span><span\
+      \ class=\"br0\">(</span> <span class=\"br0\">)</span>;\n<span class=\"br0\"\
+      >}</span>\n \n \n<span class=\"kw1\">function</span> SetMaster<span class=\"\
+      br0\">(</span> CaptureVolume ourCaptureVolume <span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n\t<span class=\"kw2\">if</span><span class=\"\
+      br0\">(</span> ourCaptureVolume <span class=\"sy0\">!=</span> <span class=\"\
+      kw5\">None</span> <span class=\"br0\">)</span>\n\t\tcaptureVolume <span class=\"\
+      sy0\">=</span> ourCaptureVolume;\n<span class=\"br0\">}</span>\n \n \n \n<span\
+      \ class=\"kw1\">function</span> Touched<span class=\"br0\">(</span> <span class=\"\
+      kw9\">Pawn</span> other<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \ \n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">function</span> Untouched<span\
+      \ class=\"br0\">(</span> <span class=\"kw9\">Pawn</span> other<span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n \n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"kw1\">function</span> ResetPoint<span class=\"br0\">(</span>\
+      \ <span class=\"kw5\">Bool</span> bEnabled <span class=\"br0\">)</span>\n<span\
+      \ class=\"br0\">{</span>\n \n \n<span class=\"br0\">}</span>\n \n<span class=\"\
+      kw1\">defaultproperties</span>\n<span class=\"br0\">{</span>\n   \tbHidden<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">False</span>\n\tcapturePointNumber<span\
+      \ class=\"sy0\">=-</span><span class=\"nu0\">1</span>\n\tcaptureName<span class=\"\
+      sy0\">=</span><span class=\"st0\">\"A Capture Point\"</span>\n\tbUseCylinderCollision<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">True</span>\n\t<span class=\"kw7\"\
+      >RemoteRole</span><span class=\"sy0\">=</span><span class=\"kw7\">ROLE_SimulatedProxy</span>\n\
+      \tbAlwaysRelevant<span class=\"sy0\">=</span><span class=\"kw6\">True</span>\n\
+      \tbStasis<span class=\"sy0\">=</span><span class=\"kw6\">False</span>\n\tbStatic<span\
+      \ class=\"sy0\">=</span><span class=\"kw6\">False</span>\n\tbNoDelete<span class=\"\
+      sy0\">=</span><span class=\"kw6\">True</span>\n\tbNetNotify<span class=\"sy0\"\
+      >=</span><span class=\"kw6\">True</span>\n\t<span class=\"kw7\">CollisionRadius</span><span\
+      \ class=\"sy0\">=</span><span class=\"nu0\">60.000000</span>\n\t<span class=\"\
+      kw7\">CollisionHeight</span><span class=\"sy0\">=</span><span class=\"nu0\"\
+      >40.000000</span>\n\t<span class=\"kw7\">DrawScale</span><span class=\"sy0\"\
+      >=</span><span class=\"nu0\">0.60000</span>\n\tbCollideActors<span class=\"\
+      sy0\">=</span><span class=\"kw6\">True</span>\n\tbBlockActors<span class=\"\
+      sy0\">=</span><span class=\"kw6\">False</span>\n\tbBlockPlayers<span class=\"\
+      sy0\">=</span><span class=\"kw6\">False</span>\n\tNetUpdateFrequency<span class=\"\
+      sy0\">=</span><span class=\"nu0\">8</span>\n\tObjectiveName<span class=\"sy0\"\
+      >=</span><span class=\"st0\">\"Capture Point\"</span>\n \n<span class=\"br0\"\
+      >}</span></pre></div>\n</div>\n<p>You'll notice there's not much there. Basically\
+      \ the only thing I want is the touched and untouched function. This will allow\
+      \ me to interact easily with the <a href=\"/Legacy:HUD\" title=\"Legacy:HUD\"\
+      >HUD</a> and draw upon it. I personally wasn't able to find a way to interact\
+      \ solely using the volume and the HUD. It's also helpful to note that the triggering\
+      \ is not done by the CapturePoint, but done by the CaptureVolume which then\
+      \ interacts with their specified CapturePoint.</p>\n<p><b>Note:</b> You must\
+      \ create a custom <a href=\"/edit/Legacy:Player_Replication_Info?redlink=1\"\
+      \ class=\"new\" title=\"Legacy:Player Replication Info (page does not exist)\"\
+      >Player Replication Info</a> for your player to hold a single variable that\
+      \ will track the volume number.</p>\n<h3><span class=\"mw-headline\" id=\"Custom_PlayerReplicationInfo\"\
+      >Custom PlayerReplicationInfo</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:CaptureVolume?section=5\"\
+      \ title=\"Edit section: Custom PlayerReplicationInfo\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h3>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"co1\">// Graham Ross</span>\n<span class=\"co1\">// 10/13/04</span>\n\
+      <span class=\"co1\">//</span>\n<span class=\"co1\">// Custom PRI to use with\
+      \ my volume and my hud</span>\n \n<span class=\"kw1\">class</span> rscPRI <span\
+      \ class=\"kw1\">extends</span> xPlayerReplicationInfo;\n \n<span class=\"kw1\"\
+      >var</span> <span class=\"kw5\">int</span> cVolumeNumber;\n \n<span class=\"\
+      kw1\">defaultproperties</span>\n<span class=\"br0\">{</span>\n       cVolumeNumber\
+      \ <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>\n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p>The last bit of code will do the drawing\
+      \ on the hud for us. I'm using a HUD interaction here, in my opinion the best\
+      \ way to draw on the HUD.</p>\n<p>At the top, declare something like this:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">var</span> <span\
+      \ class=\"kw1\">enum</span> volumeNo\n<span class=\"br0\">{</span>\n    VN_None,\n\
+      \    VN_Bal1,\n    VN_Bal2\n<span class=\"br0\">}</span>  VNStatus;</pre></div>\n\
+      </div>\n<p>Later, do something like this...</p>\n<div dir=\"ltr\" class=\"mw-geshi\
+      \ mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n<pre class=\"\
+      de1\"><span class=\"kw1\">simulated</span> <span class=\"kw1\">function</span>\
+      \ checkGlowVariable<span class=\"br0\">(</span><span class=\"kw8\">canvas</span>\
+      \ c<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n \n \n \n   \
+      \ <span class=\"kw2\">switch</span><span class=\"br0\">(</span>rscPRI<span class=\"\
+      br0\">(</span>pOwner.<span class=\"me0\">PlayerReplicationInfo</span><span class=\"\
+      br0\">)</span>.<span class=\"me0\">cVolumeNumber</span><span class=\"br0\">)</span>\n\
+      \      <span class=\"br0\">{</span>\n         <span class=\"kw2\">case</span>\
+      \ <span class=\"nu0\">0</span>:\n               VNStatus <span class=\"sy0\"\
+      >=</span> VN_None;  fadeout <span class=\"sy0\">=</span> <span class=\"kw6\"\
+      >true</span>;\n               <span class=\"kw2\">break</span>;\n \n       \
+      \  <span class=\"kw2\">case</span> <span class=\"nu0\">1</span>:\n         \
+      \      VNStatus <span class=\"sy0\">=</span> VN_Bal1;    fadeout <span class=\"\
+      sy0\">=</span> <span class=\"kw6\">true</span>;\n               <span class=\"\
+      kw2\">break</span>;\n \n         <span class=\"kw2\">case</span> <span class=\"\
+      nu0\">2</span>:\n               VNStatus <span class=\"sy0\">=</span> VN_Bal2;\
+      \     fadeout <span class=\"sy0\">=</span> <span class=\"kw6\">true</span>;\n\
+      \               <span class=\"kw2\">break</span>;\n \n         <span class=\"\
+      kw1\">default</span>:\n \n        <span class=\"br0\">}</span>\n \n<span class=\"\
+      br0\">}</span></pre></div>\n</div>\n<p>In the DrawHud function (or separate\
+      \ function that will be called) put in the following code:</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"> \n<span class=\"kw1\">simulated</span> <span class=\"\
+      kw1\">function</span> checkGlowInfo<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n \n    <span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">byte</span> tempStyle;\n    <span class=\"kw1\">local</span>\
+      \ <span class=\"kw5\">color</span> tempColor;\n \n \n \n    glowMoveX <span\
+      \ class=\"sy0\">=</span> shiftX;\n    glowMoveY <span class=\"sy0\">=</span>\
+      \ ShiftY;\n \n \n \n    tempStyle <span class=\"sy0\">=</span> Cv.<span class=\"\
+      kw7\">Style</span>;\n    tempcolor <span class=\"sy0\">=</span> Cv.<span class=\"\
+      me0\">DrawColor</span>;\n \n \n    cv.<span class=\"me0\">SetDrawColor</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">255</span>, <span class=\"nu0\"\
+      >255</span>, <span class=\"nu0\">255</span>, <span class=\"nu0\">0</span><span\
+      \ class=\"br0\">)</span>;\n    cv.<span class=\"me0\">SetPos</span><span class=\"\
+      br0\">(</span><span class=\"br0\">(</span>cv.<span class=\"me0\">ClipX</span>\
+      \ <span class=\"sy0\">-</span> xpos <span class=\"sy0\">*</span> HUDscaleX<span\
+      \ class=\"br0\">)</span>, <span class=\"br0\">(</span>cv.<span class=\"me0\"\
+      >ClipY</span> <span class=\"sy0\">-</span> ypos <span class=\"sy0\">*</span>\
+      \ HUDScaley<span class=\"br0\">)</span><span class=\"br0\">)</span>;\n    cv.<span\
+      \ class=\"me0\">DrawIcon</span><span class=\"br0\">(</span> LastRoom, sizeIcon\
+      \ <span class=\"sy0\">*</span> <span class=\"br0\">(</span>hudScaleX <span class=\"\
+      sy0\">+</span> hudScaleY<span class=\"br0\">)</span><span class=\"br0\">)</span>;\n\
+      \ \n \n    cv.<span class=\"me0\">SetDrawColor</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">255</span>, <span class=\"nu0\">255</span>, <span class=\"nu0\"\
+      >255</span>, fade<span class=\"br0\">)</span>;\n    cv.<span class=\"me0\">SetPos</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">(</span>cv.<span class=\"me0\">ClipX</span>\
+      \ <span class=\"sy0\">-</span> xpos <span class=\"sy0\">*</span> HUDscaleX<span\
+      \ class=\"br0\">)</span>, <span class=\"br0\">(</span>cv.<span class=\"me0\"\
+      >ClipY</span> <span class=\"sy0\">-</span> ypos <span class=\"sy0\">*</span>\
+      \ HUDScaley<span class=\"br0\">)</span><span class=\"br0\">)</span>;\n    cv.<span\
+      \ class=\"me0\">DrawIcon</span><span class=\"br0\">(</span> pLastRoom, sizeIcon\
+      \ <span class=\"sy0\">*</span> <span class=\"br0\">(</span>hudScaleX <span class=\"\
+      sy0\">+</span> hudScaleY<span class=\"br0\">)</span><span class=\"br0\">)</span>;\n\
+      \ \n    cv.<span class=\"me0\">SetDrawColor</span><span class=\"br0\">(</span><span\
+      \ class=\"nu0\">255</span>, <span class=\"nu0\">255</span>, <span class=\"nu0\"\
+      >255</span>, mapOp<span class=\"br0\">)</span>;\n    cv.<span class=\"me0\"\
+      >SetPos</span><span class=\"br0\">(</span><span class=\"br0\">(</span>cv.<span\
+      \ class=\"me0\">CLipX</span>  <span class=\"sy0\">-</span> <span class=\"br0\"\
+      >(</span>xGlow<span class=\"sy0\">-</span>glowMoveX<span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">*</span> HUDScaleX<span class=\"br0\">)</span>, <span\
+      \ class=\"br0\">(</span>cv.<span class=\"me0\">ClipY</span> <span class=\"sy0\"\
+      >-</span> <span class=\"br0\">(</span>yGlow<span class=\"sy0\">-</span>glowMoveY<span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">*</span> HUDScaleY<span class=\"\
+      br0\">)</span><span class=\"br0\">)</span>;\n    cv.<span class=\"me0\">DrawIcon</span><span\
+      \ class=\"br0\">(</span> pLastGlow,  sizeGlow <span class=\"sy0\">*</span> <span\
+      \ class=\"br0\">(</span>hudScaleX <span class=\"sy0\">+</span> hudScaleY<span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>;\n \n    <span class=\"\
+      kw2\">switch</span> <span class=\"br0\">(</span>VNStatus<span class=\"br0\"\
+      >)</span>\n    <span class=\"br0\">{</span>\n \n       <span class=\"kw2\">case</span>\
+      \ VN_None:\n          resetfade<span class=\"br0\">(</span><span class=\"br0\"\
+      >)</span>;\n          <span class=\"kw2\">break</span>;\n \n       <span class=\"\
+      kw2\">case</span> VN_Bal1:\n          plastRoom <span class=\"sy0\">=</span>\
+      \ blank;   lastVolume <span class=\"sy0\">=</span> <span class=\"nu0\">12</span>;\
+      \    pLastGlow <span class=\"sy0\">=</span> Bal1_g; ShiftX <span class=\"sy0\"\
+      >=</span> <span class=\"nu0\">5</span>;  ShiftY <span class=\"sy0\">=</span>\
+      \ <span class=\"nu0\">0</span>;\n          <span class=\"kw2\">break</span>;\n\
+      \ \n       <span class=\"kw2\">case</span> VN_Bal2:\n          plastRoom <span\
+      \ class=\"sy0\">=</span> blank;  lastVolume <span class=\"sy0\">=</span> <span\
+      \ class=\"nu0\">13</span>;   pLastGlow <span class=\"sy0\">=</span> Bal2_g;\
+      \ ShiftX <span class=\"sy0\">=</span> <span class=\"sy0\">-</span><span class=\"\
+      nu0\">5</span>; ShiftY <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>;\n\
+      \          <span class=\"kw2\">break</span>;\n \n \n       <span class=\"kw1\"\
+      >default</span>:\n          pLastRoom <span class=\"sy0\">=</span> blank ;\n\
+      \          pLastGlow <span class=\"sy0\">=</span> Hall_g ;\n          resetfade<span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span>;\n          <span class=\"\
+      kw2\">break</span>;\n    <span class=\"br0\">}</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>Please note that the reason I'm doing it this way is becuase of my\
+      \ fades. I faked my fades by having them come in on top of each other, so I\
+      \ needed to track the last icon that came up, then draw it and have it stay\
+      \ to give the appearance of a cross-fade. You could easily track player position\
+      \ and then have it just pop instantly onto the screen...</p>\n<h2><span class=\"\
+      mw-headline\" id=\"Linking_Through_UnrealEd\">Linking Through UnrealEd</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:CaptureVolume?section=6\" title=\"Edit section: Linking\
+      \ Through UnrealEd\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>Okay, hopefully you can just hand this off to a level designer and say \"\
+      Link the numbers slave of GUI!\". But for those less fortunate of us, here's\
+      \ how you link the two together.</p>\n<ol>\n<li>\n<ul>\n<li>If you've created\
+      \ a package, after you've compiled all your scripts, go to the <a href=\"/Legacy:Actor_Browser\"\
+      \ title=\"Legacy:Actor Browser\" class=\"mw-redirect\">actor browser</a> and\
+      \ load the package under the actor classes tab. This will bring your scripts\
+      \ into UEd and allow you to access them and place them on your level.</li>\n\
+      <li>If you've created classes within UnrealEd, they should already be in the\
+      \ <a href=\"/Legacy:Actor_Browser\" title=\"Legacy:Actor Browser\" class=\"\
+      mw-redirect\">actor browser</a> once you compile in he <a href=\"/Legacy:Script_Editor\"\
+      \ title=\"Legacy:Script Editor\">Script Editor</a> window.</li>\n</ul>\n</li>\n\
+      <li><a href=\"/Legacy:Add_An_Actor\" title=\"Legacy:Add An Actor\">Add an Actor</a>\
+      \ &gt;&gt; <a href=\"/Legacy:NavigationPoint\" title=\"Legacy:NavigationPoint\"\
+      >NavigationPoint</a> &gt;&gt; <a href=\"/Legacy:JumpDest\" title=\"Legacy:JumpDest\"\
+      >JumpDest</a> &gt;&gt; <a href=\"/Legacy:GameObjective\" title=\"Legacy:GameObjective\"\
+      >GameObjective</a> &gt;&gt; CapturePoint.</li>\n<li><a href=\"/Legacy:Add_A_Volume\"\
+      \ title=\"Legacy:Add A Volume\">Add a Volume</a> of the new class, CaptureVolume.</li>\n\
+      <li>Now comes the tricky part. Select your capturepoint. Open the actor ptoperites\
+      \ window and set the capturePointNum to a valid number, like 1. The, go under\
+      \ the events rollout and give it a tag, like MED_CP or something.</li>\n<li>Select\
+      \ the corresponding volume. Give the volume the name number as the capture point\
+      \ (1) and then under the events rollout set the event name to the tag of the\
+      \ capture point (MED_CP). This will effectively link the two. Here's a brief\
+      \ overview on how to better <a href=\"/Legacy:Match_These_Tags\" title=\"Legacy:Match\
+      \ These Tags\">match these tags</a></li>\n</ol>\n<p>That's about it. If you\
+      \ have problems, make sure your tags match between the two. Also, another trick\
+      \ I've found is to set the draw coords to somehting like 500 by 500, so you\
+      \ can make sure it's actually drawing and not getting covered by something.</p>\n\
+      <p>Confused about what 'trigger' means? Here's a good definition of what <a\
+      \ href=\"/Legacy:Triggered\" title=\"Legacy:Triggered\">triggered</a> means.</p>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.181 seconds\nReal time usage:\
+      \ 0.183 seconds\nPreprocessor visited node count: 89/1000000\nPreprocessor generated\
+      \ node count: 217/1000000\nPost‐expand include size: 786/2097152 bytes\nTemplate\
+      \ argument size: 332/2097152 bytes\nHighest expansion depth: 3/40\nExpensive\
+      \ parser function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report\
+      \ (%,ms,calls,template)\n100.00%    6.370      1 - -total\n100.00%    6.370\
+      \      1 - Template:Innerbox\n-->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:772-0!*!0!!en!*!*\
+      \ and timestamp 20221120201946 and revision id 2201\n -->\n"
+  categories:
+  - sortkey: "CaptureVolume"
+    name: "Legacy_Custom_Class_(UT2003)"
+  - sortkey: "CaptureVolume"
+    name: "Legacy_Custom_Class_(UT2004)"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Script Editor"
+  - ns: 100
+    exists: false
+    name: "Legacy:Player Replication Info"
+  - ns: 100
+    exists: true
+    name: "Legacy:Text Editor"
+  - ns: 100
+    exists: true
+    name: "Legacy:GameObjective"
+  - ns: 100
+    exists: true
+    name: "Legacy:Volume"
+  - ns: 100
+    exists: true
+    name: "Legacy:JumpDest"
+  - ns: 100
+    exists: true
+    name: "Legacy:Create A Subclass"
+  - ns: 100
+    exists: true
+    name: "Legacy:Add An Actor"
+  - ns: 100
+    exists: true
+    name: "Legacy:Actor Browser"
+  - ns: 100
+    exists: true
+    name: "Legacy:NavigationPoint"
+  - ns: 100
+    exists: true
+    name: "Legacy:Triggered"
+  - ns: 100
+    exists: true
+    name: "Legacy:Add A Volume"
+  - ns: 100
+    exists: true
+    name: "Legacy:HUD"
+  - ns: 100
+    exists: true
+    name: "Legacy:Package"
+  - ns: 100
+    exists: true
+    name: "Legacy:Match These Tags"
+  templates:
+  - ns: 10
+    exists: true
+    name: "Template:Innerbox"
+  images: []
+  externallinks:
+  - "http://www.speakerprojects.com/index.html"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Linking Volumes and Control Points"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:CaptureVolume"
+    byteoffset: 0
+    anchor: "Linking_Volumes_and_Control_Points"
+  - toclevel: 1
+    level: "2"
+    line: "Writing The Code"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:CaptureVolume"
+    byteoffset: 844
+    anchor: "Writing_The_Code"
+  - toclevel: 2
+    level: "3"
+    line: "CaptureVolume"
+    number: "2.1"
+    index: "3"
+    fromtitle: "Legacy:CaptureVolume"
+    byteoffset: 1224
+    anchor: "CaptureVolume"
+  - toclevel: 2
+    level: "3"
+    line: "CapturePoint"
+    number: "2.2"
+    index: "4"
+    fromtitle: "Legacy:CaptureVolume"
+    byteoffset: 3763
+    anchor: "CapturePoint"
+  - toclevel: 2
+    level: "3"
+    line: "Custom PlayerReplicationInfo"
+    number: "2.3"
+    index: "5"
+    fromtitle: "Legacy:CaptureVolume"
+    byteoffset: 5617
+    anchor: "Custom_PlayerReplicationInfo"
+  - toclevel: 1
+    level: "2"
+    line: "Linking Through UnrealEd"
+    number: "3"
+    index: "6"
+    fromtitle: "Legacy:CaptureVolume"
+    byteoffset: 8383
+    anchor: "Linking_Through_UnrealEd"
+  displaytitle: "Legacy:CaptureVolume"
+  iwlinks: []
+  wikitext:
+    text: "==Linking Volumes and Control Points==\n\n''Or, how I learned to stop worrying\
+      \ and love my volume!''\n\n{{innerbox|Goes without saying, but if you sample\
+      \ any of this code please give me credit somewhere in your script.  Also, note\
+      \ that I'm not the cleanest coder in the world, so be sure to check and double\
+      \ check!  Share the love baby!\n\nProps go to the Adster.  Visit his page @\
+      \ http://www.speakerprojects.com/index.html and tell him he's sexy.\n\n}}\n\n\
+      The origin of this page comes from a project I'm currently working. For the\
+      \ mod, it was necessary to track player position and then have an icon fade\
+      \ in and out on the hud.  I'm not going to go into the fades right now since\
+      \ that's a whole monster to itself.  What I'm going to focus on is how to link\
+      \ a control point to a capture volume and, using the two, get it to display\
+      \ icons onto the HUD.\n\n==Writing The Code==\n\nYou need to create some new\
+      \ UnrealScript classes. You can either:\n* [[Legacy:Create A Subclass|Create\
+      \ a subclass]] in UnrealEd for each of the following scripts,\n* or create a\
+      \ [[Legacy:Package|package]] containing all of these classes.\n\n'''Note:'''\
+      \ Using UnrealEd is not recommended.  Instead, use any of the [[Legacy:Text\
+      \ Editor| suggested text editors]].\n\n===CaptureVolume===\n\nThe first thing\
+      \ you want to do is [[Legacy:Create A Subclass|create a subclass]] of the [[Legacy:Volume|volume]]\
+      \ class. The volume will be used to track when a player enters (or leaves) a\
+      \ given space.\n\n<uscript>\n/*\nExtended Volume Class\n\nGraham Ross 9/21/04\n\
+      \nAn extended volume class to help display the names of\nrooms on the HUD\n\n\
+      */\n//Graham Ross (thanks Adster!!!)\n//An interactive volume to trigger elements\
+      \ on the HUD\n// 10/13/04\n//=============================================================================\n\
+      \nclass captureVolume extends PhysicsVolume;\n\nvar( ) Int captureVolumeNumber;\n\
+      var CapturePoint ourCapturePoint;\n\nvar int volumeNumber;\nvar bool inVolume;\n\
+      \nsimulated function PostBeginPlay( )\n{\n\tlocal NavigationPoint nP;\n\n\t\
+      Super.PostBeginPlay( );\n\n\tfor( nP = Level.NavigationPointList; nP != None;\
+      \ nP = nP.NextNavigationPoint )\n\t{\n\t\tif( !nP.IsA( 'CapturePoint' ) )\n\t\
+      \t\tcontinue;\n\n\t\tif( CapturePoint( nP ).capturePointNumber == captureVolumeNumber\
+      \ )\n\t\t{\n\t\t\tourCapturePoint = CapturePoint( nP );\n\t\t\tourCapturePoint.SetMaster(\
+      \ self );\n\t\t\tbreak;\n\t\t}\n\t}\n}\n\nevent PawnEnteredVolume( Pawn other\
+      \ )\n{\n\tif( ( other.IsPlayerPawn() )\n\t\t&& ( ourCapturePoint != None ) &&\
+      \ (other.PlayerReplicationInfo != none))   //is the problem that the capt. point\
+      \ is none?\n\t{\n\t\tif( customPawn( other ) != none )\n        \trscPRI(other.PlayerReplicationInfo).cVolumeNumber\
+      \ = captureVolumeNumber;\n\n \t\tourCapturePoint.Touched( other);\n\n     }\n\
+      }\n\nevent PawnLeavingVolume( Pawn other )\n{\n    if((  other  != none )&&\
+      \ ( ourCapturePoint != None )&& (other.PlayerReplicationInfo != none))\n   \
+      \ {\n\t\tif( customPawn( other ) != none )\n        \t rscPRI(other.PlayerReplicationInfo).cVolumeNumber\
+      \ = 0;\n\n\t\tourCapturePoint.Untouched( other);\n    }\n}\n\ndefaultproperties\n\
+      {\n\tcaptureVolumeNumber=255\n\tvolumeNumber = -1;\n}\n</uscript>\n\nSo you'll\
+      \ notice there are a few things I'm keeping track of.  First, in the PostBeginPlay\
+      \ function, I'm cycling through all the NavigationPoints in the level.  If it\
+      \ is a CapturePoint (or a subclass of it), I proceed forward and match up the\
+      \ number of capture points to the number of the volume, two attributes I've\
+      \ manually set from within the level.  You'll also notice I have two checks\
+      \ for whether the pawn enters or leaves a volume.  This is the most important\
+      \ part of the code.  When a player enters the volume, it calls the Touched and\
+      \ Untouched functions of the capture point.  We'll get into that part shortly.\n\
+      \n'''Note:''' I've set captureVolumeNumber and Volume number to 255 and -1,\
+      \ two out of range types.\n\n===CapturePoint===\n\nNow we move on to creating\
+      \ a custom CapturePoint for our new CaptureVolumes to link to.\n\n<uscript>\n\
+      \n//  Graham Ross (Thanks Adster!!!)\n// class for altering the function of\
+      \ GameObjective.\n//\n//=============================================================================\n\
+      \nclass CapturePoint extends GameObjective\n\tPlaceable;\n\nvar( ) localized\
+      \ String captureName;\nvar( ) Name captureEvent; \nvar( ) Int capturePointNumber;\n\
+      \nvar CaptureVolume captureVolume;\n\nsimulated function PostBeginPlay( )\n\
+      {\n\tSuper.PostBeginPlay( );\n}\n\n\nfunction SetMaster( CaptureVolume ourCaptureVolume\
+      \ )\n{\n\tif( ourCaptureVolume != None )\n\t\tcaptureVolume = ourCaptureVolume;\n\
+      }\n\n\n\nfunction Touched( Pawn other)\n{\n\n}\n\nfunction Untouched( Pawn other)\n\
+      {\n\n}\n\nfunction ResetPoint( Bool bEnabled )\n{\n\n\n}\n\ndefaultproperties\n\
+      {\n   \tbHidden=False\n\tcapturePointNumber=-1\n\tcaptureName=\"A Capture Point\"\
+      \n\tbUseCylinderCollision=True\n\tRemoteRole=ROLE_SimulatedProxy\n\tbAlwaysRelevant=True\n\
+      \tbStasis=False\n\tbStatic=False\n\tbNoDelete=True\n\tbNetNotify=True\n\tCollisionRadius=60.000000\n\
+      \tCollisionHeight=40.000000\n\tDrawScale=0.60000\n\tbCollideActors=True\n\t\
+      bBlockActors=False\n\tbBlockPlayers=False\n\tNetUpdateFrequency=8\n\tObjectiveName=\"\
+      Capture Point\"\n\n}\n</uscript>\n\nYou'll notice there's not much there.  Basically\
+      \ the only thing I want is the touched and untouched function.  This will allow\
+      \ me to interact easily with the [[Legacy:HUD|HUD]] and draw upon it.  I personally\
+      \ wasn't able to find a way to interact solely using the volume and the HUD.\
+      \  It's also helpful to note that the triggering is not done by the CapturePoint,\
+      \ but done by the CaptureVolume which then interacts with their specified CapturePoint.\n\
+      \n'''Note:''' You must create a custom [[Legacy:Player Replication Info|Player\
+      \ Replication Info]] for your player to hold a single variable that will track\
+      \ the volume number.\n\n===Custom PlayerReplicationInfo===\n\n<uscript>\n//\
+      \ Graham Ross\n// 10/13/04\n//\n// Custom PRI to use with my volume and my hud\n\
+      \nclass rscPRI extends xPlayerReplicationInfo;\n\nvar int cVolumeNumber;\n\n\
+      defaultproperties\n{\n       cVolumeNumber = 0\n}\n</uscript>\n\nThe last bit\
+      \ of code will do the drawing on the hud for us.  I'm using a HUD interaction\
+      \ here, in my opinion the best way to draw on the HUD.\n\nAt the top, declare\
+      \ something like this:\n\n<uscript>\nvar enum volumeNo\n{\n    VN_None,\n  \
+      \  VN_Bal1,\n    VN_Bal2\n}  VNStatus;\n</uscript>\n\nLater, do something like\
+      \ this...\n\n<uscript>\nsimulated function checkGlowVariable(canvas c)\n{\n\n\
+      \n\n    switch(rscPRI(pOwner.PlayerReplicationInfo).cVolumeNumber)\n      {\n\
+      \         case 0:\n               VNStatus = VN_None;  fadeout = true;\n   \
+      \            break;\n\n         case 1:\n               VNStatus = VN_Bal1;\
+      \    fadeout = true;\n               break;\n\n         case 2:\n          \
+      \     VNStatus = VN_Bal2;     fadeout = true;\n               break;\n\n   \
+      \      default:\n\n        }\n\n}\n\n</uscript>\n\nIn the DrawHud function (or\
+      \ separate function that will be called) put in the following code:\n\n<uscript>\
+      \ \nsimulated function checkGlowInfo()\n{\n\n    local byte tempStyle;\n   \
+      \ local color tempColor;\n\n\n\n    glowMoveX = shiftX;\n    glowMoveY = ShiftY;\n\
+      \n\n\n    tempStyle = Cv.Style;\n    tempcolor = Cv.DrawColor;\n\n\n    cv.SetDrawColor(255,\
+      \ 255, 255, 0);\n    cv.SetPos((cv.ClipX - xpos * HUDscaleX), (cv.ClipY - ypos\
+      \ * HUDScaley));\n    cv.DrawIcon( LastRoom, sizeIcon * (hudScaleX + hudScaleY));\n\
+      \n\n    cv.SetDrawColor(255, 255, 255, fade);\n    cv.SetPos((cv.ClipX - xpos\
+      \ * HUDscaleX), (cv.ClipY - ypos * HUDScaley));\n    cv.DrawIcon( pLastRoom,\
+      \ sizeIcon * (hudScaleX + hudScaleY));\n\n    cv.SetDrawColor(255, 255, 255,\
+      \ mapOp);\n    cv.SetPos((cv.CLipX  - (xGlow-glowMoveX) * HUDScaleX), (cv.ClipY\
+      \ - (yGlow-glowMoveY) * HUDScaleY));\n    cv.DrawIcon( pLastGlow,  sizeGlow\
+      \ * (hudScaleX + hudScaleY));\n   \n    switch (VNStatus)\n    {\n\n       case\
+      \ VN_None:\n          resetfade();\n          break;\n\n       case VN_Bal1:\n\
+      \          plastRoom = blank;   lastVolume = 12;    pLastGlow = Bal1_g; ShiftX\
+      \ = 5;  ShiftY = 0;\n          break;\n\n       case VN_Bal2:\n          plastRoom\
+      \ = blank;  lastVolume = 13;   pLastGlow = Bal2_g; ShiftX = -5; ShiftY = 0;\n\
+      \          break;\n\n\n       default:\n          pLastRoom = blank ;\n    \
+      \      pLastGlow = Hall_g ;\n          resetfade();\n          break;\n    }\n\
+      }\n</uscript>\n\nPlease note that the reason I'm doing it this way is becuase\
+      \ of my fades.  I faked my fades by having them come in on top of each other,\
+      \ so I needed to track the last icon that came up, then draw it and have it\
+      \ stay to give the appearance of a cross-fade.  You could easily track player\
+      \ position and then have it just pop instantly onto the screen...\n\n==Linking\
+      \ Through UnrealEd==\n\nOkay, hopefully you can just hand this off to a level\
+      \ designer and say \"Link the numbers slave of GUI!\".  But for those less fortunate\
+      \ of us, here's how you link the two together.\n\n#* If you've created a package,\
+      \ after you've compiled all your scripts, go to the [[Legacy:Actor Browser|actor\
+      \ browser]] and load the package under the actor classes tab. This will bring\
+      \ your scripts into UEd and allow you to access them and place them on your\
+      \ level. \n#* If you've created classes within UnrealEd, they should already\
+      \ be in the [[Legacy:Actor Browser|actor browser]] once you compile in he [[Legacy:Script\
+      \ Editor|Script Editor]] window.\n# [[Legacy:Add An Actor|Add an Actor]] >>\
+      \ [[Legacy:NavigationPoint|NavigationPoint]] >> [[Legacy:JumpDest|JumpDest]]\
+      \ >> [[Legacy:GameObjective|GameObjective]] >> CapturePoint. \n# [[Legacy:Add\
+      \ A Volume|Add a Volume]] of the new class, CaptureVolume.\n# Now comes the\
+      \ tricky part. Select your capturepoint. Open the actor ptoperites window and\
+      \ set the capturePointNum to a valid number, like 1.  The, go under the events\
+      \ rollout and give it a tag, like MED_CP or something.\n# Select the corresponding\
+      \ volume.  Give the volume the name number as the capture point (1) and then\
+      \ under the events rollout set the event name to the tag of the capture point\
+      \ (MED_CP).  This will effectively link the two. Here's a brief overview on\
+      \ how to better [[Legacy:Match These Tags|match these tags]]\n\nThat's about\
+      \ it.  If you have problems, make sure your tags match between the two.  Also,\
+      \ another trick I've found is to set the draw coords to somehting like 500 by\
+      \ 500, so you can make sure it's actually drawing and not getting covered by\
+      \ something.\n\nConfused about what 'trigger' means?  Here's a good definition\
+      \ of what [[Legacy:Triggered|triggered]] means.\n\n[[Category:Legacy Custom\
+      \ Class (UT2003)|{{PAGENAME}}]]\n[[Category:Legacy Custom Class (UT2004)|{{PAGENAME}}]]"
+  properties: []
+  revId: 2201
+name: "Legacy:CaptureVolume"
+revision:
+  revid: 2201
+  parentid: 2202
+  user: "Sweavo"
+  timestamp: 1195405264.000000000
+  comment: "*"
+timestamp: 1668975327.028063000

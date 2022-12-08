@@ -1,0 +1,735 @@
+---
+parse:
+  title: "Legacy:Weapon Mutator Tutorial (UT2003)"
+  text:
+    text: "<p><i>This page is one of a series of <a href=\"/Legacy:UnrealScript_Lessons\"\
+      \ title=\"Legacy:UnrealScript Lessons\">UnrealScript Lessons</a>.</i></p>\n\
+      <p><i>The UT2004 version of this tutorial is available at <a href=\"/Legacy:Weapon_Mutator_Tutorial\"\
+      \ title=\"Legacy:Weapon Mutator Tutorial\">Weapon Mutator Tutorial</a>.</i></p>\n\
+      <h2><span class=\"mw-headline\" id=\"UTute_3:_A_Weapon_Mute_.E2.80.93_Did_someone_say_Firestorm.3F\"\
+      >UTute 3: A Weapon Mute – Did someone say Firestorm?</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Weapon_Mutator_Tutorial_(UT2003)?section=1\"\
+      \ title=\"Edit section: UTute 3: A Weapon Mute – Did someone say Firestorm?\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>I was\
+      \ reading a preview of Unreal Tournament 2003 that said that the alt fire would\
+      \ have explosive bullets. I thought, neat - that's just like firestorm rounds\
+      \ in my mod, Freehold! But when I got the game, I realized that Epic had a different\
+      \ definition of \"explosive\" than I did. So I set out to change that.</p>\n\
+      <p>What I like to do with something like this is run through the code and grab\
+      \ everything I might need in order to complete it. In UT2003, the weapon code\
+      \ is more subdivided than in UT, with seperate classes for the weapon, the weapon's\
+      \ pickup, the ammo, the fire, the damage, etc. At first, it's actually a bit\
+      \ annoying - but in practice quite flexible. Since all I wanted to do was change\
+      \ the altfire of the Minigun, I was going to extend the following classes:</p>\n\
+      <ul>\n<li><a href=\"/Legacy:Minigun\" title=\"Legacy:Minigun\">Minigun</a> -\
+      \ for the weapon, to reference the new fire and pickup class</li>\n<li><a href=\"\
+      /Legacy:MinigunFire\" title=\"Legacy:MinigunFire\">MinigunFire</a> - for the\
+      \ new explosive fire</li>\n<li><a href=\"/Legacy:Mutator\" title=\"Legacy:Mutator\"\
+      >Mutator</a> - to make a pickup mutator so that it can be seen in the game</li>\n\
+      <li><a href=\"/Legacy:MinigunPickup\" title=\"Legacy:MinigunPickup\">MinigunPickup</a>\
+      \ - to make a pickup class for my new weapon</li>\n</ul>\n<p>So I made four\
+      \ new classes which extended those:</p>\n<ul>\n<li>MinigunHE - for the weapon,\
+      \ to reference the new fire and pickup class</li>\n<li>MinigunHEAltFire - for\
+      \ the new explosive fire</li>\n<li>MinigunHEArena - to make a pickup mutator\
+      \ so that it can be seen in the game</li>\n<li>MinigunHEPickup - to make a pickup\
+      \ class for my new weapon</li>\n</ul>\n<p>Quicknote about MinigunHEArena. I\
+      \ call any mutator I use to alter pickups in the game an \"arena\" class, but\
+      \ this might be somewhat confusing to some other definitions of Arena.</p>\n\
+      <p>In MiniGunHE, all I needed to do was point two default properties to my new\
+      \ classes. Essentially I modified the following:</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\">FireModeClass<span class=\"br0\">(</span><span class=\"nu0\"\
+      >1</span><span class=\"br0\">)</span><span class=\"sy0\">=</span><span class=\"\
+      kw1\">Class</span><span class=\"st0\">'XPak.MinigunHEAltFire'</span>\nPickupClass<span\
+      \ class=\"sy0\">=</span><span class=\"kw1\">Class</span><span class=\"st0\"\
+      >'Xpak.MinigunHEPickup'</span></pre></div>\n</div>\n<p>Each weapon in UT2003\
+      \ has two FireModeClasses, primary (0) and alt (1). Here, I want the alt fire\
+      \ to be my class. The PickUpClass is something that confused me at first, but\
+      \ essentially it points to the class which should be used to pick up this weapon\
+      \ in the map itself. It becomes important with the mutator.</p>\n<p>In the MinigunHEAltFire,\
+      \ I use the DoTrace which is inherited from the InstantFire parent class.. DoTrace\
+      \ is a function called when an instant hit weapon needs to determine the target\
+      \ that it is pointing at. It generates a vector called HitLocation and another\
+      \ called HitNormal to describe the point that the hit would occur. I added:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\">Explode<span class=\"br0\">(</span>HitLocation,\
+      \ HitNormal<span class=\"br0\">)</span>;</pre></div>\n</div>\n<p>After those\
+      \ <a href=\"/Legacy:Vector\" title=\"Legacy:Vector\">vectors</a> are determined.\
+      \ I then defined Explode, and its damaging function BlowUp (based from <a href=\"\
+      /Legacy:UT\" title=\"Legacy:UT\" class=\"mw-redirect\">UT</a> code actually)\
+      \ as:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div\
+      \ class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\"\
+      >function</span> BlowUp<span class=\"br0\">(</span><span class=\"kw5\">vector</span>\
+      \ HitLocation<span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t\
+      <span class=\"kw4\">HurtRadius</span><span class=\"br0\">(</span><span class=\"\
+      nu0\">15</span>, <span class=\"nu0\">45</span>, <span class=\"kw9\">DamageType</span>,\
+      \ <span class=\"nu0\">250</span>, HitLocation <span class=\"br0\">)</span>;\n\
+      \t<span class=\"kw4\">MakeNoise</span><span class=\"br0\">(</span><span class=\"\
+      nu0\">1.0</span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n\
+      \ \n<span class=\"kw1\">simulated</span> <span class=\"kw1\">function</span>\
+      \ Explode<span class=\"br0\">(</span><span class=\"kw5\">vector</span> HitLocation,\
+      \ <span class=\"kw5\">vector</span> HitNormal<span class=\"br0\">)</span>\n\
+      <span class=\"br0\">{</span>\n\t<span class=\"kw4\">PlaySound</span><span class=\"\
+      br0\">(</span><span class=\"kw5\">sound</span><span class=\"st0\">'WeaponSounds.BExplosion3'</span>,,<span\
+      \ class=\"nu0\">2.5</span><span class=\"sy0\">*</span><span class=\"kw7\">TransientSoundVolume</span><span\
+      \ class=\"br0\">)</span>;\n    <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span> EffectIsRelevant<span class=\"br0\">(</span><span class=\"kw7\"\
+      >Location</span>,<span class=\"kw6\">false</span><span class=\"br0\">)</span>\
+      \ <span class=\"br0\">)</span>\n    <span class=\"br0\">{</span>\n    \t<span\
+      \ class=\"kw4\">Spawn</span><span class=\"br0\">(</span><span class=\"kw1\"\
+      >class</span><span class=\"st0\">'HEBulletExplosion'</span>,,,HitLocation <span\
+      \ class=\"sy0\">+</span> HitNormal<span class=\"sy0\">*</span><span class=\"\
+      nu0\">16</span>,<span class=\"kw5\">rotator</span><span class=\"br0\">(</span>HitNormal<span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>;\n        <span class=\"\
+      kw4\">Spawn</span><span class=\"br0\">(</span><span class=\"kw1\">class</span><span\
+      \ class=\"st0\">'ExplosionCrap'</span>,,, HitLocation, <span class=\"kw5\">rotator</span><span\
+      \ class=\"br0\">(</span>HitNormal<span class=\"br0\">)</span><span class=\"\
+      br0\">)</span>;\n\t\t   <span class=\"br0\">}</span>\n \n\tBlowUp<span class=\"\
+      br0\">(</span>HitLocation<span class=\"br0\">)</span>;\n<span class=\"br0\"\
+      >}</span></pre></div>\n</div>\n<p>Now, when the DoTrace returns its HitLocation,\
+      \ there is also a little explosion and a damage radius. Now that's an explosion.\
+      \ The other class directly related to the weapon is the pickup itself. Here,\
+      \ it's enough to extend the MinigunPickUp and merely change a few <a href=\"\
+      /Legacy:Default_Properties\" title=\"Legacy:Default Properties\">default properties</a>:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">defaultproperties</span>\n\
+      <span class=\"br0\">{</span>\n     InventoryType<span class=\"sy0\">=</span><span\
+      \ class=\"kw1\">Class</span><span class=\"st0\">'XPak.MinigunHE'</span>\n  \
+      \   PickupMessage<span class=\"sy0\">=</span><span class=\"st0\">\"You got the\
+      \ Minigun HE.\"</span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>Finally,\
+      \ we write a mutator to replace that old Minigun with the shiny new one.</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">class</span> MinigunHEArena\
+      \ <span class=\"kw1\">extends</span> <span class=\"kw9\">Mutator</span>\n  \
+      \  <span class=\"kw1\">config</span><span class=\"br0\">(</span>user<span class=\"\
+      br0\">)</span>;\n \n<span class=\"kw1\">function</span> <span class=\"kw5\"\
+      >bool</span> CheckReplacement<span class=\"br0\">(</span> <span class=\"kw9\"\
+      >Actor</span> Other, <span class=\"kw1\">out</span> <span class=\"kw5\">byte</span>\
+      \ bSuperRelevant <span class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\
+      \tbSuperRelevant <span class=\"sy0\">=</span> <span class=\"nu0\">0</span>;\n\
+      \    <span class=\"kw2\">if</span> <span class=\"br0\">(</span> xWeaponBase<span\
+      \ class=\"br0\">(</span>Other<span class=\"br0\">)</span> <span class=\"sy0\"\
+      >!=</span> <span class=\"kw5\">None</span> <span class=\"br0\">)</span>\n  \
+      \  <span class=\"br0\">{</span>\n\t\t<span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span> xWeaponBase<span class=\"br0\">(</span>Other<span class=\"br0\"\
+      >)</span>.<span class=\"me0\">WeaponType</span> <span class=\"sy0\">==</span>\
+      \ <span class=\"kw1\">class</span><span class=\"st0\">'Minigun'</span> <span\
+      \ class=\"br0\">)</span>\n\t\t\txWeaponBase<span class=\"br0\">(</span>Other<span\
+      \ class=\"br0\">)</span>.<span class=\"me0\">WeaponType</span> <span class=\"\
+      sy0\">=</span> <span class=\"kw1\">class</span><span class=\"st0\">'MinigunHE'</span>;\n\
+      \t\t<span class=\"kw2\">else</span>\n\t\t\t<span class=\"kw2\">return</span>\
+      \ <span class=\"kw6\">true</span>;\n\t<span class=\"br0\">}</span>\n\t<span\
+      \ class=\"kw2\">else</span> <span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span> WeaponPickup<span class=\"br0\">(</span>Other<span class=\"br0\">)</span>\
+      \ <span class=\"sy0\">!=</span> <span class=\"kw5\">None</span> <span class=\"\
+      br0\">)</span>\n\t<span class=\"br0\">{</span>\n\t\t<span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span> <span class=\"kw5\">string</span><span class=\"\
+      br0\">(</span>Other.<span class=\"kw1\">Class</span><span class=\"br0\">)</span>\
+      \ ~<span class=\"sy0\">=</span> <span class=\"st0\">\"xWeapons.MinigunPickup\"\
+      </span> <span class=\"br0\">)</span>\n\t\t\tReplaceWith<span class=\"br0\">(</span>\
+      \ Other, <span class=\"st0\">\"xPak.MinigunHEPickUP\"</span><span class=\"br0\"\
+      >)</span>;\n\t\t<span class=\"kw2\">else</span>\n\t\t\t<span class=\"kw2\">return</span>\
+      \ <span class=\"kw6\">true</span>;\n\t<span class=\"br0\">}</span>\n\t<span\
+      \ class=\"kw2\">else</span>\n\t\t<span class=\"kw2\">return</span> <span class=\"\
+      kw6\">true</span>;\n \n\t<span class=\"kw2\">return</span> <span class=\"kw6\"\
+      >false</span>;\n<span class=\"br0\">}</span>\n \n<span class=\"kw1\">defaultproperties</span>\n\
+      <span class=\"br0\">{</span>\n     GroupName<span class=\"sy0\">=</span><span\
+      \ class=\"st0\">\"Minigun HE\"</span>\n     FriendlyName<span class=\"sy0\"\
+      >=</span><span class=\"st0\">\"Minigun HE\"</span>\n     Description<span class=\"\
+      sy0\">=</span><span class=\"st0\">\"Minigun with High Explosive Firestorm rounds\"\
+      </span>\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p>CheckReplacement\
+      \ is a Mutator function which hits every actor and asks if it should be replaced.\
+      \ It's an extremely powerful call and if done wrong can completely crash your\
+      \ game. Here, it pretty much just looks for Miniguns and MinigunPickups and\
+      \ replaces them with new classes. Now, add two lines to the Public section of\
+      \ the <a href=\"/Legacy:INT_File\" title=\"Legacy:INT File\">INT file</a>:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw8\">Object</span><span\
+      \ class=\"sy0\">=</span><span class=\"br0\">(</span><span class=\"kw1\">Class</span><span\
+      \ class=\"sy0\">=</span><span class=\"kw1\">Class</span>,MetaClass<span class=\"\
+      sy0\">=</span><span class=\"kw8\">Engine</span>.<span class=\"kw9\">Mutator</span>,<span\
+      \ class=\"kw5\">Name</span><span class=\"sy0\">=</span>XPak.<span class=\"me0\"\
+      >MinigunHEArena</span>,Description<span class=\"sy0\">=</span><span class=\"\
+      st0\">\"Minigun HE.\"</span><span class=\"br0\">)</span>\n \n<span class=\"\
+      kw8\">Object</span><span class=\"sy0\">=</span><span class=\"br0\">(</span><span\
+      \ class=\"kw1\">Class</span><span class=\"sy0\">=</span><span class=\"kw1\"\
+      >Class</span>,MetaClass<span class=\"sy0\">=</span><span class=\"kw8\">Engine</span>.<span\
+      \ class=\"kw9\">Weapon</span>,<span class=\"kw5\">Name</span><span class=\"\
+      sy0\">=</span>XPak.<span class=\"me0\">MinigunHE</span>,Description<span class=\"\
+      sy0\">=</span><span class=\"st0\">\"Customized Minigun with Firestorm Rounds.\"\
+      </span><span class=\"br0\">)</span></pre></div>\n</div>\n<p>The bottom one is\
+      \ weapon specific, and is the line that adds the weapon to the Weapon Database.\
+      \ There you go, the basics of a weapon mutator and real explosions to boot.</p>\n\
+      <blockquote class=\"legacyquote\">\n<p>Quicknote about the \"HEBulletExplosion\"\
+      \ call in the \"Explosion\" function. Yes, that's a custom job as well - but\
+      \ I left it out of the tute as it's not &gt;actually needed. It essentially\
+      \ extends the explosion used for rockets and cuts back the scale.</p>\n</blockquote>\n\
+      <p><i>This tutorial was originally part of <a href=\"/Legacy:RegularX\" title=\"\
+      Legacy:RegularX\">RegularX</a>'s <a href=\"/edit/Legacy:UTutes?redlink=1\" class=\"\
+      new\" title=\"Legacy:UTutes (page does not exist)\">UTutes</a> series.</i></p>\n\
+      <h2><span class=\"mw-headline\" id=\"Related_Topics\">Related Topics</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Weapon_Mutator_Tutorial_(UT2003)?section=2\" title=\"\
+      Edit section: Related Topics\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<ul>\n<li><a href=\"/Legacy:UnrealScript_Lessons\" title=\"\
+      Legacy:UnrealScript Lessons\">UnrealScript Lessons</a> – all the UnrealScript\
+      \ tutorials</li>\n<li><a href=\"/Legacy:UnrealScript\" title=\"Legacy:UnrealScript\"\
+      >UnrealScript</a> – all the reference pages</li>\n<li><a href=\"/Legacy:Mutator_Topics\"\
+      \ title=\"Legacy:Mutator Topics\">Mutator Topics</a> – more on mutators</li>\n\
+      <li><a href=\"/Legacy:Making_Mods\" title=\"Legacy:Making Mods\">Making Mods</a>\
+      \ – more on the organizational and social aspects</li>\n<li><a href=\"/Legacy:Creating_A_New_Weapontype\"\
+      \ title=\"Legacy:Creating A New Weapontype\">Creating A New Weapontype</a> –\
+      \ more on weapon creation/modification</li>\n<li><a href=\"/Legacy:Topics_On_Modeling\"\
+      \ title=\"Legacy:Topics On Modeling\">Topics on Modeling</a>\n<ul>\n<li><a href=\"\
+      /Legacy:Weapon_Modeling\" title=\"Legacy:Weapon Modeling\">Weapon Modeling</a></li>\n\
+      </ul>\n</li>\n</ul>\n<h2><span class=\"mw-headline\" id=\"Discussion\">Discussion</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Weapon_Mutator_Tutorial_(UT2003)?section=3\" title=\"\
+      Edit section: Discussion\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p><b>RegularX:</b> I think there are still netcode issues with spawning the\
+      \ ExplosionCrap I haven't worked out yet.</p>\n<p><b>Nullzero:</b>Well everything\
+      \ seems to be compiling right for me except for my MinigunHEAltfire class, the\
+      \ way I read the tutorial you have a function call \"Explode(HitLocation, HitNormal);\"\
+      \ where you're passing in the values from the parent class to your later defined\
+      \ function and then calling the BlowUP function from within Explode but I'm\
+      \ getting an Unexpected'Explode' when I try to compile any comments on where\
+      \ I might have gone wrong would be helpfull or maybe full text of your classes\
+      \ just so I could compare. Thanks.</p>\n<p><b>CorDharel:</b>Same thing on my\
+      \ computer. It's also not clear, i have problems to understand it. Would be\
+      \ cool if i can get the whole code of this mut. Thx.</p>\n<p><b>RegularX:</b>\
+      \ <a rel=\"nofollow\" class=\"external text\" href=\"http://inkless.com/xxxpak_source.zip\"\
+      >| Complete Source of the XXXpak</a> - this will be out of date shortly though\
+      \ as I'll be releasing a new version of the XXXpak soon. These classes are in\
+      \ the xpak package.</p>\n<p><b>Alex AC:</b> I'm not quite clear about the bit\
+      \ saying;</p>\n<p>\"In the MinigunHEAltFire, I simply modified the original\
+      \ fire's DoTrace slightly.\"</p>\n<p>all i see in the minigunaltfire is</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">class</span> MinigunAltFire\
+      \ <span class=\"kw1\">extends</span> MinigunFire;\n \n<span class=\"kw1\">defaultproperties</span>\n\
+      <span class=\"br0\">{</span>\n     BarrelRotationsPerSec<span class=\"sy0\"\
+      >=</span><span class=\"nu0\">1.000000</span>\n     FiringSound<span class=\"\
+      sy0\">=</span><span class=\"kw5\">Sound</span><span class=\"st0\">'WeaponSounds.Minigun.minialtfireb'</span>\n\
+      \     WindUpTime<span class=\"sy0\">=</span><span class=\"nu0\">0.150000</span>\n\
+      \     FiringForce<span class=\"sy0\">=</span><span class=\"st0\">\"minialtfireb\"\
+      </span>\n     <span class=\"kw9\">DamageType</span><span class=\"sy0\">=</span><span\
+      \ class=\"kw1\">Class</span><span class=\"st0\">'XWeapons.DamTypeMinigunAlt'</span>\n\
+      \     DamageMin<span class=\"sy0\">=</span><span class=\"nu0\">12</span>\n \
+      \    DamageMax<span class=\"sy0\">=</span><span class=\"nu0\">14</span>\n  \
+      \   FireLoopAnimRate<span class=\"sy0\">=</span><span class=\"nu0\">3.000000</span>\n\
+      \     PreFireTime<span class=\"sy0\">=</span><span class=\"nu0\">0.150000</span>\n\
+      \     SmokeEmitterClass<span class=\"sy0\">=</span><span class=\"kw1\">Class</span><span\
+      \ class=\"st0\">'XEffects.MinigunAltMuzzleSmoke'</span>\n     Spread<span class=\"\
+      sy0\">=</span><span class=\"nu0\">0.030000</span>\n<span class=\"br0\">}</span></pre></div>\n\
+      </div>\n<p>am i being stupid, or is there just a miscomunication?</p>\n<p><b>RegularX:</b>\
+      \ It's misleading, and more evidence I need to rewrite this guy - but I was\
+      \ referring to adding DoTrace to the AltFire which will update its super.function.\
+      \ So \"its\" is the one it inherited.</p>\n<p>'<i>AlexAC:</i> buh?</p>\n<p><b>RegularX:</b>\
+      \ I just double checked. MinigunHEAltFire extends MinigunFire, but the DoTrace\
+      \ it is replacing/updating is the one from inherited from InstantFire. (I'm\
+      \ assuming all this OO stuff makes sense&#160;?). Updated the text to try and\
+      \ make it more clear.</p>\n<p>Also - I have a networked version that puts the\
+      \ explosion effects in the correct place (oddly, they seem to work off the attachment)\
+      \ for the upcoming X3Pak version.</p>\n<p><b>Almo:</b> Found a problem. I copied\
+      \ this:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div\
+      \ class=\"uscript source-uscript\">\n<pre class=\"de1\">    <span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span> <span class=\"kw5\">string</span><span\
+      \ class=\"br0\">(</span>Other.<span class=\"kw1\">Class</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"xWeapons.FlakCannonPickup\"\
+      </span> <span class=\"br0\">)</span></pre></div>\n</div>\n<p>and changed it\
+      \ to this:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n\
+      <div class=\"uscript source-uscript\">\n<pre class=\"de1\">    <span class=\"\
+      kw2\">if</span> <span class=\"br0\">(</span> <span class=\"kw5\">string</span><span\
+      \ class=\"br0\">(</span>Other.<span class=\"kw1\">Class</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">==</span> <span class=\"st0\">\"xWeapons.FlakAmmoPickup\"\
+      </span> <span class=\"br0\">)</span></pre></div>\n</div>\n<p>and it didn't replace\
+      \ flak ammo. It was a small error in xWeapon:</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\">    <span class=\"kw2\">if</span> <span class=\"br0\">(</span>\
+      \ <span class=\"kw5\">string</span><span class=\"br0\">(</span>Other.<span class=\"\
+      kw1\">Class</span><span class=\"br0\">)</span> <span class=\"sy0\">==</span>\
+      \ <span class=\"st0\">\"XWeapons.FlakAmmoPickup\"</span> <span class=\"br0\"\
+      >)</span></pre></div>\n</div>\n<p>Note the Capital \"X\".&#160;:D</p>\n<p><b>Mychaeel:</b>\
+      \ Actually I'd be better to do a case-insensitive comparison to start with;\
+      \ I have changed the code in the tutorial accordingly. On the other hand, I\
+      \ don't fully understand why the tutorial's author did a string comparison at\
+      \ all; simply comparing the classes directly would have done famously.</p>\n\
+      <p><b>Foxpaw:</b> I would have used the IsA function.. that way you are still\
+      \ covered if, for whatever reason, Epic or Digital Extremes chose to change\
+      \ which package the minigun is in in a later patch. It would also catch subclasses.</p>\n\
+      <p><b>RegularX:</b> Well, I wrote it like that because that's how MutArena is\
+      \ arranged, although it's done like that due to how the ArenaConfig is set up.\
+      \ An IsA would seem to be the way to go.</p>\n<p><b>Mychaeel:</b> Probably not\
+      \ if you're replacing a class by a custom subclass of it; then you'd get into\
+      \ an infinite loop and crash the game. Doing a string comparison prevents a\
+      \ package dependency (at that place), but at least the comparison should be\
+      \ case-insensitive as is the rest of the game. No biggie, but something you\
+      \ can easily spend hours on trying to track down.</p>\n<p><b>Foxpaw:</b> Hmm,\
+      \ you have a point. In which case, you could do if ( IsA( 'BaseClass' ) &amp;&amp;&#160;!IsA(\
+      \ 'CustomSubclass' ) )</p>\n<p><b>***Rand*m N**B***</b> I have been following\
+      \ the tutorials and this seems to be the last one directly linked,as so it seems\
+      \ tat there is a very steep curve in the jump from unexperience to the more\
+      \ knowledgable.I find this bridge very confusing to cross,so much is still unexplained</p>\n\
+      <p><b>Araes:</b> (3/25/04) Alright, having a bit of trouble getting this to\
+      \ work, so I'll attempt to describe everything involved. One of the main things\
+      \ that's confusing me is that I assume this worked fine in UT2003, however,\
+      \ even out of the zip, this mod is no longer working in UT2004. Its erroring\
+      \ out on the MiniGunHEAltFire.uc file. What its having trouble with is the explosion\
+      \ (Explode, BlowUp) spawn which was derived from the RocketProj.uc. The specific\
+      \ error code is:</p>\n<blockquote class=\"legacyquote\">\n<p>I:\\GAMES\\UT2004\\\
+      Xpak\\Classes\\MinigunHEAltFire.uc(66)&#160;: Error, 'PlaySound': Bad command\
+      \ or expression</p>\n</blockquote>\n<p>However, since it was doing this I figured\
+      \ I'd just avoid the sound and only spawn the explosion.</p>\n<blockquote class=\"\
+      legacyquote\">\n<p>I:\\GAMES\\UT2004\\Xpak\\Classes\\MinigunHEAltFire.uc(67)&#160;:\
+      \ Error, Bad or missing expression in 'If'</p>\n</blockquote>\n<p>No dice. So\
+      \ then I figured I'd just avoid the whole explosion and just get the damage\
+      \ to work.</p>\n<blockquote class=\"legacyquote\">\n<p>I:\\GAMES\\UT2004\\Xpak\\\
+      Classes\\MinigunHEAltFire.uc(60)&#160;: Error, 'HurtRadius': Bad command or\
+      \ expression</p>\n</blockquote>\n<p>All of this seems quite wierd as HurtRadius,\
+      \ PlaySound, and Spawn are all inherited from the most general Actor class.\
+      \ Note, it does compile fine and run otherwise if I get rid of all the code\
+      \ in Explode and BlowUp and just leave them as empty functions. Anybody have\
+      \ any idea what has changed between versions or where my problem might lie?\
+      \ The full code for this section is as shown:</p>\n<div dir=\"ltr\" class=\"\
+      mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\">\n\
+      <pre class=\"de1\"><span class=\"kw1\">function</span> BlowUp<span class=\"\
+      br0\">(</span><span class=\"kw5\">vector</span> HitLocation<span class=\"br0\"\
+      >)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw4\">HurtRadius</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">100</span>, <span class=\"nu0\"\
+      >220</span>, <span class=\"kw9\">DamageType</span>, <span class=\"nu0\">750</span>,\
+      \ HitLocation <span class=\"br0\">)</span>;\n\t<span class=\"kw4\">MakeNoise</span><span\
+      \ class=\"br0\">(</span><span class=\"nu0\">1.0</span><span class=\"br0\">)</span>;\n\
+      <span class=\"br0\">}</span>\n \n<span class=\"kw1\">simulated</span> <span\
+      \ class=\"kw1\">function</span> Explode<span class=\"br0\">(</span><span class=\"\
+      kw5\">vector</span> HitLocation, <span class=\"kw5\">vector</span> HitNormal<span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw4\"\
+      >PlaySound</span><span class=\"br0\">(</span><span class=\"kw5\">sound</span><span\
+      \ class=\"st0\">'WeaponSounds.BExplosion3'</span>,,<span class=\"nu0\">2.5</span><span\
+      \ class=\"sy0\">*</span><span class=\"kw7\">TransientSoundVolume</span><span\
+      \ class=\"br0\">)</span>;\n    <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span> EffectIsRelevant<span class=\"br0\">(</span><span class=\"kw7\"\
+      >Location</span>,<span class=\"kw6\">false</span><span class=\"br0\">)</span>\
+      \ <span class=\"br0\">)</span>\n    <span class=\"br0\">{</span>\n    \t<span\
+      \ class=\"kw4\">Spawn</span><span class=\"br0\">(</span><span class=\"kw1\"\
+      >class</span><span class=\"st0\">'HEBulletExplosion'</span>,,,HitLocation <span\
+      \ class=\"sy0\">+</span> HitNormal<span class=\"sy0\">*</span><span class=\"\
+      nu0\">16</span>,<span class=\"kw5\">rotator</span><span class=\"br0\">(</span>HitNormal<span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>;\n        <span class=\"\
+      kw4\">Spawn</span><span class=\"br0\">(</span><span class=\"kw1\">class</span><span\
+      \ class=\"st0\">'ExplosionCrap'</span>,,, HitLocation <span class=\"sy0\">+</span>\
+      \ HitNormal, <span class=\"kw5\">rotator</span><span class=\"br0\">(</span>HitNormal<span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>;\n    <span class=\"br0\"\
+      >}</span>\n \n\tBlowUp<span class=\"br0\">(</span>HitLocation<span class=\"\
+      br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n</div>\n<p><b>pgibbs:</b>\
+      \ I think the WeaponFire class now derives from Object, where it derived from\
+      \ Actor in UT2003; which'd explain the error messages you are getting (as those\
+      \ are defined in Actor).</p>\n<p><b>RegularX:</b> Yeah, you're trying to compile\
+      \ a UT2003 mutator with some WeaponFire specific stuff into UT2004, and both\
+      \ the Minigun and the LinkGun have had code modifications, plus the mentioned\
+      \ fact that WeaponFires are Objects now in 2k4, not Actors - which could explain\
+      \ the PlaySound() and other issues ... unforturnately the other weapon tute\
+      \ around here is for the LinkGun, so you'll probably run into similar issues.\
+      \ Regardless - weapon code from the xxxpak probably isn't going to play nice\
+      \ w/ 2k4 without some modification.</p>\n<p>I will try to make an updated UT2004\
+      \ tutorial, but it's going to be this weekend at the very earliest.</p>\n<p><b>Areas:</b>\
+      \ Alright, could have sworn looking at it last night that it was an Actor still,\
+      \ but maybe that was just me being distracted by the tree of dependancies. I'll\
+      \ look into it tonight.</p>\n<p><b>Areas:</b> Yep, you're right. Instantfire,\
+      \ Minigunfire, and Weaponfire are now all direct children of Object rather than\
+      \ Actor. Since this is the case, what is the syntax for referencing the use\
+      \ of a function within another class that is not within your direct dependancy?\
+      \ For example, using the HurtRadius() function in Actor?</p>\n<p><b>RegularX:</b>\
+      \ Look to ProjectileFire for an example. Since Object doesn't have Spawn(),\
+      \ ProjectileFire asks it's Weapon to do it for it ( Weapon.Spawn(ProjectileClass,,,\
+      \ Start, Dir); ) ... So either point to something the WeaponFire has access\
+      \ to, like it's Weapon or Instigator, and have them handle the function - or\
+      \ have them spawn an actor which can handle the function.</p>\n<p><b>Araes:</b>\
+      \ Thanks. Changing the code to a version with large references to instigators:</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\">function</span>\
+      \ BlowUp<span class=\"br0\">(</span><span class=\"kw5\">vector</span> HitLocation<span\
+      \ class=\"br0\">)</span>\n<span class=\"br0\">{</span>\n\t<span class=\"kw7\"\
+      >Instigator</span>.<span class=\"kw4\">HurtRadius</span><span class=\"br0\"\
+      >(</span><span class=\"nu0\">100</span>, <span class=\"nu0\">220</span>, <span\
+      \ class=\"kw9\">DamageType</span>, <span class=\"nu0\">750</span>, HitLocation\
+      \ <span class=\"br0\">)</span>;\n\t<span class=\"kw7\">Instigator</span>.<span\
+      \ class=\"kw4\">MakeNoise</span><span class=\"br0\">(</span><span class=\"nu0\"\
+      >1.0</span><span class=\"br0\">)</span>;\n<span class=\"br0\">}</span>\n \n\
+      <span class=\"kw1\">simulated</span> <span class=\"kw1\">function</span> Explode<span\
+      \ class=\"br0\">(</span><span class=\"kw5\">vector</span> HitLocation, <span\
+      \ class=\"kw5\">vector</span> HitNormal<span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n\t<span class=\"kw7\">Instigator</span>.<span class=\"kw4\"\
+      >PlaySound</span><span class=\"br0\">(</span><span class=\"kw5\">sound</span><span\
+      \ class=\"st0\">'WeaponSounds.BExplosion3'</span>,,<span class=\"nu0\">2.5</span><span\
+      \ class=\"sy0\">*</span><span class=\"kw7\">TransientSoundVolume</span><span\
+      \ class=\"br0\">)</span>;\n    <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span> <span class=\"kw7\">Instigator</span>.<span class=\"me0\">EffectIsRelevant</span><span\
+      \ class=\"br0\">(</span><span class=\"kw7\">Instigator</span>.<span class=\"\
+      kw7\">Location</span>,<span class=\"kw6\">false</span><span class=\"br0\">)</span>\
+      \ <span class=\"br0\">)</span>\n    <span class=\"br0\">{</span>\n    \t<span\
+      \ class=\"kw7\">Instigator</span>.<span class=\"kw4\">Spawn</span><span class=\"\
+      br0\">(</span><span class=\"kw1\">class</span><span class=\"st0\">'HEBulletExplosion'</span>,,,HitLocation\
+      \ <span class=\"sy0\">+</span> HitNormal<span class=\"sy0\">*</span><span class=\"\
+      nu0\">16</span>,<span class=\"kw5\">rotator</span><span class=\"br0\">(</span>HitNormal<span\
+      \ class=\"br0\">)</span><span class=\"br0\">)</span>;\n        <span class=\"\
+      kw7\">Instigator</span>.<span class=\"kw4\">Spawn</span><span class=\"br0\"\
+      >(</span><span class=\"kw1\">class</span><span class=\"st0\">'ExplosionCrap'</span>,,,\
+      \ HitLocation <span class=\"sy0\">+</span> HitNormal, <span class=\"kw5\">rotator</span><span\
+      \ class=\"br0\">(</span>HitNormal<span class=\"br0\">)</span><span class=\"\
+      br0\">)</span>;\n\t\t   <span class=\"br0\">}</span>\n \n\tBlowUp<span class=\"\
+      br0\">(</span>HitLocation<span class=\"br0\">)</span>;\n<span class=\"br0\"\
+      >}</span></pre></div>\n</div>\n<p>As so, seems to have worked fine and fixed\
+      \ the problem.</p>\n<p><b>Geist:</b> So, if I've adapted this tutorial to work\
+      \ with UT2004, what's the current Wiki-wide policy on how to handle differences\
+      \ in different UT versions (esp. if I'm not sure how it works in UT or UT2003?).\
+      \ Should it be in a /UT2004 subpage? A \"UT2004 Differences and Caveats\" section\
+      \ of the same page? Let me know, and I'll add my version in the appropriate\
+      \ place. Then hopefully someone more savvy about UT2003 can clean it up? (I'd\
+      \ almost like to refactor this whole page – esp. since I didn't use any XXXpak\
+      \ resources, thus making it more \"vanilla\" – but I don't want to clobber anything\
+      \ that is UT2003-specific.)</p>\n<p><b>Tarquin:</b> I guess it depends on how\
+      \ much difference there is. If it's just something minor, then a heading for\
+      \ that part should do. If the differences are fundamental, then I'd say put\
+      \ the 2004 version here and move the 2003 version to a page \"Weapon Mutator\
+      \ Tutorial (UT2003)\", leaving a link at the top of this one. If your version\
+      \ of this tutorial doesn't use the XXXpak, it sounds to me like it's rather\
+      \ different, so maybe the 2 page approach is best.</p>\n<p><b>RegularX:</b>\
+      \ Yeah, I would agree. This page woefully needs refactoring, did since day one\
+      \ really - and that was like week after UT2003 was released. I didn't even realize\
+      \ what a poor choice the minigun is because of it's odd use of the attachment\
+      \ class. So archiving this page just for UT2003 reference and replacing it with\
+      \ a UT2004, non-XXXpak variant sounds dandy.</p>\n<p><b>Geist:</b> Done. See\
+      \ the link at the top of this page (and the reciprical link at the top of the\
+      \ old page). Notice that this page still needs refactoring for UT2003!</p>\n\
+      \n<!-- \nNewPP limit report\nCPU time usage: 0.271 seconds\nReal time usage:\
+      \ 0.274 seconds\nPreprocessor visited node count: 123/1000000\nPreprocessor\
+      \ generated node count: 385/1000000\nPost‐expand include size: 1552/2097152\
+      \ bytes\nTemplate argument size: 552/2097152 bytes\nHighest expansion depth:\
+      \ 3/40\nExpensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion expansion\
+      \ time report (%,ms,calls,template)\n100.00%   65.575      1 - -total\n 11.14%\
+      \    7.308      4 - Template:Innerbox\n-->\n\n<!-- Saved in parser cache with\
+      \ key wiki:pcache:idhash:3783-0!*!0!!*!*!* and timestamp 20221118160607 and\
+      \ revision id 9581\n -->\n"
+  categories:
+  - sortkey: "Weapon Mutator Tutorial (UT2003)"
+    name: "Legacy_Tutorial"
+  - sortkey: "Weapon Mutator Tutorial (UT2003)"
+    name: "Legacy_Refactor_Me"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Topics On Modeling"
+  - ns: 100
+    exists: true
+    name: "Legacy:MinigunPickup"
+  - ns: 100
+    exists: true
+    name: "Legacy:Vector"
+  - ns: 100
+    exists: true
+    name: "Legacy:Creating A New Weapontype"
+  - ns: 100
+    exists: false
+    name: "Legacy:UTutes"
+  - ns: 100
+    exists: true
+    name: "Legacy:UT"
+  - ns: 100
+    exists: true
+    name: "Legacy:Weapon Mutator Tutorial"
+  - ns: 100
+    exists: true
+    name: "Legacy:INT File"
+  - ns: 100
+    exists: true
+    name: "Legacy:Weapon Modeling"
+  - ns: 100
+    exists: true
+    name: "Legacy:Mutator"
+  - ns: 100
+    exists: true
+    name: "Legacy:Minigun"
+  - ns: 100
+    exists: true
+    name: "Legacy:UnrealScript"
+  - ns: 100
+    exists: true
+    name: "Legacy:RegularX"
+  - ns: 100
+    exists: true
+    name: "Legacy:Mutator Topics"
+  - ns: 100
+    exists: true
+    name: "Legacy:MinigunFire"
+  - ns: 100
+    exists: true
+    name: "Legacy:UnrealScript Lessons"
+  - ns: 100
+    exists: true
+    name: "Legacy:Making Mods"
+  - ns: 100
+    exists: true
+    name: "Legacy:Default Properties"
+  templates:
+  - ns: 10
+    exists: true
+    name: "Template:Innerbox"
+  images: []
+  externallinks:
+  - "http://inkless.com/xxxpak_source.zip"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "UTute 3: A Weapon Mute &ndash; Did someone say Firestorm?"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Weapon_Mutator_Tutorial_(UT2003)"
+    byteoffset: 208
+    anchor: "UTute_3:_A_Weapon_Mute_.E2.80.93_Did_someone_say_Firestorm.3F"
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Weapon_Mutator_Tutorial_(UT2003)"
+    byteoffset: 5893
+    anchor: "Related_Topics"
+  - toclevel: 1
+    level: "2"
+    line: "Discussion"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:Weapon_Mutator_Tutorial_(UT2003)"
+    byteoffset: 6444
+    anchor: "Discussion"
+  displaytitle: "Legacy:Weapon Mutator Tutorial (UT2003)"
+  iwlinks: []
+  wikitext:
+    text: "''This page is one of a series of [[Legacy:UnrealScript Lessons|UnrealScript\
+      \ Lessons]].''\n\n''The UT2004 version of this tutorial is available at [[Legacy:Weapon\
+      \ Mutator Tutorial|Weapon Mutator Tutorial]].''\n\n==UTute 3: A Weapon Mute\
+      \ &ndash; Did someone say Firestorm?==\n\nI was reading a preview of Unreal\
+      \ Tournament 2003 that said that the alt fire would have explosive bullets.\
+      \ I thought, neat - that's just like firestorm rounds in my mod, Freehold! But\
+      \ when I got the game, I realized that Epic had a different definition of \"\
+      explosive\" than I did. So I set out to change that. \n\nWhat I like to do with\
+      \ something like this is run through the code and grab everything I might need\
+      \ in order to complete it. In UT2003, the weapon code is more subdivided than\
+      \ in UT, with seperate classes for the weapon, the weapon's pickup, the ammo,\
+      \ the fire, the damage, etc. At first, it's actually a bit annoying - but in\
+      \ practice quite flexible. Since all I wanted to do was change the altfire of\
+      \ the Minigun, I was going to extend the following classes: \n\n* [[Legacy:Minigun|Minigun]]\
+      \ - for the weapon, to reference the new fire and pickup class\n* [[Legacy:MinigunFire|MinigunFire]]\
+      \   - for the new explosive fire\n* [[Legacy:Mutator|Mutator]]       - to make\
+      \ a pickup mutator so that it can be seen in the game\n* [[Legacy:MinigunPickup|MinigunPickup]]\
+      \ - to make a pickup class for my new weapon\n\nSo I made four new classes which\
+      \ extended those: \n\n*MinigunHE            - for the weapon, to reference the\
+      \ new fire and pickup class\n*MinigunHEAltFire     - for the new explosive fire\n\
+      *MinigunHEArena       - to make a pickup mutator so that it can be seen in the\
+      \ game\n*MinigunHEPickup      - to make a pickup class for my new weapon\n\n\
+      Quicknote about MinigunHEArena. I call any mutator I use to alter pickups in\
+      \ the game an \"arena\" class, but this might be somewhat confusing to some\
+      \ other definitions of Arena. \n\nIn MiniGunHE, all I needed to do was point\
+      \ two default properties to my new classes. Essentially I modified the following:\
+      \ \n\n<uscript>\nFireModeClass(1)=Class'XPak.MinigunHEAltFire'\nPickupClass=Class'Xpak.MinigunHEPickup'\n\
+      </uscript>\n\nEach weapon in UT2003 has two FireModeClasses, primary (0) and\
+      \ alt (1). Here, I want the alt fire to be my class. The PickUpClass is something\
+      \ that confused me at first, but essentially it points to the class which should\
+      \ be used to pick up this weapon in the map itself. It becomes important with\
+      \ the mutator. \n\nIn the MinigunHEAltFire, I use the DoTrace which is inherited\
+      \ from the InstantFire parent class.. DoTrace is a function called when an instant\
+      \ hit weapon needs to determine the target that it is pointing at. It generates\
+      \ a vector called HitLocation and another called HitNormal to describe the point\
+      \ that the hit would occur. I added: \n\n<uscript>\nExplode(HitLocation, HitNormal);\n\
+      </uscript>\n\nAfter those [[Legacy:Vector|vector]]s are determined. I then defined\
+      \ Explode, and its damaging function BlowUp (based from [[Legacy:UT|UT]] code\
+      \ actually) as: \n\n<uscript>\nfunction BlowUp(vector HitLocation)\n{\n\tHurtRadius(15,\
+      \ 45, DamageType, 250, HitLocation );\n\tMakeNoise(1.0);\n}\n\nsimulated function\
+      \ Explode(vector HitLocation, vector HitNormal)\n{\n\tPlaySound(sound'WeaponSounds.BExplosion3',,2.5*TransientSoundVolume);\n\
+      \    if ( EffectIsRelevant(Location,false) )\n    {\n    \tSpawn(class'HEBulletExplosion',,,HitLocation\
+      \ + HitNormal*16,rotator(HitNormal));\n        Spawn(class'ExplosionCrap',,,\
+      \ HitLocation, rotator(HitNormal));\n\t\t   }\n\n\tBlowUp(HitLocation);\n}\n\
+      </uscript>\n\nNow, when the DoTrace returns its HitLocation, there is also a\
+      \ little explosion and a damage radius. Now that's an explosion. The other class\
+      \ directly related to the weapon is the pickup itself. Here, it's enough to\
+      \ extend the MinigunPickUp and merely change a few [[Legacy:Default Properties|default\
+      \ properties]]: \n\n<uscript>\ndefaultproperties\n{\n     InventoryType=Class'XPak.MinigunHE'\n\
+      \     PickupMessage=\"You got the Minigun HE.\"\n}\n</uscript>\n\nFinally, we\
+      \ write a mutator to replace that old Minigun with the shiny new one. \n\n<uscript>\n\
+      class MinigunHEArena extends Mutator\n    config(user);\n\nfunction bool CheckReplacement(\
+      \ Actor Other, out byte bSuperRelevant )\n{\n\tbSuperRelevant = 0;\n    if (\
+      \ xWeaponBase(Other) != None )\n    {\n\t\tif ( xWeaponBase(Other).WeaponType\
+      \ == class'Minigun' )\n\t\t\txWeaponBase(Other).WeaponType = class'MinigunHE';\n\
+      \t\telse\n\t\t\treturn true;\n\t}\n\telse if ( WeaponPickup(Other) != None )\n\
+      \t{\n\t\tif ( string(Other.Class) ~= \"xWeapons.MinigunPickup\" )\n\t\t\tReplaceWith(\
+      \ Other, \"xPak.MinigunHEPickUP\");\n\t\telse\n\t\t\treturn true;\n\t}\n\telse\n\
+      \t\treturn true;\n\n\treturn false;\n}\n\ndefaultproperties\n{\n     GroupName=\"\
+      Minigun HE\"\n     FriendlyName=\"Minigun HE\"\n     Description=\"Minigun with\
+      \ High Explosive Firestorm rounds\"\n}\n</uscript>\n\nCheckReplacement is a\
+      \ Mutator function which hits every actor and asks if it should be replaced.\
+      \ It's an extremely powerful call and if done wrong can completely crash your\
+      \ game. Here, it pretty much just looks for Miniguns and MinigunPickups and\
+      \ replaces them with new classes. Now, add two lines to the Public section of\
+      \ the [[Legacy:INT File|INT file]]: \n\n<uscript>\nObject=(Class=Class,MetaClass=Engine.Mutator,Name=XPak.MinigunHEArena,Description=\"\
+      Minigun HE.\")\n\nObject=(Class=Class,MetaClass=Engine.Weapon,Name=XPak.MinigunHE,Description=\"\
+      Customized Minigun with Firestorm Rounds.\")\n</uscript>\n\nThe bottom one is\
+      \ weapon specific, and is the line that adds the weapon to the Weapon Database.\
+      \ There you go, the basics of a weapon mutator and real explosions to boot.\
+      \ \n\n{{innerbox|Quicknote about the \"HEBulletExplosion\" call in the \"Explosion\"\
+      \ function. Yes, that's a custom job as well - but I left it out of the tute\
+      \ as it's not >actually needed. It essentially extends the explosion used for\
+      \ rockets and cuts back the scale. \n\n}}\n\n''This tutorial was originally\
+      \ part of [[Legacy:RegularX|RegularX]]'s [[Legacy:UTutes|UTutes]] series.''\n\
+      \n==Related Topics==\n* [[Legacy:UnrealScript Lessons|UnrealScript Lessons]]\
+      \ &ndash; all the UnrealScript tutorials\n* [[Legacy:UnrealScript|UnrealScript]]\
+      \ &ndash; all the reference pages\n* [[Legacy:Mutator Topics|Mutator Topics]]\
+      \ &ndash; more on mutators\n* [[Legacy:Making Mods|Making Mods]] &ndash; more\
+      \ on the organizational and social aspects\n* [[Legacy:Creating A New Weapontype|Creating\
+      \ A New Weapontype]] &ndash; more on weapon creation/modification\n* [[Legacy:Topics\
+      \ On Modeling|Topics on Modeling]]\n** [[Legacy:Weapon Modeling|Weapon Modeling]]\n\
+      \n==Discussion==\n\n'''RegularX:''' I think there are still netcode issues with\
+      \ spawning the ExplosionCrap I haven't worked out yet.\n\n'''Nullzero:'''Well\
+      \ everything seems to be compiling right for me except for my MinigunHEAltfire\
+      \ class, the way I read the tutorial you have a function call \"Explode(HitLocation,\
+      \ HitNormal);\" where you're passing in the values from the parent class to\
+      \ your later defined function and then calling the BlowUP function from within\
+      \ Explode but I'm getting an Unexpected'Explode' when I try to compile any comments\
+      \ on where I might have gone wrong would be helpfull or maybe full text of your\
+      \ classes just so I could compare.  Thanks.\n\n'''CorDharel:'''Same thing on\
+      \ my computer. It's also not clear, i have problems to understand it. Would\
+      \ be cool if i can get the whole code of this mut. Thx.\n\n'''RegularX:''' [http://inkless.com/xxxpak_source.zip\
+      \ | Complete Source of the XXXpak] - this will be out of date shortly though\
+      \ as I'll be releasing a new version of the XXXpak soon.  These classes are\
+      \ in the xpak package.\n\n'''Alex AC:''' I'm not quite clear about the bit saying;\n\
+      \n\"In the MinigunHEAltFire, I simply modified the original fire's DoTrace slightly.\"\
+      \n\nall i see in the minigunaltfire is\n\n<uscript>\nclass MinigunAltFire extends\
+      \ MinigunFire;\n\ndefaultproperties\n{\n     BarrelRotationsPerSec=1.000000\n\
+      \     FiringSound=Sound'WeaponSounds.Minigun.minialtfireb'\n     WindUpTime=0.150000\n\
+      \     FiringForce=\"minialtfireb\"\n     DamageType=Class'XWeapons.DamTypeMinigunAlt'\n\
+      \     DamageMin=12\n     DamageMax=14\n     FireLoopAnimRate=3.000000\n    \
+      \ PreFireTime=0.150000\n     SmokeEmitterClass=Class'XEffects.MinigunAltMuzzleSmoke'\n\
+      \     Spread=0.030000\n}\n</uscript>\n\nam i being stupid, or is there just\
+      \ a miscomunication?\n\n'''RegularX:''' It's misleading, and more evidence I\
+      \ need to rewrite this guy - but I was referring to adding DoTrace to the AltFire\
+      \ which will update its super.function.  So \"its\" is the one it inherited.\n\
+      \n'''AlexAC:'' buh?\n\n'''RegularX:''' I just double checked.  MinigunHEAltFire\
+      \ extends MinigunFire, but the DoTrace it is replacing/updating is the one from\
+      \ inherited from InstantFire.  (I'm assuming all this OO stuff makes sense ?).\
+      \  Updated the text to try and make it more clear.\n\nAlso - I have a networked\
+      \ version that puts the explosion effects in the correct place (oddly, they\
+      \ seem to work off the attachment) for the upcoming X3Pak version.\n\n'''Almo:'''\
+      \ Found a problem. I copied this:\n\n<uscript>\n    if ( string(Other.Class)\
+      \ == \"xWeapons.FlakCannonPickup\" )\n</uscript>\n\nand changed it to this:\n\
+      \n<uscript>\n    if ( string(Other.Class) == \"xWeapons.FlakAmmoPickup\" )\n\
+      </uscript>\n\nand it didn't replace flak ammo. It was a small error in xWeapon:\n\
+      \n<uscript>\n    if ( string(Other.Class) == \"XWeapons.FlakAmmoPickup\" )\n\
+      </uscript>\n\nNote the Capital \"X\". :D\n\n'''Mychaeel:''' Actually I'd be\
+      \ better to do a case-insensitive comparison to start with; I have changed the\
+      \ code in the tutorial accordingly.  On the other hand, I don't fully understand\
+      \ why the tutorial's author did a string comparison at all; simply comparing\
+      \ the classes directly would have done famously.\n\n'''Foxpaw:''' I would have\
+      \ used the IsA function.. that way you are still covered if, for whatever reason,\
+      \ Epic or Digital Extremes chose to change which package the minigun is in in\
+      \ a later patch. It would also catch subclasses.\n\n'''RegularX:''' Well, I\
+      \ wrote it like that because that's how MutArena is arranged, although it's\
+      \ done like that due to how the ArenaConfig is set up.  An IsA would seem to\
+      \ be the way to go.\n\n'''Mychaeel:''' Probably not if you're replacing a class\
+      \ by a custom subclass of it; then you'd get into an infinite loop and crash\
+      \ the game.  Doing a string comparison prevents a package dependency (at that\
+      \ place), but at least the comparison should be case-insensitive as is the rest\
+      \ of the game.  No biggie, but something you can easily spend hours on trying\
+      \ to track down.\n\n'''Foxpaw:''' Hmm, you have a point. In which case, you\
+      \ could do if ( IsA( 'BaseClass' ) && !IsA( 'CustomSubclass' ) )\n\n'''***Rand*m\
+      \ N**B***''' I have been following the tutorials and this seems to be the last\
+      \ one directly linked,as so it seems tat there is a very steep curve in the\
+      \ jump from unexperience to the more knowledgable.I find this bridge very confusing\
+      \ to cross,so much is still unexplained\n\n'''Araes:''' (3/25/04) Alright, having\
+      \ a bit of trouble getting this to work, so I'll attempt to describe everything\
+      \ involved.  One of the main things that's confusing me is that I assume this\
+      \ worked fine in UT2003, however, even out of the zip, this mod is no longer\
+      \ working in UT2004.  Its erroring out on the MiniGunHEAltFire.uc file.  What\
+      \ its having trouble with is the explosion (Explode, BlowUp) spawn which was\
+      \ derived from the RocketProj.uc.  The specific error code is:\n\n{{innerbox|I:\\\
+      GAMES\\UT2004\\Xpak\\Classes\\MinigunHEAltFire.uc(66) : Error, 'PlaySound':\
+      \ Bad command or expression\n\n}}\n\nHowever, since it was doing this I figured\
+      \ I'd just avoid the sound and only spawn the explosion.\n\n{{innerbox|I:\\\
+      GAMES\\UT2004\\Xpak\\Classes\\MinigunHEAltFire.uc(67) : Error, Bad or missing\
+      \ expression in 'If'\n\n}}\n\nNo dice.  So then I figured I'd just avoid the\
+      \ whole explosion and just get the damage to work.\n\n{{innerbox|I:\\GAMES\\\
+      UT2004\\Xpak\\Classes\\MinigunHEAltFire.uc(60) : Error, 'HurtRadius': Bad command\
+      \ or expression\n\n}}\n\nAll of this seems quite wierd as HurtRadius, PlaySound,\
+      \ and Spawn are all inherited from the most general Actor class.  Note, it does\
+      \ compile fine and run otherwise if I get rid of all the code in Explode and\
+      \ BlowUp and just leave them as empty functions.  Anybody have any idea what\
+      \ has changed between versions or where my problem might lie?  The full code\
+      \ for this section is as shown:\n\n<uscript>\n\nfunction BlowUp(vector HitLocation)\n\
+      {\n\tHurtRadius(100, 220, DamageType, 750, HitLocation );\n\tMakeNoise(1.0);\n\
+      }\n\nsimulated function Explode(vector HitLocation, vector HitNormal)\n{\n\t\
+      PlaySound(sound'WeaponSounds.BExplosion3',,2.5*TransientSoundVolume);\n    if\
+      \ ( EffectIsRelevant(Location,false) )\n    {\n    \tSpawn(class'HEBulletExplosion',,,HitLocation\
+      \ + HitNormal*16,rotator(HitNormal));\n        Spawn(class'ExplosionCrap',,,\
+      \ HitLocation + HitNormal, rotator(HitNormal));\n    }\n\n\tBlowUp(HitLocation);\n\
+      }\n</uscript>\n\n'''pgibbs:''' I think the WeaponFire class now derives from\
+      \ Object, where it derived from Actor in UT2003; which'd explain the error messages\
+      \ you are getting (as those are defined in Actor).\n\n'''RegularX:''' Yeah,\
+      \ you're trying to compile a UT2003 mutator with some WeaponFire specific stuff\
+      \ into UT2004, and both the Minigun and the LinkGun have had code modifications,\
+      \ plus the mentioned fact that WeaponFires are Objects now in 2k4, not Actors\
+      \ - which could explain the PlaySound() and other issues ... unforturnately\
+      \ the other weapon tute around here is for the LinkGun, so you'll probably run\
+      \ into similar issues.  Regardless - weapon code from the xxxpak probably isn't\
+      \ going to play nice w/ 2k4 without some modification.\n\nI will try to make\
+      \ an updated UT2004 tutorial, but it's going to be this weekend at the very\
+      \ earliest.\n\n'''Areas:''' Alright, could have sworn looking at it last night\
+      \ that it was an Actor still, but maybe that was just me being distracted by\
+      \ the tree of dependancies.  I'll look into it tonight.\n\n'''Areas:''' Yep,\
+      \ you're right.  Instantfire, Minigunfire, and Weaponfire are now all direct\
+      \ children of Object rather than Actor.  Since this is the case, what is the\
+      \ syntax for referencing the use of a function within another class that is\
+      \ not within your direct dependancy?  For example, using the HurtRadius() function\
+      \ in Actor?\n\n'''RegularX:''' Look to ProjectileFire for an example.  Since\
+      \ Object doesn't have Spawn(), ProjectileFire asks it's Weapon to do it for\
+      \ it ( Weapon.Spawn(ProjectileClass,,, Start, Dir); ) ... So either point to\
+      \ something the WeaponFire has access to, like it's Weapon or Instigator, and\
+      \ have them handle the function - or have them spawn an actor which can handle\
+      \ the function.\n\n'''Araes:''' Thanks.  Changing the code to a version with\
+      \ large references to instigators:\n\n<uscript>\nfunction BlowUp(vector HitLocation)\n\
+      {\n\tInstigator.HurtRadius(100, 220, DamageType, 750, HitLocation );\n\tInstigator.MakeNoise(1.0);\n\
+      }\n\nsimulated function Explode(vector HitLocation, vector HitNormal)\n{\n\t\
+      Instigator.PlaySound(sound'WeaponSounds.BExplosion3',,2.5*TransientSoundVolume);\n\
+      \    if ( Instigator.EffectIsRelevant(Instigator.Location,false) )\n    {\n\
+      \    \tInstigator.Spawn(class'HEBulletExplosion',,,HitLocation + HitNormal*16,rotator(HitNormal));\n\
+      \        Instigator.Spawn(class'ExplosionCrap',,, HitLocation + HitNormal, rotator(HitNormal));\n\
+      \t\t   }\n\n\tBlowUp(HitLocation);\n}\n</uscript>\n\nAs so, seems to have worked\
+      \ fine and fixed the problem.\n\n'''Geist:'''  So, if I've adapted this tutorial\
+      \ to work with UT2004, what's the current Wiki-wide policy on how to handle\
+      \ differences in different UT versions (esp. if I'm not sure how it works in\
+      \ UT or UT2003?).  Should it be in a /UT2004 subpage?  A \"UT2004 Differences\
+      \ and Caveats\" section of the same page?  Let me know, and I'll add my version\
+      \ in the appropriate place.  Then hopefully someone more savvy about UT2003\
+      \ can clean it up?  (I'd almost like to refactor this whole page &ndash; esp.\
+      \ since I didn't use any XXXpak resources, thus making it more \"vanilla\" &ndash;\
+      \ but I don't want to clobber anything that is UT2003-specific.)\n\n'''Tarquin:'''\
+      \ I guess it depends on how much difference there is. If it's just something\
+      \ minor, then a heading for that part should do. If the differences are fundamental,\
+      \ then I'd say put the 2004 version here and move the 2003 version to a page\
+      \ \"Weapon Mutator Tutorial (UT2003)\", leaving a link at the top of this one.\
+      \ If your version of this tutorial doesn't use the XXXpak, it sounds to me like\
+      \ it's rather different, so maybe the 2 page approach is best.\n\n'''RegularX:'''\
+      \ Yeah, I would agree.  This page woefully needs refactoring, did since day\
+      \ one really - and that was like week after UT2003 was released.  I didn't even\
+      \ realize what a poor choice the minigun is because of it's odd use of the attachment\
+      \ class.  So archiving this page just for UT2003 reference and replacing it\
+      \ with a UT2004, non-XXXpak variant sounds dandy.\n\n'''Geist:'''  Done.  See\
+      \ the link at the top of this page (and the reciprical link at the top of the\
+      \ old page).  Notice that this page still needs refactoring for UT2003!\n\n\
+      [[Category:Legacy Tutorial|{{PAGENAME}}]]\n[[Category:Legacy Refactor Me|{{PAGENAME}}]]"
+  properties: []
+  revId: 9581
+name: "Legacy:Weapon Mutator Tutorial (UT2003)"
+revision:
+  revid: 9581
+  parentid: 9583
+  user: "I07v-62-34-18-61.d4.club-internet.fr"
+  timestamp: 1148572840.000000000
+  comment: "*"
+timestamp: 1668787416.441712000

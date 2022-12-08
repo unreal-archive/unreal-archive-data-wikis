@@ -1,0 +1,379 @@
+---
+parse:
+  title: "Legacy:Eldhrin/Rocket InstaGib"
+  text:
+    text: "<p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n\
+      </div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#Rocket_InstaGib\"\
+      ><span class=\"tocnumber\">1</span> <span class=\"toctext\">Rocket InstaGib</span></a>\n\
+      <ul>\n<li class=\"toclevel-2 tocsection-2\"><a href=\"#The_concept...\"><span\
+      \ class=\"tocnumber\">1.1</span> <span class=\"toctext\">The concept...</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-3\"><a href=\"#How_to_make_your_own_rocket_launcher\"\
+      ><span class=\"tocnumber\">1.2</span> <span class=\"toctext\">How to make your\
+      \ own rocket launcher</span></a></li>\n<li class=\"toclevel-2 tocsection-4\"\
+      ><a href=\"#How_to_make_a_rocket_always_kill_people\"><span class=\"tocnumber\"\
+      >1.3</span> <span class=\"toctext\">How to make a rocket always kill people</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-5\"><a href=\"#How_to_make_it_look_different\"\
+      ><span class=\"tocnumber\">1.4</span> <span class=\"toctext\">How to make it\
+      \ look different</span></a></li>\n<li class=\"toclevel-2 tocsection-6\"><a href=\"\
+      #8th_December_2002_-_how_to_make_it_look_different_part_two\"><span class=\"\
+      tocnumber\">1.5</span> <span class=\"toctext\">8th December 2002 - how to make\
+      \ it look different part two</span></a></li>\n<li class=\"toclevel-2 tocsection-7\"\
+      ><a href=\"#9th_December_2002_-_how_to_make_it_work_with_the_Linux_client\"\
+      ><span class=\"tocnumber\">1.6</span> <span class=\"toctext\">9th December 2002\
+      \ - how to make it work with the Linux client</span></a></li>\n</ul>\n</li>\n\
+      </ul>\n</div>\n<p></p>\n<h2><span class=\"mw-headline\" id=\"Rocket_InstaGib\"\
+      >Rocket InstaGib</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Eldhrin/Rocket_InstaGib?section=1\" title=\"\
+      Edit section: Rocket InstaGib\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>A little more complicated to do than I imagined, but\
+      \ still seems to have come together a lot more quickly than I would have thought,\
+      \ given that I've got the majority of it done in two days, barring cosmetic\
+      \ changes. There must be something wrong with it, there's no way it could be\
+      \ this easy...</p>\n<h3><span class=\"mw-headline\" id=\"The_concept...\">The\
+      \ concept...</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:Eldhrin/Rocket_InstaGib?section=2\" title=\"\
+      Edit section: The concept...\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>...was simple, just make an InstaGib mutator which\
+      \ uses rocket launchers instead of shock rifles. Oh that's easy, I thought to\
+      \ myself. I'll just subclass RocketProj, make it always-lethal, then subclass\
+      \ RocketLauncher, make it launch my new kind of rocket, and then poke around\
+      \ in the InstaGib mutator to see how to get it to replace the weapons in the\
+      \ map. Well, that bit went smoothly enough, but it turns out weapons are more\
+      \ complicated than I thought.</p>\n<h3><span class=\"mw-headline\" id=\"How_to_make_your_own_rocket_launcher\"\
+      >How to make your own rocket launcher</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Eldhrin/Rocket_InstaGib?section=3\"\
+      \ title=\"Edit section: How to make your own rocket launcher\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h3>\n<p>Subclassing RocketLauncher\
+      \ seemed like the thing to do since I wanted all its functionality, but oh no,\
+      \ that doesn't work very well at all. Why not? Because the RocketLauncher code\
+      \ has explicit typecasts to RocketLauncher in it - most specifically to call\
+      \ SpawnProjectile. So guess what - it fires RocketProj instead of the new projectile\
+      \ I'd so carefully crafted.</p>\n<p>A further complication is added by the fact\
+      \ that actually firing a weapon is handled by another class derived from WeaponFire,\
+      \ so I had to modify those as well. As it turns out, this isn't such a bad thing,\
+      \ but it was irritating at the time. RocketLauncher has two firing classes derived\
+      \ from ProjectileFire - one of them handles primary fire mode and launches a\
+      \ single rocket, while the other handles secondary fire mode and launches up\
+      \ to three rockets in two different patterns, as you all no doubt know.</p>\n\
+      <p>So I thought of subclassing both of them. Big mistake - it ended up firing\
+      \ RocketProj again no matter what I did to the default properties. And why's\
+      \ that? Explicit typecasts again. Haven't the UT coders heard of type abstraction?\
+      \ So I ended up overriding so many methods that I ended up throwing my arms\
+      \ up in despair and just overriding almost every method in RocketLauncher. But\
+      \ hey, that's what overriding is for after all... and at least UnrealScript's\
+      \ methods are virtual by default.</p>\n<h3><span class=\"mw-headline\" id=\"\
+      How_to_make_a_rocket_always_kill_people\">How to make a rocket always kill people</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Eldhrin/Rocket_InstaGib?section=4\" title=\"Edit section:\
+      \ How to make a rocket always kill people\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>First I had to get rid of the proportional splash\
+      \ damage. By default this is handled by a method of Actor called HurtRadius,\
+      \ which automatically tracks down and deals damage to all the suitable Actors\
+      \ in the vicinity of the specified location, based on the distance from that\
+      \ location. I, however, wanted to kill everything in the rocket's explosion\
+      \ radius. This, happily, is easy enough by making a new method called HurtRadiusConstant\
+      \ inside my projectile class, making it do pretty much the same thing as HurtRadius\
+      \ but without the proportional damage falloff calculation, and then call it\
+      \ with a suitably high amount of damage - say 250, a figure I picked out of\
+      \ the RedeemerProjectile code. I was kind of hoping to do it in a slightly less\
+      \ cludgy way by being able to call Actor.Kill() or something, but so far I haven't\
+      \ located such a method.</p>\n<h3><span class=\"mw-headline\" id=\"How_to_make_it_look_different\"\
+      >How to make it look different</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Eldhrin/Rocket_InstaGib?section=5\"\
+      \ title=\"Edit section: How to make it look different\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h3>\n<p>At the moment, Rocket InstaGib\
+      \ games look a lot like using the Arena mutator with Rocket Launcher as the\
+      \ chosen weapon, because the InstaGib version of the rocket launcher</p>\n<ol>\n\
+      <li>doesn't InstaGib, it just kills people</li>\n<li>has precisely the same\
+      \ textures and explosion effects</li>\n</ol>\n<p>I'd like to change all this,\
+      \ but I haven't worked out how yet. Well, explosion effects are simple enough\
+      \ if there's already a class which does it, just Spawn the thing (what do all\
+      \ those extra arguments for Spawn do anyway?) but at the moment there isn't,\
+      \ so I need to work out how to make Emitter classes which do what I want them\
+      \ to do - i.e. anything at all really. Must go hunting for a tutorial, or at\
+      \ least someone who knows how to use them. UDN doesnt' seem to be any help.\
+      \ Anyone? Oh well.</p>\n<h3><span class=\"mw-headline\" id=\"8th_December_2002_-_how_to_make_it_look_different_part_two\"\
+      >8th December 2002 - how to make it look different part two</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Eldhrin/Rocket_InstaGib?section=6\"\
+      \ title=\"Edit section: 8th December 2002 - how to make it look different part\
+      \ two\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>So one of the most visual parts of the rocket is the smoke trail, right?\
+      \ I mean, it's not exactly something you don't see... therefore I figured I'd\
+      \ change that a bit, just to make sure that people notice they're playing with\
+      \ rockets which are considerably more dangerous than the usual kind - infinite\
+      \ numbers of them at that. As I may have mentioned, games with this mutator\
+      \ are noisy, albeit quieter than ones using Redeemer missiles (I tried that\
+      \ for a laugh - never again!)</p>\n<p>Anyway, how to make the trail different?\
+      \ Well, XEffects.RocketTrailSmoke is a subclass of <a href=\"/Legacy:XEmitter\"\
+      \ title=\"Legacy:XEmitter\">xEmitter</a>, which is, it seems, the Digital Extremes\
+      \ particle emitter class, as distinct from <a href=\"/Legacy:Emitter\" title=\"\
+      Legacy:Emitter\">Emitter</a> which is the one provided by Epic. Why they couldn't\
+      \ use Epic's I have no idea, the feature sets of the two at the basic level\
+      \ seem similar. Maybe it's some hyper-optimised version or something, I can't\
+      \ tell as it's implemented in native code (note to self: check if <a href=\"\
+      /Legacy:Emitter\" title=\"Legacy:Emitter\">Emitter</a> is native or not. If\
+      \ it's not, that would explain a great deal, but would be very silly). So we\
+      \ either subclass RocketTrailSmoke and tweak it a bit, or subclass xEmitter,\
+      \ copy RocketTrailSmoke's defaultproperties (which are the only thing it contains,\
+      \ makes sense really as it's quite a simple effect so needs no extra UnrealScript)\
+      \ and modify them on a more extensive basis? I opted for the latter, as I was\
+      \ originally intended to make larger changes than I actually did. However, it\
+      \ does now mean that I'm not dependent on changes in RocketTrailSmoke which\
+      \ might possibly be implemented in future patches, although I'll probably need\
+      \ to keep an eye on it to see if they change anything for the better which I\
+      \ should copy.</p>\n<p>So, to the business state of affairs. I wasn't sure exactly\
+      \ what I could do, but the two things which suggested themselves to me immediately\
+      \ were mucking about with the dispersion of the smoke trail, and of course the\
+      \ colour.</p>\n<p>I changed mGrowthRate a little bit, which makes the trails\
+      \ a bit fatter at their older ends, although not all that much that I can tell,\
+      \ so this change isn't really important.</p>\n<p>What is important is mColorRange.\
+      \ This is a two-element array containing R, G and B components, and it's a colour\
+      \ which is used to modify the colour of the texture used for the xEmitter's\
+      \ skin (xEmitter sprite particle textures are specified using the generic Skins\
+      \ array rather than anything added on, as Epic's system opted to do. Clearly\
+      \ their design goals were different). I was happy with the texture, and I don't\
+      \ like mucking about with them anyway (don't know how), so I just changed mColorRange(0)\
+      \ and mColorRange(1). As far as I can determine, xEmitter picks a random value\
+      \ from 0 to 1 for each particle, and interpolates between the two mColorRange\
+      \ values to see how much it should modify the particle texture by. Unsure what\
+      \ colour I really wanted, I randomly set mColorRange(0) to (R=50,G=210,B=0)\
+      \ and mColorRange(1) to (R=210,G=210,B=210). The 210 comes from the settings\
+      \ used for RocketTrailSmoke.</p>\n<p>This produced a rather nice green and grey\
+      \ kind of trail, but I figured green was too indicative of poison gas rockets\
+      \ (which are really something I should implement at some stage I think) so I\
+      \ went for red, the standard colour of danger, and changed mColorRange(0) to\
+      \ (R=210,G=0,B=0). Here's what it looks like:</p>\n<div class=\"center\">\n\
+      <div class=\"floatnone\"><a href=\"/File:Legacy_eldhrin-rocketinstagib-redsmokesample.jpeg\"\
+      \ class=\"image\" title=\"Instant-kill rockets with snazzy red smoke trails\"\
+      ><img alt=\"Instant-kill rockets with snazzy red smoke trails\" src=\"/w/images/Legacy_eldhrin-rocketinstagib-redsmokesample.jpeg\"\
+      \ width=\"554\" height=\"454\" /></a></div>\n</div>\n<p>This screenshot is out\
+      \ of date, as I have now implemented team-coloured smoke trails in team games.\
+      \ Non-team games use red trails.</p>\n<p>Once I've determined that it works\
+      \ on a LAN, I'll make it available for download. Some kind of stupidly open\
+      \ licence probably, I don't want to conflict too much with all the code I used\
+      \ from Epic and Digital Extremes, and someone might even be able to learn something\
+      \ from my scripting mess.</p>\n<h3><span class=\"mw-headline\" id=\"9th_December_2002_-_how_to_make_it_work_with_the_Linux_client\"\
+      >9th December 2002 - how to make it work with the Linux client</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Eldhrin/Rocket_InstaGib?section=7\"\
+      \ title=\"Edit section: 9th December 2002 - how to make it work with the Linux\
+      \ client\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>This doesn't seem to work... surely I should just be able to put the .u and\
+      \ .int file for the package into ~/.ut2003/System, right? Well it doesn't show\
+      \ up in the Mutators list! Argh! Tried /usr/games/ut2003/System as well and\
+      \ it didn't help any, neither did adding it to ServerPackages and EditPackages.</p>\n\
+      <hr />\n<p><a href=\"/Legacy:Eldhrin/Developer_Journal\" title=\"Legacy:Eldhrin/Developer\
+      \ Journal\">Eldhrin/Developer Journal</a></p>\n<p><a href=\"/Legacy:Eldhrin\"\
+      \ title=\"Legacy:Eldhrin\">Eldhrin</a></p>\n<hr />\n<p><b>Bullet:</b> I think\
+      \ you could have done all of it without building a new Weapon by modifing the\
+      \ exiting Rocket Launchers in CheckReplacement() and dealing lethal damage in\
+      \ NetDamage(). The problem with the Rocket Launcher using hardcoded projectiles\
+      \ is bad</p>\n<p>but could have been resolved by subclassing and overwriting\
+      \ these functions&#160;;)</p>\n\n<!-- \nNewPP limit report\nCPU time usage:\
+      \ 0.093 seconds\nReal time usage: 0.228 seconds\nPreprocessor visited node count:\
+      \ 26/1000000\nPreprocessor generated node count: 32/1000000\nPost‐expand include\
+      \ size: 0/2097152 bytes\nTemplate argument size: 0/2097152 bytes\nHighest expansion\
+      \ depth: 2/40\nExpensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion\
+      \ expansion time report (%,ms,calls,template)\n100.00%    0.000      1 - -total\n\
+      -->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:1153-0!*!0!!en!5!*\
+      \ and timestamp 20221118193259 and revision id 3020\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Eldhrin"
+  - ns: 100
+    exists: true
+    name: "Legacy:XEmitter"
+  - ns: 100
+    exists: true
+    name: "Legacy:Emitter"
+  - ns: 100
+    exists: true
+    name: "Legacy:Eldhrin/Developer Journal"
+  templates: []
+  images:
+  - "Legacy_eldhrin-rocketinstagib-redsmokesample.jpeg"
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Rocket InstaGib"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Eldhrin/Rocket_InstaGib"
+    byteoffset: 0
+    anchor: "Rocket_InstaGib"
+  - toclevel: 2
+    level: "3"
+    line: "The concept..."
+    number: "1.1"
+    index: "2"
+    fromtitle: "Legacy:Eldhrin/Rocket_InstaGib"
+    byteoffset: 317
+    anchor: "The_concept..."
+  - toclevel: 2
+    level: "3"
+    line: "How to make your own rocket launcher"
+    number: "1.2"
+    index: "3"
+    fromtitle: "Legacy:Eldhrin/Rocket_InstaGib"
+    byteoffset: 797
+    anchor: "How_to_make_your_own_rocket_launcher"
+  - toclevel: 2
+    level: "3"
+    line: "How to make a rocket always kill people"
+    number: "1.3"
+    index: "4"
+    fromtitle: "Legacy:Eldhrin/Rocket_InstaGib"
+    byteoffset: 2207
+    anchor: "How_to_make_a_rocket_always_kill_people"
+  - toclevel: 2
+    level: "3"
+    line: "How to make it look different"
+    number: "1.4"
+    index: "5"
+    fromtitle: "Legacy:Eldhrin/Rocket_InstaGib"
+    byteoffset: 3104
+    anchor: "How_to_make_it_look_different"
+  - toclevel: 2
+    level: "3"
+    line: "8th December 2002 - how to make it look different part two"
+    number: "1.5"
+    index: "6"
+    fromtitle: "Legacy:Eldhrin/Rocket_InstaGib"
+    byteoffset: 3910
+    anchor: "8th_December_2002_-_how_to_make_it_look_different_part_two"
+  - toclevel: 2
+    level: "3"
+    line: "9th December 2002 - how to make it work with the Linux client"
+    number: "1.6"
+    index: "7"
+    fromtitle: "Legacy:Eldhrin/Rocket_InstaGib"
+    byteoffset: 7878
+    anchor: "9th_December_2002_-_how_to_make_it_work_with_the_Linux_client"
+  displaytitle: "Legacy:Eldhrin/Rocket InstaGib"
+  iwlinks: []
+  wikitext:
+    text: "==Rocket InstaGib==\n\nA little more complicated to do than I imagined,\
+      \ but still seems to have come together a lot more quickly than I would have\
+      \ thought, given that I've got the majority of it done in two days, barring\
+      \ cosmetic changes. There must be something wrong with it, there's no way it\
+      \ could be this easy...\n\n===The concept...===\n\n...was simple, just make\
+      \ an InstaGib mutator which uses rocket launchers instead of shock rifles. Oh\
+      \ that's easy, I thought to myself. I'll just subclass RocketProj, make it always-lethal,\
+      \ then subclass RocketLauncher, make it launch my new kind of rocket, and then\
+      \ poke around in the InstaGib mutator to see how to get it to replace the weapons\
+      \ in the map. Well, that bit went smoothly enough, but it turns out weapons\
+      \ are more complicated than I thought.\n\n===How to make your own rocket launcher===\n\
+      \nSubclassing RocketLauncher seemed like the thing to do since I wanted all\
+      \ its functionality, but oh no, that doesn't work very well at all. Why not?\
+      \ Because the RocketLauncher code has explicit typecasts to RocketLauncher in\
+      \ it - most specifically to call SpawnProjectile. So guess what - it fires RocketProj\
+      \ instead of the new projectile I'd so carefully crafted.\n\nA further complication\
+      \ is added by the fact that actually firing a weapon is handled by another class\
+      \ derived from WeaponFire, so I had to modify those as well. As it turns out,\
+      \ this isn't such a bad thing, but it was irritating at the time. RocketLauncher\
+      \ has two firing classes derived from ProjectileFire - one of them handles primary\
+      \ fire mode and launches a single rocket, while the other handles secondary\
+      \ fire mode and launches up to three rockets in two different patterns, as you\
+      \ all no doubt know.\n\nSo I thought of subclassing both of them. Big mistake\
+      \ - it ended up firing RocketProj again no matter what I did to the default\
+      \ properties. And why's that? Explicit typecasts again. Haven't the UT coders\
+      \ heard of type abstraction? So I ended up overriding so many methods that I\
+      \ ended up throwing my arms up in despair and just overriding almost every method\
+      \ in RocketLauncher. But hey, that's what overriding is for after all... and\
+      \ at least UnrealScript's methods are virtual by default.\n\n===How to make\
+      \ a rocket always kill people===\n\nFirst I had to get rid of the proportional\
+      \ splash damage. By default this is handled by a method of Actor called HurtRadius,\
+      \ which automatically tracks down and deals damage to all the suitable Actors\
+      \ in the vicinity of the specified location, based on the distance from that\
+      \ location. I, however, wanted to kill everything in the rocket's explosion\
+      \ radius. This, happily, is easy enough by making a new method called HurtRadiusConstant\
+      \ inside my projectile class, making it do pretty much the same thing as HurtRadius\
+      \ but without the proportional damage falloff calculation, and then call it\
+      \ with a suitably high amount of damage - say 250, a figure I picked out of\
+      \ the RedeemerProjectile code. I was kind of hoping to do it in a slightly less\
+      \ cludgy way by being able to call Actor.Kill() or something, but so far I haven't\
+      \ located such a method.\n\n===How to make it look different===\n\nAt the moment,\
+      \ Rocket InstaGib games look a lot like using the Arena mutator with Rocket\
+      \ Launcher as the chosen weapon, because the InstaGib version of the rocket\
+      \ launcher\n# doesn't InstaGib, it just kills people\n# has precisely the same\
+      \ textures and explosion effects\n\nI'd like to change all this, but I haven't\
+      \ worked out how yet. Well, explosion effects are simple enough if there's already\
+      \ a class which does it, just Spawn the thing (what do all those extra arguments\
+      \ for Spawn do anyway?) but at the moment there isn't, so I need to work out\
+      \ how to make Emitter classes which do what I want them to do - i.e. anything\
+      \ at all really. Must go hunting for a tutorial, or at least someone who knows\
+      \ how to use them. UDN doesnt' seem to be any help. Anyone? Oh well.\n\n===8th\
+      \ December 2002 - how to make it look different part two===\n\nSo one of the\
+      \ most visual parts of the rocket is the smoke trail, right? I mean, it's not\
+      \ exactly something you don't see... therefore I figured I'd change that a bit,\
+      \ just to make sure that people notice they're playing with rockets which are\
+      \ considerably more dangerous than the usual kind - infinite numbers of them\
+      \ at that. As I may have mentioned, games with this mutator are noisy, albeit\
+      \ quieter than ones using Redeemer missiles (I tried that for a laugh - never\
+      \ again!)\n\nAnyway, how to make the trail different? Well, XEffects.RocketTrailSmoke\
+      \ is a subclass of [[Legacy:XEmitter|xEmitter]], which is, it seems, the Digital\
+      \ Extremes particle emitter class, as distinct from [[Legacy:Emitter|Emitter]]\
+      \ which is the one provided by Epic. Why they couldn't use Epic's I have no\
+      \ idea, the feature sets of the two at the basic level seem similar. Maybe it's\
+      \ some hyper-optimised version or something, I can't tell as it's implemented\
+      \ in native code (note to self: check if [[Legacy:Emitter|Emitter]] is native\
+      \ or not. If it's not, that would explain a great deal, but would be very silly).\
+      \ So we either subclass RocketTrailSmoke and tweak it a bit, or subclass xEmitter,\
+      \ copy RocketTrailSmoke's defaultproperties (which are the only thing it contains,\
+      \ makes sense really as it's quite a simple effect so needs no extra UnrealScript)\
+      \ and modify them on a more extensive basis? I opted for the latter, as I was\
+      \ originally intended to make larger changes than I actually did. However, it\
+      \ does now mean that I'm not dependent on changes in RocketTrailSmoke which\
+      \ might possibly be implemented in future patches, although I'll probably need\
+      \ to keep an eye on it to see if they change anything for the better which I\
+      \ should copy.\n\nSo, to the business state of affairs. I wasn't sure exactly\
+      \ what I could do, but the two things which suggested themselves to me immediately\
+      \ were mucking about with the dispersion of the smoke trail, and of course the\
+      \ colour.\n\nI changed mGrowthRate a little bit, which makes the trails a bit\
+      \ fatter at their older ends, although not all that much that I can tell, so\
+      \ this change isn't really important.\n\nWhat is important is mColorRange. This\
+      \ is a two-element array containing R, G and B components, and it's a colour\
+      \ which is used to modify the colour of the texture used for the xEmitter's\
+      \ skin (xEmitter sprite particle textures are specified using the generic Skins\
+      \ array rather than anything added on, as Epic's system opted to do. Clearly\
+      \ their design goals were different). I was happy with the texture, and I don't\
+      \ like mucking about with them anyway (don't know how), so I just changed mColorRange(0)\
+      \ and mColorRange(1). As far as I can determine, xEmitter picks a random value\
+      \ from 0 to 1 for each particle, and interpolates between the two mColorRange\
+      \ values to see how much it should modify the particle texture by. Unsure what\
+      \ colour I really wanted, I randomly set mColorRange(0) to (R=50,G=210,B=0)\
+      \ and mColorRange(1) to (R=210,G=210,B=210). The 210 comes from the settings\
+      \ used for RocketTrailSmoke.\n\nThis produced a rather nice green and grey kind\
+      \ of trail, but I figured green was too indicative of poison gas rockets (which\
+      \ are really something I should implement at some stage I think) so I went for\
+      \ red, the standard colour of danger, and changed mColorRange(0) to (R=210,G=0,B=0).\
+      \ Here's what it looks like:\n\n[[Image:Legacy_eldhrin-rocketinstagib-redsmokesample.jpeg|center|Instant-kill\
+      \ rockets with snazzy red smoke trails]]\n\nThis screenshot is out of date,\
+      \ as I have now implemented team-coloured smoke trails in team games. Non-team\
+      \ games use red trails.\n\nOnce I've determined that it works on a LAN, I'll\
+      \ make it available for download. Some kind of stupidly open licence probably,\
+      \ I don't want to conflict too much with all the code I used from Epic and Digital\
+      \ Extremes, and someone might even be able to learn something from my scripting\
+      \ mess.\n\n===9th December 2002 - how to make it work with the Linux client===\n\
+      \nThis doesn't seem to work... surely I should just be able to put the .u and\
+      \ .int file for the package into ~/.ut2003/System, right? Well it doesn't show\
+      \ up in the Mutators list! Argh! Tried /usr/games/ut2003/System as well and\
+      \ it didn't help any, neither did adding it to ServerPackages and EditPackages.\n\
+      \n----\n\n[[Legacy:Eldhrin/Developer Journal|Eldhrin/Developer Journal]]\n\n\
+      [[Legacy:Eldhrin|Eldhrin]]\n\n----\n\n'''Bullet:''' I think you could have done\
+      \ all of it without building a new Weapon by modifing the exiting Rocket Launchers\
+      \ in CheckReplacement() and dealing lethal damage in NetDamage(). The problem\
+      \ with the Rocket Launcher using hardcoded projectiles is bad\n\nbut could have\
+      \ been resolved by subclassing and overwriting these functions ;)"
+  properties: []
+  revId: 3020
+name: "Legacy:Eldhrin/Rocket InstaGib"
+revision:
+  revid: 3020
+  parentid: 3021
+  user: "Bullet"
+  timestamp: 1102770861.000000000
+  comment: "Added comment"
+timestamp: 1668799759.253016000

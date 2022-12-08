@@ -1,0 +1,244 @@
+---
+parse:
+  title: "Legacy:UMOD/File Format"
+  text:
+    text: "<p>If you want to create your own tool for building or extracting files\
+      \ from <a href=\"/Legacy:UMOD\" title=\"Legacy:UMOD\">UMOD</a> installers, you'll\
+      \ need knowledge about their internal structure.</p>\n<p></p>\n<div id=\"toc\"\
+      \ class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n</div>\n<ul>\n<li\
+      \ class=\"toclevel-1 tocsection-1\"><a href=\"#Basic_structure\"><span class=\"\
+      tocnumber\">1</span> <span class=\"toctext\">Basic structure</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-2\"><a href=\"#Parts\"><span class=\"tocnumber\"\
+      >2</span> <span class=\"toctext\">Parts</span></a>\n<ul>\n<li class=\"toclevel-2\
+      \ tocsection-3\"><a href=\"#UMOD_file_.22header.22\"><span class=\"tocnumber\"\
+      >2.1</span> <span class=\"toctext\">UMOD file \"header\"</span></a></li>\n<li\
+      \ class=\"toclevel-2 tocsection-4\"><a href=\"#File_directory\"><span class=\"\
+      tocnumber\">2.2</span> <span class=\"toctext\">File directory</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-5\"><a href=\"#Files\"><span class=\"tocnumber\"\
+      >2.3</span> <span class=\"toctext\">Files</span></a></li>\n</ul>\n</li>\n<li\
+      \ class=\"toclevel-1 tocsection-6\"><a href=\"#Data_details\"><span class=\"\
+      tocnumber\">3</span> <span class=\"toctext\">Data details</span></a></li>\n\
+      </ul>\n</div>\n<p></p>\n<h2><span class=\"mw-headline\" id=\"Basic_structure\"\
+      >Basic structure</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:UMOD/File_Format?section=1\" title=\"Edit section:\
+      \ Basic structure\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>A UMOD installer file consists of three parts:</p>\n<ol>\n<li>First comes\
+      \ the (uncompressed) content of all files that are contained in the UMOD installer.</li>\n\
+      <li>After that, a list of files including their offset and length (and some\
+      \ more information which is detailed below) follows.</li>\n<li>At the very end\
+      \ of the UMOD file (with a fixed offset from the file end), the UMOD file \"\
+      header\" is stored.</li>\n</ol>\n<p>The UMOD installer must contain a file <tt>Manifest.ini</tt>\
+      \ that describes the target locations of the files, the installed mod's requirements\
+      \ and other details, and <tt>Manifest.int</tt> that contains the textual captions\
+      \ and descriptions used in the installer. See <a href=\"/Legacy:UMOD/Creating\"\
+      \ title=\"Legacy:UMOD/Creating\">Legacy:UMOD/Creating</a> on how to set up those\
+      \ files.</p>\n<h2><span class=\"mw-headline\" id=\"Parts\">Parts</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:UMOD/File_Format?section=2\" title=\"Edit section: Parts\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>Described\
+      \ in reverse order of their appearance in the file, since this is the order\
+      \ they'll be parsed when <i>reading</i> the UMOD file.</p>\n<h3><span class=\"\
+      mw-headline\" id=\"UMOD_file_.22header.22\">UMOD file \"header\"</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:UMOD/File_Format?section=3\" title=\"Edit section: UMOD\
+      \ file &quot;header&quot;\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>The UMOD file header is 20 bytes long. The header is stored in the last 20\
+      \ bytes of the file (hence the quotes around the term \"header\").</p>\n<table>\n\
+      <tr>\n<td style=\"text-align: right\">'<i>Offset</i></td>\n<td style=\"text-align:\
+      \ right\"><b>Length</b></td>\n<td><b>Type</b></td>\n<td><b>Description</b></td>\n\
+      </tr>\n<tr>\n<td style=\"text-align: right\">0</td>\n<td style=\"text-align:\
+      \ right\">4</td>\n<td>unsigned int</td>\n<td>Magic number. Used to verify this\
+      \ file as a UMOD installer. Always 0x9FE3C5A3.</td>\n</tr>\n<tr>\n<td style=\"\
+      text-align: right\">4</td>\n<td style=\"text-align: right\">4</td>\n<td>unsigned\
+      \ int</td>\n<td>Byte offset of file directory in the UMOD file. (See below.)</td>\n\
+      </tr>\n<tr>\n<td style=\"text-align: right\">8</td>\n<td style=\"text-align:\
+      \ right\">4</td>\n<td>unsigned int</td>\n<td>Total byte size of the UMOD file.</td>\n\
+      </tr>\n<tr>\n<td style=\"text-align: right\">12</td>\n<td style=\"text-align:\
+      \ right\">4</td>\n<td>unsigned int</td>\n<td>UMOD file version.</td>\n</tr>\n\
+      <tr>\n<td style=\"text-align: right\">16</td>\n<td style=\"text-align: right\"\
+      >4</td>\n<td>unsigned int</td>\n<td><a href=\"/Legacy:CRC32\" title=\"Legacy:CRC32\"\
+      >CRC32</a> checksum over the file content.</td>\n</tr>\n</table>\n<p><b>Mychaeel:</b>\
+      \ That CRC32 checksum needs further investigation... It's just a guess that\
+      \ the checksum goes over the file content (first part of UMOD file) only. Besides,\
+      \ I've been running into problems trying to verify UnrealScript source code\
+      \ TextBuffer checksums using a standard CRC32 algorithm with a standard seed\
+      \ – or I didn't feed it the right data. Any help?</p>\n<p><b>Ether:</b> it's\
+      \ checksum of the whole file w/o header using a C function appmemcrc()</p>\n\
+      <h3><span class=\"mw-headline\" id=\"File_directory\">File directory</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:UMOD/File_Format?section=4\" title=\"Edit section: File\
+      \ directory\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>The file directory describes the files stored in the first part of the UMOD\
+      \ file. Its byte offset in the UMOD file is given in the file \"header\" (see\
+      \ above).</p>\n<p>The directory consists of an <i>index</i>-type file count\
+      \ (the <i>index</i> data type is described below), followed by variable-size\
+      \ records, each describing one file in the UMOD installer.</p>\n<table>\n<tr>\n\
+      <td style=\"text-align: right\"><b>Offset</b></td>\n<td style=\"text-align:\
+      \ right\"><b>Length</b></td>\n<td><b>Type</b></td>\n<td><b>Description</b></td>\n\
+      </tr>\n<tr>\n<td style=\"text-align: right\">0</td>\n<td>variable</td>\n<td>index</td>\n\
+      <td>Length of file name (including trailing null byte).</td>\n</tr>\n<tr>\n\
+      <td></td>\n<td>variable</td>\n<td>char</td>\n<td>File name, with trailing null\
+      \ byte.</td>\n</tr>\n<tr>\n<td></td>\n<td style=\"text-align: right\">4</td>\n\
+      <td>unsigned int</td>\n<td>Byte offset of file in UMOD file.</td>\n</tr>\n<tr>\n\
+      <td></td>\n<td style=\"text-align: right\">4</td>\n<td>unsigned int</td>\n<td>Byte\
+      \ length of file.</td>\n</tr>\n<tr>\n<td></td>\n<td style=\"text-align: right\"\
+      >4</td>\n<td>unsigned int</td>\n<td>Bit field describing file flags. (See below.)</td>\n\
+      </tr>\n</table>\n<p><b>Mychaeel:</b> Feel free to investigate and contribute\
+      \ information about the file flags. (I know that they have to be set to 0x03\
+      \ for <tt>Manifest.ini</tt> and <tt>Manifest.int</tt> to prevent those files\
+      \ from being copied to the user's System directory, and set to 0x00 for all\
+      \ other files.)</p>\n<h3><span class=\"mw-headline\" id=\"Files\">Files</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:UMOD/File_Format?section=5\" title=\"Edit section: Files\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n<p>The\
+      \ files are stored without compression starting from byte 0 of the file, one\
+      \ after another, with no padding or separators between them. Their respective\
+      \ byte offsets in the file are specified by the file directory (see above).</p>\n\
+      <h2><span class=\"mw-headline\" id=\"Data_details\">Data details</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:UMOD/File_Format?section=6\" title=\"Edit section: Data\
+      \ details\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <p>Specifications of the integer and index values can be found: <a href=\"/Legacy:Package_File_Format/Data_Details\"\
+      \ title=\"Legacy:Package File Format/Data Details\">Package File Format/Data\
+      \ Details</a></p>\n\n<!-- \nNewPP limit report\nCPU time usage: 0.035 seconds\n\
+      Real time usage: 0.055 seconds\nPreprocessor visited node count: 29/1000000\n\
+      Preprocessor generated node count: 44/1000000\nPost‐expand include size: 10/2097152\
+      \ bytes\nTemplate argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\n\
+      Expensive parser function count: 0/100\n-->\n\n<!-- \nTransclusion expansion\
+      \ time report (%,ms,calls,template)\n100.00%    0.000      1 - -total\n-->\n\
+      \n<!-- Saved in parser cache with key wiki:pcache:idhash:3311-0!*!0!!en!*!*\
+      \ and timestamp 20221117210542 and revision id 8569\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:CRC32"
+  - ns: 100
+    exists: true
+    name: "Legacy:UMOD/Creating"
+  - ns: 100
+    exists: true
+    name: "Legacy:UMOD"
+  - ns: 100
+    exists: true
+    name: "Legacy:Package File Format/Data Details"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Basic structure"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:UMOD/File_Format"
+    byteoffset: 162
+    anchor: "Basic_structure"
+  - toclevel: 1
+    level: "2"
+    line: "Parts"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:UMOD/File_Format"
+    byteoffset: 912
+    anchor: "Parts"
+  - toclevel: 2
+    level: "3"
+    line: "UMOD file \"header\""
+    number: "2.1"
+    index: "3"
+    fromtitle: "Legacy:UMOD/File_Format"
+    byteoffset: 1059
+    anchor: "UMOD_file_.22header.22"
+  - toclevel: 2
+    level: "3"
+    line: "File directory"
+    number: "2.2"
+    index: "4"
+    fromtitle: "Legacy:UMOD/File_Format"
+    byteoffset: 2473
+    anchor: "File_directory"
+  - toclevel: 2
+    level: "3"
+    line: "Files"
+    number: "2.3"
+    index: "5"
+    fromtitle: "Legacy:UMOD/File_Format"
+    byteoffset: 3683
+    anchor: "Files"
+  - toclevel: 1
+    level: "2"
+    line: "Data details"
+    number: "3"
+    index: "6"
+    fromtitle: "Legacy:UMOD/File_Format"
+    byteoffset: 3928
+    anchor: "Data_details"
+  displaytitle: "Legacy:UMOD/File Format"
+  iwlinks: []
+  wikitext:
+    text: "If you want to create your own tool for building or extracting files from\
+      \ [[Legacy:UMOD|UMOD]] installers, you'll need knowledge about their internal\
+      \ structure.\n\n==Basic structure ==\n\nA UMOD installer file consists of three\
+      \ parts:\n\n# First comes the (uncompressed) content of all files that are contained\
+      \ in the UMOD installer.\n# After that, a list of files including their offset\
+      \ and length (and some more information which is detailed below) follows.\n\
+      # At the very end of the UMOD file (with a fixed offset from the file end),\
+      \ the UMOD file \"header\" is stored.\n\nThe UMOD installer must contain a file\
+      \ <tt>Manifest.ini</tt> that describes the target locations of the files, the\
+      \ installed mod's requirements and other details, and <tt>Manifest.int</tt>\
+      \ that contains the textual captions and descriptions used in the installer.\
+      \  See [[:{{SUBJECTSPACE}}:{{BASEPAGENAME}}/Creating]] on how to set up those\
+      \ files.\n\n==Parts ==\n\nDescribed in reverse order of their appearance in\
+      \ the file, since this is the order they'll be parsed when ''reading'' the UMOD\
+      \ file.\n\n===UMOD file \"header\" ===\n\nThe UMOD file header is 20 bytes long.\
+      \  The header is stored in the last 20 bytes of the file (hence the quotes around\
+      \ the term \"header\").\n\n{|\n\n|-\n| style=\"text-align: right\" |'''Offset''\n\
+      | style=\"text-align: right\" |'''Length'''\n|'''Type'''\n|'''Description'''\
+      \ \n|-\n| style=\"text-align: right\" |0\n| style=\"text-align: right\" |4\n\
+      |unsigned int\n|Magic number.  Used to verify this file as a UMOD installer.\
+      \  Always 0x9FE3C5A3.\n|-\n| style=\"text-align: right\" |4\n| style=\"text-align:\
+      \ right\" |4\n|unsigned int\n|Byte offset of file directory in the UMOD file.\
+      \  (See below.)\n|-\n| style=\"text-align: right\" |8\n| style=\"text-align:\
+      \ right\" |4\n|unsigned int\n|Total byte size of the UMOD file.\n|-\n| style=\"\
+      text-align: right\" |12\n| style=\"text-align: right\" |4\n|unsigned int\n|UMOD\
+      \ file version.\n|-\n| style=\"text-align: right\" |16\n| style=\"text-align:\
+      \ right\" |4\n|unsigned int\n|[[Legacy:CRC32|CRC32]] checksum over the file\
+      \ content.\n|}\n\n'''Mychaeel:'''   That CRC32 checksum needs further investigation...\
+      \  It's just a guess that the checksum goes over the file content (first part\
+      \ of UMOD file) only.  Besides, I've been running into problems trying to verify\
+      \ UnrealScript source code TextBuffer checksums using a standard CRC32 algorithm\
+      \ with a standard seed &ndash; or I didn't feed it the right data.  Any help?\n\
+      \n'''Ether:''' it's checksum of the whole file w/o header using a C function\
+      \ appmemcrc()\n\n===File directory ===\n\nThe file directory describes the files\
+      \ stored in the first part of the UMOD file.  Its byte offset in the UMOD file\
+      \ is given in the file \"header\" (see above).\n\nThe directory consists of\
+      \ an ''index''-type file count (the ''index'' data type is described below),\
+      \ followed by variable-size records, each describing one file in the UMOD installer.\n\
+      \n{|\n\n|-\n| style=\"text-align: right\" |'''Offset'''\n| style=\"text-align:\
+      \ right\" |'''Length'''\n|'''Type'''\n|'''Description''' \n|-\n| style=\"text-align:\
+      \ right\" |0\n|variable\n|index\n|Length of file name (including trailing null\
+      \ byte).\n|-\n|\n|variable\n|char\n|File name, with trailing null byte.\n|-\n\
+      |\n| style=\"text-align: right\" |4\n|unsigned int\n|Byte offset of file in\
+      \ UMOD file.\n|-\n|\n| style=\"text-align: right\" |4\n|unsigned int\n|Byte\
+      \ length of file.\n|-\n|\n| style=\"text-align: right\" |4\n|unsigned int\n\
+      |Bit field describing file flags.  (See below.)\n|}\n\n'''Mychaeel:'''   Feel\
+      \ free to investigate and contribute information about the file flags.  (I know\
+      \ that they have to be set to 0x03 for <tt>Manifest.ini</tt> and <tt>Manifest.int</tt>\
+      \ to prevent those files from being copied to the user's System directory, and\
+      \ set to 0x00 for all other files.)\n\n===Files ===\n\nThe files are stored\
+      \ without compression starting from byte 0 of the file, one after another, with\
+      \ no padding or separators between them.  Their respective byte offsets in the\
+      \ file are specified by the file directory (see above).\n\n==Data details ==\n\
+      \nSpecifications of the integer and index values can be found: [[Legacy:Package\
+      \ File Format/Data Details|Package File Format/Data Details]]"
+  properties: []
+  revId: 8569
+name: "Legacy:UMOD/File Format"
+revision:
+  revid: 8569
+  parentid: 8571
+  user: "Wormbo"
+  timestamp: 1171990257.000000000
+  comment: "*"
+timestamp: 1668775142.485013000

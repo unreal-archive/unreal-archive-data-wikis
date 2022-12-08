@@ -1,0 +1,392 @@
+---
+parse:
+  title: "Legacy:Insertion Sort"
+  text:
+    text: "<p>Insertion Sort is an iterative sorting algorithm like Bubble Sort. While\
+      \ this algorithm generally is less efficient than <a href=\"/Legacy:QuickSort\"\
+      \ title=\"Legacy:QuickSort\">QuickSort</a>, the UnrealScript implementation\
+      \ on this page can greatly out-perform QuickSort in certain cases. For more\
+      \ information, see <a href=\"http://en.wikipedia.org/wiki/Insertion_Sort\" class=\"\
+      extiw\" title=\"wikipedia:Insertion Sort\">Wikipedia:Insertion Sort</a>.</p>\n\
+      <p></p>\n<div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n\
+      </div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#Advantages_of_Insertion_Sort\"\
+      ><span class=\"tocnumber\">1</span> <span class=\"toctext\">Advantages of Insertion\
+      \ Sort</span></a></li>\n<li class=\"toclevel-1 tocsection-2\"><a href=\"#Algorithm\"\
+      ><span class=\"tocnumber\">2</span> <span class=\"toctext\">Algorithm</span></a></li>\n\
+      <li class=\"toclevel-1 tocsection-3\"><a href=\"#Code\"><span class=\"tocnumber\"\
+      >3</span> <span class=\"toctext\">Code</span></a>\n<ul>\n<li class=\"toclevel-2\
+      \ tocsection-4\"><a href=\"#Implementation_for_Dynamic_Arrays_of_Strings\"><span\
+      \ class=\"tocnumber\">3.1</span> <span class=\"toctext\">Implementation for\
+      \ Dynamic Arrays of Strings</span></a></li>\n<li class=\"toclevel-2 tocsection-5\"\
+      ><a href=\"#Optimized_Implementation_for_Dynamic_Arrays_of_Numeric_Values\"\
+      ><span class=\"tocnumber\">3.2</span> <span class=\"toctext\">Optimized Implementation\
+      \ for Dynamic Arrays of Numeric Values</span></a></li>\n</ul>\n</li>\n<li class=\"\
+      toclevel-1 tocsection-6\"><a href=\"#Related_Topics\"><span class=\"tocnumber\"\
+      >4</span> <span class=\"toctext\">Related Topics</span></a></li>\n</ul>\n</div>\n\
+      <p></p>\n<h2><span class=\"mw-headline\" id=\"Advantages_of_Insertion_Sort\"\
+      >Advantages of Insertion Sort</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Insertion_Sort?section=1\"\
+      \ title=\"Edit section: Advantages of Insertion Sort\">edit</a><span class=\"\
+      mw-editsection-bracket\">]</span></span></h2>\n<ul>\n<li>Simple to implement</li>\n\
+      <li>Efficient on (quite) small data sets</li>\n<li>Efficient on data sets which\
+      \ are already substantially sorted</li>\n<li>Stable (i.e. does not change the\
+      \ order of already ordered elements)</li>\n<li>Does not suffer from poor \"\
+      worst case input\" performance</li>\n<li>Minimal memory requirements</li>\n\
+      </ul>\n<h2><span class=\"mw-headline\" id=\"Algorithm\">Algorithm</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:Insertion_Sort?section=2\" title=\"Edit section: Algorithm\"\
+      >edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n<p>Originally\
+      \ the Insertion Sort algorithm works like this:</p>\n<ol>\n<li>Start with the\
+      \ result being the first element of the input.</li>\n<li>Loop over the input\
+      \ array until it is empty, \"removing\" the first remaining (leftmost) element.</li>\n\
+      <li>Compare the removed element against the current result, starting from the\
+      \ highest (rightmost) element and working left towards the lowest element.</li>\n\
+      <li>If the removed input element is lower than the current result element, copy\
+      \ that value into the following element to make room for the new element below\
+      \ and repeat with the next lowest result element.</li>\n<li>Otherwise, the new\
+      \ element is in the correct location; save it in the cell left by copying the\
+      \ last examined result up and start again from (2) with the next input element.</li>\n\
+      </ol>\n<p>However, with UnrealScript's dynamic arrays and their Remove() and\
+      \ Insert() methods the algorithm can be modified to this:</p>\n<ol>\n<li>Start\
+      \ with the result being the first element of the input.</li>\n<li>Loop over\
+      \ the input array until it is empty, remembering the first remaining (leftmost)\
+      \ element.</li>\n<li>Compare the removed element against the current result,\
+      \ starting from the highest (rightmost) element, and working left towards the\
+      \ lowest element.</li>\n<li>If the removed input element is higher than the\
+      \ current result element, the element's correct location is found; remove it\
+      \ from its original location, insert it at the new location and start again\
+      \ from (2) with the next input element.</li>\n</ol>\n<p>For numeric arrays the\
+      \ last two steps can be optimized using <a href=\"/Legacy:BinarySearch\" title=\"\
+      Legacy:BinarySearch\">BinarySearch</a> to search the new location in the sorted\
+      \ part of the array if it's not already in the correct location.</p>\n<h2><span\
+      \ class=\"mw-headline\" id=\"Code\">Code</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Insertion_Sort?section=3\"\
+      \ title=\"Edit section: Code\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<h3><span class=\"mw-headline\" id=\"Implementation_for_Dynamic_Arrays_of_Strings\"\
+      >Implementation for Dynamic Arrays of Strings</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Insertion_Sort?section=4\"\
+      \ title=\"Edit section: Implementation for Dynamic Arrays of Strings\">edit</a><span\
+      \ class=\"mw-editsection-bracket\">]</span></span></h3>\n<p>This implementation\
+      \ only works for dynamic arrays. This particular example sorts all elements\
+      \ in <code>MyArray</code> with an index between (including) the <code>LowerBound</code>\
+      \ and the <code>UpperBound</code>. Optionally it can sort the strings case-insensitively.</p>\n\
+      <div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript\
+      \ source-uscript\">\n<pre class=\"de1\"><span class=\"co1\">//== static InsertSortSArray\
+      \ ==================================================</span>\n<span class=\"\
+      coMULTI\">/**\nSorts a string array using Insertion Sort.\nDue to the dynamic\
+      \ array implementation this is considerably faster than\nQuickSort on smaller\
+      \ arrays and especially on already sorted arrays.\n*/</span>\n<span class=\"\
+      co1\">//=============================================================================</span>\n\
+      \ \n<span class=\"kw1\">static</span> <span class=\"kw1\">final</span> <span\
+      \ class=\"kw1\">function</span> InsertSortSArray<span class=\"br0\">(</span><span\
+      \ class=\"kw1\">out</span> array<span class=\"sy0\">&lt;</span>string<span class=\"\
+      sy0\">&gt;</span> MyArray, <span class=\"kw5\">int</span> LowerBound, <span\
+      \ class=\"kw5\">int</span> UpperBound, <span class=\"kw1\">optional</span> <span\
+      \ class=\"kw5\">bool</span> bCaseInsenstive<span class=\"br0\">)</span>\n<span\
+      \ class=\"br0\">{</span>\n  <span class=\"kw1\">local</span> <span class=\"\
+      kw5\">int</span> InsertIndex, RemovedIndex;\n \n  <span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span> LowerBound <span class=\"sy0\">&lt;</span> UpperBound\
+      \ <span class=\"br0\">)</span>\n     <span class=\"kw2\">for</span> <span class=\"\
+      br0\">(</span>RemovedIndex <span class=\"sy0\">=</span> LowerBound <span class=\"\
+      sy0\">+</span> <span class=\"nu0\">1</span>; RemovedIndex <span class=\"sy0\"\
+      >&lt;=</span> UpperBound; <span class=\"sy0\">++</span>RemovedIndex<span class=\"\
+      br0\">)</span> <span class=\"br0\">{</span>\n      InsertIndex <span class=\"\
+      sy0\">=</span> RemovedIndex;\n      <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span> <span class=\"sy0\">!</span>bCaseInsenstive <span class=\"br0\"\
+      >)</span> <span class=\"br0\">{</span>\n        <span class=\"kw2\">while</span>\
+      \ <span class=\"br0\">(</span>InsertIndex <span class=\"sy0\">&gt;</span> LowerBound\
+      \ <span class=\"sy0\">&amp;&amp;</span> MyArray<span class=\"br0\">[</span>InsertIndex<span\
+      \ class=\"sy0\">-</span><span class=\"nu0\">1</span><span class=\"br0\">]</span>\
+      \ <span class=\"sy0\">&gt;</span> MyArray<span class=\"br0\">[</span>RemovedIndex<span\
+      \ class=\"br0\">]</span><span class=\"br0\">)</span>\n          <span class=\"\
+      sy0\">--</span>InsertIndex;\n      <span class=\"br0\">}</span>\n      <span\
+      \ class=\"kw2\">else</span> <span class=\"br0\">{</span>\n        <span class=\"\
+      kw2\">while</span> <span class=\"br0\">(</span>InsertIndex <span class=\"sy0\"\
+      >&gt;</span> LowerBound <span class=\"sy0\">&amp;&amp;</span> <span class=\"\
+      kw3\">Caps</span><span class=\"br0\">(</span>MyArray<span class=\"br0\">[</span>InsertIndex<span\
+      \ class=\"sy0\">-</span><span class=\"nu0\">1</span><span class=\"br0\">]</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">&gt;</span> <span class=\"kw3\"\
+      >Caps</span><span class=\"br0\">(</span>MyArray<span class=\"br0\">[</span>RemovedIndex<span\
+      \ class=\"br0\">]</span><span class=\"br0\">)</span><span class=\"br0\">)</span>\n\
+      \          <span class=\"sy0\">--</span>InsertIndex;\n      <span class=\"br0\"\
+      >}</span>\n      <span class=\"kw2\">if</span> <span class=\"br0\">(</span>\
+      \ RemovedIndex <span class=\"sy0\">!=</span> InsertIndex <span class=\"br0\"\
+      >)</span> <span class=\"br0\">{</span>\n        MyArray.<span class=\"me0\"\
+      >Insert</span><span class=\"br0\">(</span>InsertIndex, <span class=\"nu0\">1</span><span\
+      \ class=\"br0\">)</span>;\n        MyArray<span class=\"br0\">[</span>InsertIndex<span\
+      \ class=\"br0\">]</span> <span class=\"sy0\">=</span> MyArray<span class=\"\
+      br0\">[</span>RemovedIndex <span class=\"sy0\">+</span> <span class=\"nu0\"\
+      >1</span><span class=\"br0\">]</span>;\n        MyArray.<span class=\"me0\"\
+      >Remove</span><span class=\"br0\">(</span>RemovedIndex <span class=\"sy0\">+</span>\
+      \ <span class=\"nu0\">1</span>, <span class=\"nu0\">1</span><span class=\"br0\"\
+      >)</span>;\n      <span class=\"br0\">}</span>\n    <span class=\"br0\">}</span>\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<p><b>Foxpaw:</b> Are you\
+      \ sure that that's an optimization, Wormbo? By removing the temporary variable,\
+      \ you save an assignment, but you gain two addition operations.</p>\n<p><b>Wormbo:</b>\
+      \ In UnrealScript assignments are very expensive operations, especially if you're\
+      \ not dealing with string, but e.g. complex structs. In that case it's really\
+      \ an optimization.</p>\n<h3><span class=\"mw-headline\" id=\"Optimized_Implementation_for_Dynamic_Arrays_of_Numeric_Values\"\
+      >Optimized Implementation for Dynamic Arrays of Numeric Values</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Insertion_Sort?section=5\"\
+      \ title=\"Edit section: Optimized Implementation for Dynamic Arrays of Numeric\
+      \ Values\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>This implementation's use of <a href=\"/Legacy:BinarySearch\" title=\"Legacy:BinarySearch\"\
+      >BinarySearch</a> for finding the <code>InsertIndex</code> of unsorted elements\
+      \ means a huge performance improvement over a linear search approach with large,\
+      \ unsorted arrays.</p>\n<p>Also, because binary search requires less iterations\
+      \ for finding the <code>InsertIndex</code>, this implementation of Insertion\
+      \ Sort can handle larger unsorted arrays than the string implementation above\
+      \ without causing a runaway loop crash.</p>\n<p>An extreme example: It took\
+      \ about 80 seconds (!) to sort a test array with 100,000 random integer numbers,\
+      \ but it was sorted <i>without crashing</i>. Sorting this huge sorted array\
+      \ again took only about 100 milliseconds.</p>\n<p>You can use this implementation\
+      \ for any kind of dynamic array of comparable values.</p>\n<div dir=\"ltr\"\
+      \ class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"co1\">//== static InsertSortIArray ==================================================</span>\n\
+      <span class=\"coMULTI\">/**\nSorts an int array using optimized Insertion Sort.\n\
+      This implementation outperforms QuickSort due to its use of dynamic arrays and\n\
+      BinarySearch for unsorted elements.\n*/</span>\n<span class=\"co1\">//=============================================================================</span>\n\
+      \ \n<span class=\"kw1\">static</span> <span class=\"kw1\">final</span> <span\
+      \ class=\"kw1\">function</span> InsertSortIArray<span class=\"br0\">(</span><span\
+      \ class=\"kw1\">out</span> array<span class=\"sy0\">&lt;</span>int<span class=\"\
+      sy0\">&gt;</span> MyArray, <span class=\"kw5\">int</span> LowerBound, <span\
+      \ class=\"kw5\">int</span> UpperBound<span class=\"br0\">)</span>\n<span class=\"\
+      br0\">{</span>\n  <span class=\"kw1\">local</span> <span class=\"kw5\">int</span>\
+      \ InsertIndex, RemovedIndex;\n  <span class=\"kw1\">local</span> <span class=\"\
+      kw5\">int</span> High, Closest;\n \n  <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span> LowerBound <span class=\"sy0\">&lt;</span> UpperBound <span class=\"\
+      br0\">)</span>\n     <span class=\"kw2\">for</span> <span class=\"br0\">(</span>RemovedIndex\
+      \ <span class=\"sy0\">=</span> LowerBound <span class=\"sy0\">+</span> <span\
+      \ class=\"nu0\">1</span>; RemovedIndex <span class=\"sy0\">&lt;=</span> UpperBound;\
+      \ <span class=\"sy0\">++</span>RemovedIndex<span class=\"br0\">)</span> <span\
+      \ class=\"br0\">{</span>\n      <span class=\"kw2\">if</span> <span class=\"\
+      br0\">(</span> MyArray<span class=\"br0\">[</span>RemovedIndex<span class=\"\
+      sy0\">-</span><span class=\"nu0\">1</span><span class=\"br0\">]</span> <span\
+      \ class=\"sy0\">&gt;</span> MyArray<span class=\"br0\">[</span>RemovedIndex<span\
+      \ class=\"br0\">]</span> <span class=\"br0\">)</span> <span class=\"br0\">{</span>\n\
+      \        <span class=\"co1\">// element is not in the correct place, find InsertIndex\
+      \ with BinarySearch</span>\n        InsertIndex <span class=\"sy0\">=</span>\
+      \ <span class=\"nu0\">0</span>;\n        High <span class=\"sy0\">=</span> RemovedIndex\
+      \ <span class=\"sy0\">-</span> <span class=\"nu0\">1</span>;\n        <span\
+      \ class=\"kw2\">while</span> <span class=\"br0\">(</span>InsertIndex <span class=\"\
+      sy0\">&lt;=</span> High<span class=\"br0\">)</span> <span class=\"br0\">{</span>\n\
+      \          Closest <span class=\"sy0\">=</span> <span class=\"br0\">(</span>InsertIndex\
+      \ <span class=\"sy0\">+</span> High<span class=\"br0\">)</span> <span class=\"\
+      sy0\">/</span> <span class=\"nu0\">2</span>;\n          <span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span> MyArray<span class=\"br0\">[</span>Closest<span\
+      \ class=\"br0\">]</span> <span class=\"sy0\">==</span> MyArray<span class=\"\
+      br0\">[</span>RemovedIndex<span class=\"br0\">]</span> <span class=\"br0\">)</span>\
+      \ <span class=\"br0\">{</span>\n            InsertIndex <span class=\"sy0\"\
+      >=</span> Closest;\n            <span class=\"kw2\">break</span>;\n        \
+      \  <span class=\"br0\">}</span>\n          <span class=\"kw2\">if</span> <span\
+      \ class=\"br0\">(</span> MyArray<span class=\"br0\">[</span>Closest<span class=\"\
+      br0\">]</span> <span class=\"sy0\">&gt;</span> MyArray<span class=\"br0\">[</span>RemovedIndex<span\
+      \ class=\"br0\">]</span> <span class=\"br0\">)</span>\n            High <span\
+      \ class=\"sy0\">=</span> Closest <span class=\"sy0\">-</span> <span class=\"\
+      nu0\">1</span>;\n          <span class=\"kw2\">else</span> <span class=\"kw2\"\
+      >if</span> <span class=\"br0\">(</span> MyArray<span class=\"br0\">[</span>Closest<span\
+      \ class=\"br0\">]</span> <span class=\"sy0\">&lt;</span> MyArray<span class=\"\
+      br0\">[</span>RemovedIndex<span class=\"br0\">]</span> <span class=\"br0\">)</span>\n\
+      \            InsertIndex <span class=\"sy0\">=</span> Closest <span class=\"\
+      sy0\">+</span> <span class=\"nu0\">1</span>;\n        <span class=\"br0\">}</span>\n\
+      \        <span class=\"kw2\">if</span> <span class=\"br0\">(</span> InsertIndex\
+      \ <span class=\"sy0\">&lt;</span> RemovedIndex <span class=\"sy0\">&amp;&amp;</span>\
+      \ MyArray<span class=\"br0\">[</span>InsertIndex<span class=\"br0\">]</span>\
+      \ <span class=\"sy0\">&lt;</span> MyArray<span class=\"br0\">[</span>RemovedIndex<span\
+      \ class=\"br0\">]</span> <span class=\"br0\">)</span>\n          <span class=\"\
+      sy0\">++</span>InsertIndex;\n      <span class=\"br0\">}</span>\n      <span\
+      \ class=\"kw2\">else</span>\n        InsertIndex <span class=\"sy0\">=</span>\
+      \ RemovedIndex;\n \n \n      <span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span> RemovedIndex <span class=\"sy0\">!=</span> InsertIndex <span class=\"\
+      br0\">)</span> <span class=\"br0\">{</span>\n        MyArray.<span class=\"\
+      me0\">Insert</span><span class=\"br0\">(</span>InsertIndex, <span class=\"nu0\"\
+      >1</span><span class=\"br0\">)</span>;\n        MyArray<span class=\"br0\">[</span>InsertIndex<span\
+      \ class=\"br0\">]</span> <span class=\"sy0\">=</span> MyArray<span class=\"\
+      br0\">[</span>RemovedIndex <span class=\"sy0\">+</span> <span class=\"nu0\"\
+      >1</span><span class=\"br0\">]</span>;\n        MyArray.<span class=\"me0\"\
+      >Remove</span><span class=\"br0\">(</span>RemovedIndex <span class=\"sy0\">+</span>\
+      \ <span class=\"nu0\">1</span>, <span class=\"nu0\">1</span><span class=\"br0\"\
+      >)</span>;\n      <span class=\"br0\">}</span>\n    <span class=\"br0\">}</span>\n\
+      <span class=\"br0\">}</span></pre></div>\n</div>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Related_Topics\">Related Topics</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:Insertion_Sort?section=6\"\
+      \ title=\"Edit section: Related Topics\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<ul>\n<li><a href=\"/Legacy:QuickSort\" title=\"Legacy:QuickSort\"\
+      >QuickSort</a></li>\n<li><a href=\"/Legacy:BinarySearch\" title=\"Legacy:BinarySearch\"\
+      >BinarySearch</a></li>\n<li><a href=\"/Legacy:Open_Source\" title=\"Legacy:Open\
+      \ Source\">Open Source</a></li>\n</ul>\n\n<!-- \nNewPP limit report\nCPU time\
+      \ usage: 0.065 seconds\nReal time usage: 0.067 seconds\nPreprocessor visited\
+      \ node count: 42/1000000\nPreprocessor generated node count: 76/1000000\nPost‐\
+      expand include size: 14/2097152 bytes\nTemplate argument size: 0/2097152 bytes\n\
+      Highest expansion depth: 2/40\nExpensive parser function count: 0/100\n-->\n\
+      \n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n100.00% \
+      \   0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:1513-0!*!0!!en!*!*\
+      \ and timestamp 20221118025038 and revision id 3787\n -->\n"
+  categories:
+  - sortkey: "Insertion Sort"
+    name: "Legacy_Algorithm"
+  links:
+  - ns: 100
+    exists: true
+    name: "Legacy:Open Source"
+  - ns: 100
+    exists: true
+    name: "Legacy:QuickSort"
+  - ns: 100
+    exists: true
+    name: "Legacy:BinarySearch"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Advantages of Insertion Sort"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:Insertion_Sort"
+    byteoffset: 307
+    anchor: "Advantages_of_Insertion_Sort"
+  - toclevel: 1
+    level: "2"
+    line: "Algorithm"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:Insertion_Sort"
+    byteoffset: 625
+    anchor: "Algorithm"
+  - toclevel: 1
+    level: "2"
+    line: "Code"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:Insertion_Sort"
+    byteoffset: 2260
+    anchor: "Code"
+  - toclevel: 2
+    level: "3"
+    line: "Implementation for Dynamic Arrays of Strings"
+    number: "3.1"
+    index: "4"
+    fromtitle: "Legacy:Insertion_Sort"
+    byteoffset: 2270
+    anchor: "Implementation_for_Dynamic_Arrays_of_Strings"
+  - toclevel: 2
+    level: "3"
+    line: "Optimized Implementation for Dynamic Arrays of Numeric Values"
+    number: "3.2"
+    index: "5"
+    fromtitle: "Legacy:Insertion_Sort"
+    byteoffset: 4151
+    anchor: "Optimized_Implementation_for_Dynamic_Arrays_of_Numeric_Values"
+  - toclevel: 1
+    level: "2"
+    line: "Related Topics"
+    number: "4"
+    index: "6"
+    fromtitle: "Legacy:Insertion_Sort"
+    byteoffset: 6631
+    anchor: "Related_Topics"
+  displaytitle: "Legacy:Insertion Sort"
+  iwlinks:
+  - prefix: "wikipedia"
+    url: "http://en.wikipedia.org/wiki/Insertion_Sort"
+    name: "wikipedia:Insertion Sort"
+  wikitext:
+    text: "Insertion Sort is an iterative sorting algorithm like Bubble Sort. While\
+      \ this algorithm generally is less efficient than [[Legacy:QuickSort|QuickSort]],\
+      \ the UnrealScript implementation on this page can greatly out-perform QuickSort\
+      \ in certain cases. For more information, see [[Wikipedia:Insertion Sort]].\n\
+      \n==Advantages of Insertion Sort==\n* Simple to implement\n* Efficient on (quite)\
+      \ small data sets\n* Efficient on data sets which are already substantially\
+      \ sorted\n* Stable (i.e. does not change the order of already ordered elements)\n\
+      * Does not suffer from poor \"worst case input\" performance\n* Minimal memory\
+      \ requirements\n\n==Algorithm==\n\nOriginally the Insertion Sort algorithm works\
+      \ like this:\n# Start with the result being the first element of the input.\n\
+      # Loop over the input array until it is empty, \"removing\" the first remaining\
+      \ (leftmost) element.\n# Compare the removed element against the current result,\
+      \ starting from the highest (rightmost) element and working left towards the\
+      \ lowest element.\n# If the removed input element is lower than the current\
+      \ result element, copy that value into the following element to make room for\
+      \ the new element below and repeat with the next lowest result element.\n# Otherwise,\
+      \ the new element is in the correct location; save it in the cell left by copying\
+      \ the last examined result up and start again from (2) with the next input element.\n\
+      \nHowever, with UnrealScript's dynamic arrays and their Remove() and Insert()\
+      \ methods the algorithm can be modified to this:\n# Start with the result being\
+      \ the first element of the input.\n# Loop over the input array until it is empty,\
+      \ remembering the first remaining (leftmost) element.\n# Compare the removed\
+      \ element against the current result, starting from the highest (rightmost)\
+      \ element, and working left towards the lowest element.\n# If the removed input\
+      \ element is higher than the current result element, the element's correct location\
+      \ is found; remove it from its original location, insert it at the new location\
+      \ and start again from (2) with the next input element.\n\nFor numeric arrays\
+      \ the last two steps can be optimized using [[Legacy:BinarySearch|BinarySearch]]\
+      \ to search the new location in the sorted part of the array if it's not already\
+      \ in the correct location.\n\n==Code==\n\n===Implementation for Dynamic Arrays\
+      \ of Strings===\n\nThis implementation only works for dynamic arrays. This particular\
+      \ example sorts all elements in <code>MyArray</code> with an index between (including)\
+      \ the <code>LowerBound</code> and the <code>UpperBound</code>. Optionally it\
+      \ can sort the strings case-insensitively.\n\n<uscript>\n//== static InsertSortSArray\
+      \ ==================================================\n/**\nSorts a string array\
+      \ using Insertion Sort.\nDue to the dynamic array implementation this is considerably\
+      \ faster than\nQuickSort on smaller arrays and especially on already sorted\
+      \ arrays.\n*/\n//=============================================================================\n\
+      \nstatic final function InsertSortSArray(out array<string> MyArray, int LowerBound,\
+      \ int UpperBound, optional bool bCaseInsenstive)\n{\n  local int InsertIndex,\
+      \ RemovedIndex;\n  \n  if ( LowerBound < UpperBound )\n     for (RemovedIndex\
+      \ = LowerBound + 1; RemovedIndex <= UpperBound; ++RemovedIndex) {\n      InsertIndex\
+      \ = RemovedIndex;\n      if ( !bCaseInsenstive ) {\n        while (InsertIndex\
+      \ > LowerBound && MyArray[InsertIndex-1] > MyArray[RemovedIndex])\n        \
+      \  --InsertIndex;\n      }\n      else {\n        while (InsertIndex > LowerBound\
+      \ && Caps(MyArray[InsertIndex-1]) > Caps(MyArray[RemovedIndex]))\n         \
+      \ --InsertIndex;\n      }\n      if ( RemovedIndex != InsertIndex ) {\n    \
+      \    MyArray.Insert(InsertIndex, 1);\n        MyArray[InsertIndex] = MyArray[RemovedIndex\
+      \ + 1];\n        MyArray.Remove(RemovedIndex + 1, 1);\n      }\n    }\n}\n</uscript>\n\
+      \n'''Foxpaw:''' Are you sure that that's an optimization, Wormbo? By removing\
+      \ the temporary variable, you save an assignment, but you gain two addition\
+      \ operations.\n\n'''Wormbo:''' In UnrealScript assignments are very expensive\
+      \ operations, especially if you're not dealing with string, but e.g. complex\
+      \ structs. In that case it's really an optimization.\n\n===Optimized Implementation\
+      \ for Dynamic Arrays of Numeric Values===\n\nThis implementation's use of [[Legacy:BinarySearch|BinarySearch]]\
+      \ for finding the <code>InsertIndex</code> of unsorted elements means a huge\
+      \ performance improvement over a linear search approach with large, unsorted\
+      \ arrays.\n\nAlso, because binary search requires less iterations for finding\
+      \ the <code>InsertIndex</code>, this implementation of Insertion Sort can handle\
+      \ larger unsorted arrays than the string implementation above without causing\
+      \ a runaway loop crash.\n\nAn extreme example: It took about 80 seconds (!)\
+      \ to sort a test array with 100,000 random integer numbers, but it was sorted\
+      \ ''without crashing''. Sorting this huge sorted array again took only about\
+      \ 100 milliseconds.\n\nYou can use this implementation for any kind of dynamic\
+      \ array of comparable values.\n\n<uscript>\n//== static InsertSortIArray ==================================================\n\
+      /**\nSorts an int array using optimized Insertion Sort.\nThis implementation\
+      \ outperforms QuickSort due to its use of dynamic arrays and\nBinarySearch for\
+      \ unsorted elements.\n*/\n//=============================================================================\n\
+      \nstatic final function InsertSortIArray(out array<int> MyArray, int LowerBound,\
+      \ int UpperBound)\n{\n  local int InsertIndex, RemovedIndex;\n  local int High,\
+      \ Closest;\n  \n  if ( LowerBound < UpperBound )\n     for (RemovedIndex = LowerBound\
+      \ + 1; RemovedIndex <= UpperBound; ++RemovedIndex) {\n      if ( MyArray[RemovedIndex-1]\
+      \ > MyArray[RemovedIndex] ) {\n        // element is not in the correct place,\
+      \ find InsertIndex with BinarySearch\n        InsertIndex = 0;\n        High\
+      \ = RemovedIndex - 1;\n        while (InsertIndex <= High) {\n          Closest\
+      \ = (InsertIndex + High) / 2;\n          if ( MyArray[Closest] == MyArray[RemovedIndex]\
+      \ ) {\n            InsertIndex = Closest;\n            break;\n          }\n\
+      \          if ( MyArray[Closest] > MyArray[RemovedIndex] )\n            High\
+      \ = Closest - 1;\n          else if ( MyArray[Closest] < MyArray[RemovedIndex]\
+      \ )\n            InsertIndex = Closest + 1;\n        }\n        if ( InsertIndex\
+      \ < RemovedIndex && MyArray[InsertIndex] < MyArray[RemovedIndex] )\n       \
+      \   ++InsertIndex;\n      }\n      else\n        InsertIndex = RemovedIndex;\n\
+      \      \n\n      if ( RemovedIndex != InsertIndex ) {\n        MyArray.Insert(InsertIndex,\
+      \ 1);\n        MyArray[InsertIndex] = MyArray[RemovedIndex + 1];\n        MyArray.Remove(RemovedIndex\
+      \ + 1, 1);\n      }\n    }\n}\n</uscript>\n\n==Related Topics==\n* [[Legacy:QuickSort|QuickSort]]\n\
+      * [[Legacy:BinarySearch|BinarySearch]]\n* [[Legacy:Open Source|Open Source]]\n\
+      \n[[Category:Legacy Algorithm|{{PAGENAME}}]]"
+  properties: []
+  revId: 3787
+name: "Legacy:Insertion Sort"
+revision:
+  revid: 3787
+  parentid: 3789
+  user: "71-17-22-38.regn.hsdb.sasknet.sk.ca"
+  timestamp: 1184090843.000000000
+  comment: "revert"
+timestamp: 1668764786.737248000

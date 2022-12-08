@@ -1,0 +1,366 @@
+---
+parse:
+  title: "Legacy:BruteForce/EBNF"
+  text:
+    text: "<p>If you don't understand this first read about <a rel=\"nofollow\" class=\"\
+      external text\" href=\"http://www.garshol.priv.no/download/text/bnf.html\">EBNF</a>.</p>\n\
+      <h2><span class=\"mw-headline\" id=\"Non_terminals\">Non terminals</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/Legacy:BruteForce/EBNF?section=1\" title=\"Edit section: Non\
+      \ terminals\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <pre> PROGRAM               ::= DECLARATIONS STATEMENTS\n</pre>\n<p>It's not\
+      \ that difficult to allow declarations everywhere in the code, it's just that\
+      \ I prefer to have it at the top. This way it's easy to find the declaration\
+      \ when you are looking at the code.</p>\n<pre> DECLARATIONS          ::= ((DECLARATION|FUNCTION)\
+      \ SEMICOLON)*\n</pre>\n<p>Well ok, this allows you to mix variable declarations\
+      \ and function declarations, but that's up to you. You might prefer to declare\
+      \ vars first and then function. This gives you the freedom.</p>\n<p>Note that\
+      \ this rule may be empty. I use the semicolon as a divider of parts, and it's\
+      \ checked here and not in the declaration/function because it's part of the\
+      \ block, seperating the elements.</p>\n<pre> DECLARATION           ::= VAR TYPE\
+      \ IDENTIFIER\n</pre>\n<p>C style variable declaration, but prefixed with a <b>var</b>\
+      \ keyword. This is to make it a bit easier for the parser.</p>\n<pre> TYPE \
+      \                 ::= INTEGER\n                         | STRING\n         \
+      \                | FLOAT\n                         | BOOLEAN\n</pre>\n<p>We've\
+      \ got four types, I've not thought about custom type declarations.</p>\n<pre>\
+      \ IDENTIFIER            ::= __implicit__\n</pre>\n<p>Identifiers are returned\
+      \ by the tokenizer so I haven't added it to the language specification.</p>\n\
+      <pre> FUNCTION              ::= FUNC TYPE IDENTIFIER LBRACK ARGUMENTS RBRACK\
+      \ DECLARATIONS BEGIN STATEMENTS END\n</pre>\n<p>A function declaration including\
+      \ body. You always have to return a type, this is used to declare the always\
+      \ present local variable <i>result</i> (just like in <a href=\"/edit/Legacy:Pascal?redlink=1\"\
+      \ class=\"new\" title=\"Legacy:Pascal (page does not exist)\">Pascal</a> functions).\
+      \ Before the function body you can define local variables (and even functions).\
+      \ The function body is encapsued with a <b>begin</b> and <b>end</b> just like\
+      \ in <a href=\"/edit/Legacy:Pascal?redlink=1\" class=\"new\" title=\"Legacy:Pascal\
+      \ (page does not exist)\">Pascal</a>. I like this way, ok it's more to write\
+      \ but it makes to code more <i>readable</i>, ok I just like it since I can easily\
+      \ replace it with <b>{</b> and <b>}</b> or whatever I want.</p>\n<pre> ARGUMENTS\
+      \             ::= (TYPE LVALUE (SEMICOLON TYPE LVALUE)*)?\n</pre>\n<p>Function\
+      \ arguments are optional, and to prevent you from adding a semicolon after the\
+      \ last argument I used this construction. It's doesn't matter for the resulting\
+      \ AST, just the parser.</p>\n<pre> STATEMENTS            ::= (STATEMENT SEMICOLON)*\n\
+      </pre>\n<p>Zero or more statements, yes it's possible to define a program without\
+      \ any code to be executed, this might be usefull for function declarations to\
+      \ be reused or something.</p>\n<pre> STATEMENT             ::= ASSIGNMENT\n\
+      \                         | WHILEDO\n                         | IFTHENELSE\n\
+      </pre>\n<p>A statement can be everything, an assignment or a control block like\
+      \ <b>while</b> ... <b>do</b> or <b>if</b> ... <b>then</b> ... <b>else</b>. It's\
+      \ easy to add new kind of statements here.</p>\n<pre> ASSIGNMENT           \
+      \ ::= IDENTIFIER BECOMES EXPR\n                         | FUNCTIONCALL\n</pre>\n\
+      <p>Well this is the reason why BruteForce is no longer LL(1), because I have\
+      \ to look a head to see if it's an assignment or an function call. Both start\
+      \ with an identifier. I could work around it but this would require me to add\
+      \ a keyword to one of them. For example <code><b>call</b> function_name()</code></p>\n\
+      <pre> WHILEDO               ::= WHILE EXPR DO CODEBLOCK\n CODEBLOCK        \
+      \     ::= STATEMENT\n                         | (BEGIN STATEMENTS END)\n</pre>\n\
+      <p>The <b>while</b> and <b>if</b> control blocks accept code blocks this is\
+      \ either one statement or more, because more statements qould require to use\
+      \ the semicolon to divide them a code block will start with <b>begin</b> and\
+      \ end with <b>end</b> .</p>\n<pre> IFTHENELSE            ::= IF EXPR THEN CODEBLOCK\
+      \ (ELSE CODEBLOCK)?\n</pre>\n<p>I've made the else part optional, empty <b>else</b>\
+      \ parts are just ugly and it can easily be avoided since it's a diffirence between\
+      \ a semicolon and <b>else</b></p>\n<pre> EXPR                  ::= BOOLEX\n\
+      </pre>\n<p>Here's an nice example of a pretty useless rule, but maybe when I\
+      \ want to extend expression with something that has a lower precendence than\
+      \ a boolean expression I would only need to update one rule instead of a lot.</p>\n\
+      <p>The following rules define the operator precedance, the sooner the lower\
+      \ the priority. The definition below allows constructs like:</p>\n<div dir=\"\
+      ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div class=\"uscript source-uscript\"\
+      >\n<pre class=\"de1\"><span class=\"nu0\">1</span><span class=\"sy0\">+</span><span\
+      \ class=\"nu0\">2</span><span class=\"sy0\">+</span><span class=\"nu0\">3</span><span\
+      \ class=\"sy0\">+</span><span class=\"nu0\">4</span><span class=\"sy0\">+</span><span\
+      \ class=\"nu0\">5</span> \n<span class=\"nu0\">1</span><span class=\"sy0\">*</span><span\
+      \ class=\"nu0\">2</span><span class=\"sy0\">+</span><span class=\"nu0\">3</span><span\
+      \ class=\"sy0\">/</span><span class=\"nu0\">5</span><span class=\"sy0\">&lt;=</span><span\
+      \ class=\"nu0\">4</span><span class=\"sy0\">+</span><span class=\"nu0\">1</span></pre></div>\n\
+      </div>\n<pre> BOOLEX                ::= ACCUM ((LT|LE|GT|GE|EQ|NE) ACCUM)*\n\
+      \ ACCUM                 ::= MULT ((PLUS|MINUS) MULT)*\n MULT               \
+      \   ::= PREOP ((MULTIPLY|DIVIDE) PREOP)*\n PREOP                 ::= (MINUS|NOT)?\
+      \ OPERAND\n OPERAND               ::= IDENTIFIER\n                         |\
+      \ FUNCTIONCALL\n                         | INTVALUE\n                      \
+      \   | FLOATVALUE\n                         | STRINGVALUE\n                 \
+      \        | BOOLVALUE\n                         | LBRACK EXPR RBRACK\n</pre>\n\
+      <p>An operant is either a constant value, a variable identifier, a function\
+      \ call or again an expression between braches. These expressions between braces\
+      \ are very important, it allows you to overrule the operator precedance. You\
+      \ won't see these braces in the AST anymore because they are no longer needed\
+      \ in there, the operators are already set in the correct order.</p>\n<pre> FUNCTIONCALL\
+      \          ::= IDENTIFIER LBRACK (EXPR (COMMA EXPR)*)? RBRACK\n</pre>\n<p>The\
+      \ arguments of a function call are expressions, this allows you to use a constant\
+      \ or expression besides the normal identifiers.</p>\n<pre> INTVALUE        \
+      \      ::= __implicit__\n FLOATVALUE            ::= __implicit__\n STRINGVALUE\
+      \           ::= __implicit__\n BOOLVALUE             ::= TRUE|FALSE\n</pre>\n\
+      <p>Boolean values are returned as an identifier by the tokenizer, so we need\
+      \ to filter those out manualy.</p>\n<h2><span class=\"mw-headline\" id=\"Terminals\"\
+      >Terminals</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/Legacy:BruteForce/EBNF?section=2\" title=\"Edit section:\
+      \ Terminals\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h2>\n\
+      <pre> BEGIN                 ::= 'begin'\n END                   ::= 'end'\n\
+      \ SEMICOLON             ::= ';'\n VAR                   ::= 'var'\n INTEGER\
+      \               ::= 'int'\n STRING                ::= 'string'\n FLOAT     \
+      \            ::= 'float'\n BOOLEAN               ::= 'bool'\n FUNC         \
+      \         ::= 'function'\n BECOMES               ::= '='\n WHILE           \
+      \      ::= 'while'\n DO                    ::= 'do'\n IF                   \
+      \ ::= 'if'\n THEN                  ::= 'then'\n ELSE                  ::= 'else'\n\
+      \ LT                    ::= '&lt;'\n LE                    ::= '&lt;='\n GT\
+      \                    ::= '&gt;'\n GE                    ::= '&gt;='\n EQ   \
+      \                 ::= '=='\n NE                    ::= '!='\n PLUS         \
+      \         ::= '+'\n MINUS                 ::= '-'\n MULTIPLY              ::=\
+      \ '*'\n DIVIDE                ::= '/'\n MOD                   ::= '%'\n NOT\
+      \                   ::= '!'\n LBRACK                ::= '('\n RBRACK       \
+      \         ::= ')'\n TRUE                  ::= 'true'\n FALSE               \
+      \  ::= 'false'\n COMMA                 ::= ','\n</pre>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Sample_code\">Sample code</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/Legacy:BruteForce/EBNF?section=3\"\
+      \ title=\"Edit section: Sample code\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>Here's a piece of example code that will print all\
+      \ easters dates from 2003 to 2012, unless you provide diffirent values on the\
+      \ input</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\">\n<div\
+      \ class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"kw1\"\
+      >var</span> <span class=\"kw5\">int</span> y;\n<span class=\"kw1\">var</span>\
+      \ <span class=\"kw5\">int</span> ey;\n \n<span class=\"kw1\">function</span>\
+      \ <span class=\"kw5\">string</span> easter<span class=\"br0\">(</span><span\
+      \ class=\"kw5\">int</span> year<span class=\"br0\">)</span>\n  <span class=\"\
+      kw1\">var</span> <span class=\"kw5\">int</span> m;\n  <span class=\"kw1\">var</span>\
+      \ <span class=\"kw5\">int</span> d;\n  <span class=\"kw1\">var</span> <span\
+      \ class=\"kw5\">int</span> g;\n  <span class=\"kw1\">var</span> <span class=\"\
+      kw5\">int</span> c;\n  <span class=\"kw1\">var</span> <span class=\"kw5\">int</span>\
+      \ x;\n  <span class=\"kw1\">var</span> <span class=\"kw5\">int</span> z;\n \
+      \ <span class=\"kw1\">var</span> <span class=\"kw5\">int</span> b;\n  <span\
+      \ class=\"kw1\">var</span> <span class=\"kw5\">int</span> e;\n<span class=\"\
+      kw2\">begin</span>\n  g <span class=\"sy0\">=</span> year <span class=\"sy0\"\
+      >%</span> <span class=\"nu0\">19</span> <span class=\"sy0\">+</span> <span class=\"\
+      nu0\">1</span>;         \n  c <span class=\"sy0\">=</span> <span class=\"br0\"\
+      >(</span>year <span class=\"sy0\">/</span> <span class=\"nu0\">100</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">+</span> <span class=\"nu0\">1</span>;\n\
+      \  x <span class=\"sy0\">=</span> <span class=\"br0\">(</span><span class=\"\
+      nu0\">3</span><span class=\"sy0\">*</span>c <span class=\"sy0\">/</span> <span\
+      \ class=\"nu0\">4</span><span class=\"br0\">)</span> <span class=\"sy0\">-</span>\
+      \ <span class=\"nu0\">12</span>;\n  z <span class=\"sy0\">=</span> <span class=\"\
+      br0\">(</span><span class=\"br0\">(</span><span class=\"nu0\">8</span><span\
+      \ class=\"sy0\">*</span>c <span class=\"sy0\">+</span> <span class=\"nu0\">5</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">/</span> <span class=\"nu0\">25</span><span\
+      \ class=\"br0\">)</span> <span class=\"sy0\">-</span> <span class=\"nu0\">5</span>;\n\
+      \  b <span class=\"sy0\">=</span> <span class=\"br0\">(</span><span class=\"\
+      nu0\">5</span><span class=\"sy0\">*</span>year <span class=\"sy0\">/</span>\
+      \ <span class=\"nu0\">4</span><span class=\"br0\">)</span> <span class=\"sy0\"\
+      >-</span> x <span class=\"sy0\">-</span> <span class=\"nu0\">10</span>;\n  e\
+      \ <span class=\"sy0\">=</span> <span class=\"br0\">(</span><span class=\"nu0\"\
+      >11</span><span class=\"sy0\">*</span>g <span class=\"sy0\">+</span> <span class=\"\
+      nu0\">20</span> <span class=\"sy0\">+</span> z <span class=\"sy0\">-</span>\
+      \ x<span class=\"br0\">)</span>;\n  e <span class=\"sy0\">=</span> e <span class=\"\
+      sy0\">%</span> <span class=\"nu0\">30</span>;                     \n  <span\
+      \ class=\"kw2\">if</span> e <span class=\"sy0\">&lt;</span> <span class=\"nu0\"\
+      >0</span> then e <span class=\"sy0\">=</span> e<span class=\"sy0\">+</span><span\
+      \ class=\"nu0\">30</span>;\n  <span class=\"kw2\">if</span> <span class=\"br0\"\
+      >(</span><span class=\"br0\">(</span><span class=\"br0\">(</span>e <span class=\"\
+      sy0\">==</span> <span class=\"nu0\">25</span><span class=\"br0\">)</span><span\
+      \ class=\"sy0\">+</span><span class=\"br0\">(</span>g<span class=\"sy0\">&gt;</span><span\
+      \ class=\"nu0\">11</span><span class=\"br0\">)</span> <span class=\"sy0\">==</span>\
+      \ <span class=\"nu0\">2</span><span class=\"br0\">)</span> <span class=\"sy0\"\
+      >+</span> <span class=\"br0\">(</span>e<span class=\"sy0\">==</span><span class=\"\
+      nu0\">24</span><span class=\"br0\">)</span><span class=\"br0\">)</span> <span\
+      \ class=\"sy0\">&gt;</span> <span class=\"nu0\">0</span> then e <span class=\"\
+      sy0\">=</span> e<span class=\"sy0\">+</span><span class=\"nu0\">1</span>;\n\
+      \  d <span class=\"sy0\">=</span> <span class=\"nu0\">44</span><span class=\"\
+      sy0\">-</span>e;\n  <span class=\"kw2\">if</span> d <span class=\"sy0\">&lt;</span>\
+      \ <span class=\"nu0\">21</span> then d <span class=\"sy0\">=</span> d<span class=\"\
+      sy0\">+</span><span class=\"nu0\">30</span>;\n  d <span class=\"sy0\">=</span>\
+      \ d<span class=\"sy0\">+</span><span class=\"nu0\">7</span><span class=\"sy0\"\
+      >-</span><span class=\"br0\">(</span><span class=\"br0\">(</span>b<span class=\"\
+      sy0\">+</span>d<span class=\"br0\">)</span> <span class=\"sy0\">-</span> <span\
+      \ class=\"br0\">(</span><span class=\"br0\">(</span>b<span class=\"sy0\">+</span>d<span\
+      \ class=\"br0\">)</span><span class=\"sy0\">/</span><span class=\"nu0\">7</span><span\
+      \ class=\"br0\">)</span><span class=\"sy0\">*</span><span class=\"nu0\">7</span><span\
+      \ class=\"br0\">)</span>;\n  <span class=\"kw2\">if</span> d<span class=\"sy0\"\
+      >&gt;</span><span class=\"nu0\">31</span> then m <span class=\"sy0\">=</span>\
+      \ <span class=\"nu0\">4</span> <span class=\"kw2\">else</span> m <span class=\"\
+      sy0\">=</span> <span class=\"nu0\">3</span>;\n  <span class=\"kw2\">if</span>\
+      \ d<span class=\"sy0\">&gt;</span><span class=\"nu0\">31</span> then d <span\
+      \ class=\"sy0\">=</span> d<span class=\"sy0\">-</span><span class=\"nu0\">31</span>;\n\
+      \  result <span class=\"sy0\">=</span> <span class=\"st0\">\"\"</span><span\
+      \ class=\"sy0\">+</span>year<span class=\"sy0\">+</span><span class=\"st0\"\
+      >\"-\"</span><span class=\"sy0\">+</span>m<span class=\"sy0\">+</span><span\
+      \ class=\"st0\">\"-\"</span><span class=\"sy0\">+</span>d;\nend;\n \ny <span\
+      \ class=\"sy0\">=</span> <span class=\"nu0\">2003</span>;\ney <span class=\"\
+      sy0\">=</span> <span class=\"nu0\">2012</span>;\n \n<span class=\"kw2\">if</span>\
+      \ <span class=\"br0\">(</span>argc<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span> <span class=\"sy0\">==</span> <span class=\"nu0\">1</span><span\
+      \ class=\"br0\">)</span> then ey <span class=\"sy0\">=</span> <span class=\"\
+      kw5\">Int</span><span class=\"br0\">(</span>argv<span class=\"br0\">(</span><span\
+      \ class=\"nu0\">0</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n\
+      <span class=\"kw2\">if</span> <span class=\"br0\">(</span>argc<span class=\"\
+      br0\">(</span><span class=\"br0\">)</span> <span class=\"sy0\">==</span> <span\
+      \ class=\"nu0\">2</span><span class=\"br0\">)</span> then <span class=\"kw2\"\
+      >begin</span>\n  y <span class=\"sy0\">=</span> <span class=\"kw5\">Int</span><span\
+      \ class=\"br0\">(</span>argv<span class=\"br0\">(</span><span class=\"nu0\"\
+      >0</span><span class=\"br0\">)</span><span class=\"br0\">)</span>;\n  ey <span\
+      \ class=\"sy0\">=</span> <span class=\"kw5\">Int</span><span class=\"br0\">(</span>argv<span\
+      \ class=\"br0\">(</span><span class=\"nu0\">1</span><span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span>;\nend;\nprint<span class=\"br0\">(</span><span class=\"\
+      st0\">\"Day of Easter for \"</span><span class=\"sy0\">+</span>y<span class=\"\
+      sy0\">+</span><span class=\"st0\">\"-\"</span><span class=\"sy0\">+</span>ey<span\
+      \ class=\"sy0\">+</span><span class=\"st0\">\".\"</span><span class=\"br0\"\
+      >)</span>;\n \n<span class=\"kw2\">while</span> <span class=\"br0\">(</span>y\
+      \ <span class=\"sy0\">&lt;=</span> ey<span class=\"br0\">)</span> <span class=\"\
+      kw2\">do</span> <span class=\"kw2\">begin</span>\n  print<span class=\"br0\"\
+      >(</span>easter<span class=\"br0\">(</span>y<span class=\"br0\">)</span><span\
+      \ class=\"br0\">)</span>;\n  y <span class=\"sy0\">=</span> y<span class=\"\
+      sy0\">+</span><span class=\"nu0\">1</span>;\nend;</pre></div>\n</div>\n\n<!--\
+      \ \nNewPP limit report\nCPU time usage: 0.082 seconds\nReal time usage: 0.083\
+      \ seconds\nPreprocessor visited node count: 23/1000000\nPreprocessor generated\
+      \ node count: 56/1000000\nPost‐expand include size: 0/2097152 bytes\nTemplate\
+      \ argument size: 0/2097152 bytes\nHighest expansion depth: 2/40\nExpensive parser\
+      \ function count: 0/100\n-->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n\
+      100.00%    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key\
+      \ wiki:pcache:idhash:602-0!*!0!!*!*!* and timestamp 20221118154722 and revision\
+      \ id 1814\n -->\n"
+  categories: []
+  links:
+  - ns: 100
+    exists: false
+    name: "Legacy:Pascal"
+  templates: []
+  images: []
+  externallinks:
+  - "http://www.garshol.priv.no/download/text/bnf.html"
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Non terminals"
+    number: "1"
+    index: "1"
+    fromtitle: "Legacy:BruteForce/EBNF"
+    byteoffset: 105
+    anchor: "Non_terminals"
+  - toclevel: 1
+    level: "2"
+    line: "Terminals"
+    number: "2"
+    index: "2"
+    fromtitle: "Legacy:BruteForce/EBNF"
+    byteoffset: 5554
+    anchor: "Terminals"
+  - toclevel: 1
+    level: "2"
+    line: "Sample code"
+    number: "3"
+    index: "3"
+    fromtitle: "Legacy:BruteForce/EBNF"
+    byteoffset: 6647
+    anchor: "Sample_code"
+  displaytitle: "Legacy:BruteForce/EBNF"
+  iwlinks: []
+  wikitext:
+    text: "If you don't understand this first read about [http://www.garshol.priv.no/download/text/bnf.html\
+      \ EBNF].\n\n==Non terminals ==\n\n  PROGRAM               ::= DECLARATIONS STATEMENTS\n\
+      \nIt's not that difficult to allow declarations everywhere in the code, it's\
+      \ just that I prefer to have it at the top. This way it's easy to find the declaration\
+      \ when you are looking at the code.\n  DECLARATIONS          ::= ((DECLARATION|FUNCTION)\
+      \ SEMICOLON)*\n\nWell ok, this allows you to mix variable declarations and function\
+      \ declarations, but that's up to you. You might prefer to declare vars first\
+      \ and then function. This gives you the freedom.\n\nNote that this rule may\
+      \ be empty. I use the semicolon as a divider of parts, and it's checked here\
+      \ and not in the declaration/function because it's part of the block, seperating\
+      \ the elements.\n  DECLARATION           ::= VAR TYPE IDENTIFIER\n\nC style\
+      \ variable declaration, but prefixed with a '''var''' keyword. This is to make\
+      \ it a bit easier for the parser.\n  TYPE                  ::= INTEGER\n   \
+      \                       | STRING\n                          | FLOAT\n      \
+      \                    | BOOLEAN\n\nWe've got four types, I've not thought about\
+      \ custom type declarations.\n  IDENTIFIER            ::= __implicit__\n\nIdentifiers\
+      \ are returned by the tokenizer so I haven't added it to the language specification.\n\
+      \  FUNCTION              ::= FUNC TYPE IDENTIFIER LBRACK ARGUMENTS RBRACK DECLARATIONS\
+      \ BEGIN STATEMENTS END\n\nA function declaration including body. You always\
+      \ have to return a type, this is used to declare the always present local variable\
+      \ ''result'' (just like in [[Legacy:Pascal|Pascal]] functions). Before the function\
+      \ body you can define local variables (and even functions). The function body\
+      \ is encapsued with a '''begin''' and '''end''' just like in [[Legacy:Pascal|Pascal]].\
+      \ I like this way, ok it's more to write but it makes to code more ''readable'',\
+      \ ok I just like it since I can easily replace it with '''{'''  and '''}'''\
+      \ or whatever I want.\n  ARGUMENTS             ::= (TYPE LVALUE (SEMICOLON TYPE\
+      \ LVALUE)*)?\n\nFunction arguments are optional, and to prevent you from adding\
+      \ a semicolon after the last argument I used this construction. It's doesn't\
+      \ matter for the resulting AST, just the parser.\n  STATEMENTS            ::=\
+      \ (STATEMENT SEMICOLON)*\n\nZero or more statements, yes it's possible to define\
+      \ a program without any code to be executed, this might be usefull for function\
+      \ declarations to be reused or something.\n  STATEMENT             ::= ASSIGNMENT\n\
+      \                          | WHILEDO\n                          | IFTHENELSE\n\
+      \nA statement can be everything, an assignment or a control block like '''while'''\
+      \ ... '''do''' or '''if''' ... '''then''' ... '''else'''. It's easy to add new\
+      \ kind of statements here.\n  ASSIGNMENT            ::= IDENTIFIER BECOMES EXPR\n\
+      \                          | FUNCTIONCALL\n\nWell this is the reason why BruteForce\
+      \ is no longer LL(1), because I have to look a head to see if it's an assignment\
+      \ or an function call. Both start with an identifier. I could work around it\
+      \ but this would require me to add a keyword to one of them. For example <code>'''call'''\
+      \ function_name()</code>\n  WHILEDO               ::= WHILE EXPR DO CODEBLOCK\n\
+      \  CODEBLOCK             ::= STATEMENT\n                          | (BEGIN STATEMENTS\
+      \ END)\n\nThe '''while''' and '''if''' control blocks accept code blocks this\
+      \ is either one statement or more, because more statements qould require to\
+      \ use the semicolon to divide them a code block will start with '''begin'''\
+      \ and end with '''end''' .\n  IFTHENELSE            ::= IF EXPR THEN CODEBLOCK\
+      \ (ELSE CODEBLOCK)?\n\nI've made the else part optional, empty '''else''' parts\
+      \ are just ugly and it can easily be avoided since it's a diffirence between\
+      \ a semicolon and '''else'''\n  EXPR                  ::= BOOLEX\n\nHere's an\
+      \ nice example of a pretty useless rule, but maybe when I want to extend expression\
+      \ with something that has a lower precendence than a boolean expression I would\
+      \ only need to update one rule instead of a lot.\n\nThe following rules define\
+      \ the operator precedance, the sooner the lower the priority. The definition\
+      \ below allows constructs like:\n\n<uscript>\n1+2+3+4+5 \n1*2+3/5<=4+1\n</uscript>\n\
+      \  BOOLEX                ::= ACCUM ((LT|LE|GT|GE|EQ|NE) ACCUM)*\n  ACCUM   \
+      \              ::= MULT ((PLUS|MINUS) MULT)*\n  MULT                  ::= PREOP\
+      \ ((MULTIPLY|DIVIDE) PREOP)*\n  PREOP                 ::= (MINUS|NOT)? OPERAND\n\
+      \  OPERAND               ::= IDENTIFIER\n                          | FUNCTIONCALL\n\
+      \                          | INTVALUE\n                          | FLOATVALUE\n\
+      \                          | STRINGVALUE\n                          | BOOLVALUE\n\
+      \                          | LBRACK EXPR RBRACK\n\nAn operant is either a constant\
+      \ value, a variable identifier, a function call or again an expression between\
+      \ braches. These expressions between braces are very important, it allows you\
+      \ to overrule the operator precedance. You won't see these braces in the AST\
+      \ anymore because they are no longer needed in there, the operators are already\
+      \ set in the correct order.\n  FUNCTIONCALL          ::= IDENTIFIER LBRACK (EXPR\
+      \ (COMMA EXPR)*)? RBRACK\n\nThe arguments of a function call are expressions,\
+      \ this allows you to use a constant or expression besides the normal identifiers.\n\
+      \  INTVALUE              ::= __implicit__\n  FLOATVALUE            ::= __implicit__\n\
+      \  STRINGVALUE           ::= __implicit__\n  BOOLVALUE             ::= TRUE|FALSE\n\
+      \nBoolean values are returned as an identifier by the tokenizer, so we need\
+      \ to filter those out manualy.\n\n==Terminals ==\n\n  BEGIN                \
+      \ ::= 'begin'\n  END                   ::= 'end'\n  SEMICOLON             ::=\
+      \ ';'\n  VAR                   ::= 'var'\n  INTEGER               ::= 'int'\n\
+      \  STRING                ::= 'string'\n  FLOAT                 ::= 'float'\n\
+      \  BOOLEAN               ::= 'bool'\n  FUNC                  ::= 'function'\n\
+      \  BECOMES               ::= '='\n  WHILE                 ::= 'while'\n  DO\
+      \                    ::= 'do'\n  IF                    ::= 'if'\n  THEN    \
+      \              ::= 'then'\n  ELSE                  ::= 'else'\n  LT        \
+      \            ::= '<'\n  LE                    ::= '<='\n  GT               \
+      \     ::= '>'\n  GE                    ::= '>='\n  EQ                    ::=\
+      \ '=='\n  NE                    ::= '!='\n  PLUS                  ::= '+'\n\
+      \  MINUS                 ::= '-'\n  MULTIPLY              ::= '*'\n  DIVIDE\
+      \                ::= '/'\n  MOD                   ::= '%'\n  NOT           \
+      \        ::= '!'\n  LBRACK                ::= '('\n  RBRACK                ::=\
+      \ ')'\n  TRUE                  ::= 'true'\n  FALSE                 ::= 'false'\n\
+      \  COMMA                 ::= ','\n\n==Sample code ==\n\nHere's a piece of example\
+      \ code that will print all easters dates from 2003 to 2012, unless you provide\
+      \ diffirent values on the input\n\n<uscript>\nvar int y;\nvar int ey;\n\nfunction\
+      \ string easter(int year)\n  var int m;\n  var int d;\n  var int g;\n  var int\
+      \ c;\n  var int x;\n  var int z;\n  var int b;\n  var int e;\nbegin\n  g = year\
+      \ % 19 + 1;         \n  c = (year / 100) + 1;\n  x = (3*c / 4) - 12;\n  z =\
+      \ ((8*c + 5) / 25) - 5;\n  b = (5*year / 4) - x - 10;\n  e = (11*g + 20 + z\
+      \ - x);\n  e = e % 30;                     \n  if e < 0 then e = e+30;\n  if\
+      \ (((e == 25)+(g>11) == 2) + (e==24)) > 0 then e = e+1;\n  d = 44-e;\n  if d\
+      \ < 21 then d = d+30;\n  d = d+7-((b+d) - ((b+d)/7)*7);\n  if d>31 then m =\
+      \ 4 else m = 3;\n  if d>31 then d = d-31;\n  result = \"\"+year+\"-\"+m+\"-\"\
+      +d;\nend;\n\ny = 2003;\ney = 2012;\n\nif (argc() == 1) then ey = Int(argv(0));\n\
+      if (argc() == 2) then begin\n  y = Int(argv(0));\n  ey = Int(argv(1));\nend;\n\
+      print(\"Day of Easter for \"+y+\"-\"+ey+\".\");\n\nwhile (y <= ey) do begin\n\
+      \  print(easter(y));\n  y = y+1;\nend;\n</uscript>"
+  properties: []
+  revId: 1814
+name: "Legacy:BruteForce/EBNF"
+revision:
+  revid: 1814
+  parentid: 1815
+  user: "El Muerte TDS"
+  timestamp: 1051100300.000000000
+  comment: "*"
+timestamp: 1668786366.102437000

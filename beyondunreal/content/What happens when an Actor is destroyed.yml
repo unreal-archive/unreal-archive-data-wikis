@@ -1,0 +1,350 @@
+---
+parse:
+  title: "What happens when an Actor is destroyed"
+  text:
+    text: "<p>While they released a snippet of native code in <a href=\"/UnLevAct.cpp\"\
+      \ title=\"UnLevAct.cpp\" class=\"mw-redirect\">UnLevAct.cpp</a> that explains\
+      \ <a href=\"/What_happens_when_an_Actor_is_spawned\" title=\"What happens when\
+      \ an Actor is spawned\">what happens when an Actor is spawned</a>, Epic Games\
+      \ never released the corresponding code for destroying actors. However, though\
+      \ experiments and some experience with random bugs in one's own code, certain\
+      \ assumptions can be made about what exactly happens when an Actor is destroyed\
+      \ with the <a href=\"/Actor#Destroy\" title=\"Actor\">Destroy() function</a>.</p>\n\
+      <p>The events described here also happen clientsidely when a replicated actor\
+      \ that isn't <i>bNetTemporary</i> and wasn't \"torn off\" is no longer relevant\
+      \ to that client. If the actor becomes relevant again at some later point, it\
+      \ will be spawned again as if it is a new actor to that client.</p>\n<p></p>\n\
+      <div id=\"toc\" class=\"toc\">\n<div id=\"toctitle\">\n<h2>Contents</h2>\n</div>\n\
+      <ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#Summary_of_events\"><span\
+      \ class=\"tocnumber\">1</span> <span class=\"toctext\">Summary of events</span></a>\n\
+      <ul>\n<li class=\"toclevel-2 tocsection-2\"><a href=\"#Validity_checks\"><span\
+      \ class=\"tocnumber\">1.1</span> <span class=\"toctext\">Validity checks</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-3\"><a href=\"#bPendingDelete\"><span class=\"\
+      tocnumber\">1.2</span> <span class=\"toctext\">bPendingDelete</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-4\"><a href=\"#EndState.28.29\"><span class=\"\
+      tocnumber\">1.3</span> <span class=\"toctext\">EndState()</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-5\"><a href=\"#Destroyed.28.29\"><span class=\"\
+      tocnumber\">1.4</span> <span class=\"toctext\">Destroyed()</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-6\"><a href=\"#Detach.28.29.2C_BaseChanged.28.29\"\
+      ><span class=\"tocnumber\">1.5</span> <span class=\"toctext\">Detach(), BaseChanged()</span></a></li>\n\
+      <li class=\"toclevel-2 tocsection-7\"><a href=\"#UnTouch.28.29\"><span class=\"\
+      tocnumber\">1.6</span> <span class=\"toctext\">UnTouch()</span></a></li>\n<li\
+      \ class=\"toclevel-2 tocsection-8\"><a href=\"#Owner.LostChild.28.29\"><span\
+      \ class=\"tocnumber\">1.7</span> <span class=\"toctext\">Owner.LostChild()</span></a></li>\n\
+      </ul>\n</li>\n<li class=\"toclevel-1 tocsection-9\"><a href=\"#After_Destroy.28.29_returned\"\
+      ><span class=\"tocnumber\">2</span> <span class=\"toctext\">After Destroy()\
+      \ returned</span></a></li>\n</ul>\n</div>\n<p></p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"Summary_of_events\">Summary of events</span><span class=\"mw-editsection\"\
+      ><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/What_happens_when_an_Actor_is_destroyed?section=1\"\
+      \ title=\"Edit section: Summary of events\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>Everything described in this section happens between\
+      \ the call to Destroy() and its return.</p>\n<p>Be careful about calling Destroy()\
+      \ on an actor currently being destroyed. This subsequent Destroy() call will\
+      \ processed as usual, so you will have to manually implement something to break\
+      \ out of this recursion before it crashes the engine with an <a href=\"/edit/Infinite_script_recursion?redlink=1\"\
+      \ class=\"new\" title=\"Infinite script recursion (page does not exist)\">infinite\
+      \ script recursion</a> error. Once an \"inner\" Destroy() call succeeds, any\
+      \ \"outer\" Destroy() will short-circuit and return <code>True</code> without\
+      \ calling any additional events.</p>\n<h3><span class=\"mw-headline\" id=\"\
+      Validity_checks\">Validity checks</span><span class=\"mw-editsection\"><span\
+      \ class=\"mw-editsection-bracket\">[</span><a href=\"/edit/What_happens_when_an_Actor_is_destroyed?section=2\"\
+      \ title=\"Edit section: Validity checks\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Before doing anything, the engine checks whether the\
+      \ actor can be destroyed at all. Actors with <i>bStatic</i> or <i>bNoDelete</i>\
+      \ set to <code>True</code> cannot be destroyed. Neither can replicated actors\
+      \ with the <i>bNetTemporary</i> flag set to <code>False</code> on a network\
+      \ client, unless they are no longer network relevant to that client. In that\
+      \ case destruction does not originate from the Destroy() function, but from\
+      \ <a href=\"/Replication\" title=\"Replication\" class=\"mw-redirect\">replication</a>\
+      \ code. The Destroy() function will return <code>False</code> if it detects\
+      \ any of these conditions.</p>\n<p>Also it seems PlayerControllers (or PlayerPawns\
+      \ in <a href=\"/edit/UE1?redlink=1\" class=\"new\" title=\"UE1 (page does not\
+      \ exist)\">UE1</a>) of clients cannot be destroyed directly on a network server,\
+      \ but the call to Destroy() causes them to be disconnected. That disconnect\
+      \ may happen a bit later, but after the connection is closed, the PlayerController\
+      \ (or PlayerPawn) is destroyed with the usual events getting called as described\
+      \ below. Destroy() returns <code>False</code> here as well, even though the\
+      \ player actor starts disconnecting, which will eventually result in its destruction.</p>\n\
+      <h3><span class=\"mw-headline\" id=\"bPendingDelete\">bPendingDelete</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/What_happens_when_an_Actor_is_destroyed?section=3\" title=\"\
+      Edit section: bPendingDelete\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>While the Destroy() function is executed, the Actor's\
+      \ <i>bPendingDelete</i> property is set to <code>True</code>. Any event called\
+      \ directly or indirectly during destruction should check this property before\
+      \ doing anything that won't make sense on an Actor that is about to be deleted\
+      \ from the level.</p>\n<h3><span class=\"mw-headline\" id=\"EndState.28.29\"\
+      >EndState()</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/What_happens_when_an_Actor_is_destroyed?section=4\"\
+      \ title=\"Edit section: EndState()\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>If the actor is in a <a href=\"/State\" title=\"State\"\
+      \ class=\"mw-redirect\">state</a>, the EndState() event is called. The actor\
+      \ doesn't actually leave the state, though. You could probably still switch\
+      \ states via GotoState(), but don't complain if you or your code gets confused.</p>\n\
+      <h3><span class=\"mw-headline\" id=\"Destroyed.28.29\">Destroyed()</span><span\
+      \ class=\"mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a\
+      \ href=\"/edit/What_happens_when_an_Actor_is_destroyed?section=5\" title=\"\
+      Edit section: Destroyed()\">edit</a><span class=\"mw-editsection-bracket\">]</span></span></h3>\n\
+      <p>Next, the Destroyed() event is called. As mentioned above, the actor does\
+      \ not leave its current state, so you could probably override this event in\
+      \ states.</p>\n<h3><span class=\"mw-headline\" id=\"Detach.28.29.2C_BaseChanged.28.29\"\
+      >Detach(), BaseChanged()</span><span class=\"mw-editsection\"><span class=\"\
+      mw-editsection-bracket\">[</span><a href=\"/edit/What_happens_when_an_Actor_is_destroyed?section=6\"\
+      \ title=\"Edit section: Detach(), BaseChanged()\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>If the actor is attached to another actor (<code>thisActor.Base&#160;!=\
+      \ None</code>), the base actor's Detach() event and the destroyed actor's BaseChange()\
+      \ event are called. Similarly, for any actor attached to the destroyed actor,\
+      \ the destroyed actor's Detach() event and the detached actor's BaseChange()\
+      \ event are called.</p>\n<h3><span class=\"mw-headline\" id=\"UnTouch.28.29\"\
+      >UnTouch()</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/What_happens_when_an_Actor_is_destroyed?section=7\"\
+      \ title=\"Edit section: UnTouch()\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>If the actor is touching any other actors, those actors'\
+      \ UnTouch() event is called. It is not called on the destroyed actor itself,\
+      \ though.</p>\n<h3><span class=\"mw-headline\" id=\"Owner.LostChild.28.29\"\
+      >Owner.LostChild()</span><span class=\"mw-editsection\"><span class=\"mw-editsection-bracket\"\
+      >[</span><a href=\"/edit/What_happens_when_an_Actor_is_destroyed?section=8\"\
+      \ title=\"Edit section: Owner.LostChild()\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h3>\n<p>Lastly, if the actor has an <i>Owner</i>, that owner\
+      \ actor's LostChild() event is called.</p>\n<h2><span class=\"mw-headline\"\
+      \ id=\"After_Destroy.28.29_returned\">After Destroy() returned</span><span class=\"\
+      mw-editsection\"><span class=\"mw-editsection-bracket\">[</span><a href=\"/edit/What_happens_when_an_Actor_is_destroyed?section=9\"\
+      \ title=\"Edit section: After Destroy() returned\">edit</a><span class=\"mw-editsection-bracket\"\
+      >]</span></span></h2>\n<p>When the Destroy() function (or the <a href=\"/Replication\"\
+      \ title=\"Replication\" class=\"mw-redirect\">replication</a> code that cleans\
+      \ up obsolete replicated actors) returns, the actor object is not actually gone,\
+      \ it just becomes unaccessible by other objects in UnrealScript.</p>\n<p>If\
+      \ the Destroy() function was called from within a function of the destroyed\
+      \ actor, then that function continues to execute even after Destroy() returned\
+      \ successfully. If you execute code after a successful Destroy() call, things\
+      \ start getting awkward. You can still access the destroyed actor's variables\
+      \ and call its functions, but only directly, not through variables or function\
+      \ return values. You can even still assign the destroyed actor to variables,\
+      \ but accessing variable or calling functions through them fails with an <a\
+      \ href=\"/Accessed_None\" title=\"Accessed None\" class=\"mw-redirect\">Accessed\
+      \ None</a> warning:</p>\n<div dir=\"ltr\" class=\"mw-geshi mw-code mw-content-ltr\"\
+      >\n<div class=\"uscript source-uscript\">\n<pre class=\"de1\"><span class=\"\
+      kw1\">function</span> DestructionTest<span class=\"br0\">(</span><span class=\"\
+      br0\">)</span>\n<span class=\"br0\">{</span>\n  <span class=\"kw1\">local</span>\
+      \ <span class=\"kw9\">Actor</span> Before, After;\n \n  Before <span class=\"\
+      sy0\">=</span> <span class=\"kw6\">Self</span>;\n \n  <span class=\"co1\">//\
+      \ logs \"False True True\"</span>\n  <span class=\"kw3\">log</span><span class=\"\
+      br0\">(</span>bDeleteMe <span class=\"sy0\">@</span> <span class=\"kw4\">Destroy</span><span\
+      \ class=\"br0\">(</span><span class=\"br0\">)</span> <span class=\"sy0\">@</span>\
+      \ bDeleteMe<span class=\"br0\">)</span>;\n \n  After <span class=\"sy0\">=</span>\
+      \ <span class=\"kw6\">Self</span>;\n \n  <span class=\"co1\">// logs 3 Accessed\
+      \ None warnings, then logs \"True False False False\",</span>\n  <span class=\"\
+      co1\">// because accessing a variable through None returns its null value,</span>\n\
+      \  <span class=\"co1\">// which is False for type bool</span>\n  <span class=\"\
+      kw3\">log</span><span class=\"br0\">(</span>bDeleteMe <span class=\"sy0\">@</span>\
+      \ <span class=\"kw6\">Self</span>.<span class=\"me0\">bDeleteMe</span> <span\
+      \ class=\"sy0\">@</span> Before.<span class=\"me0\">bDeleteMe</span> <span class=\"\
+      sy0\">@</span> After.<span class=\"me0\">bDeleteMe</span><span class=\"br0\"\
+      >)</span>;\n \n  <span class=\"co1\">// logs 3x this actor's name, separated\
+      \ by single spaces</span>\n  <span class=\"co1\">// (even though the engine\
+      \ claimed it was accessing None in the previous log() call)</span>\n  <span\
+      \ class=\"kw3\">log</span><span class=\"br0\">(</span><span class=\"kw6\">Self</span>\
+      \ <span class=\"sy0\">@</span> Before <span class=\"sy0\">@</span> After<span\
+      \ class=\"br0\">)</span>;\n<span class=\"br0\">}</span></pre></div>\n</div>\n\
+      <p>Note that the <a href=\"/Self\" title=\"Self\" class=\"mw-redirect\">Self</a>\
+      \ keyword and variable assignments still work, just accessing class members\
+      \ through them no longer does. That <i>bDeleteMe</i> variable is set to <code>True</code>\
+      \ by the Destroy() function after all the events described in the <a href=\"\
+      #Summary_of_events\">Summary of events</a> section.</p>\n\n<!-- \nNewPP limit\
+      \ report\nCPU time usage: 0.052 seconds\nReal time usage: 0.114 seconds\nPreprocessor\
+      \ visited node count: 38/1000000\nPreprocessor generated node count: 60/1000000\n\
+      Post‐expand include size: 0/2097152 bytes\nTemplate argument size: 0/2097152\
+      \ bytes\nHighest expansion depth: 2/40\nExpensive parser function count: 0/100\n\
+      -->\n\n<!-- \nTransclusion expansion time report (%,ms,calls,template)\n100.00%\
+      \    0.000      1 - -total\n-->\n\n<!-- Saved in parser cache with key wiki:pcache:idhash:28807-0!*!0!!en!*!*\
+      \ and timestamp 20221117234454 and revision id 42668\n -->\n"
+  categories:
+  - sortkey: ""
+    name: "Programming_articles"
+  links:
+  - ns: 0
+    exists: false
+    name: "Infinite script recursion"
+  - ns: 0
+    exists: true
+    name: "What happens when an Actor is spawned"
+  - ns: 0
+    exists: true
+    name: "Self"
+  - ns: 0
+    exists: true
+    name: "State"
+  - ns: 0
+    exists: true
+    name: "Replication"
+  - ns: 0
+    exists: true
+    name: "UnLevAct.cpp"
+  - ns: 0
+    exists: false
+    name: "UE1"
+  - ns: 0
+    exists: true
+    name: "Actor"
+  - ns: 0
+    exists: true
+    name: "Accessed None"
+  templates: []
+  images: []
+  externallinks: []
+  sections:
+  - toclevel: 1
+    level: "2"
+    line: "Summary of events"
+    number: "1"
+    index: "1"
+    fromtitle: "What_happens_when_an_Actor_is_destroyed"
+    byteoffset: 699
+    anchor: "Summary_of_events"
+  - toclevel: 2
+    level: "3"
+    line: "Validity checks"
+    number: "1.1"
+    index: "2"
+    fromtitle: "What_happens_when_an_Actor_is_destroyed"
+    byteoffset: 1248
+    anchor: "Validity_checks"
+  - toclevel: 2
+    level: "3"
+    line: "bPendingDelete"
+    number: "1.2"
+    index: "3"
+    fromtitle: "What_happens_when_an_Actor_is_destroyed"
+    byteoffset: 2321
+    anchor: "bPendingDelete"
+  - toclevel: 2
+    level: "3"
+    line: "EndState()"
+    number: "1.3"
+    index: "4"
+    fromtitle: "What_happens_when_an_Actor_is_destroyed"
+    byteoffset: 2640
+    anchor: "EndState.28.29"
+  - toclevel: 2
+    level: "3"
+    line: "Destroyed()"
+    number: "1.4"
+    index: "5"
+    fromtitle: "What_happens_when_an_Actor_is_destroyed"
+    byteoffset: 2884
+    anchor: "Destroyed.28.29"
+  - toclevel: 2
+    level: "3"
+    line: "Detach(), BaseChanged()"
+    number: "1.5"
+    index: "6"
+    fromtitle: "What_happens_when_an_Actor_is_destroyed"
+    byteoffset: 3059
+    anchor: "Detach.28.29.2C_BaseChanged.28.29"
+  - toclevel: 2
+    level: "3"
+    line: "UnTouch()"
+    number: "1.6"
+    index: "7"
+    fromtitle: "What_happens_when_an_Actor_is_destroyed"
+    byteoffset: 3411
+    anchor: "UnTouch.28.29"
+  - toclevel: 2
+    level: "3"
+    line: "Owner.LostChild()"
+    number: "1.7"
+    index: "8"
+    fromtitle: "What_happens_when_an_Actor_is_destroyed"
+    byteoffset: 3568
+    anchor: "Owner.LostChild.28.29"
+  - toclevel: 1
+    level: "2"
+    line: "After Destroy() returned"
+    number: "2"
+    index: "9"
+    fromtitle: "What_happens_when_an_Actor_is_destroyed"
+    byteoffset: 3680
+    anchor: "After_Destroy.28.29_returned"
+  displaytitle: "What happens when an Actor is destroyed"
+  iwlinks: []
+  wikitext:
+    text: "While they released a snippet of native code in [[UnLevAct.cpp]] that explains\
+      \ [[what happens when an Actor is spawned]], Epic Games never released the corresponding\
+      \ code for destroying actors. However, though experiments and some experience\
+      \ with random bugs in one's own code, certain assumptions can be made about\
+      \ what exactly happens when an Actor is destroyed with the [[Actor#Destroy|Destroy()\
+      \ function]].\n\nThe events described here also happen clientsidely when a replicated\
+      \ actor that isn't ''bNetTemporary'' and wasn't \"torn off\" is no longer relevant\
+      \ to that client. If the actor becomes relevant again at some later point, it\
+      \ will be spawned again as if it is a new actor to that client.\n\n==Summary\
+      \ of events==\nEverything described in this section happens between the call\
+      \ to Destroy() and its return.\n\nBe careful about calling Destroy() on an actor\
+      \ currently being destroyed. This subsequent Destroy() call will processed as\
+      \ usual, so you will have to manually implement something to break out of this\
+      \ recursion before it crashes the engine with an [[infinite script recursion]]\
+      \ error. Once an \"inner\" Destroy() call succeeds, any \"outer\" Destroy()\
+      \ will short-circuit and return <code>True</code> without calling any additional\
+      \ events.\n\n===Validity checks===\nBefore doing anything, the engine checks\
+      \ whether the actor can be destroyed at all. Actors with ''bStatic'' or ''bNoDelete''\
+      \ set to <code>True</code> cannot be destroyed. Neither can replicated actors\
+      \ with the ''bNetTemporary'' flag set to <code>False</code> on a network client,\
+      \ unless they are no longer network relevant to that client. In that case destruction\
+      \ does not originate from the Destroy() function, but from [[replication]] code.\n\
+      The Destroy() function will return <code>False</code> if it detects any of these\
+      \ conditions.\n\nAlso it seems PlayerControllers (or PlayerPawns in [[UE1]])\
+      \ of clients cannot be destroyed directly on a network server, but the call\
+      \ to Destroy() causes them to be disconnected. That disconnect may happen a\
+      \ bit later, but after the connection is closed, the PlayerController (or PlayerPawn)\
+      \ is destroyed with the usual events getting called as described below. Destroy()\
+      \ returns <code>False</code> here as well, even though the player actor starts\
+      \ disconnecting, which will eventually result in its destruction.\n\n===bPendingDelete===\n\
+      While the Destroy() function is executed, the Actor's ''bPendingDelete'' property\
+      \ is set to <code>True</code>. Any event called directly or indirectly during\
+      \ destruction should check this property before doing anything that won't make\
+      \ sense on an Actor that is about to be deleted from the level.\n\n===EndState()===\n\
+      If the actor is in a [[state]], the EndState() event is called. The actor doesn't\
+      \ actually leave the state, though. You could probably still switch states via\
+      \ GotoState(), but don't complain if you or your code gets confused.\n\n===Destroyed()===\n\
+      Next, the Destroyed() event is called. As mentioned above, the actor does not\
+      \ leave its current state, so you could probably override this event in states.\n\
+      \n===Detach(), BaseChanged()===\nIf the actor is attached to another actor (<code>thisActor.Base\
+      \ != None</code>), the base actor's Detach() event and the destroyed actor's\
+      \ BaseChange() event are called. Similarly, for any actor attached to the destroyed\
+      \ actor, the destroyed actor's Detach() event and the detached actor's BaseChange()\
+      \ event are called.\n\n===UnTouch()===\nIf the actor is touching any other actors,\
+      \ those actors' UnTouch() event is called. It is not called on the destroyed\
+      \ actor itself, though.\n\n===Owner.LostChild()===\nLastly, if the actor has\
+      \ an ''Owner'', that owner actor's LostChild() event is called.\n\n==After Destroy()\
+      \ returned==\nWhen the Destroy() function (or the [[replication]] code that\
+      \ cleans up obsolete replicated actors) returns, the actor object is not actually\
+      \ gone, it just becomes unaccessible by other objects in UnrealScript.\n\nIf\
+      \ the Destroy() function was called from within a function of the destroyed\
+      \ actor, then that function continues to execute even after Destroy() returned\
+      \ successfully. If you execute code after a successful Destroy() call, things\
+      \ start getting awkward. You can still access the destroyed actor's variables\
+      \ and call its functions, but only directly, not through variables or function\
+      \ return values. You can even still assign the destroyed actor to variables,\
+      \ but accessing variable or calling functions through them fails with an [[Accessed\
+      \ None]] warning:\n<uscript>\nfunction DestructionTest()\n{\n  local Actor Before,\
+      \ After;\n\n  Before = Self;\n\n  // logs \"False True True\"\n  log(bDeleteMe\
+      \ @ Destroy() @ bDeleteMe);\n\n  After = Self;\n\n  // logs 3 Accessed None\
+      \ warnings, then logs \"True False False False\",\n  // because accessing a\
+      \ variable through None returns its null value,\n  // which is False for type\
+      \ bool\n  log(bDeleteMe @ Self.bDeleteMe @ Before.bDeleteMe @ After.bDeleteMe);\n\
+      \n  // logs 3x this actor's name, separated by single spaces\n  // (even though\
+      \ the engine claimed it was accessing None in the previous log() call)\n  log(Self\
+      \ @ Before @ After);\n}\n</uscript>\nNote that the [[Self]] keyword and variable\
+      \ assignments still work, just accessing class members through them no longer\
+      \ does. That ''bDeleteMe'' variable is set to <code>True</code> by the Destroy()\
+      \ function after all the events described in the [[#Summary of events|Summary\
+      \ of events]] section.\n\n[[Category:Programming articles]]"
+  properties: []
+  revId: 42668
+name: "What happens when an Actor is destroyed"
+revision:
+  revid: 42668
+  parentid: 42635
+  user: "Wormbo"
+  timestamp: 1268910881.000000000
+  comment: "/* Detach(), BaseChanged() */ clarified meaning of \"attached\""
+timestamp: 1668772458.941787000
